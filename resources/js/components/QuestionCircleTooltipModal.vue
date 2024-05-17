@@ -1,12 +1,12 @@
 <template>
-  <a href="#"
-     @click.prevent="$bvModal.show(modalId)"
-  >
-    <b-icon class="text-muted"
-            icon="question-circle"
-            :aria-label="ariaLabel"
-    />
-  </a>
+  <span @mouseover="showModal()" @mouseout="mouseOver = false">
+    <a href="#" @click.prevent>
+      <b-icon class="text-muted"
+              icon="question-circle"
+              :aria-label="ariaLabel"
+      />
+    </a>
+  </span>
 </template>
 
 <script>
@@ -21,6 +21,19 @@ export default {
     modalId: {
       type: String,
       default: ''
+    }
+  },
+  data: () => ({
+    mouseOver: true
+  }),
+  methods: {
+    showModal () {
+      this.mouseOver = true
+      setTimeout(() => {
+        if (this.mouseOver) {
+          this.$bvModal.show(this.modalId)
+        }
+      }, 500)
     }
   }
 }

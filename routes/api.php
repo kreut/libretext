@@ -304,6 +304,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
     Route::delete('/courses/{course}/reset', 'CourseController@reset');
+    Route::get('/courses/{course}/assignment-statuses', 'CourseController@getAssignmentStatusesByCourse');
 
     Route::get('/assignments/{course}/dates', 'AssignmentController@getDates');
     Route::patch('/assignments/preview-shift-dates', 'AssignmentController@previewShiftDates');

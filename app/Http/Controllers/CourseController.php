@@ -31,6 +31,7 @@ use App\Traits\DateFormatter;
 use App\User;
 use App\WhitelistedDomain;
 use App\School;
+use Carbon\Carbon;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
@@ -44,6 +45,39 @@ class CourseController extends Controller
 {
 
     use DateFormatter;
+
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @param Assignment $assignment
+     * @return array
+     */
+    public function getAssignmentStatusesByCourse(Request $request, Course $course, Assignment $assignment)
+    {
+
+        $assign_to_timings = DB::table('assignments')
+            ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
+            ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
+            ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
+            ->where('user_id', $request->user()->id)
+            ->select('assign_to_timings.*', 'assignments.id', 'assignments.assessment_type')
+            ->get();
+
+
+        foreach ($assign_to_timings as &$assign_to_timing) {
+            if ($assign_to_timing->assessment_type == 'clicker') {
+                $assign_to_timing->status = 'N/A';
+            } else {
+                $assign_to_timing->status =   $assignment->getStatus($assign_to_timing->available_from,$assign_to_timing->due, $assign_to_timing->final_submission_deadline);
+            }
+        }
+        $response['assignment_statuses'] = $assign_to_timings;
+        $response['type'] = 'success';
+        return $response;
+
+
+    }
+
 
     /**
      * @param AutoReleaseRequest $request

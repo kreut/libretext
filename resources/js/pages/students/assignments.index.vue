@@ -54,7 +54,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -62,6 +62,44 @@
           {{ form.errors.get('assignmentFile') }}
         </div>
       </b-form>
+    </b-modal>
+    <b-modal id="modal-status"
+             title="Explanation of Statuses"
+             size="lg"
+             hide-footer
+    >
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Explanation</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>
+            <span :class="getStatusTextClass('Upcoming')">Upcoming</span>
+          </td>
+          <td>The assignment is not yet open.</td>
+        </tr>
+        <tr>
+          <td>
+            <span :class="getStatusTextClass('Open')">Open</span>
+          </td>
+          <td>The assignment is open and you can submit responses.</td>
+        </tr>
+        <tr>
+          <td>
+            <span :class="getStatusTextClass('Late')">Late</span>
+          </td>
+          <td>You may still submit responses but there may be a late penalty. Enter the assignment for details.</td>
+        </tr>
+        <tr>
+          <td>
+            <span :class="getStatusTextClass('Closed')">Closed</span>
+          </td>
+          <td>The assignment is past due and you may no longer submit responses.</td>
+        </tr>
+      </table>
     </b-modal>
     <b-modal
       id="modal-assignment-submission-feedback"
@@ -93,11 +131,11 @@
       </b-card>
       <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
-          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"/>
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
         </div>
       </div>
     </b-modal>
-    <PageTitle v-if="canViewAssignments" :title="title"/>
+    <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
       <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
       <loading :active.sync="loading"
@@ -132,7 +170,7 @@
               <a id="course-z-score-tooltip"
                  href="#"
               >
-                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
+                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score" />
               </a>
               <b-tooltip target="course-z-score-tooltip"
                          triggers="hover focus"
@@ -152,8 +190,17 @@
                 <b-form-select v-if="assignmentGroupOptions.length>1"
                                v-model="chosenAssignmentGroup"
                                title="Filter by assignment group"
+                               size="sm"
                                :options="assignmentGroupOptions"
                                @change="updateAssignmentGroupFilter();getAssignmentsWithinChosenAssignmentGroup()"
+                />
+              </b-col>
+              <b-col lg="3">
+                <b-form-select v-model="chosenAssignmentStatus"
+                               title="Filter by assignment status"
+                               size="sm"
+                               :options="assignmentStatusOptions"
+                               @change="getAssignmentsWithChosenAssignmentStatus()"
                 />
               </b-col>
               <b-col class="pt-1">
@@ -167,7 +214,12 @@
               </b-col>
             </b-row>
           </b-container>
-          <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage">
+          <div v-show="showNoMatchingMessage">
+            <b-alert show variant="info">
+              There are no assignments that match this criteria.
+            </b-alert>
+          </div>
+          <p v-show="atLeastOneAssignmentNotIncludedInWeightedAverage && assignments.length>1">
             Submissions for assignments marked with an asterisk (<span class="text-danger">*</span>) will not be
             included
             in your final weighted average.
@@ -178,15 +230,20 @@
             aria-label="Assignments"
             striped
             hover
+            small
             :no-border-collapse="true"
             :items="assignments"
             :fields="assignmentFields"
           >
             <template v-slot:head(z_score)="data">
               Z-Score
-              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'"/>
+              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'" />
             </template>
 
+            <template v-slot:head(status)="data">
+              Status
+              <QuestionCircleTooltipModal :aria-label="'status-explained'" :modal-id="'modal-status'" />
+            </template>
             <template #cell(name)="data">
               <span v-show="data.item.is_available">
                 <a href="" @click.prevent="getAssignmentSummaryView(data.item)">{{ data.item.name }}</a>
@@ -216,21 +273,20 @@
               <span v-show="data.item.assessment_type !== 'clicker'">
                 {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
                 {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-                {{ data.item.due.is_extension ? '(Extension)' : '' }} <span v-show="data.item.due.late"
-                                                                            v-b-tooltip.hover
-                                                                            class="text-warning"
-                                                                            :title="`Submissions for ${data.item.name} will be considered late.  Enter the assignment for details.`"
-              >*</span>
+                {{ data.item.due.is_extension ? '(Extension)' : '' }}
               </span>
               <span v-show="data.item.assessment_type === 'clicker'">
                 N/A
               </span>
             </template>
+            <template #cell(status)="data">
+              <span :class="getStatusTextClass(data.item.status)"> {{ data.item.status }}</span>
+            </template>
             <template #cell(score)="data">
               <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
               <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
-                  data.item.total_points
-                }}</span>
+                data.item.total_points
+              }}</span>
             </template>
           </b-table>
         </div>
@@ -258,6 +314,7 @@ import { initAssignmentGroupOptions, updateAssignmentGroupFilter } from '~/helpe
 import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
 import { mapGetters } from 'vuex'
 import { initCentrifuge } from '~/helpers/Centrifuge'
+import { getStatusTextClass } from '~/helpers/AssignTosStatus'
 
 export default {
   components: {
@@ -268,6 +325,9 @@ export default {
     return { title: 'My Assignments' }
   },
   data: () => ({
+    showNoMatchingMessage: false,
+    chosenAssignmentStatus: null,
+    assignmentStatuses: [],
     centrifugo: {},
     isInLmsCourse: false,
     showProgressReport: false,
@@ -303,25 +363,42 @@ export default {
         sortable: true,
         isRowHeader: true
       },
-      'assignment_group',
+      {
+        key: 'assignment_group',
+        label: 'Group',
+        sortable: true
+      },
       {
         key: 'available_from',
         sortable: true,
-        thStyle: { width: '230px' }
+        thStyle: { width: '170px' }
       },
       {
         key: 'due',
         sortable: true,
-        thStyle: { width: '230px' }
+        thStyle: { width: '170px' }
+      },
+      {
+        key: 'status',
+        sortable: true,
+        thStyle: { width: '95px' }
       },
       {
         key: 'number_submitted',
         label: 'Submitted'
       },
       'score',
-      'z_score'
+      {
+        key: 'z_score',
+        thStyle: { width: '95px' }
+      }
     ],
     assignmentGroupOptions: [],
+    assignmentStatusOptions: [{ value: null, text: 'All Statuses' },
+      { value: 'Upcoming', text: 'Upcoming' },
+      { value: 'Open', text: 'Open' },
+      { value: 'Closed', text: 'Closed' },
+      { value: 'Late', text: 'Late' }],
     chosenAssignmentGroupText: null,
     chosenAssignmentGroup: null,
     loading: true,
@@ -348,14 +425,6 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
-  created () {
-    this.downloadSolutionFile = downloadSolutionFile
-    this.downloadFile = downloadFile
-    this.submitUploadFile = submitUploadFile
-    this.getAcceptedFileTypes = getAcceptedFileTypes
-    this.initAssignmentGroupOptions = initAssignmentGroupOptions
-    this.updateAssignmentGroupFilter = updateAssignmentGroupFilter
-  },
   beforeDestroy () {
     try {
       if (this.centrifuge) {
@@ -365,15 +434,48 @@ export default {
       // won't be a function for all the other ones that haven't been defined on the page
     }
   },
-  mounted () {
+  async mounted () {
     this.courseId = this.$route.params.courseId
-    this.getScoresByUser()
+    await this.getAssignmentStatusesByCourseAndUser()
+    await this.getScoresByUser()
   },
   methods: {
+    downloadSolutionFile,
+    downloadFile,
+    submitUploadFile,
+    getAcceptedFileTypes,
+    initAssignmentGroupOptions,
+    updateAssignmentGroupFilter,
+    getStatusTextClass,
+    async getAssignmentStatusesByCourseAndUser () {
+      try {
+        const { data } = await axios.get(`/api/courses/${this.courseId}/assignment-statuses`)
+        if (data.type === 'success') {
+          this.assignmentStatuses = data.assignment_statuses
+        } else {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     getAssignmentsWithinChosenAssignmentGroup () {
       this.assignments = this.chosenAssignmentGroup === null
         ? this.originalAssignments
         : this.originalAssignments.filter(assignment => assignment.assignment_group === this.chosenAssignmentGroupText)
+      if (this.chosenAssignmentStatus) {
+        this.assignments = this.assignments.filter(assignment => assignment.status === this.chosenAssignmentStatus)
+      }
+      this.showNoMatchingMessage = !this.assignments.length
+    },
+    getAssignmentsWithChosenAssignmentStatus () {
+      this.assignments = this.chosenAssignmentStatus === null
+        ? this.originalAssignments
+        : this.originalAssignments.filter(assignment => assignment.status === this.chosenAssignmentStatus)
+      if (this.chosenAssignmentGroup) {
+        this.assignments = this.assignments.filter(assignment => assignment.assignment_group === this.chosenAssignmentGroupText)
+      }
+      this.showNoMatchingMessage = !this.assignments.length
     },
     async getScoresByUser () {
       try {
@@ -394,6 +496,8 @@ export default {
           if (!this.assignments[i].include_in_weighted_average) {
             this.atLeastOneAssignmentNotIncludedInWeightedAverage = true
           }
+          const assignmentStatus = this.assignmentStatuses.find(item => item.assignment_id === this.assignments[i].id)
+          this.assignments[i].status = assignmentStatus ? assignmentStatus.status : 'N/A'
         }
         this.originalAssignments = this.assignments
         this.initAssignmentGroupOptions(this.assignments)
