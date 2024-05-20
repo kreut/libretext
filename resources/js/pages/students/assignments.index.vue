@@ -54,7 +54,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -70,10 +70,10 @@
     >
       <table class="table table-striped">
         <thead>
-        <tr>
-          <th>Status</th>
-          <th>Explanation</th>
-        </tr>
+          <tr>
+            <th>Status</th>
+            <th>Explanation</th>
+          </tr>
         </thead>
         <tr>
           <td>
@@ -131,11 +131,11 @@
       </b-card>
       <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
-          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"/>
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
         </div>
       </div>
     </b-modal>
-    <PageTitle v-if="canViewAssignments" :title="title"/>
+    <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
       <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
       <loading :active.sync="loading"
@@ -170,7 +170,7 @@
               <a id="course-z-score-tooltip"
                  href="#"
               >
-                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
+                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score" />
               </a>
               <b-tooltip target="course-z-score-tooltip"
                          triggers="hover focus"
@@ -237,12 +237,12 @@
           >
             <template v-slot:head(z_score)="data">
               Z-Score
-              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'"/>
+              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'" />
             </template>
 
             <template v-slot:head(status)="data">
               Status
-              <QuestionCircleTooltipModal :aria-label="'status-explained'" :modal-id="'modal-status'"/>
+              <QuestionCircleTooltipModal :aria-label="'status-explained'" :modal-id="'modal-status'" />
             </template>
             <template #cell(name)="data">
               <span v-show="data.item.is_available">
@@ -271,11 +271,9 @@
             </template>
             <template #cell(due)="data">
               <span v-show="data.item.assessment_type !== 'clicker'">
-                <span :class="data.item.status=== 'Late' ? getStatusTextClass('Late') : ''">
-                  {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
-                  {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
-                  {{ data.item.due.is_extension ? '(Extension)' : '' }}
-                </span>
+                {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
+                {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+                {{ data.item.due.is_extension ? '(Extension)' : '' }}
               </span>
               <span v-show="data.item.assessment_type === 'clicker'">
                 N/A
@@ -287,8 +285,8 @@
             <template #cell(score)="data">
               <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
               <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
-                  data.item.total_points
-                }}</span>
+                data.item.total_points
+              }}</span>
             </template>
           </b-table>
         </div>
