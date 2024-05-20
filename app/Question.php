@@ -2646,15 +2646,48 @@ class Question extends Model
 
         $simple_choices = $this->getSimpleChoices($qti_json);
         $like_question_id = 0;
+        $dom = new DOMDocument;
         foreach ($like_questions as $like_question) {
             $like_question_json = json_decode($like_question->qti_json, true);
             $stripped_like_prompt = trim(strip_tags($like_question_json['prompt']));
             $like_simple_choices = $this->getSimpleChoices($like_question_json);
-            if ($stripped_like_prompt === $stripped_prompt && $this->array_values_identical($simple_choices, $like_simple_choices)) {
+            if ($stripped_like_prompt === $stripped_prompt
+                && $this->array_values_identical($simple_choices, $like_simple_choices)
+                && $this->imgsSame($prompt, $like_question_json['prompt'])) {
                 $like_question_id = $like_question->id;
             }
         }
         return $like_question_id;
+    }
+
+    /**
+     * @param $prompt
+     * @param $like_question_prompt
+     * @return bool
+     */
+    public function imgsSame($prompt, $like_question_prompt): bool
+    {
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true); // For handling potential HTML parsing errors
+        $dom->loadHTML($prompt);
+        libxml_clear_errors();
+        $images = $dom->getElementsByTagName('img');
+        $srcs = [];
+        foreach ($images as $img) {
+            $src = $img->getAttribute('src');
+            $srcs[] = strtok($src, '?');
+        }
+
+        libxml_use_internal_errors(true); // For handling potential HTML parsing errors
+        $dom->loadHTML($like_question_prompt);
+        libxml_clear_errors();
+        $like_images = $dom->getElementsByTagName('img');
+        $like_srcs = [];
+        foreach ($like_images as $img) {
+            $src = $img->getAttribute('src');
+            $like_srcs[] = strtok($src, '?');
+        }
+        return $srcs === $like_srcs;
     }
 
     /**
