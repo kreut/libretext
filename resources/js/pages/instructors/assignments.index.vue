@@ -1152,7 +1152,6 @@
                         $moment(assignment.assign_tos[0].final_submission_deadline, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A')
                       }}
                     </span>
-                    <span v-show="assignment.assign_tos[0].status === 'Late'">*</span>
                   </span>
                 </div>
               </td>
