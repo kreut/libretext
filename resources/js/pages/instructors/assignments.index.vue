@@ -1146,10 +1146,10 @@
                     </span>
                     <span v-if="showFinalSubmissionDeadline(assignment.assign_tos[0])">
                       {{
-                        $moment(assignment.assign_tos[0].final_submission_deadline, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY')
+                        $moment(assignment.assign_tos[0].final_submission_deadline_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY')
                       }}
                       {{
-                        $moment(assignment.assign_tos[0].final_submission_deadline, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A')
+                        $moment(assignment.assign_tos[0].final_submission_deadline_time, 'HH:mm:ss A').format('h:mm A')
                       }}
                     </span>
                   </span>
