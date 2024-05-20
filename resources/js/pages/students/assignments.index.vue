@@ -192,7 +192,7 @@
                                title="Filter by assignment group"
                                size="sm"
                                :options="assignmentGroupOptions"
-                               @change="updateAssignmentGroupFilter();getAssignmentsWithinChosenAssignmentGroup()"
+                               @input="updateAssignmentGroupFilter();getAssignmentsWithinChosenAssignmentGroup()"
                 />
               </b-col>
               <b-col lg="3">
@@ -200,7 +200,7 @@
                                title="Filter by assignment status"
                                size="sm"
                                :options="assignmentStatusOptions"
-                               @change="getAssignmentsWithChosenAssignmentStatus()"
+                               @input="getAssignmentsWithChosenAssignmentStatus()"
                 />
               </b-col>
               <b-col class="pt-1">
@@ -401,7 +401,8 @@ export default {
       { value: 'Open', text: 'Open' },
       { value: 'Closed', text: 'Closed' },
       { value: 'Late', text: 'Late' },
-      { value: 'Completed', text: 'Completed' }],
+      { value: 'Completed', text: 'Completed' },
+      { value: 'Not Completed', text: 'Not Completed' }],
     chosenAssignmentGroupText: null,
     chosenAssignmentGroup: null,
     loading: true,
@@ -462,19 +463,42 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    filterAssignmentsWithChosenAssignmentStatus () {
+      if (('Completed', 'Not Completed').includes(this.chosenAssignmentStatus)) {
+        const assignmentsLength = this.assignments.length
+        let assignments
+        assignments = []
+        for (let i = 0; i < assignmentsLength; i++) {
+          const assignment = this.assignments[i]
+          if (assignment.number_submitted.includes('/')) {
+            const numberSubmittedArr = assignment.number_submitted.split('/')
+            const numberSubmitted = numberSubmittedArr[0]
+            const numberQuestions = numberSubmittedArr[1]
+            const include = this.chosenAssignmentStatus === 'Completed' ? numberSubmitted === numberQuestions : numberSubmitted !== numberQuestions
+            if (include) {
+              assignments.push(assignment)
+            }
+          }
+        }
+        this.assignments = assignments
+      } else {
+        this.assignments = this.assignments.filter(assignment => assignment.status === this.chosenAssignmentStatus)
+      }
+    },
     getAssignmentsWithinChosenAssignmentGroup () {
       this.assignments = this.chosenAssignmentGroup === null
         ? this.originalAssignments
         : this.originalAssignments.filter(assignment => assignment.assignment_group === this.chosenAssignmentGroupText)
       if (this.chosenAssignmentStatus) {
-        this.assignments = this.assignments.filter(assignment => assignment.status === this.chosenAssignmentStatus)
+        this.filterAssignmentsWithChosenAssignmentStatus()
       }
       this.showNoMatchingMessage = !this.assignments.length
     },
     getAssignmentsWithChosenAssignmentStatus () {
-      this.assignments = this.chosenAssignmentStatus === null
-        ? this.originalAssignments
-        : this.originalAssignments.filter(assignment => assignment.status === this.chosenAssignmentStatus)
+      this.assignments = this.originalAssignments
+      if (this.chosenAssignmentStatus) {
+        this.filterAssignmentsWithChosenAssignmentStatus()
+      }
       if (this.chosenAssignmentGroup) {
         this.assignments = this.assignments.filter(assignment => assignment.assignment_group === this.chosenAssignmentGroupText)
       }
