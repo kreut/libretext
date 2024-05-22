@@ -12,11 +12,7 @@
              size="lg"
     >
       <p>
-        Assignment dates can be shifted automatically using
-        a new "first assignment due date" as the reference point for all other dates. For example, if your old
-        course's first assignment has its due date as 9/1/2023 at 9:00 AM and you enter 1/1/2024 at 9:00 AM below, then
-        all assignment dates in
-        the copied course will be shifted by 4 months.
+       After cloning this course, you can easily
       </p>
       <b-form-group
         label-cols-sm="3"
@@ -794,9 +790,10 @@ export default {
       }
     },
     initCloneCourse (course) {
+      //no longer do the shift assignment modal
       this.courseToClone = course
       this.cloneCourseOption = null
-      this.$bvModal.show('modal-shift-assignments')
+      this.checkForBeta()
     },
     checkForBeta () {
       if (this.courseToClone.is_beta_course) {

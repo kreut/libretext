@@ -260,7 +260,7 @@ class Course extends Model
             }
             DB::commit();
             $response['type'] = 'success';
-            $response['message'] = "<strong>$imported_course->name</strong> has been created.  Don't forget to change the dates associated with this course and all of its assignments.";
+            $response['message'] = "<strong>$imported_course->name</strong> has been created.  Please change the individual assignment due dates to match your new course or go to Course Properties->Edit Asignment Dates to take advantage of the bulk editing tool.";
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
