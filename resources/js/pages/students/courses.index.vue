@@ -142,14 +142,17 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    }
-    ,
+    },
     getAssignments (courseId) {
+      const course = this.enrolledInCourses.find(item => item.id === courseId)
+      if (course.lms && !this.user.is_instructor_logged_in_as_student) {
+        this.$noty.info('All assignments are served through your LMS such as Canvas, Blackboard, or Moodle. Please log in to your LMS to access your assignments.')
+        return false
+      }
       this.isAnonymousUser
         ? this.$router.push(`/students/courses/${courseId}/assignments/anonymous-user`)
         : this.$router.push(`/students/courses/${courseId}/assignments`)
-    }
-    ,
+    },
     async getAnonymousUserCourses () {
       try {
         const { data } = await axios.get('/api/courses/anonymous-user')
@@ -164,8 +167,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    }
-    ,
+    },
     async getEnrolledInCourses () {
       try {
         const { data } = await axios.get('/api/enrollments')
