@@ -9,6 +9,7 @@ use App\Enrollment;
 use App\Course;
 use App\Extension;
 use App\ExtraCredit;
+use App\Helpers\Helper;
 use App\Http\Requests\AutoEnrollStudent;
 use App\Http\Requests\DestroyEnrollment;
 use App\Http\Requests\UpdateEnrollment;
@@ -407,11 +408,15 @@ class EnrollmentController extends Controller
      * @param Request $request
      * @param Course $course
      * @param Enrollment $enrollment
-     * @return array
+     * @param string $download
+     * @return array|void
      * @throws Exception
      */
     public
-    function details(Request $request, Course $course, Enrollment $enrollment)
+    function details(Request    $request,
+                     Course     $course,
+                     Enrollment $enrollment,
+                     string     $download = '0')
     {
 
         $response['type'] = 'error';
@@ -453,11 +458,21 @@ class EnrollmentController extends Controller
             $response['enrollments'] = $enrollments;
             $response['lms'] = $course->lms;
             $response['type'] = 'success';
+            if ($download) {
+                $download_info = [['Name', 'Email', 'Enrollment Date', 'Section']];
+                foreach ($enrollments as $enrollment) {
+                    $row = [$enrollment->name, $enrollment->email, $enrollment->enrollment_date, $enrollment->section];
+                    $download_info[] = $row;
+                }
+                Helper::arrayToCsvDownload($download_info, $course->name . '  roster');
+                exit;
+            }
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting your enrollments.  Please try again or contact us for assistance.";
         }
+
         return $response;
 
     }
@@ -529,7 +544,7 @@ class EnrollmentController extends Controller
                 $response = '{"message":"The given data was invalid.","errors":{"access_code":["The selected access code is invalid."]}}';
                 return response($response, 422);
             }
-            if ($section->course->lms && !$request->session()->has('lti_user_id')){
+            if ($section->course->lms && !$request->session()->has('lti_user_id')) {
                 DB::rollback();
                 $response = '{"message":"The given data was invalid.","errors":{"access_code":["You are trying to enroll in a course that is being served through an LMS such as Canvas, Blackboard, or Moodle.  Please log into your LMS and enter the first ADAPT assignment; you will then be prompted to enter the access code."]}}';
                 return response($response, 422);

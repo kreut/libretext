@@ -205,6 +205,19 @@
                       </b-input-group>
                     </b-form-group>
                   </b-col>
+                  <b-col>
+                    <a v-show="false"
+                       id="download-roster"
+                       :href="`/api/enrollments/${courseId}/details/1`"
+                    >download roster link</a>
+                    <b-button class="float-right"
+                              size="sm"
+                              variant="primary"
+                              @click="downloadRoster"
+                    >
+                      Download Roster
+                    </b-button>
+                  </b-col>
                 </b-row>
               </b-container>
               <b-table striped
@@ -356,6 +369,9 @@ export default {
     this.getCourseInfo()
   },
   methods: {
+    downloadRoster () {
+      document.getElementById('download-roster').click()
+    },
     initUpdateStudentEmail (student) {
       this.studentEmailForm.errors.clear()
       this.studentEmailForm.email = ''
