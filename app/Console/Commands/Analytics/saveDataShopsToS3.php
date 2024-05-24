@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Analytics;
 
 use App\DataShop;
 use App\Exceptions\Handler;

@@ -4,6 +4,7 @@ namespace App\Console\Commands\Analytics;
 
 use App\Course;
 use App\DataShop;
+use App\DataShopsComplete;
 use App\Exceptions\Handler;
 use App\Question;
 use App\User;
@@ -48,13 +49,14 @@ class cacheMetrics extends Command
     public function handle(Question $question, User $user)
     {
         try {
-            $cell_data_info = DataShop::select('data_shops.course_id',
-                'data_shops.course_name',
+
+    $cell_data_info = DataShopsComplete::select('data_shops_complete.course_id',
+                'data_shops_complete.course_name',
                 'schools.name as school_name', 'instructor_name', 'course_start_date')
-                ->join('schools', 'data_shops.school', '=', 'schools.id')
-                ->whereNotNull('data_shops.course_name')
+                ->join('schools', 'data_shops_complete.school', '=', 'schools.id')
+                ->whereNotNull('data_shops_complete.course_name')
                 ->where('instructor_name', '<>', 'Instructor Kean')
-                ->groupBy(['data_shops.course_id', 'data_shops.course_name', 'school_name', 'instructor_name', 'course_start_date'])
+                ->groupBy(['data_shops_complete.course_id', 'data_shops_complete.course_name', 'school_name', 'instructor_name', 'course_start_date'])
                 ->orderBy('course_start_date', 'desc')
                 ->get();
 
@@ -67,7 +69,8 @@ class cacheMetrics extends Command
                 }
             }
 
-            $total_entries_by_course = DataShop::select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
+            $total_entries_by_course = DB::table('data_shops_complete')
+                ->select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
                 ->groupBy('course_id')
                 ->get();
 
@@ -90,7 +93,10 @@ class cacheMetrics extends Command
 
             $my_id = $this->_getMyId();
             $instructor_accounts = $user->where('role', 2)->where('id', '<>', $my_id)->count();
-            $student_accounts = $user->where('role', 3)->where('fake_student', 0)->count();
+            $student_accounts = $user->where('role', 3)
+                ->where('fake_student', 0)
+                ->where('email', 'regexp', '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+                ->count();
             $questions = $question->count();
             $campuses = DB::table('courses')
                 ->join('users', 'courses.user_id', '=', 'users.id')
@@ -98,12 +104,13 @@ class cacheMetrics extends Command
                 ->select('school_id')
                 ->groupBy('school_id')
                 ->count();
-            $courses = DB::table('data_shops')
+            $courses = DB::table('data_shops_complete')
                 ->where('instructor_name', '<>', 'Instructor Kean')
                 ->select('course_id')
                 ->groupBy('course_id')
                 ->get();
-            $total_entries_by_course = DataShop::select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
+            $total_entries_by_course = DB::table('data_shops_complete')
+                ->select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
                 ->groupBy('course_id')
                 ->get();
             $total_entries_by_course_id = [];
@@ -163,19 +170,22 @@ class cacheMetrics extends Command
      */
     private function _getTerm($datetime): string
     {
+        try {
+            $carbon_datetime = Carbon::createFromFormat('Y-m-d H:i:s', $datetime);
 
-        $carbon_datetime = Carbon::createFromFormat('Y-m-d H:i:s', $datetime);
-
-        if ($carbon_datetime->month >= 3 && $carbon_datetime->month <= 5) {
-            $season = "Spring";
-        } elseif ($carbon_datetime->month >= 6 && $carbon_datetime->month <= 8) {
-            $season = "Summer";
-        } elseif ($carbon_datetime->month >= 9 && $carbon_datetime->month <= 11) {
-            $season = "Fall";
-        } else {
-            $season = "Winter";
+            if ($carbon_datetime->month >= 3 && $carbon_datetime->month <= 5) {
+                $season = "Spring";
+            } elseif ($carbon_datetime->month >= 6 && $carbon_datetime->month <= 8) {
+                $season = "Summer";
+            } elseif ($carbon_datetime->month >= 9 && $carbon_datetime->month <= 11) {
+                $season = "Fall";
+            } else {
+                $season = "Winter";
+            }
+            return $season . ' ' . $carbon_datetime->format('Y');
+        } catch (Exception $e) {
+            return 'No term provided.';
         }
-        return $season . ' ' . $carbon_datetime->format('Y');
     }
 
     /**

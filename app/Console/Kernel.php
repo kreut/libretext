@@ -69,7 +69,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('email:submissionFeedbackSummary')->daily();
             $schedule->command('email:pendingQuestionRevisionNotifications')->daily();
-            $schedule->command('cache:Metrics')->daily();
+            //$schedule->command('cache:Metrics')->daily();
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
 
             $schedule->command('passback:manualPendingScores')->everyMinute();
@@ -93,6 +93,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('check:nullH5pTypes')->daily();
             $schedule->command('save:dataShopsToS3')->daily();
+            $schedule->command('import:dataShopsFromS3')->daily();
 
             /* grader notifications */
             $schedule->command('notify:gradersForDueAssignments')->hourly();
