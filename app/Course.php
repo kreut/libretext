@@ -197,8 +197,8 @@ class Course extends Model
                 $minutes_diff = $date1->diffInMinutes($date2);
 
             }
-
-            if ($request->auto_releases === 'use existing') {
+//auto-releases does not exist for public courses
+            if (property_exists($request, 'auto_release') && $request->auto_releases === 'use existing') {
                 $assignment_ids = $this->assignments->pluck('id')->toArray();
                 $auto_releases = AutoRelease::whereIn('type_id', $assignment_ids)->where('type', 'assignment')->get();
                 $auto_releases_by_assignment_id = [];
