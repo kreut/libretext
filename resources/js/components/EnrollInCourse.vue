@@ -1,6 +1,8 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-enroll-in-course'" />
+    <AllFormErrors :all-form-errors="allFormErrors"
+                   :show-please-fix-message="allFormErrors.length > 0 && !allFormErrors[0].includes('LMS')"
+                   :modal-id="'modal-form-errors-enroll-in-course'" />
     <b-modal
       id="modal-enroll-in-course"
       ref="modal"
@@ -176,9 +178,9 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
-          this.$nextTick(() => fixInvalid())
-          this.allFormErrors = this.form.errors.flatten()
-          this.$bvModal.show('modal-form-errors-enroll-in-course')
+            this.$nextTick(() => fixInvalid())
+            this.allFormErrors = this.form.errors.flatten()
+            this.$bvModal.show('modal-form-errors-enroll-in-course')
         }
       }
     },

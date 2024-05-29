@@ -6,10 +6,13 @@
       title="Form Errors"
       hide-footer
     >
-      <p>
+      <p v-show="showPleaseFixMessage">
         Please fix the following errors in your form:
       </p>
-      <ul>
+      <p v-show="allFormErrors.length === 1">
+        {{ allFormErrors[0] }}
+      </p>
+      <ul v-show="allFormErrors.length > 1">
         <li v-for="formError in allFormErrors" :key="formError">
           <span v-html="formError"/>
         </li>
@@ -27,6 +30,10 @@ export default {
       default: function () {
         return []
       }
+    },
+    showPleaseFixMessage: {
+      type: Boolean,
+      default: true
     },
     modalId: {
       type: String,
