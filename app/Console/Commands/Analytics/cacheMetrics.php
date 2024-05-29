@@ -51,43 +51,7 @@ class cacheMetrics extends Command
     {
         try {
 
-            $cell_data_info = DataShopsComplete::select('data_shops_complete.course_id',
-                'data_shops_complete.course_name',
-                'schools.name as school_name', 'instructor_name', 'course_start_date')
-                ->join('schools', 'data_shops_complete.school', '=', 'schools.id')
-                ->whereNotNull('data_shops_complete.course_name')
-                ->where('instructor_name', '<>', 'Instructor Kean')
-                ->groupBy(['data_shops_complete.course_id', 'data_shops_complete.course_name', 'school_name', 'instructor_name', 'course_start_date'])
-                ->orderBy('course_start_date', 'desc')
-                ->get();
-
-            $course_ids = [];
-            $cell_data = [];
-            foreach ($cell_data_info as $key => $data) {
-                if (!in_array($data->course_id, $course_ids)) {
-                    $cell_data[] = $data;
-                    $course_ids[] = $data->course_id;
-                }
-            }
-
-            $total_entries_by_course = DB::table('data_shops_complete')
-                ->select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
-                ->groupBy('course_id')
-                ->get();
-
-            $total_entries_by_course_id = [];
-            foreach ($total_entries_by_course as $entry) {
-                $total_entries_by_course_id[$entry->course_id] = $entry->total_entries;
-            }
-            foreach ($cell_data as $key => $data) {
-                if ($total_entries_by_course_id[$data->course_id] < 3) {
-                    unset($cell_data[$key]);
-                } else {
-                    $cell_data[$key]['number_of_enrolled_students'] = $total_entries_by_course_id[$data->course_id];
-                    $cell_data[$key]['term'] = $dataShop->getTerm($data['course_start_date']);
-                }
-            }
-
+            $cell_data = DB::table('data_shops_enrollments')->get()->toArray();
             $cell_data = array_values($cell_data);
             Cache::forever('cell_data', $cell_data);
             echo "Cell data cached.\r\n";
@@ -105,12 +69,17 @@ class cacheMetrics extends Command
                 ->select('school_id')
                 ->groupBy('school_id')
                 ->count();
-            $courses = DB::table('data_shops_complete')
-                ->where('instructor_name', '<>', 'Instructor Kean')
-                ->select('course_id')
-                ->groupBy('course_id')
+           /* $courses = DB::table('data_shops_complete')
+                ->select('course_id', 'instructor_name')
+                ->distinct()
                 ->get();
-            $total_entries_by_course = DB::table('data_shops_complete')
+            foreach ($courses as $key => $course) {
+                if ($course->instructor_name === 'Instructor Kean') {
+                    $courses->forget($key);
+                }
+
+            }
+           /* $total_entries_by_course = DB::table('data_shops_complete')
                 ->select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
                 ->groupBy('course_id')
                 ->get();
@@ -124,6 +93,7 @@ class cacheMetrics extends Command
                 }
             }
             $real_courses = count($courses);
+           */
 
             $live_courses = Course::select('courses.name', 'users.first_name', 'users.last_name')
                 ->join('users', 'courses.user_id', '=', 'users.id')
@@ -147,7 +117,6 @@ class cacheMetrics extends Command
                 'student_accounts',
                 'questions',
                 'campuses',
-                'real_courses',
                 'live_courses',
                 'grade_passbacks',
                 'LTI_schools',
