@@ -583,10 +583,45 @@ class EnrollmentController extends Controller
                 $enrollment->section_id = $section_id;
                 $enrollment->course_id = $course_id;
                 $enrollment->save();
-
                 $assignments = $section->course->assignments;
                 $assignToUser->assignToUserForAssignments($assignments, $enrollment->user_id, $section->id);
                 $actual_student = !($request->user()->fake_student || $request->user()->formative_student || $request->user()->testing_student);
+                if ($actual_student) {
+                    $data_shops_enrollment = DB::table('data_shops_enrollments')
+                        ->where('course_id', $course_id)
+                        ->first();
+                    try {
+                        if (!$data_shops_enrollment) {
+                            $course_info = DB::table('courses')
+                                ->join('users', 'courses.user_id', '=', 'users.id')
+                                ->join('schools', 'courses.school_id', '=', 'schools.id')
+                                ->select('term',
+                                    'courses.name AS course_name',
+                                    'schools.name AS school_name',
+                                    DB::raw('CONCAT(first_name, " " , last_name) AS instructor_name'))
+                                ->first();
+
+                            $data = ['course_id' => $course_id,
+                                'course_name' => $course_info->course_name,
+                                'school_name' => $course_info->school_name,
+                                'term' => $course_info->term,
+                                'instructor_name' => $course_info->instructor_name,
+                                'number_of_enrolled_students' => 1,
+                                'created_at' => now(),
+                                'updated_at' => now()];
+                            DB::table('data_shops_enrollments')->insert($data);
+                        } else {
+                            DB::table('data_shops_enrollments')->where(['course_id' => $course_id])
+                                ->update(['number_of_enrolled_students' => $data_shops_enrollment->number_of_enrolled_students + 1,
+                                    'updated_at' => now()]);
+                        }
+                    } catch (Exception $e) {
+                        $h = new Handler(app());
+                        $h->report($e);
+                    }
+                }
+
+
                 $notification_exists = DB::table('notifications')->where('user_id', $request->user()->id)->first();
                 if ($actual_student && !$notification_exists) {
                     $notification_data = [
@@ -606,6 +641,7 @@ class EnrollmentController extends Controller
             $h->report($e);
             $response['message'] = "There was an error enrolling you in the course.  Please try again or contact us for assistance.";
         }
+
         return $response;
     }
 }

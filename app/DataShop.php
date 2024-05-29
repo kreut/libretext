@@ -17,6 +17,30 @@ class DataShop extends Model
     public $guarded = [];
 
     /**
+     * @param $datetime
+     * @return string
+     */
+    public function getTerm($datetime): string
+    {
+        try {
+            $carbon_datetime = Carbon::createFromFormat('Y-m-d H:i:s', $datetime);
+
+            if ($carbon_datetime->month >= 3 && $carbon_datetime->month <= 5) {
+                $season = "Spring";
+            } elseif ($carbon_datetime->month >= 6 && $carbon_datetime->month <= 8) {
+                $season = "Summer";
+            } elseif ($carbon_datetime->month >= 9 && $carbon_datetime->month <= 11) {
+                $season = "Fall";
+            } else {
+                $season = "Winter";
+            }
+            return $season . ' ' . $carbon_datetime->format('Y');
+        } catch (Exception $e) {
+            return 'No term provided.';
+        }
+    }
+
+    /**
      * @param string $type
      * @param $data
      * @param Assignment $assignment
@@ -94,6 +118,43 @@ class DataShop extends Model
             $this->instructor_email = $extra_info->email;
             $this->updated_at = now();
             $this->save();
+        }
+        if ($assignment->course->formative) {
+            $course = $assignment->course;
+            $data_shops_enrollment = DB::table('data_shops_enrollments')
+                ->where('course_id', $course->id)
+                ->select('id', 'assignment_id', 'question_id', 'number_of_enrolled_students')
+                ->first();
+            if ($data_shops_enrollment) {
+                if ($data_shops_enrollment->assignment_id === $assignment->id
+                    && $data_shops_enrollment->question_id === $question->id) {
+                  DB::table('data_shops_enrollments')
+                      ->where('id', $data_shops_enrollment->id)
+                        ->update([
+                            'number_of_enrolled_students' => $data_shops_enrollment->number_of_enrolled_students + 1,
+                            'updated_at' =>now()]);
+
+                }
+            } else {
+                $extra_info = DB::table('courses')
+                    ->join('schools', 'courses.school_id', '=', 'schools.id')
+                    ->join('users', 'courses.user_id', '=', 'users.id')
+                    ->where('courses.id', $course->id)
+                    ->select('schools.name AS school_name', DB::raw('CONCAT(first_name, " " , last_name) AS instructor_name'))
+                    ->first();
+                $data = ['course_id' => $course->id,
+                    'course_name' => $course->name,
+                    'school_name' => $extra_info->school_name,
+                    'instructor_name' => $extra_info->instructor_name,
+                    'term' => $course->term,
+                    'number_of_enrolled_students' => 1,
+                    'assignment_id' => $assignment->id,
+                    'question_id' => $question->id,
+                    'created_at' => now(),
+                    'updated_at' => now()];
+                DB::table('data_shops_enrollments')->insert($data);
+            }
+
         }
     }
 

@@ -43,14 +43,15 @@ class cacheMetrics extends Command
     /**
      * @param Question $question
      * @param User $user
+     * @param DataShop $dataShop
      * @return int
      * @throws Exception
      */
-    public function handle(Question $question, User $user)
+    public function handle(Question $question, User $user, DataShop $dataShop): int
     {
         try {
 
-    $cell_data_info = DataShopsComplete::select('data_shops_complete.course_id',
+            $cell_data_info = DataShopsComplete::select('data_shops_complete.course_id',
                 'data_shops_complete.course_name',
                 'schools.name as school_name', 'instructor_name', 'course_start_date')
                 ->join('schools', 'data_shops_complete.school', '=', 'schools.id')
@@ -83,7 +84,7 @@ class cacheMetrics extends Command
                     unset($cell_data[$key]);
                 } else {
                     $cell_data[$key]['number_of_enrolled_students'] = $total_entries_by_course_id[$data->course_id];
-                    $cell_data[$key]['term'] = $this->_getTerm($data['course_start_date']);
+                    $cell_data[$key]['term'] = $dataShop->getTerm($data['course_start_date']);
                 }
             }
 
@@ -164,29 +165,6 @@ class cacheMetrics extends Command
         return 1;
     }
 
-    /**
-     * @param $datetime
-     * @return string
-     */
-    private function _getTerm($datetime): string
-    {
-        try {
-            $carbon_datetime = Carbon::createFromFormat('Y-m-d H:i:s', $datetime);
-
-            if ($carbon_datetime->month >= 3 && $carbon_datetime->month <= 5) {
-                $season = "Spring";
-            } elseif ($carbon_datetime->month >= 6 && $carbon_datetime->month <= 8) {
-                $season = "Summer";
-            } elseif ($carbon_datetime->month >= 9 && $carbon_datetime->month <= 11) {
-                $season = "Fall";
-            } else {
-                $season = "Winter";
-            }
-            return $season . ' ' . $carbon_datetime->format('Y');
-        } catch (Exception $e) {
-            return 'No term provided.';
-        }
-    }
 
     /**
      * @return int|mixed

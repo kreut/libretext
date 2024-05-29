@@ -45,7 +45,6 @@ class MetricsController extends Controller
             }
             $response['type'] = 'success';
             $response['cell_data'] = $cell_data;
-
             if ($download) {
                 $columns = ['Course Name', 'Term', 'School Name', 'Instructor Name', 'Number of Enrolled Students'];
                 $rows[0] = $columns;
