@@ -7,7 +7,7 @@
       hide-footer
     >
       <p v-show="showPleaseFixMessage">
-        Please fix the following errors in your form:
+        Please fix the following error<span v-show="allFormErrors.length > 1">s</span> in your form:
       </p>
       <p v-show="allFormErrors.length === 1">
         {{ allFormErrors[0] }}
