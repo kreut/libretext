@@ -17,7 +17,14 @@ class SolutionPolicy
 {
     use HandlesAuthorization;
 
-    public function showSolutionByAssignmentQuestionUser(User $user, Solution $solution, Assignment $assignment, Question $question)
+    /**
+     * @param User $user
+     * @param Solution $solution
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function showSolutionByAssignmentQuestionUser(User $user, Solution $solution, Assignment $assignment, Question $question): Response
     {
         $authorized = true;
         $message = '';
@@ -25,7 +32,19 @@ class SolutionPolicy
             ->where('assignment_id', $assignment->id)
             ->where('question_id', $question->id)
             ->where('user_id', $user->id)
-            ->first();
+            ->union(
+                DB::table('submission_texts')
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->where('user_id', $user->id)
+            )->union(
+                DB::table('submission_files')
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->where('user_id', $user->id)
+            )
+            ->exists();
+
         $can_give_up_exists = DB::table('can_give_ups')
             ->where('assignment_id', $assignment->id)
             ->where('question_id', $question->id)

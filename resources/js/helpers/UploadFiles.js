@@ -64,6 +64,7 @@ export async function submitUploadFile (type, form, noty, nextTick, bvModal, upl
       uploadFile.submission_file_exists = true
       uploadFile.submission = data.submission
       uploadFile.submission_file_url = data.submission_file_url
+      uploadFile.can_give_up = data.can_give_up
     }
     if (type === 'solution') {
       uploadFile.solution = data.original_filename

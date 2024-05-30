@@ -1462,8 +1462,9 @@
                   <b-button
                     size="sm"
                     variant="primary"
-                    @click="questions[currentPage-1].submission_count || questions[currentPage-1].can_give_up
-                      ? $bvModal.show('modal-confirm-give-up')
+                    @click="questions[currentPage-1].submission_file_url
+                      || questions[currentPage-1].submission_count || questions[currentPage-1].can_give_up
+                      ? confirmGiveUp()
                       : $bvModal.show('modal-cannot-give-up-yet')"
                   >
                     I Give Up
@@ -3603,6 +3604,18 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    async confirmGiveUp () {
+      try {
+        const { data } = await axios.get(`/api/can-give-up/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/validate`)
+        if (data.type === 'success') {
+          this.$bvModal.show('modal-confirm-give-up')
+        } else {
+          this.$noty.info(data.message)
+        }
+      } catch (error) {
+        console.error(error.message)
+      }
+    },
     togglePresentationMode () {
       this.presentationMode = !this.presentationMode
       this.renderMathJax()
@@ -5136,6 +5149,9 @@ export default {
         if (['real time', 'learning tree'].includes(this.assessmentType)) {
           this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
           this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
+          if (this.questions[this.currentPage - 1].solution || this.questions[this.currentPage - 1].solution_html !== null) {
+            this.showSolutionFileHTML = true
+          }
         }
         this.updateTotalScore()
         await this.updateTimeOnTask(assignmentId, questionId)
@@ -5272,7 +5288,7 @@ export default {
         try {
           const { data } = await axios.post('/api/submission-files/can-submit-file-submission', {
             assignmentId: this.assignmentId,
-            questionId: this.questionId
+            questionId: this.questions[this.currentPage - 1].id
           })
           if (data.type === 'error') {
             this.$noty.error(data.message)
@@ -5325,7 +5341,9 @@ export default {
 
       if (!this.uploadFileForm.errors.any() &&
         (this.uploadLevel === 'question' || !this.showCurrentFullPDF)) {
-        this.questions[this.currentPage - 1].solution_type = 'q'
+        if (!this.questions[this.currentPage - 1].can_give_up) {
+          this.questions[this.currentPage - 1].solution_type = 'q'
+        }
         this.$bvModal.hide(`modal-upload-file`)
       }
 

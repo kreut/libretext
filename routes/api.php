@@ -736,6 +736,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('/grading', 'GradingController@store');
     Route::get('/grading/{assignment}/{question}/{sectionId}/{gradeView}', 'GradingController@index');
 
+     Route::get('/can-give-up/assignments/{assignment}/questions/{question}/validate', 'CanGiveUpController@validateCanGiveUp');
 
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');
     Route::post('/submission-files/get-temporary-url-from-request', 'SubmissionFileController@getTemporaryUrlFromRequest');

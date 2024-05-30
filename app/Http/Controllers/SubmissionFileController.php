@@ -510,7 +510,7 @@ class SubmissionFileController extends Controller
                         ->where('type', 'audio')
                         ->delete();
                     $score = $this->updateScoreIfCompletedScoringType($assignment, $question_id);
-
+                    $response['can_give_up'] = true;
                     $response['submission'] = basename($submission);
                     $response['original_filename'] = $original_filename;
                     $response['score'] = $score === null ? null : $score;

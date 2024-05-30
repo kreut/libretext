@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\AssignmentSyncQuestion;
+use App\CanGiveUp;
 use App\Http\Requests\StoreSolutionText;
 use App\Question;
 use App\Solution;
@@ -55,11 +56,17 @@ class SolutionController extends Controller
                 ->where('question_id', $question->id)
                 ->where('user_id', $request->user()->id)
                 ->update(['show_solution' => 1]);
-            DB::table('can_give_ups')
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->where('user_id', $request->user()->id)
-                ->update(['status' => 'gave up']);
+            CanGiveUp::updateOrCreate(
+                [
+                    'assignment_id' => $assignment->id,
+                    'question_id' => $question->id,
+                    'user_id' => $request->user()->id
+                ],
+                [
+                    'status' => 'gave up'
+                ]
+            );
+
             $response['type'] = 'success';
             DB::commit();
         } catch (Exception $e) {
