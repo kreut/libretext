@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Case Study Notes" />
+        <PageTitle title="Case Study Notes"/>
         <b-modal id="modal-confirm-remove-updated-patient-information"
                  title="Remove Updated Patient Information"
         >
@@ -134,7 +134,7 @@
           </template>
         </b-modal>
 
-        <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes" />
+        <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-case-study-notes"/>
         <b-alert show>
           This concept is currently set-up for Case Study notes which accompany Next Gen NCLEX (nursing) style
           questions.
@@ -183,7 +183,7 @@
           >
             <template v-slot:label>
               Common Question Text
-              <QuestionCircleTooltip id="common_question_text" />
+              <QuestionCircleTooltip id="common_question_text"/>
               <b-tooltip target="common_question_text"
                          delay="250"
               >
@@ -277,7 +277,7 @@
                             required
                             @keydown="patientInfoForm.errors.clear('name')"
                           />
-                          <has-error :form="patientInfoForm" field="name" />
+                          <has-error :form="patientInfoForm" field="name"/>
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -299,7 +299,7 @@
                               size="sm"
                               @change="patientInfoForm.errors.clear('code_status')"
                             />
-                            <has-error :form="patientInfoForm" field="code_status" />
+                            <has-error :form="patientInfoForm" field="code_status"/>
                           </div>
                         </b-form-group>
                       </b-col>
@@ -324,7 +324,7 @@
                             required
                             @keydown="patientInfoForm.errors.clear('gender')"
                           />
-                          <has-error :form="patientInfoForm" field="gender" />
+                          <has-error :form="patientInfoForm" field="gender"/>
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -345,7 +345,7 @@
                             name="allergies"
                             @keydown="patientInfoForm.errors.clear('allergies')"
                           />
-                          <has-error :form="patientInfoForm" field="allergies" />
+                          <has-error :form="patientInfoForm" field="allergies"/>
                         </b-form-group>
                       </b-col>
                     </b-form-row>
@@ -369,7 +369,7 @@
                             required
                             @keydown="patientInfoForm.errors.clear('age')"
                           />
-                          <has-error :form="patientInfoForm" field="age" />
+                          <has-error :form="patientInfoForm" field="age"/>
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -394,7 +394,7 @@
                               name="allergies"
                               @keydown="patientInfoForm.errors.clear('weight')"
                             />
-                            <has-error :form="patientInfoForm" field="weight" />
+                            <has-error :form="patientInfoForm" field="weight"/>
                             <b-form-radio-group v-model="patientInfoForm.weight_units">
                               <b-form-radio value="lb">
                                 lb
@@ -427,7 +427,7 @@
                             required
                             @keydown="patientInfoForm.errors.clear('dob')"
                           />
-                          <has-error :form="patientInfoForm" field="dob" />
+                          <has-error :form="patientInfoForm" field="dob"/>
                         </b-form-group>
                       </b-col>
                       <b-col>
@@ -448,7 +448,7 @@
                             name="BMI"
                             @keydown="patientInfoForm.errors.clear('bmi')"
                           />
-                          <has-error :form="patientInfoForm" field="bmi" />
+                          <has-error :form="patientInfoForm" field="bmi"/>
                         </b-form-group>
                       </b-col>
                     </b-form-row>
@@ -471,7 +471,7 @@
                           />
                         </b-col>
                         <div class="mt-1 pl-2">
-                          <b-icon-trash scale="1.25" @click="initRemovePatientUpdatedInformation()" />
+                          <b-icon-trash scale="1.25" @click="initRemovePatientUpdatedInformation()"/>
                         </div>
                       </b-form-row>
                     </b-form-group>
@@ -495,7 +495,7 @@
                           @keydown="patientInfoForm.errors.clear('updated_weight')"
                         />
                         {{ patientInfoForm.weight_units }}
-                        <has-error :form="patientInfoForm" field="updated_weight" />
+                        <has-error :form="patientInfoForm" field="updated_weight"/>
                       </b-form-row>
                     </b-form-group>
                     <b-form-group
@@ -516,7 +516,7 @@
                         name="BMI"
                         @keydown="patientInfoForm.errors.clear('updated_bmi')"
                       />
-                      <has-error :form="patientInfoForm" field="updated_bmi" />
+                      <has-error :form="patientInfoForm" field="updated_bmi"/>
                     </b-form-group>
                   </b-form>
                 </b-tab>
@@ -524,7 +524,8 @@
                   <div v-for="(item,index) in caseStudyNotes" :key="`case-study-notes-${index}`">
                     <b-tab :key="`tab-${item.type}-${tabKey}`" :active="activeTab === item.type">
                       <template #title>
-                        <span :class="{'text-danger': errorsByType[item.type] && errorsByType[item.type].length}">{{ getCaseStudyText(item) }}</span>
+                        <span :class="{'text-danger': errorsByType[item.type] && errorsByType[item.type].length}"
+                        >{{ getCaseStudyText(item) }}</span>
                         <b-icon-trash
                           scale=".75"
                           class="text-muted"
@@ -557,16 +558,13 @@
                         >
                           <b-form-row>
                             <div v-show="firstApplicationOptions.length>1">
-                              <b-col lg="8">
+                              <b-col lg="16">
                                 <b-form-select id="first_application"
                                                v-model="notes.first_application"
                                                :options="firstApplicationOptions"
                                                size="sm"
                                 />
                               </b-col>
-                              <div class="mt-1 pl-2">
-                                <b-icon-trash scale="1.25" @click="initRemoveCaseStudyNotesItemById(notes)" />
-                              </div>
                             </div>
                             <div v-if="firstApplicationOptions.length === 1">
                               <b-alert show variant="info">
@@ -576,6 +574,11 @@
                             </div>
                           </b-form-row>
                         </b-form-group>
+                        <b-form-row>
+                          <b-button size="sm" variant="danger" @click="initRemoveCaseStudyNotesItemById(notes)">Remove Item
+                          </b-button>
+
+                        </b-form-row>
                         <ckeditor
                           v-model="notes.text"
                           tabindex="0"
@@ -763,7 +766,7 @@ export default {
   },
   methods: {
     async reloadPage () {
-      this.firstApplicationOptions = []
+      this.firstApplicationOptions = [{ text: 'Choose a question', value: null }]
       this.caseStudyNotes = []
       await this.getAssignmentQuestions()
       await this.getPatientInformation()

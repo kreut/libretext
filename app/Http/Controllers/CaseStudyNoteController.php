@@ -220,17 +220,12 @@ class CaseStudyNoteController extends Controller
                     foreach ($case_study_note['notes'] as $notes) {
                         $first_applications[$notes['type']] = [];
                     }
-                    $num_questions = count($assignment->questions);
                     foreach ($case_study_note['notes'] as $notes_key => $notes) {
                         if (!isset($errors_by_type[$type])) {
                             $errors_by_type[$type] = [];
                         }
                         if (!$notes['first_application']) {
-                            if (!$num_questions) {
-                                $case_study_notes[$case_study_notes_key]['notes'][$notes_key]['first_application'] = 1;
-                            } else {
-                                $errors_by_type[$type][] = "All First Applications must be set for $formatted_type.";
-                            }
+                            $case_study_notes[$case_study_notes_key]['notes'][$notes_key]['first_application'] = 1;
                         } else {
                             if (in_array($notes['first_application'], $first_applications[$type])) {
                                 $errors_by_type[$type][] = "Each First Application should be chosen only once for $formatted_type.";
@@ -277,7 +272,7 @@ class CaseStudyNoteController extends Controller
             }
 
             if ($request->bulk_import) {
-                CaseStudyNote::where('assignment_id',$request->assignment_id)->delete();
+                CaseStudyNote::where('assignment_id', $request->assignment_id)->delete();
                 foreach ($case_study_notes as $notes) {
                     CaseStudyNote::updateOrCreate([
                         'assignment_id' => $request->assignment_id,
