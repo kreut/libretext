@@ -945,7 +945,7 @@ export default {
     editSource () {
       this.questionToView.id = this.nodeForm.question_id.split('-').pop()
       let url
-      url = `/empty-learning-tree-node/edit/${this.questionToView.id}`
+      url = `/source/edit/${this.questionToView.id}`
       window.open(url, '_blank')
     },
     toggleLearningTreeView () {

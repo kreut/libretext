@@ -1,12 +1,5 @@
 <template>
   <div>
-    <b-alert show variant="info">
-      Create a question with fill in the blanks by underlining
-      the correct responses. Example. A <u>stitch</u> in time saves <u>nine</u>. If you would like to
-      accept multiple answers, separate them with a vertical bar: "|". Example.
-      <u>January|February</u> is a month that comes before March.
-    </b-alert>
-    <QuestionMediaUpload />
     <ckeditor
       id="qtiItemBodyTextEntryInteraction"
       v-model="qtiJson.itemBody.textEntryInteraction"
@@ -101,12 +94,10 @@
 <script>
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import CKEditor from 'ckeditor4-vue'
-import QuestionMediaUpload from '../QuestionMediaUpload.vue'
 
 export default {
   name: 'FillInTheBlank',
   components: {
-    QuestionMediaUpload,
     ckeditor: CKEditor.component
   },
   props: {

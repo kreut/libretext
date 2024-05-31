@@ -12,12 +12,14 @@ use App\Course;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionRequest;
 use App\IMathAS;
+use App\Jobs\ProcessTranscribe;
 use App\Jobs\ProcessValidateQtiFile;
 use App\JWE;
 use App\Libretext;
 use App\PendingQuestionRevision;
 use App\QtiJob;
 use App\Question;
+use App\QuestionMediaUpload;
 use App\QuestionRevision;
 use App\RubricCategory;
 use App\SavedQuestionsFolder;
@@ -34,21 +36,17 @@ use DOMDocument;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
-use App\Solution;
 use App\Traits\IframeFormatter;
 use App\Traits\LibretextFiles;
 use App\Exceptions\Handler;
-use \Exception;
+use Exception;
 
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-use PDO;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
@@ -257,6 +255,7 @@ class QuestionController extends Controller
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param BetaCourseApproval $betaCourseApproval
      * @param RubricCategory $rubricCategory
+     * @param QuestionMediaUpload $questionMediaUpload
      * @return array
      * @throws Exception
      */
@@ -264,7 +263,8 @@ class QuestionController extends Controller
                           Question               $question,
                           AssignmentSyncQuestion $assignmentSyncQuestion,
                           BetaCourseApproval     $betaCourseApproval,
-                          RubricCategory         $rubricCategory): array
+                          RubricCategory         $rubricCategory,
+                          QuestionMediaUpload    $questionMediaUpload): array
     {
         $response['type'] = 'error';
         $cloned_question = [];
@@ -373,6 +373,29 @@ class QuestionController extends Controller
                     $new_rubric_category->save();
                 }
             }
+            $question_media_uploads = $questionMediaUpload->where('question_id', $clone_source->id)->get();
+            foreach ($question_media_uploads as $question_media_upload) {
+                $question_media_upload = $question_media_upload->replicate();
+                $s3_key = $question_media_upload->s3_key;
+                $cloned_s3_key = md5(uniqid('', true)) . '.' . pathinfo($s3_key, PATHINFO_EXTENSION);
+                if (Storage::disk('s3')->exists("{$questionMediaUpload->getDir()}/$s3_key")) {
+                    $contents = Storage::disk('s3')->get("{$questionMediaUpload->getDir()}/$s3_key");
+                    Storage::disk('s3')->put("{$questionMediaUpload->getDir()}/$cloned_s3_key", $contents);
+                }
+                if ($question_media_upload->transcript) {
+                    $file_name_without_ext = pathinfo($cloned_s3_key, PATHINFO_FILENAME);
+                    Storage::disk('s3')->put("{$questionMediaUpload->getDir()}/$file_name_without_ext.vtt", $question_media_upload->transcript);
+                }
+                $question_media_upload->s3_key = $cloned_s3_key;
+                $question_media_upload->question_id = $cloned_question->id;
+                if ($clone_source->qti_json){
+                    $cloned_question->qti_json = str_replace($s3_key, $cloned_s3_key, $cloned_question->qti_json);
+                    $cloned_question->save();
+                }
+                $question_media_upload->save();
+            }
+
+
             if ($clone_source->webwork_code) {
                 $webwork = new Webwork();
                 $latest_revision_id = $clone_source->latestQuestionRevision('id');
@@ -1240,7 +1263,7 @@ class QuestionController extends Controller
         }
         $revision_action = $request->revision_action;
         $automatically_update_revision = $revision_action === 'notify' ? $request->automatically_update_revision : 0;
-
+        $media_uploads = $request->media_uploads;
 
         try {
             $data = $request->validated();
@@ -1608,6 +1631,45 @@ class QuestionController extends Controller
             $question->addFrameworkItems($request->framework_item_sync_question);
             $question->non_technology_html = $non_technology_text;
             $assignment_name = '';
+            if ($media_uploads) {
+                if ($is_update) {
+                    $current_s3_keys = QuestionMediaUpload::where('question_id', $question->id)
+                        ->get()
+                        ->pluck('s3_key')
+                        ->toArray();
+                    $new_s3_keys = [];
+                    foreach ($media_uploads as $new_media_upload) {
+                        $new_s3_keys[] = $new_media_upload['s3_key'];
+                        if (!in_array($new_media_upload['s3_key'], $current_s3_keys)) {
+                            $questionMediaUpload = new QuestionMediaUpload();
+                            $questionMediaUpload->question_id = $question->id;
+                            $questionMediaUpload->original_filename = $new_media_upload['original_filename'];
+                            $questionMediaUpload->size = $new_media_upload['size'];
+                            $questionMediaUpload->s3_key = $new_media_upload['s3_key'];
+                            $questionMediaUpload->transcript = '';
+                            $questionMediaUpload->save();
+                            ProcessTranscribe::dispatch($questionMediaUpload->s3_key);
+                        }
+                    }
+                    foreach ($current_s3_keys as $current_s3_key) {
+                        if (!in_array($current_s3_key, $new_s3_keys)) {
+                            QuestionMediaUpload::where('question_id', $question->id)->where('s3_key', $current_s3_key)->delete();
+                        }
+                    }
+                } else {
+                    foreach ($media_uploads as $media_upload) {
+                        $questionMediaUpload = new QuestionMediaUpload();
+                        $questionMediaUpload->question_id = $question->id;
+                        $questionMediaUpload->original_filename = $media_upload['original_filename'];
+                        $questionMediaUpload->size = $media_upload['size'];
+                        $questionMediaUpload->s3_key = $media_upload['s3_key'];
+                        $questionMediaUpload->transcript = '';
+                        $questionMediaUpload->save();
+                        ProcessTranscribe::dispatch($questionMediaUpload->s3_key);
+                    }
+
+                }
+            }
             if ($request->course_id) { //for bulk uploads
                 $assignment = DB::table('assignments')
                     ->join('courses', "assignments.course_id", "=", "courses.id")

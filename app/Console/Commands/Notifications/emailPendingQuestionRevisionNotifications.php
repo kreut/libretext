@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Notifications;
 
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\PendingQuestionRevision;
 use Carbon\Carbon;
 use Exception;
@@ -68,19 +69,7 @@ class emailPendingQuestionRevisionNotifications extends Command
                         'first_name' => $pending_revision->first_name,
                         'pending_question_revisions' => []];
                 }
-                switch (app()->environment()) {
-                    case('local'):
-                        $schema_and_host = 'https://local.adapt:8890/';
-                        break;
-                    case('staging'):
-                        $schema_and_host = 'https://staging-adapt.libretexts.org/';
-                        break;
-                    case('production'):
-                        $schema_and_host = 'https://adapt.libretexts.org/';
-                        break;
-                    default:
-                        throw new Exception (app()->environment() . ' is not a valid environment to the pending revision notifications.');
-                }
+                $schema_and_host = Helper::schemaAndHost();
                 $pending_question_revisions_to_email[$pending_revision->user_id]['pending_question_revisions'][]
                     = ['course_name' => $pending_revision->course_name,
                     'assignment_name' => $pending_revision->assignment_name,

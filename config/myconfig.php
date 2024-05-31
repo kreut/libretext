@@ -26,5 +26,6 @@ return [
     'centrifugo_secret_key' => env('CENTRIFUGO_SECRET_KEY', ''),
     'centrifugo_api_key' => env('CENTRIFUGO_API_KEY', ''),
     'centrifugo_domain' => env('CENTRIFUGO_DOMAIN', ''),
-    'mysql8_db_password' => env('MYSQL8_DB_PASSWORD', '')
+    'mysql8_db_password' => env('MYSQL8_DB_PASSWORD', ''),
+    'openai_api_key' => env('OPENAI_API_KEY', ''),
 ];

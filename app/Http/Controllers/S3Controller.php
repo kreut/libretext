@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\Exceptions\Handler;
 use App\PreSignedURL;
+use App\QuestionMediaUpload;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -58,7 +59,8 @@ class S3Controller extends Controller
                     $dir = 'uploads/qti/' . $request->user()->id;
                     break;
                 case('question-media'):
-                    $dir = 'uploads/question-media';
+                    $questionMediaUpload = new QuestionMediaUpload();
+                    $dir = $questionMediaUpload->getDir();
 
             }
             if (!$dir) {

@@ -3,7 +3,9 @@
     <PageTitle title="Edit Question"/>
     <CreateQuestion v-if="questionToEdit.id"
                     :question-to-edit="questionToEdit"
-                    :modal-id="'edit-question'"/>
+                    :question-media-upload-id="+questionMediaUploadId"
+                    :modal-id="'edit-question'"
+    />
   </div>
 </template>
 
@@ -16,10 +18,14 @@ export default {
     CreateQuestion
   },
   data: () => ({
-    questionToEdit: {}
+    questionToEdit: {},
+    questionMediaUploadId: 0
   }),
   mounted () {
     this.getQuestionToEdit(this.$route.params.questionId)
+    if (this.$route.params.questionMediaUploadId) {
+      this.questionMediaUploadId = this.$route.params.questionMediaUploadId
+    }
   },
   methods: {
     async getQuestionToEdit (questionId) {
@@ -37,4 +43,3 @@ export default {
   }
 }
 </script>
-

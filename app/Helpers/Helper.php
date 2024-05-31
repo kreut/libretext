@@ -257,7 +257,29 @@ class Helper
     public static function iMathASDomain(): string
     {
 
-        return in_array(app()->environment(),['dev','local']) ? 'dev2.imathas.libretexts.org' : 'imathas.libretexts.org';
-}
+        return in_array(app()->environment(), ['dev', 'local']) ? 'dev2.imathas.libretexts.org' : 'imathas.libretexts.org';
+    }
+
+    /**
+     * @return string
+     * @throws Exception
+     */
+    public static function schemaAndHost(): string
+    {
+        switch (app()->environment()) {
+            case('local'):
+                $schema_and_host = 'https://local.adapt:8891/';
+                break;
+            case('staging'):
+                $schema_and_host = 'https://staging-adapt.libretexts.org/';
+                break;
+            case('production'):
+                $schema_and_host = 'https://adapt.libretexts.org/';
+                break;
+            default:
+                throw new Exception (app()->environment() . ' is not a valid environment to the pending revision notifications.');
+        }
+        return $schema_and_host;
+    }
 
 }

@@ -14,10 +14,14 @@
   <script src="{{ asset('assets/js/ableplayer/build/ableplayer.min.js') }}"></script>
 </head>
 <body>
-<video id="video1" preload="auto" data-able-player>
+<video id="video1"
+       preload="auto"
+       data-able-player
+       data-start-time="{{$start_time}}">
   <source type="video/mp4"
           src="{{$temporary_url}}"
   />
+  <track kind="captions" src="{{$vtt_file}}"/>
 </video>
 </body>
 </html>

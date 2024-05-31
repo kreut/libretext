@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "spa" middleware group.
 |
 */
-Route::get('question-media-player/{media}', 'QuestionMediaController@index');
+Route::get('question-media-player/{media}/{start_time?}', 'QuestionMediaController@index');
 Route::get('/apple-app-site-association', 'MobileAppController@appleAppSiteAssociation');
 Route::get('/.well-known/assetlinks.json', 'MobileAppController@androidAssetLink');
 Route::get('{path}', 'SpaController')->where('path', '(.*)');

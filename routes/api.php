@@ -720,6 +720,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}', 'SubmissionFileController@getFilesFromS3');
     Route::post('/submission-files/can-submit-file-submission', 'SubmissionFileController@canSubmitFileSubmission');
 
+    Route::patch('/question-media/{questionMediaUpload}/caption/{caption}', 'QuestionMediaController@updateCaption');
+    Route::delete('/question-media/{questionMediaUpload}', 'QuestionMediaController@destroy');
+
 
     Route::post('/solutions/show-solution/{assignment}/{question}', 'SolutionController@showSolutionByAssignmentQuestionUser');
     Route::post('/solutions/text/{assignment}/{question}', 'SolutionController@storeText');
@@ -741,7 +744,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');
     Route::post('/submission-files/get-temporary-url-from-request', 'SubmissionFileController@getTemporaryUrlFromRequest');
     Route::post('/submission-files/download', 'SubmissionFileController@downloadSubmissionFile');
-
 
     Route::post('/invitations/grader', 'InvitationController@emailGraderInvitation');
 
