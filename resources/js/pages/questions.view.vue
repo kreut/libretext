@@ -352,15 +352,23 @@
     <b-modal id="modal-confirm-give-up"
              title="Confirm Giving Up"
     >
-      <p v-if="questions[currentPage - 1]">
-        You can give up now and get access to the solution, but if you do, your current score of
-        {{ questions[currentPage - 1].submission_score }} will be recorded.
-      </p>
-      <p>
-        In addition, once the solution becomes available, you will no longer be able to submit a new
-        response.
-      </p>
-
+      <div v-if="questions[currentPage - 1]">
+        <div v-show="questions[currentPage - 1].submission_score">
+          <p>
+            You can give up now and get access to the solution, but if you do, your current score of
+            {{ questions[currentPage - 1].submission_score }} will be recorded.
+          </p>
+          <p>
+            In addition, once the solution becomes available, you will no longer be able to submit a new
+            response.
+          </p>
+        </div>
+        <div v-show="!questions[currentPage - 1].submission_score">
+          You can give up now and get access to the solution, but once the solution becomes available, you will no
+          longer be able to submit a new
+          response.
+        </div>
+      </div>
       <template #modal-footer="{ ok, cancel }">
         <b-button size="sm" @click="$bvModal.hide('modal-confirm-give-up')">
           Cancel
