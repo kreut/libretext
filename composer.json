@@ -45,6 +45,7 @@
     "laravel/vapor-ui": "^1.1",
     "league/flysystem": "^1.1",
     "league/flysystem-aws-s3-v3": "^1.0",
+    "miladrahimi/php-jwt": "3.*",
     "napp/xray-laravel": "^1.5",
     "orhanerday/open-ai": "^5.2",
     "predis/predis": "^1.1",

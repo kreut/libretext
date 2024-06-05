@@ -20,6 +20,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\JWT;
+use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
+use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
+use MiladRahimi\Jwt\Generator;
 
 class JWTController extends Controller
 {
@@ -36,10 +39,20 @@ class JWTController extends Controller
 
     public function signWithNewSecret()
     {
-        //encoding...
-        //
 
+         try {
+            if (!app()->environment('local')){
+                 dd('Can only run locally');
+             }
+             $key = new HmacKey(config('myconfig.analytics_token'));
+             $signer = new HS256($key);
+             $generator = new Generator($signer);
+             $jwt = $generator->generate(['id' => 7]);
 
+             dd($jwt); // "abc.123.xyz"
+         } catch (Exception $e) {
+             echo $e->getMessage();
+         }
         $payload = auth()->payload();
         print_r($payload->toArray()); // current user info
         \JWTAuth::getJWTProvider()->setSecret('secret'); //change the secret

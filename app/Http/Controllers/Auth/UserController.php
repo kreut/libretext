@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Analytics;
 use App\Enrollment;
 use App\Helpers\Helper;
 use App\Http\Requests\LoginAsRequest;
+use App\JWE;
 use App\User;
 use App\Course;
 use App\Assignment;
@@ -17,7 +19,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
-
+use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
+use MiladRahimi\Jwt\Exceptions\InvalidSignatureException;
+use MiladRahimi\Jwt\Generator;
+use MiladRahimi\Jwt\Parser;
+use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 
 class UserController extends Controller
 {
@@ -41,6 +47,78 @@ class UserController extends Controller
 
         }
         return response()->json($request->user());
+    }
+
+    public function validateSignature($content, $secret): bool
+    {
+
+        //https://developer.okta.com/blog/2019/02/04/create-and-verify-jwts-in-php
+        //verify
+        // split the token
+        $tokenParts = explode('.', $content);
+        if (!(isset($tokenParts[0]) && isset($tokenParts[1]) && isset($tokenParts[2]))) {
+            return false;
+        }
+        $header = $tokenParts[0];
+        $payload = $tokenParts[1];
+        $signatureProvided = $tokenParts[2];
+        $signature = hash_hmac('sha256', $header . "." . $payload, $secret, true);
+        $base64UrlSignature = $this->base64UrlEncode($signature);
+
+        // verify it matches the signature provided in the token
+        return ($base64UrlSignature === $signatureProvided);
+        //
+    }
+
+    function base64UrlEncode($text)
+    {
+        return str_replace(
+            ['+', '/', '='],
+            ['-', '_', ''],
+            base64_encode($text)
+        );
+    }
+
+    /**
+     * @param Request $request
+     * @param Analytics $analytics
+     * @return array
+     * @throws Exception
+     */
+    public function autoLogin(Request $request, Analytics $analytics): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $claims = $analytics->hasAccess($request);
+            $id = $claims['id'];
+            if (in_array($id, [1, 5])) {
+                $response['message'] = "$id is an admin user.";
+                return $response;
+            }
+            $user = User::find($id);
+            if (!$user) {
+                $response['message'] = "$id is not a valid user id.";
+                return $response;
+            }
+            if ($user->role !== 2) {
+                $response['message'] = "$id is a user who is not an instructor.";
+                return $response;
+            }
+            $token = \JWTAuth::claims(['analytics' => 1])->fromUser($user);
+            $response['type'] = 'success';
+            $response['token'] = $token;
+        } catch (InvalidSignatureException $e){
+            $response['message'] = 'InvalidSignatureException: cannot log do auto-login.';
+            return $response;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $message = $e->getMessage() ?: 'Cannot log in do to JWT error.';
+            $response['message'] = $e->getMessage();
+        }
+        return $response;
+
     }
 
     /**

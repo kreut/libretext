@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\Analytics;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CheckForMaintenanceMode;
 use App\Http\Middleware\EncryptCookies;
@@ -68,7 +69,7 @@ class Kernel extends HttpKernel
         'spa' => [
             SubstituteBindings::class,
         ],
-
+        'analytics' => [Analytics::class],
         'api' => [
             SubstituteBindings::class,
         ],

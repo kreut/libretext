@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Analytics;
 use App\Assignment;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
@@ -40,11 +41,48 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
+use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
+use MiladRahimi\Jwt\Exceptions\InvalidSignatureException;
+use MiladRahimi\Jwt\Exceptions\InvalidTokenException;
+use MiladRahimi\Jwt\Exceptions\JsonDecodingException;
+use MiladRahimi\Jwt\Exceptions\SigningException;
+use MiladRahimi\Jwt\Exceptions\ValidationException;
+use MiladRahimi\Jwt\Parser;
 
 class CourseController extends Controller
 {
 
     use DateFormatter;
+
+    /**
+     * @param Request $request
+     * @param Analytics $analytics
+     * @return array
+     * @throws InvalidSignatureException
+     * @throws InvalidTokenException
+     * @throws JsonDecodingException
+     * @throws SigningException
+     * @throws ValidationException
+     */
+    public function showMiniSummary(Request $request, Analytics $analytics): array
+    {
+        $response['type'] = 'error';
+
+        try { $claims = $analytics->hasAccess($request);
+            $course_id = $claims['course_id'];
+            $course = Course::find($course_id);
+            $response['mini-summary'] =collect($course->only(['name', 'user_id', 'start_date', 'end_date', 'textbook_url']))
+                ->merge(['letter_grades_released' => $course->finalGrades->letter_grades_released])
+                ->toArray();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the course mini-summary.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
      * @param Request $request
@@ -68,7 +106,7 @@ class CourseController extends Controller
             if ($assign_to_timing->assessment_type == 'clicker') {
                 $assign_to_timing->status = 'N/A';
             } else {
-                $assign_to_timing->status =   $assignment->getStatus($assign_to_timing->available_from,$assign_to_timing->due, $assign_to_timing->final_submission_deadline);
+                $assign_to_timing->status = $assignment->getStatus($assign_to_timing->available_from, $assign_to_timing->due, $assign_to_timing->final_submission_deadline);
             }
         }
         $response['assignment_statuses'] = $assign_to_timings;

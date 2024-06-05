@@ -96,7 +96,7 @@ class backupS3Files extends Command
                 }
             }
             echo "Syncing from S3\r\n";
-            $command = "/usr/local/bin/aws s3 sync s3://libretexts /var/www/dev.adapt/storage/s3_backups --profile default";
+            $command = '/usr/local/bin/aws s3 sync s3://libretexts /var/www/dev.adapt/storage/s3_backups --profile default --exclude "db_backups/*"';
             exec($command, $output, $return_var);
             if ($return_var !== 0) {
                 $this->sendTelegramMessage("Unable to get the folders for the s3 backup with return var $return_var");

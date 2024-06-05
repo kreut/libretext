@@ -28,6 +28,9 @@ class CoursePolicy
             : Response::deny('You are not allowed to set the auto-release for this course.');
 
     }
+
+
+
     /**
      * @param User $user
      * @param Course $course

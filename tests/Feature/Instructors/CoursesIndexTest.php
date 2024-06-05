@@ -55,6 +55,19 @@ class CoursesIndexTest extends TestCase
     }
 
     /** @test */
+    public function cannot_get_the_mini_summary_if_you_do_not_have_an_analytics_token()
+    {
+        $this->actingAs($this->user_2)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer bad-token'])
+            ->getJson("/api/courses/mini-summary")
+            ->assertJson(['type' => 'error',
+                'message' => 'There was an error getting the course mini-summary.  Please try again or contact us for assistance.']);
+    }
+
+    /** @test */
     public function cannot_update_a_course_if_you_are_not_the_owner()
     {
         //create two users
@@ -71,6 +84,7 @@ class CoursesIndexTest extends TestCase
 
 
     }
+
     /** @test */
     public function if_shifting_dates_due_time_and_date_must_be_valid()
     {
@@ -139,7 +153,7 @@ class CoursesIndexTest extends TestCase
     public function can_copy_your_own_course()
     {
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course->id}", ['action' => 'clone'])
-            ->assertJson(['type'=>'info']);
+            ->assertJson(['type' => 'info']);
 
     }
 
@@ -326,7 +340,6 @@ class CoursesIndexTest extends TestCase
     }
 
 
-
     /** @test */
     public function term_field_is_required()
     {
@@ -353,7 +366,6 @@ class CoursesIndexTest extends TestCase
             'crn' => 'some crn'
         ])->assertJson(['type' => 'success']);
     }
-
 
 
     /** @test */

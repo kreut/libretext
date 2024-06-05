@@ -22,9 +22,11 @@ use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LoginController extends Controller
 {
@@ -66,7 +68,6 @@ class LoginController extends Controller
         if ($user instanceof MustVerifyEmail && !$user->hasVerifiedEmail()) {
             return false;
         }
-
         $this->guard()->setToken($token);
         return true;
     }

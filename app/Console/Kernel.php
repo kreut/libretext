@@ -109,7 +109,7 @@ class Kernel extends ConsoleKernel
         }
 
         if (env('APP_ENV') === 'dev') {
-            $schedule->command('s3:backup')->hourly();
+            $schedule->command('s3:backup')->daily();
         }
 
     }

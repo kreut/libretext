@@ -94,7 +94,11 @@ Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'Ques
 Route::get('/time-zones', 'TimeZoneController@index');
 Route::get('/users/get-cookie-user-jwt', 'UserController@getCookieUserJWT');
 
-Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
+Route::get('/users/auto-login', 'Auth\UserController@autoLogin');
+
+Route::get('/courses/mini-summary', 'CourseController@showMiniSummary');
+
+Route::group(['middleware' => ['auth:api','analytics', 'throttle:550,1']], function () {
 
     Route::get('/updated-information-first-application/{assignment}', 'UpdatedInformationFirstApplicationController@index');
     Route::patch('/updated-information-first-application', 'UpdatedInformationFirstApplicationController@update');
