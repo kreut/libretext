@@ -563,6 +563,9 @@ class ScoreController extends Controller
                 if ($total_points) {
                     $columns['percent_correct'] = 100 * Helper::removeZerosAfterDecimal(round((float)$assignment_score / $total_points, 4)) . '%';
                     $columns['total_points'] = Helper::removeZerosAfterDecimal(round((float)$assignment_score, 2));
+                } else {
+                    $columns['percent_correct'] = "N/A";
+                    $columns['total_points'] = 0;
                 }
                 if (isset($scores_by_user_id[$user_id])) {
                     $assignment_score = Helper::removeZerosAfterDecimal(round((float)$scores_by_user_id[$user_id], 2));
