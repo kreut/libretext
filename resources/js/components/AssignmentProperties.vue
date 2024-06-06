@@ -512,7 +512,7 @@
             label-for="alpha_scoring_type"
             label=" Points Per Question*"
           >
-            For non-alpha courses, you can specific whether you want points per question or weights per question.
+            For non-alpha courses, you can specify whether you want points per question or weights per question.
             For alpha courses, each question must be provided a number of points with the default provided below.
           </b-form-group>
 
