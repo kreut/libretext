@@ -1,6 +1,71 @@
 <template>
   <b-container>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-file-upload-${modalId}`" />
+    <b-modal id="modal-upload-vtt"
+             title="Upload Transcript"
+             no-close-on-backdrop
+             no-close-on-esc
+             size="lg"
+             hide-footer
+             @shown="isVttUpload = true"
+             @hidden="isVttUpload = false"
+    >
+      <p>
+        If you would like to upload your own .vtt file to use as the transcript, please select it from your
+        computer.
+      </p>
+      <div v-if="isVttUpload">
+        <file-upload
+          ref="vttUpload"
+          v-model="files2"
+          class="btn btn-primary btn-sm"
+          accept=".vtt"
+          put-action="/put.method"
+          @input-file="inputFile"
+          @input-filter="inputUploadFileFilter"
+        >
+          Select .vtt file
+        </file-upload>
+        <b-row class="upload mt-3 ml-1">
+          <div v-if="files2.length && (preSignedURL !== '')">
+            <div v-for="file in files2" :key="file.id">
+              File to upload:
+              <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
+                file.name
+              }}</span> -
+              <span>{{ formatFileSize(file.size) }} </span>
+              <b-button
+                v-if="(preSignedURL !== '') && (!$refs.vttUpload || !$refs.vttUpload.active)"
+                variant="info"
+                size="sm"
+                style="vertical-align: top"
+                :disabled="disableStartUpload"
+                @click.prevent="initStartUpload('vttUpload')"
+              >
+                Upload
+              </b-button>
+              <span v-else-if="file.active" class="ml-2 text-info">
+                <b-spinner small type="grow" />
+                Uploading File...
+              </span>
+              <b-button size="sm"
+                        style="vertical-align: top"
+                        :disabled="disableStartUpload"
+                        @click.prevent="cancelUpload"
+              >
+                Cancel
+              </b-button>
+              <div v-if="file.error" class="text-danger">
+                Error: {{ file.error }}
+              </div>
+            </div>
+          </div>
+        </b-row>
+        <b-progress v-if="preSignedURL && isVttUpload" max="100" class="mt-2 mb-3">
+          <b-progress-bar :value="progress" :label="`${Number(progress).toFixed(0)}%`" show-progress animated />
+        </b-progress>
+      </div>
+    </b-modal>
     <b-modal id="modal-confirm-delete-question-media"
              :title="`Delete ${activeMedia.original_filename}`"
              no-close-on-esc
@@ -109,17 +174,19 @@
       </div>
     </b-modal>
     <b-row>
-      <file-upload
-        ref="questionMediaUpload"
-        v-model="files"
-        class="btn btn-primary btn-sm"
-        accept=".mp3,.mp4"
-        put-action="/put.method"
-        @input-file="inputFile"
-        @input-filter="inputQuestionMediaFilter"
-      >
-        Select Audio or Video file
-      </file-upload>
+      <div v-if="!isVttUpload">
+        <file-upload
+          ref="questionMediaUpload"
+          v-model="files"
+          class="btn btn-primary btn-sm"
+          accept=".mp3,.mp4,.vtt"
+          put-action="/put.method"
+          @input-file="inputFile"
+          @input-filter="inputUploadFileFilter"
+        >
+          Select Audio or Video file
+        </file-upload>
+      </div>
     </b-row>
     <b-row class="upload mt-3 ml-1">
       <div v-if="files.length && (preSignedURL !== '')">
@@ -130,12 +197,12 @@
           }}</span> -
           <span>{{ formatFileSize(file.size) }} </span>
           <b-button
-            v-if="!processingFile && (preSignedURL !== '') && (!$refs.questionMediaUpload || !$refs.questionMediaUpload.active)"
+            v-if="(preSignedURL !== '') && (!$refs.questionMediaUpload || !$refs.questionMediaUpload.active)"
             variant="info"
             size="sm"
             style="vertical-align: top"
-            :disabled="disableQuestionMediaStartUpload"
-            @click.prevent="initStartUpload"
+            :disabled="disableStartUpload"
+            @click.prevent="initStartUpload('questionMediaUpload')"
           >
             Upload
           </b-button>
@@ -143,16 +210,9 @@
             <b-spinner small type="grow" />
             Uploading File...
           </span>
-          <span v-if="processingFile && !file.active" class="text-info">
-            <b-spinner
-              small
-              type="grow"
-            />
-            {{ processingFileMessage }}
-          </span>
           <b-button size="sm"
                     style="vertical-align: top"
-                    :disabled="disableQuestionMediaStartUpload"
+                    :disabled="disableStartUpload"
                     @click.prevent="cancelUpload"
           >
             Cancel
@@ -163,11 +223,11 @@
         </div>
       </div>
     </b-row>
-    <b-progress v-if="preSignedURL" max="100" class="mt-2 mb-3">
+    <b-progress v-if="preSignedURL && !isVttUpload" max="100" class="mt-2 mb-3">
       <b-progress-bar :value="progress" :label="`${Number(progress).toFixed(0)}%`" show-progress animated />
     </b-progress>
-    <b-row v-show="questionMediaErrorMessage" class="mb-3">
-      <ErrorMessage :message="questionMediaErrorMessage" />
+    <b-row v-show="uploadFileErrorMessage" class="mb-3">
+      <ErrorMessage :message="uploadFileErrorMessage" />
     </b-row>
     <div v-show="mediaUploads.length>0">
       <b-table
@@ -178,41 +238,73 @@
         :fields="fields"
         :items="mediaUploads"
       >
-        <template v-slot:cell(url)="data">
-          <span :id="`copy-question-media-url-${data.item.s3_key}`">{{ data.item.url }}</span>
-          <span class="text-info">
-            <a :id="getTooltipTarget('copyURL',data.item.s3_key)"
-               href=""
-               aria-label="Copy URL"
-               @click.prevent="doCopy(`copy-question-media-url-${data.item.s3_key}`, 'Successfully copied!  You may add this URL to a link in your question.')"
-            >
-              <font-awesome-icon :icon="copyIcon" />
-            </a>
-          </span>
+        <template v-slot:cell(actions)="data">
+          <span v-show="false" :id="`copy-question-media-url-${data.item.s3_key}`">{{ data.item.url }}</span>
+          <a :id="getTooltipTarget('copyURL',data.item.s3_key)"
+             href=""
+             aria-label="Copy URL"
+             class="text-muted mr-1"
+             @click.prevent="doCopy(`copy-question-media-url-${data.item.s3_key}`, 'Successfully copied!  You may add this URL to a link in your question.')"
+          >
+            <font-awesome-icon :icon="copyIcon" />
+          </a>
           <b-tooltip :target="getTooltipTarget('copyURL',data.item.s3_key)"
                      triggers="hover"
                      delay="500"
           >
-            Copy the URL, then create a link inside the question editor.
+            Copy the URL, then create a link inside the question editor and ADAPT will convert the format the media for
+            listening/viewing.
           </b-tooltip>
-        </template>
-        <template v-slot:cell(actions)="data">
           <b-icon :id="getTooltipTarget('editCaptions',data.item.s3_key)"
                   icon="pencil"
                   :aria-label="`Edit question transcription`"
                   style="cursor: pointer;"
+                  class="mr-1"
                   @click="showQuestionMedia(data.item)"
           />
           <b-tooltip :target="getTooltipTarget('editCaptions',data.item.s3_key)"
                      triggers="hover"
                      delay="500"
           >
-            Edit captions for {{ data.item.original_filename }}
+            Edit transcript for {{ data.item.original_filename }}
           </b-tooltip>
+          <span v-show="data.item.id">
+            <a v-show="false"
+               :id="`download-transcript-${data.item.id}`"
+               :href="`/api/question-media/${data.item.id}/download-transcript`"
+            >Download Transcript</a>
+            <b-icon :id="getTooltipTarget('downloadTranscript',data.item.s3_key)"
+                    icon="download"
+                    :aria-label="`Download Transcript`"
+                    style="cursor: pointer;"
+                    class="mr-1"
+                    @click="downloadTranscript(data.item)"
+            />
+            <b-tooltip :target="getTooltipTarget('downloadTranscript',data.item.s3_key)"
+                       triggers="hover"
+                       delay="500"
+            >
+              Download transcript for {{ data.item.original_filename }}
+            </b-tooltip>
+            <b-icon :id="getTooltipTarget('uploadTranscript',data.item.s3_key)"
+                    icon="upload"
+                    :aria-label="`Upload Transcript`"
+                    style="cursor: pointer;"
+                    class="mr-1"
+                    @click="uploadTranscript(data.item)"
+            />
+            <b-tooltip :target="getTooltipTarget('uploadTranscript',data.item.s3_key)"
+                       triggers="hover"
+                       delay="500"
+            >
+              Upload transcript (.vtt) file for {{ data.item.original_filename }}
+            </b-tooltip>
+          </span>
           <b-icon :id="getTooltipTarget('deleteQuestionMedia',data.item.s3_key)"
                   icon="trash"
                   :aria-label="`Delete question media`"
                   style="cursor: pointer;"
+                  class="mr-1"
                   @click="confirmDeleteQuestionMedia(data.item)"
           />
           <b-tooltip :target="getTooltipTarget('deleteQuestionMedia',data.item.s3_key)"
@@ -264,6 +356,8 @@ export default {
     }
   },
   data: () => ({
+    isVttUpload: false,
+    files2: [],
     copyIcon: faCopy,
     startTime: 0,
     questionMediaKey: 0,
@@ -274,25 +368,22 @@ export default {
       {
         key: 'original_filename',
         label: 'Filename',
-        isRowHeader: true
-      },
-      {
-        key: 'url',
-        label: 'URL',
-        isRowHeader: true
+        isRowHeader: true,
+        thStyle: 'width:80%'
       },
       {
         key: 'actions',
-        isRowHeader: true
+        isRowHeader: true,
+        thStyle: 'width:80%',
+        thClass: 'text-center',
+        tdClass: 'text-center'
       }
     ],
     allFormErrors: [],
     questionMediaUpload: {},
     progress: 0,
-    questionMediaErrorMessage: '',
-    processingFile: false,
-    processingFileMessage: '',
-    disableQuestionMediaStartUpload: false,
+    uploadFileErrorMessage: '',
+    disableStartUpload: false,
     files: [],
     preSignedURL: '',
     modalId: '',
@@ -311,6 +402,13 @@ export default {
     formatFileSize,
     fixInvalid,
     doCopy,
+    async downloadTranscript (activeMedia) {
+      document.getElementById(`download-transcript-${activeMedia.id}`).click()
+    },
+    uploadTranscript (activeMedia) {
+      this.activeMedia = activeMedia
+      this.$bvModal.show('modal-upload-vtt')
+    },
     confirmDeleteQuestionMedia (activeMedia) {
       this.activeMedia = activeMedia
       if (this.qtiJson.includes(activeMedia.s3_key)) {
@@ -411,37 +509,42 @@ export default {
       }
       this.$bvModal.show('modal-question-media')
     },
-    initStartUpload () {
-      this.processingFileMessage = ''
+    initStartUpload (fileUploadRef) {
       this.allFormErrors = []
-      this.$refs.questionMediaUpload.active = true
+      this.$refs[fileUploadRef].active = true
     },
-    async inputQuestionMediaFilter (newFile, oldFile, prevent) {
-      this.questionMediaErrorMessage = ''
+    async inputUploadFileFilter (newFile, oldFile, prevent) {
+      this.uploadFileErrorMessage = ''
       this.errorMessages = []
       if (newFile && !oldFile) {
         if (parseInt(newFile.size) > 30000000) {
-          this.questionMediaErrorMessage = '30 MB max allowed.  Your file is too large.'
+          this.uploadFileErrorMessage = '30 MB max allowed.  Your file is too large.'
           this.$nextTick(() => fixInvalid())
-          this.allFormErrors = [this.questionMediaErrorMessage]
+          this.allFormErrors = [this.uploadFileErrorMessage]
           this.$bvModal.show(`modal-form-errors-file-upload-${this.modalId}`)
           return prevent()
         }
-        const acceptedExtensionsRegex = /\.(mp3|mp4|ogg|vtt|webm)$/i
+        const acceptedExtensionsRegex = this.isVttUpload ? /\.(vtt)$/i : /\.(mp3|mp4)$/i
         const validExtension = acceptedExtensionsRegex.test(newFile.name)
         if (!validExtension) {
-          this.questionMediaErrorMessage = `${newFile.name} does not have a valid extension.`
+          this.uploadFileErrorMessage = `${newFile.name} does not have a valid extension.`
           this.$nextTick(() => fixInvalid())
-          this.allFormErrors = [this.questionMediaErrorMessage]
+          this.allFormErrors = [this.uploadFileErrorMessage]
           this.$bvModal.show(`modal-form-errors-file-upload-${this.modalId}`)
           return prevent()
         } else {
           try {
             this.preSignedURL = ''
-            let uploadFileData = {
-              upload_file_type: 'question-media',
-              file_name: newFile.name
-            }
+            let uploadFileData = this.isVttUpload
+              ? {
+                upload_file_type: 'vtt',
+                s3_key: this.activeMedia.s3_key,
+                file_name: newFile.name
+              }
+              : {
+                upload_file_type: 'question-media',
+                file_name: newFile.name
+              }
             const { data } = await axios.post('/api/s3/pre-signed-url', uploadFileData)
             if (data.type === 'error') {
               this.$noty.error(data.message)
@@ -485,7 +588,7 @@ export default {
               this.handledOK = true
               console.log(this.handledOK)
               console.log(newFile)
-              this.disableQuestionMediaStartUpload = true
+              this.disableStartUpload = true
               this.handleOK(newFile)
             }
           } else {
@@ -498,16 +601,32 @@ export default {
     },
     handleOK (newFile) {
       this.preSignedURL = ''
-      this.disableQuestionMediaStartUpload = false
-      this.questionMediaUpload = newFile
-      this.questionMediaUpload.url = window.location.origin + `/question-media-player/${this.questionMediaUpload.question_media_filename}`
-      this.$emit('updateQuestionMediaUploads', {
-        original_filename: this.originalFilename,
-        size: this.files[0].size,
-        s3_key: this.questionMediaUpload.question_media_filename,
-        url: this.questionMediaUpload.url,
-        transcript: ''
-      })
+      this.disableStartUpload = false
+      if (!this.isVttUpload) {
+        this.questionMediaUpload = newFile
+        this.questionMediaUpload.url = window.location.origin + `/question-media-player/${this.questionMediaUpload.question_media_filename}`
+        this.$emit('updateQuestionMediaUploads', {
+          original_filename: this.originalFilename,
+          size: this.files[0].size,
+          s3_key: this.questionMediaUpload.question_media_filename,
+          url: this.questionMediaUpload.url,
+          transcript: ''
+        })
+      } else {
+        this.validateVTTFile()
+      }
+    },
+    async validateVTTFile () {
+      try {
+        const { data } = await axios.get(`/api/question-media/validate-vtt/${this.activeMedia.id}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.$emit('updateQuestionTranscript', this.activeMedia, data.transcript)
+          this.$bvModal.hide('modal-upload-vtt')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     }
   }
 }

@@ -383,8 +383,8 @@ class QuestionController extends Controller
                     Storage::disk('s3')->put("{$questionMediaUpload->getDir()}/$cloned_s3_key", $contents);
                 }
                 if ($question_media_upload->transcript) {
-                    $file_name_without_ext = pathinfo($cloned_s3_key, PATHINFO_FILENAME);
-                    Storage::disk('s3')->put("{$questionMediaUpload->getDir()}/$file_name_without_ext.vtt", $question_media_upload->transcript);
+                    $vtt_file = $question_media_upload->getVttFileNameFromS3Key();
+                    Storage::disk('s3')->put("{$questionMediaUpload->getDir()}/$vtt_file", $question_media_upload->transcript);
                 }
                 $question_media_upload->s3_key = $cloned_s3_key;
                 $question_media_upload->question_id = $cloned_question->id;

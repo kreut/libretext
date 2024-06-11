@@ -33,6 +33,9 @@ class S3Controller extends Controller
                 case('question-media'):
                     $authorized = Gate::inspect('questionMediaPreSignedURL', $preSignedURL);
                     break;
+                case('vtt'):
+                    $authorized = Gate::inspect('vttPreSignedURL', [$preSignedURL, $request->s3_key]);
+                    break;
                 default:
                     $authorized = Gate::inspect('preSignedURL', [$preSignedURL, $assignment, $upload_file_type]);
 
@@ -48,6 +51,7 @@ class S3Controller extends Controller
             $bucket = $adapter->getBucket(); // Get the current bucket
 // Make a PutObject command
             $dir = false;
+            $questionMediaUpload = new QuestionMediaUpload();
             switch ($upload_file_type) {
                 case('submission'):
                     $dir = 'assignments/' . $request->assignment_id;
@@ -59,15 +63,18 @@ class S3Controller extends Controller
                     $dir = 'uploads/qti/' . $request->user()->id;
                     break;
                 case('question-media'):
-                    $questionMediaUpload = new QuestionMediaUpload();
+                case('vtt'):
                     $dir = $questionMediaUpload->getDir();
+                    break;
 
             }
             if (!$dir) {
                 throw new Exception("This is not a valid upload file type.");
             }
 
-            $uploaded_filename = md5(uniqid('', true)) . '.' . pathinfo($request->file_name, PATHINFO_EXTENSION);
+            $uploaded_filename = $upload_file_type === 'vtt' ?
+                $questionMediaUpload->getVttFileNameFromS3Key($request->s3_key)
+                : md5(uniqid('', true)) . '.' . pathinfo($request->file_name, PATHINFO_EXTENSION);
             $key = "$dir/$uploaded_filename";
             $cmd = $client->getCommand('PutObject', [
                 'Bucket' => $bucket,

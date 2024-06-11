@@ -15,6 +15,22 @@ class QuestionMediaUpload extends Model
     protected $guarded = [];
 
     /**
+     * @param string $media
+     * @return string
+     * @throws Exception
+     */
+    public function getVttFileNameFromS3Key(string $media = ''): string
+    {
+        $s3_key = $media ?: $this->s3_key;
+        $file_name_without_ext = pathinfo($s3_key, PATHINFO_FILENAME);
+        if (!$file_name_without_ext) {
+            throw new Exception("There is not file_name_without_ext");
+        }
+        return "$file_name_without_ext.vtt";
+    }
+
+
+    /**
      * @param string $type
      * @return void
      * @throws Exception

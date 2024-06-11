@@ -23,6 +23,23 @@ class QuestionMediaUploadPolicy
             ->where('question_editor_user_id', $user->id)
             ->first();
     }
+    public function download(User $user, QuestionMediaUpload $questionMediaUpload): Response
+    {
+        return $this->_ownsQuestionMediaUpload($questionMediaUpload, $user)
+            ? Response::allow()
+            : Response::deny("You are not allowed to download the transcript.");
+
+
+    }
+
+    public function validateVTT(User $user, QuestionMediaUpload $questionMediaUpload): Response
+    {
+        return $this->_ownsQuestionMediaUpload($questionMediaUpload, $user)
+            ? Response::allow()
+            : Response::deny("You are not allowed to validate the .vtt file.");
+
+
+    }
 
     public function destroy(User $user, QuestionMediaUpload $questionMediaUpload): Response
     {

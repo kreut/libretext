@@ -29,6 +29,35 @@ class QuestionMediaUploadTest extends TestCase
     }
 
     /** @test */
+    public function non_owner_cannot_get_presigned_url()
+    {
+        $this->actingAs($this->user_2)
+            ->postJson("/api/s3/pre-signed-url",
+                ['upload_file_type' => 'vtt',
+                    's3_key' => 'some-bad-key',
+                    'file_name' => 'who_knows'
+                ])
+            ->assertJson(['message' => "You do not own that media so you cannot upload a transcript."]);
+    }
+
+
+    /** @test */
+    public function non_owner_cannot_validate_vtt()
+    {
+        $this->actingAs($this->user_2)
+            ->getJson("/api/question-media/validate-vtt/{$this->questionMediaUpload->id}")
+            ->assertJson(['message' => "You are not allowed to validate the .vtt file."]);
+    }
+
+    /** @test */
+    public function vtt_file_must_exist()
+    {
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/question-media/{$this->questionMediaUpload->id}/caption/1")
+            ->assertJson(['message' => "You are not allowed to update this transcript."]);
+    }
+
+    /** @test */
     public function non_owner_cannot_update_caption()
     {
         $this->actingAs($this->user_2)

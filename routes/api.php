@@ -722,6 +722,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:550,1']], function () {
 
     Route::patch('/question-media/{questionMediaUpload}/caption/{caption}', 'QuestionMediaController@updateCaption');
     Route::delete('/question-media/{questionMediaUpload}', 'QuestionMediaController@destroy');
+    Route::get('/question-media/{questionMediaUpload}/download-transcript', 'QuestionMediaController@downloadTranscript');
+    Route::get('/question-media/validate-vtt/{questionMediaUpload}', 'QuestionMediaController@validateVTT');
 
 
     Route::post('/solutions/show-solution/{assignment}/{question}', 'SolutionController@showSolutionByAssignmentQuestionUser');

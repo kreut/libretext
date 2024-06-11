@@ -7,6 +7,7 @@ use App\PreSignedURL;
 use App\User;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Support\Facades\DB;
 
 class PreSignedURLPolicy
 {
@@ -22,6 +23,19 @@ class PreSignedURLPolicy
         return in_array($user->role,[2,5])
             ? Response::allow()
             : Response::deny('You are not allowed to upload question media.');
+
+    }
+
+
+    public function vttPreSignedURL(User $user, PreSignedURL $preSignedURL, string $s3_key): Response
+    {
+        $question_media_owner = DB::table('question_media_uploads')
+            ->join('questions', 'question_media_uploads.question_id', '=', 'questions.id')
+            ->where('s3_key', $s3_key)
+            ->first();
+        return $question_media_owner
+            ? Response::allow()
+            : Response::deny('You do not own that media so you cannot upload a transcript.');
 
     }
 

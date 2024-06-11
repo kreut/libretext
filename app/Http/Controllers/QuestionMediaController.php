@@ -3,16 +3,105 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\QuestionMediaUpload;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionMediaController extends Controller
 {
+    /**
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @return array
+     * @throws Exception
+     */
+    public function validateVTT(QuestionMediaUpload $questionMediaUpload): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('validateVTT', $questionMediaUpload);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $s3_key = $questionMediaUpload->s3_key;
+            $original_s3_key = $s3_key;
+            $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($s3_key);
+            $s3_key = "{$questionMediaUpload->getDir()}/$vtt_file";
+            if (!Storage::disk('s3')->exists($s3_key)) {
+                $response['message'] = "We were unable to locate the .vtt file on the server.";
+                return $response;
+            }
+
+            // Check the file extension
+            $extension = pathinfo($s3_key, PATHINFO_EXTENSION);
+            if (strtolower($extension) !== 'vtt') {
+                $response['message'] = "That is not a .vtt file.";
+                Storage::disk('s3')->delete($s3_key);
+                return $response;
+            }
+
+            $vtt_content = Storage::disk('s3')->get($s3_key);
+            if (strpos($vtt_content, 'WEBVTT') !== 0) {
+                $response['message'] = "Missing WEBVTT from the file.";
+                Storage::disk('s3')->delete($s3_key);
+                return $response;
+            }
+            $questionMediaUpload->where('s3_key', $original_s3_key)->update(['transcript' => $vtt_content]);
+
+            $transcript = $questionMediaUpload->parseVtt($vtt_content);
+
+
+            $response['type'] = 'success';
+            $response['transcript'] = $transcript;
+            $response['message'] = "The transcript has been updated.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not upload the transcript. Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+
+    /**
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @return array|StreamedResponse
+     * @throws Exception
+     */
+    public function downloadTranscript(QuestionMediaUpload $questionMediaUpload)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('download', $questionMediaUpload);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key();
+            if (Storage::disk('s3')->exists("{$questionMediaUpload->getDir()}/$vtt_file")) {
+                return Storage::disk('s3')->download("{$questionMediaUpload->getDir()}/$vtt_file");
+            } else {
+                $response['message'] = "We were unable to locate the .vtt file $vtt_file.";
+
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not download the .vtt file. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     /**
      * @param QuestionMediaUpload $questionMediaUpload
      * @return array
@@ -31,8 +120,7 @@ class QuestionMediaController extends Controller
             $s3_key = $questionMediaUpload->s3_key;
             $original_filename = $questionMediaUpload->filename;
             $questionMediaUpload->delete();
-            $file_name_without_ext = pathinfo($s3_key, PATHINFO_FILENAME);
-            $vtt_file = "$file_name_without_ext.vtt";
+            $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key();
             if (Storage::disk('s3')->exists("{$questionMediaUpload->getDir()}/$vtt_file")) {
                 Storage::disk('s3')->delete("{$questionMediaUpload->getDir()}/$vtt_file");
             }
@@ -53,8 +141,7 @@ class QuestionMediaController extends Controller
     public function index(string $media, int $start_time = 0)
     {
         $questionMediaUpload = new QuestionMediaUpload();
-        $file_name_without_ext = pathinfo($media, PATHINFO_FILENAME);
-        $vtt_file = "$file_name_without_ext.vtt";
+        $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($media);
         $temporary_url = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$media", Carbon::now()->addDays(7));
         $vtt_file = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$vtt_file", Carbon::now()->addDays(7));
         return view('question_media', ['temporary_url' => $temporary_url, 'vtt_file' => $vtt_file, 'start_time' => $start_time]);
