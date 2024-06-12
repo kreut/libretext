@@ -388,7 +388,7 @@ class QuestionController extends Controller
                 }
                 $question_media_upload->s3_key = $cloned_s3_key;
                 $question_media_upload->question_id = $cloned_question->id;
-                if ($clone_source->qti_json){
+                if ($clone_source->qti_json) {
                     $cloned_question->qti_json = str_replace($s3_key, $cloned_s3_key, $cloned_question->qti_json);
                     $cloned_question->save();
                 }
@@ -1089,7 +1089,8 @@ class QuestionController extends Controller
                          'pending_question_revisions',
                          'question_revisions',
                          'can_give_ups',
-                         'webwork_attachments'
+                         'webwork_attachments',
+                         'question_media_uploads'
                      ]
                      as $table) {
                 $column = in_array($table, ['adapt_migrations', 'adapt_mass_migrations']) ? 'new_page_id' : 'question_id';
@@ -1111,7 +1112,8 @@ class QuestionController extends Controller
             DB::commit();
             $response['message'] = "The question has been deleted.";
             $response['type'] = 'info';
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
