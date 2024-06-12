@@ -1086,6 +1086,7 @@ class QuestionController extends Controller
                          'question_learning_outcome',
                          'seeds',
                          'assignment_question_time_on_tasks',
+                         'pending_question_revisions',
                          'question_revisions',
                          'webwork_attachments'
                      ]
