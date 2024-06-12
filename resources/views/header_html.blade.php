@@ -1,12 +1,6 @@
 <html>
 <head>
-  @php
-    $style_sheet = config('app.env') === 'local'
-  ? request()->getSchemeAndHttpHost() . '/assets/css/libretext.css?v=2'
-  : 'https://dev.adapt.libretexts.org/assets/css/libretext.css?v=2';
-    echo "<link rel='stylesheet' href='$style_sheet'>";
-  @endphp
-
+  <link href="{{ asset('assets/css/libretext.css?v=3') }}" rel="stylesheet">
   <script type="text/javascript"
           src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.2.11/iframeResizer.contentWindow.min.js"
   ></script>
