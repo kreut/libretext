@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Cleanup;
 
 use App\Exceptions\Handler;
+use App\User;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -64,10 +65,19 @@ class removeUnenrolledTestingStudents extends Command
             DB::table('tester_students')
                 ->whereIn('student_user_id', $not_enrolled_testing_students)
                 ->delete();
-            DB::table('users')
-                ->whereIn('id', $not_enrolled_testing_students)
+            $not_enrolled_users = User::whereIn('id', $not_enrolled_testing_students)
                 ->where('testing_student', 1) //not needed but just in case I screwed something up
-                ->delete();
+                ->get();
+            foreach ($not_enrolled_users as $not_enrolled_user) {
+                foreach (['assignment_question_time_on_tasks',
+                             'randomized_assignment_questions',
+                             'review_histories'] as $table) {
+                    DB::table($table)
+                        ->where('user_id', $not_enrolled_user->id)
+                        ->delete();
+                }
+                $not_enrolled_user->delete();
+            }
             DB::commit();
             $num_not_enrolled_testing_students = count($not_enrolled_testing_students);
             if ($num_not_enrolled_testing_students) {
