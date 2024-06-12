@@ -1534,6 +1534,7 @@
                             :rich-editor-config="richEditorConfig"
                             :question-form="questionForm"
                             class="p-0"
+                            @setCKEditorKeydownAsTrue="setCKEditorKeydownAsTrue"
             />
             <HighlightTable v-if="qtiQuestionType === 'highlight_table'"
                             ref="HighlightTable"
@@ -2644,6 +2645,10 @@ export default {
     }
   },
   methods: {
+    setCKEditorKeydownAsTrue(){
+      this.ckeditorKeyDown = true
+      console.log('trued')
+    },
     updateQuestionTranscript (activeMedia, transcript) {
       this.questionForm.media_uploads.find(item => item.id === activeMedia.id).transcript = transcript
       console.log(activeMedia.id)

@@ -10,82 +10,83 @@
       class="pb-3"
       @namespaceloaded="onCKEditorNamespaceLoaded"
       @ready="handleFixCKEditor()"
+      @focus="setCKEditorKeydownAsTrue"
       @keydown="questionForm.errors.clear('qti_item_body')"
     />
-    <has-error :form="questionForm" field="qti_item_body" />
+    <has-error :form="questionForm" field="qti_item_body"/>
     <table v-if="textEntryInteractions.length" class="table table-striped">
       <thead>
-        <tr>
-          <th scope="col">
-            Correct Response
-          </th>
-          <th scope="col">
-            Matching Type
-            <QuestionCircleTooltip :id="'matching-type-tooltip'" />
-            <b-tooltip target="matching-type-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Example. 'the city' would be considered correct if the answer really is 'the city' if you choose
-              Exact. If you choose Substring and student
-              submits 'city'.
-            </b-tooltip>
-          </th>
-          <th scope="col">
-            Case Sensitive
-            <QuestionCircleTooltip :id="'case-sensitive-tooltip'" />
-            <b-tooltip target="case-sensitive-tooltip-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Example. 'new york' would be correct if the correct answer is 'New York' and you choose 'no' for
-              Case Sensitive. Otherwise, it would be
-              considered incorrect.
-            </b-tooltip>
-          </th>
-        </tr>
+      <tr>
+        <th scope="col">
+          Correct Response
+        </th>
+        <th scope="col">
+          Matching Type
+          <QuestionCircleTooltip :id="'matching-type-tooltip'"/>
+          <b-tooltip target="matching-type-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Example. 'the city' would be considered correct if the answer really is 'the city' if you choose
+            Exact. If you choose Substring and student
+            submits 'city'.
+          </b-tooltip>
+        </th>
+        <th scope="col">
+          Case Sensitive
+          <QuestionCircleTooltip :id="'case-sensitive-tooltip'"/>
+          <b-tooltip target="case-sensitive-tooltip-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Example. 'new york' would be correct if the correct answer is 'New York' and you choose 'no' for
+            Case Sensitive. Otherwise, it would be
+            considered incorrect.
+          </b-tooltip>
+        </th>
+      </tr>
       </thead>
       <tbody>
-        <tr v-for="(uTag,index) in uTags" :key="`uTag-${index}`">
-          <td>
-            <div v-if="!uTag.includes('|')">
-              {{ uTag }}
-            </div>
-            <div v-if="uTag.includes('|')">
-              <ol class="pl-3">
-                <li v-for="(uTagOption, uTagOptionIndex) in uTag.split('|')"
-                    :key="`uTag-Option-Index-${index}-${uTagOptionIndex}`"
-                >
-                  {{ uTagOption }}
-                </li>
-              </ol>
-            </div>
-          </td>
-          <td>
-            <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
-                          value="exact"
-            >
-              Exact
-            </b-form-radio>
-            <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
-                          value="substring"
-            >
-              Substring
-            </b-form-radio>
-          </td>
-          <td>
-            <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
-                          value="no"
-            >
-              No
-            </b-form-radio>
-            <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
-                          value="yes"
-            >
-              Yes
-            </b-form-radio>
-          </td>
-        </tr>
+      <tr v-for="(uTag,index) in uTags" :key="`uTag-${index}`">
+        <td>
+          <div v-if="!uTag.includes('|')">
+            {{ uTag }}
+          </div>
+          <div v-if="uTag.includes('|')">
+            <ol class="pl-3">
+              <li v-for="(uTagOption, uTagOptionIndex) in uTag.split('|')"
+                  :key="`uTag-Option-Index-${index}-${uTagOptionIndex}`"
+              >
+                {{ uTagOption }}
+              </li>
+            </ol>
+          </div>
+        </td>
+        <td>
+          <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
+                        value="exact"
+          >
+            Exact
+          </b-form-radio>
+          <b-form-radio v-model="textEntryInteractions[index].matchingType" :name="`matching_type-${index}`"
+                        value="substring"
+          >
+            Substring
+          </b-form-radio>
+        </td>
+        <td>
+          <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
+                        value="no"
+          >
+            No
+          </b-form-radio>
+          <b-form-radio v-model="textEntryInteractions[index].caseSensitive" :name="`case_sensitive-${index}`"
+                        value="yes"
+          >
+            Yes
+          </b-form-radio>
+        </td>
+      </tr>
       </tbody>
     </table>
   </div>
@@ -170,6 +171,9 @@ export default {
     console.log(this.textEntryInteractions)
   },
   methods: {
+    setCKEditorKeydownAsTrue () {
+      this.$emit('setCKEditorKeydownAsTrue')
+    },
     htmlDecode (input) {
       let doc = new DOMParser().parseFromString(input, 'text/html')
       return doc.documentElement.textContent
