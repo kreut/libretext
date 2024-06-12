@@ -1088,6 +1088,7 @@ class QuestionController extends Controller
                          'assignment_question_time_on_tasks',
                          'pending_question_revisions',
                          'question_revisions',
+                         'can_give_ups',
                          'webwork_attachments'
                      ]
                      as $table) {
