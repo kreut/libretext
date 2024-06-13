@@ -1295,11 +1295,14 @@
             </div>
             <div v-if="qtiQuestionType === 'select_choice'">
               <b-alert show variant="info">
-                Using brackets, place a non-space-containing identifier to show where
-                you want the select placed.
-                Example. The [planet] is the closest planet to the sun; there are [number-of-planets] planets.
-                Then, add the choices below with your first choice being the correct response. Each student will
-                receive a randomized ordering of the choices.
+                Using brackets, place the correct answer in the location that you want the select choice to appear.  Then, add the choices below. <br>
+                <br>
+                Example. [Star Wars] took place in a [galaxy] far, far away.
+                <br><br>
+                Note that bracketed words should only appear once.  If you need to use the same correct answer multiple times,
+                you can use a dummy identifier such as [Star Wars-1] where the "1" should be increased each time you need to use the same correct answer.
+                Then, below, you can update the correct answer manually.<br>
+                <br>Each student will receive a randomized ordering of the choices.<br>
               </b-alert>
             </div>
             <div v-if="qtiQuestionType === 'drop_down_rationale_dyad'">

@@ -29,7 +29,7 @@
       <tbody>
         <tr v-for="(selectChoice,index) in selectChoices" :key="`selectChoices-${index}`">
           <td>
-           <span v-html="selectChoice"></span>
+            <span v-html="selectChoice" />
             <input type="hidden" class="form-control is-invalid">
             <div class="help-block invalid-feedback">
               <span v-html="questionForm.errors.get(`qti_select_choice_${selectChoice}`)" />
@@ -152,15 +152,18 @@ export default {
             this.$bvModal.show('qti-select-choice-error')
             return false
           }
-          if (newSelectChoices[i].includes(' ')) {
-            this.selectChoiceIdentifierError = `The identifier [${newSelectChoices[i]}] contains a space. Identifiers should not contain any spaces.`
-            this.$bvModal.show('qti-select-choice-error')
-            return false
-          }
           if (choices.includes(newSelectChoices[i])) {
-            this.selectChoiceIdentifierError = `The identifier [${newSelectChoices[i]}] appears multiple times in your prompt. Identifiers should only appear once.`
-            this.$bvModal.show('qti-select-choice-error')
-            return false
+            if (this.qtiJson.questionType === 'select_choice') {
+              this.selectChoiceIdentifierError = `The identifier [${newSelectChoices[i]}] appears multiple times in your prompt. Identifiers should only appear once.<br><br>If you need to use the same correct answer multiple times, you can use a dummy identifier such as [${newSelectChoices[i]}-1] where the "1" should be increased each time you use the same correct answer. Then, below, you can update the correct answer manually.`
+              this.$bvModal.show('qti-select-choice-error')
+              return false
+            } else {
+              if (choices.includes(newSelectChoices[i])) {
+                this.selectChoiceIdentifierError = `The identifier [${newSelectChoices[i]}] appears multiple times in your prompt. Identifiers should only appear once.`
+                this.$bvModal.show('qti-select-choice-error')
+                return false
+              }
+            }
           }
           choices.push(newSelectChoices[i])
         }
@@ -169,7 +172,7 @@ export default {
           if (!Object.keys(this.qtiJson.inline_choice_interactions).includes(choice)) {
             this.qtiJson.inline_choice_interactions[choice] = [{
               value: uuidv4(),
-              text: '',
+              text: this.qtiJson.questionType === 'select_choice' ? choice : '',
               correctResponse: true
             }]
           }

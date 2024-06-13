@@ -29,7 +29,7 @@ class IsValidSelectChoice implements Rule
      * @param mixed $value
      * @return bool
      */
-    public function passes($attribute, $value)
+    public function passes($attribute, $value): bool
     {
 
         $choices = $this->qti_array['inline_choice_interactions'][$this->identifier];
@@ -37,9 +37,6 @@ class IsValidSelectChoice implements Rule
             $this->message .= "The identifier [$this->identifier] should have at least 2 choices.<br>";
         }
 
-        if (strpos($this->identifier, ' ') !== false) {
-            $this->message .= "The identifier [$this->identifier] should not have spaces.<br>";
-        }
         foreach ($choices as $choice) {
             if ($choice['text'] === '') {
                 $this->message .= "The identifier [$this->identifier] has a blank choice.<br>";
