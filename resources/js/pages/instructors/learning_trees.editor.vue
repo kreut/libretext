@@ -1011,7 +1011,7 @@ export default {
         console.log(this.nodeQuestion)
         this.autoAttributionHTML = ''
         let vm = this
-        this.updateAutoAttribution(vm, this.nodeQuestion.license, this.nodeQuestion.license_version, this.nodeQuestion.author, this.nodeQuestion.source_url)
+        this.updateAutoAttribution(vm, this.nodeQuestion)
         if (this.nodeQuestion.technology === 'text' || this.nodeQuestion.question_type === 'exposition') {
           this.timeLeft = this.nodeQuestion.time_left
         } else {
@@ -1035,7 +1035,7 @@ export default {
         }
         this.questionToView = data.question
         let vm = this
-        this.updateAutoAttribution(vm, this.questionToView.license, this.questionToView.license_version, this.questionToView.author, this.questionToView.source_url)
+        this.updateAutoAttribution(vm, this.questionToView)
         this.questionToViewKey++
       } catch (error) {
         if (error.message.includes('404')) {

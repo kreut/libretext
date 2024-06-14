@@ -4541,7 +4541,7 @@ export default {
       this.propertiesForm.private_description = this.questions[this.currentPage - 1].private_description
       this.autoAttribution = !!this.questions[this.currentPage - 1].auto_attribution
       let vm = this
-      this.updateAutoAttribution(vm, this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author, this.questions[this.currentPage - 1].source_url)
+      this.updateAutoAttribution(vm, this.questions[this.currentPage - 1])
       this.$bvModal.show('modal-properties')
     },
     createQrCode () {
@@ -5522,7 +5522,7 @@ export default {
       }
       this.autoAttributionHTML = ''
       let vm = this
-      this.updateAutoAttribution(vm, this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author, this.questions[this.currentPage - 1].source_url)
+      this.updateAutoAttribution(vm, this.questions[this.currentPage - 1])
       await this.setQuestionUpdatedAtSession(this.questions[this.currentPage - 1].loaded_question_updated_at)
       if (this.user.role === 3) {
         await this.canSubmit()

@@ -1,4 +1,3 @@
-
 export function updateLicenseVersions (license) {
   this.licenseVersionOptions = this.defaultLicenseVersionOptions.filter(version => version.licenses.includes(license))
   let licenseVersion = null
@@ -64,17 +63,30 @@ let defaultLicenseVersionOptions = [
   { value: '1.0', text: '1.0', licenses: ['gnu', 'ccby', 'ccbyncnd', 'ccbynd', 'ccbysa', 'ccbync'] }
 ]
 
+function removeLastPeriod (str) {
+  if (!str) {
+    return str
+  }
+  if (str.charAt(str.length - 1) === '.') {
+    return str.slice(0, -1)
+  }
+  return str
+}
 
-export function updateAutoAttribution (vm, license, licenseVersion, author, sourceURL) {
+export function updateAutoAttribution (vm, question) {
+  const license = question.license
+  const licenseVersion = question.license_version === null ? '' : Number(question.license_version).toFixed(1)
+
+  const author = removeLastPeriod(question.author)
+  const sourceURL = question.source_url
+  const title = question.title
+  console.log(question)
   if (license === 'ncbsn') {
     vm.autoAttributionHTML = 'Content used under license from <a href="https://www.ncsbn.org/" target="_blank">National Council of State Boards of Nursing, Inc. (“NCSBN”)</a>. Copyright 2021 NCSBN. All rights reserved.'
     return
   }
-  licenseVersion = licenseVersion === null ? '' : Number(licenseVersion).toFixed(1)
 
-  let byAuthor = author
-    ? `by ${author}`
-    : ''
+  const byAuthor = author ? `and was authored by ${author}` : ''
   if (!license) {
     vm.autoAttributionHTML = ''
     return
@@ -91,15 +103,14 @@ export function updateAutoAttribution (vm, license, licenseVersion, author, sour
   vm.autoAttributionHTML = license === 'ck12foundation'
     ? '<img style="height: 18px;padding-bottom: 3px;padding-right: 5px;" src="https://www.ck12.org/media/common/images/logo_ck12.svg" alt="ck12 logo">'
     : ''
-  if (licenseVersion) {
-    vm.autoAttributionHTML +=
-      `This assessment ${byAuthor} is licensed under <a href="${url}" target="_blank">${chosenLicenseText} ${licenseVersion}</a>.`
-  } else {
-    vm.autoAttributionHTML += `This assessment ${byAuthor} is licensed under <a href="${url}" target="_blank">${chosenLicenseText}</a>.`
+  const licenseTextAndVersion = licenseVersion ? `${chosenLicenseText} ${licenseVersion}` : `${chosenLicenseText}`
+
+  vm.autoAttributionHTML +=
+    `This assessment titled ${title} is shared under a <a href="${url}" target="_blank">${licenseTextAndVersion}</a> license ${byAuthor}`
+  if (sourceURL && (vm.user && vm.user.role !== 3)) {
+    vm.autoAttributionHTML += ` via <a href="${sourceURL}" target="_blank">source content</a> `
   }
-  if (sourceURL) {
-    vm.autoAttributionHTML += `  The source of this assessment is <a href="${sourceURL}" target="_blank">${sourceURL}</a>.`
-  }
+  vm.autoAttributionHTML += ' that was edited to the style and standards of the ADAPT platform.'
 }
 
 export { licenseOptions, defaultLicenseVersionOptions }
