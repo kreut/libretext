@@ -76,13 +76,15 @@ class AssignmentController extends Controller
                 foreach (['available_from', 'due', 'final_submission_deadline'] as $key) {
                     if ($assign_to_timing->{$key}) {
                         $date = CarbonImmutable::parse($assign_to_timing->{$key});
-                        $assign_to_timing->{$key} = $date->add($shift_by)->toDateTimeString();
+                        $assign_to_timing->{$key} = $date->add($shift_by)->sub("$request->offset_difference minutes")->toDateTimeString();
                     }
                 }
                 $assign_to_timing->save();
             }
             DB::commit();
-            $response['message'] = "The dates have been shifted by $shift_by.";
+            $response['message'] = $request->shifting_method === 'period of time'
+                ? "The dates have been shifted by $shift_by."
+                : "The dates have been shifted based on your new first available from.";
             $response['type'] = 'success';
 
         } catch (Exception $e) {
