@@ -66,6 +66,18 @@ class LoginAsTest extends TestCase
 
 
     /** @test */
+    public function cannot_login_as_another_user_if_you_use_an_invalid_url()
+    {
+        $this->login_as_info['user'] = 'https://some-bad-link';
+        $response = $this->actingAs($this->user)
+            ->disableCookieEncryption()
+            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->withSession(['original_email' => $this->user->email])
+            ->post('/api/user/login-as', $this->login_as_info);
+        $this->assertEquals('That is not a valid URL to log in as.', $response->original['message']);
+    }
+
+    /** @test */
     public function cannot_login_as_another_user_if_you_have_an_incorrect_email()
     {
         $response = $this->actingAs($this->user)

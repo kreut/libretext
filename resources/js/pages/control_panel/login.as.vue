@@ -16,7 +16,7 @@
             <autocomplete
               ref="userSearch"
               class="pr-2"
-              style="width:600px"
+              style="width:650px"
               :search="searchByUser"
               inline
               @submit="selectUser"
@@ -80,6 +80,9 @@ export default {
       }
     },
     searchByUser (input) {
+      if (input.includes('https://')) {
+        return [input]
+      }
       if (input.length < 1) {
         return []
       }
@@ -127,7 +130,11 @@ export default {
           // Fetch the user.
           await this.$store.dispatch('auth/fetchUser')
           // Redirect to the correct home page
-          redirectOnLogin(this.$store, this.$router)
+          if (this.form.user.includes('https://')) {
+            window.location.href = this.form.user
+          } else {
+            redirectOnLogin(this.$store, this.$router)
+          }
         } else {
           this.$noty.error(data.message)// no access
         }

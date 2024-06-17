@@ -243,10 +243,23 @@ class UserController extends Controller
         $user_info = [];
 
         try {
-            $user_info = explode(' --- ', $request->user);
+            if (strpos($request->user, "https://") === false) {
+                $user_info = explode(' --- ', $request->user);
+                $email = $user_info[1];
+                $new_user = User::where('email', $email)->first();
+            } else {
+                $pattern = "/\/assignments\/(\d+)\/questions\/view\/\d+\//";
+                if (preg_match($pattern, $request->user, $matches)) {
+                    $assignment_id = $matches[1];
+                    $user_id = Assignment::find($assignment_id)->course->user_id;
+                    $new_user = User::find($user_id);
+                    $email = $new_user->email;
+                } else {
+                    $response['message'] = "That is not a valid URL to log in as.";
+                    return $response;
+                }
 
-            $email = $user_info[1];
-            $new_user = User::where('email', $email)->first();
+            }
             $authorized = Gate::inspect('loginAs', [$user, $email]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
@@ -261,7 +274,8 @@ class UserController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error logging in as $user_info[0].  Please try again or contact us for assistance.";
+            $user_info_message = $user_info[0] ?? "the user";
+            $response['message'] = "There was an error logging in as $user_info_message.  Please try again or contact us for assistance.";
         }
         return $response;
 
