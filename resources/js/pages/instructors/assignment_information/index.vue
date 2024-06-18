@@ -13,7 +13,7 @@
       />
     </b-modal>
     <div v-if="[2, 4, 5].includes(user.role)">
-      <CannotAddAssessmentToBetaAssignmentModal/>
+      <CannotAddAssessmentToBetaAssignmentModal />
       <b-container>
         <hr>
       </b-container>
@@ -51,10 +51,14 @@
                   <span class="hover-underline"> {{ tab.name }}</span>
                 </router-link>
               </li>
-              <li v-if="user.role !== 5 && !isFormative">
-                <a href="" class="nav-link" @click.prevent="gotoOpenGrader()">
-                  <span class="hover-underline">  Open Grader</span>
-                </a>
+              <li>
+                <router-link
+                  :to="{ name: 'assignment.grading.index', params: {assignmentId: assignmentId}}"
+                  class="nav-link"
+                  active-class="active"
+                >
+                  <span class="hover-underline"> Open Grader</span>
+                </router-link>
               </li>
               <router-link v-if="user.role !== 5 && !isFormative"
                            :to="{ name: 'instructors.assignments.gradebook' }"
@@ -74,7 +78,7 @@
 
         <div class="col-md-9">
           <transition name="fade" mode="out-in">
-            <router-view :key="`router-view-${tabKey}`"/>
+            <router-view :key="`router-view-${tabKey}`" />
           </transition>
         </div>
       </div>
@@ -195,9 +199,6 @@ export default {
       return (this.user.role === 5 && ['Questions', 'Properties'].includes(name)) ||
         this.user.role === 2 ||
         (this.user.role === 4 && !['Grader Access', 'Properties'].includes(name))
-    },
-    gotoOpenGrader () {
-      this.$router.push(`/assignments/${this.assignmentId}/grading`)
     },
     gotoMassGrading () {
       this.$router.push(`/assignments/${this.assignmentId}/regrader`)
