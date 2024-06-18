@@ -74,17 +74,36 @@ class AssignmentController extends Controller
             DB::beginTransaction();
             foreach ($assign_to_timings as $assign_to_timing) {
                 foreach (['available_from', 'due', 'final_submission_deadline'] as $key) {
-                    if ($assign_to_timing->{$key}) {
-                        $date = CarbonImmutable::parse($assign_to_timing->{$key});
-                        $assign_to_timing->{$key} = $date->add($shift_by)->sub("$request->offset_difference minutes")->toDateTimeString();
+                    if ($request->shifting_method !== 'assignment date property') {
+                        if ($assign_to_timing->{$key}) {
+                            $date = CarbonImmutable::parse($assign_to_timing->{$key});
+                            $assign_to_timing->{$key} = $date->add($shift_by)->sub("$request->offset_difference minutes")->toDateTimeString();
+                        }
+                    } else {
+                        if ($key === $request->assignment_date_property) {
+                            $input_date_time = $request->change_date_form['date'].' '.$request->change_date_form['time'];
+                            $datetimeInUserTimezone = Carbon::createFromFormat('Y-m-d g:i A', $input_date_time, $request->user()->time_zone);
+                            $datetimeInUTC = $datetimeInUserTimezone->setTimezone('UTC');
+                            $assign_to_timing->{$key} = $datetimeInUTC->format('Y-m-d H:i:s');
+                        }
                     }
                 }
                 $assign_to_timing->save();
             }
             DB::commit();
-            $response['message'] = $request->shifting_method === 'period of time'
-                ? "The dates have been shifted by $shift_by."
-                : "The dates have been shifted based on your new first available from.";
+            $message = "";
+            switch ($request->shifting_method) {
+                case('period of time'):
+                    $message = "The dates have been shifted by $shift_by.";
+                    break;
+                case('assignment date property'):
+                    $message = "The dates have been updated.";
+                    break;
+                case('first available on'):
+                    $message = "The dates have been shifted based on your new first available from.";
+                    break;
+            }
+            $response['message'] = $message;
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -104,30 +123,46 @@ class AssignmentController extends Controller
      */
     public function previewShiftDates(Request $request): array
     {
+
         $shift_by = $request->shift_by;
         $chosen_assignments = $request->chosen_assignments;
         $date = CarbonImmutable::now();
         $response['type'] = 'error';
-        try {
-            $date->add($shift_by)->calendar();
-        } catch (Exception $e) {
-            $response['message'] = "$shift_by is not a valid period of time.";
-            return $response;
+        if (in_array($shift_by, ['period of time', 'first available on'])) {
+            try {
+                $date->add($shift_by)->calendar();
+            } catch (Exception $e) {
+                $response['message'] = "$shift_by is not a valid period of time.";
+                return $response;
+            }
         }
         $preview_shift_dates = [];
         foreach ($chosen_assignments as $chosen_assignment) {
             $preview_shift_date = [];
             foreach (['due', 'available_from', 'final_submission_deadline'] as $key) {
-                if ($chosen_assignment[$key]) {
-                    $date = CarbonImmutable::parse($chosen_assignment[$key]);
-                    $preview_shift_date[$key] = $date->add($shift_by)->toDateTimeString();
+                if ($request->shifting_method !== 'assignment date property') {
+                    if ($chosen_assignment[$key]) {
+                        $date = CarbonImmutable::parse($chosen_assignment[$key]);
+                        $preview_shift_date[$key] = $date->add($shift_by)->toDateTimeString();
+                    }
+                } else {
+                    if ($key === $request->assignment_date_property) {
+                        $input_date_time = $request->change_date_form['date'].' '.$request->change_date_form['time'];
+                        $datetimeInUserTimezone = Carbon::createFromFormat('Y-m-d g:i A', $input_date_time);
+                        $preview_shift_date[$key] = $datetimeInUserTimezone->format('Y-m-d H:i:s');
+                    } else {
+                        if (isset($chosen_assignment[$key])) {
+                            $preview_shift_date[$key] = $chosen_assignment[$key];
+                        }
+                    }
                 }
             }
             $preview_shift_date['name'] = $chosen_assignment['name'];
             $preview_shift_date['assignment_id'] = $chosen_assignment['assignment_id'];
             $preview_shift_dates[] = $preview_shift_date;
         }
-        $response['type'] = 'success';
+        $response['type'] = 'info';
+        $response['message'] = 'The dates have been updated for preview.';
         $response['preview_shift_dates'] = $preview_shift_dates;
         return $response;
     }
@@ -152,7 +187,7 @@ class AssignmentController extends Controller
                 ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
                 ->join('assignments', 'assign_to_timings.assignment_id', '=', 'assignments.id')
                 ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
-                ->select('assignments.id AS id', 'assign_to_timings.*', 'assignments.name')
+                ->select('assignments.id as id', 'assign_to_timings.*', 'assignments.name')
                 ->where('group', 'course')
                 ->where('assessment_type', '<>', 'clicker')
                 ->get();
@@ -176,7 +211,6 @@ class AssignmentController extends Controller
 
 
     }
-
     /**
      * @param Assignment $assignment
      * @return array

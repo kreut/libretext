@@ -52,7 +52,7 @@
         class="mb-3"
         label="Shifting Method"
         stacked
-        @change="resetShiftDatesForm"
+        @input="resetShiftDatesForm"
       >
         <b-form-radio
           name="shifting-method"
@@ -67,61 +67,80 @@
         >
           A period of time such as 1 hour or -10 days
         </b-form-radio>
+        <b-form-radio
+          name="shifting-method"
+          value="assignment date property"
+        >
+          Provide a single common date for the Available On, the Due Date, or the Final Submission
+        </b-form-radio>
       </b-form-radio-group>
 
-      <b-form-group
-        v-show="shiftDatesForm.shifting_method === 'first available on'"
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="date"
-        label-align="end"
-      >
-        <template v-slot:label>
-          First Available On
-        </template>
-        <b-form-row>
-          <b-col lg="7">
-            <b-form-datepicker
-              id="date"
-              v-model="firstAvailableOnForm.date"
-              required
-              tabindex="0"
-              :class="{ 'is-invalid': firstAvailableOnForm.errors.has('date') }"
-              class="datepicker"
-              @shown="firstAvailableOnForm.errors.clear('date')"
-            />
-            <has-error :form="firstAvailableOnForm" field="date"/>
-          </b-col>
-          <b-col>
-            <vue-timepicker id="time"
-                            v-model="firstAvailableOnForm.time"
-                            format="h:mm A"
-                            manual-input
-                            drop-direction="up"
-                            :class="{ 'is-invalid': firstAvailableOnForm.errors.has('date') }"
-                            input-class="custom-timepicker-class"
-            >
-              <template v-slot:icon>
-                <b-icon-clock/>
-              </template>
-            </vue-timepicker>
-            <has-error :form="firstAvailableOnForm" field="time"/>
-          </b-col>
-          <b-col>
-            <div class="mt-1">
-              <b-button variant="info" size="sm" @click="previewShiftDates">
-                Preview
-              </b-button>
-              <b-button variant="info" size="sm" @click="resetDates">
-                Reset
-              </b-button>
-              <b-button variant="primary" size="sm" @click="saveShiftDates">
-                Save
-              </b-button>
+      <div v-show="['first available on','assignment date property'].includes(shiftDatesForm.shifting_method)">
+        <b-form-group
+          :label-cols-sm="shiftDatesForm.shifting_method === 'assignment date property' ? 4 :3"
+          :label-cols-lg="shiftDatesForm.shifting_method === 'assignment date property' ? 3 :2"
+          label-for="date"
+          label-align="end"
+        >
+          <template v-slot:label>
+            <div v-if="shiftDatesForm.shifting_method === 'assignment date property'" class="pb-2">
+              <b-form-select v-model="assignmentDateProperty"
+                             :options="assignmentDatePropertyOptions"
+                             size="sm"
+                             @change="assignmentDatePropertyError = ''"
+              />
+              <ErrorMessage :message="assignmentDatePropertyError"/>
             </div>
-          </b-col>
-        </b-form-row>
-      </b-form-group>
+            <div v-if="shiftDatesForm.shifting_method === 'first available on'">
+              First Available On
+            </div>
+          </template>
+          <b-form-row>
+            <b-col lg="6">
+              <b-form-datepicker
+                id="date"
+                :key="`date-key-${dateTimeKey}`"
+                v-model="changeDateForm.date"
+                required
+                tabindex="0"
+                :class="{ 'is-invalid': changeDateForm.errors.has('date') }"
+                class="datepicker"
+                @shown="changeDateForm.errors.clear('date')"
+              />
+              <has-error :form="changeDateForm" field="date"/>
+            </b-col>
+            <b-col>
+              <vue-timepicker id="time"
+                              :key="`time-key-${dateTimeKey}`"
+                              v-model="changeDateForm.time"
+                              format="h:mm A"
+                              manual-input
+                              drop-direction="up"
+                              :class="{ 'is-invalid': changeDateForm.errors.has('date') }"
+                              input-class="custom-timepicker-class"
+              >
+                <template v-slot:icon>
+                  <b-icon-clock/>
+                </template>
+              </vue-timepicker>
+              <has-error :form="changeDateForm" field="time"/>
+            </b-col>
+            <b-col>
+              <div class="mt-1">
+                <b-button variant="info" size="sm" @click="previewShiftDates">
+                  Preview
+                </b-button>
+                <b-button variant="info" size="sm" @click="resetDates">
+                  Reset
+                </b-button>
+                <b-button variant="primary" size="sm" @click="saveShiftDates">
+                  Save
+                </b-button>
+              </div>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+      </div>
       <b-form-group
         v-show="shiftDatesForm.shifting_method === 'period of time'"
         label-cols-sm="3"
@@ -266,12 +285,32 @@ import AllFormErrors from '~/components/AllFormErrors.vue'
 import VueTimepicker from 'vue2-timepicker'
 import 'vue2-timepicker/dist/VueTimepicker.css'
 import { mapGetters } from 'vuex'
+import ErrorMessage from '../../../components/ErrorMessage.vue'
 
 export default {
-  components: { AllFormErrors, VueTimepicker },
+  components: { ErrorMessage, AllFormErrors, VueTimepicker },
   data: () => ({
+    hitPreview: false,
+    showAssignmentsTable: true,
+    dateTimeKey: 0,
+    assignmentDatePropertyError: '',
+    assignmentDateProperty: null,
+    assignmentDatePropertyOptions: [
+      {
+        text: 'Choose a Property', value: null
+      },
+      {
+        text: 'Available On', value: 'available_from'
+      },
+      {
+        text: 'Due Date', value: 'due'
+      },
+      {
+        text: 'Final Submission Deadline', value: 'final_submission_deadline'
+      }
+    ],
     offsetDifference: 0,
-    firstAvailableOnForm: new Form({
+    changeDateForm: new Form({
       date: '',
       time: ''
     }),
@@ -296,16 +335,19 @@ export default {
   },
   methods: {
     resetShiftDatesForm (option) {
-      this.shiftDatesForm = new Form({
-        shift_by: '',
-        offset_difference: 0,
-        shifting_method: option
-      })
-      this.firstAvailableOnForm =
-        new Form({
+      this.$nextTick(() => {
+        this.assignmentDateProperty = null
+        this.shiftDatesForm = new Form({
+          shift_by: '',
+          offset_difference: 0,
+          shifting_method: option
+        })
+        this.changeDateForm = new Form({
           date: '',
           time: ''
         })
+      })
+      this.dateTimeKey++
     },
     showShiftingPeriodExamplesModal () {
       this.mouseOverShiftingPeriodExamples = true
@@ -316,23 +358,30 @@ export default {
       }, 500)
     },
     resetDates () {
+      this.hitPreview = false
       this.shiftDatesForm.shift_by = null
       this.chosenAssignments = this.assignmentDates.filter(assignment => this.selectedAssignmentIds.includes(assignment.assignment_id))
       this.$noty.success('The dates have been reset.')
     },
     async saveShiftDates () {
-      if (this.shiftDatesForm.shifting_method === 'first available on') {
-        if (!this.computeShiftByForDate()) {
-          return
-        }
+      this.changeDateForm.errors.clear()
+      if (!this.preValidateForm()) {
+        return
       }
+      this.hitPreview = false
       try {
         this.shiftDatesForm.assignment_ids = this.selectedAssignmentIds
+        this.shiftDatesForm.assignment_date_property = this.assignmentDateProperty
+        this.shiftDatesForm.change_date_form = this.changeDateForm
         const { data } = await this.shiftDatesForm.post(`/api/assignments/${this.courseId}/shift-dates`)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           await this.getAssignmentDates()
-          this.$bvModal.hide('modal-shift-dates')
+          if (this.shiftDatesForm.shifting_method !== 'assignment date property') {
+            this.$bvModal.hide('modal-shift-dates')
+          } else {
+            this.chosenAssignments = this.assignmentDates.filter(assignment => this.selectedAssignmentIds.includes(assignment.assignment_id))
+          }
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -344,7 +393,7 @@ export default {
       }
     },
     computeShiftByForDate () {
-      const { date, time } = this.firstAvailableOnForm
+      const { date, time } = this.changeDateForm
       const time24 = this.$moment(time, ['h:mm A']).format('HH:mm')
       const dateTimeString = `${date} ${time24}`
       if (this.$moment(dateTimeString).isValid() && this.$moment(this.assignmentDates[0].available_from).isValid()) {
@@ -363,28 +412,55 @@ export default {
         this.shiftDatesForm.shift_by = `${this.differenceInMinutes} minutes`
       } else {
         const errorMessage = 'Please be sure to enter a valid date and time.'
-        this.firstAvailableOnForm.errors.set('date', errorMessage)
+        this.changeDateForm.errors.set('date', errorMessage)
         this.allFormErrors = [errorMessage]
         this.$bvModal.show('modal-form-errors-shift-dates')
         return false
       }
       return true
     },
-    async previewShiftDates () {
-      if (this.shiftDatesForm.shifting_method === 'first available on') {
-        if (!this.computeShiftByForDate()) {
-          return
+    preValidateForm () {
+      if (this.shiftDatesForm.shifting_method === 'assignment date property') {
+        if (this.chosenAssignments.filter(item => !item.final_submission_deadline).length
+          && this.assignmentDateProperty === 'final_submission_deadline') {
+          this.assignmentDatePropertyError = 'The Final Submission Deadline is not applicable for at least one of your assignments.'
+          return false
+        }
+        if (!this.assignmentDateProperty) {
+          this.assignmentDatePropertyError = 'Please choose one of the assignment properties.'
+          return false
         }
       }
+      if (['first available on', 'assignment date property'].includes(this.shiftDatesForm.shifting_method)) {
+        if (!this.computeShiftByForDate()) {
+          return false
+        }
+      }
+      return true
+    },
+    async previewShiftDates () {
+      this.changeDateForm.errors.clear()
+      if (!this.preValidateForm()) {
+        return
+      }
+      if (this.shiftDatesForm.shifting_method === 'assignment date property' && this.hitPreview) {
+        this.$noty.info('Please either save your previewed changes or reset before changing the timings again.')
+        return
+      }
+      this.hitPreview = true
+
       this.chosenAssignments = this.assignmentDates.filter(assignment => this.selectedAssignmentIds.includes(assignment.assignment_id))
       try {
         const { data } = await axios.patch('/api/assignments/preview-shift-dates', {
           shift_by: this.shiftDatesForm.shift_by,
-          chosen_assignments: this.chosenAssignments
+          chosen_assignments: this.chosenAssignments,
+          assignment_date_property: this.assignmentDateProperty,
+          shifting_method: this.shiftDatesForm.shifting_method,
+          change_date_form: this.changeDateForm
         })
-        if (data.type === 'success') {
+        if (data.type === 'info') {
           this.chosenAssignments = data.preview_shift_dates
-          this.$noty.success('The dates have been updated.')
+          this.$noty.info(data.message)
         } else {
           this.shiftDatesForm.errors.set('shift_by', data.message)
           return false
