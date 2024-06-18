@@ -128,6 +128,7 @@ class AssignmentGroupWeightController extends Controller
             $response['message'] = 'The non-extra credit percentage weights should sum to 100.';
             return $response;
         }
+        $response['form_error']= false;
         $response['type'] = 'success';
         return $response;
     }
