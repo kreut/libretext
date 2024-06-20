@@ -53,12 +53,35 @@
     </b-modal>
     <b-modal
       :id="`modal-edit-question-${questionToEdit.id}`"
-      :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
       size="xl"
       hide-footer
       no-close-on-backdrop
       @hidden="hideModalEditActions()"
     >
+       <template #modal-header>
+        <div>
+          <h2 class="h5 modal-title">
+           Edit Question "{{ questionToEdit.title }}"
+          </h2>
+          <div>
+            <small>ADAPT ID: <span id="adapt-id">{{ questionToEdit.id }}</span></small>
+            <span class="text-info">
+              <a href=""
+                 aria-label="Copy ADAPT ID"
+                 @click.prevent="doCopy('adapt-id')"
+              >
+                <font-awesome-icon :icon="copyIcon"/>
+              </a>
+            </span>
+          </div>
+        </div>
+        <button type="button" aria-label="Close"
+                class="close"
+                @click="$bvModal.hide(`modal-edit-question-${questionToEdit.id}`);hideModalEditActions()"
+        >
+          ×
+        </button>
+      </template>
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}-${questionToEdit.question_revision_id}`"
                       :question-to-edit="questionToEdit"
                       :modal-id="'my-questions-question-to-view-questions-editor'"
@@ -206,6 +229,8 @@ import axios from 'axios'
 import { editQuestionSource, getQuestionToEdit, getQuestionRevisionToEdit } from '~/helpers/Questions'
 import { mapGetters } from 'vuex'
 import { v4 as uuidv4 } from 'uuid'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { doCopy } from '~/helpers/Copy'
 
 export default {
   name: 'GetQuestionsActions',
@@ -257,6 +282,7 @@ export default {
     }
   },
   data: () => ({
+    copyIcon: faCopy,
     componentId: '',
     isBetaAssignment: false,
     confirmDeleteModalId: 'confirm-delete-modal',
@@ -297,6 +323,7 @@ export default {
     this.componentId = uuidv4()
   },
   methods: {
+    doCopy,
     setQuestionRevision (revision) {
       console.log('setting revision')
       console.log(this.questionToEdit)

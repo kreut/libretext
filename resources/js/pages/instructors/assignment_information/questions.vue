@@ -12,12 +12,35 @@
       v-if="questionToEdit"
       :id="`modal-edit-question-${questionToEdit.id}`"
       :key="`modal-edit-question-${questionToEdit.id}`"
-      :title="`Edit Question &quot;${questionToEdit.title}&quot;`"
       size="xl"
       no-close-on-backdrop
       hide-footer
       @hidden="$emit('reloadCurrentAssignmentQuestions')"
     >
+      <template #modal-header>
+        <div>
+          <h2 class="h5 modal-title">
+            Edit Question "{{ questionToEdit.title }}"
+          </h2>
+          <div>
+            <small>ADAPT ID: <span :id="`adapt-id-${questionToEdit.id}`">{{ questionToEdit.id }}</span></small>
+            <span class="text-info">
+              <a href=""
+                 aria-label="Copy ADAPT ID"
+                 @click.prevent="doCopy(`adapt-id-${questionToEdit.id}`)"
+              >
+                <font-awesome-icon :icon="copyIcon"/>
+              </a>
+            </span>
+          </div>
+        </div>
+        <button type="button" aria-label="Close"
+                class="close"
+                @click="$bvModal.hide(`modal-edit-question-${questionToEdit.id}`);$emit('reloadCurrentAssignmentQuestions')"
+        >
+          ×
+        </button>
+      </template>
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}-${questionToEdit.question_revision_id}`"
                       :question-to-edit="questionToEdit"
                       :parent-get-my-questions="getAssignmentInfo"
