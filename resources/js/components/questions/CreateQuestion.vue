@@ -1037,6 +1037,7 @@
             <b-container class="mt-2">
               <b-row>
                 <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                                     v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded || ['exposition','report'].includes(questionForm.question_type)"
                                      :media-uploads="questionForm.media_uploads"
                                      :question-media-upload-id="questionMediaUploadId"
                                      :qti-json="questionForm.non_technology_text"

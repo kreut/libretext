@@ -117,8 +117,7 @@ class QuestionMediaController extends Controller
         }
         try {
             DB::beginTransaction();
-            $s3_key = $questionMediaUpload->s3_key;
-            $original_filename = $questionMediaUpload->filename;
+            $original_filename = $questionMediaUpload->original_filename;
             $questionMediaUpload->delete();
             $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key();
             if (Storage::disk('s3')->exists("{$questionMediaUpload->getDir()}/$vtt_file")) {

@@ -186,6 +186,29 @@
         >
           Select Audio or Video file
         </file-upload>
+        <QuestionCircleTooltipModal :modal-id="'modal-upload-question-media'" />
+        <b-modal id="modal-upload-question-media"
+                 title="Upload Question Media and Edit Transcript"
+                 size="lg"
+                 no-close-on-backdrop
+        >
+          <b-embed
+            type="iframe"
+            aspect="16by9"
+            src="https://www.youtube.com/embed/tvtGLadJ4u0?rel=0"
+            allowfullscreen
+          />
+          <template #modal-footer>
+            <b-button
+              size="sm"
+              variant="primary"
+              class="float-right"
+              @click="$bvModal.hide('modal-upload-question-media')"
+            >
+              OK
+            </b-button>
+          </template>
+        </b-modal>
       </div>
     </b-row>
     <b-row class="upload mt-3 ml-1">
@@ -243,7 +266,8 @@
           <a :id="getTooltipTarget('copyURL',data.item.s3_key)"
              href=""
              aria-label="Copy URL"
-             class="text-muted mr-1"
+             style="cursor: pointer;color:#212529 !important"
+             class="mr-1"
              @click.prevent="doCopy(`copy-question-media-url-${data.item.s3_key}`, 'Successfully copied!  You may add this URL to a link in your question.')"
           >
             <font-awesome-icon :icon="copyIcon" />
@@ -330,12 +354,14 @@ import { doCopy } from '~/helpers/Copy'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { getTooltipTarget } from '~/helpers/Tooptips'
+import QuestionCircleTooltipModal from './QuestionCircleTooltipModal.vue'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
 export default {
   name: 'QuestionMediaUpload',
   components: {
+    QuestionCircleTooltipModal,
     ErrorMessage,
     AllFormErrors,
     FontAwesomeIcon
