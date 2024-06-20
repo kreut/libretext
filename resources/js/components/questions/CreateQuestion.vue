@@ -1031,7 +1031,9 @@
               </span>
             </template>
           </b-form-group>
-          <div v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || ['exposition','report'].includes(questionForm.question_type)">
+          <div
+            v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || ['exposition','report'].includes(questionForm.question_type)"
+          >
             <b-container class="mt-2">
               <b-row>
                 <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
@@ -1307,12 +1309,15 @@
             </div>
             <div v-if="qtiQuestionType === 'select_choice'">
               <b-alert show variant="info">
-                Using brackets, place the correct answer in the location that you want the select choice to appear.  Then, add the choices below. <br>
+                Using brackets, place the correct answer in the location that you want the select choice to appear.
+                Then, add the choices below. <br>
                 <br>
                 Example. [Star Wars] took place in a [galaxy] far, far away.
                 <br><br>
-                Note that bracketed words should only appear once.  If you need to use the same correct answer multiple times,
-                you can use a dummy identifier such as [Star Wars-1] where the "1" should be increased each time you need to use the same correct answer.
+                Note that bracketed words should only appear once. If you need to use the same correct answer multiple
+                times,
+                you can use a dummy identifier such as [Star Wars-1] where the "1" should be increased each time you
+                need to use the same correct answer.
                 Then, below, you can update the correct answer manually.<br>
                 <br>Each student will receive a randomized ordering of the choices.<br>
               </b-alert>
@@ -1721,21 +1726,31 @@
             v-if="existingQuestionFormTechnology !== 'text'
               && !webworkEditorShown
               && questionForm.question_type === 'assessment'"
-            label-cols-sm="3"
-            label-cols-lg="2"
+            :label-cols-sm="existingQuestionFormTechnology === 'h5p' ? 2 : 3"
+            :label-cols-lg="existingQuestionFormTechnology === 'h5p' ? 1 : 2"
             label-for="technology_id"
             :label="existingQuestionFormTechnology === 'webwork' ? 'WeBWork Path' : `${getTextFromTechnology(questionForm.technology)} ID`"
           >
             <b-form-row>
-              <b-form-input
-                id="technology_id"
-                v-model="questionForm.technology_id"
-                type="text"
-                :style="existingQuestionFormTechnology === 'webwork' ? 'width:700px' : ''"
-                :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
-                @keydown="questionForm.errors.clear('technology_id')"
-              />
-              <has-error :form="questionForm" field="technology_id" />
+              <div>
+                <b-form-input
+                  id="technology_id"
+                  v-model="questionForm.technology_id"
+                  type="text"
+                  :style="existingQuestionFormTechnology === 'webwork' ? 'width:700px' : ''"
+                  :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
+                  @keydown="questionForm.errors.clear('technology_id')"
+                />
+                <has-error :form="questionForm" field="technology_id" />
+              </div>
+              <div class="mt-1 ml-3">
+                <b-button v-if="existingQuestionFormTechnology === 'h5p' && questionForm.technology_id" size="sm"
+                          variant="outline-primary"
+                          @click="viewInLibreStudio(questionForm.technology_id)"
+                >
+                  View in LibreStudio
+                </b-button>
+              </div>
             </b-form-row>
           </b-form-group>
           <div v-show="webworkEditorShown">
@@ -2660,6 +2675,12 @@ export default {
     }
   },
   methods: {
+    viewInLibreStudio (id) {
+      window.open(
+        `https://studio.libretexts.org/h5p/${id}`,
+        '_blank' // <- This is what makes it open in a new window.
+      )
+    },
     setCKEditorKeydownAsTrue () {
       this.ckeditorKeyDown = true
       console.log('trued')
