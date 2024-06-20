@@ -22,6 +22,20 @@ class SubmissionPolicy
      * @param Assignment $assignment
      * @return Response
      */
+    public function getSubmissionTimesByAssignmentAndStudent(User $user, Submission $submission, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny("You are not allowed to get the submission times by assignment and student.");
+
+    }
+
+    /**
+     * @param User $user
+     * @param Submission $submission
+     * @param Assignment $assignment
+     * @return Response
+     */
     public function submissionArray(User $user, Submission $submission, Assignment $assignment): Response
     {
 
@@ -88,7 +102,7 @@ class SubmissionPolicy
         $is_fake_student = $user->fake_student && auth()->user()->instructor_user_id;
         $assignment_questions = $assignment->questions->pluck('id')->toArray();
 
-        return ((in_array($user->role,[2,5]) || $user->formative_student || $is_fake_student) && in_array($question_id, $assignment_questions))
+        return ((in_array($user->role, [2, 5]) || $user->formative_student || $is_fake_student) && in_array($question_id, $assignment_questions))
             ? Response::allow()
             : Response::deny("You are not allowed to reset this submission.");
 

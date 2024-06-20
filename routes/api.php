@@ -402,6 +402,8 @@ Route::group(['middleware' => ['auth:api','analytics', 'throttle:550,1']], funct
 
     Route::get('/auto-graded-and-file-submissions/{assignment}/{question}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student', 'AutoGradedAndFileSubmissionController@getAutoGradedAndFileSubmissionsByAsssignmentAndQuestionAndStudent');
     Route::get('/auto-graded-submissions/{assignment}/get-auto-graded-submissions-by-assignment/{download}', 'AutoGradedAndFileSubmissionController@getAutoGradedSubmissionsByAssignment');
+    Route::get('/auto-graded-and-file-submissions/{assignment}/get-submission-times-by-assignment-and-student', 'AutoGradedAndFileSubmissionController@getSubmissionTimesByAssignmentAndStudent');
+
 
     Route::get('/scores/{assignment}/{question}/get-scores-by-assignment-and-question', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::put('/scores/{assignment}/upload-override-scores', 'ScoreController@uploadOverrideScores');

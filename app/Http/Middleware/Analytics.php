@@ -42,7 +42,8 @@ class Analytics
                         'ScoreController@getScoreByAssignmentAndStudent',
                         'EnrollmentController@details',
                         'AssignmentQuestionTimeOnTaskController@getTimeOnTasksByAssignment',
-                        'ScoreController@getAssignmentQuestionScoresByUser'
+                        'ScoreController@getAssignmentQuestionScoresByUser',
+                        'AutoGradedAndFileSubmissionController@getSubmissionTimesByAssignmentAndStudent'
                     ];
 
                     if ($method !== 'GET' || !in_array($action_name, $valid_action_names)) {

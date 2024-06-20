@@ -32,6 +32,17 @@ class AutoGradedSubmissionsTest extends TestCase
     }
 
 
+
+
+/** @test */
+    public function non_owner_cannot_get_timings()
+{
+
+    $this->actingAs($this->user_2)
+        ->getJson("/api/auto-graded-and-file-submissions/{$this->assignment->id}/get-submission-times-by-assignment-and-student")
+        ->assertJson(['message' => "You are not allowed to get the submission times by assignment and student."]);
+
+}
     /** @test */
     public function non_owner_cannot_get_auto_graded_submissions()
     {

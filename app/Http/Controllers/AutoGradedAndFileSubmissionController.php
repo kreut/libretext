@@ -8,6 +8,7 @@ use App\Helpers\Helper;
 use App\Question;
 use App\Submission;
 use App\SubmissionFile;
+use App\SubmissionText;
 use App\User;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler;
@@ -20,6 +21,69 @@ use Throwable;
 
 class AutoGradedAndFileSubmissionController extends Controller
 {
+
+    public function getSubmissionTimesByAssignmentAndStudent(Assignment     $assignment,
+                                                   Submission     $submission,
+                                                   SubmissionFile $submissionFile,
+                                                   SubmissionText $submissionText)
+    {
+        $response['type'] = 'error';
+          $authorized = Gate::inspect('getSubmissionTimesByAssignmentAndStudent', [$submission, $assignment]);
+          if (!$authorized->allowed()) {
+              $response['message'] = $authorized->message();
+              return $response;
+          }
+        try {
+            $enrolled_users = $assignment->course->enrolledUsers->sortBy('first_name', SORT_NATURAL | SORT_FLAG_CASE);
+            $enrolled_users_by_id = $enrolled_users->pluck('id')->toArray();
+            $submissions = $submission->where('assignment_id', $assignment->id)->get();
+            foreach ($submissions as $submission) {
+                if (!isset($submissions_by_user_question[$submission->user_id])) {
+                    $submissions_by_user_question[$submission->user_id] = [];
+                }
+                $submissions_by_user_question[$submission->user_id][$submission->question_id] = [
+                    'first_submitted_at' => $submission->created_at,
+                    'last_submitted_at' => $submission->updated_at];
+            }
+            $submission_files = $submissionFile->where('assignment_id', $assignment->id)->get();
+            foreach ($submission_files as $submission_file) {
+                if (!isset($submission_files_by_user_question[$submission->user_id])) {
+                    $submission_files_by_user_question[$submission_file->user_id] = [];
+                }
+                $submission_files_by_user_question[$submission_file->user_id][$submission_file->question_id] = [
+                    'submitted_at' => $submission->created_at];
+            }
+            $submission_texts = $submissionText->where('assignment_id', $assignment->id)->get();
+            foreach ($submission_texts as $submission_text) {
+                if (!isset($submission_texts_by_user_question[$submission_text->user_id])) {
+                    $submission_texts_by_user_question[$submission_text->user_id] = [];
+                }
+                $submission_texts_by_user_question[$submission_text->user_id][$submission_text->question_id] = [
+                    'submitted_at' => $submission->created_at];
+            }
+            $submission_times_by_user = [];
+            foreach ($enrolled_users_by_id as $enrolled_user_id) {
+                $info['user_id'] = $enrolled_user_id;
+                $info['auto_graded'] = $submissions_by_user_question[$enrolled_user_id] ?? null;
+                $open_ended = null;
+                if (isset($submission_files_by_user_question[$enrolled_user_id])) {
+                    $open_ended = $submission_files_by_user_question[$enrolled_user_id];
+                }
+                if (isset($submission_texts_by_user_question[$enrolled_user_id])) {
+                    $open_ended = $submission_texts_by_user_question[$enrolled_user_id];
+                }
+                $info['open_ended'] = $open_ended;
+                $submission_times_by_user[] = $info;
+            }
+            return $submission_times_by_user;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the submission times for this assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
      * @param Assignment $assignment
