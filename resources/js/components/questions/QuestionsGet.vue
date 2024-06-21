@@ -4,6 +4,22 @@
                          :modal-id="questionToView.question_id"
                          :qti-json="questionToView.qti_answer_json"
     />
+    <b-modal id="modal-formatted-question-types"
+             title="Choose Type"
+             size="xl"
+    >
+      <FormattedQuestionTypeRadio :key="allQuestionsTechnology"
+                                  :formatted-question-types-options-by-technology="formattedQuestionTypesOptionsByTechnology"
+                                  :technology="allQuestionsTechnology"
+                                  :formatted-question-type="formattedQuestionType"
+                                  @setFormattedQuestionType="setFormattedQuestionType"
+      />
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-formatted-question-types')">
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-cannot-reorder"
              title="Cannot re-order questions"
              @hidden="getCollection(questionSource)"
@@ -14,32 +30,6 @@
           OK
         </b-button>
       </template>
-    </b-modal>
-    <b-modal
-      id="modal-search-by-adapt-id"
-      title="Search By ADAPT ID"
-      hide-footer
-    >
-      <b-form-group
-        label-for="all-questions-adapt-id"
-        label-cols-sm="2"
-        label-align-sm="right"
-        label-size="sm"
-        label="ADAPT ID"
-      >
-        <b-input-group style="width:300px">
-          <span class="pr-2">
-            <b-form-input
-              id="all-questions-adapt-id"
-              v-model="allQuestionsAdaptId"
-              size="sm"
-            />
-          </span>
-          <b-button class="pl-2" size="sm" variant="outline-primary" @click="getQuestionByAdaptId()">
-            Get Question
-          </b-button>
-        </b-input-group>
-      </b-form-group>
     </b-modal>
     <b-modal
       :id="`modal-share-${questionToView.question_id}`"
@@ -651,7 +641,7 @@
                               />
                             </b-form-group>
                           </div>
-                          <div v-if="questionSource === 'all_questions'">
+                          <div v-if="questionSource === 'all_questions' && showPagination">
                             <b-pagination
                               v-model="allQuestionsCurrentPage"
                               :total-rows="allQuestionsTotalRows"
@@ -924,10 +914,10 @@
                   </div>
                   <div v-if="user.role !== 5">
                     <b-form inline class="pb-3">
-                      <label class="ml-2" style="font-size:14px;margin-right:52px">Type</label>
-                      <b-form-select id="content-type"
-                                     v-model="allQuestionsType"
-                                     :options="typeOptions"
+                      <label for="class" style="font-size:15px;margin-left:45px;margin-right:10px;text-align:right">Class</label>
+                      <b-form-select id="class"
+                                     v-model="allQuestionsClass"
+                                     :options="classOptions"
                                      inline
                                      style="width:175px"
                                      size="sm"
@@ -935,7 +925,7 @@
                       />
                     </b-form>
                     <b-form inline class="pb-3">
-                      <label class="ml-2" style="font-size:14px;margin-right:32px">Content</label>
+                      <label style="margin-left:33px;font-size:14px;margin-right:8px">Content</label>
                       <b-form-select id="content-type"
                                      v-model="allQuestionsContent"
                                      :options="contentOptions"
@@ -1046,6 +1036,50 @@
                     </b-form-radio-group>
                   </b-form-group>
                   <b-form-group
+                    label-for="adapt-id"
+                    label-cols-sm="1"
+                    label-align-sm="right"
+                    label-size="sm"
+                    label="Type"
+                  >
+                    <span style="font-size:14px" :class="!formattedQuestionType ? 'text-muted' : ''">{{
+                      formattedQuestionType ? formattedQuestionType : 'None Chosen'
+                    }}</span>
+                    <span class="ml-2">
+                      <b-button variant="outline-info" size="sm" @click="initChooseType()">
+                        Choose Type
+                      </b-button>
+                      <b-button variant="outline-secondary" size="sm" @click="formattedQuestionType = null">
+                        Reset Type
+                      </b-button>
+                    </span>
+                  </b-form-group>
+                  <b-form-group
+                    label-for="adapt-id"
+                    label-cols-sm="1"
+                    label-align-sm="right"
+                    label-size="sm"
+                  >
+                    <template v-slot:label>
+                      ADAPT ID
+                      <QuestionCircleTooltip :id="'adapt-id'" />
+                    </template>
+                    <b-tooltip target="adapt-id"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Search for a specific question using its ADAPT ID. If this field is filled out, all other fields
+                      will be ignored.
+                    </b-tooltip>
+                    <b-input-group size="sm" style="width:175px">
+                      <b-form-input
+                        id="adapt-id"
+                        v-model="allQuestionsAdaptId"
+                      />
+                    </b-input-group>
+                  </b-form-group>
+
+                  <b-form-group
                     label-for="all-questions-title"
                     label-cols-sm="1"
                     label-align-sm="right"
@@ -1140,21 +1174,6 @@
                   >
                     <template v-slot:head(question_id)>
                       ADAPT ID
-                      <a href=""
-                         @click.prevent
-                      >
-                        <b-icon id="search-by-adapt-id-tooltip"
-                                class="text-muted"
-                                icon="search"
-                                @click="$bvModal.show('modal-search-by-adapt-id')"
-                        />
-                      </a>
-                      <b-tooltip target="search-by-adapt-id-tooltip"
-                                 delay="570"
-                                 triggers="hover"
-                      >
-                        Search for a specific question using its ADAPT ID
-                      </b-tooltip>
                     </template>
                     <template v-slot:head(title)>
                       <input :class="`select_all-${questionSource}`" type="checkbox"
@@ -1216,7 +1235,7 @@
                       </span>
                       <span v-if="data.item.technology === 'text'">
                         {{
-                          ['exposition', 'report'].includes(data.item.question_type) ? data.item.question_type : 'open-ended'
+                          ['exposition', 'report'].includes(data.item.question_class) ? data.item.question_class : 'open-ended'
                         }}
                       </span>
                       <span v-if="['webwork','imathas'].includes(data.item.technology)">
@@ -1409,9 +1428,11 @@ import { doCopy } from '~/helpers/Copy'
 import QtiJsonAnswerViewer from '../QtiJsonAnswerViewer'
 import FormativeWarning from '../FormativeWarning.vue'
 import { initCentrifuge } from '~/helpers/Centrifuge'
+import FormattedQuestionTypeRadio from '../FormattedQuestionTypeRadio.vue'
 
 export default {
   components: {
+    FormattedQuestionTypeRadio,
     FormativeWarning,
     QtiJsonAnswerViewer,
     GetQuestionsTitle,
@@ -1442,6 +1463,11 @@ export default {
     }
   },
   data: () => ({
+    qtiContentType: '',
+    formattedQuestionTypesOptionsByTechnology: [],
+    formattedQuestionType: null,
+    columnSize: 1,
+    formattedQuestionTypesOptions: [],
     showDescriptions: false,
     centrifuge: {},
     webworkAlgorithmic: 'either',
@@ -1530,10 +1556,10 @@ export default {
       { value: 'add_to_assignment', text: 'Add To Assignment' },
       { value: 'bulk_move_to_new_topic', text: 'Move To Topic' }
     ],
-    allQuestionsType: 'any',
-    typeOptions: [
+    allQuestionsClass: 'any',
+    classOptions: [
       {
-        value: 'any', text: 'Any type'
+        value: 'any', text: 'Any class'
       },
       {
         value: 'assessment', text: 'Question'
@@ -1668,7 +1694,7 @@ export default {
     }
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
-
+    await this.getFormattedQuestionTypes()
     for (let i = 1; i < this.libraryOptions.length; i++) {
       let library = this.libraryOptions[i]
       this.libraryOptions[i].text = `${library.text} (${library.value})`
@@ -1701,6 +1727,68 @@ export default {
   },
   methods: {
     initCentrifuge,
+    initChooseType () {
+      this.formattedQuestionTypesOptionsByTechnology = this.formattedQuestionTypesOptions
+      console.log(this.allQuestionsTechnology)
+      if (this.allQuestionsTechnology !== 'any') {
+        this.formattedQuestionTypesOptionsByTechnology = this.formattedQuestionTypesOptions.filter(item => item.technology === this.allQuestionsTechnology)
+        if (['basic', 'nursing'].includes(this.qtiContentType)) {
+          let options
+          switch (this.qtiContentType) {
+            case ('basic'):
+              options = [
+                'Multiple Choice', 'True/False', 'Numerical', 'Multiple Answers', 'Fill-in-the-blank', 'Select Choice', 'Matching']
+              break
+            case ('nursing'):
+              options = ['Bow Tie',
+                'Multiple Choice',
+                'Matrix Multiple Choice',
+                'Multiple Response Select N',
+                'Multiple Response Select All That Apply',
+                'Highlight Table',
+                'Highlight Text',
+                'Multiple Response Grouping',
+                'Drop-Down Table',
+                'Drop-Down Dyad',
+                'Drop-Down Triad',
+                'Drop-Down Cloze',
+                'Matrix Multiple Response',
+                'Drag and Drop Cloze'
+              ]
+              break
+          }
+          this.formattedQuestionTypesOptionsByTechnology = this.formattedQuestionTypesOptionsByTechnology.filter(item => options.includes(item.formatted_question_type))
+        }
+      } else {
+        const usedFormattedQuestionTypes = []
+        const formattedQuestionTypesOptionsByTechnology = []
+        for (let i = 0; i < this.formattedQuestionTypesOptionsByTechnology.length; i++) {
+          const currentType = this.formattedQuestionTypesOptionsByTechnology[i].formatted_question_type
+          if (!usedFormattedQuestionTypes.includes(currentType)) {
+            console.log('delete' + currentType)
+            formattedQuestionTypesOptionsByTechnology.push(this.formattedQuestionTypesOptionsByTechnology[i])
+            usedFormattedQuestionTypes.push(currentType)
+          }
+        }
+        this.formattedQuestionTypesOptionsByTechnology = formattedQuestionTypesOptionsByTechnology
+      }
+
+      this.$bvModal.show('modal-formatted-question-types')
+    },
+    setFormattedQuestionType (formattedQuestionType) {
+      this.formattedQuestionType = formattedQuestionType
+    },
+    async getFormattedQuestionTypes () {
+      try {
+        const { data } = await axios.get('/api/formatted-question-types')
+        this.formattedQuestionTypesOptions = data.formatted_question_types
+        const totalOptions = this.formattedQuestionTypesOptions.length
+        const columns = totalOptions > 0 ? Math.ceil(totalOptions / 2) : 6
+        this.columnSize = 12 / columns
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getShowDescriptions () {
       const { data } = await axios.get('/api/question-bank/show-descriptions')
       this.showDescriptions = +data.show_descriptions
@@ -1718,16 +1806,6 @@ export default {
     formatType (type) {
       type = type.replaceAll('_', ' ')
       return _.toLower(type)
-    },
-    getQuestionByAdaptId () {
-      this.allQuestionsCurrentPage = 1
-      this.allQuestionsContent = 'both'
-      this.allQuestionsTechnology = 'any'
-      this.allQuestionsTechnologyId = ''
-      this.allQuestionsTitle = ''
-      this.allQuestionsAuthor = ''
-      this.allQuestionsTags = ''
-      this.getCollection('all_questions')
     },
     reloadQuestions () {
       if (this.questionSource === 'my_questions') {
@@ -2383,6 +2461,17 @@ export default {
       this.processingGetCollection = false
     },
     async getCollection (collection, toFolderId = null) {
+      this.showPagination = true
+      if (this.allQuestionsAdaptId) {
+        this.showPagination = false
+        this.allQuestionsCurrentPage = 1
+        this.allQuestionsContent = 'both'
+        this.allQuestionsTechnology = 'any'
+        this.allQuestionsTechnologyId = ''
+        this.allQuestionsTitle = ''
+        this.allQuestionsAuthor = ''
+        this.allQuestionsTags = ''
+      }
       this.processingGetCollection = true
       this.chosenCourseId = null
       this.resetBulkActionData()
@@ -2400,7 +2489,8 @@ export default {
             current_page: this.allQuestionsCurrentPage,
             question_id: this.allQuestionsAdaptId,
             per_page: this.allQuestionsPerPage,
-            question_type: this.allQuestionsType,
+            question_class: this.allQuestionsClass,
+            question_type: this.formattedQuestionType,
             question_content: this.allQuestionsContent,
             technology: this.allQuestionsTechnology,
             webwork_content_type: this.webworkContentType,
@@ -2440,8 +2530,6 @@ export default {
         const { data } = this.questionSource === 'all_questions'
           ? await axios.post(url, allQuestionsData)
           : await axios.get(url)
-        this.allQuestionsAdaptId = ''
-        this.$bvModal.hide('modal-search-by-adapt-id')
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -2478,8 +2566,6 @@ export default {
         }
       } catch (error) {
         this.$noty.error(error.message)
-        this.allQuestionsAdaptId = ''
-        this.$bvModal.hide('modal-search-by-adapt-id')
       }
       this.processingGetCollection = false
     },

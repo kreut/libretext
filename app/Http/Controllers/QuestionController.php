@@ -1090,7 +1090,8 @@ class QuestionController extends Controller
                          'question_revisions',
                          'can_give_ups',
                          'webwork_attachments',
-                         'question_media_uploads'
+                         'question_media_uploads',
+                         'formatted_question_types'
                      ]
                      as $table) {
                 $column = in_array($table, ['adapt_migrations', 'adapt_mass_migrations']) ? 'new_page_id' : 'question_id';
@@ -1633,6 +1634,7 @@ class QuestionController extends Controller
             }
             $question->addTags($tags);
             $question->addFrameworkItems($request->framework_item_sync_question);
+            $question->saveFormat();
             $question->non_technology_html = $non_technology_text;
             $assignment_name = '';
             if ($media_uploads) {

@@ -98,7 +98,7 @@ Route::get('/users/auto-login', 'Auth\UserController@autoLogin');
 
 Route::get('/courses/mini-summary', 'CourseController@showMiniSummary');
 
-Route::group(['middleware' => ['auth:api','analytics', 'throttle:550,1']], function () {
+Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], function () {
 
     Route::get('/updated-information-first-application/{assignment}', 'UpdatedInformationFirstApplicationController@index');
     Route::patch('/updated-information-first-application', 'UpdatedInformationFirstApplicationController@update');
@@ -606,6 +606,7 @@ Route::group(['middleware' => ['auth:api','analytics', 'throttle:550,1']], funct
     Route::delete('patient-information/{assignment}', 'PatientInformationController@destroy');
     Route::patch('patient-information/delete-updated-information/{assignment}', 'PatientInformationController@deleteUpdatedPatientInformation');
 
+    Route::get('/formatted-question-types', 'FormattedQuestionTypeController@index');
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
     Route::get('/assignments/{assignment}/questions/question-info', 'AssignmentSyncQuestionController@getQuestionInfoByAssignment');
@@ -747,7 +748,7 @@ Route::group(['middleware' => ['auth:api','analytics', 'throttle:550,1']], funct
     Route::post('/grading', 'GradingController@store');
     Route::get('/grading/{assignment}/{question}/{sectionId}/{gradeView}', 'GradingController@index');
 
-     Route::get('/can-give-up/assignments/{assignment}/questions/{question}/validate', 'CanGiveUpController@validateCanGiveUp');
+    Route::get('/can-give-up/assignments/{assignment}/questions/{question}/validate', 'CanGiveUpController@validateCanGiveUp');
 
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');
     Route::post('/submission-files/get-temporary-url-from-request', 'SubmissionFileController@getTemporaryUrlFromRequest');

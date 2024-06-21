@@ -3,20 +3,17 @@
 namespace App;
 
 use App\Helpers\Helper;
-use App\Jobs\ProcessTranscribe;
 use App\Traits\IframeFormatter;
 use App\Traits\LibretextFiles;
 use Carbon\Carbon;
 use DOMDocument;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use App\Exceptions\Handler;
 use \Exception;
@@ -2729,8 +2726,13 @@ class Question extends Model
     function getWebworkCodeFromFilePath($file_path)
     {
         $data = ['sourceFilePath' => $file_path];
-        $endpoint = "https://wwrenderer.libretexts.org/render-api/tap";
-        return $this->curlPost($endpoint, $data);
+        $endpoint = "https://wwlibrary.libretexts.org/render-api/tap";
+        $webwork_token = config('myconfig.webwork_token');
+        $headers = [
+            "Content-Type:multipart/form-data",
+            "Authorization: Bearer " . $webwork_token
+        ];
+        return $this->curlPost($endpoint, $data, $headers);
 
     }
 
@@ -2749,10 +2751,11 @@ class Question extends Model
     /**
      * @param string $endpoint
      * @param array $data
+     * @param array $headers
      * @return bool|string
      */
     public
-    function curlPost(string $endpoint, array $data)
+    function curlPost(string $endpoint, array $data, array $headers = [])
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $endpoint);
@@ -2761,7 +2764,9 @@ class Question extends Model
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_FAILONERROR, true); // Required for HTTP error codes to be reported via our call to curl_error($ch)
-
+        if ($headers) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        }
         $output = curl_exec($ch);
         $error_msg = curl_errno($ch) ? curl_error($ch) : '';
         curl_close($ch);
@@ -3228,6 +3233,325 @@ class Question extends Model
             'text_question',
             'a11y_auto_graded_question_id',
             'webwork_code'];
+    }
+
+    /**
+     * @return string
+     */
+    public function textFormattedType(): string
+    {
+        return 'Open-ended';
+    }
+
+    /**
+     * @return array
+     */
+    public function webworkFormattedType(): array
+    {
+        $question_types = [
+            [
+                "type" => "Likert Scale",
+                "text" => ["'Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'"]
+            ],
+            [
+                "type" => "Fill-in-the-blank",
+                "text" => ["contextString.pl", 'Context("String");']
+            ],
+            [
+                "type" => "Implicit Equation",
+                "text" => ['Context("ImplicitEquation");', "'parserImplicitEquation.pl',"]
+            ],
+            [
+                "type" => "Drag and Drop",
+                "text" => ["draggableProof.pl"]
+            ],
+            [
+                "type" => "Numerical",
+                "text" => ["contextInexactValue.pl", 'Context("InexactValue");']
+            ],
+            [
+                "type" => "Numerical",
+                "text" => ['Context("Numeric");']
+            ],
+            [
+                "type" => "Open-ended",
+                "text" => ["PGessaymacros.pl",]
+            ],
+            [
+                "type" => "Multiple Choice",
+                "text" => ["PGchoicemacros.pl", 'new_checkbox_multiple_choice']
+            ],
+            [
+                "type" => "Select Choice",
+                "text" => ["parserPopUp.pl", 'PopUp']
+            ],
+            [
+                "type" => "Numerical",
+                "text" => ["contextInteger.pl", 'Context("LimitedNumeric");']
+            ],
+            [
+                "type" => "Scaffold",
+                "text" => ["scaffold.pl", 'Scaffold::Begin();']
+            ],
+            [
+                "type" => "Chemical Species and Reaction",
+                "text" => ["scaffold.pl", 'Scaffold::Begin();']
+            ],
+            ["type" => "Open-ended",
+                "text" => ['Context("ArbitraryString");', "contextArbitraryString.pl"]
+            ],
+            ["type" => "Multiple Answer",
+                "text" => ['parserCheckboxList.pl', "CheckboxList"]
+            ],
+            ["type" => "Multiple Choice",
+                "text" => ["parserRadioButtons.pl", "RadioButtons"]
+            ],
+            ["type" => "True/False",
+                "text" => ["parserRadioButtons.pl", '["True", "False"]']
+            ]
+        ];
+        $formatted_question_types = [];
+        $webwork_code = $this->webwork_code ? $this->webwork_code : $this->getWebworkCodeFromFilePath($this->technology_id);
+        foreach ($question_types as $question_type) {
+            foreach ($question_type['text'] as $text) {
+                $type = $question_type['type'];
+                if (strpos(strtolower($webwork_code), strtolower($text)) === false) {
+                    $type = false;
+                }
+                if ($type) {
+                    $formatted_question_types[] = $type;
+                }
+            }
+
+        }
+        return array_unique($formatted_question_types);
+    }
+
+
+    /**
+     * @return mixed|string
+     */
+    public function h5pFormattedType()
+    {
+        switch ($this->h5p_type) {
+            case('Find Multiple Hotspots');
+            case('Find the Hotspot');
+                $formatted_question_type = "Hotspot";
+                break;
+            case('Drag the Words'):
+                $formatted_question_type = 'Drag and Drop';
+                break;
+            case('appear.in for Chat and Talk'):
+                $formatted_question_type = 'Appear.in for Chat and Talk';
+                break;
+            case('True/False Question'):
+                $formatted_question_type = 'True/False';
+                break;
+            case('Essay'):
+                $formatted_question_type = 'Open-ended';
+                break;
+            case('Speak the Words Set'):
+                $formatted_question_type = 'Speak the Words';
+                break;
+            case('Advanced fill the blanks'):
+                $formatted_question_type = 'Select Choice';
+                break;
+            case('Fill in the Blanks'):
+                $formatted_question_type = 'Fill-in-the-blank';
+                break;
+            default:
+                $formatted_question_type = $this->h5p_type;
+                break;
+        }
+        return $formatted_question_type;
+    }
+
+    /**
+     * @return string
+     */
+    public function nativeFormattedType(): string
+    {
+        switch ($this->qti_json_type) {
+            case('drag_and_drop'):
+            case('drag_and_drop_cloze'):
+                $formatted_question_type = "Drag and Drop";
+                break;
+            case('fill_in_the_blank'):
+                $formatted_question_type = 'Fill-in-the-blank';
+                break;
+            case('essay_question'):
+            case('file_upload_question'):
+            case('short_answer_question'):
+                $formatted_question_type = 'Open-ended';
+                break;
+            case('numerical_question'):
+                $formatted_question_type = 'Numerical';
+                break;
+            case('true_false'):
+                $formatted_question_type = 'True/False';
+                break;
+            case('multiple_answers_question'):
+                $formatted_question_type = 'Multiple Answer';
+                break;
+            case('multiple_dropdowns_question'):
+                $formatted_question_type = 'Multiple Dropdowns';
+                break;
+            case('matching_question'):
+                $formatted_question_type = 'Matching';
+                break;
+            default:
+                $formatted_question_type = str_replace('_', ' ', $this->qti_json_type);
+                $formatted_question_type = ucwords($formatted_question_type);
+        }
+        return $formatted_question_type;
+    }
+
+    /**
+     * @param $formatted_question_type
+     * @return string|null
+     */
+    public function imathasFormattedType($formatted_question_type): ?string
+    {
+        switch ($formatted_question_type) {
+            case('string'):
+                $formatted_question_type = "Short Answer";
+                break;
+            case('number'):
+            case(' number'):
+            case('calculated'):
+                $formatted_question_type = 'Numerical';
+                break;
+            case('choices'):
+                $formatted_question_type = "Multiple Choice";
+                break;
+            case('multans'):
+                $formatted_question_type = "Multiple Answer";
+                break;
+            case('matching'):
+                $formatted_question_type = 'Matching';
+                break;
+            case('numfunc'):
+            case('function'):
+                $formatted_question_type = "Function/Algebraic Expression or Equation";
+                break;
+            case('draw'):
+                $formatted_question_type = "Drawing";
+                break;
+            case('ntuple'):
+            case('calcntuple'):
+                $formatted_question_type = "N-tuple (points, vectors, etc)";
+                break;
+            case('matrix'):
+            case('calcmatrix'):
+                $formatted_question_type = "Matrix";
+                break;
+            case('complex'):
+            case('calccomplex'):
+                $formatted_question_type = "Complex";
+                break;
+            case("interval"):
+            case("calcinterval"):
+                $formatted_question_type = "Interval Notation";
+                break;
+            case('chemeqn'):
+                $formatted_question_type = "Chemical Equation";
+                break;
+            case('conditional'):
+                $formatted_question_type = "Conditional";
+                break;
+            case('molecule'):
+                $formatted_question_type = "Chemical Molecule Drawing";
+                break;
+            case('essay'):
+            case('file'):
+                $formatted_question_type = "Open-ended";
+                break;
+            default:
+        }
+        return $formatted_question_type;
+    }
+
+
+    /**
+     * @return void
+     * @throws Exception
+     */
+    public function saveFormat()
+    {
+        return;
+        $formatted_question_types = [];
+        try {
+            switch ($this->technology) {
+                case('text'):
+                    $formatted_question_type = $this->textFormattedType();
+                    break;
+                case('h5p'):
+                    $formatted_question_type = $this->h5pFormattedType();
+                    break;
+                case('qti_json'):
+                    $formatted_question_type = $this->nativeFormattedType();
+                    break;
+                case('imathas'):
+                    $domain = app()->environment('local') ? "dev2.imathas.libretexts.org" : "imathas.libretexts.org";
+                    $response = Http::get("https://$domain/imathas/adapt/question_format.php?id=$this->technology_id");
+
+                    if ($response->successful()) {
+                        // Get the response body
+                        $data = $response->body(); // or $response->json() if you expect a JSON response
+                        $data = json_decode($data, 1);
+                        $formatted_question_type = $data['question_type'];
+                    } else {
+                        throw new Exception ("Could not get the question type for IMathAS $this->technology_id with question ID $this->id.");
+                    }
+                    $formatted_question_type = $this->imathasFormattedType($formatted_question_type);
+                    break;
+                case('webwork'):
+                    $formatted_question_types = $this->webworkFormattedType();
+                    break;
+                default:
+                    $formatted_question_type = null;
+                    break;
+            }
+            FormattedQuestionType::where('question_id', $this->id)->delete();
+            if ($this->technology !== 'webwork') {
+                FormattedQuestionType::insert(['question_id' => $this->id, 'formatted_question_type' => $formatted_question_type]);
+            } else {
+                if ($formatted_question_types) {
+                    foreach ($formatted_question_types as $formatted_question_type) {
+                        FormattedQuestionType::insert(['question_id' => $this->id, 'formatted_question_type' => $formatted_question_type]);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
+    }
+
+    /**
+     * @param $formatted_question_type
+     * @return string|null
+     */
+    public function initFormattedQuestionTypes($formatted_question_type = null): ?string
+    {
+        switch ($this->technology) {
+            case('text'):
+                $formatted_question_type = $this->textFormattedType();
+                break;
+            case('h5p'):
+                $formatted_question_type = $this->h5pFormattedType();
+                break;
+            case('qti'):
+                $formatted_question_type = $this->nativeFormattedType();
+                break;
+            case('imathas'):
+                $formatted_question_type = $this->imathasFormattedType($formatted_question_type);
+                break;
+            case('webwork'):
+            default:
+                break;
+        }
+        return $formatted_question_type;
     }
 
 

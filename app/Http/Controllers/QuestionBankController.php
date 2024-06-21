@@ -252,7 +252,10 @@ class QuestionBankController extends Controller
         $technology = $request->technology;
         $webwork_content_type = $request->webwork_content_type;
         $webwork_algorithmic = $request->webwork_algorithmic;
-        $question_type = $request->question_type;
+        $question_class = $request->question_class;
+        $formatted_question_type = $request->question_type;
+
+
         $qti_question_type = $request->qti_question_type;
         $technology_id = $technology !== 'any' ? $request->technology_id : null;
         $question_id = $request->question_id;
@@ -312,6 +315,18 @@ class QuestionBankController extends Controller
                     ->toArray();
                 $question_ids = $question_ids->whereIn('questions.id', $question_ids_with_tags);
             }
+
+
+            if ($formatted_question_type) {
+                $formatted_question_types = DB::table('formatted_question_types')->where('formatted_question_type', $formatted_question_type)->get();
+
+                if ($formatted_question_types) {
+                    $formatted_question_type_question_ids = $formatted_question_types->pluck('question_id')->toArray();
+                    $question_ids = $question_ids->whereIn('id', $formatted_question_type_question_ids);
+                }
+
+            }
+
             if ($title) {
                 $question_ids = $question_ids->where('title', 'LIKE', "%$title%");
             }
@@ -365,8 +380,9 @@ class QuestionBankController extends Controller
                         break;
                 }
             }
-            if ($question_type !== 'any') {
-                $question_ids = $question_ids->where('question_type', $question_type);
+            if ($question_class !== 'any') {
+                //a little confusing but it would be much more work and not a good idea to change question_type all over the place
+                $question_ids = $question_ids->where('question_type', $question_class);
             }
             if ($question_content === 'auto_graded_only') {
                 $question_ids = $question_ids->where('technology', '<>', 'text');
