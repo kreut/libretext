@@ -34,6 +34,8 @@ class Analytics
                         'FrameworkLevelController@getAllChildren',
                         'FrameworkItemSyncQuestionController@getFrameworkItemsByQuestion',
                         'FinalGradeController@getCourseLetterGrades',
+                        'FrameworkLevelController@getFrameworkLevelsWithSameParent',
+                        'FrameworkController@show',
                         'AssignmentController@index',
                         'AssignmentController@getQuestionsInfo',
                         'AssignmentController@getAssignmentSummary',
