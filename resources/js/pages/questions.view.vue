@@ -1,5 +1,6 @@
 <template>
-  <div :style="!inIFrame ? 'min-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
+  <div :style="!inIFrame ? '' : 'margin-bottom:10px;'">
+    <div v-if="questions[currentPage-1]" id="questions-loaded"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>

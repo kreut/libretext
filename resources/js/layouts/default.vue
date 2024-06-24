@@ -10,14 +10,18 @@
       </b-alert>
     </div>
     <div v-if="!inIFrame">
-      <navbar />
+      <navbar/>
     </div>
-    <div v-else id="default-padding-top" style="padding-top:30px" />
+    <div v-else id="default-padding-top" style="padding-top:30px"/>
     <div id="main-content" role="main" :class="{ 'container': true, 'mt-4': true }" tabindex="-1">
-      <child />
+      <child/>
     </div>
-    <div v-if="!inIFrame && !isLearningTreesEditor" class="d-flex flex-column" style="margin-top:200px;">
-      <footer id="site-footer" class="footer bg-black text-white">
+    <div v-if="!inIFrame && !isLearningTreesEditor" id="footer-div" class="d-flex flex-column"
+         style="margin-top:50px;"
+    >
+      <footer v-if="showFooter" id="site-footer"
+              class="footer bg-black text-white mt-3"
+      >
         <div>
           <b-navbar toggleable="sm" type="dark" variant="dark">
             <b-navbar-nav>
@@ -71,12 +75,13 @@
                 For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>. In
                 addition, we
                 provide a comprehensive report of the site's
-                <a href="https://chem.libretexts.org/Courses/Remixer_University/LibreVerse_Accessibility_Conformance_Reports"
-                   target="_blank"
+                <a
+                  href="https://chem.libretexts.org/Courses/Remixer_University/LibreVerse_Accessibility_Conformance_Reports"
+                  target="_blank"
                 >
                   accessibility</a> and our <a href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement"
-                                             target="_blank"
-                >FERPA statement</a>. And you can also
+                                               target="_blank"
+              >FERPA statement</a>. And you can also
                 view our <a href="https://libretexts.org/legal/index.html" target="_blank">Terms And Conditions</a>
                 should you
                 use the site.
@@ -124,14 +129,18 @@
 import Navbar from '~/components/Navbar'
 import { mapGetters } from 'vuex'
 import Email from '~/components/Email'
+import Child from '../components/Child.vue'
 
 export default {
   name: 'MainLayout',
   components: {
+    Child,
     Navbar,
     Email
   },
   data: () => ({
+    intervalId: null,
+    showFooter: true,
     skipToContent: '',
     showEnvironment: window.config.showEnvironment,
     environment: window.config.environment,
@@ -146,6 +155,13 @@ export default {
     '$route' (to, from) {
       this.skipToContent = to.name === 'questions.view' ? '#question-to-view' : '#main-content'
       this.isLearningTreesEditor = to.name === 'instructors.learning_trees.editor'
+      if (to.name === 'questions.view') {
+        this.showFooter = false
+        this.intervalId = setInterval(this.checkQuestionViewDisplay, 50)
+
+        document.getElementById('footer-div').style.marginTop = '0px'
+        document.getElementById('main-content').style.minHeight = '0px'
+      }
     }
   },
   created () {
@@ -156,8 +172,9 @@ export default {
     }
   },
   mounted () {
+
     if (!this.inIFrame && !this.isLearningTreesEditor) {
-      document.getElementById('main-content').style.minHeight = (window.screen.height - 630) + 'px'
+      document.getElementById('main-content').style.minHeight = (window.screen.height - 430) + 'px'
     }
     window.addEventListener('keydown', this.keydownHandler)
     this.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
@@ -176,8 +193,18 @@ export default {
   },
   beforeDestroy () {
     window.removeEventListener('keydown', this.keydownHandler)
+    if (this.intervalId) {
+      clearInterval(this.intervalId)
+    }
   },
   methods: {
+    checkQuestionViewDisplay() {
+      const questionViewDisplay = document.getElementById('questions-loaded')
+      if (questionViewDisplay) {
+        this.showFooter = true
+        clearInterval(this.intervalId)
+      }
+    },
     contactUsWidget () {
       document.getElementById('supportButton').click()
     },
