@@ -406,9 +406,10 @@ class QuestionBankController extends Controller
                 ->toArray();
 
             $questions_info = DB::table('questions')
+                ->join('formatted_question_types','questions.id','=','formatted_question_types.question_id')
                 ->select(
-                    'id AS question_id',
-                    'id',
+                    'questions.id AS question_id',
+                    'questions.id',
                     DB::raw('CONCAT(library, "-", page_id) AS library_page_id'),
                     'library',
                     'page_id',
@@ -416,13 +417,13 @@ class QuestionBankController extends Controller
                     'description',
                     'author',
                     'technology',
-                    'question_type',
+                    'formatted_question_types.formatted_question_type AS question_type',
                     'qti_json',
                     'qti_json_type',
                     'h5p_type',
                     'technology_id',
                     'non_technology')
-                ->whereIn('id', $question_ids)
+                ->whereIn('questions.id', $question_ids)
                 ->get();
 
 
