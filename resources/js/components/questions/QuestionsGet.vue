@@ -12,6 +12,7 @@
                                   :formatted-question-types-options-by-technology="formattedQuestionTypesOptionsByTechnology"
                                   :technology="allQuestionsTechnology"
                                   :formatted-question-type="formattedQuestionType"
+                                  :interactive-formatted-types="interactiveH5PFormattedTypes"
                                   @setFormattedQuestionType="setFormattedQuestionType"
       />
       <template #modal-footer="{ ok }">
@@ -1231,6 +1232,17 @@
                     </template>
                     <template v-slot:cell(type)="data">
                       {{ data.item.question_type ? data.item.question_type : 'Unknown' }}
+                      <span v-show="interactiveH5PFormattedTypes.includes(data.item.question_type)">
+                        <QuestionCircleTooltip :id="`h5p-interactive-tooltip-${data.item.id}`"
+                                               :color="'text-danger'"
+                        />
+                        <b-tooltip :target="`h5p-interactive-tooltip-${data.item.id}`"
+                                   delay="250"
+                                   triggers="hover focus"
+                        >
+                          This question is an interactive question and has no auto-graded component associated with it.  It acts like an ADAPT open-ended question.
+                        </b-tooltip>
+                      </span>
                     </template>
                     <template v-slot:cell(action)="data">
                       <GetQuestionsActions :assignment-question="data.item"
@@ -1453,6 +1465,42 @@ export default {
     }
   },
   data: () => ({
+    interactiveH5PFormattedTypes: [
+      'Accordion',
+      'Advent Calendar (beta)',
+      'AR Scavenger (beta)',
+      'Branching Scenario',
+      'Cornell Notes',
+      'Image Juxtaposition',
+      'Image Zoom',
+      'KewAr Code',
+      'None Provided',
+      'Questionnaire',
+      'Speak the Words',
+      'Advent Calendar (beta) Test',
+      'Arithmetic Quiz',
+      'Chart',
+      'Course Presentation',
+      'Documentation Tool',
+      'Flashcards',
+      'Iframe Embedder',
+      'Information Wall',
+      'Structure Strip',
+      'Twitter User Feed',
+      'Agamotto',
+      'Audio',
+      'Collage',
+      'Memory Game',
+      'Personality Quiz',
+      'Virtual Tour (360)',
+      'Appear.in for Chat and Talk',
+      'Audio Recorder',
+      'Dialog Cards',
+      'Guess the Answer',
+      'Image Hotspots',
+      'Image Slider',
+      'Timeline'
+    ],
     qtiContentType: '',
     formattedQuestionTypesOptionsByTechnology: [],
     formattedQuestionType: null,
@@ -1717,44 +1765,6 @@ export default {
   },
   methods: {
     initCentrifuge,
-    badH5PFormattedTypes () {
-      return [
-        'Accordion',
-        'Advent Calendar (beta)',
-        'AR Scavenger (beta)',
-        'Branching Scenario',
-        'Cornell Notes',
-        'Image Juxtaposition',
-        'Image Zoom',
-        'KewAr Code',
-        'None Provided',
-        'Questionnaire',
-        'Speak the Words',
-        'Advent Calendar (beta) Test',
-        'Arithmetic Quiz',
-        'Chart',
-        'Course Presentation',
-        'Documentation Tool',
-        'Flashcards',
-        'Iframe Embedder',
-        'Information Wall',
-        'Structure Strip',
-        'Twitter User Feed',
-        'Agamotto',
-        'Audio',
-        'Collage',
-        'Memory Game',
-        'Personality Quiz',
-        'Virtual Tour (360)',
-        'Appear.in for Chat and Talk',
-        'Audio Recorder',
-        'Dialog Cards',
-        'Guess the Answer',
-        'Image Hotspots',
-        'Image Slider',
-        'Timeline'
-      ]
-    },
     nursingFormattedQuestionTypes () {
       return ['Bow Tie',
         'Multiple Choice',
@@ -1783,19 +1793,7 @@ export default {
         this.$noty.info('Since you have chosen open-ended as your technology, you will only receive open-ended questions.')
         return false
       }
-      const goodFormattedOptions = []
-      const badH5PFormattedTypes = this.badH5PFormattedTypes()
-      console.log(badH5PFormattedTypes)
-      console.log(this.formattedQuestionTypesOptions)
-      for (let i = 0; i < this.formattedQuestionTypesOptions.length; i++) {
-        const currentType = this.formattedQuestionTypesOptions[i].formatted_question_type
-        console.log(currentType)
-        if (!badH5PFormattedTypes.includes(currentType)) {
-          goodFormattedOptions.push(this.formattedQuestionTypesOptions[i])
-        }
-      }
-
-      this.formattedQuestionTypesOptionsByTechnology = goodFormattedOptions
+      this.formattedQuestionTypesOptionsByTechnology = this.formattedQuestionTypesOptions
       if (this.allQuestionsTechnology !== 'any') {
         this.formattedQuestionTypesOptionsByTechnology = this.formattedQuestionTypesOptionsByTechnology.filter(item => item.technology === this.allQuestionsTechnology)
         if (['basic', 'nursing'].includes(this.qtiContentType)) {
