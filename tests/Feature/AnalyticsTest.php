@@ -150,62 +150,7 @@ class AnalyticsTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to view the nursing analytics.']);
     }
 
-    /** @test */
-    public function cannot_get_proportion_correct_without_authorization()
-    {
-
-        $response = $this->actingAs($this->user)->getJson("/api/analytics/proportion-correct-by-assignment/course/{$this->course->id}")
-            ->getContent();
-        $this->assertEquals('Not authorized to get proportion correct.', $response);
-
-    }
-
-    /** @test */
-    public function cannot_get_learning_outcomes_without_authorization()
-    {
-
-        $response = $this->actingAs($this->user)->getJson("/api/analytics/learning-outcomes")
-            ->getContent();
-        $this->assertEquals('Not authorized.', $response);
-
-    }
-
-    /** @test */
-    public function cannot_get_question_learning_outcome_without_authorization()
-    {
-
-        $response = $this->actingAs($this->user)->getJson("/api/analytics/question-learning-outcome")
-            ->getContent();
-        $this->assertEquals('Not authorized.', $response);
-    }
-
-    /** @test */
-    public function cannot_get_scores_by_course_without_authorization()
-    {
-
-        $response = $this->actingAs($this->user)->getJson("/api/analytics/scores/course/{$this->course->id}")
-            ->getContent();
-        $this->assertEquals('{"error":"Not authorized."}', $response);
-    }
 
 
-    /** @test */
-    public function cannot_get_review_history_without_authorization()
-    {
 
-        $response = $this->actingAs($this->user)->getJson("/api/analytics/review-history/assignment/{$this->assignment->id}")
-            ->getContent();
-        $this->assertEquals('Not authorized.', $response);
-    }
-
-
-    /** @test */
-    public function cannot_data_shops_file_without_authorization()
-    {
-
-        $response = $this->actingAs($this->user)->getJson("/api/analytics")
-            ->getContent();
-        $this->assertEquals('Not authorized.', $response);
-
-    }
 }

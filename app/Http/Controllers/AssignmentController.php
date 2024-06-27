@@ -37,6 +37,7 @@ use DateTime;
 use DOMDocument;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -50,15 +51,57 @@ class AssignmentController extends Controller
     use AssignmentProperties;
 
     /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public
+    function getReviewHistoryByAssignment(Assignment $assignment)
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('getReviewHistoryByAssignment', $assignment);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $review_histories = DB::table('review_histories')
+                ->join('users', 'review_histories.user_id', '=', 'users.id')
+                ->select('users.email',
+                    'review_histories.assignment_id',
+                    'review_histories.question_id',
+                    'review_histories.created_at',
+                    'review_histories.updated_at')
+                ->where('assignment_id', $assignment->id)
+                ->get();
+            $response['review_histories'] = $review_histories;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the review histories for this assignment.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+    /**
      * @param ShiftDatesRequest $request
      * @param AssignToTiming $assignToTiming
      * @param Assignment $assignment
      * @return array
      * @throws Exception
      */
-    public function shiftDates(ShiftDatesRequest $request,
-                               AssignToTiming    $assignToTiming,
-                               Assignment        $assignment): array
+    public
+    function shiftDates(ShiftDatesRequest $request,
+                        AssignToTiming    $assignToTiming,
+                        Assignment        $assignment): array
     {
 
         $response['type'] = 'error';
@@ -81,7 +124,7 @@ class AssignmentController extends Controller
                         }
                     } else {
                         if ($key === $request->assignment_date_property) {
-                            $input_date_time = $request->change_date_form['date'].' '.$request->change_date_form['time'];
+                            $input_date_time = $request->change_date_form['date'] . ' ' . $request->change_date_form['time'];
                             $datetimeInUserTimezone = Carbon::createFromFormat('Y-m-d g:i A', $input_date_time, $request->user()->time_zone);
                             $datetimeInUTC = $datetimeInUserTimezone->setTimezone('UTC');
                             $assign_to_timing->{$key} = $datetimeInUTC->format('Y-m-d H:i:s');
@@ -121,7 +164,8 @@ class AssignmentController extends Controller
      * @param Request $request
      * @return array
      */
-    public function previewShiftDates(Request $request): array
+    public
+    function previewShiftDates(Request $request): array
     {
 
         $shift_by = $request->shift_by;
@@ -147,7 +191,7 @@ class AssignmentController extends Controller
                     }
                 } else {
                     if ($key === $request->assignment_date_property) {
-                        $input_date_time = $request->change_date_form['date'].' '.$request->change_date_form['time'];
+                        $input_date_time = $request->change_date_form['date'] . ' ' . $request->change_date_form['time'];
                         $datetimeInUserTimezone = Carbon::createFromFormat('Y-m-d g:i A', $input_date_time);
                         $preview_shift_date[$key] = $datetimeInUserTimezone->format('Y-m-d H:i:s');
                     } else {
@@ -173,7 +217,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getDates(Course $course, Assignment $assignment): array
+    public
+    function getDates(Course $course, Assignment $assignment): array
     {
 
         $authorized = Gate::inspect('getDates', [$assignment, $course]);
@@ -211,12 +256,14 @@ class AssignmentController extends Controller
 
 
     }
+
     /**
      * @param Assignment $assignment
      * @return array
      * @throws Exception
      */
-    public function unlinkFromLMS(Assignment $assignment): array
+    public
+    function unlinkFromLMS(Assignment $assignment): array
     {
 
         $response['type'] = 'error';
@@ -247,7 +294,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function resyncFromLMS(Assignment $assignment): array
+    public
+    function resyncFromLMS(Assignment $assignment): array
     {
         $response['type'] = 'error';
         /*$authorized = Gate::inspect('unlinkFromLMS', $course);
@@ -354,7 +402,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getClickerAssignmentsForEnrolledAndOpenCourses(Request $request, Assignment $assignment)
+    public
+    function getClickerAssignmentsForEnrolledAndOpenCourses(Request $request, Assignment $assignment)
     {
         $response['type'] = 'error';
         try {
@@ -389,7 +438,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function validateNotWeightedPointsPerQuestionWithSubmissions(Assignment $assignment): array
+    public
+    function validateNotWeightedPointsPerQuestionWithSubmissions(Assignment $assignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('validateNotWeightedPointsPerQuestionWithSubmissions', $assignment);
@@ -420,7 +470,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function linkToLMS(Request $request, Assignment $assignment): array
+    public
+    function linkToLMS(Request $request, Assignment $assignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('linkToLMS', $assignment);
@@ -484,7 +535,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function unlinkLti(Assignment $assignment): array
+    public
+    function unlinkLti(Assignment $assignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('unlinkLti', $assignment);
@@ -508,7 +560,8 @@ class AssignmentController extends Controller
 
     }
 
-    public function showCommonQuestionText(Request $request, Assignment $assignment): array
+    public
+    function showCommonQuestionText(Request $request, Assignment $assignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('showCommonQuestionText', $assignment);
@@ -537,7 +590,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateCommonQuestionText(Request $request, Assignment $assignment): array
+    public
+    function updateCommonQuestionText(Request $request, Assignment $assignment): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('updateCommonQuestionText', $assignment);

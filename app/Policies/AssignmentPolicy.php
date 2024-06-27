@@ -35,6 +35,15 @@ class AssignmentPolicy
 
     }
 
+
+    public function getReviewHistoryByAssignment(User $user, Assignment $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the review histories for this assignment.');
+
+    }
+
     public function getDates(User $user, Assignment $assignment, Course $course): Response
     {
         return $course->user_id === $user->id

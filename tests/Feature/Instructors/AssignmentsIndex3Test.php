@@ -487,4 +487,14 @@ class AssignmentsIndex3Test extends TestCase
             ->assertJson(['message' => "This assignment already has non-Learning Tree assessments in it.  If you would like to change the assessment type, please first remove those assessments."]);
 
     }
+
+
+    /** @test */
+    public function cannot_get_review_history_without_authorization()
+    {
+
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/review-history")
+            ->assertJson(['message'=>'You are not allowed to get the review histories for this assignment.']);
+
+    }
 }
