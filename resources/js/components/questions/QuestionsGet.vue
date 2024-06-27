@@ -208,11 +208,11 @@
             {{ questionToView.title }}
           </h2>
           <div>
-            <small>ADAPT ID: <span id="adapt-id">{{ questionToView.id }}</span></small>
+            <small>ADAPT ID: <span :id="`adapt-id-in-title-${questionToView.id}`">{{ questionToView.id }}</span></small>
             <span class="text-info">
               <a href=""
                  aria-label="Copy ADAPT ID"
-                 @click.prevent="doCopy('adapt-id')"
+                 @click.prevent="doCopy(`adapt-id-in-title-${questionToView.id}`)"
               >
                 <font-awesome-icon :icon="copyIcon"/>
               </a>
@@ -1764,6 +1764,7 @@ export default {
     await this.getShowDescriptions()
   },
   methods: {
+    doCopy,
     initCentrifuge,
     nursingFormattedQuestionTypes () {
       return ['Bow Tie',
