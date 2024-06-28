@@ -228,14 +228,6 @@
       </template>
 
       <div class="pb-2">
-        <b-button
-          variant="info"
-          size="sm"
-          @click="openShareModal()"
-        >
-          <b-icon icon="share"/>
-          Share
-        </b-button>
         <b-button v-if="questionToView.qti_json"
                   size="sm"
                   variant="outline-info"
@@ -1908,10 +1900,6 @@ export default {
       await this.getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder()
       this.mySavedQuestionsCurrentPage = 1
       this.showPagination = !this.filter
-    },
-    openShareModal () {
-      this.technologySrc = this.getTechnologySrc('technology', 'technology_iframe_src', this.questionToView)
-      this.$bvModal.show(`modal-share-${this.questionToView.question_id}`)
     },
     getBulkActions (questionSource) {
       let bulkActionOptions
