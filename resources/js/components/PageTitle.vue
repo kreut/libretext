@@ -5,7 +5,23 @@
         v-if="learningTreeId"
         icon="tree"
         variant="success"
-      /> {{ title }}
+      />
+      {{ title }}
+      <span v-if="cloneSourceId">
+        <font-awesome-icon
+          id="clone-source-id-tooltip"
+          :icon="copyIcon"
+          class="mb-1 text-success"
+          style="height:20px;"
+          aria-label="Update custom title"
+        />
+        <b-tooltip target="clone-source-id-tooltip"
+                   delay="750"
+                   triggers="hover"
+        >
+          This question was cloned from the question with ADAPT ID {{ cloneSourceId }}.
+        </b-tooltip>
+      </span>
       <CustomTitle v-if="title && showPencil"
                    :assignment-id="assignmentId"
                    :question-id="questionId"
@@ -27,7 +43,9 @@
       </a>
     </span>
     </span>
-    <span v-if="learningTreeId"><br>Learning Tree ID: <span id="learning-tree-id">{{ learningTreeId }}</span>  <span class="text-info">
+    <span v-if="learningTreeId"><br>Learning Tree ID: <span id="learning-tree-id">{{ learningTreeId }}</span>  <span
+      class="text-info"
+    >
       <a href=""
          aria-label="Copy Learning Tree ID"
          @click.prevent="doCopy('learning-tree-id')"
@@ -75,6 +93,10 @@ export default {
       type: Boolean,
       default: false
     },
+    cloneSourceId: {
+      type: Number,
+      default: 0
+    },
     assignmentId: {
       type: Number,
       default: 0
@@ -87,10 +109,8 @@ export default {
   data: () => ({
     copyIcon: faCopy
   }),
-  mounted () {
-    this.doCopy = doCopy
-  },
   methods: {
+    doCopy,
     updateCustomQuestionTitle (title) {
       this.$emit('updateCustomQuestionTitle', title)
     }

@@ -3,13 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
-use App\AssignmentTopic;
 use App\Course;
 use App\Exceptions\Handler;
-use App\Helpers\Helper;
 use App\Question;
 use App\QuestionBank;
-use App\SavedQuestionsFolder;
 use App\Tag;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
@@ -18,7 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 
 class QuestionBankController extends Controller
 {
@@ -27,7 +23,7 @@ class QuestionBankController extends Controller
      * @param Request $request
      * @return array
      */
-    public function getShowDescriptionsCookie(Request $request)
+    public function getShowDescriptionsCookie(Request $request): array
     {
 
         $response['show_descriptions'] = request()->cookie()['show_descriptions'] ?? 0;
@@ -188,6 +184,7 @@ class QuestionBankController extends Controller
                     'questions.description',
                     'questions.id AS question_id',
                     'questions.technology_iframe',
+                    'questions.clone_source_id',
                     'questions.technology',
                     'questions.technology_id',
                     'questions.text_question',
@@ -201,6 +198,7 @@ class QuestionBankController extends Controller
                     'questions.description',
                     'questions.id AS question_id',
                     'questions.technology_iframe',
+                    'questions.clone_source_id',
                     'questions.technology',
                     'questions.technology_id',
                     'questions.qti_json',
@@ -410,6 +408,7 @@ class QuestionBankController extends Controller
                 ->select(
                     'questions.id AS question_id',
                     'questions.id',
+                    'questions.clone_source_id',
                     DB::raw('CONCAT(library, "-", page_id) AS library_page_id'),
                     'library',
                     'page_id',

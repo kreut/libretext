@@ -23,12 +23,18 @@
         >s</span> "{{ assignmentQuestion.in_assignments_names }}".
       </b-tooltip>
     </span>
+    <CloneMessage :question="assignmentQuestion" />
   </span>
 </template>
 
 <script>
+import CloneMessage from './CloneMessage.vue'
+
 export default {
   name: 'GetQuestionsTitle',
+  components: {
+    CloneMessage
+  },
   props: {
     assignmentQuestion: {
       type: Object,

@@ -807,6 +807,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $columns['id'] = $value->question_id;
+                $columns['clone_source_id'] = $questions_by_question_id[$value->question_id]->clone_source_id;
                 $columns['technology'] = $value->technology;
                 if ($value->technology === 'h5p') {
                     $h5p_questions_exists = true;

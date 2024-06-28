@@ -254,13 +254,19 @@
           <div>
             <small>ADAPT ID: <span id="adapt-question-id">{{ questionToEdit.id }}</span></small>
             <span class="text-info">
-              <a href=""
+              <a id="copy-adapt-id-tooltip"
+                 href=""
                  aria-label="Copy ADAPT ID"
                  @click.prevent="doCopy('adapt-question-id')"
               >
                 <font-awesome-icon :icon="copyIcon" />
               </a>
             </span>
+            <b-tooltip target="copy-adapt-id-tooltip" delay="250"
+                       triggers="hover focus"
+            >
+              Copy ADAPT ID {{ questionToEdit.id }}
+            </b-tooltip>
           </div>
         </div>
         <button type="button" aria-label="Close"
@@ -1298,6 +1304,7 @@
                    :show-pencil="user && user.role===2"
                    :assignment-id="+assignmentId"
                    :question-id="questions.length && questions[currentPage-1].id"
+                   :clone-source-id="user && user.role===2 && questions[currentPage - 1] && questions[currentPage - 1].clone_source_id"
                    @updateCustomQuestionTitle="updateCustomQuestionTitle"
         />
       </div>
