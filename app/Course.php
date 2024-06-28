@@ -757,6 +757,7 @@ class Course extends Model
             ->toArray();
 
         return DB::table('courses')
+            ->leftJoin('disciplines', 'courses.discipline_id', '=', 'disciplines.id')
             ->join('users', 'courses.user_id', '=', 'users.id')
             ->join('schools', 'courses.school_id', '=', 'schools.id')
             ->whereIn('courses.id', $public_courses_with_at_least_one_question)
@@ -764,9 +765,12 @@ class Course extends Model
             ->select('courses.id',
                 'courses.name AS name',
                 'schools.name AS school',
+                'disciplines.id AS discipline_id',
+                'disciplines.name AS discipline_name',
                 'term',
                 'alpha',
                 DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
+            ->orderBy('discipline_name')
             ->orderBy('name')
             ->get();
     }

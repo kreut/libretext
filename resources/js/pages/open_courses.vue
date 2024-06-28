@@ -7,6 +7,102 @@
            type="contact_us"
            subject="Request Instructor Access Code"
     />
+    <b-modal id="modal-delete-discipline"
+             title="Delete Discipline"
+             no-close-on-backdrop
+    >
+      <p>Please confirm that you would like to delete the discipline:</p>
+      <p class="text-center font-weight-bold">
+        {{ activeDiscipline.text }}
+      </p>
+      Once this discipline is deleted, it will be removed from all associated courses.
+
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-delete-discipline')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="deleteDiscipline(activeDiscipline.value)"
+        >
+          Delete
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-edit-new-discipline"
+             :title="activeDiscipline.value ? 'Edit Discipline' : 'New Discipline'"
+             no-close-on-backdrop
+             @hidden="resetDiscipline"
+    >
+      <b-form-input id="description"
+                    v-model="disciplineForm.name"
+                    :class="{ 'is-invalid': disciplineForm.errors.has('name') }"
+                    style="width:400px"
+                    type="text"
+                    @keydown="disciplineForm.errors.clear('name')"
+      />
+      <has-error :form="disciplineForm" field="name" />
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="disciplineForm.errors.clear();$bvModal.hide('modal-edit-new-discipline')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="saveDiscipline(activeDiscipline.value)"
+        >
+          Save
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-update-disciplines"
+             title="Update Disciplines"
+             size="lg"
+             no-close-on-backdrop
+    >
+      <div class="mb-2">
+        <b-button variant="primary"
+                  size="sm"
+                  @click="$bvModal.show('modal-edit-new-discipline')"
+        >
+          New Discipline
+        </b-button>
+      </div>
+      <ol v-show="disciplineOptions.length">
+        <li v-for="(discipline, disciplineIndex) in disciplineOptions"
+            v-show="discipline.value"
+            :key="`discipline-${disciplineIndex}`"
+        >
+          {{ discipline.text }}
+          <b-icon icon="pencil"
+                  @click.prevent="initEditDiscipline(discipline)"
+          />
+          <b-icon icon="trash"
+                  @click.prevent="initDeleteDiscipline(discipline)"
+          />
+        </li>
+      </ol>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-update-disciplines')"
+        >
+          Cancel
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-enter-course"
       title="Enter Course"
@@ -46,7 +142,7 @@
         </li>
       </ul>
     </b-modal>
-    <PageTitle :title="title"/>
+    <PageTitle :title="title" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -56,55 +152,188 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <b-container>
-        <b-table
-          :aria-label="title"
-          striped
-          hover
-          :no-border-collapse="true"
-          :fields="fields"
-          :items="openCourses"
-        >
-          <template v-slot:cell(name)="data">
-            <a
-              href=""
-              @click.prevent="initEnterOpenCourseAsAnonymousUser(data.item.id)"
+      <div v-show="type === 'commons'" class="mb-4">
+        Enter full or partial text in the title and/or description to filter out the courses. For example, if you
+        type
+        "span" in the title field, the courses "Spanish I" and "Spanning the Universe" will be in the filtered
+        list.
+        <hr>
+      </div>
+      <b-form-group
+        label-cols-sm="2"
+        label-cols-lg="1"
+        label-for="discipline"
+        label="Discipline"
+      >
+        <div>
+          <b-form-select v-model="discipline"
+                         style="width:300px"
+                         size="sm"
+                         :options="disciplineOptions"
+                         class="mt-2 mr-2"
+          />
+          <b-button v-show="isMe"
+                    size="sm"
+                    variant="outline-primary"
+                    style="height:30px;margin-top:8px"
+                    @click="$bvModal.show('modal-update-disciplines')"
+          >
+            Update Disciplines
+          </b-button>
+        </div>
+      </b-form-group>
+      <b-form-group
+        label-cols-sm="2"
+        label-cols-lg="1"
+        label-for="title"
+      >
+        <template v-slot:label>
+          Title
+          <span v-show="type === 'public_courses'">
+            <QuestionCircleTooltip id="title-tooltip" />
+            <b-tooltip target="title-tooltip"
+                       delay="250"
+                       triggers="hover focus"
             >
-              {{ data.item.name }}
-            </a>
+              Enter any partial text. For example "span" will find Spanish II as well as Introductory Spanish
+            </b-tooltip>
+          </span>
+        </template>
+        <b-form-input id="title"
+                      v-model="name"
+                      style="width:300px"
+                      aria-label="title"
+                      type="text"
+                      size="sm"
+        />
+      </b-form-group>
+      <div v-show="type === 'commons'">
+        <b-form-group
+          label-cols-sm="2"
+          label-cols-lg="1"
+          label-for="description"
+        >
+          <template v-slot:label>
+            Description
           </template>
-          <template v-slot:cell(actions)="data">
-            <div class="mb-0">
-              <b-tooltip :target="getTooltipTarget('viewAssignments',data.item.id)"
-                         triggers="hover"
-                         delay="500"
-              >
-                View assignments for {{ data.item.name }}
-              </b-tooltip>
-              <a :id="getTooltipTarget('viewAssignments',data.item.id)"
-                 href="#"
-                 class="pr-1"
-                 @click="openAssignmentsModal(data.item.id)"
-              >
-                <b-icon class="text-muted"
-                        icon="eye"
-                        :aria-label="`View ${data.item.name} Assignments`"
-                />
-              </a>
-              <ImportCourse v-if="user && user.role === 2"
-                            :one-button-per-row="oneButtonPerRow"
-                            :open-course="data.item"
-                            :icon="true"
+          <b-form-input id="description"
+                        v-model="description"
+                        style="width:300px"
+                        aria-label="description"
+                        size="sm"
+                        type="text"
+          />
+        </b-form-group>
+      </div>
+      <b-form-group
+        v-show="type === 'public'"
+        label-cols-sm="2"
+        label-cols-lg="1"
+        label-for="instructor"
+        label="Author"
+      >
+        <div style="width:500px">
+          <autocomplete
+            ref="authorSearch"
+            :search="searchByAuthor"
+            @submit="selectAuthor"
+          />
+        </div>
+      </b-form-group>
+      <b-form-group
+        v-show="type === 'public'"
+        label-cols-sm="2"
+        label-cols-lg="1"
+        label-for="school"
+        label="School"
+      >
+        <div style="width:500px">
+          <autocomplete
+            id="school"
+            ref="schoolSearch"
+            :search="searchBySchool"
+            @submit="selectSchool"
+          />
+        </div>
+      </b-form-group>
+      <div class="mb-3">
+        <b-button variant="primary" size="sm" @click="update">
+          Update
+        </b-button>
+        <span class="ml-2"><b-button size="sm" @click="reset">Reset</b-button></span>
+      </div>
+
+      <b-table
+        v-show="openCourses.length"
+        :aria-label="title"
+        striped
+        hover
+        :no-border-collapse="true"
+        :fields="fields"
+        :items="openCourses"
+      >
+        <template v-slot:cell(name)="data">
+          <a
+            href=""
+            @click.prevent="initEnterOpenCourseAsAnonymousUser(data.item.id)"
+          >
+            {{ data.item.name }}
+          </a>
+        </template>
+        <template v-slot:cell(discipline_id)="data">
+          <div v-if="!isMe">
+            {{ data.item.discipline_name ? data.item.discipline_name : 'None specified' }}
+          </div>
+          <div v-if="isMe">
+            <DisciplineSelect :key="`discipline-${disciplineCache}`"
+                              :current-discipline-id="data.item.discipline_id ? data.item.discipline_id : null"
+                              :discipline-options="disciplineOptions"
+                              :course-id="data.item.id"
+                              @reload="reload"
+            />
+          </div>
+        </template>
+        <template v-slot:cell(description)="data">
+          <div class="truncate" :title="data.item.description">
+            {{ data.item.description }}
+          </div>
+        </template>
+        <template v-slot:cell(actions)="data">
+          <div class="mb-0">
+            <b-tooltip :target="getTooltipTarget('viewAssignments',data.item.id)"
+                       triggers="hover"
+                       delay="500"
+            >
+              View assignments for {{ data.item.name }}
+            </b-tooltip>
+            <a :id="getTooltipTarget('viewAssignments',data.item.id)"
+               href="#"
+               class="pr-1"
+               @click="openAssignmentsModal(data.item.id)"
+            >
+              <b-icon class="text-muted"
+                      icon="eye"
+                      :aria-label="`View ${data.item.name} Assignments`"
               />
-            </div>
-          </template>
-        </b-table>
-      </b-container>
+            </a>
+            <ImportCourse v-if="user && user.role === 2"
+                          :one-button-per-row="oneButtonPerRow"
+                          :open-course="data.item"
+                          :icon="true"
+            />
+          </div>
+        </template>
+      </b-table>
     </div>
+    <b-alert variant="info" :show="!openCourses.length && !isLoading">
+      There are no courses which match your criteria.
+    </b-alert>
   </div>
 </template>
 
 <script>
+import Autocomplete from '@trevoreyre/autocomplete-vue'
+import '@trevoreyre/autocomplete-vue/dist/style.css'
 import { mapGetters } from 'vuex'
 import axios from 'axios'
 import Loading from 'vue-loading-overlay'
@@ -114,17 +343,32 @@ import Email from '~/components/Email'
 import ImportCourse from '~/components/ImportCourse'
 import { logout } from '~/helpers/Logout'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
+import DisciplineSelect from '../components/DisciplineSelect.vue'
 
 export default {
   components: {
+    DisciplineSelect,
     Loading,
     Email,
-    ImportCourse
+    ImportCourse,
+    Autocomplete
   },
   metaInfo () {
     return { title: 'Commons' }
   },
   data: () => ({
+    disciplineCache: 0,
+    disciplineForm: new Form({
+      name: ''
+    }),
+    activeDiscipline: {},
+    discipline: null,
+    disciplineOptions: [{ value: null, text: 'Choose a discipline' }],
+    description: '',
+    school: '',
+    name: '',
+    schools: [],
+    authors: '',
     type: '',
     title: '',
     oneButtonPerRow: false,
@@ -132,6 +376,7 @@ export default {
     loggingIn: true,
     isLoading: true,
     openCourses: [],
+    originalOpenCourses: [],
     assignments: [],
     openCourseId: 0,
     loginForm: new Form({
@@ -141,9 +386,12 @@ export default {
     openCourseName: '',
     fields: []
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    isMe: () => window.config.isMe
+  },
   created () {
     this.logout = logout
   },
@@ -159,11 +407,147 @@ export default {
     }
     this.title = this.type === 'commons' ? 'Commons' : 'Public Courses'
     this.getOpenCourses()
+    this.getDisciplines()
   },
   beforeDestroy () {
     window.removeEventListener('resize', this.resizeHandler)
   },
   methods: {
+    reload () {
+      this.getOpenCourses()
+      this.getDisciplines()
+    },
+    resetDiscipline () {
+      this.activeDiscipline = {}
+      this.disciplineForm.name = ''
+    },
+    initEditDiscipline (discipline) {
+      this.activeDiscipline = discipline
+      this.disciplineForm.name = discipline.text
+      this.$bvModal.show('modal-edit-new-discipline')
+    },
+    initDeleteDiscipline (discipline) {
+      this.activeDiscipline = discipline
+      this.$bvModal.show('modal-delete-discipline')
+    },
+    async getDisciplines () {
+      try {
+        const { data } = await axios.get('/api/disciplines')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.disciplineOptions = [{ value: null, text: 'Choose a discipline' }]
+        for (let i = 0; i < data.disciplines.length; i++) {
+          const discipline = data.disciplines[i]
+          this.disciplineOptions.push({ value: discipline.id, text: discipline.name })
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async saveDiscipline (activeDisciplineId = null) {
+      let url
+      let method
+      if (activeDisciplineId) {
+        url = `/api/disciplines/${activeDisciplineId}`
+        method = 'patch'
+      } else {
+        url = `/api/disciplines`
+        method = 'post'
+      }
+      try {
+        const { data } = await this.disciplineForm[method](url)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        } else {
+          await this.getOpenCourses()
+          await this.getDisciplines()
+          this.$bvModal.hide('modal-edit-new-discipline')
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
+    async deleteDiscipline (discipline) {
+      try {
+        const { data } = await axios.delete(`/api/disciplines/${discipline}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        } else {
+          await this.getOpenCourses()
+          await this.getDisciplines()
+          this.disciplineCache++
+          this.$bvModal.hide('modal-delete-discipline')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    reset () {
+      this.$refs.authorSearch.value = ''
+      this.$refs.schoolSearch.value = ''
+      this.school = this.name = this.author = this.description = ''
+      this.discipline = null
+      this.openCourses = this.originalOpenCourses
+    },
+    update () {
+      this.openCourses = this.originalOpenCourses
+      if (this.school) {
+        this.openCourses = this.openCourses.filter(item => item.school === this.school)
+      }
+      if (this.author) {
+        this.openCourses = this.openCourses.filter(item => item.instructor.toLowerCase().includes(this.author.toLowerCase()))
+      }
+      if (this.name) {
+        this.openCourses = this.openCourses.filter(item => item.name.toLowerCase().includes(this.name.toLowerCase()))
+      }
+      if (this.discipline) {
+        this.openCourses = this.openCourses.filter(item => item.discipline_id === this.discipline)
+        this.disciplineCache++
+      }
+      if (this.description) {
+        this.openCourses = this.openCourses.filter(item => item.description.toLowerCase().includes(this.description.toLowerCase()))
+      }
+    },
+    selectAuthor (selectedAuthor) {
+      this.author = selectedAuthor
+    },
+    searchByAuthor (input) {
+      if (input.length < 1) {
+        return []
+      }
+      let matches = this.authors.filter(authors => authors.toLowerCase().includes(input.toLowerCase()))
+      let authors = []
+      if (matches) {
+        for (let i = 0; i < matches.length; i++) {
+          authors.push(matches[i])
+        }
+        authors.sort()
+      }
+      return authors
+    },
+    selectSchool (selectedSchool) {
+      this.school = selectedSchool
+    },
+    searchBySchool (input) {
+      if (input.length < 1) {
+        return []
+      }
+      let matches = this.schools.filter(school => school.toLowerCase().includes(input.toLowerCase()))
+      let schools = []
+      if (matches) {
+        for (let i = 0; i < matches.length; i++) {
+          schools.push(matches[i])
+        }
+        schools.sort()
+      }
+      return schools
+    },
     resizeHandler () {
       this.oneCoursePerRow = this.zoomGreaterThan(1.2)
       this.oneButtonPerRow = this.zoomGreaterThan(1)
@@ -206,19 +590,47 @@ export default {
           this.$noty[data.type](data.message)
           return false
         }
-        this.openCourses = this.type === 'commons' ? data.commons_courses : data.public_courses
-        this.fields = [{
-          key: 'name',
-          isRowHeader: true,
-          sortable: true
+        if (this.type === 'commons') {
+          for (let i = 0; i < data.commons_courses.length; i++) {
+            if (!data.commons_courses[i].description) {
+              data.commons_courses[i].description = 'None provided.'
+            }
+          }
         }
+        this.openCourses = this.type === 'commons' ? data.commons_courses : data.public_courses
+        this.isLoading = false
+        this.originalOpenCourses = this.openCourses
+        this.fields = [
+          {
+            key: 'discipline_id',
+            label: 'Discipline',
+            sortable: true
+          },
+          {
+            key: 'name',
+            label: 'Title',
+            sortable: true
+          }
         ]
         if (this.type === 'commons') {
-          this.fields.push('description')
+          this.fields.push({
+            key: 'description',
+            label: 'Description'
+          })
         } else {
+          this.schools = []
+          this.authors = []
+          for (let i = 0; i < data.public_courses.length; i++) {
+            if (!(this.schools).includes(data.public_courses[i].school)) {
+              this.schools.push(data.public_courses[i].school)
+            }
+            if (!(this.authors).includes(data.public_courses[i].instructor)) {
+              this.authors.push(data.public_courses[i].instructor)
+            }
+          }
           this.fields.push({
             key: 'instructor',
-            label: 'Authored By',
+            label: 'Author',
             sortable: true
           })
           this.fields.push(
@@ -231,8 +643,12 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-      this.isLoading = false
     }
   }
 }
 </script>
+<style>
+.truncate {
+  max-width: 600px; /* Adjust the width as needed */
+}
+</style>

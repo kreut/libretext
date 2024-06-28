@@ -54,6 +54,17 @@ class CoursesIndexTest extends TestCase
 
     }
 
+
+    /** @test */
+    public function non_admin_cannot_update_disciplines()
+    {
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/courses/{$this->course->id}/update-discipline")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to update the discipline for this course.']);
+    }
+
+
     /** @test */
     public function cannot_get_the_mini_summary_if_you_do_not_have_an_analytics_token()
     {

@@ -56,6 +56,42 @@ class CourseController extends Controller
     use DateFormatter;
 
     /**
+     *
+     */
+    public function updateDiscipline(Request $request, Course $course)
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateDiscipline', $course);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            if ($request->discipline_id === null) {
+                $course->discipline_id = null;
+                $course->save();
+                $response['message'] = "The discipline has been removed from $course->name.";
+                $response['type'] = 'info';
+            } else if (DB::table('disciplines')->where('id', $request->discipline_id)) {
+                $course->discipline_id = $request->discipline_id;
+                $course->save();
+                $response['message'] = "The discipline for $course->name has been updated.";
+                $response['type'] = 'success';
+            } else {
+                $response['message'] = "That is not a valid discipline.";
+            }
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the discipline.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
      * @param Request $request
      * @param Analytics $analytics
      * @return array
@@ -63,16 +99,17 @@ class CourseController extends Controller
      * @throws InvalidTokenException
      * @throws JsonDecodingException
      * @throws SigningException
-     * @throws ValidationException
+     * @throws ValidationException|Exception
      */
     public function showMiniSummary(Request $request, Analytics $analytics): array
     {
         $response['type'] = 'error';
 
-        try { $claims = $analytics->hasAccess($request);
+        try {
+            $claims = $analytics->hasAccess($request);
             $course_id = $claims['course_id'];
             $course = Course::find($course_id);
-            $response['mini-summary'] =collect($course->only(['name', 'user_id', 'start_date', 'end_date', 'textbook_url']))
+            $response['mini-summary'] = collect($course->only(['name', 'user_id', 'start_date', 'end_date', 'textbook_url']))
                 ->merge(['letter_grades_released' => $course->finalGrades->letter_grades_released])
                 ->toArray();
             $response['type'] = 'success';
@@ -870,11 +907,14 @@ class CourseController extends Controller
             $commons_user = User::where('email', 'commons@libretexts.org')->first();
             $commons_courses = DB::table('courses')
                 ->join('users', 'courses.user_id', '=', 'users.id')
+                ->leftJoin('disciplines', 'courses.discipline_id', '=', 'disciplines.id')
                 ->join('schools', 'courses.school_id', '=', 'schools.id')
                 ->where('courses.user_id', $commons_user->id)
                 ->where('shown', 1)
                 ->select('courses.id',
                     'courses.name AS name',
+                    'disciplines.name AS discipline_name',
+                    'disciplines.id AS discipline_id',
                     'courses.public_description AS description',
                     'schools.name AS school',
                     DB::raw("CONCAT(users.first_name, ' ',users.last_name) AS instructor"),

@@ -58,6 +58,12 @@ Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'Be
 Route::get('/beta-assignments/is-beta-assignment/{assignment}', 'BetaAssignmentController@isBetaAssignment');
 
 
+Route::get('/disciplines', 'DisciplineController@index');
+Route::post('/disciplines', 'DisciplineController@store');
+Route::patch('/disciplines/{discipline}', 'DisciplineController@edit');
+Route::delete('/disciplines/{discipline}', 'DisciplineController@destroy');
+
+
 Route::get('/h5p-collections', 'H5PCollectionController@index');
 Route::post('/h5p-collections/validate-import', 'H5PCollectionController@validateImport');
 Route::patch('/h5p-collections/get-adapt-question-id-by-h5p-id/{h5p_id}', 'H5PCollectionController@getAdaptIdByH5pId');
@@ -262,6 +268,8 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
     Route::get('/courses/assignments/non-beta', 'CourseController@getCoursesAndNonBetaAssignments');
     Route::get('/courses/enrolled-in-courses-and-assignments', 'CourseController@getEnrolledInCoursesAndAssignments');
+    Route::patch('/courses/{course}/update-discipline', 'CourseController@updateDiscipline');
+
 
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');

@@ -17,6 +17,16 @@ class CoursePolicy
     use CommonPolicies;
 
     /**
+     * @return Response
+     */
+    public function updateDiscipline(): Response
+    {
+        return Helper::isAdmin()
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the discipline for this course.');
+
+    }
+    /**
      * @param User $user
      * @param Course $course
      * @return Response
