@@ -42,7 +42,7 @@
            class="radio-item"
            :style="`width:${width}`"
       >
-        <b-form-radio :id="`${formattedQuestionType}`"
+        <b-form-radio :id="`${formattedQuestionType}-${index}`"
                       v-model="formattedQuestionType"
                       :value="option.formatted_question_type"
                       @change="setFormattedQuestionType(option.formatted_question_type)"
