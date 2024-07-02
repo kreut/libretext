@@ -42,7 +42,8 @@
                             :show-response-feedback="showResponseFeedback"
       />
       <div
-        v-if="['matching',
+        v-if="['submit_molecule',
+               'matching',
                'true_false',
                'multiple_choice',
                'multiple_answers',
@@ -57,9 +58,26 @@
                'bow_tie'].includes(questionType)"
       >
         <div style="font-family: Sans-Serif,serif;" :style="presentationMode ? 'font-size:20px' : 'font-size:16px'">
-          <span v-html="prompt"/>
+          <span v-html="prompt" />
         </div>
         <b-form-group>
+          <div>
+            <iframe
+              v-if="previewingQuestion"
+              id="emptySketcher"
+              v-resize="{ log: false }"
+              width="100%"
+              src="/api/sketcher/empty"
+              frameborder="0"
+            />
+          </div>
+          <SketcherViewer v-if="questionType === 'submit_molecule' & !previewingQuestion"
+                          ref="sketcherViewer"
+                          :key="`sketcher-${qtiJsonCacheKey}`"
+                          :qti-json="JSON.parse(qtiJson)"
+                          :student-response="studentResponse ? JSON.stringify(JSON.parse(studentResponse).structure) : JSON.stringify(JSON.parse(qtiJson).solutionStructure)"
+                          :read-only="previewOrSolution"
+          />
           <DropDownTableViewer v-if="questionType === 'drop_down_table'"
                                ref="dropDownTableViewer"
                                :key="`drop-down-${qtiJsonCacheKey}`"
@@ -176,11 +194,12 @@
 <script>
 import $ from 'jquery'
 import { mapGetters } from 'vuex'
+import SketcherViewer from './viewers/SketcherViewer.vue'
 import NumericalViewer from './viewers/NumericalViewer'
 import BowTieViewer from './viewers/BowTieViewer'
 import MatrixMultipleChoiceViewer from './viewers/MatrixMultipleChoiceViewer'
 import MultipleResponseSelectAllThatApplyOrSelectNViewer
-  from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
+from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
 import MultipleResponseGroupingViewer from './viewers/MultipleResponseGroupingViewer'
 import DropDownTableViewer from './viewers/DropDownTableViewer'
 import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'
@@ -197,6 +216,7 @@ import { formatQuestionMediaPlayer } from '~/helpers/Questions'
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    SketcherViewer,
     MatrixMultipleResponseViewer,
     MultipleChoiceTrueFalseViewer,
     MultipleAnswersViewer,
@@ -245,22 +265,32 @@ export default {
     presentationMode: {
       type: Boolean,
       default: false
+    },
+    previewOrSolution: {
+      type: Boolean,
+      default: false
+    },
+    previewingQuestion: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
-      clickerApp: window.config.clickerApp,
-      qtiJsonCacheKey: 0,
-      matchingFeedback: '',
-      termsToMatch: [],
-      possibleMatches: [],
-      jsonShown: false,
-      submissionErrorMessage: '',
-      questionType: '',
-      selectChoices: [],
-      question: {},
-      prompt: '',
-      simpleChoice: []
-    }
+    response: '',
+    receivedStructure: false,
+    clickerApp: window.config.clickerApp,
+    qtiJsonCacheKey: 0,
+    matchingFeedback: '',
+    termsToMatch: [],
+    possibleMatches: [],
+    jsonShown: false,
+    submissionErrorMessage: '',
+    questionType: '',
+    selectChoices: [],
+    question: {},
+    prompt: '',
+    simpleChoice: []
+  }
   ),
   computed: {
     isLocalMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
@@ -273,6 +303,12 @@ export default {
       this.qtiJsonCacheKey++
     }
   },
+  created () {
+    window.addEventListener('message', this.receiveMessage, false)
+  },
+  beforeDestroy () {
+    window.removeEventListener('message', this.hotKeys)
+  },
   mounted () {
     this.question = JSON.parse(this.qtiJson)
     if (!this.question) {
@@ -280,8 +316,8 @@ export default {
       return false
     }
     this.questionType = this.question.questionType
-    console.log(this.question)
     switch (this.questionType) {
+      case ('submit_molecule'):
       case ('numerical'):
       case ('matching') :
       case ('multiple_answers'):
@@ -333,6 +369,16 @@ export default {
   },
   methods: {
     formatQuestionMediaPlayer,
+    receiveMessage (event) {
+      if (event.data.structure && event.data.smiles) {
+        this.response = {
+          smiles: event.data.smiles,
+          structure: event.data.structure
+        }
+        this.receivedStructure = true
+        this.$forceUpdate()
+      }
+    },
     showRandomizedMessage () {
       if (this.presentationMode) {
         return false
@@ -355,11 +401,33 @@ export default {
         [array[i], array[j]] = [array[j], array[i]]
       }
     },
-    submitResponse () {
+    waitForStructure () {
+      return new Promise((resolve) => {
+        const intervalId = setInterval(() => {
+          if (this.receivedStructure) {
+            clearInterval(intervalId)
+            resolve()
+          } else {
+            console.log('Checking for receivedStructure...')
+          }
+        }, 50)
+      })
+    },
+    async handleGetStructure () {
+      await this.waitForStructure()
+      this.message = 'Structure received!'
+    },
+    async submitResponse () {
       let response
       let invalidResponse = false
       let submissionErrorMessage
       switch (this.questionType) {
+        case ('submit_molecule'):
+          const iframe = document.getElementById('sketcherViewer')
+          iframe.contentWindow.postMessage('save', '*')
+          await this.handleGetStructure()
+          response = JSON.stringify(this.response)
+          break
         case ('numerical'):
           response = this.$refs.numericalViewer.numericalResponse.toString()
           if (response === '') {

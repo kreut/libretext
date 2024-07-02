@@ -1576,6 +1576,7 @@
                                      :key="`modal-answer-${questions[currentPage-1].id}`"
                                      :modal-id="questions[currentPage-1].id"
                                      :qti-json="questions[currentPage-1].qti_answer_json"
+                                     :preview-or-solution="true"
                 />
                 <b-button
                   size="sm"
@@ -1861,6 +1862,7 @@
                 <QtiJsonAnswerViewer
                   :modal-id="questions[currentPage-1].id"
                   :qti-json="questions[currentPage-1].qti_answer_json"
+                  :preview-or-solution="true"
                 />
                 <b-button size="sm"
                           variant="outline-info"
@@ -1939,6 +1941,7 @@
               <QtiJsonAnswerViewer
                 :modal-id="questions[currentPage-1].id"
                 :qti-json="questions[currentPage-1].qti_answer_json"
+                :preview-or-solution="true"
               />
               <b-button size="sm"
                         variant="outline-info"
@@ -2139,6 +2142,7 @@
                                  :key="`modal-answer-${questions[currentPage-1].id}`"
                                  :modal-id="questions[currentPage-1].id"
                                  :qti-json="questions[currentPage-1].qti_answer_json"
+                                 :preview-or-solution="true"
             />
             <b-button
               size="sm"

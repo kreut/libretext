@@ -14,6 +14,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Exceptions\Handler;
 use \Exception;
@@ -545,6 +546,17 @@ class Question extends Model
             }
         }
         switch ($question_type) {
+            case('submit_molecule'):
+                if (!$show_solution) {
+                    if (request()->user()->role === 3) {
+                        $qti_array['solutionStructure'] = '';
+                    }
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
+                        $qti_array['solutionStructure'] = '';
+                    }
+                }
+                break;
             case('highlight_table'):
                 if ($student_response) {
                     $student_response = json_decode($student_response, 1);

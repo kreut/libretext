@@ -114,6 +114,10 @@ class Submission extends Model
             case('qti'):
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
+                    case('submit_molecule'):
+                        $student_smiles = json_decode($submission->student_response)->smiles;
+                        $proportion_correct = $submission->question->smiles === $student_smiles ? 1 : 0;
+                        break;
                     case('highlight_text'):
                         $student_responses = json_decode($submission->student_response);
                         $score = 0;
@@ -946,10 +950,13 @@ class Submission extends Model
                 break;
             case('qti'):
                 $submission = json_decode($submission->submission);
-
+              if ($submission->question->questionType === 'submit_molecule') {
+                 return $submission->student_response;
+              }
                 $student_response = $submission->student_response ?: '';
                 if ($formatted && $student_response) {
                     $student_response = $this->formattedStudentResponse($submission->question, $student_response);
+
                 }
                 break;
         }
@@ -966,6 +973,7 @@ class Submission extends Model
     {
 
         $student_response = $question->questionType !== 'multiple_choice' ? json_decode($student_response) : $student_response;
+
         if (!$student_response) {
             return $student_response;
         }

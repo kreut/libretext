@@ -152,7 +152,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/get-header-html/{question}/{revision_number?}', 'LibretextController@getHeaderHtml');
     Route::post('/libretexts/solution-error', 'LibretextController@emailSolutionError');
 
-    Route::get('/sketcher', 'SketcherController@getSketcher');
+    Route::get('/sketcher/{type?}', 'SketcherController@getSketcher');
 
     Route::patch('/pending-question-ownership-transfer-request', 'PendingQuestionOwnershipTransferController@update');
 

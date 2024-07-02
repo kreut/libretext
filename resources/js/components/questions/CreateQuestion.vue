@@ -459,8 +459,8 @@
     <b-modal
       :id="modalId"
       title="Preview Question"
-      size="lg"
       ok-title="OK"
+      size="lg"
       ok-only
     >
       <SolutionFileHtml
@@ -478,6 +478,8 @@
           :show-qti-answer="showQtiAnswer"
           :show-submit="false"
           :show-response-feedback="false"
+          :preview-or-solution="showQtiAnswer"
+          :previewing-question="previewingQuestion"
         />
       </div>
       <ViewQuestions v-if="questionForm.technology !== 'qti'"
@@ -1036,14 +1038,15 @@
           >
             <b-container class="mt-2">
               <b-row>
-                <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
-                                     v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded || ['exposition','report'].includes(questionForm.question_type)"
-                                     :media-uploads="questionForm.media_uploads"
-                                     :question-media-upload-id="questionMediaUploadId"
-                                     :qti-json="questionForm.non_technology_text"
-                                     @updateQuestionMediaUploads="updateQuestionMediaUploads"
-                                     @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
-                                     @updateQuestionTranscript="updateQuestionTranscript"
+                <QuestionMediaUpload
+                  v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded || ['exposition','report'].includes(questionForm.question_type)"
+                  :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                  :media-uploads="questionForm.media_uploads"
+                  :question-media-upload-id="questionMediaUploadId"
+                  :qti-json="questionForm.non_technology_text"
+                  @updateQuestionMediaUploads="updateQuestionMediaUploads"
+                  @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
+                  @updateQuestionTranscript="updateQuestionTranscript"
                 />
               </b-row>
             </b-container>
@@ -1166,6 +1169,12 @@
                     exam.
                   </b-tooltip>
                 </b-form-radio>
+                <b-form-radio value="sketcher">
+                  Sketcher
+                </b-form-radio>
+                <b-form-radio v-show="false" value="3D visualization">
+                  3D Visualization
+                </b-form-radio>
                 <b-form-radio value="all">
                   All
                 </b-form-radio>
@@ -1282,6 +1291,13 @@
                               @change="initQTIQuestionType($event)"
                 >
                   Drag and Drop Cloze
+                </b-form-radio>
+              </div>
+              <div v-if="['all'].includes(nativeType)">
+                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="sketcher"
+                              @change="initQTIQuestionType('submit_molecule')"
+                >
+                  Sketcher
                 </b-form-radio>
               </div>
             </b-form-group>
@@ -1470,10 +1486,13 @@
                      'matrix_multiple_choice',
                      'bow_tie',
                      'highlight_text',
-                     'highlight_table'].includes(qtiQuestionType) && qtiJson"
+                     'highlight_table',
+                     'submit_molecule'].includes(qtiQuestionType) && qtiJson"
               class="mb-2"
             >
-              <b-container v-if="questionForm.technology === 'qti'" class="mt-2">
+              <b-container v-if="questionForm.technology === 'qti' && !['submit_molecule'].includes(qtiQuestionType)"
+                           class="mt-2"
+              >
                 <b-row>
                   <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
                                        :media-uploads="questionForm.media_uploads"
@@ -1508,6 +1527,11 @@
             </div>
             <div v-if="isLocalMe || user.id === 36892">
               {{ qtiJson }}
+            </div>
+            <div v-if="qtiQuestionType === 'submit_molecule'">
+              <Sketcher :error-message="questionForm.errors.get(`solution_structure`)"
+                        :solution-structure="solutionStructure"
+              />
             </div>
             <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
                               ref="dragAndDropCloze"
@@ -1907,7 +1931,6 @@
               @updateQuestionFormRubricCategories="updateQuestionFormRubricCategories"
       />
     </b-card>
-
     <b-card v-if="questionForm.question_type === 'assessment'"
             border-variant="primary"
             header-bg-variant="primary"
@@ -2202,6 +2225,7 @@ import FrameworkAligner from '../FrameworkAligner'
 import DropDownRationaleTriad from './nursing/DropDownRationaleTriad.vue'
 import Rubric from './Rubric.vue'
 import QuestionRevisionDifferences from '../QuestionRevisionDifferences.vue'
+import Sketcher from './Sketcher.vue'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2349,6 +2373,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    Sketcher,
     QuestionMediaUpload,
     QuestionRevisionDifferences,
     Rubric,
@@ -2411,6 +2436,10 @@ export default {
     }
   },
   data: () => ({
+    previewingQuestion: false,
+    solutionStructure: {},
+    receivedStructure: false,
+    molViewJson: {},
     questionMediaUploadKey: 0,
     a11yAutoGradedAlternativeQuestionId: 0,
     initiallyWebworkQuestion: false,
@@ -2593,6 +2622,7 @@ export default {
   },
   created () {
     this.getLearningOutcomes = getLearningOutcomes
+    window.addEventListener('message', this.receiveMessage, false)
   },
   beforeDestroy () {
     window.removeEventListener('keydown', this.hotKeys)
@@ -2648,6 +2678,10 @@ export default {
     if (![2, 5].includes(this.user.role)) {
       return false
     }
+    // this.questionType = 'native'
+    // this.nativeType = 'sketcher'
+    // this.qtiQuestionType = 'submit_molecule'
+
     this.switchingType = false
     this.doCopy = doCopy
     window.addEventListener('keydown', this.hotKeys)
@@ -2674,8 +2708,21 @@ export default {
     if (this.questionToEdit) {
       axios.delete(`/api/current-question-editor/${this.questionToEdit.id}`)
     }
+    window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    receiveMessage (event) {
+      console.log(event.data)
+      if (event.data.structure && event.data.smiles) {
+        this.receivedStructure = true
+        this.qtiJson.solutionStructure = event.data.structure
+        this.questionForm.solution_structure = JSON.stringify(this.qtiJson.solutionStructure)
+        this.questionForm.smiles = this.qtiJson.smiles = event.data.smiles
+        this.questionForm.qti_prompt = this.qtiJson.prompt
+        this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+        this.$forceUpdate()
+      }
+    },
     viewInLibreStudio (id) {
       window.open(
         `https://studio.libretexts.org/h5p/${id}`,
@@ -2783,6 +2830,22 @@ export default {
         this.$forceUpdate()
       })
     },
+    waitForStructure () {
+      return new Promise((resolve) => {
+        const intervalId = setInterval(() => {
+          if (this.receivedStructure) {
+            clearInterval(intervalId)
+            resolve()
+          } else {
+            console.log('Checking for receivedStructure...')
+          }
+        }, 50)
+      })
+    },
+    async handleGetStructure () {
+      await this.waitForStructure()
+      this.message = 'Structure received!'
+    },
     async initSaveQuestion () {
       this.questionForm.changes_are_topical = ''
       console.log(`Technology: ${this.questionForm.technology}`)
@@ -2810,6 +2873,12 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('submit_molecule'):
+            this.receivedStructure = false
+            const iframe = document.getElementById('sketcher')
+            iframe.contentWindow.postMessage('save', '*')
+            await this.handleGetStructure()
+            break
           case ('highlight_table'):
             this.$forceUpdate()
             this.questionForm.colHeaders = this.qtiJson['colHeaders']
@@ -3099,8 +3168,13 @@ export default {
           // made select_choice do double duty
           this.nativeType = 'nursing'
         }
-        console.log(this.qtiJson.questionType)
+        console.log(this.qtiJson)
         switch (this.qtiJson.questionType) {
+          case ('submit_molecule'):
+            this.qtiQuestionType = this.qtiJson.questionType
+            this.qtiPrompt = this.qtiJson['prompt']
+            this.solutionStructure = this.qtiJson.solutionStructure
+            break
           case ('drag_and_drop_cloze'):
             this.qtiQuestionType = this.qtiJson.questionType
             this.qtiPrompt = this.qtiJson['prompt']
@@ -3327,8 +3401,8 @@ export default {
       }
     },
     initNativeType () {
-      if (this.nativeType === 'nursing') {
-        this.initNursingQuestion()
+      if (['nursing', 'sketcher'].includes(this.nativeType)) {
+        this.initNonBasicQTIQuestion()
       } else {
         this.qtiQuestionType = 'multiple_choice'
         this.initQTIQuestionType('multiple_choice')
@@ -3451,8 +3525,16 @@ export default {
       let option = this.existingAutoGradedTechnologyOptions.find(item => item.value === technology)
       return option ? option.text : 'unknown technology'
     },
-    initNursingQuestion () {
-      let questionType = 'bow_tie'
+    initNonBasicQTIQuestion () {
+      let questionType
+      switch (this.nativeType) {
+        case ('nursing'):
+          questionType = 'bow_tie'
+          break
+        case ('sketcher'):
+          questionType = 'submit_molecule'
+          break
+      }
       this.qtiQuestionType = questionType
       this.initQTIQuestionType(questionType)
       this.questionFormTechnology = 'qti'
@@ -3484,6 +3566,7 @@ export default {
       }
     },
     async getQtiAnswerJson () {
+      this.previewingQuestion = false
       try {
         const { data } = await axios.post('/api/questions/qti-answer-json', { qti_json: JSON.stringify(this.qtiJson) })
         if (data.type !== 'success') {
@@ -3493,6 +3576,15 @@ export default {
         console.log(data)
         this.qtiAnswerJson = data.qti_answer_json
         this.showQtiAnswer = true
+        try {
+          if (this.qtiJson.questionType === 'submit_molecule') {
+            this.previewingQuestion = false
+            this.qtiAnswerJson = JSON.stringify(this.qtiJson)
+          }
+        } catch (error) {
+          console.error(error.message)
+          console.error('This logic is just for submit molecule.  Bt it didn;t work')
+        }
         this.qtiJsonQuestionViewerKey++
       } catch (error) {
         this.$noty.error(error.message)
@@ -3630,6 +3722,15 @@ export default {
         this.generalFeedbacks[i].editorShown = false
       }
       switch (questionType) {
+        case ('submit_molecule'):
+          this.qtiJson = {
+            questionType: 'submit_molecule',
+            prompt: '',
+            solutionStructure: '',
+            solution: ''
+          }
+          this.qtiQuestionType = 'submit_molecule'
+          break
         case ('highlight_table'):
           this.qtiJson = {
             questionType: 'highlight_table',
@@ -3740,9 +3841,7 @@ export default {
               { identifier: uuidv4(), value: '', correctResponse: false }]
           }
           break
-        case
-          ('bow_tie')
-          :
+        case ('bow_tie'):
           this.qtiJson = {
             questionType: 'bow_tie',
             actionsToTake: [{ identifier: uuidv4(), value: '', correctResponse: true },
@@ -3752,9 +3851,7 @@ export default {
               { identifier: uuidv4(), value: '', correctResponse: true }]
           }
           break
-        case
-          ('numerical')
-          :
+        case ('numerical'):
           this.qtiJson = {
             questionType: 'numerical',
             prompt: '',
@@ -3769,20 +3866,14 @@ export default {
             }
           }
           break
-        case
-          ('matching')
-          :
+        case ('matching'):
           this.qtiJson = { questionType: 'matching' }
           this.qtiJson.prompt = {}
           this.qtiJson.termsToMatch = []
           this.qtiJson.possibleMatches = []
           break
-        case
-          ('multiple_answers')
-          :
-        case
-          ('multiple_choice')
-          :
+        case ('multiple_answers'):
+        case ('multiple_choice'):
           let qtiJson
           qtiJson = simpleChoiceJson
           qtiJson.prompt = ''
@@ -3820,9 +3911,7 @@ export default {
           this.qtiJson = qtiJson
           this.$forceUpdate()
           break
-        case
-          ('true_false')
-          :
+        case ('true_false'):
           this.qtiJson = simpleChoiceJson
           this.qtiJson.prompt = ''
           this.qtiPrompt = ''
@@ -3842,9 +3931,7 @@ export default {
           this.simpleChoices = this.qtiJson.simpleChoice
           this.correctResponse = ''
           break
-        case
-          ('fill_in_the_blank')
-          :
+        case ('fill_in_the_blank'):
           this.qtiJson = {
             questionType: 'fill_in_the_blank',
             itemBody: { textEntryInteraction: '' }
@@ -3985,6 +4072,14 @@ export default {
           this.questionForm.technology = 'imathas'
           this.$bvModal.show('modal-auto-graded-redirect')
           break
+        case ('sketcher'):
+          if (this.questionForm.non_technology_text) {
+            this.newAutoGradedTechnology = null
+            this.$noty.info('Please first remove any Open-Ended Content.  You can always place additional content in the Sketcher question\'s Prompt.')
+            return false
+          }
+          this.questionForm.technology = 'sketcher'
+          break
         case null:
           this.questionForm.technology = 'text'
           return false
@@ -4063,7 +4158,7 @@ export default {
         }
       }
       if (this.nursing) {
-        this.initNursingQuestion()
+        this.initNonBasicQTIQuestion()
       }
       this.questionForm.question_type = questionType
       this.questionForm.folder_id = folderId
@@ -4106,6 +4201,13 @@ export default {
       return true
     },
     async previewQuestion () {
+      if (this.qtiQuestionType === 'submit_molecule') {
+        this.previewingQuestion = true
+        this.receivedStructure = false
+        const iframe = document.getElementById('sketcher')
+        iframe.contentWindow.postMessage('save', '*')
+        await this.handleGetStructure()
+      }
       if (!this.validateImagesHaveAlts()) {
         return false
       }

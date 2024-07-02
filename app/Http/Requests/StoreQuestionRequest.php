@@ -130,6 +130,10 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('submit_molecule'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['solution_structure'] = ['required'];
+                                    break;
                                 case('highlight_table'):
                                     $rules['colHeaders'] = ['required', new HighlightTableHeaders()];
                                     $rules['rows'] = ['required', new HighlightTableRows()];
@@ -205,8 +209,8 @@ class StoreQuestionRequest extends FormRequest
                                     $rules['qti_simple_choice_0'][] = new nonRepeatingSimpleChoice($qti_simple_choices);
                                     $rules['qti_simple_choice_0'][] = new correctResponseRequired($this->qti_json);
                                     $rules['qti_simple_choice_0'][] = new atLeastTwoResponses($qti_simple_choices);
-                                    if ($qti_array['questionType'] === 'multiple_choice'){
-                                        $rules['qti_randomize_order'] = ['required', Rule::in('yes','no')];
+                                    if ($qti_array['questionType'] === 'multiple_choice') {
+                                        $rules['qti_randomize_order'] = ['required', Rule::in('yes', 'no')];
                                     }
                                     break;
                                 case('drop_down_rationale_triad'):

@@ -1281,6 +1281,9 @@ class QuestionController extends Controller
                 $question_type = json_decode($request->qti_json)->questionType;
                 $data['qti_json_type'] = $question_type;
                 switch ($question_type) {
+                    case('submit_molecule'):
+                        $unsets = ['smiles', 'solution_structure'];
+                        break;
                     case ('multiple_response_select_all_that_apply'):
                     case ('multiple_response_select_n'):
                         $unsets = ['colHeaders', 'rows', 'responses'];

@@ -1,5 +1,5 @@
 <template>
-  <b-button v-if="libretextsAuth" class="btn btn-dark" type="button" @click="login">
+  <b-button v-if="libretextsAuth" class="btn btn-dark" type="button" @click="ooga">
     <span class="icon-SSO"/> Campus {{ action }}
   </b-button>
 </template>
@@ -35,7 +35,7 @@ export default {
   },
 
   methods: {
-    async login () {
+    async ooga () {
       const newWindow = openWindow('', this.$t('login'))
 
       const url = await this.$store.dispatch('auth/fetchOauthUrl', {

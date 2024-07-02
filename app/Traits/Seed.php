@@ -26,7 +26,9 @@ trait Seed
                 $qti_array = json_decode($question->qti_json, true);
                 $question_type = $qti_array['questionType'];
                 $seed = '';
-                if (in_array($question_type, ['true_false',
+                if (in_array($question_type, [
+                    'submit_molecule',
+                    'true_false',
                     'fill_in_the_blank',
                     'numerical',
                     'matrix_multiple_choice',

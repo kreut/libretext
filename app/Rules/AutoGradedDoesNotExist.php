@@ -52,6 +52,8 @@ class AutoGradedDoesNotExist implements Rule
     {
         $this->technology_id = $value;
         switch ($this->technology) {
+            case('molview'):
+                break;
             case('h5p'):
                 $like = "%https://studio.libretexts.org/h5p/$this->technology_id/embed%";
                 break;

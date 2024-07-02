@@ -1,55 +1,57 @@
 <template>
   <div>
-    <div>
-      <div class="mb-3">
-        <iframe
-          id="sketcher"
-          v-resize="{ log: false }"
-          width="100%"
-          src="/api/sketcher"
-          frameborder="0"
-        />
-      </div>
-      <div class="text-center">
-        <b-button
-          variant="primary"
-          @click="postMessage('sketcher')"
-        >
-          Submit
-        </b-button>
-      </div>
-    </div>
-    <div v-show="false" class="mt-5">
-      <div class="mb-3">
-        <b-embed
-          id="bio"
-          type="iframe"
-          aspect="16by9"
-          src="https://www.youtube.com/embed/td95okNF-Lk?rel=0"
-          allowfullscreen
-          class="mb-2"
-        />
-      </div>
-      <b-button
-        variant="primary"
-        @click="postMessage('bio')"
-      >
-        Submit
-      </b-button>
-    </div>
+    <iframe
+      id="sketcherViewer"
+      ref="sketcherViewer"
+      v-resize="{ log: false }"
+      width="100%"
+      :src="src"
+      frameborder="0"
+      @load="loadStructure"
+    />
   </div>
 </template>
 
 <script>
 export default {
-  name: 'NewTechnologiesDemo',
+  name: 'SketcherViewer',
+  props: {
+    qtiJson: {
+      type: Object,
+      default: () => {
+      }
+    },
+    studentResponse: {
+      type: String,
+      default: ''
+    },
+    readOnly: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data: () => ({
+    src: ''
+  }),
   created () {
     window.addEventListener('message', this.receiveMessage, false)
   },
   destroyed () {
     window.removeEventListener('message', this.receiveMessage)
   },
+  mounted () {
+    this.src = this.readOnly ? '/api/sketcher/readonly' : '/api/sketcher'
+    this.loadStructure()
+  },
   methods: {
+    loadStructure () {
+      console.log('loading solutionStructure')
+      const structure = this.studentResponse ? JSON.parse(this.studentResponse) : this.qtiJson.solutionStructure
+      this.$refs.sketcherViewer.contentWindow.postMessage({
+        method: 'load',
+        structure: structure
+      }, '*')
+    },
     receiveMessage (event) {
       if (event.data.submissionResults) {
         console.log(event)
@@ -82,7 +84,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>

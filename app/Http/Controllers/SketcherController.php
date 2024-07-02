@@ -2,12 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 
 class SketcherController extends Controller
 {
 
-    public function getSketcher(){
-        return view('sketcher');
+    public function getSketcher($type = '')
+    {
+        switch ($type){
+            case('readonly'):
+                return view('sketcher_readonly') ;
+            case('empty_sketcher'):
+                return view('empty_sketcher');
+            default:
+                return view('sketcher');
+        }
+
     }
 }

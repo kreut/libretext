@@ -10,6 +10,7 @@
                            :show-qti-answer="true"
                            :show-submit="false"
                            :show-response-feedback="false"
+                           :preview-or-solution="true"
     />
     <template #modal-footer="{ ok }">
       <b-button size="sm"

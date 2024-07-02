@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Embedded Sketcher</title>
+  <title>ReadOnly Embedded Sketcher</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     .sketcher {
       display: inline-block;
-      width: 100%;
+      width: 40em;
       height: 32em;
       border: 2px solid #555555;
     }
@@ -25,22 +25,12 @@
         const sketcher = document.getElementById('sketcher')
         await sketcher.load(event.data.structure)
       }
-        if (event.data === 'save') {
-          const sketcher = document.getElementById('sketcher')
-          const smiles = await sketcher.getSMILES()
-          const structure = await sketcher.save()
-          event.source.postMessage({
-            smiles: smiles,
-            structure: structure
-          }, '*')
-        }
     }
-
   </script>
 </head>
 <body>
 <div id="page">
-  <molview-sketcher id="sketcher" class="sketcher"></molview-sketcher>
+  <molview-sketcher id="sketcher" readonly class="sketcher"></molview-sketcher>
 </div>
 </body>
 </html>
