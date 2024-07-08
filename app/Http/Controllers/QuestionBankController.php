@@ -406,7 +406,7 @@ class QuestionBankController extends Controller
                 ->toArray();
 
             $questions_info = DB::table('questions')
-                ->join('formatted_question_types','questions.id','=','formatted_question_types.question_id')
+                ->leftJoin('formatted_question_types','questions.id','=','formatted_question_types.question_id')
                 ->select(
                     'questions.id AS question_id',
                     'questions.id',
