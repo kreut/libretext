@@ -16,6 +16,18 @@ class DisciplinePolicy
      * @param User $user
      * @return Response
      */
+    public function requestNew(User $user): Response
+    {
+        return $user->role !== 3
+            ? Response::allow()
+            : Response::deny('You are not allowed to request new disciplines.');
+
+    }
+
+    /**
+     * @param User $user
+     * @return Response
+     */
     public function index(User $user): Response
     {
         return $user->role !== 3

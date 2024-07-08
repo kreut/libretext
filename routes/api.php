@@ -60,8 +60,11 @@ Route::get('/beta-assignments/is-beta-assignment/{assignment}', 'BetaAssignmentC
 
 Route::get('/disciplines', 'DisciplineController@index');
 Route::post('/disciplines', 'DisciplineController@store');
+Route::post('/disciplines/request-new', 'DisciplineController@requestNew');
 Route::patch('/disciplines/{discipline}', 'DisciplineController@edit');
 Route::delete('/disciplines/{discipline}', 'DisciplineController@destroy');
+
+
 
 
 Route::get('/h5p-collections', 'H5PCollectionController@index');

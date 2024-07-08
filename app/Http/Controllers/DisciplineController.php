@@ -5,19 +5,66 @@ namespace App\Http\Controllers;
 use App\Course;
 use App\Discipline;
 use App\Exceptions\Handler;
+use App\Http\Requests\RequestNewDisciplineRequest;
 use App\Http\Requests\StoreDisciplineRequest;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Snowfire\Beautymail\Beautymail;
 
 class DisciplineController extends Controller
 {
     /**
+     * @param RequestNewDisciplineRequest $request
      * @param Discipline $discipline
      * @return array
      * @throws Exception
      */
-    public function index(Discipline $discipline): array
+    public function requestNew(RequestNewDisciplineRequest $request, Discipline $discipline): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('requestNew', $discipline);
+            $data = $request->validated();
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $beauty_mail = app()->make(Beautymail::class);
+            $to_email = 'dlarsen@libretexts.org';
+            $reply_to_email = $request->user()->email;
+            $requested_by = $request->user()->first_name . ' ' . $request->user()->last_name;
+
+            $beauty_mail->send('emails.new_discipline_request',
+                ['discipline' => $data['name'], 'requested_by' => $requested_by], function ($message)
+                use ($to_email, $reply_to_email) {
+                    $message
+                        ->from('adapt@noreply.libretexts.org', 'ADAPT')
+                        ->to($to_email)
+                        ->replyTo($reply_to_email)
+                        ->subject('New Discipline Request');
+                });
+            $response['message'] = "Your request has been submitted.  We'll contact you if we have any questions.";
+            $response['type'] = 'success';
+
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not request a new discipline.  Please contact support.";
+
+        }
+        return $response;
+    }
+
+    /**
+     * @param Discipline $discipline
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function index(Discipline $discipline, Course $course): array
     {
         try {
             $response['type'] = 'error';
@@ -27,6 +74,9 @@ class DisciplineController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
+
+            $last_course = $course->where('user_id', request()->user()->id)->orderBy('id', 'DESC')->first();
+            $response['discipline'] = $last_course ? $last_course->discipline_id : null;
             $response['disciplines'] = DB::table('disciplines')->orderBy('name')->get();
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -115,7 +165,7 @@ class DisciplineController extends Controller
                 return $response;
             }
             DB::beginTransaction();
-            $course->where('discipline_id', $discipline->id)->update(['discipline_id'=> null]);
+            $course->where('discipline_id', $discipline->id)->update(['discipline_id' => null]);
             $discipline_name = $discipline->name;
             $discipline->delete();
             $response['type'] = 'info';

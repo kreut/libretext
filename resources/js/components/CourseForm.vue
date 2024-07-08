@@ -1,5 +1,47 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-new-discipline-form-errors"/>
+    <b-modal
+      id="modal-request-new-discipline"
+      title="Request New Discipline"
+    >
+      <p>Please let us know what discipline you would like to add.</p>
+      <RequiredText :plural="false"/>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="new-discipline"
+        label="Discipline*"
+      >
+        <b-form-input
+          id="crn"
+          v-model="newDisciplineForm.name"
+          type="text"
+          placeholder=""
+          required
+          :class="{ 'is-invalid': newDisciplineForm.errors.has('name') }"
+          @keydown="newDisciplineForm.errors.clear('name')"
+        />
+        <has-error :form="newDisciplineForm" field="name"/>
+      </b-form-group>
+
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitNewDiscipline"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-h5p-questions-in-course-with-anonymous-users-warning"
       title="H5P Assessments With Anonymous Users Warning"
@@ -193,6 +235,19 @@
           @keydown="form.errors.clear('name')"
         />
         <has-error :form="form" field="name"/>
+      </b-form-group>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="discipline"
+        label="Discipline"
+      >
+        <b-form-select v-model="form.discipline"
+                       size="sm"
+                       :options="disciplineOptions"
+                       class="mt-2"
+                       @change="checkRequestForNewDiscipline($event)"
+        />
       </b-form-group>
       <b-form-group
         label-cols-sm="4"
@@ -551,16 +606,16 @@
             <has-error :form="form" field="whitelisted_domains"/>
           </b-form-row>
           <div class="d-flex flex-row">
-          <span v-for="chosenWhitelistedDomain in form.whitelisted_domains" :key="chosenWhitelistedDomain"
-                class="mt-2"
-          >
-            <b-button size="sm"
-                      variant="secondary"
-                      class="mr-2"
-                      style="line-height:.8"
-                      @click="removeWhitelistedDomain(chosenWhitelistedDomain)"
-            ><span v-html="chosenWhitelistedDomain"/> x</b-button>
-          </span>
+            <span v-for="chosenWhitelistedDomain in form.whitelisted_domains" :key="chosenWhitelistedDomain"
+                  class="mt-2"
+            >
+              <b-button size="sm"
+                        variant="secondary"
+                        class="mr-2"
+                        style="line-height:.8"
+                        @click="removeWhitelistedDomain(chosenWhitelistedDomain)"
+              ><span v-html="chosenWhitelistedDomain"/> x</b-button>
+            </span>
           </div>
         </b-form-group>
       </div>
@@ -574,15 +629,21 @@ import { mapGetters } from 'vuex'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixRequired } from '~/helpers/accessibility/FixRequired'
 import 'vue-select/dist/vue-select.css'
+import Form from 'vform'
+import AllFormErrors from './AllFormErrors.vue'
 
 const now = new Date()
 export default {
   name: 'CourseForm',
+  components: { AllFormErrors },
   props: {
     form: { type: Object, default: null },
     course: { type: Object, default: null }
   },
   data: () => ({
+    allFormErrors: [],
+    newDisciplineForm: new Form({ name: '' }),
+    disciplineOptions: [{ text: 'Please choose a discipline', value: null }],
     showGradePassback: false,
     showWhiteListedDomain: false,
     whitelistedDomain: '',
@@ -609,6 +670,7 @@ export default {
     endDate.style.padding = '5px'
     this.getSchools()
     this.getLTISchools()
+    this.getDisciplines()
     console.log(this.course)
     if (this.course) {
       this.setModality(this.form)
@@ -617,6 +679,59 @@ export default {
     }
   },
   methods: {
+    async submitNewDiscipline () {
+      try {
+        const { data } = await this.newDisciplineForm.post(`/api/disciplines/request-new`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.$bvModal.hide('modal-request-new-discipline')
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.newDisciplineForm.errors.flatten()
+          this.$bvModal.show('modal-new-discipline-form-errors')
+        }
+      }
+    },
+    checkRequestForNewDiscipline (discipline) {
+      if (discipline === -1) {
+        this.$bvModal.show('modal-request-new-discipline')
+      }
+    },
+    async getDisciplines () {
+      try {
+        const { data } = await axios.get(`/api/disciplines`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+
+        for (let i = 0; i < data.disciplines.length; i++) {
+          const discipline = data.disciplines[i]
+          this.disciplineOptions.push({
+            text: discipline.name,
+            value: discipline.id
+          })
+        }
+
+        this.form.discipline = this.course ? this.course.discipline : data.discipline
+
+        this.disciplineOptions.push({
+          text: '-----------------------',
+          value: 'divider-1',
+          disabled: true
+        })
+        this.disciplineOptions.push({
+          text: 'I don\'t see my discipline',
+          value: -1
+        })
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateShowLMSItems (value) {
       this.showWhiteListedDomain = value === '0'
       this.$forceUpdate()

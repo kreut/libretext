@@ -1596,6 +1596,7 @@ class CourseController extends Controller
             $response['course'] = [
                 'id' => $course->id,
                 'school' => $course->school->name,
+                'discipline' => $course->discipline_id,
                 'name' => $course->name,
                 'public_description' => $course->public_description,
                 'private_description' => $course->private_description,
@@ -1773,7 +1774,9 @@ class CourseController extends Controller
 
             //create the course
 
-
+            if ($request->discipline > 0) {
+                $data['discipline_id'] = $request->discipline;
+            }
             $new_course = $course->create($data);
 
             $section->course_id = $new_course->id;
@@ -1848,6 +1851,9 @@ class CourseController extends Controller
             DB::beginTransaction();
             $data['public_description'] = $request->public_description;
             $data['private_description'] = $request->private_description;
+            if ($request->discipline > 0) {
+                $data['discipline_id'] = $request->discipline;
+            }
             if ($request->user()->role === 2) {
                 $lms_grade_passback = $data['lms'] ? 'automatic' : null;
                 Assignment::where('course_id', $course->id)->update(['lms_grade_passback' => $lms_grade_passback]);

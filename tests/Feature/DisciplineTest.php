@@ -16,8 +16,20 @@ class DisciplineTest extends TestCase
         $this->user = factory(User::class)->create(['id' => 93]);
         $this->discipline = Discipline::create(['name' => 'some discipline']);
 
+    }
+
+    /** @test */
+    public function non_instructor_cannot_request_new_discipline()
+    {
+        $this->user->role = 3;
+        $this->user->save();
+        $this->actingAs($this->user)
+            ->postJson("/api/disciplines/request-new", ['name' => 'some name'])
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to request new disciplines.']);
 
     }
+
 
     /** @test */
     public function non_admin_cannot_save_disciplines()
