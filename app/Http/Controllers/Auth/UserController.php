@@ -108,7 +108,7 @@ class UserController extends Controller
             $token = \JWTAuth::claims(['analytics' => 1])->fromUser($user);
             $response['type'] = 'success';
             $response['token'] = $token;
-        } catch (InvalidSignatureException $e){
+        } catch (InvalidSignatureException $e) {
             $response['message'] = 'InvalidSignatureException: cannot log do auto-login.';
             return $response;
         } catch (Exception $e) {
@@ -227,35 +227,29 @@ class UserController extends Controller
                 $response['message'] = "This is not a formative assignment.";
                 return $response;
             }
-
-            $formative_student_user_id = session()->get('formative_student_user_id')
-                ? session()->get('formative_student_user_id')
-                : null;
-            $user = User::find($formative_student_user_id);
-            if (!$user) {
-                $user = new User();
-                $user->first_name = '';
-                $user->last_name = '';
-                $user->role = 3;
-                $user->email = substr(sha1(mt_rand()), 17, 25);
-                $user->student_id = '';
-                $user->time_zone = 'America/Los_Angeles';
-                $user->formative_student = 1;
-                $user->save();
-                $section = DB::table('sections')
-                    ->where('course_id', $assignment->course->id)
-                    ->first();
-                if (!$section) {
-                    $response['message'] = "This assignment needs to be associated with a course with at least one section.";
-                    return $response;
-                }
-                $enrollment = new Enrollment();
-                $enrollment->section_id = $section->id;
-                $enrollment->course_id = $assignment->course->id;
-                $enrollment->user_id = $user->id;
-                $enrollment->save();
-                session()->put('formative_student_user_id', $user->id);
+            
+            $user = new User();
+            $user->first_name = '';
+            $user->last_name = '';
+            $user->role = 3;
+            $user->email = substr(sha1(mt_rand()), 17, 25);
+            $user->student_id = '';
+            $user->time_zone = 'America/Los_Angeles';
+            $user->formative_student = 1;
+            $user->save();
+            $section = DB::table('sections')
+                ->where('course_id', $assignment->course->id)
+                ->first();
+            if (!$section) {
+                $response['message'] = "This assignment needs to be associated with a course with at least one section.";
+                return $response;
             }
+            $enrollment = new Enrollment();
+            $enrollment->section_id = $section->id;
+            $enrollment->course_id = $assignment->course->id;
+            $enrollment->user_id = $user->id;
+            $enrollment->save();
+            session()->put('formative_student_user_id', $user->id);
 
             $response['type'] = 'success';
             $response['token'] = \JWTAuth::fromUser($user);
