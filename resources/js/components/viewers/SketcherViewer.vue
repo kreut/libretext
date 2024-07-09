@@ -1,7 +1,7 @@
 <template>
   <div>
     <iframe
-      id="sketcherViewer"
+      :id="`${sketcherViewerId}`"
       ref="sketcherViewer"
       v-resize="{ log: false }"
       width="100%"
@@ -13,9 +13,14 @@
 </template>
 
 <script>
+import { v4 as uuidv4 } from 'uuid'
 export default {
   name: 'SketcherViewer',
   props: {
+    sketcherViewerId:{
+      type: String,
+      default: 'sketcherViewer'
+    },
     qtiJson: {
       type: Object,
       default: () => {
@@ -31,7 +36,8 @@ export default {
     }
   },
   data: () => ({
-    src: ''
+    src: '',
+    uuid: ''
   }),
   created () {
     window.addEventListener('message', this.receiveMessage, false)
@@ -42,8 +48,10 @@ export default {
   mounted () {
     this.src = this.readOnly ? '/api/sketcher/readonly' : '/api/sketcher'
     this.loadStructure()
+    this.uuid = this.uuidv4
   },
   methods: {
+    uuidv4,
     loadStructure () {
       console.log('loading solutionStructure')
       const structure = this.studentResponse ? JSON.parse(this.studentResponse) : this.qtiJson.solutionStructure
