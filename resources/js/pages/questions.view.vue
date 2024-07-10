@@ -635,8 +635,10 @@
                          :scoring-type="scoringType"
                          :user-role="user.role"
         />
-
-        <div v-if="questions[currentPage - 1].qti_answer_json && questions[currentPage - 1].student_response">
+        <div v-if="questions[currentPage - 1].student_response
+          && questions[currentPage-1].qti_json
+          && JSON.parse(questions[currentPage-1].qti_json).questionType === 'submit_molecule'"
+        >
           <SketcherSubmission
             :key="questions[currentPage - 1].student_response"
             :question="questions[currentPage-1]"
