@@ -59,23 +59,16 @@ class DisciplineController extends Controller
     }
 
     /**
-     * @param Discipline $discipline
      * @param Course $course
      * @return array
      * @throws Exception
      */
-    public function index(Discipline $discipline, Course $course): array
+    public function index(Course $course): array
     {
         try {
             $response['type'] = 'error';
-            $authorized = Gate::inspect('index', $discipline);
 
-            if (!$authorized->allowed()) {
-                $response['message'] = $authorized->message();
-                return $response;
-            }
-
-            $last_course = $course->where('user_id', request()->user()->id)->orderBy('id', 'DESC')->first();
+            $last_course = request()->user() ? $course->where('user_id', request()->user()->id)->orderBy('id', 'DESC')->first() : null;
             $response['discipline'] = $last_course ? $last_course->discipline_id : null;
             $response['disciplines'] = DB::table('disciplines')->orderBy('name')->get();
             $response['type'] = 'success';
