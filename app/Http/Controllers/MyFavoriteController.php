@@ -110,7 +110,7 @@ class MyFavoriteController extends Controller
             }
             DB::commit();
             $response['type'] = 'success';
-            $response['message'] = 'The question has been added to your My Favorites Folder.';
+            $response['message'] = 'The question has been added to your My Favorites folder.';
         } catch (Exception $e) {
             DB::rollBack();
             $h = new Handler(app());
@@ -146,7 +146,7 @@ class MyFavoriteController extends Controller
                 ->where('folder_id', $savedQuestionsFolder->id)
                 ->delete();
             $response['type'] = 'info';
-            $response['message'] = 'The question has been removed from your favorites.';
+            $response['message'] = 'The question has been removed from your My Favorites folder.';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

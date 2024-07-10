@@ -1700,7 +1700,7 @@
                   <a id="add-to-favorites-tooltip"
                      href=""
                      class="p-1"
-                     @click.prevent="addQuestionToFavorites('single')"
+                     @click.prevent="$bvModal.show('modal-save-to-my-favorites')"
                   >
                     <font-awesome-icon :icon="heartIcon"
                                        aria-label="Add To My Favorites"
@@ -1708,14 +1708,38 @@
                                        scale="1.1"
                     />
                   </a>
-                  <SavedQuestionsFolders
-                    ref="savedQuestionsFolders"
-                    :type="'my_favorites'"
-                    :init-saved-questions-folder="myFavoritesFolder"
-                    :create-modal-add-saved-questions-folder="true"
-                    :question-source-is-my-favorites="false"
-                    @savedQuestionsFolderSet="setMyFavoritesFolder"
-                  />
+                  <b-modal
+                    :id="`modal-save-to-my-favorites`"
+                    ref="saveToMyFavorites"
+                    title="Save Question To My Favorites"
+                  >
+                    <SavedQuestionsFolders
+                      ref="savedQuestionsFolders"
+                      :type="'my_favorites'"
+                      :init-saved-questions-folder="myFavoritesFolder"
+                      :create-modal-add-saved-questions-folder="true"
+                      :question-source-is-my-favorites="false"
+                      @savedQuestionsFolderSet="setMyFavoritesFolder"
+                    />
+                    <template #modal-footer>
+                      <b-button
+                        size="sm"
+                        class="float-right"
+                        @click="$bvModal.hide(`modal-save-to-my-favorites`)"
+                      >
+                        Cancel
+                      </b-button>
+                      <b-button
+                        variant="primary"
+                        size="sm"
+                        class="float-right"
+                        @click="addQuestionToFavorites('single')"
+                      >
+                        Submit
+                      </b-button>
+                    </template>
+                  </b-modal>
+
                   <b-tooltip target="add-to-favorites-tooltip"
                              delay="750"
                              triggers="hover"
@@ -4409,9 +4433,8 @@ export default {
             folder_id: this.myFavoritesFolder,
             chosen_assignment_ids: [this.assignmentId]
           })
-
+        this.$noty[data.type](data.message)
         if (data.type === 'error') {
-          this.$noty.error(data.message)
           return false
         }
         for (let i = 0; i < questionIds.length; i++) {
@@ -4435,6 +4458,8 @@ export default {
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
+        } else {
+          this.$noty.info(data.message)
         }
         this.myFavoriteQuestions = this.myFavoriteQuestions.filter(myFavoriteQuestion => myFavoriteQuestion.my_favorites_question_id !== questionId)
         // console.log(this.myFavoriteQuestions)
