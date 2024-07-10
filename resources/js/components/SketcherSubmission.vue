@@ -13,10 +13,11 @@
       </li>
       <li>Submission:</li>
     </ul>
-    <div v-if="structure">
+    <div v-if="responseStructure">
       <SketcherViewer
+        :key="`sketcher-viewer-${structure}`"
         :qti-json="JSON.parse(question.qti_json)"
-        :student-response="structure"
+        :student-response="responseStructure"
         :read-only="true"
         :sketcher-viewer-id="'sketcherSubmission'"
       />
@@ -51,11 +52,12 @@ export default {
     }
   },
   data: () => ({
-    result: ''
+    result: '',
+    responseStructure: ''
   }),
   mounted () {
     this.result = +this.question.submission_score === +this.question.points ? 'Correct' : 'Incorrect'
-    this.structure = JSON.stringify(JSON.parse(this.question.student_response).structure)
+    this.responseStructure = JSON.stringify(JSON.parse(this.question.student_response).structure)
   },
   methods: {
     getPercent () {

@@ -636,8 +636,9 @@
                          :user-role="user.role"
         />
 
-        <div v-if="questions[currentPage - 1].qti_answer_json">
+        <div v-if="questions[currentPage - 1].qti_answer_json && questions[currentPage - 1].student_response">
           <SketcherSubmission
+            :key="questions[currentPage - 1].student_response"
             :question="questions[currentPage-1]"
             :scoring-type="scoringType"
           />
