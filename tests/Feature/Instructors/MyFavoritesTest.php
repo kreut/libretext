@@ -64,12 +64,12 @@ class MyFavoritesTest extends TestCase
 
         //ok if course owner.
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
-            ->assertJson(['message' => 'The question has been added to your My Favorites Folder.']);
+            ->assertJson(['message' => 'The question has been added to your My Favorites folder.']);
 
 //ok if commons
         $data['chosen_assignment_ids'] = [$this->commons_assignment->id];
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
-            ->assertJson(['message' => 'The question has been added to your My Favorites Folder.']);
+            ->assertJson(['message' => 'The question has been added to your My Favorites folder.']);
 
         //not ok if not your course and not public
 
@@ -82,14 +82,14 @@ class MyFavoritesTest extends TestCase
         $this->course_2->save();
         $data['chosen_assignment_ids'] = [$this->assignment_2->id];
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
-            ->assertJson(['message' => 'The question has been added to your My Favorites Folder.']);
+            ->assertJson(['message' => 'The question has been added to your My Favorites folder.']);
 
         //ok if question editor
         $data['chosen_assignment_ids'] = [$this->assignment_2->id];
         $this->question->question_editor_user_id = $this->user->id;
         $this->question->save();
         $this->actingAs($this->user)->postJson("/api/my-favorites", $data)
-            ->assertJson(['message' => 'The question has been added to your My Favorites Folder.']);
+            ->assertJson(['message' => 'The question has been added to your My Favorites folder.']);
 
     }
 
@@ -130,7 +130,7 @@ class MyFavoritesTest extends TestCase
         $myFavorite->save();
         $this->actingAs($this->user)
             ->deleteJson("/api/my-favorites/folder/{$this->saved_questions_folder->id}/question/{$this->question->id}")
-            ->assertJson(['message' => 'The question has been removed from your favorites.']);
+            ->assertJson(['message' => 'The question has been removed from your My Favorites folder.']);
         $this->assertDatabaseCount('my_favorites', 0);
     }
 

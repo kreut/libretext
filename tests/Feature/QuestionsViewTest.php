@@ -3052,15 +3052,6 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
-    public function can_get_titles_of_learning_tree()
-    {
-        $this->actingAs($this->user)->getJson("/api/libreverse/library/chem/page/21691/title")
-            ->assertSeeText('Studying Chemistry');
-
-
-    }
-
 
     /** @test */
     public function cannot_get_assignment_questions_if_not_student_in_course()

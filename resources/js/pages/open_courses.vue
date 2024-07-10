@@ -389,11 +389,11 @@ export default {
   computed: {
     ...mapGetters({
       user: 'auth/user'
-    }),
-    isMe: () => window.config.isMe
+    })
   },
   created () {
     this.logout = logout
+    this.isMe = this.user && window.config.isMe
   },
   mounted () {
     this.getTooltipTarget = getTooltipTarget
