@@ -5192,7 +5192,7 @@ export default {
         if (['real time', 'learning tree'].includes(this.assessmentType)) {
           this.numberOfRemainingAttempts = this.getNumberOfRemainingAttempts()
           this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
-          if (this.questions[this.currentPage - 1].solution || this.questions[this.currentPage - 1].solution_html !== null) {
+          if (this.questions[this.currentPage - 1].solution || this.questions[this.currentPage - 1].solution_html) {
             this.showSolutionFileHTML = true
           }
         }
