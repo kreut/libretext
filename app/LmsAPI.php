@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Exceptions\Handler;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
@@ -89,20 +90,26 @@ class LmsAPI extends Model
      */
     public function getAssignments(object $lti_registration, int $user_id, $course_id): array
     {
-        switch ($lti_registration->iss) {
-            case('https://canvas.instructure.com'):
-            case('https://canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
-                $response = $canvasAPI->getAssignments($course_id);
-                break;
-            default:
-                throw new Exception("$lti_registration->iss is not set up to get assignments through the LMS API.");
+        try {
+            switch ($lti_registration->iss) {
+                case('https://canvas.instructure.com'):
+                case('https://canvas.libretexts.org'):
+                    $canvasAPI = new CanvasAPI($lti_registration, $user_id);
+                    $response = $canvasAPI->getAssignments($course_id);
+                    break;
+                default:
+                    throw new Exception("$lti_registration->iss is not set up to get assignments through the LMS API.");
 
+            }
+        } catch (Exception $e) {
+            $response['type'] = 'error';
+            $response['message'] = $e->getMessage();
+            $h = new Handler(app());
+            $h->report($e);
         }
         return $response;
 
     }
-
 
     /**
      * @param string $iss
@@ -128,20 +135,27 @@ class LmsAPI extends Model
     /**
      * @throws Exception
      */
-    public function getCourse(object $lti_registration,int $user_id,  $course_id): array
+    public function getCourse(object $lti_registration, int $user_id, $course_id): array
     {
-        switch ($lti_registration->iss) {
-            case('https://canvas.instructure.com'):
-            case('https://canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
-                $response = $canvasAPI->getCourse($course_id);
-                break;
-            default:
-                throw new Exception("$lti_registration->iss is not set up to get a course through the LMS API.");
+        try {
+            switch ($lti_registration->iss) {
+                case('https://canvas.instructure.com'):
+                case('https://canvas.libretexts.org'):
+                    $canvasAPI = new CanvasAPI($lti_registration, $user_id);
+                    $response = $canvasAPI->getCourse($course_id);
+                    break;
+                default:
+                    throw new Exception("$lti_registration->iss is not set up to get a course through the LMS API.");
 
-        }
-        if ($response['type'] === 'success') {
-            $response['course'] = $response['message'];
+            }
+            if ($response['type'] === 'success') {
+                $response['course'] = $response['message'];
+            }
+        } catch (Exception $e) {
+            $response['type'] = 'error';
+            $response['message'] = $e->getMessage();
+            $h = new Handler(app());
+            $h->report($e);
         }
         return $response;
     }
@@ -152,30 +166,37 @@ class LmsAPI extends Model
      */
     public function getCourses(object $lti_registration, int $user_id): array
     {
-        switch ($lti_registration->iss) {
-            case('https://canvas.instructure.com'):
-            case('https://canvas.libretexts.org'):
-                $canvasAPI = new CanvasAPI($lti_registration, $user_id);
-                $response = $canvasAPI->getCourses();
-                if ($response['type'] === 'success') {
-                    $courses = $response['message'];
-                    $message = [];
-                    foreach ($courses as $course) {
-                        if (property_exists($course, 'access_restricted_by_date') && $course->access_restricted_by_date) {
-                            continue;
-                        } else {
-                            $message[] = $course;
+        try {
+            switch ($lti_registration->iss) {
+                case('https://canvas.instructure.com'):
+                case('https://canvas.libretexts.org'):
+                    $canvasAPI = new CanvasAPI($lti_registration, $user_id);
+                    $response = $canvasAPI->getCourses();
+                    if ($response['type'] === 'success') {
+                        $courses = $response['message'];
+                        $message = [];
+                        foreach ($courses as $course) {
+                            if (property_exists($course, 'access_restricted_by_date') && $course->access_restricted_by_date) {
+                                continue;
+                            } else {
+                                $message[] = $course;
+                            }
                         }
+                        $response['message'] = $message;
                     }
-                    $response['message'] = $message;
-                }
-                break;
-            default:
-                throw new Exception("$lti_registration->iss is not set up to create courses through the LMS API.");
+                    break;
+                default:
+                    throw new Exception("$lti_registration->iss is not set up to create courses through the LMS API.");
 
-        }
-        if ($response['type'] === 'success') {
-            $response['courses'] = $response['message'];
+            }
+            if ($response['type'] === 'success') {
+                $response['courses'] = $response['message'];
+            }
+        } catch (Exception $e) {
+            $response['type'] = 'error';
+            $response['message'] = $e->getMessage();
+            $h = new Handler(app());
+            $h->report($e);
         }
         return $response;
     }

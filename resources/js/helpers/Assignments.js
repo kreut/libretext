@@ -12,6 +12,9 @@ export async function getAssignments () {
     this.unlinkedAssignments = data.unlinked_assignments
     this.hasAssignments = data.assignments.length > 0
     this.showNoAssignmentsAlert = !this.hasAssignments
+    if (!this.lmsError) {
+      this.lmsError = data.lms_error
+    }
     if (this.hasAssignments) {
       for (let i = 0; i < data.assignments.length; i++) {
         data.assignments[i] = checkIfReleased(data.assignments[i])

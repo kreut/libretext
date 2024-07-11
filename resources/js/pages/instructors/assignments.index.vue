@@ -568,233 +568,241 @@
           </b-alert>
         </div>
         <div v-show="lms">
-          <b-alert variant="info" :show="true">
-            <div v-if="!course.lms_course_id">
-              This is a course which is being served through your LMS. You will create your assignments
-              in ADAPT including determining due dates, but will use your LMS's gradebook.
-            </div>
-            <div v-if="course.lms_has_api_key && enableCanvasAPI">
-              <div v-if="course.lms_course_id">
-                <div>
-                  This course is directly linked to the LMS course <span class="font-weight-bold">{{ course.lms_course_name }}</span>.
-                  <span class="pr-2"><b-button
-                    v-b-tooltip="{ title: 'You can use this option if you accidentally linked your ADAPT course to an incorrect Canvas course.',delay: '500'}"
-                    size="sm"
-                    variant="info"
-                    @click="$bvModal.show('modal-confirm-unlink-lms-course')"
+          <div v-if="lmsError">
+            <b-alert variant="danger" show>
+              There was an error trying to connect to your LMS with ADAPT. Please reach out
+              to support so that we can troubleshoot the issue. In the meantime, you can still work on your ADAPT assignments.
+            </b-alert>
+          </div>
+          <div v-else>
+            <b-alert variant="info" :show="true">
+              <div v-if="!course.lms_course_id">
+                This is a course which is being served through your LMS. You will create your assignments
+                in ADAPT including determining due dates, but will use your LMS's gradebook.
+              </div>
+              <div v-if="course.lms_has_api_key && enableCanvasAPI">
+                <div v-if="course.lms_course_id">
+                  <div>
+                    This course is directly linked to the LMS course <span class="font-weight-bold">{{ course.lms_course_name }}</span>.
+                    <span class="pr-2"><b-button
+                      v-b-tooltip="{ title: 'You can use this option if you accidentally linked your ADAPT course to an incorrect Canvas course.',delay: '500'}"
+                      size="sm"
+                      variant="info"
+                      @click="$bvModal.show('modal-confirm-unlink-lms-course')"
+                    >
+                      Unlink Course
+                    </b-button></span>
+                    <b-button
+                      v-show="false"
+                      v-b-tooltip="{ title: 'Find Canvas assignments that have already been linked, i.e. ones with the (ADAPT) extension, and re-sync them to your ADAPT assignments.',delay: '500'}"
+                      size="sm"
+                      variant="primary"
+                      :disabled="processingResync"
+                      @click="reSyncLMSCourse"
+                    >
+                      <span v-show="processingResync">
+                        <b-spinner small type="grow" />
+                        Re-syncing Course
+                      </span> <span v-show="!processingResync">
+                        Re-sync Course
+                      </span>
+                    </b-button>
+                  </div>
+                  <div>
+                    <a href="#" @click.prevent="$bvModal.show('modal-lms-linking-process')">Learn more about the
+                      linking process.</a>
+                  </div>
+                  <b-modal id="modal-lms-linking-process"
+                           title="Linking to your LMS"
+                           hide-footer
+                           size="lg"
                   >
-                    Unlink Course
-                  </b-button></span>
-                  <b-button
-                    v-show="false"
-                    v-b-tooltip="{ title: 'Find Canvas assignments that have already been linked, i.e. ones with the (ADAPT) extension, and re-sync them to your ADAPT assignments.',delay: '500'}"
-                    size="sm"
-                    variant="primary"
-                    :disabled="processingResync"
-                    @click="reSyncLMSCourse"
-                  >
-                    <span v-show="processingResync">
+                    <p>The following table describes how ADAPT and your LMS are linked.</p>
+                    <table class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>ADAPT</th>
+                          <th>LMS</th>
+                        </tr>
+                      </thead>
+                      <tr>
+                        <td>
+                          Assignment Name
+                        </td>
+                        <td>Assignment Name</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          Assign Tos
+                        </td>
+                        <td>
+                          Determines when students can access assignment questions. Currently just set for
+                          "everybody".
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          Instructions
+                        </td>
+                        <td>Assignment Description</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          Assignment Groups
+                        </td>
+                        <td>ADAPT assignment groups do not affect Canvas assignment groups</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          Show/Hide
+                        </td>
+                        <td>Publish/Unpublish individual assignments</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          Add/remove questions
+                        </td>
+                        <td>Total assignment points updated</td>
+                      </tr>
+                    </table>
+                    <div v-if="unlinkedAssignments.length">
+                      <b-card header-html="<h2 class=&quot;h7&quot;>Unlinked LMS assignments</h2>" class="mt-5">
+                        <p>The following assignments were found in your LMS. However, they are not linked to ADAPT.</p>
+                        <ol>
+                          <li v-for="(unlinkedAssignment, unlinkedAssignmentsKey) in unlinkedAssignments"
+                              :key="`unlinked-assignments-${unlinkedAssignmentsKey}`"
+                          >
+                            {{ unlinkedAssignment.name }}
+                          </li>
+                        </ol>
+                      </b-card>
+                    </div>
+                  </b-modal>
+                </div>
+                <div v-else>
+                  <div v-if="!course.lms_has_access_token">
+                    <p class="mt-3">
+                      To link your course to one of LMS courses, please
+                      <GrantLmsApiAccess :key="`grant-lms-api-access-${course.id}`"
+                                         :course-id="course.id"
+                      />
+                    </p>
+                  </div>
+                  <div v-if="course.lms_has_access_token">
+                    <div v-show="lmsCourseOptions.length === 1" class="mt-3">
+                      However, there are no LMS courses available to link to your ADAPT course.
+                      If you would like to link this ADAPT course, please first unlink one of your other LMS courses
+                      or create a new course in your LMS.
+                    </div>
+                    <div v-show="lmsCourseOptions.length > 1">
+                      <p class="mt-3">
+                        Please begin by choosing a course from your LMS to link to. Then, all assignments created within
+                        ADAPT will automatically be created in your LMS with the structure "Some Name (ADAPT)". If an
+                        assignment already exists in your LMS with the name
+                        "Some Name (ADAPT)", then instead of creating a new assignment, ADAPT will link your ADAPT
+                        assignment to the pre-existing LMS
+                        assignment.
+                      </p>
+                      <b-form-group
+                        label-cols-sm="3"
+                        label-cols-lg="2"
+                        label-size="sm"
+                        label="Link to LMS course"
+                      >
+                        <b-form-select
+                          v-model="linkCourseToLMSForm.lms_course_id"
+                          :options="lmsCourseOptions"
+                          size="sm"
+                          :class="{ 'is-invalid': linkCourseToLMSForm.errors.has('lms_course_id') }"
+                          style="width: 200px"
+                          @change="linkCourseToLMS"
+                        />
+                      </b-form-group>
+                    </div>
+                    <span v-if="processingLinkCourseToLMS" class="pl-2">
                       <b-spinner small type="grow" />
-                      Re-syncing Course
-                    </span> <span v-show="!processingResync">
-                      Re-sync Course
+                      Processing...
                     </span>
+                    <has-error :form="linkCourseToLMSForm" field="lms_course_id" />
+                  </div>
+                </div>
+              </div>
+            </b-alert>
+            <div v-show="false && lms &&
+                   course.lms_has_api_key
+                   && enableCanvasAPI
+                   && (course && (!course.updated_canvas_api.points || !course.updated_canvas_api.everybodys))"
+                 class="mb-4"
+            >
+              <b-card show
+                      variant="warning"
+              >
+                <div class="text-center">
+                  <b-button
+                    variant="outline-danger"
+                    @click="showImportantCanvasUpdateMessage = !showImportantCanvasUpdateMessage"
+                  >
+                    {{ !showImportantCanvasUpdateMessage ? 'Show' : 'Hide' }} Important Canvas Update
                   </b-button>
                 </div>
-                <div>
-                  <a href="#" @click.prevent="$bvModal.show('modal-lms-linking-process')">Learn more about the
-                    linking process.</a>
-                </div>
-                <b-modal id="modal-lms-linking-process"
-                         title="Linking to your LMS"
-                         hide-footer
-                         size="lg"
-                >
-                  <p>The following table describes how ADAPT and your LMS are linked.</p>
-                  <table class="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>ADAPT</th>
-                        <th>LMS</th>
-                      </tr>
-                    </thead>
-                    <tr>
-                      <td>
-                        Assignment Name
-                      </td>
-                      <td>Assignment Name</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Assign Tos
-                      </td>
-                      <td>
-                        Determines when students can access assignment questions. Currently just set for
-                        "everybody".
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Instructions
-                      </td>
-                      <td>Assignment Description</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Assignment Groups
-                      </td>
-                      <td>ADAPT assignment groups do not affect Canvas assignment groups</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Show/Hide
-                      </td>
-                      <td>Publish/Unpublish individual assignments</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        Add/remove questions
-                      </td>
-                      <td>Total assignment points updated</td>
-                    </tr>
-                  </table>
-                  <div v-if="unlinkedAssignments.length">
-                    <b-card header-html="<h2 class=&quot;h7&quot;>Unlinked LMS assignments</h2>" class="mt-5">
-                      <p>The following assignments were found in your LMS. However, they are not linked to ADAPT.</p>
-                      <ol>
-                        <li v-for="(unlinkedAssignment, unlinkedAssignmentsKey) in unlinkedAssignments"
-                            :key="`unlinked-assignments-${unlinkedAssignmentsKey}`"
-                        >
-                          {{ unlinkedAssignment.name }}
-                        </li>
-                      </ol>
-                    </b-card>
-                  </div>
-                </b-modal>
-              </div>
-              <div v-else>
-                <div v-if="!course.lms_has_access_token">
-                  <p class="mt-3">
-                    To link your course to one of LMS courses, please
-                    <GrantLmsApiAccess :key="`grant-lms-api-access-${course.id}`"
-                                       :course-id="course.id"
-                    />
-                  </p>
-                </div>
-                <div v-if="course.lms_has_access_token">
-                  <div v-show="lmsCourseOptions.length === 1" class="mt-3">
-                    However, there are no LMS courses available to link to your ADAPT course.
-                    If you would like to link this ADAPT course, please first unlink one of your other LMS courses
-                    or create a new course in your LMS.
-                  </div>
-                  <div v-show="lmsCourseOptions.length > 1">
-                    <p class="mt-3">
-                      Please begin by choosing a course from your LMS to link to. Then, all assignments created within
-                      ADAPT will automatically be created in your LMS with the structure "Some Name (ADAPT)". If an
-                      assignment already exists in your LMS with the name
-                      "Some Name (ADAPT)", then instead of creating a new assignment, ADAPT will link your ADAPT
-                      assignment to the pre-existing LMS
-                      assignment.
-                    </p>
-                    <b-form-group
-                      label-cols-sm="3"
-                      label-cols-lg="2"
-                      label-size="sm"
-                      label="Link to LMS course"
-                    >
-                      <b-form-select
-                        v-model="linkCourseToLMSForm.lms_course_id"
-                        :options="lmsCourseOptions"
-                        size="sm"
-                        :class="{ 'is-invalid': linkCourseToLMSForm.errors.has('lms_course_id') }"
-                        style="width: 200px"
-                        @change="linkCourseToLMS"
-                      />
-                    </b-form-group>
-                  </div>
-                  <span v-if="processingLinkCourseToLMS" class="pl-2">
-                    <b-spinner small type="grow" />
-                    Processing...
-                  </span>
-                  <has-error :form="linkCourseToLMSForm" field="lms_course_id" />
-                </div>
-              </div>
-            </div>
-          </b-alert>
-          <div v-show="false && lms &&
-                 course.lms_has_api_key
-                 && enableCanvasAPI
-                 && (course && (!course.updated_canvas_api.points || !course.updated_canvas_api.everybodys))"
-               class="mb-4"
-          >
-            <b-card show
-                    variant="warning"
-            >
-              <div class="text-center">
-                <b-button
-                  variant="outline-danger"
-                  @click="showImportantCanvasUpdateMessage = !showImportantCanvasUpdateMessage"
-                >
-                  {{ !showImportantCanvasUpdateMessage ? 'Show' : 'Hide' }} Important Canvas Update
-                </b-button>
-              </div>
-              <div v-show="showImportantCanvasUpdateMessage">
-                <p>As many of you know, this is the first semester where ADAPT is using the Canvas API. </p>
-                <ul>
-                  <li v-show="!course.updated_canvas_api.points">
-                    If you add/remove questions from an assignment in ADAPT, ADAPT will automatically adjust the
-                    total points for the
-                    assignment on Canvas. However, if you imported a course, ADAPT set the points to 100 by default
-                    (this was not the
-                    intention: we needed to consider the fact that the assignments were already populated with
-                    questions). Some of you may have
-                    manually adjusted your Canvas points to match your ADAPT points. However, if you would like,
-                    ADAPT can automatically
-                    update all assignments in your Canvas course to correctly match your ADAPT assignments and
-                    update the grades that
-                    were already passed back. Please note that you will only have to do this once and will not have
-                    to do it
-                    the next time you import an ADAPT course.
-                    <b-button variant="primary" size="sm" @click="updateCanvasAssignments('points')">
-                      Update Canvas points
-                    </b-button>
-                    <b-button variant="danger" size="sm" @click="alreadyUpdatedCanvas('points')">
-                      I don't need to do this
-                    </b-button>
-                  </li>
-                  <li v-show="!course.updated_canvas_api.everybodys">
-                    <p>
-                      Currently ADAPT is passing back the ADAPT start and end dates for your course for the
-                      assignment unlock and due dates.
-                      Note that ADAPT has ultimate control over whether a student can actually see the assignment
-                      questions based on
-                      how it's set up in ADAPT. What this means, is that currently, if your student enters an
-                      assignment through Canvas and
-                      it's not yet open in ADAPT, they won't be able to see the questions.
-                      The ADAPT code has been updated so that ADAPT will update your Canvas "Everybody" to match
-                      ADAPT's "Everybody" assign to.
-                      If you are instead assigning by section or creating timing overrides, please 1) Create the
-                      overrides in ADAPT 2) Manually update the
-                      overrides in Canvas. If you would like ADAPT to automatically update all Canvas assignments on
-                      a one-time basis so that
-                      all ADAPT "Everybody" assign tos gets passed back to Canvas then you may do so now.
-                    </p>
-                    <p>
-                      Regardless, in the future, saving any assignment will passback the current Everybody timing
-                      back to Canvas.
-                    </p>
-                    <p>
-                      <b-button variant="primary" size="sm" @click="updateCanvasAssignments('everybodys')">
-                        Update Canvas Everybodys
+                <div v-show="showImportantCanvasUpdateMessage">
+                  <p>As many of you know, this is the first semester where ADAPT is using the Canvas API. </p>
+                  <ul>
+                    <li v-show="!course.updated_canvas_api.points">
+                      If you add/remove questions from an assignment in ADAPT, ADAPT will automatically adjust the
+                      total points for the
+                      assignment on Canvas. However, if you imported a course, ADAPT set the points to 100 by default
+                      (this was not the
+                      intention: we needed to consider the fact that the assignments were already populated with
+                      questions). Some of you may have
+                      manually adjusted your Canvas points to match your ADAPT points. However, if you would like,
+                      ADAPT can automatically
+                      update all assignments in your Canvas course to correctly match your ADAPT assignments and
+                      update the grades that
+                      were already passed back. Please note that you will only have to do this once and will not have
+                      to do it
+                      the next time you import an ADAPT course.
+                      <b-button variant="primary" size="sm" @click="updateCanvasAssignments('points')">
+                        Update Canvas points
                       </b-button>
-                      <b-button variant="danger" size="sm" @click="alreadyUpdatedCanvas('everybodys')">
+                      <b-button variant="danger" size="sm" @click="alreadyUpdatedCanvas('points')">
                         I don't need to do this
                       </b-button>
-                    </p>
-                  </li>
-                </ul>
-              </div>
-            </b-card>
+                    </li>
+                    <li v-show="!course.updated_canvas_api.everybodys">
+                      <p>
+                        Currently ADAPT is passing back the ADAPT start and end dates for your course for the
+                        assignment unlock and due dates.
+                        Note that ADAPT has ultimate control over whether a student can actually see the assignment
+                        questions based on
+                        how it's set up in ADAPT. What this means, is that currently, if your student enters an
+                        assignment through Canvas and
+                        it's not yet open in ADAPT, they won't be able to see the questions.
+                        The ADAPT code has been updated so that ADAPT will update your Canvas "Everybody" to match
+                        ADAPT's "Everybody" assign to.
+                        If you are instead assigning by section or creating timing overrides, please 1) Create the
+                        overrides in ADAPT 2) Manually update the
+                        overrides in Canvas. If you would like ADAPT to automatically update all Canvas assignments on
+                        a one-time basis so that
+                        all ADAPT "Everybody" assign tos gets passed back to Canvas then you may do so now.
+                      </p>
+                      <p>
+                        Regardless, in the future, saving any assignment will passback the current Everybody timing
+                        back to Canvas.
+                      </p>
+                      <p>
+                        <b-button variant="primary" size="sm" @click="updateCanvasAssignments('everybodys')">
+                          Update Canvas Everybodys
+                        </b-button>
+                        <b-button variant="danger" size="sm" @click="alreadyUpdatedCanvas('everybodys')">
+                          I don't need to do this
+                        </b-button>
+                      </p>
+                    </li>
+                  </ul>
+                </div>
+              </b-card>
+            </div>
           </div>
         </div>
         <b-row class="mb-4" align-h="end">
@@ -1380,6 +1388,7 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    lmsError: '',
     assignmentToUnlink: {},
     importedAssignmentAutoRelease: {},
     nonMatchingAutoReleases: [],
@@ -2015,6 +2024,7 @@ What assignment parameters??? */
         this.betaCoursesInfo = this.course.beta_courses_info
         this.isBetaCourse = this.course.is_beta_course
         this.lms = this.course.lms
+        this.lmsError = this.course.lms_error
         const courseStartDate = this.$moment(this.course.start_date, 'YYYY-MM-DD')
         const november132023 = this.$moment('2023-11-13', 'YYYY-MM-DD')
         this.enableCanvasAPI = courseStartDate.isAfter(november132023)

@@ -426,7 +426,7 @@ class Assignment extends Model
                         ->get();
                     foreach ($lti_launches as $lti_launch) {
                         if (in_array($lti_launch->assignment_id, $lti_assignments->pluck('id')->toArray()))
-                        $lti_launches_by_assignment_id[$lti_launch->assignment_id]['jwt_body'] = $lti_launch->jwt_body;
+                            $lti_launches_by_assignment_id[$lti_launch->assignment_id]['jwt_body'] = $lti_launch->jwt_body;
                     }
                     foreach ($lti_launches_by_assignment_id as $lti_assignment) {
                         $assignment_id = $lti_assignment['assignment_id'];
@@ -685,26 +685,32 @@ class Assignment extends Model
 
             }
             $unlinked_assignments = [];
-            if ($course->lms_course_id) {
-                $lti_registration = $course->getLtiRegistration();
-                $lmsApi = new LmsAPI();
-                $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $course->lms_course_id);
-                if ($result['type'] === 'error') {
-                    throw new Exception("Could not get LMS course assignments: {$result['message']}");
-                }
-                $lms_assignment_ids = [];
-                foreach ($course->assignments as $assignment) {
-                    $lms_assignment_ids[] = $assignment->lms_assignment_id;
-                }
+            try {
+                if ($course->lms_course_id) {
+                    $lti_registration = $course->getLtiRegistration();
+                    $lmsApi = new LmsAPI();
+                    $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $course->lms_course_id);
+                    if ($result['type'] === 'error') {
+                        throw new Exception("Could not get LMS course assignments: {$result['message']}");
+                    }
+                    $lms_assignment_ids = [];
+                    foreach ($course->assignments as $assignment) {
+                        $lms_assignment_ids[] = $assignment->lms_assignment_id;
+                    }
 
-                if ($result['message']) {
-                    foreach ($result['message'] as $lms_assignment) {
-                        if (!in_array($lms_assignment->id, $lms_assignment_ids)) {
-                            $unlinked_assignments[] = $lms_assignment;
+                    if ($result['message']) {
+                        foreach ($result['message'] as $lms_assignment) {
+                            if (!in_array($lms_assignment->id, $lms_assignment_ids)) {
+                                $unlinked_assignments[] = $lms_assignment;
+                            }
+
                         }
-
                     }
                 }
+            } catch (Exception $e) {
+                $response['lms_error'] = $e->getMessage();
+                $h = new Handler(app());
+                $h->report($e);
             }
 
             $response['assignments'] = array_values($assignments_info);//fix the unset

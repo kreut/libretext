@@ -1545,6 +1545,7 @@ class CourseController extends Controller
                 ->first();
 
             $lms_courses = [];
+            $lms_error = '';
             $course->lms_has_api_key = false;
             $course->lms_has_access_token = false;
             $updated_canvas_api = ['points' => false, 'everybodys' => false];
@@ -1579,14 +1580,14 @@ class CourseController extends Controller
                         $lmsApi = new LmsAPI();
                         $lms_courses = $lmsApi->getCourses($lti_registration, $course->user_id);
                         if ($lms_courses['type'] === 'error') {
-                            $response['message'] = $lms_courses['message'];
-                            return $response;
-                        }
-                        $all_lms_courses = $lms_courses['courses'];
-                        $lms_courses = [];
-                        foreach ($all_lms_courses as $lms_course) {
-                            if (!in_array($lms_course->id, $linked_lms_course_ids)) {
-                                $lms_courses[] = $lms_course;
+                            $lms_error = $lms_courses['message'];
+                        } else {
+                            $all_lms_courses = $lms_courses['courses'];
+                            $lms_courses = [];
+                            foreach ($all_lms_courses as $lms_course) {
+                                if (!in_array($lms_course->id, $linked_lms_course_ids)) {
+                                    $lms_courses[] = $lms_course;
+                                }
                             }
                         }
                     }
@@ -1620,6 +1621,7 @@ class CourseController extends Controller
                 'enrolled_users' => $course->realStudentsWhoCanSubmit()->isNotEmpty(),
                 'auto_update_question_revisions' => $course->auto_update_question_revisions,
                 'lms' => $course->lms,
+                'lms_error' => $lms_error,
                 'lms_course_id' => $course->lms_course_id,
                 'lms_has_api_key' => $course->lms_has_api_key,
                 'lms_has_access_token' => $course->lms_has_access_token,
@@ -1643,9 +1645,9 @@ class CourseController extends Controller
                 $lmsApi = new LmsAPI();
                 $lms_result = $lmsApi->getCourse($course->getLtiRegistration(),
                     $course->user_id, $course->lms_course_id);
+
                 if ($lms_result['type'] === 'error') {
-                    $response['message'] = 'Error getting this course from your LMS: ' . $lms_result['message'];
-                    return $response;
+                    $response['course']['lms_error'] = $lms_result['message'];
                 } else {
                     $response['course']['lms_course_name'] = $lms_result['message']->name;
                     $response['course']['lms_course_url'] = $lmsApi->getCourseUrl($course->getLtiRegistration()->iss, $course->lms_course_id);
