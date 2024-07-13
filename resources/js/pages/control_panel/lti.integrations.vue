@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="hasAccess">
-      <PageTitle title="LTI Integrations" />
+      <PageTitle title="LTI Integrations"/>
       <div class="vld-parent">
         <loading :active.sync="isLoading"
                  :can-cancel="true"
@@ -11,6 +11,34 @@
                  color="#007BFF"
                  background="#FFFFFF"
         />
+        <b-form-group
+          label-cols-sm="2"
+          label-cols-lg="1"
+          label="Campus*"
+          label-size="sm"
+        >
+          <b-form-input
+            id="campus"
+            v-model="ltiPendingRegistrationForm.campus"
+            type="text"
+            size="sm"
+            required
+            :class="{ 'is-invalid': ltiPendingRegistrationForm.errors.has('campus') }"
+            @keydown="ltiPendingRegistrationForm.errors.clear('campus')"
+          />
+          <has-error :form="ltiPendingRegistrationForm" field="campus"/>
+          <b-button variant="primary" size="sm" class="mt-2" @click="saveLTIPendingRegistration">
+            Submit
+          </b-button>
+
+        </b-form-group>
+        <div v-if="campusId">
+          <div class="mb-2">Canvas: <span id="canvas-url">{{ origin }}/lti/canvas/config/{{ campusId }}</span>
+
+            <span class="text-muted" @click="doCopy('canvas-url')"><font-awesome-icon :icon="copyIcon"/></span></div>
+          <div class="mb-2">Moodle: <span id="moodle-url">{{ origin }}/lti/moodle/config/{{ campusId }}</span>
+            <span class="text-muted" @click="doCopy('moodle-url')"><font-awesome-icon :icon="copyIcon"/></span></div>
+        </div>
         <b-table v-show="ltiRegistrations.length"
                  striped
                  hover
@@ -44,13 +72,22 @@ import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { ToggleButton } from 'vue-js-toggle-button'
-
+import { doCopy } from '~/helpers/Copy'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 export default {
   components: {
     Loading,
-    ToggleButton
+    ToggleButton,
+    FontAwesomeIcon
   },
   data: () => ({
+    copyIcon: faCopy,
+    origin: window.location.origin,
+    campusId: '',
+    ltiPendingRegistrationForm: new Form({
+      campus: ''
+    }),
     ltiRegistrationForm: new Form({
       admin_name: '',
       admin_email: '',
@@ -65,13 +102,13 @@ export default {
       key: 'auth_server',
       label: 'URL'
     },
-    'campus_id',
-    'admin_email',
-    {
-      key: 'api',
-      label: 'API'
-    },
-    'active']
+      'campus_id',
+      'admin_email',
+      {
+        key: 'api',
+        label: 'API'
+      },
+      'active']
   }),
   computed: {
     ...mapGetters({
@@ -88,6 +125,20 @@ export default {
     this.getLTIRegistrations()
   },
   methods: {
+    doCopy,
+    async saveLTIPendingRegistration () {
+      try {
+        const { data } = await this.ltiPendingRegistrationForm.post(`/api/lti-pending-registration`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.campusId = data.campus_id
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
     async toggleActive (registrationId) {
       try {
         const { data } = await axios.patch(`/api/lti-registration/active/${registrationId}`)

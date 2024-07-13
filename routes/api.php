@@ -159,6 +159,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::patch('/pending-question-ownership-transfer-request', 'PendingQuestionOwnershipTransferController@update');
 
+    Route::post('/lti-pending-registration', 'LTIPendingRegistrationController@store');
 
     Route::get('/current-question-editor/{question}', 'CurrentQuestionEditorController@show');
     Route::patch('/current-question-editor/{question}', 'CurrentQuestionEditorController@update');
