@@ -74,6 +74,19 @@ class LTIDatabase implements LTI\Database
 
     }
 
+    public function find_deployment_by_iss_and_client_id($iss, $client_id, $deployment_id)
+    {
+        $registration_id = LtiRegistration::where('auth_server', $iss)->where('client_id',$client_id)->first()->id;
+        if (LtiDeployment::where('id', $deployment_id)->where('registration_id', $registration_id)->get()->isEmpty()) {
+            $lti_deployment = new LtiDeployment();
+            $lti_deployment->id = $deployment_id;
+            $lti_deployment->registration_id = $registration_id;
+            $lti_deployment->save();
+        }
+        return LTI\LTI_Deployment::new()
+            ->set_deployment_id($deployment_id);
+    }
+
     public function find_deployment_by_campus_id($campus_id, $deployment_id)
     {
         $campus_id = $this->fixCampusIdIfBlank($campus_id);

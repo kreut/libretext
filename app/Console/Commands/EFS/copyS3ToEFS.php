@@ -47,7 +47,7 @@ class copyS3ToEFS extends Command
         try {
             $contents = Storage::disk('s3')->get($file);
             $file_dir = dirname($file);
-            if ($file_dir && !is_dir($file_dir)) {
+            if ($file_dir && !is_dir("$dir/$file_dir")) {
                 mkdir("$dir/$file_dir");
             }
             $filename = $dir . '/' . $file;

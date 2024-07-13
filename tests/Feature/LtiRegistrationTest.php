@@ -11,6 +11,7 @@ class LtiRegistrationTest extends TestCase
     {
         parent::setUp();
         $this->lti_registration_info = ['admin_name' => 'some admin',
+            'lms' => 'canvas',
             'admin_email' => 'admin@admin.com',
             'url' => 'https://www.somewhere.com',
             'developer_key_id' => 23123312,
@@ -25,6 +26,7 @@ class LtiRegistrationTest extends TestCase
     {
 
         $this->postJson('/api/lti-registration/email-details', [
+            'lms' => 'canvas',
             'school' => 'fake school'
         ])->assertJsonValidationErrors(['school']);
     }
@@ -42,7 +44,7 @@ class LtiRegistrationTest extends TestCase
         DB::table('lti_pending_registrations')->insert(['campus_id' => 'some_id']);
         DB::table('lti_keys')->insert(['id' => '1',
             'private_key_file' => '/mnt/local/lti/private.key',
-            'alg' => 'RS256']);
+            'alg' => 'RSA256']);
         DB::table('lti_registrations')->insert([
             'campus_id' => 'some_id',
             'admin_name' => 'eric kean',
@@ -53,7 +55,6 @@ class LtiRegistrationTest extends TestCase
             'kid' => '1',
             'lti_key_id' => '1',
             'active' => '1']);
-
 
         $this->postJson('/api/lti-registration/email-details', $this->lti_registration_info)
             ->assertJson(['message' => 'This Campus ID is already in our system.  Please contact us for assistance.']);

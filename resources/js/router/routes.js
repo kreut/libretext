@@ -232,7 +232,8 @@ let general_paths = [
   { path: '/question-editor/:tab/:questionId?', name: 'question.editor', component: page('question_editor.vue') },
   { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
   { path: '/canvas/config/api/:campusId', name: 'lti_canvas_config_api', component: page('canvas_config_api.vue') },
-  { path: '/lti/blackboard/config', name: 'lti_blackboard_config', component: page('lti_blackboard_config.vue') },
+  { path: '/lti/blackboard/config/:campusId?', name: 'lti_blackboard_config', component: page('lti_blackboard_config.vue') },
+  { path: '/lti/moodle/config/:campusId', name: 'lti_moodle_config', component: page('lti_moodle_config.vue') },
   { path: '/imathas-solutions/:jwt', name: 'imathas-solutions', component: page('imathas_solutions.vue') },
   {
     path: '/beta-assignments/redirect-error',

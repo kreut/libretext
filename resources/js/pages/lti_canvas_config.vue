@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-lti-details'" />
-    <PageTitle title="Canvas Configuration" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-lti-details'"/>
+    <PageTitle title="Canvas Configuration"/>
     <div v-if="!isLoading">
       <b-container>
         <div v-if="!isValidCampusId">
@@ -16,7 +16,8 @@
           </p>
           <b-card header-html="<h2 class=&quot;h7&quot;>LTI 1.3 Configuration</h2>">
             <p>
-              In your Canvas installation, first go to the Developer Keys page and add an LTI key. When the configuration
+              In your Canvas installation, first go to the Developer Keys page and add an LTI key. When the
+              configuration
               page
               opens up choose "Manual
               Entry" as the method to enter the configuration details.
@@ -29,17 +30,19 @@
                    aria-label="Copy redirect uri"
                    @click.prevent="doCopy('redirect-uri')"
                 >
-                  <font-awesome-icon :icon="copyIcon" />
+                  <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </span>
             </p>
             <p>
-              <span class="font-weight-bold">Title:</span> <span id="title">{{ appName }}</span> <span class="text-info">
+              <span class="font-weight-bold">Title:</span> <span id="title">{{ appName }}</span> <span
+              class="text-info"
+            >
                 <a href=""
                    aria-label="Copy title"
                    @click.prevent="doCopy('title')"
                 >
-                  <font-awesome-icon :icon="copyIcon" />
+                  <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </span>
             </p>
@@ -50,7 +53,7 @@
                    aria-label="Copy description"
                    @click.prevent="doCopy('description')"
                 >
-                  <font-awesome-icon :icon="copyIcon" />
+                  <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </span>
             </p>
@@ -62,7 +65,7 @@
                    aria-label="Copy target link uri"
                    @click.prevent="doCopy('target-link-uri')"
                 >
-                  <font-awesome-icon :icon="copyIcon" />
+                  <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </span>
             </p>
@@ -74,19 +77,19 @@
                    aria-label="Copy OpenID connect url"
                    @click.prevent="doCopy('open-id-connect-url')"
                 >
-                  <font-awesome-icon :icon="copyIcon" />
+                  <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </span>
             </p>
             <p>
               <span class="font-weight-bold">Public JWK:</span>
-              <vue-json-pretty id="public-jwk" :data="publicJWK" />
+              <vue-json-pretty id="public-jwk" :data="publicJWK"/>
               <span class="text-info">
                 <a href=""
                    aria-label="Copy public JWK"
                    @click.prevent="doCopy('public-jwk')"
                 >
-                  <font-awesome-icon :icon="copyIcon" />
+                  <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </span>
             </p>
@@ -109,7 +112,7 @@
                                          aria-label="Copy custom fields"
                                          @click.prevent="doCopy('custom-fields')"
               >
-                <font-awesome-icon :icon="copyIcon" />
+                <font-awesome-icon :icon="copyIcon"/>
               </a></span>:
             </p>
             <p>
@@ -126,7 +129,7 @@
                    aria-label="Copy placement target link uri"
                    @click.prevent="doCopy('placement-target-link-uri')"
                 >
-                  <font-awesome-icon :icon="copyIcon" />
+                  <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </span>
             </p>
@@ -147,7 +150,7 @@
                    aria-label="Copy key name"
                    @click.prevent="doCopy('api-key-name')"
                 >
-                  <font-awesome-icon :icon="copyIcon" />
+                  <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </span>
             </p>
@@ -159,7 +162,7 @@
                    aria-label="Copy redirect uri"
                    @click.prevent="doCopy('redirect-uris')"
                 >
-                  <font-awesome-icon :icon="copyIcon" />
+                  <font-awesome-icon :icon="copyIcon"/>
                 </a>
               </span>
             </p>
@@ -184,7 +187,7 @@
             </p>
 
             <p>
-              After saving the API key, go to the Developer Keys page.  Please turn the key on:
+              After saving the API key, go to the Developer Keys page. Please turn the key on:
             </p>
             <img alt="image of Canvas additional settings" style="width:200px"
                  :src="asset('assets/img/Canvas API screenshots/turn-key-on.png')"
@@ -198,7 +201,7 @@
           </b-card>
           <div class="mb-5 mt-5">
             <b-card header="default" header-html="<h2 class=&quot;h7&quot;>ADAPT LTI 1.3 and API Key Registration</h2>">
-              <RequiredText />
+              <RequiredText/>
               <p>
                 Please fill out the form so that we can register your school's information. Once completed, you will
                 receive
@@ -207,7 +210,7 @@
                 up
                 their ADAPT courses to Canvas.
               </p>
-              <LTIRegistration :form="ltiRegistrationForm" :show-campus-id="false" />
+              <LTIRegistration :form="ltiRegistrationForm" :show-campus-id="false"/>
               <div class="float-right">
                 <b-button variant="primary" size="sm" @click="submitDetails">
                   Submit Details
@@ -232,6 +235,7 @@ import VueJsonPretty from 'vue-json-pretty'
 import 'vue-json-pretty/lib/styles.css'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import axios from 'axios'
+import { validateCampusId } from '../helpers/lti'
 
 export default {
   components: {
@@ -265,6 +269,7 @@ export default {
     campusId: '',
     copyIcon: faCopy,
     ltiRegistrationForm: new Form({
+      lms: 'canvas',
       admin_name: '',
       admin_email: '',
       url: '',
@@ -276,24 +281,13 @@ export default {
   }),
   mounted () {
     this.isLoading = true
-    this.doCopy = doCopy
     this.campusId = this.$route.params.campusId
     this.ltiRegistrationForm.campus_id = this.campusId
     this.validateCampusId(this.campusId)
   },
   methods: {
-    async validateCampusId (campusId) {
-      try {
-        const { data } = await axios.get(`/api/lti-registration/is-valid-campus-id/pending/${campusId}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-        }
-        this.isValidCampusId = data.is_valid_campus_id
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-      this.isLoading = false
-    },
+    doCopy,
+    validateCampusId,
     async submitDetails () {
       try {
         this.ltiRegistrationForm.errors.clear()

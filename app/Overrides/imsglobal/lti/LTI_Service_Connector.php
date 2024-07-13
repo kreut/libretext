@@ -35,18 +35,22 @@ class LTI_Service_Connector
         //Storage::disk('s3')->put("lti_registration.txt", $this->registration->get_auth_token_url());
         //Storage::disk('s3')->put("issuer.txt", $this->registration->get_issuer());
         $issuer = $this->registration->get_issuer();
-        switch ($issuer) {
-            case('https://blackboard.com'):
-            case('https://canvas.instructure.com'):
-            case('https://canvas.test.instructure.com'):
+        if (strpos($issuer,'moodle') !== false){
+            $aud = $this->registration->get_auth_token_url();
+        } else {
+            switch ($issuer) {
+                case('https://blackboard.com'):
+                case('https://canvas.instructure.com'):
+                case('https://canvas.test.instructure.com'):
                 case('https://canvas.libretexts.org'):
-                $aud = $this->registration->get_auth_token_url();
-                break;
-            case('https://dev-canvas.libretexts.org'):
-                $aud = $lti_registration ? $lti_registration->auth_token_url : $this->registration->get_auth_token_url();
-                break;
-            default:
-                throw new Exception($this->registration->get_issuer() . " is not valid.");
+                    $aud = $this->registration->get_auth_token_url();
+                    break;
+                case('https://dev-canvas.libretexts.org'):
+                    $aud = $lti_registration ? $lti_registration->auth_token_url : $this->registration->get_auth_token_url();
+                    break;
+                default:
+                    throw new Exception($this->registration->get_issuer() . " is not valid for gradepassback.");
+            }
         }
         $jwt_claim = [
             "iss" => $client_id,

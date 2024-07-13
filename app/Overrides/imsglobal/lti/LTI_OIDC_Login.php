@@ -93,7 +93,6 @@ class LTI_OIDC_Login
             // LTI message hint to identify LTI context within the platform.
             $auth_params['lti_message_hint'] = $request['lti_message_hint'];
         }
-
         $auth_login_return_url = $registration->get_auth_login_url() . "?" . http_build_query($auth_params);
 
         // Return auth redirect.
@@ -119,8 +118,9 @@ class LTI_OIDC_Login
 
         // Fetch Registration Details.
         $is_blackboard = $request['iss'] === "https://blackboard.com";
-        $registration = $is_blackboard
-            ? $this->db->find_registration_by_client_id($request['client_id'])
+        $is_moodle = strpos($request['iss'], 'moodle') !== false;
+        $registration = $is_blackboard || $is_moodle
+        ? $this->db->find_registration_by_client_id($request['client_id'])
             : $this->db->find_registration_by_campus_id($campus_id);
 
         // Check we got something.

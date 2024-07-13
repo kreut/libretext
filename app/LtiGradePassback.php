@@ -76,6 +76,7 @@ class LtiGradePassback extends Model
                 $grades = $launch->get_ags();
                 $is_canvas = strpos($iss, "canvas") !== false;
                 $is_blackboard = strpos($iss, "blackboard") !== false;
+                $is_moodle = strpos($iss, "moodle") !== false;
 
                 if ($is_canvas && !$launch->has_nrps()) {
                     throw new Exception("no names and roles");
@@ -100,8 +101,11 @@ class LtiGradePassback extends Model
                 //  file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID: " . $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'] . "\r\n", FILE_APPEND);
                 $response = $grades->put_grade($score);
                 $body = $response['body'];
-
-                $success = !isset($body['errors']);
+                if ($is_moodle) {
+                    $success = $response['body'] === null;
+                } else {
+                    $success = !isset($body['errors']);
+                }
                 $status = $success ? 'success' : 'error';
                 $success_message = '';
                 if ($success) {
@@ -109,6 +113,8 @@ class LtiGradePassback extends Model
                         $success_message = $body['resultUrl'];
                     } else if ($is_blackboard) {
                         $success_message = $body['id'];
+                    } else if ($is_moodle) {
+                        $success_message = 'successful passback';
                     } else {
                         $success_message = "$iss not in database";
                     }

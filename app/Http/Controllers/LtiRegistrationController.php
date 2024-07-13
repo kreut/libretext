@@ -142,37 +142,74 @@ class LtiRegistrationController extends Controller
             $data = $request->validated();
             DB::beginTransaction();
             $school_id = $school->where('name', trim($request->school))->first()->id;
+
             $campus_id = trim($request->campus_id);
-            $ltiRegistration->campus_id = trim($request->campus_id);
-            $auth_server = rtrim(trim($data['url'], '/'));
-            $ltiRegistration->admin_name = $data['admin_name'];
-            $ltiRegistration->admin_email = $data['admin_email'];
-            $ltiRegistration->iss = "https://canvas.instructure.com";
-            $ltiRegistration->auth_login_url = "$auth_server/api/lti/authorize_redirect";
-            $ltiRegistration->auth_token_url = "$auth_server/login/oauth2/token";
-            $ltiRegistration->auth_server = $auth_server;
-            $ltiRegistration->client_id = trim($data['developer_key_id']);
-            $ltiRegistration->api_key = $data['api_key'];
-            $ltiRegistration->api_secret = $data['api_secret'];
-            $ltiRegistration->key_set_url = 'https://canvas.instructure.com/api/lti/security/jwks';
-            $ltiRegistration->kid = '1';
-            $ltiRegistration->lti_key_id = 1;
-            $ltiRegistration->active = 1;
-            $ltiRegistration->save();
-            if (isset($data['vanity_urls'])) {
-                $vanity_urls = explode(',', $data['vanity_urls']);
-                foreach ($vanity_urls as $vanity_url) {
-                    $vanity_url = rtrim(trim($vanity_url), '/');
-                    $parse = parse_url($vanity_url);
-                    $vanity_url = $parse['host'];
-                    $canvasVanityUrl = new CanvasVanityUrl();
-                    if (!$canvasVanityUrl->where('vanity_url', $vanity_url)->first()) {
-                        $canvasVanityUrl->vanity_url = $vanity_url;
-                        $canvasVanityUrl->lti_registration_id = $ltiRegistration->id;
-                        $canvasVanityUrl->save();
+            if ($request->lms !== 'blackboard') {
+                $ltiRegistration->campus_id = trim($request->campus_id);
+                $ltiRegistration->admin_name = $data['admin_name'];
+                $ltiRegistration->admin_email = $data['admin_email'];
+            }
+            switch ($request->lms) {
+                case('canvas'):
+                    $auth_server = rtrim(trim($data['url'], '/'));
+                    $ltiRegistration->iss = "https://canvas.instructure.com";
+                    $ltiRegistration->auth_login_url = "$auth_server/api/lti/authorize_redirect";
+                    $ltiRegistration->auth_token_url = "$auth_server/login/oauth2/token";
+                    $ltiRegistration->auth_server = $auth_server;
+                    $ltiRegistration->client_id = trim($data['developer_key_id']);
+                    $ltiRegistration->api_key = $data['api_key'];
+                    $ltiRegistration->api_secret = $data['api_secret'];
+                    $ltiRegistration->key_set_url = 'https://canvas.instructure.com/api/lti/security/jwks';
+                    $ltiRegistration->kid = '1';
+                    $ltiRegistration->lti_key_id = 1;
+                    $ltiRegistration->active = 1;
+                    $ltiRegistration->save();
+
+                    if (isset($data['vanity_urls'])) {
+                        $vanity_urls = explode(',', $data['vanity_urls']);
+                        foreach ($vanity_urls as $vanity_url) {
+                            $vanity_url = rtrim(trim($vanity_url), '/');
+                            $parse = parse_url($vanity_url);
+                            $vanity_url = $parse['host'];
+                            $canvasVanityUrl = new CanvasVanityUrl();
+                            if (!$canvasVanityUrl->where('vanity_url', $vanity_url)->first()) {
+                                $canvasVanityUrl->vanity_url = $vanity_url;
+                                $canvasVanityUrl->lti_registration_id = $ltiRegistration->id;
+                                $canvasVanityUrl->save();
+                            }
+                        }
                     }
+                    break;
+                case('moodle'):
+                    $ltiRegistration->campus_id = $data['campus_id'];
+                    $ltiRegistration->iss = $data['platform_id'];
+                    $ltiRegistration->auth_login_url = trim($data['authentication_request_url']);
+                    $ltiRegistration->auth_token_url = trim($data['access_token_url']);
+                    $ltiRegistration->auth_server = $data['platform_id'];
+                    $ltiRegistration->client_id = trim($data['client_id']);
+                    $ltiRegistration->key_set_url = trim($data['public_keyset_url']);
+                    $ltiRegistration->kid = 1;
+                    $ltiRegistration->lti_key_id = 2;
+                    $ltiRegistration->active = 1;
+                    $ltiRegistration->save();
+                    break;
+                case('blackboard'):
+                    $ltiRegistration = DB::table('lti_registrations')->where('iss', 'LIKE', '%blackboard%')->first();
+                    break;
+                default:
+                {
+                    $response['message'] = "$request->lms is not a valid LMS that you can register with.";
+                    return $response;
                 }
             }
+
+
+            //Add a campus ID
+            // Start: write an email to Delmar for him to say yes for the school.
+            //Add in the school.
+            //put the private key for the lti_key_id and send up to the site
+            //check out the grade passback
+
 
             DB::table('lti_pending_registrations')->where('campus_id', $campus_id)->delete();
 
@@ -182,7 +219,7 @@ class LtiRegistrationController extends Controller
             $to_user_email = $data['admin_email'];
 
             $beauty_mail = app()->make(Beautymail::class);
-            $beauty_mail->send('emails.lti_registration_info', [], function ($message)
+            $beauty_mail->send('emails.lti_registration_info', ['lms' => $request->lms], function ($message)
             use ($to_user_email) {
                 $message
                     ->from('adapt@noreply.libretexts.org', 'ADAPT')
@@ -241,6 +278,7 @@ class LtiRegistrationController extends Controller
         return $response;
 
     }
+
 
     public function active(LtiRegistration $ltiRegistration)
     {

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Storage;
 use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
+use stdClass;
 
 
 class LTIController extends Controller
@@ -93,13 +94,14 @@ class LTIController extends Controller
 
     public function initiateLoginRequest(Request $request)
     {
-
         $campus_id = basename($request['target_link_uri']);
         $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
-        if ($campus_id === 'configure' || $campus_id === 'redirect-uri') {
+        $is_moodle = isset($request['iss']) && strpos($request['iss'], 'moodle') !== false;
+        if ($is_moodle || $campus_id === 'configure' || $campus_id === 'redirect-uri') {
             $campus_id = '';
             $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri";
         }
+
         // file_put_contents(base_path() . '//lti_log.text', "Initiate login request:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
         try {
             Storage::disk('s3')->put("lti-logs/$campus_id.txt", print_r($request->all(), true));
@@ -108,7 +110,6 @@ class LTIController extends Controller
             $h = new Handler(app());
             $h->report($e);
         }
-
         LTI\LTI_OIDC_Login::new(new LTIDatabase())
             ->do_oidc_login_redirect($launch_url, $campus_id, $request->all())
             ->do_redirect();
@@ -135,14 +136,25 @@ class LTIController extends Controller
         try {
             $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
                 ->validate();
+
             $url = $campus_id === ''
                 ? request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri"
                 : request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
+
             if ($launch->is_deep_link_launch()) {
                 //this configures the Deep Link
-                $resource = LTI\LTI_Deep_Link_Resource::new()
-                    ->set_url($url)
-                    ->set_title('ADAPT');
+                $is_moodle = strpos($launch->get_launch_data()['iss'],'moodle') !== false;
+                if ($is_moodle){
+                    //moodle needs the custom params to be some sort of object (even though it's really empty).  As a hack I'm just sending them
+                    $resource = LTI\LTI_Deep_Link_Resource::new()
+                        ->set_url($url)
+                        ->set_custom_params(json_decode('{"name" : "value"}'))
+                        ->set_title('ADAPT');
+                } else {
+                    $resource = LTI\LTI_Deep_Link_Resource::new()
+                        ->set_url($url)
+                        ->set_title('ADAPT');
+                }
                 $launch->get_deep_link()
                     ->output_response_form([$resource]);
                 exit;
@@ -276,6 +288,7 @@ class LTIController extends Controller
     {
 
         $launch = LTI\LTI_Message_Launch::from_cache($launch_id, new LTIDatabase());
+
         if (!$launch->is_deep_link_launch()) {
             echo "Not a deep link.";
             exit;

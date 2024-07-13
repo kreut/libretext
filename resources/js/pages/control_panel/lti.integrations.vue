@@ -30,14 +30,23 @@
           <b-button variant="primary" size="sm" class="mt-2" @click="saveLTIPendingRegistration">
             Submit
           </b-button>
-
         </b-form-group>
         <div v-if="campusId">
-          <div class="mb-2">Canvas: <span id="canvas-url">{{ origin }}/lti/canvas/config/{{ campusId }}</span>
+          <div class="mb-2">
+            Canvas: <span id="canvas-url">{{ origin }}/lti/canvas/config/{{ campusId }}</span>
 
-            <span class="text-muted" @click="doCopy('canvas-url')"><font-awesome-icon :icon="copyIcon"/></span></div>
-          <div class="mb-2">Moodle: <span id="moodle-url">{{ origin }}/lti/moodle/config/{{ campusId }}</span>
-            <span class="text-muted" @click="doCopy('moodle-url')"><font-awesome-icon :icon="copyIcon"/></span></div>
+            <span style="cursor: pointer;" @click="doCopy('canvas-url')"><font-awesome-icon :icon="copyIcon"/></span>
+          </div>
+          <div class="mb-2">
+            Moodle: <span id="moodle-url">{{ origin }}/lti/moodle/config/{{ campusId }}</span>
+            <span style="cursor: pointer;" @click="doCopy('moodle-url')"><font-awesome-icon :icon="copyIcon"/></span>
+          </div>
+          <div class="mb-2">
+            Blackboard: <span id="blackboard-url">{{ origin }}/lti/blackboard/config/{{
+              campusId
+            }}</span>
+            <span style="cursor: pointer;" @click="doCopy('blackboard-url')"><font-awesome-icon :icon="copyIcon"/></span>
+          </div>
         </div>
         <b-table v-show="ltiRegistrations.length"
                  striped
@@ -75,6 +84,7 @@ import { ToggleButton } from 'vue-js-toggle-button'
 import { doCopy } from '~/helpers/Copy'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+
 export default {
   components: {
     Loading,

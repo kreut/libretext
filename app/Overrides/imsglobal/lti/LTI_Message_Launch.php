@@ -303,8 +303,9 @@ class LTI_Message_Launch
 
         $campus_id = basename($this->jwt['body']['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
         $iss = $this->jwt['body']['iss'];
-        $is_blackboard =  $iss === 'https://blackboard.com';
-        $this->registration = $is_blackboard
+        $is_blackboard = $iss === 'https://blackboard.com';
+        $is_moodle = strpos($iss, 'moodle') !== false;
+        $this->registration = $is_blackboard || $is_moodle
             ? $this->db->find_registration_by_client_id($this->jwt['body']['aud'])
             : $this->db->find_registration_by_campus_id($campus_id);
 
@@ -318,7 +319,6 @@ class LTI_Message_Launch
             // Client not registered.
             throw new LTI_Exception("Client id ($client_id) not registered for this issuer ($iss)", 1);
         }
-
         return $this;
     }
 
@@ -342,9 +342,15 @@ class LTI_Message_Launch
     private function validate_deployment()
     {
         // Find deployment.
+
         $campus_id = basename($this->jwt['body']['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
-        $deployment = $this->db->find_deployment_by_campus_id($campus_id,
-            $this->jwt['body']['https://purl.imsglobal.org/spec/lti/claim/deployment_id']);
+        $deployment_id = $this->jwt['body']['https://purl.imsglobal.org/spec/lti/claim/deployment_id'];
+        $client_id = $this->jwt['body']['aud'];
+        $iss = $this->jwt['body']['iss'];
+        $is_moodle = strpos($iss, 'moodle') !== false;
+        $deployment = $is_moodle
+            ? $this->db->find_deployment_by_iss_and_client_id($iss, $client_id, $deployment_id)
+            : $this->db->find_deployment_by_campus_id($campus_id, $deployment_id);
 
         if (empty($deployment)) {
             // deployment not recognized.
