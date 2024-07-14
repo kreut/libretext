@@ -32,7 +32,7 @@ class DisciplineController extends Controller
                 return $response;
             }
             $beauty_mail = app()->make(Beautymail::class);
-            $to_email = 'dlarsen@libretexts.org';
+            $to_email = 'jhalpern@libretexts.org';
             $reply_to_email = $request->user()->email;
             $requested_by = $request->user()->first_name . ' ' . $request->user()->last_name;
 

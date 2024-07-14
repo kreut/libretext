@@ -97,7 +97,7 @@ class EmailController extends Controller
 
         try {
             $to_email = in_array($data['subject'], ['General Inquiry', 'Request Instructor Access Code'])
-                ? 'delmar@libretexts.org'
+                ? 'jhalpern@libretexts.org'
                 : 'adapt@libretexts.org';
             if ($data['subject'] === 'Request Instructor Access Code') {
                 $data['text'] = "{$data['name']} from {$data['school']} with email {$data['email']} would like an instructor access code. --- {$data['text']}";

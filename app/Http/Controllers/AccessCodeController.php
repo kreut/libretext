@@ -121,7 +121,7 @@ class AccessCodeController extends Controller
                     ->from('adapt@noreply.libretexts.org', 'Adapt')
                     ->to($to_email)
                     ->subject($subject)
-                    ->replyTo('delmar@libretexts.org');
+                    ->replyTo('jhalpern@libretexts.org');
             });
             DB::commit();
             $response['type'] = 'success';
