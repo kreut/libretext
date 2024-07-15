@@ -645,6 +645,7 @@
           && questions[currentPage-1].qti_json
           && JSON.parse(questions[currentPage-1].qti_json).questionType === 'submit_molecule'"
         >
+          aaaaaa
           <SketcherSubmission
             :key="questions[currentPage - 1].student_response"
             :question="questions[currentPage-1]"
@@ -1304,7 +1305,7 @@
                    :show-pencil="user && user.role===2"
                    :assignment-id="+assignmentId"
                    :question-id="questions.length && questions[currentPage-1].id"
-                   :clone-source-id="user && user.role===2 && questions[currentPage - 1] && questions[currentPage - 1].clone_source_id"
+                   :clone-source-id="+(user && user.role===2 && questions[currentPage - 1] && questions[currentPage - 1].clone_source_id)"
                    @updateCustomQuestionTitle="updateCustomQuestionTitle"
         />
       </div>
