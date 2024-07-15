@@ -1385,6 +1385,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param Submission $Submission
      * @param Extension $Extension
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param IMathAS $IMathAS
      * @return array
      * @throws Exception
      */
@@ -1508,9 +1509,19 @@ class AssignmentSyncQuestionController extends Controller
             : $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
                 $request->user()->time_zone, 'M d, Y g:i:s a');
 
+        $answered_correctly = null;
+        if ($assignment->assessment_type === 'real time' && $qti_json) {
+            $qti_json_arr = json_decode($question['qti_json'], 1);
+            if (isset($qti_json_arr['questionType'])
+                && $qti_json_arr['questionType'] === 'submit_molecule'
+                && json_decode($question['qti_json'])) {
+                $answered_correctly = (bool)$Submission->computeScoreFromSubmitMolecule(json_decode($question['qti_json']), $response_info['student_response']);
+            }
 
+        }
         return ['last_submitted' => $last_submitted,
             'student_response' => $response_info['student_response'],
+            'answered_correctly' => $answered_correctly,
             'submission_count' => $response_info['submission_count'],
             'submission_score' => Helper::removeZerosAfterDecimal($response_info['submission_score']),
             'late_penalty_percent' => $response_info['late_penalty_percent'],

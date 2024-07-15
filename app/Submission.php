@@ -115,8 +115,7 @@ class Submission extends Model
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
                     case('submit_molecule'):
-                        $student_smiles = json_decode($submission->student_response)->smiles;
-                        $proportion_correct = $submission->question->smiles === $student_smiles ? 1 : 0;
+                        $proportion_correct = $this->computeScoreFromSubmitMolecule($submission->question,$submission->student_response);
                         break;
                     case('highlight_text'):
                         $student_responses = json_decode($submission->student_response);
@@ -1574,6 +1573,17 @@ class Submission extends Model
             return 0;
         }
         throw new Exception ('Error in plus/minus scoring logic.');
+    }
+
+    /**
+     * @param $question
+     * @param $student_response
+     * @return int
+     */
+    public function computeScoreFromSubmitMolecule($question, $student_response): int
+    {
+        $student_smiles = json_decode($student_response)->smiles;
+        return $question->smiles === $student_smiles ? 1 : 0;
     }
 
     /**
