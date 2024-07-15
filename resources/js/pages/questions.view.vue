@@ -645,7 +645,6 @@
           && questions[currentPage-1].qti_json
           && JSON.parse(questions[currentPage-1].qti_json).questionType === 'submit_molecule'"
         >
-          aaaaaa
           <SketcherSubmission
             :key="questions[currentPage - 1].student_response"
             :question="questions[currentPage-1]"

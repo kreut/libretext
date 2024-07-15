@@ -1499,7 +1499,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
         $qti_json = $question->qti_json
-            ? $question->formatQtiJson('question_json', $question['qti_json'], $seed, $assignment->assessment_type === 'real time' || Auth::user()->role === 2, $response_info['student_response'])
+            ? $question->formatQtiJson('question_json', $question['qti_json'], $seed, $real_time_show_solution || Auth::user()->role === 2, $response_info['student_response'])
             : null;
 
 
