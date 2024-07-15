@@ -691,7 +691,7 @@ class Assignment extends Model
                     $lmsApi = new LmsAPI();
                     $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $course->lms_course_id);
                     if ($result['type'] === 'error') {
-                        throw new Exception("Could not get LMS course assignments: {$result['message']}");
+                        throw new Exception("Could not get LMS course assignments: {$result['message']} for $lti_registration->id");
                     }
                     $lms_assignment_ids = [];
                     foreach ($course->assignments as $assignment) {

@@ -318,7 +318,7 @@ class AssignmentController extends Controller
                 if (DB::transactionLevel()) {
                     DB::rollback();
                 }
-                throw new Exception("Could not get LMS course assignments: {$result['message']}");
+                throw new Exception("Could not get LMS course assignments: {$result['message']} for $lti_registration->id");
             }
             $canvas_name = "$assignment->name (ADAPT)";
             $assignment_count = 0;
