@@ -1341,6 +1341,9 @@ class AssignmentSyncQuestionController extends Controller
             DB::table('question_level_overrides')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
                 ->delete();
+            DB::table('submission_histories')->where('question_id', $question->id)
+                ->where('assignment_id', $assignment->id)
+                ->delete();
             $currently_ordered_questions = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->orderBy('order')

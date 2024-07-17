@@ -128,11 +128,11 @@ class DataShop extends Model
             if ($data_shops_enrollment) {
                 if ($data_shops_enrollment->assignment_id === $assignment->id
                     && $data_shops_enrollment->question_id === $question->id) {
-                  DB::table('data_shops_enrollments')
-                      ->where('id', $data_shops_enrollment->id)
+                    DB::table('data_shops_enrollments')
+                        ->where('id', $data_shops_enrollment->id)
                         ->update([
                             'number_of_enrolled_students' => $data_shops_enrollment->number_of_enrolled_students + 1,
-                            'updated_at' =>now()]);
+                            'updated_at' => now()]);
 
                 }
             } else {
@@ -154,7 +154,16 @@ class DataShop extends Model
                     'updated_at' => now()];
                 DB::table('data_shops_enrollments')->insert($data);
             }
-
+        }
+        if ($type === 'submission'
+            && !auth()->user()->fake_student
+            && !auth()->user()->formative_student) {
+            $submissionHistory = new SubmissionHistory();
+            $submissionHistory->user_id = auth()->user()->id;
+            $submissionHistory->assignment_id = $assignment->id;
+            $submissionHistory->question_id = $question->id;
+            $submissionHistory->submission = $data['submission']->submission;
+            $submissionHistory->save();
         }
     }
 
