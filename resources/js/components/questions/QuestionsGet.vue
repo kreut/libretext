@@ -226,7 +226,7 @@
       </template>
 
       <div class="pb-2">
-        <b-button v-if="questionToView.qti_json"
+        <b-button v-if="questionToView.qti_json && !isDiscussIt(questionToView)"
                   size="sm"
                   variant="outline-info"
                   @click="$bvModal.show(`qti-answer-${questionToView.id}`)"
@@ -1755,6 +1755,14 @@ export default {
   methods: {
     doCopy,
     initCentrifuge,
+    isDiscussIt (question) {
+      try {
+        return JSON.parse(question.qti_json).questionType === 'discuss_it'
+      } catch (error) {
+
+      }
+      return false
+    },
     nursingFormattedQuestionTypes () {
       return ['Bow Tie',
         'Multiple Choice',

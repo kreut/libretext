@@ -18,6 +18,45 @@ class AssignmentSyncQuestionPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+
+    public function getDiscussItSettings(User                   $user,
+                                         AssignmentSyncQuestion $assignmentSyncQuestion,
+                                         Assignment             $assignment,
+                                         Question               $question): Response
+    {
+        $question_in_assignment = in_array($question->id, $assignment->questions->pluck('id')->toArray());
+
+        $is_instructor = (int)$user->id === $assignment->course->user_id;
+        $is_student = in_array($user->id, $assignment->course->enrolledUsers->pluck('id')->toArray()) || $user->fake_student;
+        return $question_in_assignment && ($is_instructor || $is_student)
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the discuss-it settings for that question.');
+
+
+    }
+
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function updateDiscussItSettings(User                   $user,
+                                            AssignmentSyncQuestion $assignmentSyncQuestion,
+                                            Assignment             $assignment,
+                                            Question               $question): Response
+    {
+
+        return (int)$user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the discuss-it settings for that question.');
+
+
+    }
+
+
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
@@ -47,9 +86,9 @@ class AssignmentSyncQuestionPolicy
      * @return Response
      */
     public function updateToLatestRevision(User                   $user,
-                                      AssignmentSyncQuestion $assignmentSyncQuestion,
-                                      Assignment             $assignment,
-                                      Question               $question): Response
+                                           AssignmentSyncQuestion $assignmentSyncQuestion,
+                                           Assignment             $assignment,
+                                           Question               $question): Response
     {
 
         return (int)$user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
@@ -124,7 +163,6 @@ class AssignmentSyncQuestionPolicy
     }
 
 
-
     public function setCurrentPage(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
     {
         $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
@@ -132,6 +170,7 @@ class AssignmentSyncQuestionPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to set the current page.');
     }
+
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion

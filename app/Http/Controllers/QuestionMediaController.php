@@ -141,13 +141,17 @@ class QuestionMediaController extends Controller
 
     }
 
+    /**
+     * @throws Exception
+     */
     public function index(string $media, int $start_time = 0)
     {
         $questionMediaUpload = new QuestionMediaUpload();
         $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($media);
+        $type = strpos($media, '.mp3') !== false ? 'audio': 'video';
         $temporary_url = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$media", Carbon::now()->addDays(7));
         $vtt_file = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$vtt_file", Carbon::now()->addDays(7));
-        return view('question_media', ['temporary_url' => $temporary_url, 'vtt_file' => $vtt_file, 'start_time' => $start_time]);
+        return view('media_player', [ 'type'=> $type, 'temporary_url' => $temporary_url,'vtt_file' => $vtt_file, 'start_time' => $start_time]);
     }
 
     /**

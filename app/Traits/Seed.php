@@ -27,6 +27,7 @@ trait Seed
                 $question_type = $qti_array['questionType'];
                 $seed = '';
                 if (in_array($question_type, [
+                    'discuss_it',
                     'submit_molecule',
                     'true_false',
                     'fill_in_the_blank',

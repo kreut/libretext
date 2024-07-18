@@ -47,6 +47,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+use setasign\Fpdi\Fpdi;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
@@ -1269,7 +1270,7 @@ class QuestionController extends Controller
         $revision_action = $request->revision_action;
         $automatically_update_revision = $revision_action === 'notify' ? $request->automatically_update_revision : 0;
         $media_uploads = $request->media_uploads;
-
+$question_type = '';
         try {
             $data = $request->validated();
             if ($data['technology'] === 'qti') {
@@ -1281,6 +1282,23 @@ class QuestionController extends Controller
                 $question_type = json_decode($request->qti_json)->questionType;
                 $data['qti_json_type'] = $question_type;
                 switch ($question_type) {
+                    case('discuss_it'):
+                        $unsets = ['media_uploads'];
+                       /* $qtiJson = $request->input('qti_json');
+                        $qtiArray = json_decode($qtiJson, true);
+                        $pdf = new FPDI();
+                        $storage_path = app()->environment('local')
+                            ? app()->storagePath() . "/app/tmp"
+                            : '/tmp';
+
+                        $s3_key = json_decode($request->qti_json)->mediaUpload->s3_key;
+                        $filename = basename($s3_key);
+                        file_put_contents("$storage_path/$filename", Storage::disk('s3')->get( $s3_key));
+
+                        $qtiArray['mediaUpload']['num_pages'] =  $pdf->setSourceFile("$storage_path/$filename");
+                        $newQtiJson = json_encode($qtiArray);
+                        $request->merge(['qti_json' => $newQtiJson]);*/
+                        break;
                     case('submit_molecule'):
                         $unsets = ['smiles', 'solution_structure'];
                         break;
@@ -1640,7 +1658,7 @@ class QuestionController extends Controller
             $question->saveFormat();
             $question->non_technology_html = $non_technology_text;
             $assignment_name = '';
-            if ($media_uploads) {
+            if ($media_uploads && $question_type !== 'discuss_it') {
                 if ($is_update) {
                     $current_s3_keys = QuestionMediaUpload::where('question_id', $question->id)
                         ->get()

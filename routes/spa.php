@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 Route::get('question-media-player/{media}/{start_time?}', 'QuestionMediaController@index');
+Route::get('/discussion-media-player/assignments/{assignment}/question/{question}/{media_upload_id}', 'DiscussionController@mediaPlayer');
+Route::get('/discussion-comments/media-player/{key}/{key_id}', 'DiscussionCommentController@MediaPlayer');
 Route::get('/apple-app-site-association', 'MobileAppController@appleAppSiteAssociation');
 Route::get('/conductor-media/{src}', 'QuestionMediaController@conductorMedia');
 Route::get('/.well-known/assetlinks.json', 'MobileAppController@androidAssetLink');

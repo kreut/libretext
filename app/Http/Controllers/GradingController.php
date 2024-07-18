@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentFile;
+use App\Discussion;
 use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
@@ -70,7 +71,11 @@ class GradingController extends Controller
         }
 
         $data = $request->validated();
-
+        $is_discuss_it = false;
+        if ($question_id) {
+            $question = Question::find($question_id);
+            $is_discuss_it = $question->isDiscussIt();
+        }
         $extra_validation_response = $this->_extraValidations($request, $question_id, $assignment_id, $student_user_id);
         if ($extra_validation_response['type'] !== 'success') {
             return $extra_validation_response;
@@ -80,6 +85,23 @@ class GradingController extends Controller
             $text_feedback = $request->textFeedback ? trim($request->textFeedback) : '';
 
             DB::beginTransaction();
+            if ($is_discuss_it) {
+                if (!DB::table('submission_files')
+                    ->where('user_id', $student_user_id)
+                    ->where('assignment_id', $assignment_id)
+                    ->where('question_id', $question_id)
+                    ->first()) {
+                    $submissionFile = new SubmissionFile();
+                    $submissionFile->type = 'discuss_it';
+                    $submissionFile->original_filename = '';
+                    $submissionFile->submission = '';
+                    $submissionFile->user_id = $student_user_id;
+                    $submissionFile->assignment_id = $assignment_id;
+                    $submissionFile->question_id = $question_id;
+                    $submissionFile->date_submitted = now();
+                    $submissionFile->save();
+                }
+            }
             DB::table('submission_files')
                 ->where('user_id', $student_user_id)
                 ->where('assignment_id', $assignment_id)
@@ -211,6 +233,7 @@ class GradingController extends Controller
      * @param Submission $Submission
      * @param RubricCategorySubmission $rubricCategorySubmission
      * @param SubmissionScoreOverride $submissionScoreOverride
+     * @param Discussion $discussion
      * @return array
      * @throws Exception
      */
@@ -223,7 +246,8 @@ class GradingController extends Controller
                           Enrollment               $enrollment,
                           Submission               $Submission,
                           RubricCategorySubmission $rubricCategorySubmission,
-                          SubmissionScoreOverride  $submissionScoreOverride): array
+                          SubmissionScoreOverride  $submissionScoreOverride,
+                          Discussion               $discussion): array
     {
 
         $response['type'] = 'error';
@@ -282,9 +306,11 @@ class GradingController extends Controller
             $rubric_category_submissions = $rubricCategorySubmission->getRubricCategorySubmissionsByUser($assignment);
 
             $submission_files = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users, $question->id) : [];
-            if ($submission_files) {
+
+           if ($submission_files) {
                 $submission_files = $submission_files[0];//comes back as an array of an array
             }
+
             foreach ($submission_files as $submission_file) {
                 $submission_files_by_user[$submission_file['user_id']] = $submission_file;
             }
@@ -362,6 +388,10 @@ class GradingController extends Controller
                 ->where('question_id', $question->id)
                 ->first();
             $points = $assignment_question->points;
+
+
+            $discussions_by_user_id = $discussion->getByAssignmentQuestionMediaUploadId($assignment, $question, 0)['discussions_by_user_id'];
+            $discussions = $discussion->getByAssignmentQuestionMediaUploadId($assignment, $question, 0)['discussions'];
             foreach ($enrolled_users as $user) {
                 $question = Question::find($question->id);//something was happening with webwork in that the question was changing on each iteration
                 $seed = $seeds_by_user_id[$user->id] ?? '';
@@ -470,6 +500,7 @@ class GradingController extends Controller
                     ->where('question_id', $question->id)
                     ->first()
                     ->open_ended_submission_type !== '0';
+
             $response['is_auto_graded'] = $is_auto_graded;
             $response['show_auto_graded_submission'] = $is_auto_graded && $question->technology === 'h5p';
             $response['technology'] = $question->technology;
@@ -479,6 +510,10 @@ class GradingController extends Controller
             $response['grading'] = array_values($grading);
             $response['message'] = "Your view has been updated.";
             $response['graders_can_see_student_names'] = (bool)$assignment->graders_can_see_student_names;
+            $response['discussions'] = $discussions;
+            $response['discussions_by_user_id'] = $discussions_by_user_id;
+            $response['discuss_it'] = $question->isDiscussIt();
+
         } catch
         (Exception $e) {
             $h = new Handler(app());

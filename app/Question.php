@@ -546,6 +546,11 @@ class Question extends Model
             }
         }
         switch ($question_type) {
+            case('discuss_it'):
+                foreach ($qti_array['mediaUploads'] as $key => $mediaUpload) {
+                    $qti_array['mediaUploads'][$key]['temporary_url'] = Storage::disk('s3')->temporaryUrl($mediaUpload['s3_key'], Carbon::now()->addDays(7));
+                }
+                break;
             case('submit_molecule'):
                 if (!$show_solution) {
                     if (request()->user()->role === 3) {
@@ -3566,6 +3571,18 @@ class Question extends Model
         return $formatted_question_type;
     }
 
+    /**
+     * @return bool
+     */
+    public function isDiscussIt(): bool
+    {
+        $is_discuss_it = false;
+        try {
+            $is_discuss_it = json_decode($this->qti_json)->questionType === 'discuss_it';
+        } catch (Exception $e) {
+        }
+        return $is_discuss_it;
+    }
 
 }
 

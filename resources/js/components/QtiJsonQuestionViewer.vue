@@ -142,6 +142,15 @@
           />
         </b-form-group>
       </div>
+      <DiscussItViewer v-if="questionType === 'discuss_it'"
+                       ref="discussItViewer"
+                       :key="`discussIt-${assignmentId}-${questionId}`"
+                       :qti-json="JSON.parse(qtiJson)"
+                       :question-id="questionId"
+                       :assignment-id="assignmentId"
+                       :can-start-discussion-or-add-comments="submitButtonActive"
+
+      />
       <DragAndDropClozeViewer
         v-if="questionType === 'drag_and_drop_cloze'"
         ref="dragAndDropClozeViewer"
@@ -212,10 +221,12 @@ import MultipleAnswersViewer from './viewers/MultipleAnswersViewer'
 import MultipleChoiceTrueFalseViewer from './viewers/MultipleChoiceTrueFalseViewer'
 import MatrixMultipleResponseViewer from './viewers/MatrixMultipleResponseViewer'
 import { formatQuestionMediaPlayer } from '~/helpers/Questions'
+import DiscussItViewer from './viewers/DiscussItViewer.vue'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    DiscussItViewer,
     SketcherViewer,
     MatrixMultipleResponseViewer,
     MultipleChoiceTrueFalseViewer,
@@ -273,7 +284,16 @@ export default {
     previewingQuestion: {
       type: Boolean,
       default: false
+    },
+    assignmentId: {
+      type: Number,
+      default: 0
+    },
+    questionId: {
+      type: Number,
+      default: 0
     }
+
   },
   data: () => ({
     response: '',
@@ -317,6 +337,8 @@ export default {
     }
     this.questionType = this.question.questionType
     switch (this.questionType) {
+      case('discuss_it'):
+        break
       case ('submit_molecule'):
       case ('numerical'):
       case ('matching') :

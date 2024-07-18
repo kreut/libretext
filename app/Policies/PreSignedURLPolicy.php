@@ -20,12 +20,40 @@ class PreSignedURLPolicy
      */
     public function questionMediaPreSignedURL(User $user): Response
     {
-        return in_array($user->role,[2,5])
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny('You are not allowed to upload question media.');
 
     }
 
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function discussItSignedURL(User $user): Response
+    {
+        return in_array($user->role, [2, 5])
+            ? Response::allow()
+            : Response::deny('You are not allowed to upload DiscussIt media.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param PreSignedURL $preSignedURL
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function discussItComments(User $user, PreSignedURL $preSignedURL, Assignment $assignment)
+    {
+        $has_access = ($user->role === 3 && $assignment->course->enrollments->contains('user_id', $user->id))
+            || ($user->role === 2 && $assignment->course->user_id === $user->id);
+
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed to submit this comment');
+
+    }
 
     public function vttPreSignedURL(User $user, PreSignedURL $preSignedURL, string $s3_key): Response
     {

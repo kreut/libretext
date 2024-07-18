@@ -413,6 +413,26 @@ button.page-link:active:focus {
   display: none !important;
 }
 
+div#discuss-it-recorder div.ar-content .ar-recorder__records-limit {
+  display: none;
+}
+
+div#discuss-it-recorder div.ar-content svg {
+  margin-bottom: 15px;
+}
+
+div#discuss-it-recorder div.ar-content .ar__rm {
+  margin-bottom: 19px !important;
+}
+
+div#discuss-it-recorder div.ar-content {
+  height: 225px;
+}
+
+div#discuss-it-recorder .ar-records__record {
+  display: none;
+}
+
 
 
 

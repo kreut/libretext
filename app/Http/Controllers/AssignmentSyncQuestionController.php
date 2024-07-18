@@ -6,16 +6,15 @@ use App\BetaCourseApproval;
 use App\Custom\FCMNotification;
 use App\Enrollment;
 use App\Exceptions\Handler;
-use App\FCMToken;
 use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
 use App\Http\Requests\UpdateCompletionScoringModeRequest;
+use App\Http\Requests\UpdateDiscussItSettingsRequest;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\IMathAS;
 use App\JWE;
 use App\LearningTree;
-use App\NonUpdatedQuestionRevision;
 use App\PendingQuestionRevision;
 use App\RandomizedAssignmentQuestion;
 use App\ReportToggle;
@@ -41,11 +40,9 @@ use App\Extension;
 use App\Traits\IframeFormatter;
 use App\Traits\DateFormatter;
 use App\AssignmentSyncQuestion;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Traits\S3;
@@ -54,14 +51,93 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
-use Napp\Xray\Facades\Xray;
-use phpcent\Client;
 
 
 class AssignmentSyncQuestionController extends Controller
 {
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function getDiscussItSettings(Request $request,
+                                         Assignment             $assignment,
+                                         Question               $question,
+                                         AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('getDiscussItSettings', [$assignmentSyncQuestion, $assignment, $question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+           $discuss_it_settings = $assignmentSyncQuestion->discussItSettings($assignment->id, $question->id);
+          // $discuss_it_completion_status = $assignmentSyncQuestion->discussItCompletionStatus($request->user()->id, $assignment->id, $question->id);
+            $discuss_it_completion_status = [];
+            $response['type'] = 'success';
+            $response['discuss_it_settings'] = $discuss_it_settings;
+            $response['discuss_it_completion_status'] = $discuss_it_completion_status;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the discuss-it settings.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param UpdateDiscussItSettingsRequest $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function updateDiscussItSettings(UpdateDiscussItSettingsRequest $request,
+                                            Assignment                     $assignment,
+                                            Question                       $question,
+                                            AssignmentSyncQuestion         $assignmentSyncQuestion): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateDiscussItSettings', [$assignmentSyncQuestion, $assignment, $question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $data = $request->validated();
+            $grading_criteria = ['min_length_of_audio_video' => '',
+                "min_number_of_comments" => '',
+                "min_number_of_discussion_threads" => '',
+                "min_number_of_words" => ''];
+            foreach ($grading_criteria as $key => $value) {
+                if (!isset($data[$key])) {
+                    $data[$key] = $value;
+                }
+            }
+            DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['discuss_it_settings' => $data]);
+            $response['type'] = 'success';
+            $response['message'] = 'The discuss-it settings have been updated.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the discuss-it settings.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     use IframeFormatter;
     use DateFormatter;

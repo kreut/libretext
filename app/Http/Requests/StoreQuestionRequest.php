@@ -130,6 +130,10 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('discuss_it'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['media_uploads'] = ['required', "array", "min:1"];
+                                    break;
                                 case('submit_molecule'):
                                     $rules['qti_prompt'] = ['required'];
                                     $rules['solution_structure'] = ['required'];
@@ -299,8 +303,15 @@ class StoreQuestionRequest extends FormRequest
 
 
         }
+        try {
+            $qti_array = json_decode($this->qti_json, true);
+        } catch (Exception $e) {
 
-        $messages['qti_prompt.required'] = "A prompt is required.";
+
+        }
+        $messages['qti_prompt.required'] = isset($qti_array['questionType']) && $qti_array['questionType'] === 'discuss_it'
+            ? "Instructions are required."
+            : "A prompt is required.";
         $messages['qti_item_body.required'] = "The question text is required.";
         $messages['source_url.url'] = "Please enter a valid URL.";
         return $messages;
