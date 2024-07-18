@@ -27,9 +27,38 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
+use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
+use MiladRahimi\Jwt\Generator;
 
 class UserController extends Controller
 {
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return array
+     */
+    public function getSignedUserId(Request $request, User $user): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('getSignedUserId', $user);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $key = new HmacKey(config('myconfig.analytics_user_id_api_key'));
+            $signer = new HS256($key);
+            $generator = new Generator($signer);
+            $jwt = $generator->generate(['id' => $request->user()->id, 'role'=> $request->user()->role]);
+            $response['token'] = $jwt;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+           $response['message'] = $e->getMessage();
+        }
+        return $response;
+    }
 
     /**
      * @param User $student
@@ -264,7 +293,7 @@ class UserController extends Controller
     {
         $response['type'] = 'success';
         $response['user_jwt'] = request()->cookie()['user_jwt'] ?? 'None';
-        return response($response)->withCookie(cookie('clicker_app',1));
+        return response($response)->withCookie(cookie('clicker_app', 1));
     }
 
 }

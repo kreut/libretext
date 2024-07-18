@@ -24,6 +24,17 @@ class AnalyticsTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
     }
 
+
+    /** @test */
+    public function cannot_get_user_jwt_if_not_instructor_or_student()
+    {
+        $this->user->role = 5;
+        $this->user->save();
+        $this->actingAs($this->user)
+            ->getJson("/api/users/signed-user-id")
+            ->assertJson(['message' => 'You are not allowed to retrieve a signed user id.']);
+
+    }
     /** @test */
     public function cannot_access_all_routes_with_analytics_key()
     {

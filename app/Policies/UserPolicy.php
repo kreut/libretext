@@ -20,6 +20,17 @@ class UserPolicy
      * @param User $user
      * @return Response
      */
+    public function getSignedUserId(User $user): Response
+    {
+        return in_array($user->role, [2, 3])
+            ? Response::allow()
+            : Response::deny("You are not allowed to retrieve a signed user id.");
+    }
+
+    /**
+     * @param User $user
+     * @return Response
+     */
     public function toggleStudentView(User $user): Response
     {
         return $user->role === 2 || $user->fake_student
@@ -93,7 +104,7 @@ class UserPolicy
     {
         $message = 'You are not allowed to log in as a different user.';
         if ($user->id == 7665) {
-            $has_access = strpos($email,'estrellamountain.edu') !== false;
+            $has_access = strpos($email, 'estrellamountain.edu') !== false;
             if (!$has_access) {
                 $message = "You are not allowed to log in as $email.";
             }
