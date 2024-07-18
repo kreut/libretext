@@ -6,16 +6,15 @@ use App\BetaCourseApproval;
 use App\Custom\FCMNotification;
 use App\Enrollment;
 use App\Exceptions\Handler;
-use App\FCMToken;
 use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
 use App\Http\Requests\UpdateCompletionScoringModeRequest;
+use App\Http\Requests\UpdateDiscussItSettingsRequest;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\IMathAS;
 use App\JWE;
 use App\LearningTree;
-use App\NonUpdatedQuestionRevision;
 use App\PendingQuestionRevision;
 use App\RandomizedAssignmentQuestion;
 use App\ReportToggle;
@@ -41,11 +40,9 @@ use App\Extension;
 use App\Traits\IframeFormatter;
 use App\Traits\DateFormatter;
 use App\AssignmentSyncQuestion;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Traits\S3;
@@ -54,14 +51,149 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
-use Napp\Xray\Facades\Xray;
-use phpcent\Client;
 
 
 class AssignmentSyncQuestionController extends Controller
 {
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function getDiscussItQuestionsByAssignment(Request    $request,
+                                                      Assignment $assignment,
+                                                      Question   $question): array
+    {
+        try {
+            $response['type'] = 'error';
+            $question_ids = $assignment->questions->pluck('id')->toArray();
+            $discuss_it_questions = $question->whereIn('id', $question_ids)
+                ->where('technology', 'qti')
+                ->get();
+            $discuss_it_question_ids = [];
+            foreach ($discuss_it_questions as $discuss_it_question) {
+                if ($discuss_it_question->isDiscussIt()) {
+                    $discuss_it_question_ids[] = $discuss_it_question->id;
+                }
+            }
+            $submitted_file_infos = DB::table('submission_files')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', $request->user()->id)
+                ->get();
+            $submitted_file_infos_by_question_id = [];
+            foreach ($submitted_file_infos as $submitted_file_info) {
+                $submitted_file_infos_by_question_id[$submitted_file_info->question_id] = $submitted_file_info;
+            }
+
+            $discuss_it_question_info = [];
+            foreach ($discuss_it_question_ids as $discuss_it_question_id) {
+                $submitted_file_info = $submitted_file_infos_by_question_id[$discuss_it_question_id] ?? null;
+                $last_submitted = $submitted_file_info
+                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(
+                        $submitted_file_info->date_submitted,
+                        $request->user()->time_zone, 'M d, Y g:i:s a')
+                    : 'Not yet fully submitted';
+                $score = $submitted_file_info ? Helper::removeZerosAfterDecimal($submitted_file_info->score) : 'N/A';
+                $discuss_it_question_info[] = ['id' => $discuss_it_question_id,
+                    'last_submitted' => $last_submitted,
+                    'total_score' => $score];
+            }
+            $response['discuss_it_question_info'] = $discuss_it_question_info;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the discuss it question ionfo for this assignment.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function getDiscussItSettings(Request                $request,
+                                         Assignment             $assignment,
+                                         Question               $question,
+                                         AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('getDiscussItSettings', [$assignmentSyncQuestion, $assignment, $question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $discuss_it_settings = $assignmentSyncQuestion->discussItSettings($assignment->id, $question->id);
+            // $discuss_it_completion_status = $assignmentSyncQuestion->discussItCompletionStatus($request->user()->id, $assignment->id, $question->id);
+            $discuss_it_completion_status = [];
+            $response['type'] = 'success';
+            $response['discuss_it_settings'] = $discuss_it_settings;
+            $response['discuss_it_completion_status'] = $discuss_it_completion_status;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the discuss-it settings.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param UpdateDiscussItSettingsRequest $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function updateDiscussItSettings(UpdateDiscussItSettingsRequest $request,
+                                            Assignment                     $assignment,
+                                            Question                       $question,
+                                            AssignmentSyncQuestion         $assignmentSyncQuestion): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateDiscussItSettings', [$assignmentSyncQuestion, $assignment, $question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $data = $request->validated();
+            $grading_criteria = ['min_length_of_audio_video' => '',
+                "min_number_of_comments" => '',
+                "min_number_of_discussion_threads" => '',
+                "min_number_of_words" => ''];
+            foreach ($grading_criteria as $key => $value) {
+                if (!isset($data[$key])) {
+                    $data[$key] = $value;
+                }
+            }
+            DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['discuss_it_settings' => $data]);
+            $response['type'] = 'success';
+            $response['message'] = 'The discuss-it settings have been updated.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the discuss-it settings.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     use IframeFormatter;
     use DateFormatter;

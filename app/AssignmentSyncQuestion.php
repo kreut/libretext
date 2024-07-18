@@ -18,6 +18,98 @@ class AssignmentSyncQuestion extends Model
 {
     protected $table = 'assignment_question';
 
+    public function discussItCompletionStatus(int $user_id, int $assignment_id, int $question_id)
+    {
+        $discuss_it_settings = json_decode($this->discussItSettings($assignment_id, $question_id));
+        $completion_items = ['min_length_of_audio_video',
+            'min_number_of_discussion_threads',
+            'min_number_of_comments',
+            'min_number_of_words'];
+
+        foreach ($completion_items as $key => $completion_item) {
+            if (!$discuss_it_settings->{$completion_item}) {
+                unset($completion_items[$key]);
+            }
+        }
+        $completion_items = array_values($completion_items);
+        $discussion_comments_by_user = DB::table('discussion_comments')->
+        join('discussions', 'discussion_comments.dicussion_id', '=', 'discussions.id')
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->where('discussion_comments.user_id', $user_id)
+            ->select('discussion_comments.*')
+            ->get();
+        $total_amount_of_time = 0;
+        $total_number_of_discussion_threads = 0;
+        $total_number_of_comments = 0;
+        $total_number_of_words = 0;
+        $completion_status = [];
+        foreach ($completion_items as $completion_item) {
+            $completion_status[] = ['key' => $completion_item, 'completed' => false];
+        }
+        if ($discussion_comments_by_user) {
+            foreach ($discussion_comments_by_user as $discussion_comment) {
+                foreach ($completion_items as $completion_item) {
+                    switch ($completion_item) {
+                        case('min_length_of_audio_video'):
+                            break;
+                        case('min_number_of_discussion_threads'):
+
+                            break;
+                        case('min_number_of_comments');
+                            break;
+                        case('min_number_of_words'):
+
+                            break;
+                        default:
+                            throw new Exception ("No logic yet for  $completion_item.");
+
+                    }
+
+                }
+            }
+
+        }
+
+    }
+
+    /**
+     * @param int $assignment_id
+     * @param int $question_id
+     * @return false|mixed|string
+     */
+    public function discussItSettings(int $assignment_id, int $question_id)
+    {
+        $assignment_question_info = DB::table('assignment_question')
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->select('discuss_it_settings')
+            ->first();
+        $default_discuss_it_settings = json_encode([
+            'students_can_edit_comments' => 0,
+            'students_can_delete_comments' => 0,
+            'min_number_of_discussion_threads' => 1,
+            'min_number_of_comments' => 1,
+            'min_number_of_words' => 1,
+            'min_length_of_audio_video' => '',
+            'min_length_of_audio_video_in_milliseconds' => 0,
+            'auto_grade' => 1
+        ]);
+        $discuss_it_settings = $assignment_question_info->discuss_it_settings ? $assignment_question_info->discuss_it_settings : $default_discuss_it_settings;
+        $discuss_it_settings = json_decode($discuss_it_settings);
+
+        if ($discuss_it_settings->min_length_of_audio_video) {
+            $base = Carbon::now();
+            $min_length_of_audio_video = $discuss_it_settings->min_length_of_audio_video;
+            $min_length_of_audio_video = str_replace('and', ',', $min_length_of_audio_video);
+            $parsedTime = Carbon::parse($min_length_of_audio_video);
+            $discuss_it_settings->min_length_of_audio_video_in_milliseconds = $base->diffInMilliseconds($parsedTime);
+        }
+        return json_encode($discuss_it_settings);
+
+    }
+
+
     public function rubricCategoriesByAssignmentAndQuestion(Assignment $assignment, Question $question)
     {
         $question_revision_id = AssignmentSyncQuestion::where('assignment_id', $assignment->id)

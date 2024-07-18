@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\Request;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use stdClass;
 
 class Submission extends Model
@@ -850,7 +852,9 @@ class Submission extends Model
     /**
      * @param Assignment $assignment
      * @param Carbon $now
-     * @return float|int
+     * @return float|int|mixed
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public
     function latePenaltyPercent(Assignment $assignment, Carbon $now)
@@ -1245,7 +1249,7 @@ class Submission extends Model
         $results = DB::table('submission_files')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
-            ->whereIn('type', ['q', 'text'])
+            ->whereIn('type', ['q', 'text','discuss_it'])
             ->select('question_id', 'assignment_id')
             ->get();
 

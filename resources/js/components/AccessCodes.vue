@@ -13,27 +13,27 @@
                        :class="{ 'is-invalid': numberOfAccessCodesForm.errors.has('number_of_access_codes') }"
                        style="width: 60px"
         />
-        <has-error :form="numberOfAccessCodesForm" field="number_of_access_codes'"/>
+        <has-error :form="numberOfAccessCodesForm" field="number_of_access_codes'" />
         <b-button variant="primary" size="sm" @click="createAccessCodes">
           Create Access Codes
         </b-button>
       </b-form-group>
       <span v-if="accessCodes.length">
-                The {{ accessCodeType }} access codes are valid for 48 hours.  Please copy them before leaving this page as they will
-                only be shown once.
-              </span>
+        The {{ accessCodeType }} access codes are valid for 48 hours.  Please copy them before leaving this page as they will
+        only be shown once.
+      </span>
       <ul v-for="accessCode in accessCodes" :key="accessCode">
         <li>
           <span :id="accessCode">{{ accessCode }}</span> <a
-          href=""
-          class="pr-1"
-          aria-label="Copy Access Code"
-          @click.prevent="doCopy(accessCode)"
-        >
-          <font-awesome-icon
-            :icon="copyIcon"
-          />
-        </a>
+            href=""
+            class="pr-1"
+            aria-label="Copy Access Code"
+            @click.prevent="doCopy(accessCode)"
+          >
+            <font-awesome-icon
+              :icon="copyIcon"
+            />
+          </a>
         </li>
       </ul>
     </b-card>
@@ -42,8 +42,7 @@
         Enter a comma separated list of emails for sending {{ accessCodeType }} access codes which they can use to
         register. Access codes are valid for 48 hours.
       </p>
-      <b-form-group
-      >
+      <b-form-group>
         <b-form-textarea
           id="description"
           v-model="accessCodeEmails"
@@ -51,9 +50,9 @@
           type="text"
         />
         <div class="float-right pt-2">
-                  <span v-if="numberOfEmailsToProcess >0"> Processing {{
-                      emailsProcessed
-                    }} of {{ numberOfEmailsToProcess }} emails</span>
+          <span v-if="numberOfEmailsToProcess >0"> Processing {{
+            emailsProcessed
+          }} of {{ numberOfEmailsToProcess }} emails</span>
           <b-button size="sm" variant="primary" @click="emailAccessCodes">
             {{ getEmailAccessCodesButton() }}
           </b-button>
@@ -62,19 +61,19 @@
       <div class="pb-6" style="height:200px">
         <div v-if="sentMessage.length">
           <b-alert :show="true" variant="success">
-                <span v-if="sent.length === numberOfEmailsToProcess" class="font-weight-bold">
-                  All emails were sent successfully.
-                </span>
+            <span v-if="sent.length === numberOfEmailsToProcess" class="font-weight-bold">
+              All emails were sent successfully.
+            </span>
             <span v-if="sent.length < numberOfEmailsToProcess" class="font-weight-bold">
-                  The following emails were sent successfully: {{ sentMessage }}
-                </span>
+              The following emails were sent successfully: {{ sentMessage }}
+            </span>
           </b-alert>
         </div>
         <div v-if="notSentMessage.length">
           <b-alert :show="true" variant="danger">
-                <span class="font-weight-bold">
-                  We were unable to send the following emails: {{ notSentMessage }}
-                </span>
+            <span class="font-weight-bold">
+              We were unable to send the following emails: {{ notSentMessage }}
+            </span>
           </b-alert>
         </div>
       </div>

@@ -7,12 +7,30 @@ use App\Helpers\Helper;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Snowfire\Beautymail\Beautymail;
 
 class QuestionMediaUpload extends Model
 {
 
     protected $guarded = [];
+
+    /**
+     * @throws Exception
+     */
+    public function deleteFileAndVttFile($filename)
+    {
+
+        $s3_key = $filename ? $this->getDir() . "/" . $filename : false;
+        if ($s3_key && (Storage::disk('s3')->exists($s3_key))) {
+            Storage::disk('s3')->delete($s3_key);
+        }
+
+        $vtt_file = $this->getVttFileNameFromS3Key($s3_key);
+        if ($vtt_file && (Storage::disk('s3')->exists($vtt_file))) {
+            Storage::disk('s3')->delete($vtt_file);
+        }
+    }
 
     /**
      * @param string $media
@@ -23,10 +41,7 @@ class QuestionMediaUpload extends Model
     {
         $s3_key = $media ?: $this->s3_key;
         $file_name_without_ext = pathinfo($s3_key, PATHINFO_FILENAME);
-        if (!$file_name_without_ext) {
-            throw new Exception("There is not file_name_without_ext");
-        }
-        return "$file_name_without_ext.vtt";
+        return $file_name_without_ext ? "$file_name_without_ext.vtt" : '';
     }
 
 

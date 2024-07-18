@@ -36,6 +36,12 @@ class S3Controller extends Controller
                 case('vtt'):
                     $authorized = Gate::inspect('vttPreSignedURL', [$preSignedURL, $request->s3_key]);
                     break;
+                case('discuss-it-media'):
+                    $authorized = Gate::inspect('discussItSignedURL', $preSignedURL);
+                    break;
+                case('discuss-it-comments'):
+                    $authorized = Gate::inspect('discussItComments', [$preSignedURL, $assignment, $upload_file_type]);
+                    break;
                 default:
                     $authorized = Gate::inspect('preSignedURL', [$preSignedURL, $assignment, $upload_file_type]);
 
@@ -62,11 +68,12 @@ class S3Controller extends Controller
                 case('qti'):
                     $dir = 'uploads/qti/' . $request->user()->id;
                     break;
+                case('discuss-it-comments'):
+                case('discuss-it-media'):
                 case('question-media'):
                 case('vtt'):
                     $dir = $questionMediaUpload->getDir();
                     break;
-
             }
             if (!$dir) {
                 throw new Exception("This is not a valid upload file type.");
@@ -88,6 +95,12 @@ class S3Controller extends Controller
                     break;
                 case('question-media'):
                     $response['question_media_filename'] = $uploaded_filename;
+                    break;
+                case('discuss-it-media'):
+                    $response['discuss_it_media_filename'] =  $uploaded_filename;
+                    break;
+                case('discuss-it-comments'):
+                    $response['discuss_it_comments_filename'] = $uploaded_filename;
                     break;
                 default:
                     $response['submission'] = $uploaded_filename;

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\DiscussionComment;
 use App\Exceptions\Handler;
 use App\QuestionMediaUpload;
 use Exception;
@@ -24,15 +25,20 @@ class ProcessTranscribe implements ShouldQueue
      * @var string
      */
     private $s3_key;
+    /**
+     * @var string
+     */
+    private $upload_type;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(string $s3_key)
+    public function __construct(string $s3_key, string $upload_type)
     {
         $this->s3_key = $s3_key;
+        $this->upload_type = $upload_type;
     }
 
     /**
@@ -45,52 +51,70 @@ class ProcessTranscribe implements ShouldQueue
     public function handle()
     {
 
-        $questionMediaUpload = QuestionMediaUpload::where('s3_key', $this->s3_key)->first();
-        $efs_dir = '/mnt/local/';
-        $is_efs = is_dir($efs_dir);
-        $storage_path = $is_efs
-            ? $efs_dir
-            : Storage::disk('local')->getAdapter()->getPathPrefix();
-
-        $question_media_dir = $storage_path . $questionMediaUpload->getDir();
-        $media_upload_path = "$question_media_dir/$this->s3_key";
-        if (!is_dir($question_media_dir)) {
-            mkdir($question_media_dir);
+        switch ($this->upload_type) {
+            case('question_media_upload'):
+                $s3_key_column = 's3_key';
+                $uploadTypeModel = new QuestionMediaUpload();
+                break;
+            case('discussion_comment'):
+                $uploadTypeModel = new DiscussionComment();
+                $s3_key_column = 'file';
+                break;
+            default:
+                throw new Exception ("Invalid upload type for transcribing: $this->upload_type");
         }
-        $s3_dir = (new QuestionMediaUpload)->getDir();
-        $s3_key = "$s3_dir/$this->s3_key";
-        if (!Storage::disk('s3')->exists($s3_key)) {
-            $message = "$s3_key does not exist.";
-            $questionMediaUpload->status = "error";
-            $questionMediaUpload->message = $message;
-            $questionMediaUpload->save();
-            throw new Exception($message);
-        }
-        $media_content = Storage::disk('s3')->get($s3_key);
-        $questionMediaUpload->status = "getting file";
-        $questionMediaUpload->save();
-        file_put_contents($media_upload_path, $media_content);
-
+        $upload_type_model = $uploadTypeModel->where($s3_key_column, $this->s3_key)->first();
         try {
+            $efs_dir = '/mnt/local/';
+            $is_efs = is_dir($efs_dir);
+            $storage_path = $is_efs
+                ? $efs_dir
+                : Storage::disk('local')->getAdapter()->getPathPrefix();
 
-            $questionMediaUpload->status = "transcribing";
-            $questionMediaUpload->save();
+            $s3_dir = (new QuestionMediaUpload)->getDir();
+            $question_media_dir = $storage_path . $s3_dir;
+            $media_upload_path = "$question_media_dir/$this->s3_key";
+            if (!is_dir($question_media_dir)) {
+                mkdir($question_media_dir);
+            }
+
+            $s3_key = "$s3_dir/$this->s3_key";
+            if (!Storage::disk('s3')->exists($s3_key)) {
+                $message = "$s3_key does not exist.";
+                $upload_type_model->status = "error";
+                $upload_type_model->message = $message;
+                $upload_type_model->save();
+                throw new Exception($message);
+            }
+            $media_content = Storage::disk('s3')->get($s3_key);
+            $upload_type_model->status = "getting file";
+            $upload_type_model->save();
+
+            file_put_contents($media_upload_path, $media_content);
+
+
+            $upload_type_model->status = "transcribing";
+            $upload_type_model->save();
             $transcript = $this->transcribeWithWhisper($media_upload_path);
-            $questionMediaUpload->status = "saving vtt to database";
-            $questionMediaUpload->transcript = $transcript;
-            $questionMediaUpload->save();
+            $upload_type_model->status = "saving vtt to database";
+            $upload_type_model->transcript = $transcript;
+            $upload_type_model->save();
             $file_name_without_ext = pathinfo($s3_key, PATHINFO_FILENAME);
             Storage::disk('s3')->put("$s3_dir/$file_name_without_ext.vtt", $transcript);
-            $questionMediaUpload->status = "completed";
-            $questionMediaUpload->save();
-            $questionMediaUpload->emailResult('success');
+            $upload_type_model->status = "completed";
+            $upload_type_model->save();
+            if ($this->upload_type === 'question_media_upload') {
+                $upload_type_model->emailResult('success');
+            }
         } catch (Exception $e) {
-            $questionMediaUpload->message = $e->getMessage();
-            $questionMediaUpload->status = "error";
-            $questionMediaUpload->save();
+            $upload_type_model->message = $e->getMessage();
+            $upload_type_model->status = "error";
+            $upload_type_model->save();
             $h = new Handler(app());
             $h->report($e);
-            $questionMediaUpload->emailResult('error');
+            if ($this->upload_type === 'question_media_upload') {
+                $upload_type_model->emailResult('error');
+            }
         }
 
     }

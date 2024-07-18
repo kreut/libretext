@@ -8,13 +8,13 @@
         size="lg"
       ><div v-if="imathasSolution">
          <h2 class="editable">Solution</h2>
-       <iframe
-         :key="`technology-iframe-${questions[currentPage-1].id}-1`"
-         v-resize="{ log: false, checkOrigin: false }"
-         width="100%"
-         :src="imathasSolutionSrc"
-         frameborder="0"
-       />
+         <iframe
+           :key="`technology-iframe-${questions[currentPage-1].id}-1`"
+           v-resize="{ log: false, checkOrigin: false }"
+           width="100%"
+           :src="imathasSolutionSrc"
+           frameborder="0"
+         />
        </div>
         <iframe
           v-show="false"
@@ -35,13 +35,13 @@
         <div v-if="questions[currentPage - 1].render_webwork_solution && !renderedWebworkSolution">
           <div class="d-flex justify-content-center mb-3">
             <div class="text-center">
-              <b-spinner variant="primary" label="Text Centered"/>
+              <b-spinner variant="primary" label="Text Centered" />
               <span style="font-size:30px" class="text-primary"> Generating Algorithmic Solution...</span>
             </div>
           </div>
         </div>
         <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution && !questions[currentPage-1].imathas_solution" class="editable">Solution</h2>
-        <div v-html="renderedWebworkSolution"/>
+        <div v-html="renderedWebworkSolution" />
 
         <div v-if="!renderedWebworkSolution && !questions[currentPage - 1].render_webwork_solution"
              v-html="questions[currentPage-1].solution_html"
@@ -70,7 +70,7 @@
           </b-card>
         </b-row>
         <div v-if="questions[currentPage-1].solution_text" class="pt-3">
-          <span v-html="questions[currentPage-1].solution_text"/>
+          <span v-html="questions[currentPage-1].solution_text" />
         </div>
       </b-modal>
       <span v-if="questions[currentPage-1].solution_type === 'audio'">
@@ -79,8 +79,8 @@
           class="btn btn-outline-primary btn-sm link-outline-primary-btn"
           @click="openShowAudioSolutionModal"
         >{{
-            useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution)
-          }}</a>
+          useViewSolutionAsText ? 'View Solution' : standardizeFilename(questions[currentPage - 1].solution)
+        }}</a>
       </span>
       <span v-if="questions[currentPage-1].solution_type === 'q'">
         <a

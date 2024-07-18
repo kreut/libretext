@@ -546,6 +546,8 @@ class Question extends Model
             }
         }
         switch ($question_type) {
+            case('discuss_it'):
+                break;
             case('submit_molecule'):
                 if (!$show_solution) {
                     if (request()->user()->role === 3) {
@@ -3566,6 +3568,18 @@ class Question extends Model
         return $formatted_question_type;
     }
 
+    /**
+     * @return bool
+     */
+    public function isDiscussIt(): bool
+    {
+        $is_discuss_it = false;
+        try {
+            $is_discuss_it = json_decode($this->qti_json)->questionType === 'discuss_it';
+        } catch (Exception $e) {
+        }
+        return $is_discuss_it;
+    }
 
 }
 

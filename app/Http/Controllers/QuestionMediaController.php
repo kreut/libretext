@@ -2,24 +2,74 @@
 
 namespace App\Http\Controllers;
 
+use App\Assignment;
 use App\Exceptions\Handler;
-use App\Helpers\Helper;
+use App\Question;
 use App\QuestionMediaUpload;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionMediaController extends Controller
 {
 
-    public function conductorMedia(string $src) {
-        return view('conductor_media', ['src'=> $src]);
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @return array
+     * @throws Exception
+     */
+    public function getByQuestion(Assignment          $assignment,
+                                  Question            $question,
+                                  QuestionMediaUpload $questionMediaUpload)
+    {
+
+        try {
+//need the assignment ID for authorization
+            $response['type'] = 'error';
+            $question_media_uploads = $questionMediaUpload
+                ->where('question_id', $question->id)
+                ->orderBy('order')
+                ->get();
+            foreach ($question_media_uploads as $key => $value) {
+                if (strpos($value->s3_key, '.pdf') !== false) {
+                    $question_media_uploads[$key]['temporary_url'] = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$value->s3_key", Carbon::now()->addDays(7));
+
+                }
+            }
+            $response['question_media_uploads'] = $question_media_uploads;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not get the media associated with this question. Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+
     }
+
+    /**
+     * @param string $src
+     * @return Application|Factory|View
+     */
+    public function conductorMedia(string $src)
+    {
+        return view('conductor_media', ['src' => $src]);
+    }
+
+
     /**
      * @param QuestionMediaUpload $questionMediaUpload
      * @return array
@@ -141,13 +191,17 @@ class QuestionMediaController extends Controller
 
     }
 
+    /**
+     * @throws Exception
+     */
     public function index(string $media, int $start_time = 0)
     {
         $questionMediaUpload = new QuestionMediaUpload();
         $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($media);
+        $type = strpos($media, '.mp3') !== false ? 'audio' : 'video';
         $temporary_url = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$media", Carbon::now()->addDays(7));
         $vtt_file = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$vtt_file", Carbon::now()->addDays(7));
-        return view('question_media', ['temporary_url' => $temporary_url, 'vtt_file' => $vtt_file, 'start_time' => $start_time]);
+        return view('media_player', ['type' => $type, 'temporary_url' => $temporary_url, 'vtt_file' => $vtt_file, 'start_time' => $start_time]);
     }
 
     /**

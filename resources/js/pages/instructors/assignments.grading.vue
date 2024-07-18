@@ -1,9 +1,26 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
-
-
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'" />
+    <b-modal id="modal-discussion"
+             :title="`Started by ${activeDiscussion.started_by} on ${activeDiscussion.created_at}`"
+             size="lg"
+    >
+      <div v-for="(comment, commentIndex) in activeDiscussion.comments" :key="`active-discussion-${commentIndex}`">
+        <span class="text-muted">{{ comment.created_at }}</span> <span class="font-weight-bold">{{ comment.created_by_name }}</span> {{ comment.text }}
+        <span v-show="comment.created_by_user_id === activeUserId" class="text-success">***</span><br>
+        <hr>
+      </div>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-discussion')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <div class="vld-parent">
       <ModalOverrideSubmissionScore :active-submission-score="activeSubmissionScore"
                                     :override-submission-score-form="overrideSubmissionScoreForm"
@@ -53,7 +70,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response"/>
+          <has-error :form="cannedResponseForm" field="canned_response" />
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -91,7 +108,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow"/>
+              <b-spinner small type="grow" />
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -150,9 +167,9 @@
         </template>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
         <div v-if="grading.length>0">
-          <b-container>
+          <b-container class="pb-3">
             <b-row>
               <b-button size="sm" variant="primary" @click="$bvModal.show('modal-instructions')">
                 Instructions
@@ -238,7 +255,7 @@
               </b-col>
               <b-col lg="2">
                 <span v-if="processing">
-                  <b-spinner small type="grow"/>
+                  <b-spinner small type="grow" />
                   Processing...
                 </span>
               </b-col>
@@ -347,8 +364,8 @@
                           && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
                         >
                           <span class="font-weight-bold">Student Submission: </span> <span
-                          v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
-                        />
+                            v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
+                          />
                         </div>
                       </div>
                       <div v-if="grading[currentStudentPage - 1]['non_technology_iframe_src']">
@@ -365,13 +382,62 @@
                         />
                       </div>
                       <div v-if="grading[currentStudentPage - 1]['qti_json']">
-                        <QtiJsonQuestionViewer :key="`qti-json-${currentStudentPage}`"
-                                               :qti-json="grading[currentStudentPage - 1]['qti_json']"
-                                               :show-qti-answer="true"
-                                               :show-submit="false"
-                                               :show-response-feedback="false"
-                                               :student-response="grading[currentStudentPage - 1].student_response"
-                        />
+                        <div v-if="isDiscussIt">
+                          <ul style="list-style: none;">
+                            <li>
+                              <CompletedIcon
+                                :completed="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement"
+                              />
+                              <span
+                                :class="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement ? 'text-success' : 'text-danger'"
+                              >
+                                Submitted {{ discussItRequirementsInfo.number_of_discussion_threads_participated_in }} discussion thread<span
+                                  v-if="+discussItRequirementsInfo.number_of_discussion_threads_participated_in !== 1"
+                                >s</span>,
+                                with {{ discussItRequirementsInfo.min_number_of_discussion_threads }} required.
+                              </span>
+                            </li>
+                            <li>
+                              <CompletedIcon
+                                :completed="discussItRequirementsInfo.satisfied_min_number_of_comments_requirement"
+                              />
+                              <span
+                                :class="discussItRequirementsInfo.satisfied_min_number_of_comments_requirement ? 'text-success' : 'text-danger'"
+                              >
+                                Submitted {{ discussItRequirementsInfo.number_of_comments_submitted }} comment<span
+                                  v-if="+discussItRequirementsInfo.number_of_comments_submitted !== 1"
+                                >s</span>, with {{ discussItRequirementsInfo.min_number_of_comments_required }} required.
+                              </span>
+                            </li>
+                          </ul>
+
+                          <div
+                            v-if="discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
+                          >
+                            <div
+                              v-for="(comment,commentIndex) in discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
+                              :key="`comments-${commentIndex}`"
+                            >
+                              {{ comment.created_at }}: <a href=""
+                                                           @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
+                              >{{
+                                comment.text
+                              }}</a>
+                            </div>
+                          </div>
+                          <div v-else>
+                            No comments have been submitted by this student.
+                          </div>
+                        </div>
+                        <div v-else>
+                          <QtiJsonQuestionViewer :key="`qti-json-${currentStudentPage}`"
+                                                 :qti-json="grading[currentStudentPage - 1]['qti_json']"
+                                                 :show-qti-answer="true"
+                                                 :show-submit="false"
+                                                 :show-response-feedback="false"
+                                                 :student-response="grading[currentStudentPage - 1].student_response"
+                          />
+                        </div>
                       </div>
                       <div v-if="grading[currentStudentPage - 1]['technology_iframe']">
                         <iframe
@@ -403,8 +469,8 @@
                               The student will see the override score for this question.
                             </b-alert>
                             <span class="pr-2"><strong>Override Score:</strong> {{
-                                grading[currentStudentPage - 1]['submission_score_override']
-                              }}
+                              grading[currentStudentPage - 1]['submission_score_override']
+                            }}
                             </span>
                             <b-button size="sm"
                                       variant="outline-primary"
@@ -423,6 +489,7 @@
                           <br>
                           <br>
                           <b-form-group
+                            v-if="!isDiscussIt"
                             label-cols-sm="5"
                             label-cols-lg="4"
                             label-for="auto_graded_score"
@@ -490,14 +557,13 @@
                             label-for="open_ended_score"
                           >
                             <template v-slot:label>
-                              <span class="font-weight-bold">
-                                Open-ended score:
-                              </span>
+                              <span class="font-weight-bold" :style="isDiscussIt ? 'margin-left:20px' : ''">{{ isOpenEnded ? 'Open-ended' : 'Discuss-it' }} score:</span>
                             </template>
-                            <div v-show="isOpenEnded" class="pt-1">
+                            <div v-show="isOpenEnded || isDiscussIt" class="pt-1">
                               <div class="d-flex">
                                 <b-form-input
-                                  v-show="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                                  v-show="grading[currentStudentPage - 1]['open_ended_submission']['submission']
+                                    || discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments"
                                   id="open_ended_score"
                                   v-model="gradingForm.file_submission_score"
                                   type="text"
@@ -508,7 +574,8 @@
                                   @keydown="fileSubmissionScoreErrorMessage=''"
                                 />
                                 <span
-                                  v-if="isOpenEnded && !isAutoGraded && grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                                  v-if="(isOpenEnded && !isAutoGraded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
+                                    || (isDiscussIt && discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
                                 >
                                   <b-button size="sm"
                                             class="ml-2"
@@ -531,13 +598,20 @@
                                     Zero Score</b-button>
                                 </span>
                               </div>
-                              <div v-show="!grading[currentStudentPage - 1]['open_ended_submission']['submission']"
-                                   class="pt-1"
+                              <div
+                                v-show="(isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission'])"
+                                class="pt-1"
                               >
                                 <span>No submission</span>
                               </div>
+                              <div
+                                v-show="(isDiscussIt && !discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
+                                class="pt-1"
+                              >
+                                No comments submitted
+                              </div>
                             </div>
-                            <div v-show="!isOpenEnded" class="pt-2">
+                            <div v-show="!isOpenEnded && !isDiscussIt" class="pt-2">
                               <span>Not applicable</span>
                             </div>
                             <div v-if="fileSubmissionScoreErrorMessage"
@@ -580,9 +654,9 @@
                           <span style="margin-left:108px">
                             <strong>Total:</strong>
                             <span style="margin-left:7px">{{
-                                (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
+                              (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
                                 + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
-                              }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
+                            }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                             </span>
                           </span>
                           <br>
@@ -609,8 +683,10 @@
                           class="h-50"
                   >
                     <b-card-text align="center">
-                      <div v-show="isOpenEnded">
-                        <div v-show="grading[currentStudentPage - 1]['open_ended_submission']['submission']">
+                      <div v-show="isOpenEnded || isDiscussIt">
+                        <div v-show="(isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
+                          ||(isDiscussIt && discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
+                        >
                           <b-row class="mb-2">
                             <b-col>
                               <b-form-select id="text_feedback_mode"
@@ -654,7 +730,7 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
-                            <has-error :form="gradingForm" field="textFeedback"/>
+                            <has-error :form="gradingForm" field="textFeedback" />
 
                             <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                            v-model="cannedResponse"
@@ -684,15 +760,26 @@
                             </b-row>
                           </b-form>
                         </div>
-                        <div v-show="!grading[currentStudentPage - 1]['open_ended_submission']['submission']">
+                        <div
+                          v-show="isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                        >
                           <h4 class="pt-5">
                             <span class="text-muted">
                               There is no open-ended submission for which to provide feedback.
                             </span>
                           </h4>
                         </div>
+                        <div
+                          v-show="isDiscussIt && !discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments"
+                        >
+                          <h4 class="pt-5">
+                            <span class="text-muted">
+                              There are no comments for which to provide feedback.
+                            </span>
+                          </h4>
+                        </div>
                       </div>
-                      <div v-show="!isOpenEnded">
+                      <div v-show="!isOpenEnded && !isDiscussIt">
                         <h4 class="pt-5">
                           <span class="text-muted">
                             This panel is applicable to open-ended assessments.
@@ -827,6 +914,9 @@
           <b-alert show variant="info">
             <span class="alert-link">
               There are no submissions for this view.</span>
+            <b-button variant="outline-primary" size="sm" @click="resetView">
+              Reset View
+            </b-button>
           </b-alert>
         </div>
       </div>
@@ -858,11 +948,13 @@ import ModalOverrideSubmissionScore from '../../components/ModalOverrideSubmissi
 import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates } from '~/helpers/CSSUpdates'
 import QtiJsonQuestionViewer from '../../components/QtiJsonQuestionViewer.vue'
 import SubmissionArray from '../../components/SubmissionArray.vue'
+import CompletedIcon from '../../components/CompletedIcon.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    CompletedIcon,
     SubmissionArray,
     QtiJsonQuestionViewer,
     ModalOverrideSubmissionScore,
@@ -878,6 +970,12 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    discussItRequirementsInfo: {},
+    activeDiscussion: {},
+    activeUserId: 0,
+    discussions: [],
+    discussionsByUserId: [],
+    isDiscussIt: false,
     questionHeader: '<h2 class="h7 mb-0">Question</span></h2>',
     scoringType: '',
     submissionArray: [],
@@ -1014,6 +1112,43 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    async getDiscussItRequirementInfo () {
+      const questionId = this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_id']
+      const userId = this.grading[this.currentStudentPage - 1]['open_ended_submission']['user_id']
+      try {
+        const { data } = await axios.get(`/api/discussion-comments/assignment/${this.assignmentId}/question/${questionId}/user/${userId}/satisfied`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        } else {
+          this.discussItRequirementsInfo = data
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    hasAtLeastOneComment () {
+      for (let i = 0; i < this.discussions.length; i++) {
+        const discussion = this.discussions[i]
+        for (let j = 0; j < discussion.comments.length; j++) {
+          if (discussion.comments[j]['created_by_user_id'] === this.grading[this.currentStudentPage - 1].student.user_id) {
+            return true
+          }
+        }
+      }
+      return false
+    },
+    resetView () {
+      this.gradeView = 'allStudents'
+      this.processing = true
+      this.getGrading()
+    },
+    showDiscussion (discussionId, userId) {
+      this.activeDiscussion = this.discussions.find(value => value.id === discussionId)
+      this.activeUserId = userId
+      this.$nextTick(() => {
+        this.$bvModal.show('modal-discussion')
+      })
+    },
     hasMaxScore () {
       return ((1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0) +
           (1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)) ===
@@ -1380,7 +1515,7 @@ export default {
           this.$noty[data.type](data.message)
         }
         if (data.type === 'success') {
-          if (this.isOpenEnded && this.grading[this.currentStudentPage - 1]['open_ended_submission']) {
+          if ((this.isOpenEnded || this.isDiscussIt) && this.grading[this.currentStudentPage - 1]['open_ended_submission']) {
             this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] = this.gradingForm.file_submission_score
             this.grading[this.currentStudentPage - 1]['open_ended_submission']['grader_name'] = data.grader_name
             this.grading[this.currentStudentPage - 1]['open_ended_submission']['text_feedback_editor'] = this.gradingForm.text_feedback_editor
@@ -1511,6 +1646,10 @@ export default {
       }
     },
     async changePage () {
+      if (!this.grading.length) {
+        this.showNoAutoGradedOrOpenSubmissionsExistAlert = true
+        return false
+      }
       this.renderedWebworkSolution = ''
       this.submissionArray = []
       if (this.technology === 'webwork') {
@@ -1520,7 +1659,19 @@ export default {
       this.questionHeader = this.isAlgorithmic
         ? `<h2 class="h7 mb-0">Question (algorithmic)</span></h2>`
         : '<h2 class="h7 mb-0">Question</span></h2>'
-
+      this.gradeViews = [
+        { text: 'All Students', value: 'allStudents' },
+        { text: 'Ungraded Open-Ended Submissions', value: 'ungradedOpenEndedSubmissions' },
+        { text: 'Graded Open-Ended Submissions', value: 'gradedOpenEndedSubmissions' }
+      ]
+      if (this.isDiscussIt) {
+        this.questionHeader = `<h2 class="h7 mb-0">Discussion Comments</span></h2>`
+        this.gradeViews = [
+          { text: 'All Students', value: 'allStudents' },
+          { text: 'Ungraded Discussions', value: 'ungradedDiscussions' },
+          { text: 'Graded Discussions', value: 'gradedDiscussions' }
+        ]
+      }
       this.retrievedFromS3 = false
       this.showAudioFeedbackMessage = false
       this.cardBorderColor = ''
@@ -1529,8 +1680,10 @@ export default {
           ? 'green'
           : 'red'
       }
-
-      this.noSubmission = !this.grading[this.currentStudentPage - 1]['auto_graded_submission'] && this.grading[this.currentStudentPage - 1]['open_ended_submission']['submission'] === null
+      this.noSubmission = this.isDiscussIt
+        ? !this.hasAtLeastOneComment()
+        : !this.grading[this.currentStudentPage - 1]['auto_graded_submission'] &&
+        this.grading[this.currentStudentPage - 1]['open_ended_submission']['submission'] === null
 
       let textFeedback = this.grading[this.currentStudentPage - 1]['open_ended_submission']['text_feedback']
       this.gradingForm.file_submission_score = this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] === 'N/A'
@@ -1641,8 +1794,13 @@ export default {
         this.gradeView = 'allStudents'
         this.sectionId = 0
       }
+      let gradeView
+      gradeView = this.gradeView
+      if (['gradedDiscussions', 'ungradedDiscussions'].includes(this.gradeView)) {
+        gradeView = 'allStudents'
+      }
       try {
-        const { data } = await axios.get(`/api/grading/${this.assignmentId}/${this.questionView}/${parseInt(this.sectionId)}/${this.gradeView}`)
+        const { data } = await axios.get(`/api/grading/${this.assignmentId}/${this.questionView}/${parseInt(this.sectionId)}/${gradeView}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.isLoading = false
@@ -1668,6 +1826,35 @@ export default {
         this.grading = data.grading
         console.log(this.grading)
         this.technology = data.technology
+        this.isDiscussIt = data.discuss_it
+
+        if (this.isDiscussIt) {
+          this.getDiscussItRequirementInfo()
+          switch (this.gradeView) {
+            case ('ungradedDiscussions'):
+              const studentsWhoSubmittedComments = []
+              for (let i = 0; i < this.discussionsByUserId.length; i++) {
+                const discussion = this.discussionsByUserId[i]
+                if (discussion.comments) {
+                  studentsWhoSubmittedComments.push(discussion.user_id)
+                }
+              }
+              console.log(studentsWhoSubmittedComments)
+              this.grading = this.grading.filter(item => !item.last_graded && studentsWhoSubmittedComments.includes(item.student.user_id))
+              if (!this.grading.length) {
+                this.showNoAutoGradedOrOpenSubmissionsExistAlert = true
+                this.isLoading = false
+                this.processing = false
+                return false
+              }
+              break
+            case ('gradedDiscussions'):
+              this.grading = this.grading.filter(item => item.last_graded)
+              break
+          }
+        }
+        this.discussions = data.discussions
+        this.discussionsByUserId = data.discussions_by_user_id
         this.isAlgorithmic = data.algorithmic
         this.isOpenEnded = data.is_open_ended
         this.isAutoGraded = data.is_auto_graded
