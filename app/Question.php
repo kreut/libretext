@@ -12,6 +12,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -31,6 +32,26 @@ class Question extends Model
         parent::__construct($attributes);
         ini_set('memory_limit', '2G');
 
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @return mixed|null
+     */
+    public function getDefaultDiscussItSettings(Assignment $assignment)
+    {
+        if ($this->isDiscussIt()) {
+            $cache_key = "discuss_it_settings_{$assignment->course->user_id}";
+            if (!Cache::has($cache_key)) {
+                $discuss_it_settings =
+                    '{"students_can_edit_comments":"1","students_can_delete_comments":"1","min_number_of_discussion_threads":"1","min_number_of_comments":"1","min_number_of_words":"30","min_length_of_audio_video":"15 seconds","auto_grade":"0"}';
+                Cache::put($cache_key, $discuss_it_settings);
+            }
+            $discuss_it_settings = Cache::get($cache_key);
+        } else {
+            $discuss_it_settings = null;
+        }
+        return $discuss_it_settings;
     }
 
     /**
@@ -546,6 +567,9 @@ class Question extends Model
             }
         }
         switch ($question_type) {
+            case('discuss_it'):
+                $qti_array['media_uploads'] = QuestionMediaUpload::where('question_id', $this->id)->get();
+                break;
             case('submit_molecule'):
                 if (!$show_solution) {
                     if (request()->user()->role === 3) {
@@ -3566,6 +3590,18 @@ class Question extends Model
         return $formatted_question_type;
     }
 
+    /**
+     * @return bool
+     */
+    public function isDiscussIt(): bool
+    {
+        $is_discuss_it = false;
+        try {
+            $is_discuss_it = json_decode($this->qti_json)->questionType === 'discuss_it';
+        } catch (Exception $e) {
+        }
+        return $is_discuss_it;
+    }
 
 }
 

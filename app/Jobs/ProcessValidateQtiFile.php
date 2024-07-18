@@ -68,8 +68,8 @@ class ProcessValidateQtiFile implements ShouldQueue
                 ? $efs_dir
                 : Storage::disk('local')->getAdapter()->getPathPrefix();
 
-            $local_dir = $storage_path . $dir;
-            if (!is_dir($storage_path . $dir)) {
+            $local_dir = $storage_path.$dir;
+            if (!is_dir($storage_path.$dir)) {
                 mkdir($local_dir, 0700, true);
             }
 

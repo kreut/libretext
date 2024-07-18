@@ -26,6 +26,7 @@ class EmailPolicy
     {
         $has_access = false;
         //student can send to grader
+
         if ($user->role === 3) {
             $course = Assignment::find($assignment_id)->course;
             $enrolled = $course->enrollments->contains('user_id', $user->id);

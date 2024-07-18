@@ -32,6 +32,17 @@ class QuestionMediaUploadPolicy
 
     }
 
+    /**
+     * @param User $user
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @return Response
+     */
+    public function temporaryUrls(User $user, QuestionMediaUpload $questionMediaUpload): Response {
+        return $user->role === 2
+            ? Response::allow()
+            : Response::deny("You are not allowed to get the temporary URL for the question media upload.");
+    }
+
     public function validateVTT(User $user, QuestionMediaUpload $questionMediaUpload): Response
     {
         return $this->_ownsQuestionMediaUpload($questionMediaUpload, $user)

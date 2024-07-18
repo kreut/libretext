@@ -65,8 +65,6 @@ Route::patch('/disciplines/{discipline}', 'DisciplineController@edit');
 Route::delete('/disciplines/{discipline}', 'DisciplineController@destroy');
 
 
-
-
 Route::get('/h5p-collections', 'H5PCollectionController@index');
 Route::post('/h5p-collections/validate-import', 'H5PCollectionController@validateImport');
 Route::patch('/h5p-collections/get-adapt-question-id-by-h5p-id/{h5p_id}', 'H5PCollectionController@getAdaptIdByH5pId');
@@ -82,7 +80,6 @@ Route::get('/user/login-as-formative-student/assignment/{assignment}', 'Auth\Use
 Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
 Route::get('assignments/{assignment}/review-history', 'AssignmentController@getReviewHistoryByAssignment');
 Route::get('/analytics/nursing/{download}', 'AnalyticsController@nursing');
-
 
 
 Route::get('/libre-one-access-code/user/{access_code}', 'LibreOneAccessCodeController@getUserByAccessCode');
@@ -175,6 +172,16 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/centrifugo/token', 'CentrifugoController@token');
 
+
+    Route::delete('/discussion-comments/{discussionComment}', 'DiscussionCommentController@destroy');
+    Route::patch('/discussion-comments/{discussionComment}', 'DiscussionCommentController@update');
+    Route::get('/discussion-comments/assignment/{assignment}/question/{question}/user/{user}/satisfied','DiscussionCommentController@satisfiedRequirements');
+    Route::post('/discussion-comments/assignment/{assignment}/question/{question}/audio', 'DiscussionCommentController@storeAudioDiscussionComment');
+
+    Route::get('/discussion-comments/{discussionComment}/deleting-will-make-requirements-not-satisfied','DiscussionCommentController@deletingWillMakeRequirementsNotSatisfied');
+    Route::get('/discussions/assignment/{assignment}/question/{question}', 'DiscussionController@show');
+    Route::post('/discussions/assignment/{assignment}/question/{question}/{media_upload_id}/{discussion_id}', 'DiscussionController@store');
+    Route::get('/discussions/assignment/{assignment}/question/{question}/media-upload/{media_upload_id}', 'DiscussionController@getByAssignmentQuestionMediaUploadId');
 
     Route::post('/assignment-topics', 'AssignmentTopicController@store');
     Route::patch('/assignment-topics', 'AssignmentTopicController@update');
@@ -512,6 +519,8 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
 
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
+    Route::get('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@getDiscussItSettings');
+    Route::patch('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@updateDiscussItSettings');
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::get('/questions/{question}/assignment-status', 'QuestionController@getAssignmentStatus');
     Route::get('/questions/{question}/question-revision/{questionRevisionId}/rubric-categories', 'QuestionController@getRubricCategories');
@@ -619,7 +628,10 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/assignments/{assignment}/questions/question-info', 'AssignmentSyncQuestionController@getQuestionInfoByAssignment');
     Route::get('/assignments/{assignment}/questions/view', 'AssignmentSyncQuestionController@getQuestionsToView');
     Route::get('/assignments/{assignment}/questions/summary', 'AssignmentSyncQuestionController@getQuestionSummaryByAssignment');
+    Route::get('/assignments/{assignment}/questions/discuss-it', 'AssignmentSyncQuestionController@getDiscussItQuestionsByAssignment');
     Route::patch('/assignments/{assignment}/remix-assignment-with-chosen-questions', 'AssignmentSyncQuestionController@remixAssignmentWithChosenQuestions');
+
+
 
     Route::get('/assignments/{assignment}/validate-can-switch-to-compiled-pdf', 'AssignmentSyncQuestionController@validateCanSwitchToCompiledPdf');
     Route::get('/assignments/{assignment}/validate-can-switch-to-or-from-compiled-pdf', 'AssignmentSyncQuestionController@validateCanSwitchToOrFromCompiledPdf');
@@ -736,9 +748,11 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}', 'SubmissionFileController@getFilesFromS3');
     Route::post('/submission-files/can-submit-file-submission', 'SubmissionFileController@canSubmitFileSubmission');
 
-    Route::patch('/question-media/{questionMediaUpload}/caption/{caption}', 'QuestionMediaController@updateCaption');
+    Route::patch('/question-media/{media_upload_id}/caption/{caption}', 'QuestionMediaController@updateCaption');
+    Route::patch('/question-media/temporary-urls', 'QuestionMediaController@temporaryUrls');
     Route::delete('/question-media/{questionMediaUpload}', 'QuestionMediaController@destroy');
     Route::get('/question-media/{questionMediaUpload}/download-transcript', 'QuestionMediaController@downloadTranscript');
+    Route::get('/question-media/assignments/{assignment}/questions/{question}', 'QuestionMediaController@getByQuestion');
     Route::get('/question-media/validate-vtt/{questionMediaUpload}', 'QuestionMediaController@validateVTT');
 
 

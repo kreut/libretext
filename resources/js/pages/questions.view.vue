@@ -7,6 +7,55 @@
     <AllFormErrors :all-form-errors="allFormErrors"
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
+
+    <b-modal id="modal-question-statistics"
+             title="Question Statistics"
+             size="lg"
+    >
+      <div v-if="isDiscussIt()">
+        <b-container>
+          <b-row>
+            <b-col>
+              <b-card header="default" header-html="<span class=&quot;font-weight-bold&quot;>Question Statistics</span>"
+                      class="mb-2"
+              >
+                <b-card-text>
+                  <ul>
+                    <li>{{ scores.length }} student submissions</li>
+                    <li v-if="scores.length">
+                      Maximum score of {{ max }}
+                    </li>
+                    <li v-if="scores.length">
+                      Minimum score of {{ min }}
+                    </li>
+                    <li v-if="scores.length">
+                      Mean score of {{ mean }}
+                    </li>
+                    <li v-if="scores.length">
+                      Standard deviation of {{ stdev }}
+                    </li>
+                  </ul>
+                </b-card-text>
+              </b-card>
+            </b-col>
+            <b-col>
+              <HistogramAndTableView :chartdata="chartdata"
+                                     :height="400"
+              />
+            </b-col>
+          </b-row>
+        </b-container>
+      </div>
+      <template #modal-footer="{ ok}">
+        <b-button
+          size="sm"
+          variant="primary"
+          @click="$bvModal.hide('modal-question-statistics')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-instructor-clicker-question"
              no-close-on-backdrop
              hide-header
@@ -645,7 +694,7 @@
         <div v-if="questions[currentPage - 1].student_response
           && questions[currentPage-1].qti_json
           && JSON.parse(questions[currentPage-1].qti_json).questionType === 'submit_molecule'
-         && showSketcherSubmission"
+          && showSketcherSubmission"
         >
           <SketcherSubmission
             :key="questions[currentPage - 1].student_response"
@@ -1589,7 +1638,7 @@
                                 :assignment-name="name"
                                 :use-view-solution-as-text="true"
               />
-              <span v-if="questions[currentPage-1].qti_answer_json">
+              <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt()">
                 <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
                                      :key="`modal-answer-${questions[currentPage-1].id}`"
                                      :modal-id="questions[currentPage-1].id"
@@ -1900,7 +1949,7 @@
                     {{ uploadedAudioSolutionDataMessage }}</span>
                 </span>
               </span>
-              <span v-if="questions[currentPage-1].qti_answer_json">
+              <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt()">
                 <QtiJsonAnswerViewer
                   :modal-id="questions[currentPage-1].id"
                   :qti-json="questions[currentPage-1].qti_answer_json"
@@ -1979,7 +2028,7 @@
                               :assignment-name="name"
                               :use-view-solution-as-text="true"
             />
-            <span v-if="questions[currentPage-1].qti_answer_json">
+            <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt()">
               <QtiJsonAnswerViewer
                 :modal-id="questions[currentPage-1].id"
                 :qti-json="questions[currentPage-1].qti_answer_json"
@@ -1998,63 +2047,89 @@
               <b-button size="sm" @click="resetSubmission">
                 Reset Submission
               </b-button>
+              <b-button v-if="isDiscussIt()"
+                        size="sm"
+                        class="float-right"
+                        variant="outline-info"
+                        @click="$bvModal.show('modal-question-statistics')"
+              >
+                View Question Statistics
+              </b-button>
             </div>
-            <div class="mt-2">
-              <div
-                v-if="questions.length
-                  && questions[currentPage-1].question_revision_id !== questions[currentPage-1].question_revision_id_latest
-                  && !questions[currentPage-1].viewing_latest_revision"
-              >
-                <b-alert show variant="warning" class="text-center">
-                  You are viewing question revision {{ questions[currentPage - 1].question_revision_number }}. This
-                  question has a more up-to-date revision.
-                  <span class="ml-2">
-                    <b-button v-if="!processingUpdatingQuestionView"
-                              size="sm"
-                              variant="info"
-                              @click="viewLatestRevision"
-                    >
-                      View Latest Revision
-                    </b-button>
-                    <span v-if="processingUpdatingQuestionView">
-                      <b-spinner small type="grow"/>
-                      Updating Question...
-                    </span>
-                  </span>
-                  <b-button
-                    size="sm"
-                    variant="primary"
-                    @click.prevent="showLatestRevision()"
+          </div>
+          <div v-show="isDiscussIt()" class="mb-2">
+            <b-button
+              v-show="user.role === 2"
+              size="sm"
+              variant="outline-info"
+              @click="$bvModal.show('modal-discuss-it-settings')"
+            >
+              Settings
+            </b-button>
+            <b-button
+              v-show="isDiscussIt()"
+              size="sm"
+              variant="primary"
+              @click="$bvModal.show('modal-discuss-it-instructions')"
+            >
+              Instructions
+            </b-button>
+          </div>
+          <div v-if="[2,5].includes(user.role)" class="mt-2">
+            <div
+              v-if="questions.length
+                && questions[currentPage-1].question_revision_id !== questions[currentPage-1].question_revision_id_latest
+                && !questions[currentPage-1].viewing_latest_revision"
+            >
+              <b-alert show variant="warning" class="text-center">
+                You are viewing question revision {{ questions[currentPage - 1].question_revision_number }}. This
+                question has a more up-to-date revision.
+                <span class="ml-2">
+                  <b-button v-if="!processingUpdatingQuestionView"
+                            size="sm"
+                            variant="info"
+                            @click="viewLatestRevision"
                   >
-                    Update to Latest Revision
+                    View Latest Revision
                   </b-button>
-                </b-alert>
-              </div>
-              <div
-                v-if="questions.length && questions[currentPage-1].question_revision_id_original"
-              >
-                <b-alert show variant="info" class="text-center">
-                  You are viewing the most up-to-date revision; your assignment uses an older
-                  revision.<span class="ml-2">
-                    <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info"
-                              @click="viewCurrentRevision();"
-                    >
-                      View Revision in Assignment
-                    </b-button>
-                    <span v-if="processingUpdatingQuestionView">
-                      <b-spinner small type="grow"/>
-                      Updating Question...
-                    </span>
+                  <span v-if="processingUpdatingQuestionView">
+                    <b-spinner small type="grow"/>
+                    Updating Question...
                   </span>
-                  <b-button
-                    size="sm"
-                    variant="primary"
-                    @click.prevent="showLatestRevision()"
+                </span>
+                <b-button
+                  size="sm"
+                  variant="primary"
+                  @click.prevent="showLatestRevision()"
+                >
+                  Update to Latest Revision
+                </b-button>
+              </b-alert>
+            </div>
+            <div
+              v-if="questions.length && questions[currentPage-1].question_revision_id_original"
+            >
+              <b-alert show variant="info" class="text-center">
+                You are viewing the most up-to-date revision; your assignment uses an older
+                revision.<span class="ml-2">
+                  <b-button v-if="!processingUpdatingQuestionView" size="sm" variant="info"
+                            @click="viewCurrentRevision();"
                   >
-                    Update to Latest Revision
+                    View Revision in Assignment
                   </b-button>
-                </b-alert>
-              </div>
+                  <span v-if="processingUpdatingQuestionView">
+                    <b-spinner small type="grow"/>
+                    Updating Question...
+                  </span>
+                </span>
+                <b-button
+                  size="sm"
+                  variant="primary"
+                  @click.prevent="showLatestRevision()"
+                >
+                  Update to Latest Revision
+                </b-button>
+              </b-alert>
             </div>
           </div>
         </b-container>
@@ -2226,7 +2301,7 @@
                             :assignment-name="name"
                             :use-view-solution-as-text="true"
           />
-          <span v-if="questions[currentPage-1].qti_answer_json">
+          <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt()">
             <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
                                  :key="`modal-answer-${questions[currentPage-1].id}`"
                                  :modal-id="questions[currentPage-1].id"
@@ -2300,6 +2375,8 @@
                         :show-submit="[2,3,5].includes(user.role)"
                         :submit-button-active="getQtiJson()['submitButtonActive']"
                         :show-reset-response="Boolean(user.formative_student)"
+                        :assignment-id="+assignmentId"
+                        :question-id="+questions[currentPage-1].id"
                         @submitResponse="receiveMessage"
                         @resetResponse="resetSubmission"
                       />
@@ -2462,15 +2539,19 @@
                           <div
                             v-if="questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson'] && showQtiJsonQuestionViewer"
                           >
+                            <span v-show="false" id="discussion-it-qti-json-question-viewer"/>
                             <QtiJsonQuestionViewer
                               :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
                               :qti-json="getQtiJson()['qtiJson']"
                               :student-response="questions[currentPage - 1].student_response"
-                              :show-submit="[2,3,5].includes(user.role) && (assessmentType !== 'clicker' || timeLeft>0)"
+                              :show-submit="[2,3,5].includes(user.role) && !isDiscussIt() && (assessmentType !== 'clicker' || timeLeft>0)"
                               :submit-button-active="getQtiJson()['submitButtonActive']"
                               :show-reset-response="Boolean(user.formative_student)"
+                              :assignment-id="+assignmentId"
+                              :question-id="+questions[currentPage-1].id"
                               @submitResponse="receiveMessage"
                               @resetResponse="resetSubmission"
+                              @openContactGraderModal="openContactGraderModal"
                             />
                             <b-alert :show="!submitButtonActive && assessmentType !== 'clicker'" variant="info">
                               No additional submissions will be accepted.
@@ -2722,7 +2803,7 @@
               </div>
             </b-col>
             <b-col
-              v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView &&!clickerApp"
+              v-if="!isDiscussIt() && assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView &&!clickerApp"
               :cols="bCardCols"
             >
               <b-card header="default" header-html="<span class=&quot;font-weight-bold&quot;>Question Statistics</span>"
@@ -2818,7 +2899,7 @@
                   </div>
                 </b-card>
               </b-row>
-              <b-row v-if="(questions[currentPage-1].technology === 'qti' || questions[currentPage-1].technology_iframe)
+              <b-row v-if="(questions[currentPage-1].technology === 'qti' || questions[currentPage-1].technology_iframe) && !isDiscussIt()
                 && showSubmissionInformation && showQuestion && assessmentType !== 'learning tree' && !isFormative"
               >
                 <b-card header="default"
@@ -3057,6 +3138,8 @@
                     :show-submit="false"
                     :submit-button-active="getA11yQtiJson()['submitButtonActive']"
                     :show-reset-response="Boolean(user.formative_student)"
+                    :assignment-id="+assignmentId"
+                    :question-id="+questions[currentPage-1].id"
                   />
                   <b-alert :show="!submitButtonActive" variant="info">
                     No additional submissions will be accepted.
@@ -3654,6 +3737,28 @@ export default {
         this.questionId = this.questions[0].id
       }
       await this.changePage(this.currentPage)
+      if (this.isDiscussIt()) {
+        this.$nextTick(() => {
+          document.querySelectorAll('.container').forEach(element => {
+            element.style.maxWidth = '98%'
+          })
+          const questionToView = document.getElementById('question-to-view')
+
+          if (questionToView) {
+            // Find all elements within 'question-to-view'
+            questionToView.querySelectorAll('*').forEach(element => {
+              // Remove the classes 'pl-3' and 'pr-3' if they exist
+              element.classList.remove('pl-3', 'pr-3')
+              element.classList.forEach(className => {
+                if (className.startsWith('col')) {
+                  // Add 'padding: 0px;' to the element's style
+                  element.style.padding = '0px'
+                }
+              })
+            })
+          }
+        })
+      }
       console.log(this.questions[this.currentPage - 1])
       this.hasAtLeastOneSubmission = this.questions[this.currentPage - 1].has_at_least_one_submission
       if (this.inIFrame) {
@@ -3728,13 +3833,22 @@ export default {
     }
   },
   methods: {
-    doCopy () {
-      return doCopy
-    },
+
+    doCopy,
     updateAutoAttribution,
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    isDiscussIt () {
+      const question = this.questions[this.currentPage - 1]
+      try {
+        return question.technology === 'qti' &&
+          JSON.parse(question.qti_json).questionType === 'discuss_it'
+      } catch (error) {
+
+      }
+      return false
+    },
     async confirmGiveUp () {
       try {
         const { data } = await axios.get(`/api/can-give-up/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/validate`)
@@ -4444,7 +4558,7 @@ export default {
       }
     },
     setQuestionCol () {
-      this.questionCol = this.assessmentType === 'clicker' ||
+      this.questionCol = this.isDiscussIt() || this.assessmentType === 'clicker' ||
       !this.showSubmissionInformation
         ? 12 : 8
       // override this for files
@@ -5207,7 +5321,8 @@ export default {
       let graderId = this.questions[this.currentPage - 1].grader_id
       let contactGraderOverrideId = data.contact_grader_override_id
       let defaultGraderId = data.default_grader_id
-      if (type === 'auto-graded') {
+
+      if (['auto-graded', 'discuss-it'].includes(type)) {
         graderId = contactGraderOverrideId || defaultGraderId
       } else if (contactGraderOverrideId) {
         graderId = contactGraderOverrideId

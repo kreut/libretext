@@ -109,10 +109,16 @@ trait GeneralSubmissionPolicy
             ->where('assignment_id', $assignment_id)
             ->where('question_id', $question_id)
             ->where('user_id', $user->id)
-            ->select('date_graded')
+            ->select('date_graded', 'type', 'grader_id')
             ->first();
+        $submission_already_graded = false;
+        if ($file_submission) {
+            $submission_already_graded = $file_submission->type !== 'discuss_it'
+                ? $file_submission->date_graded !== null && $assignment->scoring_type === 'p'
+                : $file_submission->grader_id !== null;
+        }
 
-        if ($file_submission && $file_submission->date_graded && $assignment->scoring_type === 'p') {
+        if ($submission_already_graded) {
             $response['message'] = 'Your submission has already been graded and may not be re-submitted.';
             return $response;
         }

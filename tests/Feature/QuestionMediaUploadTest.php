@@ -29,6 +29,16 @@ class QuestionMediaUploadTest extends TestCase
     }
 
     /** @test */
+    public function non_instructor_cannot_get_temporary_urls()
+    {
+        $student_user = factory(User::class)->create(['role' => 3]);
+        $this->actingAs($student_user)
+            ->patchJson("/api/question-media/temporary-urls", ['some' => 'data'])
+            ->assertJson(['message' => 'You are not allowed to get the temporary URL for the question media upload.']);
+
+    }
+
+    /** @test */
     public function non_owner_cannot_get_presigned_url()
     {
         $this->actingAs($this->user_2)
@@ -53,7 +63,7 @@ class QuestionMediaUploadTest extends TestCase
     public function vtt_file_must_exist()
     {
         $this->actingAs($this->user_2)
-            ->patchJson("/api/question-media/{$this->questionMediaUpload->id}/caption/1")
+            ->patchJson("/api/question-media/{$this->questionMediaUpload->id}/caption/1", ['model' => 'QuestionMediaUpload'])
             ->assertJson(['message' => "You are not allowed to update this transcript."]);
     }
 
@@ -61,7 +71,7 @@ class QuestionMediaUploadTest extends TestCase
     public function non_owner_cannot_update_caption()
     {
         $this->actingAs($this->user_2)
-            ->patchJson("/api/question-media/{$this->questionMediaUpload->id}/caption/1")
+            ->patchJson("/api/question-media/{$this->questionMediaUpload->id}/caption/1",['model' => 'QuestionMediaUpload'])
             ->assertJson(['message' => "You are not allowed to update this transcript."]);
     }
 

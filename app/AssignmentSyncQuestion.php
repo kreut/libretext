@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +18,104 @@ use Illuminate\Support\Facades\Log;
 class AssignmentSyncQuestion extends Model
 {
     protected $table = 'assignment_question';
+
+    /**
+     * @param int $assignment_id
+     * @param int $question_id
+     * @param string $setting
+     * @return mixed
+     */
+    public function discussItSetting(int $assignment_id, int $question_id, string $setting)
+    {
+        $assignment_question = DB::table('assignment_question')
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->first();
+        return json_decode($assignment_question->discuss_it_settings)->{$setting};
+
+    }
+
+    public function discussItCompletionStatus(int $user_id, int $assignment_id, int $question_id)
+    {
+        $discuss_it_settings = json_decode($this->discussItSettings($assignment_id, $question_id));
+        $completion_items = ['min_length_of_audio_video',
+            'min_number_of_discussion_threads',
+            'min_number_of_comments',
+            'min_number_of_words'];
+
+        foreach ($completion_items as $key => $completion_item) {
+            if (!$discuss_it_settings->{$completion_item}) {
+                unset($completion_items[$key]);
+            }
+        }
+        $completion_items = array_values($completion_items);
+        $discussion_comments_by_user = DB::table('discussion_comments')->
+        join('discussions', 'discussion_comments.dicussion_id', '=', 'discussions.id')
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->where('discussion_comments.user_id', $user_id)
+            ->select('discussion_comments.*')
+            ->get();
+        $total_amount_of_time = 0;
+        $total_number_of_discussion_threads = 0;
+        $total_number_of_comments = 0;
+        $total_number_of_words = 0;
+        $completion_status = [];
+        foreach ($completion_items as $completion_item) {
+            $completion_status[] = ['key' => $completion_item, 'completed' => false];
+        }
+        if ($discussion_comments_by_user) {
+            foreach ($discussion_comments_by_user as $discussion_comment) {
+                foreach ($completion_items as $completion_item) {
+                    switch ($completion_item) {
+                        case('min_length_of_audio_video'):
+                            break;
+                        case('min_number_of_discussion_threads'):
+
+                            break;
+                        case('min_number_of_comments');
+                            break;
+                        case('min_number_of_words'):
+
+                            break;
+                        default:
+                            throw new Exception ("No logic yet for  $completion_item.");
+
+                    }
+
+                }
+            }
+
+        }
+
+    }
+
+    /**
+     * @param int $assignment_id
+     * @param int $question_id
+     * @return false|string
+     */
+    public function discussItSettings(int $assignment_id, int $question_id)
+    {
+        $assignment_question_info = DB::table('assignment_question')
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->select('discuss_it_settings')
+            ->first();
+
+        $discuss_it_settings = json_decode($assignment_question_info->discuss_it_settings);
+
+        if ($discuss_it_settings->min_length_of_audio_video) {
+            $base = Carbon::now();
+            $min_length_of_audio_video = $discuss_it_settings->min_length_of_audio_video;
+            $min_length_of_audio_video = str_replace('and', ',', $min_length_of_audio_video);
+            $parsedTime = Carbon::parse($min_length_of_audio_video);
+            $discuss_it_settings->min_length_of_audio_video_in_milliseconds = $base->diffInMilliseconds($parsedTime);
+        }
+        return json_encode($discuss_it_settings);
+
+    }
+
 
     public function rubricCategoriesByAssignmentAndQuestion(Assignment $assignment, Question $question)
     {
@@ -71,19 +170,20 @@ class AssignmentSyncQuestion extends Model
             $open_ended_submission_type = $alpha_assignment_question->open_ended_submission_type;
             $open_ended_text_editor = $alpha_assignment_question->open_ended_text_editor;
         }
-
+        $assignment_question_data = [
+            'assignment_id' => $assignment->id,
+            'question_id' => $question->id,
+            'question_revision_id' => $question->latestQuestionRevision('id'),
+            'order' => $this->getNewQuestionOrder($assignment),
+            'points' => $points, //don't need to test since tested already when creating an assignment
+            'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
+            'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
+            'open_ended_submission_type' => $open_ended_submission_type,
+            'discuss_it_settings' => $question->getDefaultDiscussItSettings($assignment),
+            'open_ended_text_editor' => $open_ended_text_editor];
 
         $assignment_question_id = DB::table('assignment_question')
-            ->insertGetId([
-                'assignment_id' => $assignment->id,
-                'question_id' => $question->id,
-                'question_revision_id' => $question->latestQuestionRevision('id'),
-                'order' => $this->getNewQuestionOrder($assignment),
-                'points' => $points, //don't need to test since tested already when creating an assignment
-                'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
-                'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
-                'open_ended_submission_type' => $open_ended_submission_type,
-                'open_ended_text_editor' => $open_ended_text_editor]);
+            ->insertGetId($assignment_question_data);
         $this->updatePointsBasedOnWeights($assignment);
         $this->addLearningTreeIfBetaAssignment($assignment_question_id, $assignment->id, $question->id);
         $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'add');
@@ -171,6 +271,7 @@ class AssignmentSyncQuestion extends Model
         }
 
         $question_revision_id = Question::find($question_id)->latestQuestionRevision('id');
+        $question = Question::find($question_id);
         DB::table('assignment_question')
             ->insert([
                 'assignment_id' => $assignment->id,
@@ -180,6 +281,7 @@ class AssignmentSyncQuestion extends Model
                 'weight' => $weight,
                 'question_revision_id' => $question_revision_id,
                 'open_ended_submission_type' => $open_ended_submission_type,
+                'discuss_it_settings' => $question->getDefaultDiscussItSettings($assignment),
                 'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                 'open_ended_text_editor' => $open_ended_text_editor]);
         $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);

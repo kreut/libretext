@@ -1,13 +1,13 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree-questions'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree-questions'" />
     <LearningTreeProperties v-if="assessmentType === 'learning tree'"
                             :learning-tree-form="learningTreeForm"
                             :learning-tree-id="learningTreeId"
                             :can-edit-learning-tree="canEditLearningTree"
                             @saveLearningTreeProperties="saveLearningTreeProperties"
     />
-    <CannotDeleteAssessmentFromBetaAssignmentModal/>
+    <CannotDeleteAssessmentFromBetaAssignmentModal />
     <b-modal
       v-if="questionToEdit"
       :id="`modal-edit-question-${questionToEdit.id}`"
@@ -29,7 +29,7 @@
                  aria-label="Copy ADAPT ID"
                  @click.prevent="doCopy(`adapt-id-${questionToEdit.id}`)"
               >
-                <font-awesome-icon :icon="copyIcon"/>
+                <font-awesome-icon :icon="copyIcon" />
               </a>
             </span>
           </div>
@@ -127,7 +127,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -173,7 +173,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Questions"/>
+        <PageTitle title="Questions" />
         <AssessmentTypeWarnings :assessment-type="assessmentType"
                                 :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
                                 :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
@@ -269,7 +269,7 @@
           >
             Refresh Question Properties
           </b-button>
-          <QuestionCircleTooltip v-if="false" :id="'refresh-question-properties'"/>
+          <QuestionCircleTooltip v-if="false" :id="'refresh-question-properties'" />
           <b-tooltip target="refresh-question-properties"
                      delay="500"
                      triggers="hover focus"
@@ -293,59 +293,59 @@
                aria-label="Assignment questions"
         >
           <thead>
-          <tr>
-            <th scope="col">
-              Order
-            </th>
-            <th scope="col">
-              Title
-              <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle"/>
-            </th>
-            <th v-if="user.role === 2 && assessmentType !== 'learning tree'" scope="col" style="width: 150px;">
-              ADAPT ID
-              <QuestionCircleTooltip :id="'adapt-id-tooltip'"/>
-              <b-tooltip target="adapt-id-tooltip"
-                         delay="500"
-                         triggers="hover focus"
+            <tr>
+              <th scope="col">
+                Order
+              </th>
+              <th scope="col">
+                Title
+                <b-icon-sort-alpha-down id="sort-by-title" @click="sortByTitle" />
+              </th>
+              <th v-if="user.role === 2 && assessmentType !== 'learning tree'" scope="col" style="width: 150px;">
+                ADAPT ID
+                <QuestionCircleTooltip :id="'adapt-id-tooltip'" />
+                <b-tooltip target="adapt-id-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
+                </b-tooltip>
+                <a id="copy-all-question-ids-tooltip"
+                   href=""
+                   class="pr-1"
+                   aria-label="Copy all ID's"
+                   @click.prevent="doCopy('question-ids')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+                <b-tooltip target="copy-all-question-ids-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Copy all ID's
+                </b-tooltip>
+              </th>
+              <th v-if="user.role === 2 && assessmentType==='learning tree'" scope="col">
+                Tree ID
+              </th>
+              <th v-if="assessmentType !== 'learning tree'" scope="col">
+                Submission
+              </th>
+              <th v-if="!formative" scope="col">
+                Points
+              </th>
+              <th v-if="assessmentType !== 'learning tree'" scope="col">
+                Solution
+              </th>
+              <th v-if="user.role === 2" scope="col"
+                  :style="(isMe && isCommonsCourse) || assessmentType === 'learning tree' ? 'width:115px;' : 'width:90px;'"
               >
-                This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
-              </b-tooltip>
-              <a id="copy-all-question-ids-tooltip"
-                 href=""
-                 class="pr-1"
-                 aria-label="Copy all ID's"
-                 @click.prevent="doCopy('question-ids')"
-              >
-                <font-awesome-icon :icon="copyIcon"/>
-              </a>
-              <b-tooltip target="copy-all-question-ids-tooltip"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                Copy all ID's
-              </b-tooltip>
-            </th>
-            <th v-if="user.role === 2 && assessmentType==='learning tree'" scope="col">
-              Tree ID
-            </th>
-            <th v-if="assessmentType !== 'learning tree'" scope="col">
-              Submission
-            </th>
-            <th v-if="!formative" scope="col">
-              Points
-            </th>
-            <th v-if="assessmentType !== 'learning tree'" scope="col">
-              Solution
-            </th>
-            <th v-if="user.role === 2" scope="col"
-                :style="(isMe && isCommonsCourse) || assessmentType === 'learning tree' ? 'width:115px;' : 'width:90px;'"
-            >
-              Actions
-            </th>
-            <th v-if="showRefreshStatus" scope="col">
-              Refresh Status
-            </th>
-          </tr>
+                Actions
+              </th>
+              <th v-if="showRefreshStatus" scope="col">
+                Refresh Status
+              </th>
+            </tr>
           </thead>
           <tbody is="draggable"
                  v-model="items"
@@ -353,99 +353,104 @@
                  :options="{disabled : user.role === 4,handle: '.handle'}"
                  @end="saveNewOrder"
           >
-          <tr v-for="item in items" :key="item.id">
-            <th scope="row">
-              <b-icon v-if="user.role === 2" class="handle" icon="list"/>
-              {{ item.order }}
-            </th>
-            <td>
+            <tr v-for="item in items" :key="item.id">
+              <th scope="row">
+                <b-icon v-if="user.role === 2" class="handle" icon="list" />
+                {{ item.order }}
+              </th>
+              <td>
                 <span v-show="isBetaAssignment"
                       class="text-muted"
                 >&beta; </span>
-              <span v-show="isAlphaCourse"
-                    class="text-muted"
-              >&alpha; </span>
-              <b-icon
-                v-if="assessmentType === 'learning tree'"
-                icon="tree"
-                variant="success"
-              />
-              <a :href="`/assignments/${assignmentId}/questions/view/${item.question_id}/view`">{{ item.title }}</a>
-              <CustomTitle
-                :assignment-id="+assignmentId"
-                :question-id="item.question_id"
-                :title="item.title"
-                @updateCustomQuestionTitle="updateCustomQuestionTitle"
-              />
-              <CloneMessage :question="item"/>
-              <FormativeWarning :formative-question="item.is_formative_question"
-                                :question-id="item.question_id"
-              />
-              <span v-html="item.migrationMessage"/>
-            </td>
-            <td v-if="user.role === 2 && assessmentType !== 'learning tree'">
+                <span v-show="isAlphaCourse"
+                      class="text-muted"
+                >&alpha; </span>
+                <b-icon
+                  v-if="assessmentType === 'learning tree'"
+                  icon="tree"
+                  variant="success"
+                />
+                <a :href="`/assignments/${assignmentId}/questions/view/${item.question_id}/view`">{{ item.title }}</a>
+                <CustomTitle
+                  :assignment-id="+assignmentId"
+                  :question-id="item.question_id"
+                  :title="item.title"
+                  @updateCustomQuestionTitle="updateCustomQuestionTitle"
+                />
+                <CloneMessage :question="item" />
+                <FormativeWarning :formative-question="item.is_formative_question"
+                                  :question-id="item.question_id"
+                />
+                <span v-html="item.migrationMessage" />
+              </td>
+              <td v-if="user.role === 2 && assessmentType !== 'learning tree'">
                 <span :id="`assignment-question-${item.assignment_id_question_id}`">{{
-                    item.assignment_id_question_id
-                  }}</span>
-              <b-tooltip :target="getTooltipTarget('copy',item.question_id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                Copy ADAPT ID {{ item.question_id }}
-              </b-tooltip>
-              <a :id="getTooltipTarget('copy',item.question_id)"
-                 href=""
-                 class="pr-1"
-                 :aria-label="`Copy ADAPT ID for ${item.title}`"
-                 @click.prevent="doCopy(`assignment-question-${item.assignment_id_question_id}`)"
-              >
-                <font-awesome-icon :icon="copyIcon"/>
-              </a>
-            </td>
+                  item.assignment_id_question_id
+                }}</span>
+                <b-tooltip :target="getTooltipTarget('copy',item.question_id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Copy ADAPT ID {{ item.question_id }}
+                </b-tooltip>
+                <a :id="getTooltipTarget('copy',item.question_id)"
+                   href=""
+                   class="pr-1"
+                   :aria-label="`Copy ADAPT ID for ${item.title}`"
+                   @click.prevent="doCopy(`assignment-question-${item.assignment_id_question_id}`)"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+              </td>
 
-            <td v-if="user.role === 2 && assessmentType==='learning tree'">
-              <span v-if="item.learning_tree_user_id !== user.id">{{ item.learning_tree_id }}</span>
-              <span v-if="item.learning_tree_user_id === user.id">
-                  <a :href="`/instructors/learning-trees/editor/${item.learning_tree_id}`" target="_blank"
-                  >{{ item.learning_tree_id }}</a>
+              <td v-if="user.role === 2 && assessmentType==='learning tree'">
+                <span v-if="item.learning_tree_user_id !== user.id">{{ item.learning_tree_id }}</span>
+                <span v-if="item.learning_tree_user_id === user.id">
+                  <a :href="`/instructors/learning-trees/editor/${item.learning_tree_id}`" target="_blank">{{ item.learning_tree_id }}</a>
                 </span>
-            </td>
-            <td v-if="assessmentType !== 'learning tree'">
-              {{ item.submission }}
-            </td>
-            <td v-if="!formative">
-              {{ item.points }}
-            </td>
-            <td v-if="assessmentType !== 'learning tree'">
+              </td>
+              <td v-if="assessmentType !== 'learning tree'">
+                {{ item.submission }}
+              </td>
+              <td v-if="!formative">
+                {{ item.points }}
+              </td>
+              <td v-if="assessmentType !== 'learning tree'">
                 <span v-if="item.qti_answer_json">
-                  <QtiJsonAnswerViewer
-                    :modal-id="item.id"
-                    :qti-json="item.qti_answer_json"
-                  />
-                  <b-button
-                    size="sm"
-                    variant="outline-info"
-                    @click="$bvModal.show(`qti-answer-${item.id}`)"
-                  >
-                    View Correct Answer
-                  </b-button>
+                  <span v-if="!isDiscussIt(item)">
+                    <QtiJsonAnswerViewer
+                      :modal-id="item.id"
+                      :qti-json="item.qti_answer_json"
+                    />
+                    <b-button
+                      size="sm"
+                      variant="outline-info"
+                      @click="$bvModal.show(`qti-answer-${item.id}`)"
+                    >
+                      View Correct Answer
+                    </b-button>
+                  </span>
                 </span>
-              <SolutionFileHtml v-if="!item.qti_answer_json"
-                                :key="`solution-file-html-${item.question_id}`"
-                                :questions="items"
-                                :current-page="item.order"
-                                :format-filename="false"
-                                :modal-id="`solution-file-html-${uniqueId()}`"
-              />
-            </td>
-            <td v-if="user.role === 2">
-              <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                Edit question source
-              </b-tooltip>
-              <span v-if="assessmentType === 'learning tree'">
+                <span v-if="isDiscussIt(item)">
+                  N/A
+                </span>
+
+                <SolutionFileHtml v-if="!item.qti_answer_json"
+                                  :key="`solution-file-html-${item.question_id}`"
+                                  :questions="items"
+                                  :current-page="item.order"
+                                  :format-filename="false"
+                                  :modal-id="`solution-file-html-${uniqueId()}`"
+                />
+              </td>
+              <td v-if="user.role === 2">
+                <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Edit question source
+                </b-tooltip>
+                <span v-if="assessmentType === 'learning tree'">
                   <b-tooltip :target="getTooltipTarget('learningTreeProperties',item.learning_tree_id)"
                              triggers="hover"
                              delay="500"
@@ -463,18 +468,18 @@
                     />
                   </a>
                 </span>
-              <a v-if="assessmentType !== 'learning tree'"
-                 :id="getTooltipTarget('edit',item.question_id)"
-                 href=""
-                 class="pr-1"
-                 @click.prevent="editQuestionSource(item)"
-              >
-                <b-icon class="text-muted"
-                        icon="pencil"
-                        aria-label="Edit question source"
-                />
-              </a>
-              <span v-if="assessmentType === 'learning tree'">
+                <a v-if="assessmentType !== 'learning tree'"
+                   :id="getTooltipTarget('edit',item.question_id)"
+                   href=""
+                   class="pr-1"
+                   @click.prevent="editQuestionSource(item)"
+                >
+                  <b-icon class="text-muted"
+                          icon="pencil"
+                          aria-label="Edit question source"
+                  />
+                </a>
+                <span v-if="assessmentType === 'learning tree'">
                   <a
                     :id="`edit-learning-tree-tooltip-${item.learning_tree_id}`"
                     class="p-1"
@@ -494,40 +499,40 @@
                   >    {{ canEditLearningTreeMessage(item) }}
                   </b-tooltip>
                 </span>
-              <CloneQuestion
-                v-if="assessmentType !== 'learning tree'"
-                :key="`copy-question-${item.question_id}`"
-                :question-id="item.question_id"
-                :question-editor-user-id="item.question_editor_user_id"
-                :title="item.title"
-                :license="item.license"
-                :public="item.public"
-                :library="item.library"
-                :non-technology="item.non_technology"
-                :assignment-id="+assignmentId"
-                @reloadQuestions="getAssignmentInfo()"
-              />
-              <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                Remove the {{ assessmentType === 'learning tree' ? 'learning tree' : 'question' }} from the assignment
-              </b-tooltip>
-              <a :id="getTooltipTarget('remove',item.question_id)"
-                 href=""
-                 class="pr-1"
-                 @click.prevent="initRemoveQuestionFromAssignment(item.question_id)"
-              >
-                <b-icon class="text-muted"
-                        icon="trash"
-                        :aria-label="`Remove question ${item.title} from the assignment`"
+                <CloneQuestion
+                  v-if="assessmentType !== 'learning tree'"
+                  :key="`copy-question-${item.question_id}`"
+                  :question-id="item.question_id"
+                  :question-editor-user-id="item.question_editor_user_id"
+                  :title="item.title"
+                  :license="item.license"
+                  :public="item.public"
+                  :library="item.library"
+                  :non-technology="item.non_technology"
+                  :assignment-id="+assignmentId"
+                  @reloadQuestions="getAssignmentInfo()"
                 />
-              </a>
-            </td>
-            <td v-if="showRefreshStatus">
-              <span v-html="item.refresh_status"/>
-            </td>
-          </tr>
+                <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  Remove the {{ assessmentType === 'learning tree' ? 'learning tree' : 'question' }} from the assignment
+                </b-tooltip>
+                <a :id="getTooltipTarget('remove',item.question_id)"
+                   href=""
+                   class="pr-1"
+                   @click.prevent="initRemoveQuestionFromAssignment(item.question_id)"
+                >
+                  <b-icon class="text-muted"
+                          icon="trash"
+                          :aria-label="`Remove question ${item.title} from the assignment`"
+                  />
+                </a>
+              </td>
+              <td v-if="showRefreshStatus">
+                <span v-html="item.refresh_status" />
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -535,7 +540,7 @@
     <div v-if="!items.length && !isLoading" class="mt-5">
       <b-alert variant="warning" :show="true">
         <span class="font-weight-bold">This assignment doesn't have any questions.</span>
-        <strong/>
+        <strong />
       </b-alert>
     </div>
   </div>
@@ -681,6 +686,14 @@ export default {
     isMobile,
     editQuestionSource,
     uniqueId,
+    isDiscussIt (question) {
+      try {
+        return JSON.parse(question.qti_answer_json).questionType === 'discuss_it'
+      } catch (error) {
+
+      }
+      return false
+    },
     canEditLearningTreeMessage (item) {
       return item.learning_tree_can_edit
         ? 'Edit the learning tree'

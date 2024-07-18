@@ -16,7 +16,7 @@ class BetaCourseApprovalPolicy
 
         return $course->user_id === $user->id
             ? Response::allow()
-            : Response::deny('You are not allowed to retreive the pending approvals.');
+            : Response::deny('You are not allowed to retrieve the pending approvals.');
 
 
     }

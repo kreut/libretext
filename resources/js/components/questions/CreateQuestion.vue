@@ -473,7 +473,7 @@
       />
       <div v-if="questionForm.technology === 'qti'">
         <b-button
-          v-if="questionForm.technology === 'qti'"
+          v-if="questionForm.technology === 'qti' && qtiQuestionType !== 'discuss_it'"
           size="sm"
           variant="primary"
           @click="getQtiAnswerJson()"
@@ -1221,6 +1221,14 @@
                 >
                   Matching
                 </b-form-radio>
+                <b-form-radio v-if="[5,173,1344,2743,1].includes(user.id)"
+                              v-model="qtiQuestionType"
+                              name="qti-question-type"
+                              value="discuss_it"
+                              @change="initQTIQuestionType($event)"
+                >
+                  Discuss-it
+                </b-form-radio>
               </div>
               <div v-if="['all','nursing'].includes(nativeType)">
                 <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="bow_tie"
@@ -1489,14 +1497,16 @@
                      'bow_tie',
                      'highlight_text',
                      'highlight_table',
-                     'submit_molecule'].includes(qtiQuestionType) && qtiJson"
+                     'submit_molecule',
+                     'discuss_it'].includes(qtiQuestionType) && qtiJson"
               class="mb-2"
             >
               <b-container v-if="questionForm.technology === 'qti' && !['submit_molecule'].includes(qtiQuestionType)"
                            class="mt-2"
               >
                 <b-row>
-                  <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                  <QuestionMediaUpload v-if="qtiQuestionType !== 'discuss_it'"
+                                       :key="`question-media-upload-key-${questionMediaUploadKey}`"
                                        :media-uploads="questionForm.media_uploads"
                                        :question-media-upload-id="questionMediaUploadId"
                                        :qti-json="JSON.stringify(qtiJson)"
@@ -1506,7 +1516,7 @@
                   />
                 </b-row>
               </b-container>
-              <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Prompt</h2>">
+              <b-card header="default" :header-html="getPromptHeader()">
                 <ckeditor
                   id="qtiItemPrompt"
                   :key="`question-type-${qtiQuestionType}`"
@@ -1526,9 +1536,21 @@
                   {{ questionForm.errors.get(`qti_prompt`) }}
                 </div>
               </b-card>
+              <div v-if="qtiQuestionType === 'discuss_it'">
+                <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                                     :media-uploads="questionForm.media_uploads"
+                                     :qti-json="JSON.stringify(qtiJson)"
+                                     :question-media-upload-id="questionMediaUploadId"
+                                     :is-discuss-it="true"
+                                     @updateQuestionMediaUploadsOrder="updateQuestionMediaUploadsOrder"
+                                     @updateQuestionMediaUploads="updateQuestionMediaUploads"
+                                     @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
+                                     @updateQuestionTranscript="updateQuestionTranscript"
+                />
+              </div>
             </div>
             <div v-if="isLocalMe || user.id === 36892">
-              {{ qtiJson }}
+              Debugging: {{ qtiJson }}
             </div>
             <div v-if="qtiQuestionType === 'submit_molecule'">
               <Sketcher :error-message="questionForm.errors.get(`solution_structure`)"
@@ -2446,6 +2468,8 @@ export default {
     }
   },
   data: () => ({
+    discussItNumPages: 1,
+    discussItTemporaryUrl: '',
     previewingQuestion: false,
     solutionStructure: {},
     receivedStructure: false,
@@ -2721,6 +2745,14 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    getPromptHeader () {
+      return this.qtiQuestionType === 'discuss_it'
+        ? '<h2 class="h7">Instructions</h2>'
+        : '<h2 class="h7">Prompt</h2>'
+    },
+    updateQuestionMediaUploadsOrder (orderedMediaUploads) {
+      this.questionForm.media_uploads = orderedMediaUploads
+    },
     receiveMessage (event) {
       console.log(event.data)
       if (event.data.structure && event.data.smiles) {
@@ -2753,8 +2785,11 @@ export default {
       this.questionForm.media_uploads = this.questionForm.media_uploads.filter(item => item.s3_key !== activeQuestionMediaUpload.s3_key)
       this.questionMediaUploadKey++
     },
-    updateQuestionMediaUploads (questionMediaUploads) {
-      this.questionForm.media_uploads.push(questionMediaUploads)
+    updateQuestionMediaUploads (questionMediaUpload) {
+      if (this.qtiQuestionType === 'discuss_it') {
+        questionMediaUpload.order = this.questionForm.media_uploads.length + 1
+      }
+      this.questionForm.media_uploads.push(questionMediaUpload)
       this.questionMediaUploadKey++
     },
     async showA11yAutoGradedQuestion () {
@@ -2883,6 +2918,11 @@ export default {
           }
         }
         switch (this.qtiQuestionType) {
+          case ('discuss_it'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('submit_molecule'):
             this.receivedStructure = false
             const iframe = document.getElementById('sketcher')
@@ -3180,6 +3220,10 @@ export default {
         }
         console.log(this.qtiJson)
         switch (this.qtiJson.questionType) {
+          case ('discuss_it'):
+            this.qtiPrompt = this.qtiJson['prompt']
+            this.qtiQuestionType = this.qtiJson.questionType
+            break
           case ('submit_molecule'):
             this.qtiQuestionType = this.qtiJson.questionType
             this.qtiPrompt = this.qtiJson['prompt']
@@ -3732,6 +3776,13 @@ export default {
         this.generalFeedbacks[i].editorShown = false
       }
       switch (questionType) {
+        case ('discuss_it'):
+          this.qtiJson = {
+            questionType: 'discuss_it',
+            prompt: ''
+          }
+          this.qtiQuestionType = 'discuss_it'
+          break
         case ('submit_molecule'):
           this.qtiJson = {
             questionType: 'submit_molecule',
@@ -4253,35 +4304,44 @@ export default {
           }
           this.questionToView = data.question
         } else {
-          if (this.qtiQuestionType === 'matching') {
-            this.qtiJson.termsToMatch = this.$refs.matching.termsToMatch
-            console.log(this.qtiJson.termsToMatch)
-            this.qtiJson.possibleMatches = this.$refs.matching.possibleMatches
-            console.log(this.qtiJson.possibleMatches)
-            if (this.$refs.matching.possibleMatches) {
-              console.log(this.$refs.matching.possibleMatches)
-              for (let i = 0; i < this.$refs.matching.matchingDistractors.length; i++) {
-                console.log(this.$refs.matching.matchingDistractors[i])
-                let matchingDistractor = this.$refs.matching.matchingDistractors[i]
-                let possibleMatch = this.qtiJson.possibleMatches.find(possibleMatch => possibleMatch.identifier === matchingDistractor.identifier)
-                if (possibleMatch) {
-                  possibleMatch.matchingTerm = matchingDistractor.matchingTerm
+          switch (this.qtiQuestionType) {
+            case('discuss_it'):
+              this.qtiJson.media_uploads = this.questionForm.media_uploads
+              this.previewingQuestion = true
+              this.$forceUpdate()
+              break
+            case ('matching'):
+              this.qtiJson.termsToMatch = this.$refs.matching.termsToMatch
+              console.log(this.qtiJson.termsToMatch)
+              this.qtiJson.possibleMatches = this.$refs.matching.possibleMatches
+              console.log(this.qtiJson.possibleMatches)
+              if (this.$refs.matching.possibleMatches) {
+                console.log(this.$refs.matching.possibleMatches)
+                for (let i = 0; i < this.$refs.matching.matchingDistractors.length; i++) {
+                  console.log(this.$refs.matching.matchingDistractors[i])
+                  let matchingDistractor = this.$refs.matching.matchingDistractors[i]
+                  let possibleMatch = this.qtiJson.possibleMatches.find(possibleMatch => possibleMatch.identifier === matchingDistractor.identifier)
+                  if (possibleMatch) {
+                    possibleMatch.matchingTerm = matchingDistractor.matchingTerm
+                  }
                 }
               }
-            }
+              break
+            case ('fill_in_the_blank'):
+              this.qtiJson.responseDeclaration = {}
+              this.qtiJson.responseDeclaration.correctResponse = this.$refs.fillInTheBlank.getFillInTheBlankResponseDeclarations()
+              break
+
+            case ('drag_and_drop_cloze'):
+              this.qtiJson.selectOptions = [{ value: null, text: 'Please choose an option' }]
+              let responses = this.qtiJson.correctResponses.concat(this.qtiJson.distractors)
+              for (let i = 0; i < responses.length; i++) {
+                let response = responses[i]
+                this.qtiJson.selectOptions.push({ value: response.identifier, text: response.value })
+              }
+              break
           }
-          if (this.qtiQuestionType === 'fill_in_the_blank') {
-            this.qtiJson.responseDeclaration = {}
-            this.qtiJson.responseDeclaration.correctResponse = this.$refs.fillInTheBlank.getFillInTheBlankResponseDeclarations()
-          }
-          if (this.qtiQuestionType === 'drag_and_drop_cloze') {
-            this.qtiJson.selectOptions = [{ value: null, text: 'Please choose an option' }]
-            let responses = this.qtiJson.correctResponses.concat(this.qtiJson.distractors)
-            for (let i = 0; i < responses.length; i++) {
-              let response = responses[i]
-              this.qtiJson.selectOptions.push({ value: response.identifier, text: response.value })
-            }
-          }
+
           this.$forceUpdate()
           this.questionToView = this.qtiJson
           if (this.questionToView.questionType !== 'drop_down_rationale_triad' &&

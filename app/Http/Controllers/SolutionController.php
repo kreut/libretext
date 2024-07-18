@@ -173,7 +173,7 @@ class SolutionController extends Controller
             DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error saving this audio solution.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error saving this text solution.  Please try again or contact us for assistance.";
             return $response;
         }
         return $response;

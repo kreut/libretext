@@ -119,79 +119,41 @@
           />
         </div>
       </b-row>
-
-      <div v-if="activeTranscript.length">
-        <b-form-group
-          label-cols-sm="2"
-          label-cols-lg="1"
-          label-for="transcript-timing"
-          label-size="sm"
-          label-align="center"
-          label="Timing"
-        >
-          <b-form-row>
-            <b-form-select v-model="transcriptTiming"
-                           style="width:200px"
-                           size="sm"
-                           class="ml-2"
-                           :options="transcriptTimingOptions"
-                           @change="updateActiveTranscriptTiming"
-            />
-          </b-form-row>
-        </b-form-group>
-      </div>
-      <div v-else>
-        <b-alert info show>
-          After saving this question, you will be notified by email when the editable transcript is ready for viewing.
-        </b-alert>
-      </div>
-      <div v-if="transcriptTiming && activeTranscriptTiming.start">
-        <b-form-group
-          label-cols-sm="2"
-          label-cols-lg="1"
-          label-for="caption"
-          label="Caption"
-          label-size="sm"
-          label-align="center"
-        >
-          <b-form-textarea
-            id="api_secret"
-            v-model="activeTranscriptTimingText"
-            type="text"
-            rows="5"
-            size="sm"
-            required
-          />
-          <div class="mt-3">
-            <b-button size="sm" variant="primary" @click="updateCaption">
-              Update
-            </b-button>
-            <b-button size="sm" @click="$bvModal.hide('modal-question-media')">
-              Cancel
-            </b-button>
-          </div>
-        </b-form-group>
+      <div v-if="needsTranscript(activeMedia)">
+        <Transcript :model="'QuestionMediaUpload'"
+                    :active-transcript="activeTranscript"
+                    :active-media="activeMedia"
+                    @hideMediaModal="hideMediaModal"
+                    @updateTranscriptInMedia="updateTranscriptInMedia"
+        />
       </div>
     </b-modal>
     <b-row>
-      <div v-if="!isVttUpload">
+      <div v-if="!isVttUpload" :class="isDiscussIt ? 'mt-3' : ''">
         <file-upload
           ref="questionMediaUpload"
           v-model="files"
           class="btn btn-primary btn-sm"
-          accept=".mp3,.mp4,.vtt"
+          :accept="isDiscussIt ? '.mp3,.mp4,.vtt,.pdf' : '.mp3,.mp4,.vtt'"
           put-action="/put.method"
           @input-file="inputFile"
           @input-filter="inputUploadFileFilter"
         >
-          Upload Audio or Video file
+          {{ isDiscussIt ? 'Upload Media' : 'Upload Audio or Video file' }}
         </file-upload>
-        <QuestionCircleTooltipModal :modal-id="'modal-upload-question-media'" />
+        <QuestionCircleTooltipModal v-show="!isDiscussIt" :modal-id="'modal-upload-question-media'" />
         <b-modal id="modal-upload-question-media"
                  title="Upload Question Media and Edit Transcript"
                  size="lg"
                  no-close-on-backdrop
         >
+          <div>
+            <p>
+              The following video explains how to have ADAPT automatically add a transcript to your audio/video media.
+              This transcript can then be
+              edited as needed.
+            </p>
+          </div>
           <b-embed
             type="iframe"
             aspect="16by9"
@@ -253,92 +215,119 @@
       <ErrorMessage :message="uploadFileErrorMessage" />
     </b-row>
     <div v-show="mediaUploads.length>0">
-      <b-table
-        aria-label="Media Uploads"
-        striped
-        hover
-        :no-border-collapse="true"
-        :fields="fields"
-        :items="mediaUploads"
-      >
-        <template v-slot:cell(actions)="data">
-          <span v-show="false" :id="`copy-question-media-url-${data.item.s3_key}`">{{ data.item.url }}</span>
-          <a :id="getTooltipTarget('copyURL',data.item.s3_key)"
-             href=""
-             aria-label="Copy URL"
-             style="cursor: pointer;color:#212529 !important"
-             class="mr-1"
-             @click.prevent="doCopy(`copy-question-media-url-${data.item.s3_key}`, 'Successfully copied!  You may add this URL to a link in your question.')"
+      <table class="table table-striped" aria-label="Media">
+        <thead>
+          <tr>
+            <th v-if="isDiscussIt" scope="col">
+              Order
+            </th>
+            <th scope="col">
+              Filename
+            </th>
+            <th scope="col">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody is="draggable" :key="mediaUploads.length" v-model="orderedMediaUploads" tag="tbody"
+               @end="updateQuestionMediaUploadsOrder"
+        >
+          <tr
+            v-for="(mediaUpload, mediaUploadIndex) in mediaUploads"
+            :key="`media-upload-${mediaUploadIndex}`"
           >
-            <font-awesome-icon :icon="copyIcon" />
-          </a>
-          <b-tooltip :target="getTooltipTarget('copyURL',data.item.s3_key)"
-                     triggers="hover"
-                     delay="500"
-          >
-            Copy the URL, then create a link inside the question editor and ADAPT will convert the format the media for
-            listening/viewing.
-          </b-tooltip>
-          <b-icon :id="getTooltipTarget('editCaptions',data.item.s3_key)"
-                  icon="pencil"
-                  :aria-label="`Edit question transcription`"
-                  style="cursor: pointer;"
-                  class="mr-1"
-                  @click="showQuestionMedia(data.item)"
-          />
-          <b-tooltip :target="getTooltipTarget('editCaptions',data.item.s3_key)"
-                     triggers="hover"
-                     delay="500"
-          >
-            Edit transcript for {{ data.item.original_filename }}
-          </b-tooltip>
-          <span v-show="data.item.id">
-            <a v-show="false"
-               :id="`download-transcript-${data.item.id}`"
-               :href="`/api/question-media/${data.item.id}/download-transcript`"
-            >Download Transcript</a>
-            <b-icon :id="getTooltipTarget('downloadTranscript',data.item.s3_key)"
-                    icon="download"
-                    :aria-label="`Download Transcript`"
-                    style="cursor: pointer;"
-                    class="mr-1"
-                    @click="downloadTranscript(data.item)"
-            />
-            <b-tooltip :target="getTooltipTarget('downloadTranscript',data.item.s3_key)"
-                       triggers="hover"
-                       delay="500"
-            >
-              Download transcript for {{ data.item.original_filename }}
-            </b-tooltip>
-            <b-icon :id="getTooltipTarget('uploadTranscript',data.item.s3_key)"
-                    icon="upload"
-                    :aria-label="`Upload Transcript`"
-                    style="cursor: pointer;"
-                    class="mr-1"
-                    @click="uploadTranscript(data.item)"
-            />
-            <b-tooltip :target="getTooltipTarget('uploadTranscript',data.item.s3_key)"
-                       triggers="hover"
-                       delay="500"
-            >
-              Upload transcript (.vtt) file for {{ data.item.original_filename }}
-            </b-tooltip>
-          </span>
-          <b-icon :id="getTooltipTarget('deleteQuestionMedia',data.item.s3_key)"
-                  icon="trash"
-                  :aria-label="`Delete question media`"
-                  style="cursor: pointer;"
-                  class="mr-1"
-                  @click="confirmDeleteQuestionMedia(data.item)"
-          />
-          <b-tooltip :target="getTooltipTarget('deleteQuestionMedia',data.item.s3_key)"
-                     triggers="hover"
-                     delay="500"
-          >
-            Delete {{ data.item.original_filename }}
-          </b-tooltip>
-        </template>
-      </b-table>
+            <th v-if="isDiscussIt" scope="row">
+              <b-icon icon="list" />
+              {{ mediaUpload.order }}
+            </th>
+            <td style="width:80%">
+              {{ mediaUpload.original_filename }}
+            </td>
+
+            <td>
+              <span v-show="false" :id="`copy-question-media-url-${mediaUpload.s3_key}`">{{ mediaUpload.url }}</span>
+              <a v-show="!isDiscussIt"
+                 :id="getTooltipTarget('copyURL',mediaUpload.s3_key)"
+                 href=""
+                 aria-label="Copy URL"
+                 style="cursor: pointer;color:#212529 !important"
+                 class="mr-1"
+                 @click.prevent="doCopy(`copy-question-media-url-${mediaUpload.s3_key}`, 'Successfully copied!  You may add this URL to a link in your question.')"
+              >
+                <font-awesome-icon :icon="copyIcon" />
+              </a>
+              <b-tooltip :target="getTooltipTarget('copyURL',mediaUpload.s3_key)"
+                         triggers="hover"
+                         delay="500"
+              >
+                Copy the URL, then create a link inside the question editor and ADAPT will convert the format the media
+                for
+                listening/viewing.
+              </b-tooltip>
+              <span v-show="needsTranscript(mediaUpload)">
+                <b-icon :id="getTooltipTarget('editCaptions',mediaUpload.s3_key)"
+                        icon="pencil"
+                        :aria-label="`Edit question transcription`"
+                        style="cursor: pointer;"
+                        class="mr-1"
+                        @click="showQuestionMedia(mediaUpload)"
+                />
+                <b-tooltip :target="getTooltipTarget('editCaptions',mediaUpload.s3_key)"
+                           triggers="hover"
+                           delay="500"
+                >
+                  Edit transcript for {{ mediaUpload.original_filename }}
+                </b-tooltip>
+                <span v-show="mediaUpload.id">
+                  <a v-show="false"
+                     :id="`download-transcript-${mediaUpload.id}`"
+                     :href="`/api/question-media/${mediaUpload.id}/download-transcript`"
+                  >Download Transcript</a>
+                  <b-icon :id="getTooltipTarget('downloadTranscript',mediaUpload.s3_key)"
+                          icon="download"
+                          :aria-label="`Download Transcript`"
+                          style="cursor: pointer;"
+                          class="mr-1"
+                          @click="downloadTranscript(mediaUpload)"
+                  />
+                  <b-tooltip :target="getTooltipTarget('downloadTranscript',mediaUpload.s3_key)"
+                             triggers="hover"
+                             delay="500"
+                  >
+                    Download transcript for {{ mediaUpload.original_filename }}
+                  </b-tooltip>
+                  <b-icon :id="getTooltipTarget('uploadTranscript',mediaUpload.s3_key)"
+                          icon="upload"
+                          :aria-label="`Upload Transcript`"
+                          style="cursor: pointer;"
+                          class="mr-1"
+                          @click="uploadTranscript(mediaUpload)"
+                  />
+                  <b-tooltip :target="getTooltipTarget('uploadTranscript',mediaUpload.s3_key)"
+                             triggers="hover"
+                             delay="500"
+                  >
+                    Upload transcript (.vtt) file for {{ mediaUpload.original_filename }}
+                  </b-tooltip>
+                </span>
+              </span>
+              <b-icon :id="getTooltipTarget('deleteQuestionMedia',mediaUpload.s3_key)"
+                      icon="trash"
+                      :aria-label="`Delete question media`"
+                      style="cursor: pointer;"
+                      class="mr-1"
+                      @click="confirmDeleteQuestionMedia(mediaUpload)"
+              />
+              <b-tooltip :target="getTooltipTarget('deleteQuestionMedia',mediaUpload.s3_key)"
+                         triggers="hover"
+                         delay="500"
+              >
+                Delete {{ mediaUpload.original_filename }}
+              </b-tooltip>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </b-container>
 </template>
@@ -355,18 +344,26 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { getTooltipTarget } from '~/helpers/Tooptips'
 import QuestionCircleTooltipModal from './QuestionCircleTooltipModal.vue'
+import draggable from 'vuedraggable'
+import Transcript from './Transcript.vue'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
 export default {
   name: 'QuestionMediaUpload',
   components: {
+    Transcript,
     QuestionCircleTooltipModal,
     ErrorMessage,
     AllFormErrors,
-    FontAwesomeIcon
+    FontAwesomeIcon,
+    draggable
   },
   props: {
+    isDiscussIt: {
+      type: Boolean,
+      default: false
+    },
     qtiJson: {
       type: String,
       default: ''
@@ -387,24 +384,6 @@ export default {
     copyIcon: faCopy,
     startTime: 0,
     questionMediaKey: 0,
-    activeTranscriptTimingText: '',
-    transcriptTiming: null,
-    transcriptTimingOptions: [],
-    fields: [
-      {
-        key: 'original_filename',
-        label: 'Filename',
-        isRowHeader: true,
-        thStyle: 'width:80%'
-      },
-      {
-        key: 'actions',
-        isRowHeader: true,
-        thStyle: 'width:80%',
-        thClass: 'text-center',
-        tdClass: 'text-center'
-      }
-    ],
     allFormErrors: [],
     questionMediaUpload: {},
     progress: 0,
@@ -415,10 +394,14 @@ export default {
     modalId: '',
     activeMedia: {},
     activeTranscript: [],
-    activeTranscriptTiming: {}
+    orderedMediaUploads: []
   }),
   mounted () {
     this.modalId = uuidv4()
+    this.orderedMediaUploads = this.isDiscussIt
+      ? this.mediaUploads.sort((a, b) => a.order - b.order)
+      : this.mediaUploads
+
     if (this.questionMediaUploadId) {
       this.autoOpenTranscript()
     }
@@ -428,6 +411,20 @@ export default {
     formatFileSize,
     fixInvalid,
     doCopy,
+    updateTranscriptInMedia (caption, transcriptTiming, activeTranscriptTimingText) {
+      this.activeMedia.transcript.find(caption => caption.start === transcriptTiming).text = activeTranscriptTimingText
+      this.startTime = this.timeToSeconds(this.activeMedia.transcript[caption].start)
+      this.questionMediaKey++
+    },
+    hideMediaModal () {
+      this.$bvModal.hide('modal-question-media')
+    },
+    updateQuestionMediaUploadsOrder () {
+      for (let i = 0; i < this.orderedMediaUploads.length; i++) {
+        this.orderedMediaUploads[i].order = i + 1
+      }
+      this.$emit('updateQuestionMediaUploadsOrder', this.orderedMediaUploads)
+    },
     async downloadTranscript (activeMedia) {
       document.getElementById(`download-transcript-${activeMedia.id}`).click()
     },
@@ -437,7 +434,7 @@ export default {
     },
     confirmDeleteQuestionMedia (activeMedia) {
       this.activeMedia = activeMedia
-      if (this.qtiJson.includes(activeMedia.s3_key)) {
+      if (this.qtiJson.includes(activeMedia.s3_key) && !this.isDiscussIt) {
         this.$noty.error('Please remove the URL from the question before deleting this media.')
       } else {
         this.$bvModal.show('modal-confirm-delete-question-media')
@@ -477,63 +474,17 @@ export default {
       const [hours, minutes, seconds] = time.split(':').map(parseFloat)
       return (hours * 3600) + (minutes * 60) + seconds
     },
-    async updateCaption () {
-      try {
-        const caption = this.activeMedia.transcript.findIndex(caption => caption.start === this.transcriptTiming)
-        if (caption === -1) {
-          this.$noty.error('We were unable to locate that caption.  Please contact support.')
-          return
-        }
-        const { data } = await axios.patch(`/api/question-media/${this.activeMedia.id}/caption/${caption}`,
-          { text: this.activeTranscriptTimingText })
-        this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          this.activeMedia.transcript.find(caption => caption.start === this.transcriptTiming).text = this.activeTranscriptTimingText
-          this.startTime = this.timeToSeconds(this.activeMedia.transcript[caption].start)
-          this.questionMediaKey++
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    updateActiveTranscriptTiming () {
-      this.activeTranscriptTimingText = ''
-      if (this.transcriptTiming) {
-        console.log(this.activeMedia.transcript)
-        console.log(this.transcriptTiming)
-        this.activeTranscriptTiming = this.activeMedia.transcript.find(caption => caption.start === this.transcriptTiming)
-        this.activeTranscriptTimingText = this.activeTranscriptTiming.text
-        console.log(this.activeTranscriptTiming)
-      }
-    },
-    formatTime (timeStr) {
-      const [hours, minutes, seconds] = timeStr.split(':').map(part => part.split('.')[0])
-      const formattedMinutes = parseInt(minutes, 10).toString().padStart(1, '0')
-      const formattedSeconds = parseInt(seconds, 10).toString().padStart(2, '0')
-
-      return `${formattedMinutes}:${formattedSeconds}`
-    },
-    formatTimeRange (start, end) {
-      // Format the start and end times
-      const formattedStart = this.formatTime(start)
-      const formattedEnd = this.formatTime(end)
-
-      // Combine them into a single string
-      return `${formattedStart} - ${formattedEnd}`
+    needsTranscript (activeMedia) {
+      return activeMedia.original_filename && !activeMedia.original_filename.endsWith('.pdf')
     },
     showQuestionMedia (activeMedia) {
-      this.activeTranscriptTimingText = ''
+      console.error(activeMedia)
       this.transcriptTiming = null
       this.activeMedia = activeMedia
       this.activeTranscript = activeMedia.transcript
-      this.transcriptTimingOptions = [{ value: null, text: 'Choose a time range' }]
-      this.transcriptTiming = null
-      for (let i = 0; i < this.activeTranscript.length; i++) {
-        const timeRange = this.activeTranscript[i]
-        const humanReadableTime = this.formatTimeRange(timeRange.start, timeRange.end)
-        this.transcriptTimingOptions.push({ value: timeRange.start, text: humanReadableTime })
+      if (this.needsTranscript(activeMedia)) {
+        this.$bvModal.show('modal-question-media')
       }
-      this.$bvModal.show('modal-question-media')
     },
     initStartUpload (fileUploadRef) {
       this.allFormErrors = []
@@ -550,7 +501,12 @@ export default {
           this.$bvModal.show(`modal-form-errors-file-upload-${this.modalId}`)
           return prevent()
         }
-        const acceptedExtensionsRegex = this.isVttUpload ? /\.(vtt)$/i : /\.(mp3|mp4)$/i
+        let acceptedExtensionsRegex
+        if (this.isVttUpload) {
+          acceptedExtensionsRegex = /\.(vtt)$/i
+        } else {
+          acceptedExtensionsRegex = this.isDiscussIt ? /\.(pdf|mp3|mp4)$/i : /\.(mp3|mp4)$/i
+        }
         const validExtension = acceptedExtensionsRegex.test(newFile.name)
         if (!validExtension) {
           this.uploadFileErrorMessage = `${newFile.name} does not have a valid extension.`

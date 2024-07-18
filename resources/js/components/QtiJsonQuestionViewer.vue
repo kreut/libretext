@@ -58,7 +58,7 @@
                'bow_tie'].includes(questionType)"
       >
         <div style="font-family: Sans-Serif,serif;" :style="presentationMode ? 'font-size:20px' : 'font-size:16px'">
-          <span v-html="prompt" />
+          <span v-html="prompt"/>
         </div>
         <b-form-group>
           <div>
@@ -142,6 +142,17 @@
           />
         </b-form-group>
       </div>
+      <DiscussItViewer v-if="questionType === 'discuss_it'"
+                       ref="discussItViewer"
+                       :key="`discussIt-${assignmentId}-${questionId}`"
+                       :qti-json="JSON.parse(qtiJson)"
+                       :question-id="questionId"
+                       :assignment-id="assignmentId"
+                       :can-start-discussion-or-add-comments="submitButtonActive"
+                       :previewing-question="previewingQuestion"
+                       @openContactGraderModal="openContactGraderModal"
+
+      />
       <DragAndDropClozeViewer
         v-if="questionType === 'drag_and_drop_cloze'"
         ref="dragAndDropClozeViewer"
@@ -212,10 +223,12 @@ import MultipleAnswersViewer from './viewers/MultipleAnswersViewer'
 import MultipleChoiceTrueFalseViewer from './viewers/MultipleChoiceTrueFalseViewer'
 import MatrixMultipleResponseViewer from './viewers/MatrixMultipleResponseViewer'
 import { formatQuestionMediaPlayer } from '~/helpers/Questions'
+import DiscussItViewer from './viewers/DiscussItViewer.vue'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    DiscussItViewer,
     SketcherViewer,
     MatrixMultipleResponseViewer,
     MultipleChoiceTrueFalseViewer,
@@ -273,24 +286,33 @@ export default {
     previewingQuestion: {
       type: Boolean,
       default: false
+    },
+    assignmentId: {
+      type: Number,
+      default: 0
+    },
+    questionId: {
+      type: Number,
+      default: 0
     }
+
   },
   data: () => ({
-    response: '',
-    receivedStructure: false,
-    clickerApp: window.config.clickerApp,
-    qtiJsonCacheKey: 0,
-    matchingFeedback: '',
-    termsToMatch: [],
-    possibleMatches: [],
-    jsonShown: false,
-    submissionErrorMessage: '',
-    questionType: '',
-    selectChoices: [],
-    question: {},
-    prompt: '',
-    simpleChoice: []
-  }
+      response: '',
+      receivedStructure: false,
+      clickerApp: window.config.clickerApp,
+      qtiJsonCacheKey: 0,
+      matchingFeedback: '',
+      termsToMatch: [],
+      possibleMatches: [],
+      jsonShown: false,
+      submissionErrorMessage: '',
+      questionType: '',
+      selectChoices: [],
+      question: {},
+      prompt: '',
+      simpleChoice: []
+    }
   ),
   computed: {
     isLocalMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
@@ -317,6 +339,8 @@ export default {
     }
     this.questionType = this.question.questionType
     switch (this.questionType) {
+      case('discuss_it'):
+        break
       case ('submit_molecule'):
       case ('numerical'):
       case ('matching') :
@@ -369,6 +393,9 @@ export default {
   },
   methods: {
     formatQuestionMediaPlayer,
+    openContactGraderModal (type) {
+      this.$emit('openContactGraderModal', type)
+    },
     receiveMessage (event) {
       if (event.data.structure && event.data.smiles) {
         this.response = {

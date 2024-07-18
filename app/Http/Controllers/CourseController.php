@@ -14,6 +14,8 @@ use App\BetaAssignment;
 use App\BetaCourse;
 use App\BetaCourseApproval;
 use App\Course;
+use App\Discussion;
+use App\DiscussionComment;
 use App\Enrollment;
 use App\Exceptions\Handler;
 use App\FinalGrade;
@@ -26,6 +28,7 @@ use App\Http\Requests\StoreCourse;
 use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\Jobs\ProcessImportCourse;
 use App\LmsAPI;
+use App\QuestionMediaUpload;
 use App\Rules\atLeastOneSelectChoice;
 use App\Section;
 use App\Traits\DateFormatter;
@@ -1932,7 +1935,8 @@ class CourseController extends Controller
                      AssignToTiming     $assignToTiming,
                      BetaAssignment     $betaAssignment,
                      BetaCourse         $betaCourse,
-                     BetaCourseApproval $betaCourseApproval): array
+                     BetaCourseApproval $betaCourseApproval,
+                     Discussion         $discussion): array
 
     {
 
@@ -2012,6 +2016,7 @@ class CourseController extends Controller
                 ->delete();
             foreach ($course->assignments as $assignment) {
                 DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);//queue this?
+                $discussion->deleteByAssignment($assignment);
             }
             DB::table('grader_notifications')
                 ->where('course_id', $course->id)

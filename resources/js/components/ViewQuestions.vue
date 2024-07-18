@@ -30,6 +30,7 @@
       :qti-json="question.qti_json"
       :student-response="question.student_response"
       :show-submit="false"
+      :previewing-question="true"
     />
     <div v-if="question.technology_iframe_src && showQuestion">
       <iframe

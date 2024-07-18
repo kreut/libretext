@@ -6,6 +6,8 @@ use App\AssignmentLevelOverride;
 use App\AssignmentQuestionLearningTree;
 use App\AssignmentSyncQuestion;
 use App\DataShop;
+use App\Discussion;
+use App\DiscussionComment;
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateScoresRequest;
 use App\LearningTree;
@@ -310,8 +312,8 @@ class SubmissionController extends Controller
             foreach ($choices as $key => $choice) {
                 $percent = 90 - 10 * $key;
                 $first = 60 - 20 * $key;
-                $response['pie_chart_data']['datasets']['backgroundColor'][$key] =  "hsla($first, 85%, $percent%, 0.9)";
-                if ($choice ===  $response['correct_answer']){
+                $response['pie_chart_data']['datasets']['backgroundColor'][$key] = "hsla($first, 85%, $percent%, 0.9)";
+                if ($choice === $response['correct_answer']) {
                     $response['correct_answer_index'] = $key;
                 }
             }
@@ -324,7 +326,7 @@ class SubmissionController extends Controller
                 }
             }
             foreach ($response['pie_chart_data']['labels'] as $key => $label) {
-               $response['pie_chart_data']['labels'][$key] .= "  &mdash; $counts[$key]%";
+                $response['pie_chart_data']['labels'][$key] .= "  &mdash; $counts[$key]%";
             }
             $response['pie_chart_data']['datasets']['data'] = $counts;
             $number_submission_results = count($submission_results); //don't include Fake
@@ -409,13 +411,34 @@ class SubmissionController extends Controller
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
                     ->delete();
             }
-            $tables = ['submissions', 'h5p_video_interactions', 'submission_files', 'seeds','can_give_ups'];
+            $tables = ['submissions', 'h5p_video_interactions', 'submission_files', 'seeds', 'can_give_ups'];
             foreach ($tables as $table) {
                 DB::table($table)
                     ->where('user_id', $request->user()->id)
                     ->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
                     ->delete();
+            }
+            $discussion_comments = DB::table('discussions')
+                ->join('discussion_comments', 'discussion_comments.discussion_id', '=', 'discussions.id')
+                ->where('discussion_comments.user_id', $request->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->select('discussion_comments.id')
+                ->get();
+            foreach ($discussion_comments as $discussion_comment) {
+                DiscussionComment::find($discussion_comment->id)->delete();
+            }
+            $discussions = Discussion::where('user_id', $request->user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->get();
+            foreach ($discussions as $discussion) {
+                if (!DB::table('discussion_comments')
+                    ->where('discussion_id', $discussion->id)
+                    ->first()) {
+                    $discussion->delete();
+                }
             }
             DB::commit();
             $response['message'] = $assignment->algorithmic

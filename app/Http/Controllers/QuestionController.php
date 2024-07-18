@@ -47,6 +47,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+use setasign\Fpdi\Fpdi;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
@@ -1269,9 +1270,9 @@ class QuestionController extends Controller
         $revision_action = $request->revision_action;
         $automatically_update_revision = $revision_action === 'notify' ? $request->automatically_update_revision : 0;
         $media_uploads = $request->media_uploads;
-
         try {
             $data = $request->validated();
+            $question_type = '';
             if ($data['technology'] === 'qti') {
                 foreach ($data as $key => $value) {
                     if (strpos($key, 'qti_') !== false) {
@@ -1281,6 +1282,9 @@ class QuestionController extends Controller
                 $question_type = json_decode($request->qti_json)->questionType;
                 $data['qti_json_type'] = $question_type;
                 switch ($question_type) {
+                    case('discuss_it'):
+                        $unsets = ['media_uploads'];
+                        break;
                     case('submit_molecule'):
                         $unsets = ['smiles', 'solution_structure'];
                         break;
@@ -1655,9 +1659,15 @@ class QuestionController extends Controller
                             $questionMediaUpload->original_filename = $new_media_upload['original_filename'];
                             $questionMediaUpload->size = $new_media_upload['size'];
                             $questionMediaUpload->s3_key = $new_media_upload['s3_key'];
+                            $questionMediaUpload->order = $new_media_upload['order'] ?? null;
                             $questionMediaUpload->transcript = '';
                             $questionMediaUpload->save();
-                            ProcessTranscribe::dispatch($questionMediaUpload->s3_key);
+                            ProcessTranscribe::dispatch($questionMediaUpload->s3_key, 'question_media_upload');
+                        } else {
+                            QuestionMediaUpload::where('question_id', $question->id)
+                                ->where('s3_key', $new_media_upload['s3_key'])
+                                ->update(['order' => $new_media_upload['order']]);
+
                         }
                     }
                     foreach ($current_s3_keys as $current_s3_key) {
@@ -1672,9 +1682,12 @@ class QuestionController extends Controller
                         $questionMediaUpload->original_filename = $media_upload['original_filename'];
                         $questionMediaUpload->size = $media_upload['size'];
                         $questionMediaUpload->s3_key = $media_upload['s3_key'];
+                        if (isset($media_upload['order'])) {
+                            $questionMediaUpload->order = $media_upload['order'];
+                        }
                         $questionMediaUpload->transcript = '';
                         $questionMediaUpload->save();
-                        ProcessTranscribe::dispatch($questionMediaUpload->s3_key);
+                        ProcessTranscribe::dispatch($questionMediaUpload->s3_key,'question_media_upload');
                     }
 
                 }

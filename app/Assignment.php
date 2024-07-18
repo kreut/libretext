@@ -110,6 +110,8 @@ class Assignment extends Model
         DB::table('auto_releases')->where('type', 'assignment')
             ->where('type_id', $this->id)
             ->delete();
+        $discussion = new Discussion();
+        $discussion->deleteByAssignment($this);
         $this->graders()->detach();
         $assignToTiming->deleteTimingsGroupsUsers($this);
 
@@ -1167,11 +1169,14 @@ class Assignment extends Model
 
     }
 
-    public function questionFileSubmissions()
+    /**
+     * @return Collection
+     */
+    public function questionFileSubmissions(): Collection
     {
         $questionFileSubmissions = DB::table('submission_files')
             ->leftJoin('users', 'grader_id', '=', 'users.id')
-            ->whereIn('type', ['q', 'text', 'audio'])
+            ->whereIn('type', ['q', 'text', 'audio', 'discuss_it'])
             ->where('assignment_id', $this->id)
             ->select('submission_files.*', DB::raw('CONCAT(users.first_name," ", users.last_name) AS grader_name'))
             ->get();
