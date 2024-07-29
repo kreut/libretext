@@ -1953,6 +1953,16 @@ class CourseController extends Controller
         try {
             DB::beginTransaction();
             $assignment_ids = $course->assignments->pluck('id')->toArray();
+            $assignment_question_ids = DB::table('assignment_question')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->get()
+                ->pluck('id');
+
+            DB::table('learning_tree_node_submissions')->whereIn('assignment_id', $assignment_ids)->delete();
+            DB::table('assignment_question_learning_tree')
+                ->whereIn('assignment_question_id', $assignment_question_ids)
+                ->delete();
+
             $tables = ['assignment_question',
                 'submissions',
                 'submission_files',
@@ -1968,6 +1978,7 @@ class CourseController extends Controller
                 'assignment_level_overrides',
                 'learning_tree_time_lefts',
                 'learning_tree_successful_branches',
+                'learning_tree_node_seeds',
                 'remediation_submissions',
                 'assignment_question_time_on_tasks',
                 'shown_hints',
@@ -1980,13 +1991,7 @@ class CourseController extends Controller
                 DB::table($table)->whereIn('assignment_id', $assignment_ids)->delete();
             }
 
-            $assignment_question_ids = DB::table('assignment_question')
-                ->whereIn('assignment_id', $assignment_ids)
-                ->get()
-                ->pluck('id');
-            DB::table('assignment_question_learning_tree')
-                ->whereIn('assignment_question_id', $assignment_question_ids)
-                ->delete();
+
             $assign_to_timing_ids = AssignToTiming::whereIn('assignment_id', $assignment_ids)->get()->pluck('id')->toArray();
 
             DB::table('assign_to_groups')
@@ -2012,6 +2017,7 @@ class CourseController extends Controller
                 ->where('course_id', $course->id)
                 ->delete();
             $course->extensions()->delete();
+
             $course->assignments()->delete();
 
 
@@ -2033,7 +2039,8 @@ class CourseController extends Controller
             DB::commit();
             $response['type'] = 'info';
             $response['message'] = "The course <strong>$course->name</strong> has been deleted.";
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
