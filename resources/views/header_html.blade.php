@@ -88,10 +88,15 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
   MathJax.Hub.Config(MathJaxConfig)
   const currentDomain = window.location.origin;
   const regex = new RegExp(`<a\\s+href="${currentDomain}/question-media-player/([^"]+)">([^<]+)<\\/a>`, 'g');
+  const regex2 = new RegExp(`<a\\s+href="https:\\/\\/customer-([a-zA-Z0-9]+)\\.cloudflarestream\\.com\\/([a-zA-Z0-9]+)\\/iframe">([^<]+)<\\/a>`, 'g');
+
   const div = document.getElementById('non-technology-html');
   if (div) {
     div.innerHTML = div.innerHTML.replace(regex, (match, url, text) => {
       return `<iframe class="question-media-player" style="width: 1px;min-width: 100%;" frameborder="0" src="${currentDomain}/question-media-player/${url}"></iframe>`;
+    });
+    div.innerHTML = div.innerHTML.replace(regex2, (match, code, videoUid, text) => {
+      return `<iframe style="width: 1px; min-width: 100%;" frameborder="0" src="https://customer-${code}.cloudflarestream.com/${videoUid}/iframe" loading="lazy" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true"></iframe>`;
     });
   } else {
     console.log('Element with id "non-technology-html" not found.');

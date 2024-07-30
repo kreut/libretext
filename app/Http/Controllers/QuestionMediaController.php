@@ -16,6 +16,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionMediaController extends Controller
 {
+
+    public function conductorMedia(string $src) {
+        return view('conductor_media', ['src'=> $src]);
+    }
     /**
      * @param QuestionMediaUpload $questionMediaUpload
      * @return array
