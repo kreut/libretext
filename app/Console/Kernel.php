@@ -69,7 +69,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('email:submissionFeedbackSummary')->daily();
             $schedule->command('email:pendingQuestionRevisionNotifications')->daily();
-            //$schedule->command('cache:Metrics')->daily();
+            $schedule->command('cache:Metrics')->daily();
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
 
             $schedule->command('passback:manualPendingScores')->everyMinute();

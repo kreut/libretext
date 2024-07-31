@@ -46,9 +46,9 @@ class MetricsController extends Controller
             $response['type'] = 'success';
             $response['cell_data'] = $cell_data;
             if ($download) {
-                $columns = ['Course Name', 'Term', 'School Name', 'Instructor Name', 'Number of Enrolled Students'];
+                $columns = ['Course Name', 'Discipline','Term', 'School Name', 'Instructor Name', 'Number of Enrolled Students'];
                 $rows[0] = $columns;
-                $keys = ['course_name', 'term', 'school_name', 'instructor_name', 'number_of_enrolled_students'];
+                $keys = ['course_name', 'discipline','term', 'school_name', 'instructor_name', 'number_of_enrolled_students'];
                 foreach ($cell_data as $data) {
                     $values = [];
                     foreach ($keys as $key) {

@@ -51,8 +51,20 @@ class cacheMetrics extends Command
     {
         try {
 
-            $cell_data = DB::table('data_shops_enrollments')->get()->toArray();
+            $cell_data = DB::table('data_shops_enrollments')
+                ->join('courses','data_shops_enrollments.course_id','=','courses.id')
+                ->leftJoin('disciplines','courses.discipline_id','=','disciplines.id')
+                ->where('instructor_name','<>','Instructor Kean')
+                ->select('data_shops_enrollments.*', 'disciplines.name AS discipline')
+                ->get()
+                ->toArray();
             $cell_data = array_values($cell_data);
+            foreach ($cell_data as $key => $value){
+                if (!$value->discipline){
+                    $value->discipline = "None provided";
+                }
+
+            }
             Cache::forever('cell_data', $cell_data);
             echo "Cell data cached.\r\n";
 
@@ -97,6 +109,7 @@ class cacheMetrics extends Command
 
             $live_courses = Course::select('courses.name', 'users.first_name', 'users.last_name')
                 ->join('users', 'courses.user_id', '=', 'users.id')
+                ->where('courses.user_id', '<>',$my_id)
                 ->whereIn('courses.id', function ($query) {
                     $query->select('course_id')
                         ->from('users')
