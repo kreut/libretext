@@ -48,7 +48,7 @@
             <span v-if="isTester">Tester</span><span v-if="isInstructor">Instructor</span> Access Code. If you
             don't have an access code, then please <span v-if="isInstructor">enroll at <a
             href="https://one.libretexts.org/"
-          >LibreOne</a> and we can provide one for you</span>
+          >LibreOne</a> and we can provide one for you.</span>
             <span v-if="isTester"><a href="" @click.prevent="openSendEmailModal()">contact us</a>
             and we can provide one for you.</span>
           </p>

@@ -184,7 +184,7 @@
           @input-file="inputFile"
           @input-filter="inputUploadFileFilter"
         >
-          Select Audio or Video file
+          Upload Audio or Video file
         </file-upload>
         <QuestionCircleTooltipModal :modal-id="'modal-upload-question-media'" />
         <b-modal id="modal-upload-question-media"
