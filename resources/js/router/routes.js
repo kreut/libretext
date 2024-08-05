@@ -5,7 +5,6 @@ function page (path) {
 }
 
 let student_paths = [
-  { path: '/analytics', name: 'analytics', component: page('analytics.vue') },
   { path: '/students/sitemap', name: 'students.sitemap', component: page('students/sitemap.vue') },
   { path: '/students/courses', name: 'students.courses.index', component: page('students/courses.index.vue') },
   {
@@ -308,6 +307,11 @@ let general_paths = [
     ]
   },
   {
+    path: '/courses/:courseId/analytics',
+    name: 'CourseAnalytics',
+    component: page('instructors/analytics.vue')
+  },
+  {
     path: '/instructors/assignments/:assignmentId/information',
     component: page('instructors/assignment_information/index.vue'),
     children: [
@@ -454,11 +458,6 @@ let general_paths = [
         path: 'testers',
         name: 'course_properties.testers',
         component: page('instructors/course_properties/testers.vue')
-      },
-      {
-        path: 'analytics',
-        name: 'course_properties.analytics',
-        component: page('instructors/course_properties/analytics.vue')
       }
     ]
   },

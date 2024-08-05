@@ -31,7 +31,7 @@ class AnalyticsTest extends TestCase
         $this->user->role = 5;
         $this->user->save();
         $this->actingAs($this->user)
-            ->getJson("/api/users/signed-user-id")
+            ->getJson("/api/users/signed-user-id/{$this->course->id}")
             ->assertJson(['message' => 'You are not allowed to retrieve a signed user id.']);
 
     }

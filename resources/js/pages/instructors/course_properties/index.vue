@@ -9,9 +9,9 @@
             </router-link>
           </li>
           <li v-if="!formative" class="nav-item">
-            <router-link :to="{ name: 'course_properties.analytics' }" class="nav-link">
+            <a :href="`/courses/${courseId}/analytics`" class="nav-link">
               <span class="hover-underline">Analytics</span>
-            </router-link>
+            </a>
           </li>
           <li v-if="!formative">
             <a :href="`/courses/${courseId}/gradebook`" class="nav-link">

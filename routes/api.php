@@ -716,7 +716,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::delete('/users-with-no-role/{user}', 'UsersWithNoRoleController@destroy');
 
     Route::get('/users/set-cookie-user-jwt', 'UserController@setCookieUserJWT');
-    Route::get('/users/signed-user-id', 'UserController@getSignedUserId');
+    Route::get('/users/signed-user-id/{course}', 'UserController@getSignedUserId');
 
 
     Route::post('/submissions', 'SubmissionController@store');

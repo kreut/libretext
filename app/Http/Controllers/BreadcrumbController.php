@@ -74,6 +74,11 @@ class BreadcrumbController extends Controller
                         }
 
                         switch ($name) {
+                            case('CourseAnalytics'):
+                                $breadcrumbs[0] = ['text' => $course->name . ' Analytics',
+                                    'href' => "#",
+                                    'active' => true];
+                                break;
                             case('nursing.analytics'):
                                 $breadcrumbs[0] = ['text' => 'Analytics',
                                     'href' => "#",

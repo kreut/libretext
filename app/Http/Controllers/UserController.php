@@ -37,9 +37,10 @@ class UserController extends Controller
     /**
      * @param Request $request
      * @param User $user
+     * @param Course $course
      * @return array
      */
-    public function getSignedUserId(Request $request, User $user): array
+    public function getSignedUserId(Request $request, User $user, Course $course): array
     {
         try {
             $response['type'] = 'error';
@@ -51,11 +52,11 @@ class UserController extends Controller
             $key = new HmacKey(config('myconfig.analytics_user_id_api_key'));
             $signer = new HS256($key);
             $generator = new Generator($signer);
-            $jwt = $generator->generate(['id' => $request->user()->id, 'role'=> $request->user()->role]);
+            $jwt = $generator->generate(['user_id' => $request->user()->id, 'role' => $request->user()->role, 'course_id' => $course->id]);
             $response['token'] = $jwt;
             $response['type'] = 'success';
         } catch (Exception $e) {
-           $response['message'] = $e->getMessage();
+            $response['message'] = $e->getMessage();
         }
         return $response;
     }
