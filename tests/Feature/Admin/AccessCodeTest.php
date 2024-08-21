@@ -54,6 +54,17 @@ class AccessCodeTest extends TestCase
         return $table;
     }
 
+
+    /** @test */
+    public function must_have_valid_bearer_token_to_just_get_instructor_access_code()
+    {
+
+        $this->actingAs($this->admin_user)
+            ->getJson('/api/access-code/instructor')
+            ->assertJson(['message' => 'Missing Bearer Token.']);
+    }
+
+
     /** @test */
     public function access_code_type_must_be_valid()
     {

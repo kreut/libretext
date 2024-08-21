@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\AccessCode;
+use App\Analytics;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\EmailAccessCodeRequest;
@@ -13,10 +14,35 @@ use App\TesterAccessCode;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-
+use Illuminate\Http\Request;
 
 class AccessCodeController extends Controller
 {
+    /**
+     * @param Request $request
+     * @param Analytics $analytics
+     * @param InstructorAccessCode $instructorAccessCode
+     * @return array
+     */
+    public function getInstructorAccessCode(Request              $request,
+                                            Analytics            $analytics,
+                                            InstructorAccessCode $instructorAccessCode)
+    {
+
+        try {
+            $response['type'] = 'error';
+            $analytics->hasAccess($request);
+            $access_code = Helper::createAccessCode();
+            $instructorAccessCode->access_code = $access_code;
+            $instructorAccessCode->save();
+            $response['type'] = 'success';
+            $response['access_code'] = $access_code;
+        } catch (Exception $e) {
+            $response['message'] = $e->getMessage();
+        }
+        return $response;
+
+    }
 
     /**
      * @param StoreAccessCodes $request
@@ -36,8 +62,8 @@ class AccessCodeController extends Controller
         $data = $request->validated();
         try {
 
-           $model = $this->_getModel($request);
-            if (!$model){
+            $model = $this->_getModel($request);
+            if (!$model) {
                 $response['message'] = "$request->type is not a valid type of access code.";
                 return $response;
             }
@@ -81,7 +107,7 @@ class AccessCodeController extends Controller
             return $response;
         }
         $model = $this->_getModel($request);
-        if (!$model){
+        if (!$model) {
             $response['message'] = "$request->type is not a valid type of access code.";
         }
         $data = $request->validated();
@@ -115,7 +141,7 @@ class AccessCodeController extends Controller
 
 
             $beauty_mail->send($email_template, ['access_code' =>
-                $access_code,'access_code_link' => $access_code_link], function ($message)
+                $access_code, 'access_code_link' => $access_code_link], function ($message)
             use ($to_email, $subject) {
                 $message
                     ->from('adapt@noreply.libretexts.org', 'Adapt')
@@ -134,8 +160,10 @@ class AccessCodeController extends Controller
 
 
     }
-    private function _getModel($request){
-        switch($request->type){
+
+    private function _getModel($request)
+    {
+        switch ($request->type) {
             case('instructor'):
                 $model = new InstructorAccessCode();
                 break;

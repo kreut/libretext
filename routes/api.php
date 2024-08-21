@@ -28,6 +28,7 @@ Route::get('test', function () {
 
 Route::get('/lms/create-course', 'LmsController@createCourse');
 Route::post('/open-ai/results/{type}', 'OpenAIController@results');
+Route::get('/access-code/instructor','AccessCodeController@getInstructorAccessCode');
 
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::post('/lti/get-token-by-lti-token-id', 'LTIController@getTokenByLtiTokenId');
