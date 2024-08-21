@@ -69,7 +69,7 @@
                 The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project
                 and the
                 <a href="https://opr.ca.gov/learninglab/">California Education Learning Lab</a>. Have questions or
-                comments? For more information please <a href="" @click.prevent="contactUs">contact us by email</a>.
+                comments? For more information please <a href="" @click.prevent="contactUsWidget()">contact us by email</a>.
               </p>
               <p>
                 For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>. In
@@ -80,7 +80,7 @@
                   target="_blank"
                 >
                   accessibility</a> and our <a href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement"
-                                               target="_blank"
+                                             target="_blank"
               >FERPA statement</a>. And you can also
                 view our <a href="https://libretexts.org/legal/index.html" target="_blank">Terms And Conditions</a>
                 should you
