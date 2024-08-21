@@ -27,6 +27,7 @@ class UpdateDiscussItSettingsRequest extends FormRequest
     {
 
         return [
+            'response_modes' => ['required'],
             "students_can_edit_comments" => ['required', Rule::in([0, 1])],
             "students_can_delete_comments" => ['required', Rule::in([0, 1])],
             "min_number_of_discussion_threads" => ['required', 'integer', 'min:1'],
@@ -35,5 +36,10 @@ class UpdateDiscussItSettingsRequest extends FormRequest
             'min_length_of_audio_video' => ['required', new IsValidPeriodOfTime()],
             'auto_grade' => ['required', Rule::in(0, 1)],
         ];
+    }
+    public function messages() {
+        $messages['response_modes.required'] = "At least one method of responding is required.";
+        return $messages;
+
     }
 }

@@ -2066,14 +2066,6 @@
             >
               Settings
             </b-button>
-            <b-button
-              v-show="isDiscussIt()"
-              size="sm"
-              variant="primary"
-              @click="$bvModal.show('modal-discuss-it-instructions')"
-            >
-              Instructions
-            </b-button>
           </div>
           <div v-if="[2,5].includes(user.role)" class="mt-2">
             <div

@@ -16,6 +16,28 @@ class QuestionMediaUpload extends Model
     protected $guarded = [];
 
     /**
+     * @return string
+     */
+    public function getText(): string
+    {
+        if (strpos($this->s3_key, '.html') !== false) {
+            try {
+                $text = $this->text;
+                if (!$text) {
+                    $this->text = Storage::disk('s3')->get($this->getDir() . '/' . $this->s3_key);
+                    $this->save();
+                    $text = $this->text;
+                }
+            } catch (Exception $e) {
+                $text = "Unable to retrieve the text for this discuss it question.";
+            }
+        } else {
+            $text = '';
+        }
+        return $text;
+    }
+
+    /**
      * @throws Exception
      */
     public function deleteFileAndVttFile($filename)

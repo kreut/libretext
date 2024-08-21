@@ -35,7 +35,7 @@ class DiscussItTest extends TestCase
         DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
-            'discuss_it_settings' => '{"students_can_edit_comments":"1","students_can_delete_comments":"1","min_number_of_discussion_threads":"2","min_number_of_comments":"1","min_number_of_words":"4","min_length_of_audio_video":"5 seconds","auto_grade":1}',
+            'discuss_it_settings' => '{"students_can_edit_comments":"1","students_can_delete_comments":"1","min_number_of_discussion_threads":"2","min_number_of_comments":"1","min_number_of_words":"4","min_length_of_audio_video":"5 seconds","auto_grade":1,"response_modes":["text", "audio", "video"]}',
             'points' => 10,
             'order' => 1,
             'open_ended_submission_type' => 'file'
@@ -53,6 +53,37 @@ class DiscussItTest extends TestCase
             'question_id' => $this->question->id,
             'media_upload_id' => $this->questionMediaUpload->id,
             'user_id' => $this->user->id]);
+    }
+
+    /** @test */
+    public function can_only_update_text_if_the_resource_is_owned()
+    {
+        $new_user = factory(User::class)->create(['role' => 3]);
+        $this->actingAs($new_user)
+            ->patchJson("/api/question-media/text", [
+                'text' => 'sdfs',
+                'description' => 'wefwef',
+                's3_key' => 'some key'])
+            ->assertJson(['message' => "You are not allowed to update the text for this question media upload."]);
+    }
+
+    /** @test */
+    public function text_and_description_are_required()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/question-media/text")
+            ->assertJsonValidationErrors(['text', 'description']);
+    }
+
+    /** @test */
+    public function only_instructors_can_do_this()
+    {
+        $new_user = factory(User::class)->create(['role' => 3]);
+        $this->actingAs($new_user)
+            ->postJson("/api/question-media/text", [
+                'text' => 'sdfs',
+                'description' => 'wefwef'])
+            ->assertJson(['message' => 'You are not allowed to store text as a question media upload.']);
     }
 
     /** @test */
@@ -82,6 +113,7 @@ class DiscussItTest extends TestCase
             "min_number_of_comments" => 1,
             "min_number_of_words" => 1,
             'min_length_of_audio_video' => '2 minutes',
+            "response_modes" => ["text", "audio", "video"],
             'auto_grade' => 1];
         $new_user = factory(User::class)->create(['role' => 3]);
         $this->actingAs($new_user)
@@ -98,6 +130,7 @@ class DiscussItTest extends TestCase
                 'students_can_delete_comments',
                 "min_number_of_discussion_threads",
                 "min_number_of_comments",
+                "response_modes",
                 "min_number_of_words",
                 'min_length_of_audio_video',
                 'auto_grade']);

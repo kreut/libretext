@@ -1,6 +1,74 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-discuss-it-text-form"/>
+    <b-modal id="modal-discuss-it-text"
+             :title="activeQuestionMediaUpload.is_edit ? 'Add Text' : 'Edit Text'"
+             size="xl"
+             @hidden="activeQuestionMediaUpload = {}"
+             @shown="updateModalToggleIndex('modal-discuss-it-text')"
+    >
+      <b-form-group
+        label-cols-sm="3"
+        label-cols-lg="2"
+        label-for="description"
+        label-size="sm"
+        label-align="center"
+      >
+        <template v-slot:label>
+          Description
+          <QuestionCircleTooltip :id="'discuss-it-description-tooltip'"/>
+          <b-tooltip target="discuss-it-description-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            A short description, not viewable by the student, but used as an identifier in the list of associated media
+            uploads for this question.
+          </b-tooltip>
+        </template>
+        <b-form-input v-model="discussItTextForm.description"
+                      required
+                      style="width:300px"
+                      size="sm"
+                      :class="{ 'is-invalid': discussItTextForm.errors.has('description')}"
+                      @keydown="discussItTextForm.errors.clear('description')"
+        />
+        <has-error :form="discussItTextForm" field="description"/>
+      </b-form-group>
+      <ckeditor
+        id="discuss_it_text"
+        ref="discuss_it_text"
+        v-model="discussItTextForm.text"
+        tabindex="0"
+        required
+        :config="richEditorConfig"
+        :class="{ 'is-invalid': discussItTextForm.errors.has('text')}"
+        class="mb-2"
+        @namespaceloaded="onCKEditorNamespaceLoaded"
+        @ready="handleFixCKEditor()"
+        @focus="ckeditorKeyDown=true"
+        @keydown="discussItTextForm.errors.clear('text')"
+      />
+      <has-error :form="discussItTextForm" field="text"/>
+      <template #modal-footer>
+        <b-button
+          variant="secondary"
+          size="sm"
+          class="Cancel"
+          @click="$bvModal.hide('modal-discuss-it-text')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="saveDiscussItText"
+        >
+          Save
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-compare-revisions"
              title="Compare Revisions"
              size="xl"
@@ -1546,6 +1614,8 @@
                                      @updateQuestionMediaUploads="updateQuestionMediaUploads"
                                      @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
                                      @updateQuestionTranscript="updateQuestionTranscript"
+                                     @editDiscussItText="editDiscussItText"
+                                     @initDiscussItText="initDiscussItText"
                 />
               </div>
             </div>
@@ -2258,6 +2328,7 @@ import DropDownRationaleTriad from './nursing/DropDownRationaleTriad.vue'
 import Rubric from './Rubric.vue'
 import QuestionRevisionDifferences from '../QuestionRevisionDifferences.vue'
 import Sketcher from './Sketcher.vue'
+import { updateModalToggleIndex } from '../../helpers/accessibility/fixCKEditor'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2384,6 +2455,7 @@ const richEditorConfig = {
   allowedContent: true,
   disableNativeSpellChecker: false
 }
+
 let shorterRichEditorConfig = JSON.parse(JSON.stringify(richEditorConfig))
 shorterRichEditorConfig.autoGrow_minHeight = 100
 
@@ -2468,6 +2540,11 @@ export default {
     }
   },
   data: () => ({
+    activeQuestionMediaUpload: {},
+    discussItTextForm: new Form({
+      text: '',
+      description: ''
+    }),
     discussItNumPages: 1,
     discussItTemporaryUrl: '',
     previewingQuestion: false,
@@ -2745,6 +2822,69 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    updateModalToggleIndex,
+    editDiscussItText (activeMedia) {
+      this.activeQuestionMediaUpload = activeMedia
+      this.activeQuestionMediaUpload.is_edit = true
+      this.discussItTextForm = new Form({
+        text: activeMedia.text,
+        description: activeMedia.original_filename
+      })
+      this.$bvModal.show('modal-discuss-it-text')
+    },
+    initDiscussItText () {
+      this.discussItTextForm = new Form({
+        text: '',
+        description: ''
+      })
+      this.$bvModal.show('modal-discuss-it-text')
+    },
+    async saveDiscussItText () {
+      try {
+        const action = this.activeQuestionMediaUpload.s3_key ? 'patch' : 'post'
+        if (action === 'patch') {
+          this.discussItTextForm.s3_key = this.activeQuestionMediaUpload.s3_key
+        }
+        const { data } = await this.discussItTextForm[action]('/api/question-media/text')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        } else {
+          const questionMediaUpload = {
+            s3_key: data.s3_key,
+            size: data.size,
+            text: this.discussItTextForm.text,
+            original_filename: this.discussItTextForm.description,
+            order: this.questionForm.media_uploads.length + 1
+          }
+          switch (action) {
+            case ('post'):
+              if (!this.questionForm.media_uploads) {
+                this.questionForm.media_uploads = []
+              }
+              this.questionForm.media_uploads.push(questionMediaUpload)
+              break
+            case ('patch'):
+              for (let i = 0; i < this.questionForm.media_uploads.length; i++) {
+                const mediaUpload = this.questionForm.media_uploads[i]
+                if (mediaUpload.s3_key === data.s3_key) {
+                  this.questionForm.media_uploads[i].text = this.discussItTextForm.text
+                  this.questionForm.media_uploads[i].original_filename = this.discussItTextForm.description
+                }
+              }
+              break
+          }
+          this.$forceUpdate()
+          this.$bvModal.hide('modal-discuss-it-text')
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.discussItTextForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-discuss-it-text-form')
+        }
+      }
+    },
     getPromptHeader () {
       return this.qtiQuestionType === 'discuss_it'
         ? '<h2 class="h7">Instructions</h2>'
@@ -3359,6 +3499,7 @@ export default {
         this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) // some may be saved as 4 vs 4.0 in the database
       }
       this.questionForm = new Form(this.questionToEdit)
+
       this.questionFormTechnology = this.questionForm.technology
       console.log(this.questionForm)
       console.log(this.questionToEdit)
@@ -4305,7 +4446,7 @@ export default {
           this.questionToView = data.question
         } else {
           switch (this.qtiQuestionType) {
-            case('discuss_it'):
+            case ('discuss_it'):
               this.qtiJson.media_uploads = this.questionForm.media_uploads
               this.previewingQuestion = true
               this.$forceUpdate()

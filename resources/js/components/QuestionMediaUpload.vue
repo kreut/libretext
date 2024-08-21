@@ -142,6 +142,13 @@
           {{ isDiscussIt ? 'Upload Media' : 'Upload Audio or Video file' }}
         </file-upload>
         <QuestionCircleTooltipModal v-show="!isDiscussIt" :modal-id="'modal-upload-question-media'" />
+        <b-button v-show="isDiscussIt"
+                  size="sm"
+                  variant="info"
+                  @click="$emit('initDiscussItText')"
+        >
+          Add Text
+        </b-button>
         <b-modal id="modal-upload-question-media"
                  title="Upload Question Media and Edit Transcript"
                  size="lg"
@@ -278,7 +285,7 @@
                 >
                   Edit transcript for {{ mediaUpload.original_filename }}
                 </b-tooltip>
-                <span v-show="mediaUpload.id">
+                <span v-show="mediaUpload.id && mediaUpload.transcript">
                   <a v-show="false"
                      :id="`download-transcript-${mediaUpload.id}`"
                      :href="`/api/question-media/${mediaUpload.id}/download-transcript`"
@@ -479,11 +486,16 @@ export default {
     },
     showQuestionMedia (activeMedia) {
       console.error(activeMedia)
-      this.transcriptTiming = null
       this.activeMedia = activeMedia
-      this.activeTranscript = activeMedia.transcript
-      if (this.needsTranscript(activeMedia)) {
-        this.$bvModal.show('modal-question-media')
+      if (activeMedia.text) {
+        this.$emit('editDiscussItText', activeMedia)
+      } else {
+        console.error(activeMedia)
+        this.transcriptTiming = null
+        this.activeTranscript = activeMedia.transcript
+        if (this.needsTranscript(activeMedia)) {
+          this.$bvModal.show('modal-question-media')
+        }
       }
     },
     initStartUpload (fileUploadRef) {

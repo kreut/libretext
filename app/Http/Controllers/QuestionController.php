@@ -2507,7 +2507,6 @@ class QuestionController extends Controller
                 ->where('id', $question->id)->first();
             if ($question_to_edit) {
                 $question_to_edit = $question->formatQuestionToEdit($request, $question_to_edit, $question_to_edit->id);
-
                 $response['question_to_edit'] = $question_to_edit;
                 $question_to_edit['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
                 $question_to_edit['question_exists_in_another_instructors_assignment'] = $question->questionExistsInAnotherInstructorsAssignments();

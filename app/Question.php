@@ -43,8 +43,7 @@ class Question extends Model
         if ($this->isDiscussIt()) {
             $cache_key = "discuss_it_settings_{$assignment->course->user_id}";
             if (!Cache::has($cache_key)) {
-                $discuss_it_settings =
-                    '{"students_can_edit_comments":"1","students_can_delete_comments":"1","min_number_of_discussion_threads":"1","min_number_of_comments":"1","min_number_of_words":"30","min_length_of_audio_video":"15 seconds","auto_grade":"0"}';
+                $discuss_it_settings = '{"students_can_edit_comments":"1","students_can_delete_comments":"1","min_number_of_discussion_threads":"1","min_number_of_comments":"1","response_modes":["text", "audio", "video"],"min_number_of_words":"30","min_length_of_audio_video":"15 seconds","auto_grade":"0"}';
                 Cache::put($cache_key, $discuss_it_settings);
             }
             $discuss_it_settings = Cache::get($cache_key);
@@ -569,6 +568,9 @@ class Question extends Model
         switch ($question_type) {
             case('discuss_it'):
                 $qti_array['media_uploads'] = QuestionMediaUpload::where('question_id', $this->id)->get();
+                foreach ($qti_array['media_uploads'] as $key => $question_media_upload) {
+                    $qti_array['media_uploads'][$key]['text'] = $question_media_upload->getText();
+                }
                 break;
             case('submit_molecule'):
                 if (!$show_solution) {
@@ -3129,16 +3131,21 @@ class Question extends Model
             ->get();
 
         $question_to_edit['learning_outcomes'] = $learning_outcomes;
-        $question_to_edit['media_uploads'] = DB::table('question_media_uploads')
-            ->where('question_id', $this->id)
+        $questionMediaUpload = new QuestionMediaUpload();
+        $question_to_edit['media_uploads'] = $questionMediaUpload->where('question_id', $this->id)
             ->get();
         if ($question_to_edit['media_uploads']) {
-            $questionMediaUpload = new QuestionMediaUpload();
             foreach ($question_to_edit['media_uploads'] as $key => $media_upload) {
-                if ($media_upload->transcript) {
-                    $question_to_edit['media_uploads'][$key]->transcript = $questionMediaUpload->parseVtt($media_upload->transcript);
+                $question_to_edit['media_uploads'][$key]->text = $media_upload->getText();
+                if (!$question_to_edit['media_uploads'][$key]->text) {
+                    if ($media_upload->transcript) {
+                        $question_to_edit['media_uploads'][$key]->transcript = $questionMediaUpload->parseVtt($media_upload->transcript);
+                    }
+                    $question_to_edit['media_uploads'][$key]->url = Helper::schemaAndHost() . "question-media-player/$media_upload->s3_key";
+                } else {
+                    $question_to_edit['media_uploads'][$key]->url = '';
+                    $question_to_edit['media_uploads'][$key]->transcript = '';
                 }
-                $question_to_edit['media_uploads'][$key]->url = Helper::schemaAndHost() . "question-media-player/$media_upload->s3_key";
             }
         }
         $formatted_question_info = $this->formatQuestionFromDatabase($request, $question_to_edit);

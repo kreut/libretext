@@ -51,13 +51,6 @@ class ProcessTranscribe implements ShouldQueue
     public function handle()
     {
 
-        // List of supported file extensions
-        $supportedFormats = ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm'];
-        $fileExtension = pathinfo($this->s3_key, PATHINFO_EXTENSION);
-        if (!in_array(strtolower($fileExtension), $supportedFormats)) {
-            exit;
-        }
-
         switch ($this->upload_type) {
             case('question_media_upload'):
                 $s3_key_column = 's3_key';
@@ -71,6 +64,15 @@ class ProcessTranscribe implements ShouldQueue
                 throw new Exception ("Invalid upload type for transcribing: $this->upload_type");
         }
         $upload_type_model = $uploadTypeModel->where($s3_key_column, $this->s3_key)->first();
+
+        $supportedFormats = ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm'];
+        $fileExtension = pathinfo($this->s3_key, PATHINFO_EXTENSION);
+        if (!in_array(strtolower($fileExtension), $supportedFormats)) {
+            $upload_type_model->status = "completed";
+            $upload_type_model->save();
+            exit;
+        }
+
         try {
             $efs_dir ="/mnt/local/";
             $is_efs = is_dir($efs_dir);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\DiscussionComment;
 use App\Exceptions\Handler;
+use App\Http\Requests\StoreQuestionMediaTextRequest;
 use App\Jobs\ProcessTranscribe;
 use App\Question;
 use App\QuestionMediaUpload;
@@ -13,6 +14,7 @@ use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -23,12 +25,89 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class QuestionMediaController extends Controller
 {
     /**
+     * @param StoreQuestionMediaTextRequest $request
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @return array
+     * @throws Exception
+     */
+    public function updateText(StoreQuestionMediaTextRequest $request,
+                               QuestionMediaUpload           $questionMediaUpload): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $s3_key = $request->s3_key;
+            $authorized = Gate::inspect('updateText', [$questionMediaUpload, $s3_key]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $data = $request->validated();
+            $question_media_upload_dir = $questionMediaUpload->getDir();
+            Storage::disk('s3')->put("$question_media_upload_dir/$s3_key", $data['text']);
+            $questionMediaUpload = QuestionMediaUpload::where('s3_key', $s3_key)->first();
+            if ($questionMediaUpload) {
+                $questionMediaUpload->original_filename = $data['description'];
+                $questionMediaUpload->text = $data['text'];
+                $questionMediaUpload->save();
+            } else {
+                $response['message'] = 'We were unable to locate that text file. Please try again or contact us for assistance.';
+                return $response;
+            }
+            $response['s3_key'] = $s3_key;
+            $response['type'] = 'success';
+            $response['size'] = Storage::disk('s3')->size("  $question_media_upload_dir/$s3_key");
+            $response['message'] = 'The text has been updated.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not update the text. Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param StoreQuestionMediaTextRequest $request
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @return array
+     * @throws Exception
+     */
+    public function storeText(StoreQuestionMediaTextRequest $request,
+                              QuestionMediaUpload           $questionMediaUpload): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('storeText', $questionMediaUpload);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $data = $request->validated();
+            $s3_key = md5(uniqid('', true)) . '.html';
+            Storage::disk('s3')->put("{$questionMediaUpload->getDir()}/$s3_key", $data['text']);
+            $response['s3_key'] = $s3_key;
+            $response['type'] = 'success';
+            $response['size'] = Storage::disk('s3')->size("{$questionMediaUpload->getDir()}/$s3_key");
+            $response['message'] = 'The text has been added.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not store the text. Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+    /**
      * @param Request $request
      * @param QuestionMediaUpload $questionMediaUpload
      * @return array
      * @throws Exception
      */
-    public function temporaryUrls(Request $request, QuestionMediaUpload $questionMediaUpload)
+    public function temporaryUrls(Request $request, QuestionMediaUpload $questionMediaUpload): array
     {
         try {
             $response['type'] = 'error';
@@ -77,11 +156,16 @@ class QuestionMediaController extends Controller
                 ->where('question_id', $question->id)
                 ->orderBy('order')
                 ->get();
+
             foreach ($question_media_uploads as $key => $value) {
-                if (strpos($value->s3_key, '.pdf') !== false) {
+                if (!in_array(pathinfo($value->s3_key, PATHINFO_EXTENSION), ['pdf', 'html'])) {
                     $question_media_uploads[$key]['temporary_url'] = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$value->s3_key", Carbon::now()->addDays(7));
+                }
+                if (pathinfo($value->s3_key, PATHINFO_EXTENSION) === 'html') {
+                    $question_media_uploads[$key]['text'] = $value->getText();
 
                 }
+
             }
             $response['question_media_uploads'] = $question_media_uploads;
             $response['type'] = 'success';
