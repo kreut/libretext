@@ -599,6 +599,7 @@ class EnrollmentController extends Controller
                                     'courses.name AS course_name',
                                     'schools.name AS school_name',
                                     DB::raw('CONCAT(first_name, " " , last_name) AS instructor_name'))
+                                ->where('courses.id', $course_id)
                                 ->first();
 
                             $data = ['course_id' => $course_id,
