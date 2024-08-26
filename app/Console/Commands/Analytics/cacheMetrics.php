@@ -52,15 +52,15 @@ class cacheMetrics extends Command
         try {
 
             $cell_data = DB::table('data_shops_enrollments')
-                ->join('courses','data_shops_enrollments.course_id','=','courses.id')
-                ->leftJoin('disciplines','courses.discipline_id','=','disciplines.id')
-                ->where('instructor_name','<>','Instructor Kean')
+                ->join('courses', 'data_shops_enrollments.course_id', '=', 'courses.id')
+                ->leftJoin('disciplines', 'courses.discipline_id', '=', 'disciplines.id')
+                ->where('instructor_name', '<>', 'Instructor Kean')
                 ->select('data_shops_enrollments.*', 'disciplines.name AS discipline')
                 ->get()
                 ->toArray();
             $cell_data = array_values($cell_data);
-            foreach ($cell_data as $key => $value){
-                if (!$value->discipline){
+            foreach ($cell_data as $key => $value) {
+                if (!$value->discipline) {
                     $value->discipline = "None provided";
                 }
 
@@ -81,35 +81,35 @@ class cacheMetrics extends Command
                 ->select('school_id')
                 ->groupBy('school_id')
                 ->count();
-           /* $courses = DB::table('data_shops_complete')
-                ->select('course_id', 'instructor_name')
-                ->distinct()
-                ->get();
-            foreach ($courses as $key => $course) {
-                if ($course->instructor_name === 'Instructor Kean') {
-                    $courses->forget($key);
-                }
+            /* $courses = DB::table('data_shops_complete')
+                 ->select('course_id', 'instructor_name')
+                 ->distinct()
+                 ->get();
+             foreach ($courses as $key => $course) {
+                 if ($course->instructor_name === 'Instructor Kean') {
+                     $courses->forget($key);
+                 }
 
-            }
-           /* $total_entries_by_course = DB::table('data_shops_complete')
-                ->select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
-                ->groupBy('course_id')
-                ->get();
-            $total_entries_by_course_id = [];
-            foreach ($total_entries_by_course as $entry) {
-                $total_entries_by_course_id[$entry->course_id] = $entry->total_entries;
-            }
-            foreach ($courses as $key => $data) {
-                if ($total_entries_by_course_id[$data->course_id] < 3) {
-                    unset($courses[$key]);
-                }
-            }
-            $real_courses = count($courses);
-           */
+             }
+            /* $total_entries_by_course = DB::table('data_shops_complete')
+                 ->select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
+                 ->groupBy('course_id')
+                 ->get();
+             $total_entries_by_course_id = [];
+             foreach ($total_entries_by_course as $entry) {
+                 $total_entries_by_course_id[$entry->course_id] = $entry->total_entries;
+             }
+             foreach ($courses as $key => $data) {
+                 if ($total_entries_by_course_id[$data->course_id] < 3) {
+                     unset($courses[$key]);
+                 }
+             }
+             $real_courses = count($courses);
+            */
 
             $live_courses = Course::select('courses.name', 'users.first_name', 'users.last_name')
                 ->join('users', 'courses.user_id', '=', 'users.id')
-                ->where('courses.user_id', '<>',$my_id)
+                ->where('courses.user_id', '<>', $my_id)
                 ->whereIn('courses.id', function ($query) {
                     $query->select('course_id')
                         ->from('users')
@@ -123,7 +123,9 @@ class cacheMetrics extends Command
 
 
             $grade_passbacks = DB::table('lti_grade_passbacks')->max('id');
-            $LTI_schools = DB::table('lti_registrations')->count();
+            $LTI_schools = DB::table('lti_registrations')
+                ->join('lti_schools', 'lti_registrations.id', '=', 'lti_schools.lti_registration_id')
+                ->count();
             $open_ended_submissions = DB::table('submission_files')->max('id');
             $auto_graded_submissions = DB::table('submissions')->max('id');
             $metrics = compact('instructor_accounts',
