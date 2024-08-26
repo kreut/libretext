@@ -1077,7 +1077,9 @@ class Question extends Model
                     foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
                         $inline_choice_interactions[$identifier] = [];
                         foreach ($seed[$identifier] as $order) {
-                            $inline_choice_interactions[$identifier][] = $qti_array['inline_choice_interactions'][$identifier][$order];
+                            if (isset($qti_array['inline_choice_interactions'][$identifier][$order])) {
+                                $inline_choice_interactions[$identifier][] = $qti_array['inline_choice_interactions'][$identifier][$order];
+                            }
                         }
                     }
                     $qti_array['inline_choice_interactions'] = $inline_choice_interactions;
