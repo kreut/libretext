@@ -27,6 +27,7 @@ use App\Http\Requests\ResetCourse;
 use App\Http\Requests\StoreCourse;
 use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\Jobs\ProcessImportCourse;
+use App\Jobs\ProcessResetCourse;
 use App\LmsAPI;
 use App\QuestionMediaUpload;
 use App\Rules\atLeastOneSelectChoice;
@@ -527,14 +528,12 @@ class CourseController extends Controller
     /**
      * @param ResetCourse $request
      * @param Course $course
-     * @param AssignToTiming $assignToTiming
      * @return array
      * @throws Exception
      */
     public
-    function reset(ResetCourse    $request,
-                   Course         $course,
-                   AssignToTiming $assignToTiming): array
+    function reset(ResetCourse $request,
+                   Course      $course): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('reset', $course);
@@ -543,59 +542,14 @@ class CourseController extends Controller
             return $response;
         }
         $request->validated();
-
         try {
-            DB::beginTransaction();
-            $fake_student = DB::table('enrollments')
-                ->join('users', 'enrollments.user_id', '=', 'users.id')
-                ->where('course_id', $course->id)
-                ->where('fake_student', 1)
-                ->first();
-
-            $assignments = $course->assignments;
-            $assignment_ids = [];
-            foreach ($assignments as $assignment) {
-                $assignment_ids[] = $assignment->id;
-                $default_timing = $assignToTiming->where('assignment_id', $assignment->id)->first();
-                $assignToTiming->deleteTimingsGroupsUsers($assignment);
-                $assign_to_timing_id = $assignment->saveAssignmentTimingAndGroup($assignment, $default_timing);
-                $assignToUser = new AssignToUser();
-                $assignToUser->assign_to_timing_id = $assign_to_timing_id;
-                $assignToUser->user_id = $fake_student->user_id;
-                $assignToUser->save();
+            if (app()->environment('testing')){
+                return $course->reset();
+            } else {
+                ProcessResetCourse::dispatch($course);
             }
-
-            DB::table('submissions')->whereIn('assignment_id', $assignment_ids)->delete();
-            DB::table('submission_files')->whereIn('assignment_id', $assignment_ids)->delete();
-            DB::table('scores')->whereIn('assignment_id', $assignment_ids)->delete();
-            DB::table('cutups')->whereIn('assignment_id', $assignment_ids)->delete();
-            DB::table('seeds')->whereIn('assignment_id', $assignment_ids)->delete();
-            DB::table('compiled_pdf_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
-            DB::table('question_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
-            DB::table('assignment_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
-            //reset all of the LMS stuff
-            DB::table('lti_grade_passbacks')->whereIn('assignment_id', $assignment_ids)->delete();
-            DB::table('lti_launches')->whereIn('assignment_id', $assignment_ids)->delete();
-            DB::table('assignments')->whereIn('id', $assignment_ids)
-                ->update(['lms_resource_link_id' => null]);
-
-
-            $course->extensions()->delete();
-            $course->extraCredits()->delete();
-            DB::table('enrollments')
-                ->join('users', 'enrollments.user_id', '=', 'users.id')
-                ->where('course_id', $course->id)
-                ->where('fake_student', 0)
-                ->delete();
-            foreach ($assignments as $assignment) {
-                DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);
-            }
-            DB::commit();
-
             $response['type'] = 'success';
-            $response['message'] = "All students from <strong>$course->name</strong> have been unenrolled and their data removed.";
         } catch (Exception $e) {
-            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error removing all students from <strong>$course->name</strong>.  Please try again or contact us for assistance.";

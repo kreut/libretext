@@ -1,6 +1,23 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-reset-course"/>
+    <b-modal :id="`modal-resetting-course`"
+             hide-footer
+             no-close-on-backdrop
+             no-close-on-esc
+             size="lg"
+             :title="`Resetting ${course.name}`"
+    >
+      <b-alert variant="info" :show="processingResettingCourse">
+        <b-spinner small type="grow"/>
+        Processing...please be patient. Resetting the course may take up to 30 seconds to complete.
+      </b-alert>
+      <b-alert :variant="resettingCourseMessageData.type === 'success' ? 'success': 'danger'"
+               :show="!processingResettingCourse"
+      >
+        <div v-html="resettingCourseMessageData.message"/>
+      </b-alert>
+    </b-modal>
     <b-modal
       id="modal-reset-course"
       ref="modal"
@@ -61,13 +78,20 @@
           Cancel
         </b-button>
 
-        <a v-if="showDownload"
-           class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn"
+        <a v-show="false"
+           id="download-scores"
            :href="`/api/scores/${courseId}/0/1`"
-           @click="resetCourseForm.downloaded_gradebook = true"
+
         >
           Download Scores
         </a>
+        <b-button v-if="showDownload"
+                  size="sm"
+                  variant="outline-primary"
+                  @click="downloadScores()"
+        >
+          Download Scores
+        </b-button>
         <b-button
           variant="danger"
           size="sm"
@@ -90,6 +114,7 @@
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import Form from 'vform'
+import { initCentrifuge } from '../helpers/Centrifuge'
 
 export default {
   name: 'ResetCourse',
@@ -115,6 +140,7 @@ export default {
     }
   },
   data: () => ({
+    resettingCourseMessageData: {},
     allFormErrors: [],
     processingResettingCourse: false,
     resetCourseForm: new Form({
@@ -122,17 +148,41 @@ export default {
       understand_scores_removed: 0
     })
   }),
+  beforeDestroy () {
+    try {
+      if (this.centrifuge) {
+        this.centrifuge.disconnect()
+      }
+    } catch (error) {
+      // won't be a function for all the other ones that haven't been defined on the page
+    }
+  },
   methods: {
+    downloadScores () {
+      this.resetCourseForm.downloaded_gradebook = true
+      document.getElementById('download-scores').click()
+    },
     async submitResetCourse () {
       this.processingResettingCourse = true
+      this.centrifuge = await initCentrifuge()
+      const sub = this.centrifuge.newSubscription(`reset-course-${this.courseId}`)
+      const courseReset = async (ctx) => {
+        this.resettingCourseMessageData = ctx.data
+        this.resetCourseForm.confirmation = ''
+        this.processingResettingCourse = false
+        this.centrifuge.disconnect()
+        this.$emit('parentReloadData')
+      }
+      sub.on('publication', function (ctx) {
+        courseReset(ctx)
+      }).subscribe()
       try {
         const { data } = await this.resetCourseForm.delete(`/api/courses/${this.courseId}/reset`)
-        this.$noty[data.type](data.message)
-        this.resetCourseForm.confirmation = ''
-        this.$bvModal.hide('modal-reset-course')
-        this.processingResettingCourse = false
-        if (data.type === 'success') {
-          this.$emit('parentReloadData')
+        if (data.type === 'error') {
+          this.$noty.error(data.error)
+        } else {
+          this.$bvModal.show('modal-resetting-course')
+          this.$bvModal.hide('modal-reset-course')
         }
       } catch (error) {
         this.processingResettingCourse = false
@@ -145,8 +195,6 @@ export default {
           this.$bvModal.show('modal-form-errors-reset-course')
         }
       }
-      this.resetCourseForm.confirmation = ''
-      this.processingResettingCourse = false
     }
   }
 }

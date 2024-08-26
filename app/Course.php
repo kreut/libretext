@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Exceptions\Handler;
+use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,63 @@ class Course extends Model
      */
     protected $guarded = [];
 
+    /**
+     * @return array
+     */
+    public function reset(): array
+    {
+        $assignToTiming = new AssignToTiming();
+        DB::beginTransaction();
+        $fake_student = DB::table('enrollments')
+            ->join('users', 'enrollments.user_id', '=', 'users.id')
+            ->where('course_id', $this->id)
+            ->where('fake_student', 1)
+            ->first();
+
+        $assignments = $this->assignments;
+        $assignment_ids = [];
+        foreach ($assignments as $assignment) {
+            $assignment_ids[] = $assignment->id;
+            $default_timing = $assignToTiming->where('assignment_id', $assignment->id)->first();
+            $assignToTiming->deleteTimingsGroupsUsers($assignment);
+            $assign_to_timing_id = $assignment->saveAssignmentTimingAndGroup($assignment, $default_timing);
+            $assignToUser = new AssignToUser();
+            $assignToUser->assign_to_timing_id = $assign_to_timing_id;
+            $assignToUser->user_id = $fake_student->user_id;
+            $assignToUser->save();
+        }
+
+        DB::table('submissions')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('submission_files')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('scores')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('cutups')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('seeds')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('compiled_pdf_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('question_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('assignment_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
+        //reset all of the LMS stuff
+        DB::table('lti_grade_passbacks')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('lti_launches')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('assignments')->whereIn('id', $assignment_ids)
+            ->update(['lms_resource_link_id' => null]);
+
+
+        $this->extensions()->delete();
+        $this->extraCredits()->delete();
+        DB::table('enrollments')
+            ->join('users', 'enrollments.user_id', '=', 'users.id')
+            ->where('course_id', $this->id)
+            ->where('fake_student', 0)
+            ->delete();
+        foreach ($assignments as $assignment) {
+            DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);
+        }
+        DB::commit();
+
+        $response['type'] = 'success';
+        $response['message'] = "All students from <strong>$this->name</strong> have been unenrolled and their data removed.";
+        return $response;
+    }
     /**
      * @return array
      */
