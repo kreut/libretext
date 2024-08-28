@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'" />
     <b-modal
       id="modal-delete-section"
       ref="modal"
@@ -39,13 +39,13 @@
              ref="modal"
              :title="sectionId ? 'Edit Section Name' : 'Add Section'"
     >
-      <RequiredText/>
+      <RequiredText />
       <b-form-group
         label-cols-sm="5"
         label-cols-lg="4"
         label-for="section_name"
       >
-        <template slot="label">
+        <template v-slot:label>
           Section Name*
         </template>
         <b-form-input
@@ -57,14 +57,14 @@
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
         />
-        <has-error :form="sectionForm" field="name"/>
+        <has-error :form="sectionForm" field="name" />
       </b-form-group>
       <b-form-group
         label-cols-sm="5"
         label-cols-lg="4"
         label-for="crn"
       >
-        <template slot="label">
+        <template v-slot:label>
           CRN*
         </template>
 
@@ -77,7 +77,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('crn') }"
           @keydown="sectionForm.errors.clear('crn')"
         />
-        <has-error :form="sectionForm" field="crn"/>
+        <has-error :form="sectionForm" field="crn" />
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -119,11 +119,11 @@
                 <p>
                   This course currently runs from
                   <span class="font-weight-bold">{{
-                      $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                    }}</span> to
+                    $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                  }}</span> to
                   <span class="font-weight-bold">{{
-                      $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                    }}</span>.
+                    $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                  }}</span>.
                   The access codes will only be valid within the start and end dates of
                   this course. If you need to change these dates, you can always do so
                   <a href="" @click.prevent="$router.push({name: 'course_properties.general_info'})">here</a>.
@@ -131,26 +131,38 @@
                 <b-table striped hover :fields="fields" :items="sections" title="Sections">
                   <template v-slot:head(crn)>
                     CRN
-                    <QuestionCircleTooltip :id="'crn-tooltip'"/>
+                    <QuestionCircleTooltip :id="'crn-tooltip'" />
                     <b-tooltip target="crn-tooltip" triggers="hover focus" delay="500">
                       The Course Reference Number is the number that identifies a specific section of a course being
                       offered.
                     </b-tooltip>
                   </template>
                   <template v-slot:cell(access_code)="data">
-                    <span :id="`access_code-${data.item.id}`">
-                      {{ data.item.access_code ? data.item.access_code : 'None Available' }}
-                    </span>
-                    <span v-if="data.item.access_code">
-                      <a
-                        href=""
-                        class="pr-1"
-                        :aria-label="`Copy access code for ${data.item.name}`"
-                        @click.prevent="doCopy(`access_code-${data.item.id}`)"
+                    <div v-if="!isLMS || sections.length >1">
+                      <span :id="`access_code-${data.item.id}`">
+                        {{ data.item.access_code ? data.item.access_code : 'None Available' }}
+                      </span>
+                      <span v-if="data.item.access_code">
+                        <a
+                          href=""
+                          class="pr-1"
+                          :aria-label="`Copy access code for ${data.item.name}`"
+                          @click.prevent="doCopy(`access_code-${data.item.id}`)"
+                        >
+                          <font-awesome-icon :icon="copyIcon" />
+                        </a>
+                      </span>
+                    </div>
+                    <div v-else>
+                      No access code required. <QuestionCircleTooltip id="no_access_code_required_tooltip" />
+                      <b-tooltip target="no_access_code_required_tooltip"
+                                 delay="500"
+                                 triggers="hover focus"
                       >
-                        <font-awesome-icon :icon="copyIcon"/>
-                      </a>
-                    </span>
+                        You do not need to provide an access code for courses served through an LMS that only have a single
+                        section.  ADAPT will automatically enroll your students when they enter their first assignment through your LMS.
+                      </b-tooltip>
+                    </div>
                   </template>
                   <template v-slot:cell(crn)="data">
                     {{ data.item.crn ? data.item.crn : 'None Provided' }}
@@ -168,7 +180,7 @@
                          class="pr-1"
                          @click.prevent="initEditSection(data.item)"
                       >
-                        <b-icon icon="pencil" class="text-muted" :aria-label="`Edit ${data.item.name}`"/>
+                        <b-icon icon="pencil" class="text-muted" :aria-label="`Edit ${data.item.name}`" />
                       </a>
 
                       <span v-if="data.index >0">
@@ -189,7 +201,7 @@
                           />
                         </a>
                       </span>
-                      <span class="text-info">
+                      <span v-show="!isLMS || sections.length >1" class="text-info">
                         <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
                                    delay="500"
                                    triggers="hover"
@@ -226,7 +238,8 @@
           <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Whitelisted Domains</h2>" class="mt-3">
             <b-tooltip target="whitelisted_domains_tooltip">
               <p>
-                The whitelisted domains determine acceptable emails for students in your course. For example, if you just want to accept
+                The whitelisted domains determine acceptable emails for students in your course. For example, if you
+                just want to accept
                 mySchool.edu
                 email addresses, you can whitelist mySchool.edu.
               </p>
@@ -244,7 +257,7 @@
               >
                 <template v-slot:label>
                   Whitelisted Domains
-                  <QuestionCircleTooltip id="whitelisted_domains_tooltip"/>
+                  <QuestionCircleTooltip id="whitelisted_domains_tooltip" />
                 </template>
                 <b-form-row class="mt-2">
                   <b-form-input
@@ -261,16 +274,16 @@
                   </b-button>
                 </b-form-row>
                 <div class="d-flex flex-row">
-                <span v-for="chosenWhitelistedDomain in whitelistedDomains" :key="chosenWhitelistedDomain.id"
-                      class="mt-2"
-                >
-                  <b-button size="sm"
-                            variant="secondary"
-                            class="mr-2"
-                            style="line-height:.8"
-                            @click="removeWhitelistedDomain(chosenWhitelistedDomain)"
-                  ><span v-html="chosenWhitelistedDomain.whitelisted_domain"/> x</b-button>
-                </span>
+                  <span v-for="chosenWhitelistedDomain in whitelistedDomains" :key="chosenWhitelistedDomain.id"
+                        class="mt-2"
+                  >
+                    <b-button size="sm"
+                              variant="secondary"
+                              class="mr-2"
+                              style="line-height:.8"
+                              @click="removeWhitelistedDomain(chosenWhitelistedDomain)"
+                    ><span v-html="chosenWhitelistedDomain.whitelisted_domain" /> x</b-button>
+                  </span>
                 </div>
               </b-form-group>
             </b-card-text>
@@ -308,6 +321,7 @@ export default {
     whitelistedDomains: [],
     copyIcon: faCopy,
     allFormErrors: [],
+    isLMS: false,
     courseId: '',
     courseStartDate: '',
     courseEndDate: '',
@@ -469,6 +483,7 @@ export default {
       this.sections = data.sections
       this.courseStartDate = data.course_start_date
       this.courseEndDate = data.course_end_date
+      this.isLMS = data.is_lms
     },
     async refreshAccessCode (sectionId) {
       try {

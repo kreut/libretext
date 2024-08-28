@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Exceptions\Handler;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -11,18 +13,82 @@ class Enrollment extends Model
 
     protected $guarded = [];
 
-    public function removeAllRelatedEnrollmentInformation(User $user,
-                                                          int $course_id,
-                                                          AssignToUser  $assignToUser,
-                                                          Assignment $assignment,
-                                                          Submission $submission,
-                                                          SubmissionFile $submissionFile,
-                                                          Score $score,
-                                                          Extension $extension,
+
+    public function completeEnrollmentDetails($user_id, Section $section, $course_id, $actual_student)
+    {
+        $assignToUser = new AssignToUser();
+        $section_id = $section->id;
+        $this->user_id = $user_id;
+        $this->section_id = $section_id;
+        $this->course_id = $course_id;
+        $this->save();
+        $course = Course::find($course_id);
+        if (!$course ->shown){
+            $course->shown = 1;
+            $course->save();
+        }
+        $assignments = $section->course->assignments;
+        $assignToUser->assignToUserForAssignments($assignments, $user_id, $section->id);
+
+        if ($actual_student) {
+            $data_shops_enrollment = DB::table('data_shops_enrollments')
+                ->where('course_id', $course_id)
+                ->first();
+            try {
+                if (!$data_shops_enrollment) {
+                    $course_info = DB::table('courses')
+                        ->join('users', 'courses.user_id', '=', 'users.id')
+                        ->join('schools', 'courses.school_id', '=', 'schools.id')
+                        ->select('term',
+                            'courses.name AS course_name',
+                            'schools.name AS school_name',
+                            DB::raw('CONCAT(first_name, " " , last_name) AS instructor_name'))
+                        ->where('courses.id', $course_id)
+                        ->first();
+
+                    $data = ['course_id' => $course_id,
+                        'course_name' => $course_info->course_name,
+                        'school_name' => $course_info->school_name,
+                        'term' => $course_info->term,
+                        'instructor_name' => $course_info->instructor_name,
+                        'number_of_enrolled_students' => 1,
+                        'created_at' => now(),
+                        'updated_at' => now()];
+                    DB::table('data_shops_enrollments')->insert($data);
+                } else {
+                    DB::table('data_shops_enrollments')->where(['course_id' => $course_id])
+                        ->update(['number_of_enrolled_students' => $data_shops_enrollment->number_of_enrolled_students + 1,
+                            'updated_at' => now()]);
+                }
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+            }
+        }
+
+        $notification_exists = DB::table('notifications')->where('user_id', $user_id)->first();
+        if ($actual_student && !$notification_exists) {
+            $notification_data = [
+                'user_id' => $user_id,
+                'hours_until_due' => 24,
+                'created_at' => now(),
+                'updated_at' => now()];
+            DB::table('notifications')->insert($notification_data);
+        }
+    }
+
+    public function removeAllRelatedEnrollmentInformation(User             $user,
+                                                          int              $course_id,
+                                                          AssignToUser     $assignToUser,
+                                                          Assignment       $assignment,
+                                                          Submission       $submission,
+                                                          SubmissionFile   $submissionFile,
+                                                          Score            $score,
+                                                          Extension        $extension,
                                                           LtiGradePassback $ltiGradePassback,
-                                                          Seed $seed,
-                                                          ExtraCredit $extraCredit,
-                                                          Section $section)
+                                                          Seed             $seed,
+                                                          ExtraCredit      $extraCredit,
+                                                          Section          $section)
     {
         $assignments_to_remove_ids = [];
         $assign_to_timings_to_remove_ids = [];

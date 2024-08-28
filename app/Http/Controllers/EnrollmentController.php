@@ -508,15 +508,13 @@ class EnrollmentController extends Controller
      * @param StoreEnrollment $request
      * @param Enrollment $enrollment
      * @param Section $Section
-     * @param AssignToUser $assignToUser
      * @return array|Application|ResponseFactory|Response|string
      * @throws Exception
      */
     public
     function store(StoreEnrollment $request,
                    Enrollment      $enrollment,
-                   Section         $Section,
-                   AssignToUser    $assignToUser)
+                   Section         $Section)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $enrollment);
@@ -578,60 +576,10 @@ class EnrollmentController extends Controller
                 $response['type'] = 'error';
                 $response['message'] = "You are already enrolled in <strong>$course_section_name</strong>.";
             } else {
-
-                $enrollment->user_id = $request->user()->id;
-                $enrollment->section_id = $section_id;
-                $enrollment->course_id = $course_id;
-                $enrollment->save();
-                $assignments = $section->course->assignments;
-                $assignToUser->assignToUserForAssignments($assignments, $enrollment->user_id, $section->id);
                 $actual_student = !($request->user()->fake_student || $request->user()->formative_student || $request->user()->testing_student);
-                if ($actual_student) {
-                    $data_shops_enrollment = DB::table('data_shops_enrollments')
-                        ->where('course_id', $course_id)
-                        ->first();
-                    try {
-                        if (!$data_shops_enrollment) {
-                            $course_info = DB::table('courses')
-                                ->join('users', 'courses.user_id', '=', 'users.id')
-                                ->join('schools', 'courses.school_id', '=', 'schools.id')
-                                ->select('term',
-                                    'courses.name AS course_name',
-                                    'schools.name AS school_name',
-                                    DB::raw('CONCAT(first_name, " " , last_name) AS instructor_name'))
-                                ->where('courses.id', $course_id)
-                                ->first();
 
-                            $data = ['course_id' => $course_id,
-                                'course_name' => $course_info->course_name,
-                                'school_name' => $course_info->school_name,
-                                'term' => $course_info->term,
-                                'instructor_name' => $course_info->instructor_name,
-                                'number_of_enrolled_students' => 1,
-                                'created_at' => now(),
-                                'updated_at' => now()];
-                            DB::table('data_shops_enrollments')->insert($data);
-                        } else {
-                            DB::table('data_shops_enrollments')->where(['course_id' => $course_id])
-                                ->update(['number_of_enrolled_students' => $data_shops_enrollment->number_of_enrolled_students + 1,
-                                    'updated_at' => now()]);
-                        }
-                    } catch (Exception $e) {
-                        $h = new Handler(app());
-                        $h->report($e);
-                    }
-                }
+                $enrollment->completeEnrollmentDetails($request->user()->id, $section, $course_id, $actual_student);
 
-
-                $notification_exists = DB::table('notifications')->where('user_id', $request->user()->id)->first();
-                if ($actual_student && !$notification_exists) {
-                    $notification_data = [
-                        'user_id' => $request->user()->id,
-                        'hours_until_due' => 24,
-                        'created_at' => now(),
-                        'updated_at' => now()];
-                    DB::table('notifications')->insert($notification_data);
-                }
                 $response['type'] = 'success';
                 $response['message'] = "You are now enrolled in <strong>$course_section_name</strong>.";
                 DB::commit();

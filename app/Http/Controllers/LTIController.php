@@ -7,6 +7,7 @@ use App\Exceptions\Handler;
 use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\LtiToken;
+use App\Section;
 use App\User;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
+use Overrides\IMSGlobal\LTI\LTI_Names_Roles_Provisioning_Service;
 use stdClass;
 
 
@@ -143,8 +145,8 @@ class LTIController extends Controller
 
             if ($launch->is_deep_link_launch()) {
                 //this configures the Deep Link
-                $is_moodle = strpos($launch->get_launch_data()['iss'],'moodle') !== false;
-                if ($is_moodle){
+                $is_moodle = strpos($launch->get_launch_data()['iss'], 'moodle') !== false;
+                if ($is_moodle) {
                     //moodle needs the custom params to be some sort of object (even though it's really empty).  As a hack I'm just sending them
                     $resource = LTI\LTI_Deep_Link_Resource::new()
                         ->set_url($url)
@@ -169,8 +171,11 @@ class LTIController extends Controller
                 echo "We can't seem to get this user's email.  Typically this happens if you're trying to connect in Student View mode or if you neglected to set the Privacy Level to Public when configuring this tool.";
                 exit;
             }
-
-            $lti_user = $user->where('email', $email)->first();
+            $sub = $launch->get_launch_data()['sub'];
+            $lti_user = $user->where('email', $sub)->first();
+            if (!$lti_user) {
+                $lti_user = $user->where('email', $email)->first();
+            }
             if (!$lti_user) {
                 $lti_user = User::create([
                     'first_name' => $launch->get_launch_data()['given_name'],
@@ -178,8 +183,15 @@ class LTIController extends Controller
                     'email' => $email,
                     'role' => 3,
                     'time_zone' => 'America/Los_Angeles',
+                    'sub' => $sub,
                     'email_verified_at' => now(),
                 ]);
+            } else {
+                ///eventually I shouldn't need the following code since they'll all be new
+                if (!$lti_user->sub) {
+                    $lti_user->lms_user_id = $sub;
+                    $lti_user->save();
+                }
             }
             DB::table('users')->where('instructor_user_id', $lti_user->id)->update(['instructor_user_id' => null]);
             session()->forget('original_user_id');
@@ -253,6 +265,29 @@ class LTIController extends Controller
                         $ltiGradePassback->where('user_id', $lti_user->id)
                             ->where('assignment_id', $linked_assignment->id)
                             ->update(['launch_id' => $launch_id]);
+                    }
+                    $courses = DB::table('assignments')
+                        ->join('courses', 'courses.id', '=', 'assignments.course_id')
+                        ->join('sections', 'courses.id', '=', 'sections.course_id')
+                        ->join('users','courses.user_id','=','users.id')
+                        ->where('assignments.id', $linked_assignment->id)
+                        ->select('courses.id AS course_id','users.time_zone AS instructor_time_zone')
+                        ->get();
+                    if (count($courses) === 1) {
+                        $course = $courses[0];
+                        $course_id = $course->course_id;
+                        $Section = new Section();
+                        $section = $Section->where('course_id', $course_id)->first();
+                        if ($section->course->enrollments->isNotEmpty()) {
+                            $enrolled_user_ids = $section->course->enrollments->pluck('user_id')->toArray();
+                            if (!in_array($lti_user->id, $enrolled_user_ids)) {
+                                $lti_user->time_zone = $course->instructor_time_zone;
+                                $lti_user->student_id = $sub;
+                                $lti_user->save();
+                                $enrollment = new Enrollment();
+                                $enrollment->completeEnrollmentDetails($lti_user->id, $section, $course_id, !$lti_user->fake_student);
+                            }
+                        }
                     }
                 }
                 return $lms_launch_in_new_window ?
@@ -369,7 +404,8 @@ class LTIController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getTokenByLtiTokenId(Request $request, LtiToken $LtiToken)
+    public
+    function getTokenByLtiTokenId(Request $request, LtiToken $LtiToken)
     {
 
         $response['type'] = 'error';
@@ -390,7 +426,8 @@ class LTIController extends Controller
 
     }
 
-    public function refreshToken()
+    public
+    function refreshToken()
     {
         $response['type'] = 'error';
         try {
