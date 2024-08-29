@@ -178,7 +178,7 @@ class AssignmentSyncQuestion extends Model
             'points' => $points, //don't need to test since tested already when creating an assignment
             'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
             'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
-            'open_ended_submission_type' => $open_ended_submission_type,
+            'open_ended_submission_type' => $question->isDiscussIt() ? 0 : $open_ended_submission_type,
             'discuss_it_settings' => $question->getDefaultDiscussItSettings($assignment),
             'open_ended_text_editor' => $open_ended_text_editor];
 
@@ -280,7 +280,7 @@ class AssignmentSyncQuestion extends Model
                 'points' => $points,
                 'weight' => $weight,
                 'question_revision_id' => $question_revision_id,
-                'open_ended_submission_type' => $open_ended_submission_type,
+                'open_ended_submission_type' => $question->isDiscussIt() ? 0 : $open_ended_submission_type,
                 'discuss_it_settings' => $question->getDefaultDiscussItSettings($assignment),
                 'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                 'open_ended_text_editor' => $open_ended_text_editor]);

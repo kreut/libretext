@@ -1884,7 +1884,7 @@
                 </a>
               </b-row>
             </div>
-            <b-form-row v-if="instructorInNonBasicView() && openEndedSubmissionTypeAllowed" style="margin-left:0">
+            <b-form-row v-if="instructorInNonBasicView() && openEndedSubmissionTypeAllowed && !isDiscussIt()" style="margin-left:0">
               <span class="pr-2">
                 Open-Ended Submission Type:
               </span>

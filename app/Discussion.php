@@ -60,9 +60,9 @@ class Discussion extends Model
      * @param string $media_upload_id
      * @return array
      */
-    public function getByAssignmentQuestionMediaUploadId(Assignment          $assignment,
-                                                         Question            $question,
-                                                         string              $media_upload_id): array
+    public function getByAssignmentQuestionMediaUploadId(Assignment $assignment,
+                                                         Question   $question,
+                                                         string     $media_upload_id): array
     {
 
         $questionMediaUpload = new QuestionMediaUpload();
@@ -70,12 +70,14 @@ class Discussion extends Model
         $enrolled_students = DB::table('users')
             ->whereIn('id', $enrolled_student_ids)
             ->orWhere('id', $assignment->course->user_id)
-            ->select('id', DB::raw('CONCAT(first_name, " " , last_name) AS name'))
+            ->select('id', DB::raw('CONCAT(first_name, " " , last_name) AS name'), 'time_zone')
             ->get();
         $enrolled_students_by_user_id = [];
         foreach ($enrolled_students as $enrolled_student) {
             $enrolled_students_by_user_id[$enrolled_student->id] = $enrolled_student->name;
+            $enrolled_student_time_zones_by_user_id[$enrolled_student->id] = $enrolled_student->time_zone;
         }
+
 
         $discussion_infos = $this->join('discussion_comments', 'discussions.id', '=', 'discussion_comments.discussion_id')
             ->where('assignment_id', $assignment->id)
@@ -104,7 +106,7 @@ class Discussion extends Model
             if (!isset($discussions[$discussion_id])) {
                 $discussions[$discussion_id] = [
                     'id' => $discussion_id,
-                    'created_at' => $this->_formatDate($value->discussion_created_at),
+                    'created_at' => $this->_formatDate($value->discussion_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_user_id]),
                     'started_by' => $enrolled_students_by_user_id[$value->discussion_user_id],
                     'comments' => []
                 ];
@@ -116,7 +118,7 @@ class Discussion extends Model
                 'text' => $question->addTimeToS3Images($value->text, $htmlDom, false),
                 'file' => $value->file,
                 'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
-                'created_at' => $this->_formatDate($value->comment_created_at)];
+                'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_user_id])];
             if (!isset($discussions_by_user_id[$value->discussion_comments_user_id])) {
                 $discussions_by_user_id[$value->discussion_comments_user_id] = [
                     'user_id' => $value->discussion_comments_user_id,
@@ -127,7 +129,7 @@ class Discussion extends Model
                 'discussion_id' => $discussion_id,
                 'text' => $question->addTimeToS3Images($value->text, $htmlDom, false),
                 'file' => $value->file,
-                'created_at' => $this->_formatDate($value->comment_created_at)
+                'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_comments_user_id])
             ];
         }
 
@@ -139,11 +141,14 @@ class Discussion extends Model
 
     /**
      * @param $date
+     * @param $time_zone
      * @return string
      */
-    private function _formatDate($date): string
+    private function _formatDate($date, $time_zone): string
     {
-        return Carbon::parse($date)->format('n/j/y \a\t g:iA');
+        return Carbon::parse($date)
+            ->setTimezone($time_zone)
+            ->format('n/j/y \a\t g:iA', $time_zone);
 
     }
 }

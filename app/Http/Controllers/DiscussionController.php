@@ -76,10 +76,8 @@ class DiscussionController extends Controller
                 $discussion->user_id = $request->user()->id;
                 $discussion->media_upload_id = $media_upload_id;
                 $discussion->save();
-                $message = 'You have started a new discussion.';
             } else {
                 $discussion = Discussion::find($discussion_id);
-                $message = 'Thank you for adding your comment!';
             }
             $discuss_it_settings = json_decode($assignmentSyncQuestion->discussItSettings($assignment->id, $question->id));
             $discussionComment = new DiscussionComment();
