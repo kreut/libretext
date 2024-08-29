@@ -269,9 +269,9 @@ class LTIController extends Controller
                     $courses = DB::table('assignments')
                         ->join('courses', 'courses.id', '=', 'assignments.course_id')
                         ->join('sections', 'courses.id', '=', 'sections.course_id')
-                        ->join('users','courses.user_id','=','users.id')
+                        ->join('users', 'courses.user_id', '=', 'users.id')
                         ->where('assignments.id', $linked_assignment->id)
-                        ->select('courses.id AS course_id','users.time_zone AS instructor_time_zone')
+                        ->select('courses.id AS course_id', 'users.time_zone AS instructor_time_zone')
                         ->get();
                     if (count($courses) === 1) {
                         $course = $courses[0];
@@ -286,6 +286,11 @@ class LTIController extends Controller
                                 $lti_user->save();
                                 $enrollment = new Enrollment();
                                 $enrollment->completeEnrollmentDetails($lti_user->id, $section, $course_id, !$lti_user->fake_student);
+                                $assignment = Assignment::find($linked_assignment->id);
+                                if (!$assignment->shown) {
+                                    $assignment->shown = 1;
+                                    $assignment->save();
+                                }
                             }
                         }
                     }
