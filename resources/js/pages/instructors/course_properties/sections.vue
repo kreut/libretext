@@ -235,59 +235,6 @@
               </div>
             </b-card-text>
           </b-card>
-          <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Whitelisted Domains</h2>" class="mt-3">
-            <b-tooltip target="whitelisted_domains_tooltip">
-              <p>
-                The whitelisted domains determine acceptable emails for students in your course. For example, if you
-                just want to accept
-                mySchool.edu
-                email addresses, you can whitelist mySchool.edu.
-              </p>
-              <p>
-                Then, only students using email addresses that contain mySchool.edu will be able to enroll.
-              </p>
-            </b-tooltip>
-            <b-card-text>
-              <p>When students register, they must register using one of the whitelisted domains below.</p>
-              <b-form-group
-                v-if="user.role"
-                label-cols-sm="4"
-                label-cols-lg="3"
-                label-for="whitelisted_domains"
-              >
-                <template v-slot:label>
-                  Whitelisted Domains
-                  <QuestionCircleTooltip id="whitelisted_domains_tooltip" />
-                </template>
-                <b-form-row class="mt-2">
-                  <b-form-input
-                    id="tags"
-                    v-model="whitelistedDomain"
-                    style="width:200px"
-                    type="text"
-                    required
-                    class="mr-2"
-                    size="sm"
-                  />
-                  <b-button variant="outline-primary" size="sm" @click="addWhitelistedDomain(whitelistedDomain)">
-                    Add whitelisted domain
-                  </b-button>
-                </b-form-row>
-                <div class="d-flex flex-row">
-                  <span v-for="chosenWhitelistedDomain in whitelistedDomains" :key="chosenWhitelistedDomain.id"
-                        class="mt-2"
-                  >
-                    <b-button size="sm"
-                              variant="secondary"
-                              class="mr-2"
-                              style="line-height:.8"
-                              @click="removeWhitelistedDomain(chosenWhitelistedDomain)"
-                    ><span v-html="chosenWhitelistedDomain.whitelisted_domain" /> x</b-button>
-                  </span>
-                </div>
-              </b-form-group>
-            </b-card-text>
-          </b-card>
         </div>
       </div>
     </div>
@@ -317,8 +264,6 @@ export default {
     return { title: 'Course Sections' }
   },
   data: () => ({
-    whitelistedDomain: '',
-    whitelistedDomains: [],
     copyIcon: faCopy,
     allFormErrors: [],
     isLMS: false,
@@ -356,48 +301,9 @@ export default {
     this.courseId = this.$route.params.courseId
     await this.getSections(this.courseId)
     await this.canCreateStudentAccessCodes()
-    await this.getWhitelistedDomains()
     this.isLoading = false
   },
   methods: {
-    async getWhitelistedDomains () {
-      try {
-        const { data } = await axios.get(`/api/whitelisted-domains/${this.courseId}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.whitelistedDomains = data.whitelisted_domains
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async addWhitelistedDomain (whitelistedDomain) {
-      if (!whitelistedDomain) {
-        this.$noty.info('Please add a domain.')
-        return false
-      }
-      whitelistedDomain = whitelistedDomain.replace(/(.*)@/, '')
-      try {
-        const { data } = await axios.post(`/api/whitelisted-domains/${this.courseId}`, { whitelisted_domain: whitelistedDomain })
-        this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          this.whitelistedDomain = ''
-        }
-        await this.getWhitelistedDomains()
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async removeWhitelistedDomain (whitelistedDomain) {
-      try {
-        const { data } = await axios.delete(`/api/whitelisted-domains/${whitelistedDomain.id}`)
-        this.$noty[data.type](data.message)
-        await this.getWhitelistedDomains()
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     async canCreateStudentAccessCodes () {
       try {
         const { data } = await axios.get('/api/sections/can-create-student-access-codes')
