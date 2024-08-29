@@ -113,6 +113,15 @@ export default {
   },
   methods: {
     formatKey (key) {
+      if (key === 'grade_passbacks') {
+        return 'Assignment Grades Passed Back'
+      }
+      if (key === 'live_lms_courses') {
+        return 'Live LMS courses'
+      }
+      if (key === 'live_non_lms_courses') {
+        return 'Live Non-LMS courses'
+      }
       const words = key.split('_')
       for (let i = 0; i < words.length; i++) {
         words[i] = words[i][0].toUpperCase() + words[i].substring(1)

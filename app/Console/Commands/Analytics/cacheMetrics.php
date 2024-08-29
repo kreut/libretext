@@ -50,7 +50,6 @@ class cacheMetrics extends Command
     public function handle(Question $question, User $user, DataShop $dataShop): int
     {
         try {
-
             $cell_data = DB::table('data_shops_enrollments')
                 ->join('courses', 'data_shops_enrollments.course_id', '=', 'courses.id')
                 ->leftJoin('disciplines', 'courses.discipline_id', '=', 'disciplines.id')
@@ -107,20 +106,9 @@ class cacheMetrics extends Command
              $real_courses = count($courses);
             */
 
-            $live_courses = Course::select('courses.name', 'users.first_name', 'users.last_name')
-                ->join('users', 'courses.user_id', '=', 'users.id')
-                ->where('courses.user_id', '<>', $my_id)
-                ->whereIn('courses.id', function ($query) {
-                    $query->select('course_id')
-                        ->from('users')
-                        ->join('enrollments', 'users.id', '=', 'enrollments.user_id')
-                        ->where([
-                            ['users.fake_student', 0],
-                            ['users.last_name', '<>', 'Kean'],
-                        ])
-                        ->groupBy('course_id');
-                })->count();
-
+            $live_courses = $this->_liveCoursesQuery($my_id, [0,1]);
+            $live_lms_courses = $this->_liveCoursesQuery($my_id, [1]);
+            $live_non_lms_courses = $this->_liveCoursesQuery($my_id, [0]);
 
             $grade_passbacks = DB::table('lti_grade_passbacks')->max('id');
             $LTI_schools = DB::table('lti_registrations')
@@ -133,6 +121,8 @@ class cacheMetrics extends Command
                 'questions',
                 'campuses',
                 'live_courses',
+                'live_lms_courses',
+                'live_non_lms_courses',
                 'grade_passbacks',
                 'LTI_schools',
                 'open_ended_submissions',
@@ -149,7 +139,23 @@ class cacheMetrics extends Command
         return 1;
     }
 
-
+    private function _liveCoursesQuery(int $my_id, array $lms)
+    {
+        return Course::select('courses.name', 'users.first_name', 'users.last_name')
+            ->join('users', 'courses.user_id', '=', 'users.id')
+            ->where('courses.user_id', '<>', $my_id)
+            ->whereIN('courses.lms', $lms)
+            ->whereIn('courses.id', function ($query) {
+                $query->select('course_id')
+                    ->from('users')
+                    ->join('enrollments', 'users.id', '=', 'enrollments.user_id')
+                    ->where([
+                        ['users.fake_student', 0],
+                        ['users.last_name', '<>', 'Kean'],
+                    ])
+                    ->groupBy('course_id');
+            })->count();
+    }
     /**
      * @return int|mixed
      */
