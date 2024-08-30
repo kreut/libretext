@@ -52,7 +52,7 @@ class IsValidWhitelistedDomain implements Rule
             ->pluck('whitelisted_domain')
             ->toArray();
         foreach ($whitelisted_domains as $whitelisted_domain) {
-            if (strpos($this->email, $whitelisted_domain) !== false) {
+            if (strpos(strtolower($this->email), strtolower($whitelisted_domain)) !== false) {
                 return true;
             }
         }

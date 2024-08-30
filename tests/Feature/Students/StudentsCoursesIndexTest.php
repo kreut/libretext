@@ -39,6 +39,27 @@ class StudentsCoursesIndexTest extends TestCase
     }
 
     /** @test */
+    public function case_insensitive_email_works()
+    {
+        $whitelisted_domain = DB::table('whitelisted_domains')
+            ->where('course_id', $this->course->id)
+            ->select('whitelisted_domain')
+            ->pluck('whitelisted_domain')
+            ->first();
+        DB::table('enrollments')->delete();
+        DB::table('sections')->delete();
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id, 'access_code' => 'sdeefsdfsdf']);
+
+        $this->student_user->email = strtoupper($whitelisted_domain);
+        $this->student_user->save();
+        $this->actingAs($this->student_user)->postJson("/api/enrollments", [
+            'section_id' => $this->section->id,
+            'access_code' => $this->section->access_code
+        ])->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test */
     public function email_must_be_on_whitelisted_domain()
     {
         $whitelisted_domain = DB::table('whitelisted_domains')
