@@ -34,8 +34,7 @@ class Kernel extends ConsoleKernel
     {
 
 
-
-      $schedule->command('process:autoRelease')->everyMinute();
+        $schedule->command('process:autoRelease')->everyMinute();
 
 
         if (env('APP_ENV') === 'local') {
@@ -59,6 +58,7 @@ class Kernel extends ConsoleKernel
                 ->everyMinute();
         }
 
+        $schedule->command('remove:NoRoles')->everyMinute();
         if (env('APP_ENV') === 'production') {
             if (!env('APP_VAPOR')) {
                 $schedule->command('db:backup')->twiceDaily();
