@@ -51,6 +51,8 @@ class ProcessTranscribe implements ShouldQueue
     public function handle()
     {
 
+
+
         switch ($this->upload_type) {
             case('question_media_upload'):
                 $s3_key_column = 's3_key';
@@ -66,22 +68,22 @@ class ProcessTranscribe implements ShouldQueue
         $upload_type_model = $uploadTypeModel->where($s3_key_column, $this->s3_key)->first();
 
         $supportedFormats = ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm'];
-        $fileExtension = pathinfo($this->s3_key, PATHINFO_EXTENSION);
-        if (!in_array(strtolower($fileExtension), $supportedFormats)) {
+        $file_extension = pathinfo($this->s3_key, PATHINFO_EXTENSION);
+        if (!in_array(strtolower($file_extension), $supportedFormats)) {
             $upload_type_model->status = "completed";
             $upload_type_model->save();
             exit;
         }
 
         try {
-            $efs_dir ="/mnt/local/";
+            $efs_dir = "/mnt/local/";
             $is_efs = is_dir($efs_dir);
             $storage_path = $is_efs
                 ? $efs_dir
                 : Storage::disk('local')->getAdapter()->getPathPrefix();
 
             $s3_dir = (new QuestionMediaUpload)->getDir();
-            $question_media_dir = $storage_path.$s3_dir;
+            $question_media_dir = $storage_path . $s3_dir;
             $media_upload_path = "$question_media_dir/$this->s3_key";
             if (!is_dir($question_media_dir)) {
                 mkdir($question_media_dir);
@@ -95,16 +97,23 @@ class ProcessTranscribe implements ShouldQueue
                 $upload_type_model->save();
                 throw new Exception($message);
             }
-            $media_content = Storage::disk('s3')->get($s3_key);
+            $adapter = Storage::disk('s3')->getDriver()->getAdapter(); // Get the filesystem adapter
+            $client = $adapter->getClient(); // Get the aws client
+            $bucket = $adapter->getBucket(); // Get the current bucket
+            $client->getObject([
+                'Bucket' => $bucket,
+                'Key' => $s3_key,
+                'SaveAs' => $media_upload_path,
+            ]);
             $upload_type_model->status = "getting file";
+            $upload_type_model->message = "";
+            $upload_type_model->transcript = "";
             $upload_type_model->save();
-
-            file_put_contents($media_upload_path, $media_content);
 
 
             $upload_type_model->status = "transcribing";
             $upload_type_model->save();
-            $transcript = $this->transcribeWithWhisper($media_upload_path);
+            $transcript = $this->transcribeWithWhisper($media_upload_path, $s3_key, $upload_type_model);
             $upload_type_model->status = "saving vtt to database";
             $upload_type_model->transcript = $transcript;
             $upload_type_model->save();
@@ -130,26 +139,144 @@ class ProcessTranscribe implements ShouldQueue
 
     /**
      * @param $media_upload_path
-     * @return bool|string
+     * @param $s3_key
+     * @param $upload_type_model
+     * @return string
      * @throws Exception
      */
-    function transcribeWithWhisper($media_upload_path)
+    function transcribeWithWhisper($media_upload_path, $s3_key, $upload_type_model): string
     {
         $openai = new OpenAi(config('myconfig.openai_api_key'));
-        if (!file_exists($media_upload_path)) {
-            throw new Exception("$media_upload_path does not exist.");
-        }
-        $cFile = curl_file_create($media_upload_path);
-        $response = $openai->transcribe([
-            "model" => "whisper-1",
-            "file" => $cFile,
-            "response_format" => "vtt"
-        ]);
-        $json_response = json_decode($response);
-        if ($json_response && $json_response->error) {
-            throw new Exception($response);
-        }
-        return $response;
 
+        // Split the video into smaller chunks using FFmpeg
+        $output_dir = pathinfo($media_upload_path, PATHINFO_DIRNAME);
+        $file_extension = pathinfo($s3_key, PATHINFO_EXTENSION);
+        $identifier = pathinfo($s3_key, PATHINFO_FILENAME);
+        $output_file_pattern = "$output_dir/$identifier-chunk_%03d.$file_extension";
+
+        $command = "ffmpeg -i $media_upload_path -c copy -map 0 -loglevel error -segment_time 30 -f segment $output_file_pattern";
+        list($returnValue, $output, $errorOutput) = $this->runFfmpegCommand($command);
+
+        if ($returnValue !== 0) {
+            throw new Exception ("FFmpeg error processing $s3_key: $errorOutput)");
+        }
+
+        $transcripts = [];
+        foreach (glob("$output_dir/$identifier-chunk_*.$file_extension") as $key => $chunk) {
+            $upload_type_model->message = "Transcribing chunk $key";
+            $upload_type_model->save();
+            $cFile = curl_file_create($chunk);
+            $response = $openai->transcribe([
+                "model" => "whisper-1",
+                "file" => $cFile,
+                "response_format" => "vtt"
+            ]);
+
+            $json_response = json_decode($response);
+            if ($json_response && isset($json_response->error)) {
+                throw new Exception($response);
+            }
+
+            $transcripts[] = $response;
+            $upload_type_model->message = "Transcribed chunk $key";
+            $upload_type_model->save();
+        }
+
+
+        $transcript = $this->mergeVTTChunks($transcripts);
+        // Log::info($transcript);
+        $upload_type_model->message = "Finished transcription";
+        $upload_type_model->save();
+        return $transcript;
     }
+
+    function mergeVTTChunks(array $transcripts): string
+    {
+
+        $totalTime = 0;
+        $finalVttContent = '';
+        foreach ($transcripts as $transcript) {
+            $lines = explode("\n", $transcript);
+            $first_timing = '';
+            $current_timing = '';
+            $end = 0;
+
+            foreach ($lines as $line) {
+                if (preg_match('/(\d{2}):(\d{2}):(\d{2})\.(\d{3}) --> (\d{2}):(\d{2}):(\d{2})\.(\d{3})/', $line, $matches)) {
+                    $start = $this->convertToMilliseconds($matches[1], $matches[2], $matches[3], $matches[4]) + $totalTime;
+                    $end = $this->convertToMilliseconds($matches[5], $matches[6], $matches[7], $matches[8]) + $totalTime;
+                    $adjustedStart = $this->convertToVttTimestamp($start);
+                    $adjustedEnd = $this->convertToVttTimestamp($end);
+                    $current_timing = "$adjustedStart --> $adjustedEnd\n";
+                    if (!$first_timing) {
+                        $first_timing = "$current_timing";
+                    }
+                    $finalVttContent .= "$current_timing";
+
+                } else {
+                    $finalVttContent .= $line . "\n";
+                }
+            }
+
+            // Calculate the total time duration of the current chunk and add to the total time
+            if (preg_match('/(\d{2}):(\d{2}):(\d{2})\.(\d{3}) --> (\d{2}):(\d{2}):(\d{2})\.(\d{3})/', $first_timing, $matches)) {
+                $start = $this->convertToMilliseconds($matches[1], $matches[2], $matches[3], $matches[4]);
+                if (preg_match('/(\d{2}):(\d{2}):(\d{2})\.(\d{3}) --> (\d{2}):(\d{2}):(\d{2})\.(\d{3})/', $current_timing, $matches)) {
+                    $end = $this->convertToMilliseconds($matches[5], $matches[6], $matches[7], $matches[8]);
+                }
+                $totalTime += $end - $start;
+
+            }
+        }
+        $finalVttContent = str_replace("WEBVTT\n\n", '', $finalVttContent);
+        $finalVttContent = str_replace("\n\n\n", "\n\n", $finalVttContent);
+        return "WEBVTT\n\n$finalVttContent";
+    }
+
+    function convertToMilliseconds($hours, $minutes, $seconds, $milliseconds)
+    {
+        return ($hours * 3600 + $minutes * 60 + $seconds) * 1000 + $milliseconds;
+    }
+
+    function convertToVttTimestamp($milliseconds): string
+    {
+        $hours = floor($milliseconds / 3600000);
+        $milliseconds -= $hours * 3600000;
+        $minutes = floor($milliseconds / 60000);
+        $milliseconds -= $minutes * 60000;
+        $seconds = floor($milliseconds / 1000);
+        $milliseconds -= $seconds * 1000;
+
+        return sprintf('%02d:%02d:%02d.%03d', $hours, $minutes, $seconds, $milliseconds);
+    }
+
+    /**
+     * @param $command
+     * @return array
+     * @throws Exception
+     */
+    function runFfmpegCommand($command): array
+    {
+        $descriptorspec = [
+            1 => ['pipe', 'w'],  // stdout is a pipe that the child will write to
+            2 => ['pipe', 'w'],  // stderr is a pipe that the child will write to
+        ];
+
+        $process = proc_open($command, $descriptorspec, $pipes);
+
+        if (!is_resource($process)) {
+            throw new Exception("Failed to start ffmpeg process");
+        }
+
+        $output = stream_get_contents($pipes[1]);
+        $errorOutput = stream_get_contents($pipes[2]);
+
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $returnValue = proc_close($process);
+
+        return [$returnValue, $output, $errorOutput];
+    }
+
 }
