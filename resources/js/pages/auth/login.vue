@@ -1,6 +1,22 @@
 <template>
   <div class="row pb-5">
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-login'"/>
+    <b-modal id="modal-form-errors-login"
+             title="Incorrect Credentials"
+             no-close-on-backdrop
+    >
+      Your credentials do not match anyone in our system. Please either try again or
+      <router-link :to="{ name: 'password.request' }" class="ml-auto my-auto">
+        reset your password
+      </router-link>
+      if you have forgotten it.
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary"
+                  @click="$bvModal.hide('modal-form-errors-login')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <div class="col-lg-8 m-auto">
       <form v-if="!inIFrame" @submit.prevent="login" @keydown="form.onKeydown($event)">
         <!-- Email -->
@@ -58,7 +74,7 @@
               </checkbox>
 
               <router-link :to="{ name: 'password.request' }" class="small ml-auto my-auto">
-                {{ $t('forgot_password') }}
+                Reset Password
               </router-link>
             </div>
           </div>
@@ -93,7 +109,6 @@
 <script>
 import Form from 'vform'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
-import AllFormErrors from '~/components/AllFormErrors'
 import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
 import ErrorMessage from '../../components/ErrorMessage.vue'
@@ -102,8 +117,7 @@ export default {
   middleware: 'guest',
   components: {
     ErrorMessage,
-    LoginWithLibretexts,
-    AllFormErrors
+    LoginWithLibretexts
   },
 
   metaInfo () {
@@ -111,7 +125,6 @@ export default {
   },
 
   data: () => ({
-    allFormErrors: [],
     form: new Form({
       email: '',
       password: ''
@@ -153,7 +166,6 @@ export default {
       } catch (error) {
         if (error.message.includes('status code 422')) {
           fixInvalid()
-          this.allFormErrors = this.form.errors.flatten()
           this.$bvModal.show('modal-form-errors-login')
         }
       }
