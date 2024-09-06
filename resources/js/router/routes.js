@@ -209,6 +209,7 @@ let control_panel_paths = [
     ]
   }]
 let general_paths = [
+  { path: '/beta-course-test', name: 'BetaCourseTest', component: page('beta_course_test.vue') },
   {
     path: '/pending-question-ownership-transfer-request/:action/:token',
     name: 'QuestionOwnershipTransferRequest',
