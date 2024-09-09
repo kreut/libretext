@@ -103,7 +103,7 @@
 <script>
 import Form from 'vform'
 import { mapGetters } from 'vuex'
-import { getTimeZones} from '~/helpers/TimeZones'
+import { getTimeZones } from '~/helpers/TimeZones'
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 
