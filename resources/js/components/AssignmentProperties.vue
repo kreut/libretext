@@ -572,7 +572,7 @@
           </b-form-group>
           <div v-show="form.source === 'a'">
             <b-form-group
-              v-show="showDefaultPointsPerQuestion"
+              v-show="false"
               label-cols-sm="4"
               label-cols-lg="3"
               label-for="default_points_per_question"
