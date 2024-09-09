@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :modal-id="'modal-form-errors-comments'" :all-form-errors="allFormErrors" />
-    <AllFormErrors :modal-id="'modal-form-errors-discussion-settings'" :all-form-errors="allFormErrors" />
+    <AllFormErrors :modal-id="'modal-form-errors-comments'" :all-form-errors="allFormErrors"/>
+    <AllFormErrors :modal-id="'modal-form-errors-discussion-settings'" :all-form-errors="allFormErrors"/>
     <b-modal id="modal-cannot-delete-comment"
              title="Cannot delete comment"
              size="lg"
@@ -45,20 +45,20 @@
     >
       <table class="table table-striped">
         <thead>
-          <tr>
-            <th scope="col">
-              Description
-            </th>
-            <th scope="col">
-              Minimum Number Required
-            </th>
-            <th scope="col">
-              Number Submitted
-            </th>
-            <th scope="col">
-              Requirement Satisfied
-            </th>
-          </tr>
+        <tr>
+          <th scope="col">
+            Description
+          </th>
+          <th scope="col">
+            Minimum Number Required
+          </th>
+          <th scope="col">
+            Number Submitted
+          </th>
+          <th scope="col">
+            Requirement Satisfied
+          </th>
+        </tr>
         </thead>
         <tr
           v-show="completionRequirements.find(item => item.key === 'min_number_of_discussion_threads')"
@@ -146,7 +146,7 @@
         {{ alreadyScoredWarning }}
       </b-alert>
       <p>Please confirm that would like to delete the comment {{ confirmDeleteCommentText }}:</p>
-      <div v-show="activeDiscussionComment.text" v-html="activeDiscussionComment.text" />
+      <div v-show="activeDiscussionComment.text" v-html="activeDiscussionComment.text"/>
       <div v-if="activeDiscussionComment.file">
         <iframe
           v-resize="{ log: false }"
@@ -196,6 +196,13 @@
       />
 
       <div v-if="commentType === 'audio'">
+        <DiscussItCommentUpload v-if="reRecording"
+                                :key="'re-record-audio'"
+                                :comment-type="'audio'"
+                                :assignment-id="assignmentId"
+                                :question-id="questionId"
+                                @saveUploadedAudioVideoComment="saveUploadedAudioVideoComment"
+        />
         <audio-recorder
           v-if="reRecording"
           id="discuss-it-recorder"
@@ -213,6 +220,13 @@
         />
       </div>
       <div v-if="commentType === 'video'">
+        <DiscussItCommentUpload v-if="reRecording"
+                                :key="'re-record-video'"
+                                :comment-type="'video'"
+                                :assignment-id="assignmentId"
+                                :question-id="questionId"
+                                @saveUploadedAudioVideoComment="saveUploadedAudioVideoComment"
+        />
         <WebCam v-if="reRecording"
                 key="update-video-comment"
                 :assignment-id="+assignmentId"
@@ -283,7 +297,7 @@
             >
               <template #label>
                 Students can edit comments
-                <QuestionCircleTooltip id="edit-comments-tooltip" />
+                <QuestionCircleTooltip id="edit-comments-tooltip"/>
                 <b-tooltip target="edit-comments-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -307,7 +321,7 @@
                   No
                 </b-form-radio>
               </b-form-radio-group>
-              <ErrorMessage :message="discussItSettingsForm.errors.get('students_can_edit_comments')" />
+              <ErrorMessage :message="discussItSettingsForm.errors.get('students_can_edit_comments')"/>
             </b-form-group>
             <b-form-group
               label-cols-sm="5"
@@ -318,7 +332,7 @@
             >
               <template #label>
                 Students can delete comments
-                <QuestionCircleTooltip id="delete-comments-tooltip" />
+                <QuestionCircleTooltip id="delete-comments-tooltip"/>
                 <b-tooltip target="delete-comments-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -342,8 +356,8 @@
                   No
                 </b-form-radio>
               </b-form-radio-group>
-              <ErrorMessage :message="discussItSettingsForm.errors.get('students_can_delete_comments')" />
-              <has-error :form="discussItSettingsForm" field="students_can_delete_comments" />
+              <ErrorMessage :message="discussItSettingsForm.errors.get('students_can_delete_comments')"/>
+              <has-error :form="discussItSettingsForm" field="students_can_delete_comments"/>
             </b-form-group>
           </b-card-text>
         </b-card>
@@ -365,7 +379,7 @@
               >
                 <template #label>
                   Participate in at least
-                  <QuestionCircleTooltip :id="'discussion-thread-tooltip'" />
+                  <QuestionCircleTooltip :id="'discussion-thread-tooltip'"/>
                   <b-tooltip target="discussion-thread-tooltip" triggers="hover focus" delay="500">
                     A discussion thread can be started by either you or any student. Students then add text or
                     audio/video
@@ -399,7 +413,7 @@
               >
                 <template #label>
                   Submit at least
-                  <QuestionCircleTooltip :id="'discussion-thread-tooltip'" />
+                  <QuestionCircleTooltip :id="'discussion-thread-tooltip'"/>
                   <b-tooltip target="discussion-thread-tooltip" triggers="hover focus" delay="500">
                     You or any of your students can submit comments. Each comment can be text or audio/video. Comments
                     are
@@ -418,7 +432,7 @@
                                 @keydown="discussItSettingsForm.errors.clear('min_number_of_comments')"
                   />
                 </b-input-group>
-                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_comments')" />
+                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_comments')"/>
               </b-form-group>
               <div class="pb-1 flex d-inline-flex col-form-label col-form-label-sm">
                 <label for="response-modes" class="mr-2">Students may respond using:
@@ -440,10 +454,10 @@
                   text-field="name"
                   @change="discussItSettingsForm.errors.clear('response_modes')"
                 />
-                <ErrorMessage :message="discussItSettingsForm.errors.get('response_modes')" />
+                <ErrorMessage :message="discussItSettingsForm.errors.get('response_modes')"/>
               </div>
               <div v-show="getAudioVideoLabel()" class="pb-2 col-form-label col-form-label-sm">
-                A comment will receive credit towards completion if either:
+                A comment will receive credit towards completion if:
               </div>
               <b-form-group
                 v-show="discussItSettingsForm.response_modes && discussItSettingsForm.response_modes.includes('text')"
@@ -464,7 +478,7 @@
                                 @keydown="discussItSettingsForm.errors.clear('min_number_of_words')"
                   />
                 </b-input-group>
-                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_words')" />
+                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_words')"/>
               </b-form-group>
               <b-form-group
                 v-show="getAudioVideoLabel()"
@@ -485,13 +499,13 @@
                               :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_length_of_audio_video') }"
                               @keydown="discussItSettingsForm.errors.clear('min_length_of_audio_video')"
                 />
-                <ErrorMessage :message="discussItSettingsForm.errors.get('min_length_of_audio_video')" />
+                <ErrorMessage :message="discussItSettingsForm.errors.get('min_length_of_audio_video')"/>
               </b-form-group>
               <b-form-radio-group v-model="discussItSettingsForm.auto_grade"
                                   class="mb-2"
               >
                 <label class="col-sm-5 col-lg-4 col-form-label col-form-label-sm text-right">Auto-grade
-                  <QuestionCircleTooltip :id="'autograde-tooltip'" />
+                  <QuestionCircleTooltip :id="'autograde-tooltip'"/>
                   <b-tooltip target="autograde-tooltip" triggers="hover focus" delay="500">
                     If you choose "yes", once a student completes the criteria above, they will get full credit for the
                     question.
@@ -578,6 +592,12 @@
                                          :show-satisfies-requirement-timer="showSatisfiesRequirementTimer"
                                          @setRequirementSatisfied="setRequirementSatisfied"
           />
+          <DiscussItCommentUpload :key="'new-audio'"
+                                  :comment-type="'audio'"
+                                  :assignment-id="assignmentId"
+                                  :question-id="questionId"
+                                  @saveUploadedAudioVideoComment="saveUploadedAudioVideoComment"
+          />
           <audio-recorder
             id="discuss-it-recorder"
             ref="recorder"
@@ -621,6 +641,12 @@
                                        :comment-type="'audio'"
                                        :show-satisfies-requirement-timer="showSatisfiesRequirementTimer"
                                        @setRequirementSatisfied="setRequirementSatisfied"
+        />
+        <DiscussItCommentUpload :key="'new-video'"
+                                :comment-type="'video'"
+                                :assignment-id="assignmentId"
+                                :question-id="questionId"
+                                @saveUploadedAudioVideoComment="saveUploadedAudioVideoComment"
         />
         <WebCam :key="`new-comment-${commentType}`"
                 :assignment-id="+assignmentId"
@@ -668,7 +694,7 @@
     </b-modal>
 
     <b-container>
-      <div v-html="qtiJson.prompt" />
+      <div v-html="qtiJson.prompt"/>
       <hr>
       <b-row>
         <b-col :cols="previewingQuestion ? 12 : 8" class="border border-dark" :class="previewingQuestion ? '' : 'mr-2'">
@@ -700,7 +726,7 @@
             />
           </div>
           <div v-if="/\.(pdf)$/.test(currentDiscussionMedia.s3_key)">
-            <VuePdfEmbed annotation-layer text-layer :source="currentDiscussionMedia.temporary_url" />
+            <VuePdfEmbed annotation-layer text-layer :source="currentDiscussionMedia.temporary_url"/>
           </div>
           <div v-if="currentDiscussionMedia.text" :class="!previewingQuestion ? 'ml-2 mr-2' : ''"
                v-html="currentDiscussionMedia.text"
@@ -714,13 +740,13 @@
                   v-for="(completionRequirement,completionRequirementIndex) in completionRequirements.filter(item =>item.show)"
                   :key="`completion-requirement-${completionRequirementIndex}`"
                 >
-                  <CompletedIcon :completed="completionRequirement.requirement_satisfied" />
+                  <CompletedIcon :completed="completionRequirement.requirement_satisfied"/>
                   <span :class="completionRequirement.requirement_satisfied ? 'text-success' : 'text-danger'">
                     {{ completionRequirement.text }} <span
-                      v-if="completionRequirement.key === 'min_number_of_comments'"
-                    >   <QuestionCircleTooltip
-                          id="min-number-of-comments-tooltip"
-                        />
+                    v-if="completionRequirement.key === 'min_number_of_comments'"
+                  >   <QuestionCircleTooltip
+                    id="min-number-of-comments-tooltip"
+                  />
                       <b-tooltip target="min-number-of-comments-tooltip"
                                  delay="250"
                                  triggers="hover focus"
@@ -728,8 +754,8 @@
                         {{ numberOfCommentsSubmittedMessage }}  <br><br>  {{ completionRequirementsToolTipText }}
                       </b-tooltip></span>
                     <span v-if="completionRequirement.key === 'min_number_of_discussion_threads'">   <QuestionCircleTooltip
-                                                                                                       id="min-number-of-threads-participated-in-tooltip"
-                                                                                                     />
+                      id="min-number-of-threads-participated-in-tooltip"
+                    />
                       <b-tooltip target="min-number-of-threads-participated-in-tooltip"
                                  delay="250"
                                  triggers="hover focus"
@@ -755,7 +781,7 @@
                 </li>
                 <li v-if="discussionCommentSubmissionResults.submission_summary.text_feedback">
                   <span class="font-weight-bold">Feedback:</span>
-                  <span v-html="discussionCommentSubmissionResults.submission_summary.text_feedback" />
+                  <span v-html="discussionCommentSubmissionResults.submission_summary.text_feedback"/>
                 </li>
                 <li v-if="discussionCommentSubmissionResults.submission_summary.file_feedback">
                   <strong>{{ discussionCommentSubmissionResults.submission_summary.file_feedback_type }} Feedback:
@@ -804,11 +830,11 @@
                 </b-button>
                 <span v-show="discussions.length>1" class="float-right">
                   <b-button variant="outline-info" size="sm" @click="showAllDiscussions">Show All</b-button> <b-button
-                    size="sm" @click="hideAllDiscussions"
-                  >Hide All</b-button>
+                  size="sm" @click="hideAllDiscussions"
+                >Hide All</b-button>
                 </span>
               </div>
-              <div class="clearfix mb-2" />
+              <div class="clearfix mb-2"/>
               <b-card v-for="(discussion, discussionIndex) in discussions" :key="`discussion-${discussionIndex}`"
                       no-body
                       class="mb-1"
@@ -817,8 +843,8 @@
                   <b-button v-b-toggle="`accordion-${discussionIndex}`" block variant="info">
                     {{ discussion.started_by }} on
                     {{ discussion.created_at }} <span class="float-right"><b-icon-eye
-                      v-show="!isOpen(discussionIndex)"
-                    /> <b-icon-eye-slash v-show="isOpen(discussionIndex)" />
+                    v-show="!isOpen(discussionIndex)"
+                  /> <b-icon-eye-slash v-show="isOpen(discussionIndex)"/>
                     </span>
                   </b-button>
                 </b-card-header>
@@ -839,9 +865,10 @@
                           :is-user="comment.created_by_user_id === user.id"
                           style="cursor: pointer"
                         />
-                        <div v-show="comment.text" v-html="comment.text" />
+                        <div v-show="comment.text" v-html="comment.text"/>
                         <span v-show="comment.file">
-                          <b-button size="sm" variant="outline-info" @click="listenOrViewComment(comment)">{{ listenOrViewCommentText(comment) }}</b-button>
+                          <b-button size="sm" variant="outline-info" @click="listenOrViewComment(comment)"
+                          >{{ listenOrViewCommentText(comment) }}</b-button>
                         </span>
                         <a :id="getTooltipTarget('editComment',comment.id)"
                            href=""
@@ -903,10 +930,12 @@ import DiscussItSatisfiesRequirement from '../DiscussItSatisfiesRequirement.vue'
 import { fixCKEditor, updateModalToggleIndex } from '~/helpers/accessibility/fixCKEditor'
 import CKEditor from 'ckeditor4-vue'
 import Transcript from '../Transcript.vue'
+import DiscussItCommentUpload from '../DiscussItCommentUpload.vue'
 
 export default {
   name: 'DiscussItViewer',
   components: {
+    DiscussItCommentUpload,
     Transcript,
     DiscussItSatisfiesRequirement,
     CompletedIcon,
@@ -1043,6 +1072,10 @@ export default {
   },
   methods: {
     updateModalToggleIndex,
+    saveUploadedAudioVideoComment (file, fileRequirementSatisfied) {
+      this.fileRequirementSatisfied = fileRequirementSatisfied
+      this.saveComment(file)
+    },
     getTooltipTarget,
     showCommentTypeOption (option) {
       return this.discussItSettingsForm.response_modes.includes(option) && this.discussItSettingsForm.response_modes.length > 1
@@ -1303,7 +1336,7 @@ export default {
       this.fileRequirementSatisfied = false
       if (comment.file.endsWith('.mp3')) {
         this.commentType = 'audio'
-      } else if (comment.file.endsWith('.webm')) {
+      } else if (comment.file.endsWith('.webm') || comment.file.endsWith('.mp4')) {
         this.commentType = 'video'
       } else {
         this.$noty.error('This file does not have an .mp3 or .mp4 extension.')

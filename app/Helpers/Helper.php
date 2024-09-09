@@ -282,4 +282,33 @@ class Helper
         return $schema_and_host;
     }
 
+    /**
+     * @param $command
+     * @return array
+     * @throws Exception
+     */
+    public static function runFfmpegCommand($command): array
+    {
+        $descriptorspec = [
+            1 => ['pipe', 'w'],  // stdout is a pipe that the child will write to
+            2 => ['pipe', 'w'],  // stderr is a pipe that the child will write to
+        ];
+
+        $process = proc_open($command, $descriptorspec, $pipes);
+
+        if (!is_resource($process)) {
+            throw new Exception("Failed to start ffmpeg process");
+        }
+
+        $output = stream_get_contents($pipes[1]);
+        $errorOutput = stream_get_contents($pipes[2]);
+
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $returnValue = proc_close($process);
+
+        return [$returnValue, $output, $errorOutput];
+    }
+
 }

@@ -178,6 +178,9 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/discussion-comments/{discussionComment}', 'DiscussionCommentController@update');
     Route::get('/discussion-comments/assignment/{assignment}/question/{question}/user/{user}/satisfied','DiscussionCommentController@satisfiedRequirements');
     Route::post('/discussion-comments/assignment/{assignment}/question/{question}/audio', 'DiscussionCommentController@storeAudioDiscussionComment');
+    Route::patch('/discussion-comments/assignment/{assignment}/question/{question}/audio-video-satisfied-file-requirements','DiscussionCommentController@audioVideoUploadSatisfiedRequirement');
+
+
 
     Route::get('/discussion-comments/{discussionComment}/deleting-will-make-requirements-not-satisfied','DiscussionCommentController@deletingWillMakeRequirementsNotSatisfied');
     Route::get('/discussions/assignment/{assignment}/question/{question}', 'DiscussionController@show');

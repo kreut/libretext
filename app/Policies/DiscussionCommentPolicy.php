@@ -83,10 +83,10 @@ class DiscussionCommentPolicy
      * @param int $question_id
      * @return Response
      */
-    public function storeAudioDiscussionComment(User $user, DiscussionComment $discussionComment, int $assignment_id, int $question_id): Response
+    public function storeAudioVideoDiscussionComment(User $user, DiscussionComment $discussionComment, int $assignment_id, int $question_id): Response
     {
         $has_access = true;
-        $message = "You may not store audio discussion comments.";
+        $message = "You may not store audio/video discussion comments.";
         $assignment = Assignment::find($assignment_id);
         switch ($user->role) {
             case(3):
@@ -105,8 +105,6 @@ class DiscussionCommentPolicy
         return $has_access
             ? Response::allow()
             : Response::deny($message);
-
-
     }
 
     /**

@@ -81,6 +81,24 @@ class DiscussionCommentTest extends TestCase
             ->patchJson("/api/question-media/{$this->discussion_comment->id}/caption/1",['model' => 'DiscussionComment'])
             ->assertJson(['message' => "You are not allowed to update this transcript."]);
     }
+
+    /** @test */
+    public function can_check_if_audio_video_satisfied_requirements_only_if_satisfy_general_submission_policy_or_it_is_instructor_assignment()
+    {
+        $this->actingAs($this->student_user)
+            ->patchJson("/api/discussion-comments/assignment/{$this->assignment->id}/question/{$this->question->id}/audio-video-satisfied-file-requirements")
+            ->assertJson(['message' => "No responses will be saved since you were not assigned to this assignment."]);
+
+        $new_user = factory(User::class)->create();
+        $new_course = factory(Course::class)->create(['user_id' => $new_user->id]);
+        $new_assignment = factory(Assignment::class)->create(['course_id' => $new_course->id]);
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/discussion-comments/assignment/{$new_assignment->id}/question/{$this->question->id}/audio-video-satisfied-file-requirements")
+            ->assertJson(['message' => "You may not store audio/video discussion comments."]);
+    }
+
+
     /** @test */
     public function can_post_audio_only_if_satisfy_general_submission_policy_or_it_is_instructor_assignment()
     {
@@ -94,7 +112,7 @@ class DiscussionCommentTest extends TestCase
 
         $this->actingAs($this->user)
             ->postJson("/api/discussion-comments/assignment/{$new_assignment->id}/question/{$this->question->id}/audio")
-            ->assertJson(['message' => "You may not store audio discussion comments."]);
+            ->assertJson(['message' => "You may not store audio/video discussion comments."]);
     }
 
     /** @test */

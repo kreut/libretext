@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\DiscussionComment;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\QuestionMediaUpload;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -155,7 +156,7 @@ class ProcessTranscribe implements ShouldQueue
         $output_file_pattern = "$output_dir/$identifier-chunk_%03d.$file_extension";
 
         $command = "ffmpeg -i $media_upload_path -c copy -map 0 -loglevel error -segment_time 30 -f segment $output_file_pattern";
-        list($returnValue, $output, $errorOutput) = $this->runFfmpegCommand($command);
+        list($returnValue, $output, $errorOutput) = Helper::runFfmpegCommand($command);
 
         if ($returnValue !== 0) {
             throw new Exception ("FFmpeg error processing $s3_key: $errorOutput)");
@@ -250,33 +251,5 @@ class ProcessTranscribe implements ShouldQueue
         return sprintf('%02d:%02d:%02d.%03d', $hours, $minutes, $seconds, $milliseconds);
     }
 
-    /**
-     * @param $command
-     * @return array
-     * @throws Exception
-     */
-    function runFfmpegCommand($command): array
-    {
-        $descriptorspec = [
-            1 => ['pipe', 'w'],  // stdout is a pipe that the child will write to
-            2 => ['pipe', 'w'],  // stderr is a pipe that the child will write to
-        ];
-
-        $process = proc_open($command, $descriptorspec, $pipes);
-
-        if (!is_resource($process)) {
-            throw new Exception("Failed to start ffmpeg process");
-        }
-
-        $output = stream_get_contents($pipes[1]);
-        $errorOutput = stream_get_contents($pipes[2]);
-
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-
-        $returnValue = proc_close($process);
-
-        return [$returnValue, $output, $errorOutput];
-    }
 
 }

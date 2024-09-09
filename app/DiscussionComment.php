@@ -5,6 +5,7 @@ namespace App;
 use App\Traits;
 use App\Helpers\Helper;
 use Carbon\Carbon;
+use Carbon\CarbonInterval;
 use DOMDocument;
 use Exception;
 use Illuminate\Database\Eloquent\Model;

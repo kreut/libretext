@@ -7,6 +7,7 @@ use App\AssignmentSyncQuestion;
 use App\Discussion;
 use App\DiscussionComment;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Http\Requests\UpdateDiscussionRequest;
 use App\Jobs\ProcessTranscribe;
 use App\Question;
@@ -16,6 +17,7 @@ use App\Submission;
 use App\SubmissionFile;
 use App\User;
 use Carbon\Carbon;
+use Carbon\CarbonInterval;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -24,10 +26,89 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use PHPUnit\TextUI\Help;
 
 class DiscussionCommentController extends Controller
 {
 
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param DiscussionComment $discussionComment
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function audioVideoUploadSatisfiedRequirement(Request                $request,
+                                                         Assignment             $assignment,
+                                                         Question               $question,
+                                                         DiscussionComment      $discussionComment,
+                                                         QuestionMediaUpload    $questionMediaUpload,
+                                                         AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('storeAudioVideoDiscussionComment', [$discussionComment, $assignment->id, $question->id]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $min_number_of_seconds_required = 0;
+            $s3_key = $request->file;
+
+            $storage_path = app()->environment('local')
+                ? app()->storagePath() . "/app/tmp"
+                : '/tmp';
+            $adapter = Storage::disk('s3')->getDriver()->getAdapter(); // Get the filesystem adapter
+            $client = $adapter->getClient(); // Get the aws client
+            $bucket = $adapter->getBucket(); // Get the current bucket
+            $path = "{$questionMediaUpload->getDir()}/$s3_key";
+            if (Storage::disk('s3')->exists($path)) {
+                $result = $client->getObject([
+                    'Bucket' => $bucket,
+                    'Key' => $path,
+                    'Range' => 'bytes=0-1048576',
+                ]);
+            } else {
+                throw new Exception ("We are unable to locate the file $path for processing.");
+            }
+
+
+            $fileContent = $result['Body'];
+            $local_file_path = $storage_path . "/partial-$s3_key";
+            file_put_contents($local_file_path, $fileContent);
+
+            $ffmpegCommand = "ffmpeg -i $local_file_path 2>&1 | grep 'Duration' | awk '{print $2}' | tr -d ,";
+            list($returnValue, $duration, $errorOutput) = Helper::runFfmpegCommand($ffmpegCommand);
+
+            if ($returnValue !== 0) {
+                throw new Exception ("FFmpeg error getting duration for $local_file_path: $errorOutput)");
+            }
+            $duration = str_replace("\n", '', $duration);
+            $duration = preg_replace('/\.\d+$/', '', $duration);
+            $time = Carbon::createFromFormat('H:i:s', $duration);
+            $total_seconds = ($time->hour * 3600) + ($time->minute * 60) + $time->second;
+
+            $discuss_it_settings = json_decode($assignmentSyncQuestion->discussItSettings($assignment->id, $question->id), 1);
+
+            if ($discuss_it_settings['min_length_of_audio_video']) {
+                $interval = CarbonInterval::fromString($discuss_it_settings['min_length_of_audio_video']);
+                $min_number_of_seconds_required = $interval->totalSeconds;
+            }
+            $response['type'] = 'success';
+            $response['file_requirement_satisfied'] = $total_seconds >= $min_number_of_seconds_required;
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to determine whether uploading this file would satisfy the requirements.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
      * @param DiscussionComment $discussionComment
@@ -35,8 +116,9 @@ class DiscussionCommentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function deletingWillMakeRequirementsNotSatisfied(DiscussionComment      $discussionComment,
-                                                             AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function deletingWillMakeRequirementsNotSatisfied(DiscussionComment      $discussionComment,
+                                                      AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         try {
             $response['type'] = 'error';
@@ -100,16 +182,17 @@ class DiscussionCommentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function storeAudioDiscussionComment(Request             $request,
-                                                Assignment          $assignment,
-                                                Question            $question,
-                                                QuestionMediaUpload $questionMediaUpload,
-                                                DiscussionComment   $discussionComment): array
+    public
+    function storeAudioDiscussionComment(Request             $request,
+                                         Assignment          $assignment,
+                                         Question            $question,
+                                         QuestionMediaUpload $questionMediaUpload,
+                                         DiscussionComment   $discussionComment): array
     {
 
         try {
             $response['type'] = 'error';
-            $authorized = Gate::inspect('storeAudioDiscussionComment', [$discussionComment, $assignment->id, $question->id]);
+            $authorized = Gate::inspect('storeAudioVideoDiscussionComment', [$discussionComment, $assignment->id, $question->id]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
@@ -138,15 +221,15 @@ class DiscussionCommentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function satisfiedRequirements(Assignment             $assignment,
-                                          Question               $question,
-                                          User                   $user,
-                                          AssignmentSyncQuestion $assignmentSyncQuestion,
-                                          DiscussionComment      $discussionComment,
-                                          Discussion             $discussion): array
+    public
+    function satisfiedRequirements(Assignment             $assignment,
+                                   Question               $question,
+                                   User                   $user,
+                                   AssignmentSyncQuestion $assignmentSyncQuestion,
+                                   DiscussionComment      $discussionComment,
+                                   Discussion             $discussion): array
     {
         try {
-
             $authorized = Gate::inspect('getSatisfiedRequirements', [$discussionComment, $assignment->id, $user->id]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
@@ -175,10 +258,11 @@ class DiscussionCommentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function destroy(Request             $request,
-                            DiscussionComment   $discussionComment,
-                            Submission          $submission,
-                            QuestionMediaUpload $questionMediaUpload): array
+    public
+    function destroy(Request             $request,
+                     DiscussionComment   $discussionComment,
+                     Submission          $submission,
+                     QuestionMediaUpload $questionMediaUpload): array
     {
         try {
             $discussion = DB::table('discussion_comments')
@@ -211,7 +295,7 @@ class DiscussionCommentController extends Controller
                 Discussion::find($discussion_id)->delete();
                 $deleted_discussion = true;
             }
-            $questionMediaUpload->deleteFileAndVttFile($discussionComment->file);
+            //$questionMediaUpload->deleteFileAndVttFile($discussionComment->file); Holding off on this for now
 
             $response['type'] = 'info';
             $response['message'] = $deleted_discussion ?
@@ -238,12 +322,13 @@ class DiscussionCommentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function update(UpdateDiscussionRequest $request,
-                           DiscussionComment       $discussionComment,
-                           AssignmentSyncQuestion  $assignmentSyncQuestion,
-                           Submission              $submission,
-                           Score                   $score,
-                           SubmissionFile          $submissionFile): array
+    public
+    function update(UpdateDiscussionRequest $request,
+                    DiscussionComment       $discussionComment,
+                    AssignmentSyncQuestion  $assignmentSyncQuestion,
+                    Submission              $submission,
+                    Score                   $score,
+                    SubmissionFile          $submissionFile): array
     {
         $response['type'] = 'error';
         $data = $request->validated();
@@ -307,7 +392,8 @@ class DiscussionCommentController extends Controller
      * @return Application|Factory|View
      * @throws Exception
      */
-    public function mediaPlayer(string $key, string $key_id, QuestionMediaUpload $questionMediaUpload)
+    public
+    function mediaPlayer(string $key, string $key_id, QuestionMediaUpload $questionMediaUpload)
     {
 
         switch ($key) {
