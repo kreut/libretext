@@ -62,12 +62,36 @@ class DiscussionCommentPolicy
         return compact('has_access', 'message');
     }
 
+    public function downloadTranscript(User $user, DiscussionComment $discussionComment)
+    {
+        $discussion = Discussion::find($discussionComment->discussion_id);
+        $assignment = Assignment::find($discussion->assignment_id);
+        $course = $assignment->course;
+        switch ($user->role) {
+            case(3):
+                $has_access = DB::table('enrollments')->where('course_id', $course->id)
+                    ->where('user_id', $user->id)
+                    ->first();
+                break;
+            case(2):
+                $has_access = $course->user_id === $user->id;
+                break;
+            default:
+                $has_access = false;
+        }
+        return $has_access
+            ? Response::allow()
+            : Response::deny("You are not allowed to download this transcript.");
+
+    }
+
     /**
      * @param User $user
      * @param DiscussionComment $discussionComment
      * @return Response
      */
-    public function updateCaption(User $user, DiscussionComment $discussionComment){
+    public function updateCaption(User $user, DiscussionComment $discussionComment): Response
+    {
         $discussion = Discussion::find($discussionComment->discussion_id);
         $assignment = Assignment::find($discussion->assignment_id);
         $has_access = $assignment->course->user_id === $user->id;
@@ -76,6 +100,7 @@ class DiscussionCommentPolicy
             : Response::deny("You are not allowed to update this transcript.");
 
     }
+
     /**
      * @param User $user
      * @param DiscussionComment $discussionComment

@@ -14,14 +14,30 @@
   <script src="{{ asset('assets/js/ableplayer/build/ableplayer.min.js') }}"></script>
 </head>
 <body>
+
+@if($type === 'audio')
+  <audio id="audio1"
+         preload="auto"
+         data-able-player
+         data-start-time="{{$start_time}}"
+  >
+    <source type="audio/mpeg"
+            src="{{$temporary_url}}"
+    />
+    <track kind="captions" src="{{$vtt_file}}"/>
+  </audio>
+@endif
+@if($type === 'video')
 <video id="video1"
        preload="auto"
        data-able-player
-       data-start-time="{{$start_time}}">
+       data-start-time="{{$start_time}}"
+>
   <source type="video/mp4"
           src="{{$temporary_url}}"
   />
   <track kind="captions" src="{{$vtt_file}}"/>
 </video>
+  @endif
 </body>
 </html>

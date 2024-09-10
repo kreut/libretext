@@ -71,7 +71,17 @@ export default {
         this.$refs.video.srcObject = this.stream
 
         this.recordedChunks = []
-        this.mediaRecorder = new MediaRecorder(this.stream, { mimeType: 'video/webm; codecs=vp8,opus' })
+        // eslint-disable-next-line no-unused-vars
+        let options = {}
+        if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8,opus')) {
+          options = { mimeType: 'video/webm; codecs=vp8,opus' }
+        } else if (MediaRecorder.isTypeSupported('video/mp4; codecs=avc1')) {
+          options = { mimeType: 'video/mp4; codecs=avc1,mp4a' } // MP4 with H.264 and AAC for Safari
+        } else {
+          alert('Neither WebM nor MP4 is supported by this browser.  Please try using Chrome.')
+          return
+        }
+        this.mediaRecorder = new MediaRecorder(this.stream, options)
         // Mute the video element during recording to prevent feedback
         this.$refs.video.muted = true
         this.mediaRecorder.ondataavailable = event => {
@@ -156,4 +166,3 @@ export default {
   text-align: center;
 }
 </style>
-

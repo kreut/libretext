@@ -105,8 +105,8 @@ class Course extends Model
         $assignments_with_submission_files = DB::table('submission_files')
             ->whereIn('user_id', $real_students_who_can_submit)
             ->select('assignment_id')
-            ->get()
             ->groupBy('assignment_id')
+            ->get()
             ->pluck('assignment_id')
             ->toArray();
         foreach ($assignments_with_submission_files as $assignment_with_submission_file) {
@@ -114,6 +114,21 @@ class Course extends Model
                 $final_assignment_ids[] = $assignment_with_submission_file;
             }
         }
+        $questions_with_discussion_submissions = DB::table('discussions')
+            ->whereIn('user_id', $real_students_who_can_submit)
+            ->select('assignment_id')
+            ->groupBy('assignment_id')
+            ->get()
+            ->pluck('assignment_id')
+            ->toArray();
+        foreach ($questions_with_discussion_submissions as $questions_with_discussion_submission) {
+            if (in_array($questions_with_discussion_submission, $course_assignment_ids)) {
+                $final_assignment_ids[] = $questions_with_discussion_submission;
+            }
+        }
+
+
+
         return array_unique($final_assignment_ids);
     }
 

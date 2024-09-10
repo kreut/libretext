@@ -8,6 +8,7 @@ use App\Discussion;
 use App\DiscussionComment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
+use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateDiscussionRequest;
 use App\Jobs\ProcessTranscribe;
 use App\Question;
@@ -24,13 +25,58 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use PHPUnit\TextUI\Help;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DiscussionCommentController extends Controller
 {
+    /**
+     * @param DiscussionComment $discussionComment
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @return array|StreamedResponse
+     * @throws Exception
+     */
+    public function downloadTranscript(DiscussionComment   $discussionComment,
+                                       QuestionMediaUpload $questionMediaUpload)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('downloadTranscript', $discussionComment);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $discussion = Discussion::find($discussionComment->discussion_id);
+            $assignment_question_info = DB::table('assignments')
+                ->join('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
+                ->where('assignment_id', $discussion->assignment_id)
+                ->where('question_id', $discussion->question_id)
+                ->first();
 
+            $assignment_name = str_replace(' ', '_', $assignment_question_info->name);
+            $assignment_name = preg_replace('/[^a-zA-Z0-9-_\.]/', '', $assignment_name);
+            $question_number = "Question #" . $assignment_question_info->order;
+            $created_at = Carbon::parse($discussionComment->created_at)
+                ->setTimezone(request()->user()->time_zone);
+            $created_by_user = User::find($discussionComment->user_id);
+            $created_by_name = $created_by_user->first_name . ' ' . $created_by_user->last_name;
+            $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($discussionComment->file);
+            if (Storage::disk('s3')->exists("{$questionMediaUpload->getDir()}/$vtt_file")) {
+                return Storage::disk('s3')->download("{$questionMediaUpload->getDir()}/$vtt_file", "$assignment_name-$question_number-$created_by_name-$created_at" . '.vtt');
+            } else {
+                $response['message'] = "We were unable to locate the .vtt file $vtt_file.";
+
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not download the .vtt file. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
      * @param Request $request
@@ -198,8 +244,54 @@ class DiscussionCommentController extends Controller
                 return $response;
             }
             $file = md5(uniqid('', true)) . '.mp3';
-            $path = $questionMediaUpload->getDir() . "/$file";
-            Storage::disk('s3')->put($path, file_get_contents($request->file('audio')));
+
+
+            $audio_file = $request->file('audio');
+
+            $efs_dir = "/mnt/local/";
+            $is_efs = is_dir($efs_dir);
+            $storage_path = $is_efs
+                ? $efs_dir
+                : Storage::disk('local')->getAdapter()->getPathPrefix();
+
+            $audio_file_path = $storage_path . $questionMediaUpload->getDir() . "/$file";
+            $output_file_path = $storage_path . $questionMediaUpload->getDir() . "/temp-$file";
+            file_put_contents($audio_file_path, file_get_contents($audio_file));
+
+            $command = "ffmpeg -y -i $audio_file_path -acodec libmp3lame -b:a 128k $output_file_path";
+            list($returnValue, $output, $errorOutput) = Helper::runFfmpegCommand($command);
+
+            if ($returnValue === 0) {
+                if (file_exists($audio_file_path)) {
+                    unlink($audio_file_path);
+                }
+                rename($output_file_path, $audio_file_path);
+            } else {
+                if (file_exists($output_file_path)) {
+                    unlink($output_file_path);
+                }
+                throw new Exception ("FFmpeg error processing audio upload for user {$request->user()->id}: $errorOutput)");
+            }
+
+
+            //Storage::disk('s3')->putObject($questionMediaUpload->getDir() . "/$file", file_get_contents($audio_file_path));
+            $adapter = Storage::disk('s3')->getDriver()->getAdapter(); // Get the filesystem adapter
+            $client = $adapter->getClient(); // Get the aws client
+            $bucket = $adapter->getBucket(); // Get the current bucket
+            $client->putObject([
+                'Bucket' => $bucket,
+                'Key' => $questionMediaUpload->getDir() . "/" . $file,
+                'SourceFile' => $audio_file_path,
+                'ContentType' => 'audio/mpeg',  // Set the content type explicitly
+            ]);
+            if (file_exists($output_file_path)) {
+                unlink($output_file_path);
+            }
+            if (file_exists($audio_file_path)) {
+                unlink($audio_file_path);
+            }
+
+            //'ContentType' => 'audio/mpeg',
             $response['type'] = 'success';
             $response['file'] = $file;
 

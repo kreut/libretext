@@ -252,6 +252,12 @@
           >
             Re-record
           </b-button>
+          <span v-if="activeDiscussionComment.transcript">
+            <a v-show="false" id="download-transcript"
+               :href="`/api/discussion-comments/${activeDiscussionComment.id}/download-transcript`"
+            >Download transcript</a>
+            <b-button size="sm" variant="info" @click="downloadTranscript"> Download Transcript</b-button>
+          </span>
           <b-button size="sm" variant="primary"
                     @click="$bvModal.hide('modal-listen-or-view-comment')"
           >
@@ -860,11 +866,12 @@
                            :key="`comments-${discussion.id}-${commentsIndex}`"
                       >
                         <user-initials
-                          v-b-tooltip="{title: `Comment created by ${comment.created_by_name} on ${comment.created_at}`,delay: '500'}"
+                          v-b-tooltip="{title: `${comment.created_by_name}`,delay: '500'}"
                           :user-name="comment.created_by_name"
                           :is-user="comment.created_by_user_id === user.id"
                           style="cursor: pointer"
                         />
+                        <span class="text-muted">{{ comment.created_at }}</span>
                         <div v-show="comment.text" v-html="comment.text"/>
                         <span v-show="comment.file">
                           <b-button size="sm" variant="outline-info" @click="listenOrViewComment(comment)"
@@ -1072,6 +1079,9 @@ export default {
   },
   methods: {
     updateModalToggleIndex,
+    downloadTranscript () {
+      document.getElementById('download-transcript').click()
+    },
     saveUploadedAudioVideoComment (file, fileRequirementSatisfied) {
       this.fileRequirementSatisfied = fileRequirementSatisfied
       this.saveComment(file)

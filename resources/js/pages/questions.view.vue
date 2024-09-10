@@ -21,7 +21,7 @@
               >
                 <b-card-text>
                   <ul>
-                    <li>{{ scores.length }} student submissions</li>
+                    <li>{{ scores.length }} scored student submissions</li>
                     <li v-if="scores.length">
                       Maximum score of {{ max }}
                     </li>

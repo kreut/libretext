@@ -53,7 +53,6 @@ class ProcessTranscribe implements ShouldQueue
     {
 
 
-
         switch ($this->upload_type) {
             case('question_media_upload'):
                 $s3_key_column = 's3_key';
@@ -82,6 +81,10 @@ class ProcessTranscribe implements ShouldQueue
             $storage_path = $is_efs
                 ? $efs_dir
                 : Storage::disk('local')->getAdapter()->getPathPrefix();
+
+            /*  $storage_path = app()->environment('local')
+                  ? app()->storagePath() . "/app/tmp"
+                  : '/tmp';*/
 
             $s3_dir = (new QuestionMediaUpload)->getDir();
             $question_media_dir = $storage_path . $s3_dir;
@@ -114,6 +117,7 @@ class ProcessTranscribe implements ShouldQueue
 
             $upload_type_model->status = "transcribing";
             $upload_type_model->save();
+
             $transcript = $this->transcribeWithWhisper($media_upload_path, $s3_key, $upload_type_model);
             $upload_type_model->status = "saving vtt to database";
             $upload_type_model->transcript = $transcript;
@@ -152,15 +156,38 @@ class ProcessTranscribe implements ShouldQueue
         // Split the video into smaller chunks using FFmpeg
         $output_dir = pathinfo($media_upload_path, PATHINFO_DIRNAME);
         $file_extension = pathinfo($s3_key, PATHINFO_EXTENSION);
+        $file_extension = $file_extension === 'webm' ? 'mp4' : $file_extension;
         $identifier = pathinfo($s3_key, PATHINFO_FILENAME);
         $output_file_pattern = "$output_dir/$identifier-chunk_%03d.$file_extension";
 
-        $command = "ffmpeg -i $media_upload_path -c copy -map 0 -loglevel error -segment_time 30 -f segment $output_file_pattern";
+
+        // Get the path info
+        $path_info = pathinfo($media_upload_path);
+
+        $new_media_upload_path = $path_info['dirname'] . '/' . $path_info['filename'] . '.' . $file_extension;
+
+
+        if ($file_extension === 'mp4') {
+            $new_media_upload_path = $path_info['dirname'] . '/temp-' . $path_info['filename'] . '.' . $file_extension;
+
+            $command = "ffmpeg -i $media_upload_path -c:v libx264 -c:a aac -strict experimental -y $new_media_upload_path";
+
+            list($returnValue, $output, $errorOutput) = Helper::runFfmpegCommand($command);
+
+            if ($returnValue !== 0) {
+                throw new Exception ("FFmpeg error processing $s3_key: $errorOutput)");
+            }
+
+        }
+
+        $command = "ffmpeg -i $new_media_upload_path -c copy -map 0 -loglevel error -segment_time 30 -f segment $output_file_pattern";
+
         list($returnValue, $output, $errorOutput) = Helper::runFfmpegCommand($command);
 
         if ($returnValue !== 0) {
             throw new Exception ("FFmpeg error processing $s3_key: $errorOutput)");
         }
+
 
         $transcripts = [];
         foreach (glob("$output_dir/$identifier-chunk_*.$file_extension") as $key => $chunk) {
@@ -185,9 +212,17 @@ class ProcessTranscribe implements ShouldQueue
 
 
         $transcript = $this->mergeVTTChunks($transcripts);
-        // Log::info($transcript);
+
         $upload_type_model->message = "Finished transcription";
         $upload_type_model->save();
+        foreach (glob("$output_dir/$identifier-chunk_*.$file_extension") as $chunk) {
+            if (file_exists($chunk)) {
+                unlink($chunk);
+            }
+        }
+        if (file_exists($new_media_upload_path)) {
+            unlink($new_media_upload_path);
+        }
         return $transcript;
     }
 
@@ -250,6 +285,4 @@ class ProcessTranscribe implements ShouldQueue
 
         return sprintf('%02d:%02d:%02d.%03d', $hours, $minutes, $seconds, $milliseconds);
     }
-
-
 }

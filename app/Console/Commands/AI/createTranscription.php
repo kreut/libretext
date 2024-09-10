@@ -5,6 +5,7 @@ namespace App\Console\Commands\AI;
 use App\Jobs\ProcessTranscribe;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class createTranscription extends Command
 {
@@ -14,7 +15,8 @@ class createTranscription extends Command
      * @var string
      */
     protected $signature = 'create:Transcription {s3_key} {upload_type}';
-
+//art create:Transcription e7008c960dd43ae00b54c20fd3dbdf14.webm discussion_comment
+//art create:Transcription 76e35c6b0d457912e52e42c136b015d1.mp3 discussion_comment
     /**
      * The console command description.
      *
@@ -39,14 +41,14 @@ class createTranscription extends Command
      */
     public function handle()
     {
-        //create:Transcription ee97f036e5d70ea252e4e46ff7811304.webm discussion_comment
+        //create:Transcription 20ccb3f12dbb3a08cb29220c842d80c0.mp3 discussion_comment
         try {
             $s3_key = $this->argument('s3_key');
             $upload_type = $this->argument('upload_type');
             $job = new ProcessTranscribe($s3_key, $upload_type);
             $job->handle();
         } catch (Exception $e) {
-            echo $e->getMessage();
+            Log::info($e->getMessage());
 
         }
         return 0;

@@ -96,7 +96,7 @@ class Discussion extends Model
         if ($media_upload_id) {
             $discussion_infos = $discussion_infos->where('media_upload_id', $media_upload_id);
         }
-        $discussion_infos = $discussion_infos->orderBy('comment_created_at', 'DESC')
+        $discussion_infos = $discussion_infos->orderBy('comment_created_at', 'ASC')
             ->get();
         $discussions = [];
         $discussions_by_user_id = [];
@@ -132,7 +132,11 @@ class Discussion extends Model
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_comments_user_id])
             ];
         }
-
+      foreach ($discussions as $key => $discussion){
+          if (isset($discussion['comments'])){
+              $discussion['comments'][$key] = rsort($discussion['comments']);
+          }
+      }
         foreach ($enrolled_students as $enrolled_student) {
             $discussions_by_user_id[$enrolled_student->id]['user_id'] = $enrolled_student->id;
         }
