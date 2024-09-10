@@ -16,7 +16,6 @@
     </div>
     <div>
       <iframe v-show="question.non_technology"
-
               v-resize="{ log: false, checkOrigin: false }"
               style="height: 30px"
               width="100%"

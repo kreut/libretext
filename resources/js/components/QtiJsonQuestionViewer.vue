@@ -63,7 +63,7 @@
         <b-form-group>
           <div>
             <iframe
-              v-if="previewingQuestion"
+              v-if="questionType === 'submit_molecule' && previewingQuestion"
               id="emptySketcher"
               v-resize="{ log: false }"
               width="100%"
