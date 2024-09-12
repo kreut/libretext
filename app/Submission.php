@@ -463,13 +463,13 @@ class Submission extends Model
     function correctFillInTheBlank(object $correct_response, string $student_response): bool
     {
         $student_response = trim($student_response);
-        Log::info($correct_response->value);
+       // Log::info($correct_response->value);
         $correct_values = explode('|', $correct_response->value);
-        Log::info(print_r($correct_values, 1));
+        //Log::info(print_r($correct_values, 1));
         $correct = false;
         foreach ($correct_values as $correct_value) {
             $correct_value = trim($correct_value);
-            Log::info($correct_value);
+            //Log::info($correct_value);
             if (!$correct) {
                 switch ($correct_response->matchingType) {
                     case('exact'):

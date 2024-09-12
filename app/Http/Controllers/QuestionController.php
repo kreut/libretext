@@ -1299,7 +1299,7 @@ class QuestionController extends Controller
                         break;
                     case('highlight_text'):
                         $unsets = ['responses'];
-                        Log::info($request->qti_json);
+                        //Log::info($request->qti_json);
                         $qti_json = json_decode($request->qti_json, 1);
                         $responses = [];
                         foreach ($qti_json['responses'] as $key => $response) {
@@ -1309,8 +1309,8 @@ class QuestionController extends Controller
                         }
                         $qti_json['responses'] = $responses;
                         $request->qti_json = json_encode($qti_json);
-                        Log::info($request->qti_json);
-                        Log::info(print_r($qti_json['responses'], 1));
+                       // Log::info($request->qti_json);
+                        //Log::info(print_r($qti_json['responses'], 1));
                         break;
                     case('drag_and_drop_cloze'):
                         $unsets = ['correct_responses', 'distractors'];
