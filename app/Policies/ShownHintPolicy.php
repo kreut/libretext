@@ -5,8 +5,11 @@ namespace App\Policies;
 use App\ShownHint;
 use App\Traits\GeneralSubmissionPolicy;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class ShownHintPolicy
 {
@@ -19,8 +22,10 @@ class ShownHintPolicy
      * @param $assignment
      * @param int $question_id
      * @return Response
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function store(User $user, ShownHint $shownHint, $assignment, int $question_id)
+    public function store(User $user, ShownHint $shownHint, $assignment, int $question_id): Response
     {
         $assign_to_timing = $assignment->assignToTimingByUser();
         $has_access = true;
@@ -33,7 +38,7 @@ class ShownHintPolicy
             $message = "You cannot view the hint since you were not assigned to this assignment.";
             $has_access = false;
         } else {
-            if ($assign_to_timing->available_from > time()) {
+            if (Carbon::parse($assign_to_timing->available_from)->gt(Carbon::now())){
                 $message = 'You cannot view the hint since the assignment is not available.';
                 $has_access = false;
             }

@@ -411,7 +411,7 @@ class SubmissionController extends Controller
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
                     ->delete();
             }
-            $tables = ['submissions', 'h5p_video_interactions', 'submission_files', 'seeds', 'can_give_ups'];
+            $tables = ['submissions', 'h5p_video_interactions', 'submission_files', 'seeds', 'can_give_ups','shown_hints'];
             foreach ($tables as $table) {
                 DB::table($table)
                     ->where('user_id', $request->user()->id)
