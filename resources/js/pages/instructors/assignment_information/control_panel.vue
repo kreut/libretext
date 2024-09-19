@@ -22,9 +22,10 @@
           label-for="scores"
         >
           <b-form-row class="mt-2">
-            <ShowHideAssignmentProperties :key="`show-scores-toggle-${assignment.id}`"
+            <ShowHideAssignmentProperties :key="`show-scores-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                                           :assignment="assignment"
                                           :property="'show_scores'"
+                                          @refreshPage="getAssignmentSummary"
             />
           </b-form-row>
         </b-form-group>
@@ -36,9 +37,10 @@
           label-for="solutions"
         >
           <b-form-row class="mt-2">
-            <ShowHideAssignmentProperties :key="`show-solutions-toggle-${assignment.id}`"
+            <ShowHideAssignmentProperties :key="`show-solutions-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                                           :assignment="assignment"
                                           :property="'solutions_released'"
+                                          @refreshPage="getAssignmentSummary"
             />
           </b-form-row>
         </b-form-group>
@@ -51,9 +53,10 @@
         >
           <b-form-row class="mt-2">
             <ShowHideAssignmentProperties
-              :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
+              :key="`students-can-view-assignment-statistics-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
               :assignment="assignment"
               :property="'students_can_view_assignment_statistics'"
+              @refreshPage="getAssignmentSummary"
             />
           </b-form-row>
         </b-form-group>
@@ -66,7 +69,7 @@
           label-for="points_per_question"
         >
           <b-form-row class="mt-2">
-            <ShowPointsPerQuestionToggle :key="`show-points-per-question-toggle-${assignment.id}`"
+            <ShowPointsPerQuestionToggle :key="`show-points-per-question-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                                          :assignment="assignment"
             />
           </b-form-row>
@@ -169,6 +172,7 @@ export default {
     return { title: 'Assignment Control Panel' }
   },
   data: () => ({
+    showHideAssignmentPropertiesKey: 0,
     toggleColors: window.config.toggleColors,
     isLoading: true,
     assignmentId: 0,
@@ -195,6 +199,7 @@ export default {
           return false
         }
         this.assignment = data.assignment
+        this.showHideAssignmentPropertiesKey++
       } catch (error) {
         this.$noty.error(error.message)
       }

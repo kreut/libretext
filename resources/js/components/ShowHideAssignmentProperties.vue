@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="thingToHide">
-      <b-modal :id="`modal-remove-auto-release-${assignment.id}`"
+      <b-modal :id="`modal-deactivate-auto-release-${assignment.id}-${property}`"
                :title="`Deactivate Auto-Release for ${assignment.name}`"
                no-close-on-esc
       >
@@ -29,7 +29,7 @@
           <b-button
             size="sm"
             class="float-right"
-            @click="$bvModal.hide(`modal-remove-auto-release-${assignment.id}`)"
+            @click="$bvModal.hide(`modal-deactivate-auto-release-${assignment.id}-${property}`)"
           >
             Cancel
           </b-button>
@@ -70,7 +70,7 @@
       </template>
     </b-modal>
 
-    <b-modal :id="`modal-hide-scores-${assignment.id}`"
+    <b-modal :id="`modal-hide-scores-${assignment.id}-${property}`"
              title="Hide Scores"
     >
       <p>
@@ -82,7 +82,7 @@
         <b-button
           size="sm"
           class="float-right"
-          @click="$bvModal.hide(`modal-hide-scores-${assignment.id}`)"
+          @click="$bvModal.hide(`modal-hide-scores-${assignment.id}-${property}`)"
         >
           Cancel
         </b-button>
@@ -282,7 +282,7 @@ export default {
         }
         this.autoReleaseTimingMessage = data.timing_message
         this.$nextTick(() => {
-          this.$bvModal.show(`modal-remove-auto-release-${this.assignment.id}`)
+          this.$bvModal.show(`modal-deactivate-auto-release-${this.assignment.id}-${this.property}`)
         })
       } else {
         this.deactivateAutoRelease = 0
@@ -301,7 +301,7 @@ export default {
           break
         case ('show_scores'):
           this.assessmentType !== 'delayed' && Boolean(this.assignment.show_scores)
-            ? this.$bvModal.show(`modal-hide-scores-${this.assignment.id}`)
+            ? this.$bvModal.show(`modal-hide-scores-${this.assignment.id}-${this.property}`)
             : await this.submitShowHideAssignmentProperty('show_scores')
           break
         case ('students_can_view_assignment_statistics'):
@@ -354,7 +354,7 @@ export default {
 
         if (data.type === 'error') {
           this.$bvModal.hide(initModal)
-          this.$bvModal.hide(`modal-remove-auto-release-${this.assignment.id}`)
+          this.$bvModal.hide(`modal-deactivate-auto-release-${this.assignment.id}-${this.property}`)
           this.assignment[property] = !this.assignment[property]
           if (this.deactivateAutoRelease) {
             this.assignment['auto_release_activated_' + property] = '1'
@@ -365,7 +365,7 @@ export default {
         this.$noty.error(error.message)
       }
       this.$bvModal.hide(initModal)
-      this.$bvModal.hide(`modal-remove-auto-release-${this.assignment.id}`)
+      this.$bvModal.hide(`modal-deactivate-auto-release-${this.assignment.id}-${this.property}`)
       this.$emit('refreshPage')
     }
   }

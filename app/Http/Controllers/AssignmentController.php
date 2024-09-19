@@ -1298,7 +1298,7 @@ class AssignmentController extends Controller
             $solutionsReleased = $assignment->solutions_released;
             DB::beginTransaction();
             $assignment->update(['solutions_released' => !$solutionsReleased]);
-            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'solutions_released', $request->remove_auto_release);
+            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'solutions_released', $request->deactivate_auto_release);
             $solutions_released = !$solutionsReleased ? 'released' : 'hidden';
             $response['type'] = !$solutionsReleased ? 'success' : 'info';
 
@@ -1382,7 +1382,7 @@ class AssignmentController extends Controller
         try {
             DB::beginTransaction();
             $assignment->update(['shown' => !$shown]);
-            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'shown', $request->remove_auto_release);
+            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'shown', $request->deactivate_auto_release);
             $course = $assignment->course;
             $lmsApi = new LmsAPI();
             if ($assignment->course->lms_course_id) {
@@ -1499,7 +1499,7 @@ class AssignmentController extends Controller
             $showScores = $assignment->show_scores;
             DB::beginTransaction();
             $assignment->update(['show_scores' => !$showScores]);
-            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'show_scores', $request->remove_auto_release);
+            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'show_scores', $request->deactivate_auto_release);
             $response['type'] = !$showScores ? 'success' : 'info';
             $scores_released = !$showScores ? 'can' : 'cannot';
             $lmsApi = new LmsAPI();
@@ -1600,7 +1600,7 @@ class AssignmentController extends Controller
             DB::beginTransaction();
             $showAssignmentStatistics = $assignment->students_can_view_assignment_statistics;
             $assignment->update(['students_can_view_assignment_statistics' => !$showAssignmentStatistics]);
-            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'students_can_view_assignment_statistics', $request->remove_auto_release);
+            $auto_release_deactivated = $autoRelease->deactivateFromAssignment($assignment->id, 'students_can_view_assignment_statistics', $request->deactivate_auto_release);
             $response['type'] = !$showAssignmentStatistics ? 'success' : 'info';
             $scores_released = !$showAssignmentStatistics ? 'can' : 'cannot';
             $response['message'] = "Your students <strong>{$scores_released}</strong> view the assignment statistics.";
@@ -2166,6 +2166,21 @@ class AssignmentController extends Controller
                 $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
 
             } else {
+                $autoRelease = new AutoRelease();
+                $auto_release_keys = $autoRelease->keys();
+                $auto_releases = AutoRelease::where('type', 'assignment')->where('type_id', $assignment->id)->first();
+                foreach ($auto_release_keys as $auto_release_key) {
+                    $formatted_items["auto_release_$auto_release_key"] = $auto_releases ? $auto_releases->{$auto_release_key} : null;
+                    $activated = $auto_release_key . "_activated";
+                    $formatted_items["auto_release_activated_$auto_release_key"] = $formatted_items["auto_release_$auto_release_key"]
+                        ? $auto_releases->{$activated}
+                        : 0;
+
+                    if ($auto_release_key !== 'shown') {
+                        $after_key = $auto_release_key . "_after";
+                        $formatted_items["auto_release_{$auto_release_key}_after"] = $auto_releases ? $auto_releases->{$after_key} : null;
+                    }
+                }
                 $question_exists_not_owned_by_the_instructor = DB::table('assignment_question')
                     ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
                     ->where('question_editor_user_id', '<>', $request->user()->id)

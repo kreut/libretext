@@ -1055,7 +1055,7 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <ShowHideAssignmentProperties :key="`show-scores-toggle-${assignment.id}`"
+                  <ShowHideAssignmentProperties :key="`show-scores-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                                                 :assignment="assignment"
                                                 :property="'show_scores'"
                                                 @refreshPage="getAssignments"
@@ -1067,7 +1067,7 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <ShowHideAssignmentProperties :key="`show-solutions-toggle-${assignment.id}`"
+                  <ShowHideAssignmentProperties :key="`show-solutions-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                                                 :assignment="assignment"
                                                 :property="'solutions_released'"
                                                 @refreshPage="getAssignments"
@@ -1080,7 +1080,7 @@
                 </div>
                 <div v-if="!isFormative (assignment)">
                   <ShowHideAssignmentProperties
-                    :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
+                    :key="`students-can-view-assignment-statistics-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                     :assignment="assignment"
                     :property="'students_can_view_assignment_statistics'"
                     @refreshPage="getAssignments"
@@ -1114,7 +1114,7 @@
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
                 <ShowHideAssignmentProperties
-                  :key="`shown-toggle-${assignment.id}`"
+                  :key="`shown-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                   :assignment="assignment"
                   :property="'shown'"
                   @refreshPage="getAssignments"
@@ -1366,6 +1366,7 @@ import LMSGradePassback from '~/components/LMSGradePassback.vue'
 import GrantLmsApiAccess from '~/components/GrantLmsApiAccess.vue'
 import { isMobile } from '~/helpers/mobileCheck'
 import ShowHideAssignmentProperties from '~/components/ShowHideAssignmentProperties.vue'
+import showHideAssignmentProperties from '../../components/ShowHideAssignmentProperties.vue'
 
 export default {
   middleware: 'auth',
@@ -1388,6 +1389,7 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    showHideAssignmentPropertiesKey: 0,
     lmsError: '',
     assignmentToUnlink: {},
     importedAssignmentAutoRelease: {},

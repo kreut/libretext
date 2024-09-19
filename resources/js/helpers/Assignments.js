@@ -20,6 +20,7 @@ export async function getAssignments () {
         data.assignments[i] = checkIfReleased(data.assignments[i])
       }
       this.assignments = data.assignments
+      this.showHideAssignmentPropertiesKey++
     }
   } catch (error) {
     this.$noty.error(error.message)
