@@ -190,15 +190,40 @@ class ProcessTranscribe implements ShouldQueue
 
 
         $transcripts = [];
+        $language = null;
+        if ($upload_type_model instanceof DiscussionComment) {
+            $assignment_question = DB::table('discussion_comments')
+                ->join('discussions', 'discussion_comments.discussion_id', '=', 'discussions.id')
+                ->join('assignment_question', function ($join) {
+                    $join->on('assignment_question.assignment_id', '=', 'discussions.assignment_id')
+                        ->on('assignment_question.question_id', '=', 'discussions.question_id');
+                })
+                ->where('discussion_comments.id', $upload_type_model->id)
+                ->select('assignment_question.*')
+                ->first();
+            if ($assignment_question) {
+                $discuss_it_settings = json_decode($assignment_question->discuss_it_settings, 1);
+                if ($discuss_it_settings['language']  && $discuss_it_settings['language'] !== 'multiple'){
+                    $language = $discuss_it_settings['language'];
+                }
+            }
+
+
+        }
         foreach (glob("$output_dir/$identifier-chunk_*.$file_extension") as $key => $chunk) {
             $upload_type_model->message = "Transcribing chunk $key";
             $upload_type_model->save();
             $cFile = curl_file_create($chunk);
-            $response = $openai->transcribe([
+            $whisper_config = [
                 "model" => "whisper-1",
                 "file" => $cFile,
                 "response_format" => "vtt"
-            ]);
+            ];
+            if ($language) {
+                $whisper_config['language'] = $language;
+            }
+            Log::info(json_encode($whisper_config));
+            $response = $openai->transcribe($whisper_config);
 
             $json_response = json_decode($response);
             if ($json_response && isset($json_response->error)) {

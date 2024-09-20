@@ -507,6 +507,32 @@
                 />
                 <ErrorMessage :message="discussItSettingsForm.errors.get('min_length_of_audio_video')"/>
               </b-form-group>
+              <b-form-group
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-size="sm"
+                label-align="right"
+              >
+                <template #label>
+                  Language
+                  <QuestionCircleTooltip :id="'language-tooltip'"/>
+                  <b-tooltip target="language-tooltip" triggers="hover focus" delay="500">
+                    We use AI to create audio/video transcriptions. To obtain the best quality transcription, please
+                    specify
+                    the language of the audio/video comments. If the comments may contain multiple languages, then
+                    please
+                    choose the 'Multiple' option.  Note that in this case transcription results may not be as expected.
+                  </b-tooltip>
+                </template>
+                <b-form-select v-model="discussItSettingsForm.language"
+                               :options="languageOptions"
+                               size="sm"
+                               :class="{ 'is-invalid': discussItSettingsForm.errors.has('language') }"
+                               style="width:200px"
+                               @change="discussItSettingsForm.errors.clear('language')"
+                />
+                <has-error :form="discussItSettingsForm" field="language'"/>
+              </b-form-group>
               <b-form-radio-group v-model="discussItSettingsForm.auto_grade"
                                   class="mb-2"
               >
@@ -977,6 +1003,24 @@ export default {
     }
   },
   data: () => ({
+    languageOptions: [
+      { text: 'Choose a Language', value: null },
+      { text: 'English', value: 'en' },
+      { text: 'French', value: 'fr' },
+      { text: 'Spanish', value: 'es' },
+      { text: 'German', value: 'de' },
+      { text: 'Mandarin Chinese', value: 'zh' },
+      { text: 'Arabic', value: 'ar' },
+      { text: 'Italian', value: 'it' },
+      { text: 'Russian', value: 'ru' },
+      { text: 'Portuguese', value: 'pt' },
+      { text: 'Japanese', value: 'ja' },
+      { text: 'Hindi', value: 'hi' },
+      { text: 'Bengali', value: 'bn' },
+      { text: 'Lahnda (Punjabi)', value: 'pa' },
+      { value: '--------------', text: '--------------------', disabled: true },
+      { text: 'Multiple', value: 'multiple' }
+    ],
     responseModeOptions: [
       { item: 'text', name: 'Text' },
       { item: 'audio', name: 'Audio' },
@@ -1026,6 +1070,7 @@ export default {
     confirmDeleteCommentText: '',
     discussItSettingsForm: new Form({
       response_modes: [],
+      language: null,
       min_number_of_comments: '',
       students_can_edit_comments: '',
       students_can_delete_comments: ''
@@ -1271,6 +1316,9 @@ export default {
         if (data.type === 'success') {
           this.discussionCommentsExist = data.discussion_comments_exist
           this.discussItSettingsForm = new Form(JSON.parse(data.discuss_it_settings))
+          if (!this.discussItSettingsForm.language) {
+            this.discussItSettingsForm.language = null
+          }
           this.humanReadableTimeUntilRequirementSatisfied = this.discussItSettingsForm.min_length_of_audio_video
           this.millisecondsTimeUntilRequirementSatisfied = this.discussItSettingsForm.min_length_of_audio_video_in_milliseconds
           this.completionRequirements = [
