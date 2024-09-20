@@ -114,7 +114,8 @@ class DiscussItTest extends TestCase
             "min_number_of_words" => 1,
             'min_length_of_audio_video' => '2 minutes',
             "response_modes" => ["text", "audio", "video"],
-            'auto_grade' => 1];
+            'auto_grade' => 1,
+            'language' => 'en'];
         $new_user = factory(User::class)->create(['role' => 3]);
         $this->actingAs($new_user)
             ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/discuss-it-settings", $info)
@@ -126,7 +127,8 @@ class DiscussItTest extends TestCase
     {
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/discuss-it-settings", [])
-            ->assertJsonValidationErrors(['students_can_edit_comments',
+            ->assertJsonValidationErrors([
+                'students_can_edit_comments',
                 'students_can_delete_comments',
                 "min_number_of_discussion_threads",
                 "min_number_of_comments",

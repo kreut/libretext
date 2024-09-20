@@ -263,7 +263,7 @@
             </template>
             <template #cell(available_from)="data">
               <span v-show="data.item.assessment_type !== 'clicker'">
-                {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
+                {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
                 {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
               </span>
               <span v-show="data.item.assessment_type === 'clicker'">
@@ -271,7 +271,7 @@
             </template>
             <template #cell(due)="data">
               <span v-show="data.item.assessment_type !== 'clicker'">
-                {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
+                {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
                 {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                 {{ data.item.due.is_extension ? '(Extension)' : '' }}
               </span>

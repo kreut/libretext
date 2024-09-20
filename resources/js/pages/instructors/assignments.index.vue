@@ -571,7 +571,8 @@
           <div v-if="lmsError">
             <b-alert variant="danger" show>
               There was an error trying to connect to your LMS with ADAPT. Please reach out
-              to support so that we can troubleshoot the issue. In the meantime, you can still work on your ADAPT assignments.
+              to support so that we can troubleshoot the issue. In the meantime, you can still work on your ADAPT
+              assignments.
             </b-alert>
           </div>
           <div v-else>
@@ -876,7 +877,7 @@
         <table class="table table-striped" aria-label="Assignment List">
           <thead>
             <tr>
-              <th scope="col">
+              <th scope="col" style="width:350px">
                 Assignment Name
               </th>
               <th v-if="view === 'control panel'" scope="col" style="width:200px">
@@ -920,19 +921,19 @@
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Group
               </th>
-              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
+              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:200px">
                 Available On
               </th>
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Due
               </th>
-              <th v-show="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:100px">
+              <th v-show="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Status
                 <span @mouseover="showAssignmentStatusModal()" @mouseout="mouseOverAssignmentStatus = false">
                   <QuestionCircleTooltip />
                 </span>
               </th>
-              <th v-if="view === 'main view'" scope="col" :style="lms ? 'width: 145px' :'width: 115px'">
+              <th v-if="view === 'main view'" scope="col" :style="lms ? 'width: 175px' :'width: 145px'">
                 Actions
               </th>
             </tr>
@@ -1055,10 +1056,11 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <ShowHideAssignmentProperties :key="`show-scores-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
-                                                :assignment="assignment"
-                                                :property="'show_scores'"
-                                                @refreshPage="getAssignments"
+                  <ShowHideAssignmentProperties
+                    :key="`show-scores-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
+                    :assignment="assignment"
+                    :property="'show_scores'"
+                    @refreshPage="getAssignments"
                   />
                 </div>
               </td>
@@ -1067,10 +1069,11 @@
                   N/A
                 </div>
                 <div v-if="!isFormative (assignment)">
-                  <ShowHideAssignmentProperties :key="`show-solutions-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
-                                                :assignment="assignment"
-                                                :property="'solutions_released'"
-                                                @refreshPage="getAssignments"
+                  <ShowHideAssignmentProperties
+                    :key="`show-solutions-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
+                    :assignment="assignment"
+                    :property="'solutions_released'"
+                    @refreshPage="getAssignments"
                   />
                 </div>
               </td>
@@ -1134,7 +1137,7 @@
                 </div>
                 <div v-if="showAssignTos(assignment)">
                   <span v-if="assignment.assign_tos.length === 1">
-                    {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
+                    {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
                     {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                   </span>
                   <span v-if="assignment.assign_tos.length > 1">
@@ -1149,13 +1152,13 @@
                 <div v-if="showAssignTos(assignment)">
                   <span v-if="assignment.assign_tos.length === 1">
                     <span v-if="!showFinalSubmissionDeadline(assignment.assign_tos[0])">
-                      {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
+                      {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
                       {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                     </span>
                     <span v-if="showFinalSubmissionDeadline(assignment.assign_tos[0])">
                       {{
                         $moment(assignment.assign_tos[0].final_submission_deadline_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY')
-                      }}
+                      }}<br>
                       {{
                         $moment(assignment.assign_tos[0].final_submission_deadline_time, 'HH:mm:ss A').format('h:mm A')
                       }}

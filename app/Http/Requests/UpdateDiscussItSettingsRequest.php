@@ -35,7 +35,7 @@ class UpdateDiscussItSettingsRequest extends FormRequest
             'min_length_of_audio_video' => ['required', new IsValidPeriodOfTime()],
             'auto_grade' => ['required', Rule::in(0, 1)]];
 
-        if (in_array('audio', $this->response_modes) || in_array('video', $this->response_modes)) {
+        if (is_array($this->response_modes) && (in_array('audio', $this->response_modes) || in_array('video', $this->response_modes))) {
             $language_codes = [
                 'en', 'fr', 'es', 'de', 'zh', 'ar', 'it', 'ru', 'pt', 'ja', 'hi', 'bn', 'pa'
             ];

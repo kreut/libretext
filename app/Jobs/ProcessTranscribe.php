@@ -203,7 +203,9 @@ class ProcessTranscribe implements ShouldQueue
                 ->first();
             if ($assignment_question) {
                 $discuss_it_settings = json_decode($assignment_question->discuss_it_settings, 1);
-                if ($discuss_it_settings['language']  && $discuss_it_settings['language'] !== 'multiple'){
+                if (isset($discuss_it_settings['language'])
+                    && $discuss_it_settings['language']
+                    && $discuss_it_settings['language'] !== 'multiple') {
                     $language = $discuss_it_settings['language'];
                 }
             }
