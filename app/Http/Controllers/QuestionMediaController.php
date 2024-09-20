@@ -332,6 +332,58 @@ class QuestionMediaController extends Controller
     /**
      * @param Request $request
      * @param int $media_upload_id
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @return array
+     * @throws Exception
+     */
+    public function reProcessTranscript(Request             $request,
+                                        int                 $media_upload_id,
+                                        QuestionMediaUpload $questionMediaUpload)
+    {
+        $response['type'] = 'error';
+        try {
+            switch ($request->model) {
+                case('QuestionMediaUpload'):
+                    throw new Exception ("QuestionMediaUpload not yet support for reprocessing transcripts.");
+                case('DiscussionComment'):
+                    $model = DiscussionComment::find($media_upload_id);
+                    $s3_key = $model->file;
+                    break;
+                default:
+                    throw new Exception("$request->model is not a valid model to update a caption.");
+            }
+            $authorized = Gate::inspect('reProcessTranscript', $model);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            if ($model->re_processed_transcript) {
+                $response['message'] = 'Transcripts can only be re-processed once.';
+                return $response;
+            }
+            $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($s3_key);
+            if ($vtt_file && (Storage::disk('s3')->exists($vtt_file))) {
+                Storage::disk('s3')->delete($vtt_file);
+            }
+            $model->transcript = '';
+            $model->re_processed_transcript = 1;
+            $model->save();
+            ProcessTranscribe::dispatch($s3_key, 'discussion_comment');
+            $response['type'] = 'success';
+            $response['message'] = 'The original transcript has been removed and a new one is being processed.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not re-process the transcription. Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Request $request
+     * @param int $media_upload_id
      * @param int $caption
      * @return array
      * @throws Exception

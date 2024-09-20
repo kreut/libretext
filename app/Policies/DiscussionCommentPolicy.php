@@ -62,7 +62,12 @@ class DiscussionCommentPolicy
         return compact('has_access', 'message');
     }
 
-    public function downloadTranscript(User $user, DiscussionComment $discussionComment)
+    /**
+     * @param User $user
+     * @param DiscussionComment $discussionComment
+     * @return Response
+     */
+    public function downloadTranscript(User $user, DiscussionComment $discussionComment): Response
     {
         $discussion = Discussion::find($discussionComment->discussion_id);
         $assignment = Assignment::find($discussion->assignment_id);
@@ -85,6 +90,22 @@ class DiscussionCommentPolicy
 
     }
 
+
+    /**
+     * @param User $user
+     * @param DiscussionComment $discussionComment
+     * @return Response
+     */
+    public function reProcessTranscript(User $user, DiscussionComment $discussionComment): Response
+    {
+        $discussion = Discussion::find($discussionComment->discussion_id);
+        $assignment = Assignment::find($discussion->assignment_id);
+        $has_access = $assignment->course->user_id === $user->id;
+        return $has_access
+            ? Response::allow()
+            : Response::deny("You are not allowed to re-process this transcript.");
+
+    }
     /**
      * @param User $user
      * @param DiscussionComment $discussionComment

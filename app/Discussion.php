@@ -91,6 +91,7 @@ class Discussion extends Model
                 'discussion_comments.text',
                 'discussion_comments.file',
                 'discussion_comments.transcript',
+                'discussion_comments.re_processed_transcript',
                 'discussion_comments.created_at AS comment_created_at'
             );
         if ($media_upload_id) {
@@ -118,6 +119,7 @@ class Discussion extends Model
                 'text' => $question->addTimeToS3Images($value->text, $htmlDom, false),
                 'file' => $value->file,
                 'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
+                're_processed_transcript' => $value->re_processed_transcript,
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_user_id])];
             if (!isset($discussions_by_user_id[$value->discussion_comments_user_id])) {
                 $discussions_by_user_id[$value->discussion_comments_user_id] = [

@@ -758,6 +758,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/question-media/text', 'QuestionMediaController@storeText');
     Route::patch('/question-media/text', 'QuestionMediaController@updateText');
     Route::patch('/question-media/{media_upload_id}/caption/{caption}', 'QuestionMediaController@updateCaption');
+    Route::patch('/question-media/{media_upload_id}/re-process-transcript', 'QuestionMediaController@reProcessTranscript');
     Route::patch('/question-media/temporary-urls', 'QuestionMediaController@temporaryUrls');
     Route::delete('/question-media/{questionMediaUpload}', 'QuestionMediaController@destroy');
     Route::get('/question-media/{questionMediaUpload}/download-transcript', 'QuestionMediaController@downloadTranscript');

@@ -1,6 +1,25 @@
 <template>
   <div>
     <div v-if="activeTranscript && activeTranscript.length">
+      <b-modal id="modal-confirm-re-process-transcript"
+               title="Confirm Re-process Transcript"
+      >
+        Please confirm that you would like to re-process this transcript. If re-processed, then the current transcript
+        will be deleted.
+        <template #modal-footer="{ cancel, ok }">
+          <b-button size="sm"
+                    @click="$bvModal.hide('modal-confirm-re-process-transcript')"
+          >
+            Cancel
+          </b-button>
+          <b-button size="sm"
+                    variant="danger"
+                    @click="reProcessTranscript"
+          >
+            Re-process Transcript
+          </b-button>
+        </template>
+      </b-modal>
       <b-form-group
         label-cols-sm="2"
         label-cols-lg="1"
@@ -54,6 +73,19 @@
           <b-button size="sm" @click="$emit('hideMediaModal')">
             Cancel
           </b-button>
+          <span v-show="model==='DiscussionComment'" class="pl-2">
+            <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
+                  :title="Boolean(activeMedia.re_processed_transcript)
+                    ? 'Transcripts may only be re-processed once.'
+                    : 'If there are major issues with the transcript you can re-process it for possibly improved results.'"
+            >
+              <b-button
+                size="sm"
+                variant="outline-danger"
+                :disabled="Boolean(activeMedia.re_processed_transcript)"
+                @click="$bvModal.show('modal-confirm-re-process-transcript')"
+              >Re-process Full Transcript</b-button></span>
+          </span>
         </div>
       </b-form-group>
     </div>
@@ -99,6 +131,17 @@ export default {
     }
   },
   methods: {
+    async reProcessTranscript () {
+      try {
+        const { data } = await axios.patch(`/api/question-media/${this.activeMedia.id}/re-process-transcript`, { model: 'DiscussionComment' })
+        this.$bvModal.hide('modal-confirm-re-process-transcript')
+        this.$noty[data.type](data.message)
+        this.transcriptTiming = false
+        this.$emit('removeCurrentTranscript')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async updateCaption () {
       try {
         const caption = this.activeMedia.transcript.findIndex(caption => caption.start === this.transcriptTiming)

@@ -242,6 +242,7 @@
                     :model="'DiscussionComment'"
                     @hideMediaModal="hideMediaModal"
                     @updateTranscriptInMedia="updateTranscriptInMedia"
+                    @removeCurrentTranscript="removeCurrentTranscript"
         />
       </div>
       <template #modal-footer>
@@ -521,7 +522,7 @@
                     specify
                     the language of the audio/video comments. If the comments may contain multiple languages, then
                     please
-                    choose the 'Multiple' option.  Note that in this case transcription results may not be as expected.
+                    choose the 'Multiple' option. Note that in this case transcription results may not be as expected.
                   </b-tooltip>
                 </template>
                 <b-form-select v-model="discussItSettingsForm.language"
@@ -1124,6 +1125,11 @@ export default {
   },
   methods: {
     updateModalToggleIndex,
+    removeCurrentTranscript () {
+      this.activeDiscussionComment.transcript = ''
+      this.activeDiscussionComment.re_processed_transcript = 1
+      this.activeTranscript = []
+    },
     downloadTranscript () {
       document.getElementById('download-transcript').click()
     },
