@@ -73,14 +73,14 @@ class DataShop extends Model
                 $this->submission_count = $data['submission']->submission_count;
                 $this->outcome = $data['all_correct'] ? 'CORRECT' : 'INCORRECT';
                 $this->session_id = session()->get('submission_id');
-                $this->anon_student_id = Auth::user()->email ? Auth::user()->email : 'test';
+                $this->anon_student_id = Auth::user()->email ? $this->getAnonStudentId(Auth::user()->email) : 'test';
                 break;
             case('time_to_review'):
                 $question = Question::find($data->question_id);
                 $this->review_time_start = $data->created_at;
                 $this->review_time_end = $data->updated_at;
                 $this->session_id = $data->session_id;
-                $this->anon_student_id = $data->email;
+                $this->anon_student_id = $this->getAnonStudentId($data->email);
                 break;
             default:
                 throw new Exception ("$type is not a valid data_shop type.");
@@ -165,6 +165,22 @@ class DataShop extends Model
             $submissionHistory->submission = $data['submission']->submission;
             $submissionHistory->save();
         }
+    }
+
+    /**
+     * @param $email
+     * @return string
+     */
+    public function getAnonStudentId($email): string
+    {
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $domain = substr($email, strrpos($email, '@') + 1);
+            return auth()->user()->id . '@' . $domain;
+        } else {
+            //not a valid email so it's a session ID
+            return $email;
+        }
+
     }
 
 }
