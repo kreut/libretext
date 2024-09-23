@@ -84,7 +84,7 @@ class QuestionRevisionController extends Controller
             $revision_info = DB::table('question_revisions')
                 ->join('users', 'question_revisions.question_editor_user_id', '=', 'users.id')
                 ->where('question_id', $question->id)
-                ->orderBy('updated_at', 'desc')
+                ->orderBy('revision_number', 'desc')
                 ->select('question_revisions.*',
                     DB::raw('CONCAT(first_name, " " , last_name) AS question_editor'))
                 ->get();

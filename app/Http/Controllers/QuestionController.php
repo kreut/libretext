@@ -1454,6 +1454,8 @@ class QuestionController extends Controller
                 $new_question_revision['question_id'] = $question['id'];
                 $new_question_revision['question_editor_user_id'] = $request->user()->id;
                 $new_question_revision['action'] = $revision_action;
+                $new_question_revision['created_at'] = now();
+                $new_question_revision['updated_at'] = now();
 
                 unset($new_question_revision['id']);
                 $newQuestionRevision = QuestionRevision::create($new_question_revision);
