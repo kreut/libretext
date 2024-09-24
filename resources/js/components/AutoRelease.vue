@@ -70,7 +70,7 @@
                        triggers="hover focus"
             >
               With auto-release, you can automatically set a time to show your assignment, release scores,
-              reveal solutions, and share class statistics with your stdents.
+              reveal solutions, and share class statistics with your students.
             </b-tooltip>
           </div>
         </div>

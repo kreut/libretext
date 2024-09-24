@@ -882,12 +882,32 @@
               </th>
               <th v-if="view === 'control panel'" scope="col" style="width:200px">
                 Scores
+                <QuestionCircleTooltip :id="`auto-release-scores-tooltip`" />
+                <b-tooltip :target="`auto-release-scores-tooltip`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  <div v-html="getAutoReleaseTooltip('releasing your scores')" />
+                </b-tooltip>
               </th>
               <th v-if="view === 'control panel'" scope="col" style="width:200px">
                 Solutions
+                <QuestionCircleTooltip :id="`auto-release-solutions-tooltip`" />
+                <b-tooltip :target="`auto-release-solutions-tooltip`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  <div v-html="getAutoReleaseTooltip('showing the solutions')" />
+                </b-tooltip>
               </th>
               <th v-if="view === 'control panel'" scope="col" style="width:200px">
-                Statistics
+                Statistics  <QuestionCircleTooltip :id="`auto-release-statistics-tooltip`" />
+                <b-tooltip :target="`auto-release-statistics-tooltip`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  <div v-html="getAutoReleaseTooltip('showing the assignment statistics')" />
+                </b-tooltip>
               </th>
               <th v-if="view === 'control panel'" scope="col">
                 Points Per Question
@@ -916,7 +936,13 @@
                 </b-tooltip>
               </th>
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:200px">
-                Visibility
+                Visibility <QuestionCircleTooltip :id="`auto-release-shown-tooltip`" />
+                <b-tooltip :target="`auto-release-shown-tooltip`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  <div v-html="getAutoReleaseTooltip('showing the assignment')" />
+                </b-tooltip>
               </th>
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Group
@@ -1544,6 +1570,9 @@ export default {
     isMobile,
     checkIfReleased,
     getStatusTextClass,
+    getAutoReleaseTooltip (setting) {
+      return `If you have set up auto-release for ${setting}, then you can optionally activate or de-activate the auto-release below.<br><br>This option is not available for clicker assignments nor for assignments without the auto-release set.`
+    },
     unlinkAssignment (assignment) {
       if (assignment.lms_resource_link_id) {
         this.assignmentToUnlink = assignment

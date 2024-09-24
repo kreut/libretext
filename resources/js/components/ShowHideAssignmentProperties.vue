@@ -148,14 +148,6 @@
         @change="updateAutoReleaseActivated()"
       >
         Auto-release
-      <QuestionCircleTooltip v-if="disabled" :id="`disabled-${assignment.id}-${property}-tooltip`" />
-
-      <b-tooltip :target="`disabled-${assignment.id}-${property}-tooltip`"
-                 delay="250"
-                 triggers="hover focus"
-      >
-        {{ getDisabledMessage(assignment) }}
-      </b-tooltip>
       </b-form-checkbox>
     </div>
     <div v-show="!showAutoRelease">
@@ -209,36 +201,6 @@ export default {
     this.disabled = this.assignment.assessment_type === 'clicker' || !this.assignment['auto_release_' + this.property]
   },
   methods: {
-    getDisabledMessage (assignment) {
-      const clicker = assignment.assessment_type === 'clicker'
-      const noProperty = !assignment['auto_release_' + this.property]
-      let
-        formattedProperty
-      switch (this.property) {
-        case ('shown'):
-          formattedProperty = '\'Assignment\''
-          break
-        case ('show_scores'):
-          formattedProperty = '\'Scores\''
-          break
-        case ('solutions_released'):
-          formattedProperty = '\'Solutions\''
-          break
-        case ('students_can_view_assignment_statistics'):
-          formattedProperty = '\'Statistics\''
-          break
-      }
-      const noPropertyMessage = noProperty ? `${formattedProperty} is not set for auto-release in your assignment properties.` : ''
-      let message
-      message = ''
-      if (clicker) {
-        message = 'Auto-release is not available for clicker assignments.  '
-      } else if (noProperty) {
-        message += noPropertyMessage
-      }
-      return message
-    },
-
     async updateAutoReleaseActivated () {
       this.assignment['auto_release_activated_' + this.property] = !this.assignment['auto_release_activated_' + this.property]
       try {
