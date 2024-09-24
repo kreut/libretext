@@ -1,13 +1,13 @@
 <template>
   <div>
-    <PageTitle title="Sitemap"/>
+    <PageTitle title="Sitemap" />
     <b-card header="default" header-html="<h2 class=&quot;h7&quot;>General Information</h2>" class="mb-3">
       <b-card-text>
         <ul>
           <li>
-          <router-link :to="{path: '/'}">
-            Homepage
-          </router-link>
+            <router-link :to="{path: '/'}">
+              Homepage
+            </router-link>
           </li>
           <li>
             <router-link :to="{name: 'settings.profile'}">
@@ -29,10 +29,7 @@
     </b-card>
     <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Courses And Assignments</h2>">
       <b-card-text>
-        You can directly view all of <router-link :to="{name: 'students.courses.index'}">
-        your courses
-      </router-link>
-        or drill down to the course-assignment details below.
+        You can can drill down to the course-assignment details below when the course is not served through an LMS such as Canvas or Blackboard.
         <ol>
           <li v-for="enrolledInCoursesAndAssignment in enrolledInCoursesAndAssignments"
               :key="`enrolled-in-course-and-assignment-${enrolledInCoursesAndAssignment.course.id}`"
@@ -42,12 +39,12 @@
               <li v-for="assignment in enrolledInCoursesAndAssignment.assignments"
                   :key="`assignment-${assignment.assignment_id}`"
               >
-                {{ assignment.name }} <span v-if="enrolledInCoursesAndAssignment.course.is_lms">Please enter through your LMS.</span>
-                <span v-if="!enrolledInCoursesAndAssignment.course.is_lms">
-                   <router-link :to="{name: 'students.assignments.summary', params: {assignmentId: assignment.assignment_id}}">
-                     Summary </router-link>
+                {{ assignment.name }}
+                <span v-if="!enrolledInCoursesAndAssignment.course.lms">
+                  <router-link :to="{name: 'students.assignments.summary', params: {assignmentId: assignment.assignment_id}}">
+                    Summary </router-link>
                   -  <router-link :to="{name: 'questions.view', params: {assignmentId: assignment.assignment_id}}">
-                  Questions </router-link>
+                    Questions </router-link>
                 </span>
               </li>
             </ul>
