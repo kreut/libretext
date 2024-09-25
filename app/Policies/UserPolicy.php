@@ -20,6 +20,67 @@ class UserPolicy
      * @param User $user
      * @return Response
      */
+    public function getStudentsToInvite(User $user): Response
+    {
+        return $user->role === 2
+            ? Response::allow()
+            : Response::deny("You are not allowed to get students to invite.");
+    }
+
+    /**
+     * @param User $user
+     * @param User $instructor_user
+     * @param int $course_id
+     * @param int $section_id
+     * @return Response
+     */
+    public function inviteStudent(User $user, User $instructor_user, int $course_id, int $section_id): Response
+    {
+
+        $course_owner = DB::table('sections')
+            ->join('courses', 'sections.course_id', '=', 'courses.id')
+            ->where('courses.user_id', $user->id)
+            ->where(function ($query) use ($course_id, $section_id) {
+                $query->where('sections.course_id', '=', $course_id)
+                    ->where('sections.id', '=', $section_id);
+            })
+            ->exists();
+        return $course_owner
+            ? Response::allow()
+            : Response::deny("You are not allowed to send student invitations to this course.");
+    }
+
+
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function getStudentRosterUploadTemplate(User $user): Response
+    {
+        return $user->role === 2
+            ? Response::allow()
+            : Response::deny("You are not allowed to get the student roster upload template.");
+    }
+
+
+    /**
+     * @param User $user
+     * @param User $instructor_user
+     * @param Course $course
+     * @return Response
+     */
+    public function revokeStudentInvitations(User $user, User $instructor_user, Course $course): Response
+    {
+        return $course->user_id ===request()->user()->id
+            ? Response::allow()
+            : Response::deny("You are not allowed to revoke student invitations for this course.");
+    }
+
+
+    /**
+     * @param User $user
+     * @return Response
+     */
     public function getSignedUserId(User $user): Response
     {
         return in_array($user->role, [2, 3])

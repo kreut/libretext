@@ -10,8 +10,11 @@ use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Extension;
 use App\ExtraCredit;
+use App\Helpers\Helper;
+use App\Http\Requests\InviteStudentRequest;
 use App\Http\Requests\UpdateStudentEmail;
 use App\LtiGradePassback;
+use App\PendingCourseInvitation;
 use App\Score;
 use App\Section;
 use App\Seed;
@@ -27,12 +30,328 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
 use MiladRahimi\Jwt\Generator;
+use Snowfire\Beautymail\Beautymail;
 
 class UserController extends Controller
 {
+    /**
+     * @param Course $course
+     * @param User $user
+     * @param PendingCourseInvitation $pendingCourseInvitation
+     * @return array
+     * @throws Exception
+     */
+    public function revokeStudentInvitations(Course                  $course,
+                                             User                    $user,
+                                             PendingCourseInvitation $pendingCourseInvitation): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('revokeStudentInvitations', [$user,  $course]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $pendingCourseInvitation->where('course_id', $course->id)->delete();
+            $response['type'] = 'info';
+            $response['message'] = "The course invitations have all been revoked.";
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "Error: {$e->getMessage()}";
+        }
+
+        return $response;
+
+
+    }
+
+    /**
+     * @param InviteStudentRequest $request
+     * @param User $user
+     * @return array
+     * @throws Exception
+     */
+    public function inviteStudent(InviteStudentRequest $request, User $user): array
+    {
+
+        try {
+            $student_to_invite = $request->all();
+            $response['type'] = 'error';
+            $section_id = $student_to_invite['section_id'];
+            $course_id = $student_to_invite['course_id'];
+            $authorized = Gate::inspect('inviteStudent', [$user, $course_id, $section_id]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $errors = [];;
+            $last_name = '';
+            $first_name = '';
+            $email = '';
+            $student_id = $student_to_invite["Student ID"] ?? 'None provided.';
+
+            switch ($request->invitation_type) {
+                case('student_from_roster_invitation'):
+
+                    $email = trim($student_to_invite['Email']);
+                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $errors[] = "Not a valid email.";
+                    }
+                    if (isset($student_to_invite['Last Name, First Name'])) {
+                        $name_parts = explode(',', $student_to_invite['Last Name, First Name']);
+                        if (isset($name_parts[0])) {
+                            $last_name = trim($name_parts[0]);
+                        } else {
+                            $errors[] = "No last name.";
+                        }
+                        if (isset($name_parts[1])) {
+                            $first_name = trim($name_parts[1]);
+                        } else {
+                            $errors[] = "No first name.";
+                        }
+                    } elseif (isset($student_to_invite['First Name Last Name'])) {
+                        $name_parts = explode(' ', $student_to_invite['First Name Last Name']);
+                        if (isset($name_parts[0])) {
+                            $first_name = $name_parts[0];
+                        } else {
+                            $errors[] = "No first name.";
+                        }
+                        if (isset($name_parts[1])) {
+                            $last_name = $name_parts[1];
+                        } else {
+                            $errors[] = "No last name.";
+                        }
+
+
+                    } else {
+                        $last_name = $student_to_invite['Last Name'];
+                        if (!$last_name) {
+                            $errors[] = "No last name.";
+                        }
+                        $first_name = $student_to_invite['First Name'];
+                        if (!$first_name) {
+                            $errors[] = "No first name.";
+                        }
+                    }
+
+
+                    $errors = implode(' ', $errors);
+                    break;
+
+                case('single_student'):
+                    $request->validated();
+                    $section = DB::table('sections')->where('id', $request->section_id)->first();
+                    $course_id = $section->course_id;
+                    $section_id = $request->section_id;
+                    $email = trim($request->email);
+                    $last_name = $request->last_name;
+                    $first_name = $request->first_name;
+                    break;
+                case('email_list'):
+                    $email = trim($request->email);
+                    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $errors = "Not a valid email.";
+                    }
+                    break;
+                default:
+                    $errors = "$request->inivitation_type is not a valid invitation type.";
+            }
+            if ($errors) {
+                $response['type'] = 'error';
+                $response['message'] = "Error: $errors";
+            } else {
+                $access_code = Helper::createAccessCode(8);
+                $pendingCourseInvitation = PendingCourseInvitation::updateOrCreate(
+                    [
+                        'course_id' => $course_id,
+                        'section_id' => $section_id,
+                        'email' => $email
+                    ],
+                    [
+                        'last_name' => $last_name,
+                        'first_name' => $first_name,
+                        'student_id' => $student_id,
+                        'status' => 'Pending',
+                        'access_code' => $access_code,
+                    ]
+                );
+
+                $email_sent_response = $this->_sendStudentCourseInvitationEmail($course_id,
+                    $section_id,
+                    $last_name,
+                    $first_name, $email, $access_code);
+                $status = $email_sent_response === true ? 'Invitation Sent' : $email_sent_response;
+                $pendingCourseInvitation->status = $status;
+                $pendingCourseInvitation->save();
+                $response['message'] = $request->invitation_type === 'student_from_roster_invitation'
+                    ? $status
+                    : "The invitation has been sent to $request->first_name $request->last_name.";
+                if ($email_sent_response === true) {
+                    $response['type'] = 'success';
+                }
+
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "Error: {$e->getMessage()}";
+        }
+
+        return $response;
+
+    }
+
+    /**
+     * @param int $course_id
+     * @param int $section_id
+     * @param string $last_name
+     * @param string $first_name
+     * @param string $email
+     * @param string $access_code
+     * @return string|true
+     */
+    private function _sendStudentCourseInvitationEmail(int    $course_id,
+                                                       int    $section_id,
+                                                       string $last_name,
+                                                       string $first_name,
+                                                       string $email,
+                                                       string $access_code)
+    {
+        try {
+            $course = Course::find($course_id);
+            $section = Section::find($section_id);
+            $instructor = User::find($course->user_id);
+            $instructor_name = "$instructor->first_name $instructor->last_name";
+            $instructor_email = $instructor->email;
+            $beautymail = app()->make(Beautymail::class);
+            $beautymail->send('emails.student_course_invitation', [
+                'access_code' => $access_code,
+                'first_name' => $first_name,
+                'course_name' => $course->name,
+                'section_name' => $section->name,
+                'instructor_name' => $instructor_name],
+                function ($message) use ($email, $first_name, $last_name, $instructor_email, $instructor_name) {
+                    $message
+                        ->from('adapt@noreply.libretexts.org', 'ADAPT')
+                        ->to($email, $first_name . ' ' . $last_name)
+                        ->replyTo($instructor_email, $instructor_name)
+                        ->subject('Your Course Registration Invitation');
+                });
+            return true;
+        } catch (Exception $e) {
+            return $e->getMessage();
+        }
+
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return array
+     * @throws Exception
+     */
+    public function getStudentsToInvite(Request $request, User $user): array
+    {
+
+        try {
+            $authorized = Gate::inspect('getStudentsToInvite',$user);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $response['type'] = 'error';
+            $s3_key = $request->s3_key;
+            if (!Storage::disk('s3')->exists($s3_key)) {
+                $response['message'] = 'We were unable to access your uploaded roster. Please try again or contact us for assistance.';
+                return $response;
+            }
+            $s3_data = Storage::disk('s3')->get($s3_key);
+            $students_to_invite = [];
+            $fileHandle = fopen('php://memory', 'r+');
+            fwrite($fileHandle, $s3_data);
+            rewind($fileHandle);
+            $headers = fgetcsv($fileHandle);
+            $header_errors = [];
+            foreach ($headers as $header) {
+                if (!in_array($header, ['Last Name', 'First Name', 'First Name Last Name', 'Last Name, First Name', 'Email', 'Student ID'])) {
+                    $header_errors[] = $header;
+                }
+            }
+            if ($header_errors) {
+                $response['type'] = 'error';
+                $response['message'] = 'Invalid headers in your .csv: ' . implode(', ', $header_errors);
+                return $response;
+            }
+            $header_errors = ['Email' => true, 'Last Name' => true, 'First Name' => true];
+            foreach ($headers as $header) {
+                if ($header === 'Email') {
+                    $header_errors['Email'] = false;
+                }
+                if (in_array($header, ['First Name', 'First Name Last Name', 'Last Name, First Name'])) {
+                    $header_errors['First Name'] = false;
+                }
+                if (in_array($header, ['Last Name', 'First Name Last Name', 'Last Name, First Name'])) {
+                    $header_errors['Last Name'] = false;
+                }
+            }
+            $missing_headers = [];
+            foreach ($header_errors as $header => $header_error) {
+                if ($header_error) {
+                    $missing_headers[] = $header;
+                }
+                if ($missing_headers) {
+                    $response['type'] = 'error';
+                    $response['message'] = 'Missing headers in .csv: ' . implode(', ', $missing_headers);
+                    return $response;
+                }
+            }
+
+            while (($student_to_invite = fgetcsv($fileHandle)) !== false) {
+                $student_to_invite = array_combine($headers, $student_to_invite);
+                $student_to_invite['Status'] = 'Pending';
+
+                $students_to_invite[] = $student_to_invite;
+            }
+            fclose($fileHandle);
+            $response['type'] = 'success';
+            $response['students_to_invite'] = $students_to_invite;
+            $headers[] = 'Status';
+            $response['headers'] = $headers;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to retrieve the list of students to invite.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return array|void
+     */
+    public
+    function getStudentRosterUploadTemplate(Request $request, User $user)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getStudentRosterUploadTemplate', $user);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        Helper::arrayToCsvDownload([$request->student_roster_upload_template_headers], 'roster-template.csv');
+    }
 
     /**
      * @param Request $request
@@ -40,7 +359,8 @@ class UserController extends Controller
      * @param Course $course
      * @return array
      */
-    public function getSignedUserId(Request $request, User $user, Course $course): array
+    public
+    function getSignedUserId(Request $request, User $user, Course $course): array
     {
         try {
             $response['type'] = 'error';
@@ -79,20 +399,21 @@ class UserController extends Controller
      * @return array
      * @throws Exception
      */
-    public function destroy(User             $student,
-                            Course           $course,
-                            AssignToUser     $assignToUser,
-                            Assignment       $assignment,
-                            Submission       $submission,
-                            SubmissionFile   $submissionFile,
-                            Score            $score,
-                            Extension        $extension,
-                            LtiGradePassback $ltiGradePassback,
-                            Seed             $seed,
-                            ExtraCredit      $extraCredit,
-                            Section          $section,
-                            Enrollment       $enrollment,
-                            TesterStudent    $testerStudent): array
+    public
+    function destroy(User             $student,
+                     Course           $course,
+                     AssignToUser     $assignToUser,
+                     Assignment       $assignment,
+                     Submission       $submission,
+                     SubmissionFile   $submissionFile,
+                     Score            $score,
+                     Extension        $extension,
+                     LtiGradePassback $ltiGradePassback,
+                     Seed             $seed,
+                     ExtraCredit      $extraCredit,
+                     Section          $section,
+                     Enrollment       $enrollment,
+                     TesterStudent    $testerStudent): array
     {
 
         $authorized = Gate::inspect('destroy', $student);
@@ -137,7 +458,8 @@ class UserController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateStudentEmail(UpdateStudentEmail $request, User $student): array
+    public
+    function updateStudentEmail(UpdateStudentEmail $request, User $student): array
     {
 
         $response['type'] = 'error';
@@ -280,7 +602,8 @@ class UserController extends Controller
     /**
      * @return Application|ResponseFactory|Response
      */
-    public function setCookieUserJWT()
+    public
+    function setCookieUserJWT()
     {
         $cookie = cookie('user_jwt', (string)Auth::guard()->getToken(), 2);
         $response['type'] = 'success';
@@ -290,7 +613,8 @@ class UserController extends Controller
     /**
      * @return Application|ResponseFactory|Response
      */
-    public function getCookieUserJWT()
+    public
+    function getCookieUserJWT()
     {
         $response['type'] = 'success';
         $response['user_jwt'] = request()->cookie()['user_jwt'] ?? 'None';

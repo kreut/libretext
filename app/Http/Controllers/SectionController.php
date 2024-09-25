@@ -98,6 +98,7 @@ class SectionController extends Controller
 
             $section->graders()->delete();
             DB::table('grader_access_codes')->where('section_id', $section->id)->delete();
+            DB::table('pending_course_invitations')->where('section_id', $section->id)->delete();
             $section->delete();
             DB::commit();
             $response['message'] = "<strong>$section_name</strong> has been deleted.";

@@ -28,7 +28,7 @@ Route::get('test', function () {
 
 Route::get('/lms/create-course', 'LmsController@createCourse');
 Route::post('/open-ai/results/{type}', 'OpenAIController@results');
-Route::get('/access-code/instructor','AccessCodeController@getInstructorAccessCode');
+Route::get('/access-code/instructor', 'AccessCodeController@getInstructorAccessCode');
 
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::post('/lti/get-token-by-lti-token-id', 'LTIController@getTokenByLtiTokenId');
@@ -92,6 +92,12 @@ Route::get('/analytics-dashboard/{course}', 'AnalyticsDashboardController@show')
 
 Route::get('/schools', 'SchoolController@index');
 Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
+Route::post('/users/student-roster-upload-template', 'UserController@getStudentRosterUploadTemplate');
+Route::patch('/users/get-students-to-invite', 'UserController@getStudentsToInvite');
+Route::post('/users/invite-student', 'UserController@inviteStudent');
+Route::delete('/users/courses/{course}/revoke-student-invitations', 'UserController@revokeStudentInvitations');
+Route::get('/pending-course-invitations/{course}', 'PendingCourseInvitationController@getPendingCourseInvitations');
+Route::delete('/pending-course-invitations/{pendingCourseInvitation}', 'PendingCourseInvitationController@destroy');
 
 Route::get('/time-zones', 'TimeZoneController@index');
 Route::get('/users/get-cookie-user-jwt', 'UserController@getCookieUserJWT');
@@ -176,13 +182,13 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::delete('/discussion-comments/{discussionComment}', 'DiscussionCommentController@destroy');
     Route::patch('/discussion-comments/{discussionComment}', 'DiscussionCommentController@update');
-    Route::get('/discussion-comments/assignment/{assignment}/question/{question}/user/{user}/satisfied','DiscussionCommentController@satisfiedRequirements');
+    Route::get('/discussion-comments/assignment/{assignment}/question/{question}/user/{user}/satisfied', 'DiscussionCommentController@satisfiedRequirements');
     Route::post('/discussion-comments/assignment/{assignment}/question/{question}/audio', 'DiscussionCommentController@storeAudioDiscussionComment');
-    Route::patch('/discussion-comments/assignment/{assignment}/question/{question}/audio-video-satisfied-file-requirements','DiscussionCommentController@audioVideoUploadSatisfiedRequirement');
+    Route::patch('/discussion-comments/assignment/{assignment}/question/{question}/audio-video-satisfied-file-requirements', 'DiscussionCommentController@audioVideoUploadSatisfiedRequirement');
     Route::get('/discussion-comments/{discussionComment}/download-transcript', 'DiscussionCommentController@downloadTranscript');
 
 
-    Route::get('/discussion-comments/{discussionComment}/deleting-will-make-requirements-not-satisfied','DiscussionCommentController@deletingWillMakeRequirementsNotSatisfied');
+    Route::get('/discussion-comments/{discussionComment}/deleting-will-make-requirements-not-satisfied', 'DiscussionCommentController@deletingWillMakeRequirementsNotSatisfied');
     Route::get('/discussions/assignment/{assignment}/question/{question}', 'DiscussionController@show');
     Route::post('/discussions/assignment/{assignment}/question/{question}/{media_upload_id}/{discussion_id}', 'DiscussionController@store');
     Route::get('/discussions/assignment/{assignment}/question/{question}/media-upload/{media_upload_id}', 'DiscussionController@getByAssignmentQuestionMediaUploadId');
@@ -637,7 +643,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/assignments/{assignment}/questions/summary', 'AssignmentSyncQuestionController@getQuestionSummaryByAssignment');
     Route::get('/assignments/{assignment}/questions/discuss-it', 'AssignmentSyncQuestionController@getDiscussItQuestionsByAssignment');
     Route::patch('/assignments/{assignment}/remix-assignment-with-chosen-questions', 'AssignmentSyncQuestionController@remixAssignmentWithChosenQuestions');
-
 
 
     Route::get('/assignments/{assignment}/validate-can-switch-to-compiled-pdf', 'AssignmentSyncQuestionController@validateCanSwitchToCompiledPdf');

@@ -13,6 +13,17 @@ class PreSignedURLPolicy
 {
     use HandlesAuthorization;
 
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function studentRoster(User $user): Response
+    {
+        return $user->role === 2
+            ? Response::allow()
+            : Response::deny('You are not allowed to upload upload a student roster.');
+
+    }
 
     /**
      * @param User $user

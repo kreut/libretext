@@ -44,7 +44,7 @@ class removeOldAccessCodes extends Command
     public function handle(): int
     {
         try {
-            foreach (['instructor_access_codes', 'question_editor_access_codes'] as $table)
+            foreach (['instructor_access_codes', 'question_editor_access_codes','pending_course_invitations'] as $table)
                 DB::table($table)
                     ->where('created_at', '<=', Carbon::now()->subDays(2)->toDateTimeString())
                     ->delete();

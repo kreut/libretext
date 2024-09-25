@@ -1879,6 +1879,7 @@ class CourseController extends Controller
      * @param BetaAssignment $betaAssignment
      * @param BetaCourse $betaCourse
      * @param BetaCourseApproval $betaCourseApproval
+     * @param Discussion $discussion
      * @return array
      * @throws Exception
      */
@@ -1886,10 +1887,7 @@ class CourseController extends Controller
     public
     function destroy(DestroyCourse      $request,
                      Course             $course,
-                     AssignToTiming     $assignToTiming,
-                     BetaAssignment     $betaAssignment,
                      BetaCourse         $betaCourse,
-                     BetaCourseApproval $betaCourseApproval,
                      Discussion         $discussion): array
 
     {
@@ -1972,6 +1970,9 @@ class CourseController extends Controller
                 DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);//queue this?
                 $discussion->deleteByAssignment($assignment);
             }
+            DB::table('pending_course_invitations')
+                ->where('course_id', $course->id)
+                ->delete();
             DB::table('grader_notifications')
                 ->where('course_id', $course->id)
                 ->delete();

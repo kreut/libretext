@@ -27,6 +27,9 @@ class S3Controller extends Controller
             $assignment = Assignment::find($request->assignment_id);
             $upload_file_type = $request->upload_file_type;
             switch ($upload_file_type) {
+                case('student-roster'):
+                    $authorized = Gate::inspect('studentRoster', $preSignedURL);
+                    break;
                 case('qti'):
                     $authorized = Gate::inspect('qtiPreSignedURL', $preSignedURL);
                     break;
@@ -59,6 +62,9 @@ class S3Controller extends Controller
             $dir = false;
             $questionMediaUpload = new QuestionMediaUpload();
             switch ($upload_file_type) {
+                case('student-roster'):
+                    $dir = 'student-rosters';
+                    break;
                 case('submission'):
                     $dir = 'assignments/' . $request->assignment_id;
                     break;
@@ -90,6 +96,9 @@ class S3Controller extends Controller
 
             $response['preSignedURL'] = (string)$client->createPresignedRequest($cmd, '+300 seconds')->getUri();
             switch ($upload_file_type) {
+                case('student-roster'):
+                    $response['student_roster_filename'] = $uploaded_filename;
+                    break;
                 case('qti'):
                     $response['qti_file'] = $uploaded_filename;
                     break;

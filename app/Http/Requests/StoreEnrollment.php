@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IsValidStudentAccessCode;
 use App\Rules\IsValidTimeZone;
 use App\Rules\IsValidWhitelistedDomain;
 use Illuminate\Foundation\Http\FormRequest;
@@ -25,7 +26,9 @@ class StoreEnrollment extends FormRequest
      */
     public function rules()
     {
-        $rules['access_code'] = ['required', 'exists:sections,access_code', new IsValidWhitelistedDomain($this->user()->email, $this->access_code)];
+        $rules['access_code'] = ['required',
+            new IsValidStudentAccessCode(),
+            new IsValidWhitelistedDomain($this->user()->email, $this->access_code)];
         if ($this->is_lms) {
             $rules['student_id'] = 'required';
             $rules['time_zone'] = new IsValidTimeZone();

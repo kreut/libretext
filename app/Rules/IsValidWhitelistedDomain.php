@@ -38,6 +38,12 @@ class IsValidWhitelistedDomain implements Rule
     {
         $section = DB::table('sections')->where('access_code', $this->access_code)->first();
         if (!$section) {
+            $pending_course_invitation = DB::table('pending_course_invitations')->where('access_code', $this->access_code)->first();
+            if ($pending_course_invitation) {
+                $section = DB::table('sections')->where('id', $pending_course_invitation->section_id)->first();
+            }
+        }
+        if (!$section) {
             $this->message = "That access code does not belong to any section.";
             return false;
         }

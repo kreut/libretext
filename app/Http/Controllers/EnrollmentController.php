@@ -14,6 +14,7 @@ use App\Http\Requests\AutoEnrollStudent;
 use App\Http\Requests\DestroyEnrollment;
 use App\Http\Requests\UpdateEnrollment;
 use App\LtiGradePassback;
+use App\PendingCourseInvitation;
 use App\Score;
 use App\Section;
 use App\Seed;
@@ -451,7 +452,7 @@ class EnrollmentController extends Controller
             }
             $enrollments = [];
             foreach ($enrollments_info as $enrollment) {
-                $enrollment->enrollment_date = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($enrollment->enrollment_date, $request->user()->time_zone, 'F d, Y');
+                $enrollment->enrollment_date = Carbon::parse($enrollment->enrollment_date)->format('n/j/y');
                 $enrollments[] = $enrollment;
             }
             $response['sections'] = $sections;
@@ -508,25 +509,27 @@ class EnrollmentController extends Controller
      * @param StoreEnrollment $request
      * @param Enrollment $enrollment
      * @param Section $Section
+     * @param PendingCourseInvitation $pendingCourseInvitation
      * @return array|Application|ResponseFactory|Response|string
      * @throws Exception
      */
     public
-    function store(StoreEnrollment $request,
-                   Enrollment      $enrollment,
-                   Section         $Section)
+    function store(StoreEnrollment         $request,
+                   Enrollment              $enrollment,
+                   Section                 $Section,
+                   PendingCourseInvitation $pendingCourseInvitation)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $enrollment);
-
+        $pending_course_invitation = null;
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
-            DB::beginTransaction();
+
             $data = $request->validated();
+            DB::beginTransaction();
             if ($request->is_lms) {
                 $user = request()->user();
                 $user->time_zone = $data['time_zone'];
@@ -536,6 +539,12 @@ class EnrollmentController extends Controller
             $section = $Section->where('access_code', '=', $data['access_code'])
                 ->where('access_code', '<>', null)
                 ->first();
+            if (!$section) {
+                $pending_course_invitation = $pendingCourseInvitation->where('access_code', '=', $data['access_code'])
+                    ->where('access_code', '<>', null)
+                    ->first();
+                $section = Section::find($pending_course_invitation->section_id);
+            }
             if (!$section) {
                 DB::rollback();
                 //not sure I even need this but I'm being extra cautious
@@ -582,6 +591,9 @@ class EnrollmentController extends Controller
 
                 $response['type'] = 'success';
                 $response['message'] = "You are now enrolled in <strong>$course_section_name</strong>.";
+                if ($pending_course_invitation) {
+                    $pending_course_invitation->delete();
+                }
                 DB::commit();
             }
         } catch (Exception $e) {
