@@ -568,6 +568,7 @@
                           </b-form-group>
                           <b-form-group
                             label-cols-sm="5"
+                            v-show="isOpenEnded || isDiscussIt"
                             label-cols-lg="4"
                             label-for="open_ended_score"
                           >
