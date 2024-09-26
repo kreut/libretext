@@ -2332,6 +2332,7 @@
                     >
                       <font-awesome-icon
                         :icon="expandArrowsIcon"
+                        title="Expand the view to just show the Case Study notes."
                       />
                       <b-tooltip target="expand-case-study-notes-tooltip" delay="750"
                                  triggers="hover"
@@ -2388,6 +2389,7 @@
                       >
                         <font-awesome-icon
                           :icon="expandArrowsIcon"
+                          title="Expand the view to just show the Case Study notes"
                         />
                         <b-tooltip target="expand-question-tooltip" delay="750"
                                    triggers="hover"
@@ -2638,6 +2640,7 @@
                       >
                         <font-awesome-icon
                           :icon="expandArrowsIcon"
+                          title="Just show the question"
                         />
                         <b-tooltip target="expand-question-tooltip" delay="750"
                                    triggers="hover"

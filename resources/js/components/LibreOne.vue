@@ -6,7 +6,7 @@
               class="launch-pad"
               @click="openLibreOne()"
     >
-      <font-awesome-icon :icon="rocketIcon" />
+      <font-awesome-icon :icon="rocketIcon" title="Explore the Libreverse through its launchpad"/>
     </b-button>
     <b-tooltip target="libreverse-tooltip"
                delay="750"
