@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
     <b-modal id="modal-last-open-ended-submission"
              title="Last Open-Ended Submission"
              hide-footer
@@ -64,7 +64,7 @@
       title="Submission Not Accepted"
     >
       <b-alert variant="danger" :show="true">
-        <span class="font-weight-bold" style="font-size: large" v-html="errorMessage" />
+        <span class="font-weight-bold" style="font-size: large" v-html="errorMessage"/>
       </b-alert>
     </b-modal>
     <b-modal id="modal-confirm-set-page"
@@ -96,9 +96,9 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="name" />
+        <PageTitle :title="name"/>
         <b-container>
-          <div v-if="assessmentType !== 'clicker' || solutionsReleased">
+          <div v-if="!showNoAccessMessage && (assessmentType !== 'clicker' || solutionsReleased)">
             <b-row align-h="end">
               <b-button class="ml-3 mb-2" variant="primary" size="sm" @click="getStudentView(assignmentId)">
                 View Assessments
@@ -107,33 +107,38 @@
             <hr>
           </div>
           <div v-show="isInstructorLoggedInAsStudent" class="mb-2">
-            <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
+            <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
           </div>
           <div v-if="assessmentType === 'clicker' && !solutionsReleased">
             Please wait for your instructor to open up this assignment.
           </div>
-          <b-card v-show="assessmentType !== 'clicker'" header="default"
+          <div v-show="showNoAccessMessage">
+            <b-alert variant="danger" show>
+              {{ showNoAccessMessage }}
+            </b-alert>
+          </div>
+          <b-card v-show="!showNoAccessMessage && assessmentType !== 'clicker'" header="default"
                   header-html="<h2 class=&quot;h5&quot;>Important Information</h2>"
           >
             <b-card-text>
               <ul style="list-style: none;">
                 <li v-if="public_description" class="mb-2">
-                  <span class="font-weight-bold">Description: </span> <span v-html="public_description" />
+                  <span class="font-weight-bold">Description: </span> <span v-html="public_description"/>
                 </li>
                 <li v-if="instructions.length" class="mb-2">
-                  <span v-html="instructions" />
+                  <span v-html="instructions"/>
                 </li>
                 <li class="mb-2">
                   <span class="font-weight-bold">Number of Points: </span>
                   <span>This assignment is worth a total of {{
-                    totalPoints
-                  }} point{{ totalPoints !== 1 ? 's' : '' }}.</span>
+                      totalPoints
+                    }} point{{ totalPoints !== 1 ? 's' : '' }}.</span>
                 </li>
                 <li class="mb-2">
                   <span class="font-weight-bold">Number of Questions: </span>
                   <span>This assignment has {{
-                    items.length
-                  }} question{{ items.length !== 1 ? 's' : '' }}.</span>
+                      items.length
+                    }} question{{ items.length !== 1 ? 's' : '' }}.</span>
                 </li>
                 <li v-show="assessmentType === 'real time'" class="mb-2">
                   <span class="font-weight-bold">Number of Allowed Attempts: </span>
@@ -197,17 +202,17 @@
               <ul v-if="files.length && (preSignedURL !== '')">
                 <li v-for="file in files" :key="file.id">
                   <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                    file.name
-                  }}</span> -
+                      file.name
+                    }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
                   <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                   <span v-else-if="file.active" class="ml-2">
-                    <b-spinner small type="grow" />
+                    <b-spinner small type="grow"/>
                     Uploading File...
                   </span>
                   <span v-if="processingFile">
-                    <b-spinner small type="grow" />
+                    <b-spinner small type="grow"/>
                     Processing file...
                   </span>
                   <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
@@ -258,8 +263,8 @@
             >
               <template #cell(question_number)="data">
                 <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)"><span style="font-size:large">&nbsp;{{
-                  data.item.question_number
-                }}&nbsp;</span></a>
+                    data.item.question_number
+                  }}&nbsp;</span></a>
               </template>
               <template v-slot:head(last_question_submission)="data">
                 Last Auto-Graded Submission
@@ -283,12 +288,12 @@
                   :class="{ 'table-text-danger': data.item.openEndedSubmissionRequired && !data.item.showThumbsUpForOpenEndedSubmission }"
                 >
                   <span v-if="!data.item.showThumbsUpForOpenEndedSubmission">{{
-                    data.item.last_open_ended_submission
-                  }}</span>
+                      data.item.last_open_ended_submission
+                    }}</span>
                   <span v-if="data.item.showThumbsUpForOpenEndedSubmission">
                     <a :href="data.item.submission_file_url" target="_blank">{{
-                      data.item.last_open_ended_submission
-                    }}</a>
+                        data.item.last_open_ended_submission
+                      }}</a>
                   </span>
                 </span>
                 <font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission" class="text-success"
@@ -347,7 +352,7 @@
           <b-card v-if="canViewAssignmentStatistics" class="mb-5" header="default"
                   header-html="<h2 class=&quot;h5&quot;>Statistics</h2>"
           >
-            <AssignmentStatistics />
+            <AssignmentStatistics/>
           </b-card>
         </b-container>
       </div>
@@ -392,6 +397,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    showNoAccessMessage: '',
     solutionsReleased: false,
     assignmentId: 0,
     setAllPages: false,
@@ -453,7 +459,10 @@ export default {
   },
   async mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    await this.getAssignmentSummary()
+    if (await this.getAssignmentSummary() === false) {
+      this.isLoading = false
+      return false
+    }
 
     await this.$nextTick(() => {
       this.getSelectedQuestions(this.assignmentId)
@@ -699,7 +708,11 @@ export default {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
         console.log(data)
         if (data.type === 'error') {
-          this.$noty.error(data.message)
+          if (data.message === 'You are not allowed to retrieve this summary.') {
+            this.showNoAccessMessage = 'You are not allowed to retrieve this summary.'
+          } else {
+            this.$noty.error(data.message)
+          }
           return false
         }
         let assignment = data.assignment

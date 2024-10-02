@@ -368,9 +368,17 @@ class AssignmentPolicy
         return $has_access;
     }
 
-    public function getAssignmentSummary(User $user, Assignment $assignment)
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function getAssignmentSummary(User $user, Assignment $assignment): Response
     {
         $has_access = $this->canView($user, $assignment);
+        if ($user->role ===3 && !$assignment->shown){
+            $has_access = false;
+        }
         return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve this summary.');
