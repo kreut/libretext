@@ -1237,6 +1237,11 @@ class Question extends Model
                                 $qti_array['feedback'][$identifier] = $this->addTimeToS3Images($qti_array['feedback'][$identifier], $domDocument, false);
                             }
                         }
+                    } else {
+                        $qti_array['feedback'] = [];
+                        foreach ($feedback_identifiers as $identifier) {
+                            $qti_array['feedback'][$identifier] = '';
+                        }
                     }
                 }
 
