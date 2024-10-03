@@ -57,6 +57,9 @@ class IsValidWhitelistedDomain implements Rule
             ->select('whitelisted_domain')
             ->pluck('whitelisted_domain')
             ->toArray();
+        if (!$whitelisted_domains){
+            return true;
+        }
         foreach ($whitelisted_domains as $whitelisted_domain) {
             if (strpos(strtolower($this->email), strtolower($whitelisted_domain)) !== false) {
                 return true;
