@@ -74,46 +74,8 @@ class processAutoRelease extends Command
                     'auto_releases.students_can_view_assignment_statistics_activated',
                     'auto_releases.students_can_view_assignment_statistics_after'
                 )->get();
-            $auto_releases_by_assignment_id = [];
-            $last_dues = ['show_scores_after', 'solutions_released_after', 'students_can_view_assignment_statistics_after'];
-            foreach ($auto_releases as $auto_release) {
-                $first_available_from = $auto_release->available_from;
-                foreach ($last_dues as $key) {
-                    $last_due = str_replace('_after', '', $key);
-                    $last_due .= "_last_due";
-                    $new_last_dues[$last_due] = $autoRelease->lastDue($auto_release, $key);
-                }
-                if (!isset($auto_releases_by_assignment_id[$auto_release->assignment_id])) {
-                    $auto_releases_by_assignment_id[$auto_release->assignment_id] = [
-                        'assignment_id' => $auto_release->assignment_id,
-                        'first_available_from' => $first_available_from,
-                        'shown' => $auto_release->shown,
-                        'shown_activated' => $auto_release->shown_activated,
-                        'show_scores' => $auto_release->show_scores,
-                        'show_scores_activated' => $auto_release->show_scores_activated,
-                        'solutions_released' => $auto_release->solutions_released,
-                        'solutions_released_activated' => $auto_release->solutions_released_activated,
-                        'students_can_view_assignment_statistics' => $auto_release->students_can_view_assignment_statistics,
-                        'students_can_view_assignment_statistics_activated' => $auto_release->students_can_view_assignment_statistics_activated,
-                        'show_scores_last_due' => $new_last_dues['show_scores_last_due'],
-                        'solutions_released_last_due' => $new_last_dues['solutions_released_last_due'],
-                        'students_can_view_assignment_statistics_last_due' => $new_last_dues['students_can_view_assignment_statistics_last_due']];
-                } else {
-                    $current_first_available_from = Carbon::parse($auto_releases_by_assignment_id[$auto_release->assignment_id]['first_available_from'])->toImmutable();
+            $auto_releases_by_assignment_id = $autoRelease->getAutoReleasesByAssignmentId($auto_releases);
 
-                    $new_first_available_from = Carbon::parse($first_available_from)->toImmutable();
-                    $auto_releases_by_assignment_id[$auto_release->assignment_id]['first_available_from'] = $current_first_available_from->min($new_first_available_from);
-
-                    foreach ($last_dues as $key) {
-                        $last_due = str_replace('_after', '', $key) . "_last_due";
-                        $current_last_due = Carbon::parse($auto_releases_by_assignment_id[$auto_release->assignment_id][$last_due])->toImmutable();
-                        $new_last_due = Carbon::parse($new_last_dues[$last_due])->toImmutable();
-                        $auto_releases_by_assignment_id[$auto_release->assignment_id][$last_due] = $current_last_due->max($new_last_due);
-                    }
-
-
-                }
-            }
             $now = Carbon::now()->toImmutable();
 
             foreach ($auto_releases_by_assignment_id as $auto_release) {

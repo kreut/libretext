@@ -408,6 +408,7 @@ class Assignment extends Model
                 $assignment_ids_with_submissions_or_file_submissions = $course->assignmentIdsWithSubmissionsOrFileSubmissions();
                 $assign_to_groups = $this->assignToGroupsByCourse($course);
                 $assignment_ids = $course->assignments->pluck('id')->toArray();
+                $auto_release_show_dates_by_assignment_id = $autoRelease->getAutoReleaseShowDatesByAssignmentId($assignment_ids);
                 $user_ids = $course->enrolledUsers->pluck('id')->toArray();
                 $need_to_grades = SubmissionFile::selectRaw('assignment_id, COUNT(*) as count')
                     ->whereNull('score')
@@ -554,6 +555,7 @@ class Assignment extends Model
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['is_in_lms_course'] = $course->lms;
+                $assignments_info[$key]['auto_release_show_dates'] = $auto_release_show_dates_by_assignment_id[$assignment->id] ?? null;
                 $assignments_info[$key]['lms_api'] = (bool)$course->lms_course_id;
                 foreach ($auto_release_keys as $auto_release_key) {
                     $assignments_info[$key]["auto_release_$auto_release_key"] = isset($auto_release_by_assignment_id[$assignment->id]) ? $auto_release_by_assignment_id[$assignment->id]->{$auto_release_key} : null;

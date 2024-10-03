@@ -135,7 +135,7 @@
         class="custom-checkbox"
         @change="initShowHideAssignmentProperty()"
       >
-        Shown
+        Manual
       </b-form-checkbox>
       <b-form-checkbox
         :id="`auto-release-activated-${property}-${assignment.id}`"
@@ -147,7 +147,7 @@
         unchecked-value="0"
         @change="updateAutoReleaseActivated()"
       >
-        Auto-release
+        Auto
       </b-form-checkbox>
     </div>
     <div v-show="!showAutoRelease">
@@ -219,37 +219,8 @@ export default {
       }
     },
     async initShowHideAssignmentProperty () {
-      if (this.assignment[this.property] &&
-        this.assignment[`auto_release_${this.property}`] &&
-        this.assignment[`auto_release_activated_${this.property}`]) {
-        this.deactivateAutoRelease = 1
-        switch (this.property) {
-          case ('shown'):
-            this.thingToHide = 'assignment'
-            break
-          case ('solutions_released'):
-            this.thingToHide = 'solutions'
-            break
-          case ('show_scores'):
-            this.thingToHide = 'scores'
-            break
-          case ('students_can_view_assignment_statistics'):
-            this.thingToHide = 'statistics'
-            break
-        }
-        const { data } = await axios.get(`/api/auto-release/assignment/${this.assignment.id}/property/${this.property}/timing-message`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.autoReleaseTimingMessage = data.timing_message
-        this.$nextTick(() => {
-          this.$bvModal.show(`modal-deactivate-auto-release-${this.assignment.id}-${this.property}`)
-        })
-      } else {
-        this.deactivateAutoRelease = 0
-        await this.handleSubmitShowHideAssignmentProperty()
-      }
+      this.deactivateAutoRelease = 0
+      await this.handleSubmitShowHideAssignmentProperty()
     },
     async handleSubmitShowHideAssignmentProperty () {
       switch (this.property) {

@@ -890,6 +890,9 @@
                   <div v-html="getAutoReleaseTooltip('releasing your scores')" />
                 </b-tooltip>
               </th>
+              <th v-if="view === 'control panel'" scope="col">
+                Scores Released On
+              </th>
               <th v-if="view === 'control panel'" scope="col" style="width:200px">
                 Solutions
                 <QuestionCircleTooltip :id="`auto-release-solutions-tooltip`" />
@@ -900,14 +903,21 @@
                   <div v-html="getAutoReleaseTooltip('showing the solutions')" />
                 </b-tooltip>
               </th>
+              <th v-if="view === 'control panel'" scope="col">
+                Solutions Released On
+              </th>
               <th v-if="view === 'control panel'" scope="col" style="width:200px">
-                Statistics  <QuestionCircleTooltip :id="`auto-release-statistics-tooltip`" />
+                Statistics
+                <QuestionCircleTooltip :id="`auto-release-statistics-tooltip`" />
                 <b-tooltip :target="`auto-release-statistics-tooltip`"
                            delay="250"
                            triggers="hover focus"
                 >
                   <div v-html="getAutoReleaseTooltip('showing the assignment statistics')" />
                 </b-tooltip>
+              </th>
+              <th v-if="view === 'control panel'" scope="col">
+                Statistics Released On
               </th>
               <th v-if="view === 'control panel'" scope="col">
                 Points Per Question
@@ -936,13 +946,17 @@
                 </b-tooltip>
               </th>
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:200px">
-                Visibility <QuestionCircleTooltip :id="`auto-release-shown-tooltip`" />
+                Released
+                <QuestionCircleTooltip :id="`auto-release-shown-tooltip`" />
                 <b-tooltip :target="`auto-release-shown-tooltip`"
                            delay="250"
                            triggers="hover focus"
                 >
                   <div v-html="getAutoReleaseTooltip('showing the assignment')" />
                 </b-tooltip>
+              </th>
+              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
+                Released On
               </th>
               <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
                 Group
@@ -974,7 +988,7 @@
               v-for="assignment in assignments"
               v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
               :key="assignment.id"
-              :style="!assignment.shown && user.role === 2 ? 'background: #ffe8e7' : ''"
+              :style="getAssignmentRowStyle(assignment)"
             >
               <th scope="row" style="width:300px">
                 <b-icon icon="list" class="handle" />
@@ -1090,6 +1104,13 @@
                   />
                 </div>
               </td>
+              <td v-if="view === 'control panel'" class="show_scores_date">
+                <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
+                                 :assignment="assignment"
+                                 :property="'show_scores_date'"
+                                 :auto-release-activated="assignment.auto_release_activated_show_scores"
+                />
+              </td>
               <td v-if="view === 'control panel'">
                 <div v-if="isFormative (assignment)">
                   N/A
@@ -1103,6 +1124,13 @@
                   />
                 </div>
               </td>
+              <td v-if="view === 'control panel'" class="solutions_released_date">
+                <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
+                                 :assignment="assignment"
+                                 :property="'solutions_released_date'"
+                                 :auto-release-activated="assignment.auto_release_activated_solutions_released"
+                />
+              </td>
               <td v-if="view === 'control panel'">
                 <div v-if="isFormative (assignment)">
                   N/A
@@ -1115,6 +1143,13 @@
                     @refreshPage="getAssignments"
                   />
                 </div>
+              </td>
+              <td v-if="view === 'control panel'" class="students_can_view_assignment_statistics_date">
+                <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
+                                 :assignment="assignment"
+                                 :property="'students_can_view_assignment_statistics_date'"
+                                 :auto-release-activated="assignment.auto_release_activated_students_can_view_assignment_statistics"
+                />
               </td>
               <td v-if="view === 'control panel'">
                 <div v-if="isFormative (assignment)">
@@ -1147,6 +1182,13 @@
                   :assignment="assignment"
                   :property="'shown'"
                   @refreshPage="getAssignments"
+                />
+              </td>
+              <td v-if="view === 'main view' && [2,4].includes(user.role)" class="show_date">
+                <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
+                                 :assignment="assignment"
+                                 :property="'show_date'"
+                                 :auto-release-activated="assignment.auto_release_activated_shown"
                 />
               </td>
               <td v-if="view === 'main view' && [2,4].includes(user.role)">
@@ -1396,10 +1438,12 @@ import GrantLmsApiAccess from '~/components/GrantLmsApiAccess.vue'
 import { isMobile } from '~/helpers/mobileCheck'
 import ShowHideAssignmentProperties from '~/components/ShowHideAssignmentProperties.vue'
 import showHideAssignmentProperties from '../../components/ShowHideAssignmentProperties.vue'
+import AutoReleaseDate from '../../components/AutoReleaseDate.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    AutoReleaseDate,
     ShowHideAssignmentProperties,
     GrantLmsApiAccess,
     LMSGradePassback,
@@ -1515,9 +1559,27 @@ export default {
     canViewAssignments: false,
     showNoAssignmentsAlert: false
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    getAssignmentRowStyle () {
+      return (assignment) => {
+        let rowStyle = {}
+        if (this.user.role === 2) {
+          if (!assignment.shown) {
+            rowStyle = { background: '#ffe8e7' }
+            if (assignment.auto_release_activated_shown) {
+              rowStyle = { background: '#FFF2E0' }
+            }
+          } else {
+            rowStyle = { background: '#E0F7E9' }
+          }
+          return rowStyle
+        }
+      }
+    }
+  },
   created () {
     this.courseId = this.$route.params.courseId
     this.isLocked = isLocked

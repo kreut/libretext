@@ -75,6 +75,11 @@
           </div>
         </div>
       </template>
+      <b-alert variant="info" show style="font-size:90%">
+        Assignments will be shown the specified amount of time <strong>before</strong> your first "available on".   Scores,
+        solutions, and statistics will be released the specified amount of time <strong>after</strong> your last due date
+        or final submissison date if applicable.
+      </b-alert>
       <table class="table table-striped table-sm">
         <thead>
           <tr>
