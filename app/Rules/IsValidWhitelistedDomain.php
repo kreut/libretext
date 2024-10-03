@@ -60,6 +60,7 @@ class IsValidWhitelistedDomain implements Rule
         if (!$whitelisted_domains){
             return true;
         }
+
         foreach ($whitelisted_domains as $whitelisted_domain) {
             if (strpos(strtolower($this->email), strtolower($whitelisted_domain)) !== false) {
                 return true;
