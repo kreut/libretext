@@ -20,13 +20,14 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
-Route::get('test', function () {
-    event(new App\Events\ClickerStatus('ooga'));
-    return "Event has been sent!";
-});
 
+Route::get('/oidc/redirect', 'OIDCController@redirect');
+Route::get('/oidc/libreone/callback', 'OIDCController@callback');
+Route::post('/oidc/libreone/instructor-verified', 'OIDCController@instructorVerified');
+Route::post('/oidc/libreone/new-user-created', 'OIDCController@newUserCreated');
 
 Route::get('/lms/create-course', 'LmsController@createCourse');
+
 Route::post('/open-ai/results/{type}', 'OpenAIController@results');
 Route::get('/access-code/instructor', 'AccessCodeController@getInstructorAccessCode');
 
