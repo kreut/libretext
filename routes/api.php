@@ -300,7 +300,12 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/auto-release/compare-to-default/assignment/{assignment}/course/{course}', 'AutoReleaseController@compareAssignmentToCourseDefault');
     Route::get('/auto-release/statuses/{assignment}', 'AutoReleaseController@getStatuses');
     Route::patch('/auto-release/activated/{assignment}', 'AutoReleaseController@updateActivated');
+    Route::patch('/auto-release/global-update/course/{course}', 'AutoReleaseController@globalUpdate');
+
+
     Route::get('/auto-release/assignment/{assignment}/property/{property}/timing-message', 'AutoReleaseController@autoReleaseTimingMessage');
+
+
 
 
     Route::patch('/courses/{course}/auto-update-question-revisions', 'CourseController@autoUpdateQuestionRevisions');

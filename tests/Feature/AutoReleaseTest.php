@@ -29,6 +29,16 @@ class AutoReleaseTest extends TestCase
             'students_can_view_assignment_statistics' => 0]);
     }
 
+
+    /** @test */
+    public function non_owner_cannot_do_global_auto_release_for_course()
+    {
+        $user_2 = factory(User::class)->create();
+        $this->actingAs($user_2)
+            ->patchJson("/api/auto-release/global-update/course/{$this->course->id}")
+            ->assertJson(['message' => 'You are not allowed to globally update the auto-releases for this course.']);
+    }
+
     /** @test */
     public function auto_release_for_course_cannot_be_updated_by_non_owner()
     {
@@ -41,7 +51,7 @@ class AutoReleaseTest extends TestCase
     /** @test */
     public function compare_assignment_to_course_default_can_only_be_done_by_instructor()
     {
-        $user_2 = factory(User::class)->create(['role'=>3]);
+        $user_2 = factory(User::class)->create(['role' => 3]);
         $this->actingAs($user_2)
             ->getJson("/api/auto-release/compare-to-default/assignment/{$this->assignment->id}/course/{$this->course->id}")
             ->assertJson(['message' => 'You are not allowed to compare the assignment auto-release to the default course auto-release.']);
@@ -215,7 +225,8 @@ class AutoReleaseTest extends TestCase
 
     }
 
-    private function _activateAll($autoRelease){
+    private function _activateAll($autoRelease)
+    {
         $autoRelease->shown_activated = 1;
         $autoRelease->solutions_released_activated = 1;
         $autoRelease->show_scores_activated = 1;

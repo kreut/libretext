@@ -1,6 +1,21 @@
 <template>
   <div>
+    <b-form-radio-group
+      v-if="radioButtons"
+      v-model="assignment.show_points_per_question"
+      stacked
+      required
+      @change="submitShowPointsPerQuestion(assignment)"
+    >
+      <b-form-radio name="showPointsPerQuestion" value="1">
+        Shown
+      </b-form-radio>
+      <b-form-radio name="showPointsPerQuestion" value="0">
+        Hidden
+      </b-form-radio>
+    </b-form-radio-group>
     <toggle-button
+      v-if="!radioButtons"
       tabindex="0"
       :width="84"
       :value="Boolean(assignment.show_points_per_question)"
@@ -26,7 +41,11 @@ export default {
         type: Object,
         default: function () {
         }
-      }
+      },
+    radioButtons: {
+      type: Boolean,
+      default: false
+    }
   },
   data: () => ({
     assessmentType: '',
@@ -40,7 +59,10 @@ export default {
         if (data.type === 'error') {
           return false
         }
-        assignment.show_points_per_question = !assignment.show_points_per_question
+        if (!this.radioButtons) {
+          assignment.show_points_per_question = !assignment.show_points_per_question
+        }
+
       } catch (error) {
         this.$noty.error(error.message)
       }

@@ -142,7 +142,7 @@ export default {
     filteredTabs () {
       let tabs
       tabs = this.tabs
-      if (!window.config.isMe) {
+      if (!(window.config.isMe || [1387, 1344, 173].includes(this.user.id))) {
         tabs = this.tabs.filter(tab => tab.name !== 'Auto-Release')
       }
       return this.formative

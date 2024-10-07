@@ -1,6 +1,5 @@
 <template>
   <div>
-    {{assignmentProperty}}
     <div v-html="getAutoReleaseDateText()" />
   </div>
 </template>

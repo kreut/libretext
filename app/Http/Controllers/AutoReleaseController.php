@@ -16,15 +16,73 @@ class AutoReleaseController extends Controller
 {
 
     /**
+     * @param Request $request
+     * @param Course $course
+     * @param AutoRelease $autoRelease
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function globalUpdate(Request     $request,
+                                 Course      $course,
+                                 AutoRelease $autoRelease,
+                                 Assignment  $assignment): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('globalUpdate', [$autoRelease, $course]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $setting = $request->setting;
+            $value = $request->value;
+            $auto_release_keys = $autoRelease->keys();
+            $course_assignment_ids = $course->assignments->pluck('id')->toArray();
+            foreach ($auto_release_keys as $auto_release) {
+                switch ($setting) {
+                    case('manual'):
+                        $assignment->whereIn('id', $course_assignment_ids)
+                            ->update([$auto_release => $value]);
+                        break;
+                    case('auto'):
+                        $assignment_ids = DB::table('assignments')
+                            ->where('assignments.assessment_type', '<>', 'clicker')
+                            ->whereIn('id', $course_assignment_ids)
+                            ->get('id')
+                            ->pluck('id')
+                            ->toArray();
+                        $autoRelease->where('type', 'assignment')
+                            ->whereNotNull($auto_release)
+                            ->whereIn('type_id', $assignment_ids)
+                            ->update(["{$auto_release}_activated" => $value]);
+                        break;
+                }
+            }
+            $response['type'] = $value ? 'success' : 'info';
+            $new_state = $value ? 'on' : 'off';
+            $response['message'] = "The '$setting' setting has been turned $new_state for all assignments in your course.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to globally update the auto-releases for this course. Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
      * @param Assignment $assignment
      * @param string $property
      * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
      */
-    public function autoReleaseTimingMessage(Assignment  $assignment,
-                                             string      $property,
-                                             AutoRelease $autoRelease): array
+    public
+    function autoReleaseTimingMessage(Assignment  $assignment,
+                                      string      $property,
+                                      AutoRelease $autoRelease): array
     {
 
         $response['type'] = 'error';

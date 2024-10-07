@@ -1,6 +1,34 @@
 <template>
   <div v-show="showAutoRelease" class="mt-2">
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-auto-release'" />
+    <b-modal id="modal-confirm-global-update-auto-release-property"
+             title="Confirm Global Update"
+    >
+      <p>
+        You are about to turn all of your {{ globalAutoRelease.setting }} settings
+        "{{ Boolean(globalAutoRelease.value) ? 'on' : 'off' }}".
+      </p>
+      <p v-if="globalAutoRelease.setting=== 'auto' && globalAutoRelease.value">
+        This will only impact non-clicker assignments and auto-release properties with existing timings.
+      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-confirm-global-update-auto-release-property')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          :variant="Boolean(globalAutoRelease.value) ? 'success' :'danger'"
+          size="sm"
+          class="float-right"
+          @click="globalUpdateAutoReleaseProperty()"
+        >
+          {{ Boolean(globalAutoRelease.value) ? 'Turn On' : 'Turn Off' }}
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-apply-auto-release-to"
              title="Auto-release Options"
     >
@@ -76,8 +104,10 @@
         </div>
       </template>
       <b-alert variant="info" show style="font-size:90%">
-        Assignments will be shown the specified amount of time <strong>before</strong> your first "available on".   Scores,
-        solutions, and statistics will be released the specified amount of time <strong>after</strong> your last due date
+        Assignments will be shown the specified amount of time <strong>before</strong> your first "available on".
+        Scores,
+        solutions, and statistics will be released the specified amount of time <strong>after</strong> your last due
+        date
         or final submissison date if applicable.
       </b-alert>
       <table class="table table-striped table-sm">
@@ -346,6 +376,48 @@
         </b-button>
       </div>
     </b-card>
+    <div v-if="courseId" class="pt-3">
+      <b-card
+        header="default"
+        header-html="<h2 class=&quot;h7&quot;>Global Update</h2>"
+      >
+        <b-card-text>
+          <p>You can globally update the "manual" and "auto" properties for all assignments in the course.</p>
+          <b-container>
+            <b-row class="pb-2">
+              <span class="pr-2"><label>Set all "manual" to :</label></span>
+              <span class="pr-2">
+                <b-button size="sm"
+                          variant="success"
+                          @click="initBulkUpdateAutoRelease('manual',1)"
+                >
+                  On</b-button>
+              </span>
+              <b-button size="sm"
+                        variant="danger"
+                        @click="initBulkUpdateAutoRelease('manual',0)"
+              >
+                Off
+              </b-button>
+            </b-row>
+            <b-row>
+              <span class="pr-2"><label>Set all "auto" to:</label></span>
+              <span class="pr-2"><b-button
+                size="sm"
+                variant="success"
+                @click="initBulkUpdateAutoRelease('auto',1)"
+              >On</b-button></span>
+              <b-button size="sm"
+                        variant="danger"
+                        @click="initBulkUpdateAutoRelease('auto',0)"
+              >
+                Off
+              </b-button>
+            </b-row>
+          </b-container>
+        </b-card-text>
+      </b-card>
+    </div>
   </div>
 </template>
 
@@ -357,6 +429,7 @@ import { ToggleButton } from 'vue-js-toggle-button'
 import axios from 'axios'
 import AutoReleaseStatus from './AutoReleaseStatus.vue'
 import ErrorMessage from './ErrorMessage.vue'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'Autorelease',
@@ -394,6 +467,7 @@ export default {
     }
   },
   data: () => ({
+    globalAutoRelease: {},
     showAutoRelease: false,
     applyTo: 'all',
     autoReleaseAfterOptions: [],
@@ -412,7 +486,10 @@ export default {
   }
   ),
   computed: {
-    isMe: () => window.config.isMe
+    isMe: () => window.config.isMe,
+    ...mapGetters({
+      user: 'auth/user'
+    })
   },
   watch: {
     'autoReleaseForm.solutions_availability': {
@@ -468,7 +545,7 @@ export default {
     }
   },
   mounted () {
-    this.showAutoRelease = this.isMe
+    this.showAutoRelease = this.isMe || [1387, 1344, 173].includes(this.user.id)
     this.headerHtml = this.courseId ? '<h2 class="h7 m-0">Default Auto-Release</h2>' : '<h2 class="h7 m-0">Auto-Release</h2>'
     if (this.assignmentId) {
       this.getReleasedSettings()
@@ -487,6 +564,21 @@ export default {
     }]
   },
   methods: {
+    async globalUpdateAutoReleaseProperty () {
+      try {
+        const { data } = await axios.patch(`/api/auto-release/global-update/course/${this.courseId}`, this.globalAutoRelease)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.$bvModal.hide('modal-confirm-global-update-auto-release-property')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    initBulkUpdateAutoRelease (setting, value) {
+      this.globalAutoRelease = { setting: setting, value: value }
+      this.$bvModal.show('modal-confirm-global-update-auto-release-property')
+    },
     initSaveCourseAutoRelease () {
       this.$bvModal.show('modal-apply-auto-release-to')
     },

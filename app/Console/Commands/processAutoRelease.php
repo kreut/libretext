@@ -9,7 +9,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class processAutoRelease extends Command
 {
@@ -37,13 +36,7 @@ class processAutoRelease extends Command
         parent::__construct();
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @param AutoRelease $autoRelease
-     * @return int
-     * @throws Exception
-     */
+
     public function handle(AutoRelease $autoRelease): int
     {
         try {

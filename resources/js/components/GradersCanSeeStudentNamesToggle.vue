@@ -1,6 +1,21 @@
 <template>
   <div>
+    <b-form-radio-group
+      v-if="radioButtons"
+      v-model="assignment.graders_can_see_student_names"
+      stacked
+      required
+      @change="submitGradersCanSeeStudentNames(assignment)"
+    >
+      <b-form-radio name="showPointsPerQuestion" value="1">
+        Shown
+      </b-form-radio>
+      <b-form-radio name="showPointsPerQuestion" value="0">
+        Hidden
+      </b-form-radio>
+    </b-form-radio-group>
     <toggle-button
+      v-if="!radioButtons"
       tabindex="0"
       :width="84"
       :value="Boolean(assignment.graders_can_see_student_names)"
@@ -27,7 +42,11 @@ export default {
         type: Object,
         default: function () {
         }
-      }
+      },
+    radioButtons: {
+      type: Boolean,
+      default: false
+    }
   },
   data: () => ({
     toggleColors: window.config.toggleColors,
@@ -41,7 +60,9 @@ export default {
         if (data.type === 'error') {
           return false
         }
-        this.assignment.graders_can_see_student_names = !this.assignment.graders_can_see_student_names
+        if (!this.radioButtons) {
+          this.assignment.graders_can_see_student_names = !this.assignment.graders_can_see_student_names
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }

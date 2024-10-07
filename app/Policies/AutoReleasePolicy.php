@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Assignment;
 use App\AutoRelease;
+use App\Course;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
@@ -18,6 +19,15 @@ class AutoReleasePolicy
         return ($user->role === 2)
             ? Response::allow()
             : Response::deny('You are not allowed to compare the assignment auto-release to the default course auto-release.');
+
+    }
+
+    public function globalUpdate(User $user, AutoRelease $autoRelease, Course $course): Response
+    {
+
+        return $course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to globally update the auto-releases for this course.');
 
     }
 
