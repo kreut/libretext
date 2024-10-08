@@ -43,7 +43,7 @@ class Question extends Model
         if ($this->isDiscussIt()) {
             $cache_key = "discuss_it_settings_{$assignment->course->user_id}";
             if (!Cache::has($cache_key)) {
-                $discuss_it_settings = '{"students_can_edit_comments":"1","students_can_delete_comments":"1","min_number_of_discussion_threads":"1","min_number_of_comments":"1","response_modes":["text", "audio", "video"],"min_number_of_words":"30","min_length_of_audio_video":"15 seconds","auto_grade":"0"}';
+                $discuss_it_settings = '{"response_modes":["text"],"students_can_edit_comments":"1","students_can_delete_comments":"1","min_number_of_discussion_threads":"1","min_number_of_comments":"1","min_number_of_words":"30","min_length_of_audio_video":"15 seconds","auto_grade":"0"}';
                 Cache::put($cache_key, $discuss_it_settings);
             }
             $discuss_it_settings = Cache::get($cache_key);

@@ -103,7 +103,16 @@ class AssignmentSyncQuestion extends Model
             ->select('discuss_it_settings')
             ->first();
 
-        $discuss_it_settings = json_decode($assignment_question_info->discuss_it_settings);
+        if ($assignment_question_info->discuss_it_settings) {
+            $discuss_it_settings = json_decode($assignment_question_info->discuss_it_settings);
+        } else {
+            $question = Question::find($question_id);
+            $assignment = Assignment::find($assignment_id);
+            $discuss_it_settings = json_decode($question->getDefaultDiscussItSettings($assignment));
+            AssignmentSyncQuestion::where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->update(['discuss_it_settings' => $question->getDefaultDiscussItSettings($assignment)]);
+        }
 
         if ($discuss_it_settings->min_length_of_audio_video) {
             $base = Carbon::now();

@@ -146,7 +146,7 @@ class QuestionMediaController extends Controller
      */
     public function getByQuestion(Assignment          $assignment,
                                   Question            $question,
-                                  QuestionMediaUpload $questionMediaUpload)
+                                  QuestionMediaUpload $questionMediaUpload): array
     {
 
         try {
@@ -158,7 +158,7 @@ class QuestionMediaController extends Controller
                 ->get();
 
             foreach ($question_media_uploads as $key => $value) {
-                if (!in_array(pathinfo($value->s3_key, PATHINFO_EXTENSION), ['pdf', 'html'])) {
+                if (pathinfo($value->s3_key, PATHINFO_EXTENSION) != 'html') {
                     $question_media_uploads[$key]['temporary_url'] = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$value->s3_key", Carbon::now()->addDays(7));
                 }
                 if (pathinfo($value->s3_key, PATHINFO_EXTENSION) === 'html') {
