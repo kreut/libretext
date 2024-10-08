@@ -2012,7 +2012,9 @@ export default {
     initPointsPerQuestionSwitch (event) {
       this.$nextTick(() => {
         this.showDefaultPointsPerQuestion = event === 'number of points'
-        this.form.default_points_per_question = ''
+        if (event === 'number of points') {
+          this.form.default_points_per_question = 10
+        }
         this.form.total_points = ''
       })
     },
