@@ -185,7 +185,9 @@ class SubmissionPolicy
 
         switch ($user->role) {
             case(2):
-                $has_access = $question_in_assignment && ($assignment->course->user_id === (int)$user->id);
+                $has_access = $question_in_assignment
+                    && ($assignment->course->user_id === (int)$user->id
+                    || $assignment->course->public);
                 break;
             case(3):
                 $has_access = $question_in_assignment && $assignment->course->enrollments->contains('user_id', $user->id);

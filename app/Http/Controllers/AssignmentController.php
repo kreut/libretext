@@ -673,7 +673,6 @@ class AssignmentController extends Controller
         try {
             $assignments = DB::table('assignments')
                 ->where('course_id', $course->id)
-                ->where('assignments.shown', 1)
                 ->orderBy('order')
                 ->get();
             $assignment_questions = DB::table('assignment_question')
@@ -1863,12 +1862,14 @@ class AssignmentController extends Controller
             return $response;
         }
         $is_fake_student = $request->user()->fake_student;
+
         try {
             $assignment = Assignment::find($assignment->id);
             $can_view_assignment_statistics = $request->user()->role === 2 || ($request->user()->role === 3 && $assignment->students_can_view_assignment_statistics);
             $response['assignment'] = [
                 'question_view' => $request->hasCookie('question_view') ? $request->cookie('question_view') : 'basic',
                 'name' => $assignment->name,
+                'is_anonymous_user' => session('anonymous_user') && $assignment->course->user_id !== $request->user()->id,
                 'assessment_type' => $assignment->assessment_type,
                 'formative' => $assignment->formative,
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,

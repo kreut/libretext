@@ -1884,7 +1884,9 @@
                 </a>
               </b-row>
             </div>
-            <b-form-row v-if="instructorInNonBasicView() && openEndedSubmissionTypeAllowed && !isDiscussIt()" style="margin-left:0">
+            <b-form-row v-if="instructorInNonBasicView() && openEndedSubmissionTypeAllowed && !isDiscussIt()"
+                        style="margin-left:0"
+            >
               <span class="pr-2">
                 Open-Ended Submission Type:
               </span>
@@ -2071,7 +2073,8 @@
             <div
               v-if="questions.length
                 && questions[currentPage-1].question_revision_id !== questions[currentPage-1].question_revision_id_latest
-                && !questions[currentPage-1].viewing_latest_revision"
+                && !questions[currentPage-1].viewing_latest_revision
+                && !isAnonymousUser"
             >
               <b-alert show variant="warning" class="text-center">
                 You are viewing question revision {{ questions[currentPage - 1].question_revision_number }}. This
@@ -5840,6 +5843,7 @@ export default {
           this.fullPdfUrl = assignment.full_pdf_url
           this.showCurrentFullPDF = !!this.fullPdfUrl.length
         }
+        this.isAnonymousUser = assignment.is_anonymous_user
 
         if (this.user.role === 2) {
           this.questionView = assignment.question_view
