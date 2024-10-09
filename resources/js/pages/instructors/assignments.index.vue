@@ -874,7 +874,10 @@
           Submissions for assignments marked with an asterisk (<span class="text-danger">*</span>) will not be included
           in when computing the final weighted average.
         </p>
-        <table class="table table-striped" aria-label="Assignment List" style="table-layout: fixed; width: 100%;">
+
+        <table class="table table-striped table-responsive"
+               aria-label="Assignment List"
+               style="table-layout: fixed; width: 100%;">
           <thead>
             <tr>
               <th scope="col" :style="view === 'main view' ? 'width:400px' : (showAutoRelease ? 'width:185px' : 'width:300px')">
