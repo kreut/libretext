@@ -1211,7 +1211,7 @@
                 <div v-if="showAssignTos(assignment)">
                   <span v-if="assignment.assign_tos.length === 1">
                     {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
-                    {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+                    {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mmA') }}
                   </span>
                   <span v-if="assignment.assign_tos.length > 1">
                     <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
@@ -1226,14 +1226,14 @@
                   <span v-if="assignment.assign_tos.length === 1">
                     <span v-if="!showFinalSubmissionDeadline(assignment.assign_tos[0])">
                       {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
-                      {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+                      {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mmA') }}
                     </span>
                     <span v-if="showFinalSubmissionDeadline(assignment.assign_tos[0])">
                       {{
                         $moment(assignment.assign_tos[0].final_submission_deadline_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY')
                       }}<br>
                       {{
-                        $moment(assignment.assign_tos[0].final_submission_deadline_time, 'HH:mm:ss A').format('h:mm A')
+                        $moment(assignment.assign_tos[0].final_submission_deadline_time, 'HH:mm:ss A').format('h:mmA')
                       }}
                     </span>
                   </span>

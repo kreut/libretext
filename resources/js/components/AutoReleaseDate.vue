@@ -46,7 +46,7 @@ export default {
         Boolean(this.autoReleaseActivated)) {
         return this.$moment(this.assignment.auto_release_show_dates[this.property], 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') +
           '<br>' +
-          this.$moment(this.assignment.auto_release_show_dates[this.property], 'YYYY-MM-DD HH:mm:ss A').format('h:mm A')
+          this.$moment(this.assignment.auto_release_show_dates[this.property], 'YYYY-MM-DD HH:mm:ss A').format('h:mmA')
       } else {
         return 'N/A'
       }
