@@ -2,12 +2,17 @@
 
 namespace App\Helpers;
 
+use App\Discussion;
+use App\DiscussionComment;
 use App\Question;
+use App\QuestionMediaUpload;
 use App\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use phpcent\Client;
 
 class Helper
@@ -221,6 +226,7 @@ class Helper
      * @param int $assignment_id
      * @param int $question_id
      * @return void
+     * @throws Exception
      */
     public static function removeAllStudentSubmissionTypesByAssignmentAndQuestion(int $assignment_id, int $question_id)
     {
@@ -230,6 +236,26 @@ class Helper
         DB::table('submission_files')->where('assignment_id', $assignment_id)
             ->where('question_id', $question_id)
             ->delete();
+        $questionMediaUpload = new QuestionMediaUpload();
+        $discussions = Discussion::where('assignment_id', $assignment_id)->get();
+        foreach ($discussions as $discussion) {
+            $discussion_comments = DiscussionComment::where('discussion_id', $discussion->id)->get();
+            foreach ($discussion_comments as $discussion_comment) {
+                $file = $discussion_comment->file;
+                Log::info($file);
+                if ($file) {
+                    if (Storage::disk('s3')->exists("{$questionMediaUpload->getDir()}/$file")) {
+                        Storage::disk('s3')->delete("{$questionMediaUpload->getDir()}/$file");
+                    }
+                    if ($discussion_comment->transcript) {
+                        $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($file);
+                        Storage::disk('s3')->delete("{$questionMediaUpload->getDir()}/$vtt_file");
+                    }
+                }
+                $discussion_comment->delete();
+            }
+            $discussion->delete();
+        }
     }
 
     /**
