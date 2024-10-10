@@ -10,6 +10,7 @@ use App\Jobs\ProcessTranscribe;
 use App\Question;
 use App\QuestionMediaUpload;
 use Carbon\Carbon;
+use DOMDocument;
 use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -156,13 +157,13 @@ class QuestionMediaController extends Controller
                 ->where('question_id', $question->id)
                 ->orderBy('order')
                 ->get();
-
+            $domDocument = new DOMDocument();
             foreach ($question_media_uploads as $key => $value) {
                 if (pathinfo($value->s3_key, PATHINFO_EXTENSION) != 'html') {
                     $question_media_uploads[$key]['temporary_url'] = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$value->s3_key", Carbon::now()->addDays(7));
                 }
                 if (pathinfo($value->s3_key, PATHINFO_EXTENSION) === 'html') {
-                    $question_media_uploads[$key]['text'] = $value->getText();
+                    $question_media_uploads[$key]['text'] = $value->getText($question, $domDocument);
 
                 }
 

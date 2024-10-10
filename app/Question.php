@@ -569,7 +569,7 @@ class Question extends Model
             case('discuss_it'):
                 $qti_array['media_uploads'] = QuestionMediaUpload::where('question_id', $this->id)->get();
                 foreach ($qti_array['media_uploads'] as $key => $question_media_upload) {
-                    $qti_array['media_uploads'][$key]['text'] = $question_media_upload->getText();
+                    $qti_array['media_uploads'][$key]['text'] = $question_media_upload->getText($this, $domDocument);
                 }
                 break;
             case('submit_molecule'):
@@ -3142,8 +3142,10 @@ class Question extends Model
         $question_to_edit['media_uploads'] = $questionMediaUpload->where('question_id', $this->id)
             ->get();
         if ($question_to_edit['media_uploads']) {
+            $domDocument = new DOMDocument();
+            $question = new Question();
             foreach ($question_to_edit['media_uploads'] as $key => $media_upload) {
-                $question_to_edit['media_uploads'][$key]->text = $media_upload->getText();
+                $question_to_edit['media_uploads'][$key]->text = $media_upload->getText($question, $domDocument);
                 if (!$question_to_edit['media_uploads'][$key]->text) {
                     if ($media_upload->transcript) {
                         $question_to_edit['media_uploads'][$key]->transcript = $questionMediaUpload->parseVtt($media_upload->transcript);

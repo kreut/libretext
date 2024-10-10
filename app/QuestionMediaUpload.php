@@ -4,6 +4,7 @@ namespace App;
 
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
+use DOMDocument;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +17,11 @@ class QuestionMediaUpload extends Model
     protected $guarded = [];
 
     /**
+     * @param Question $question
+     * @param DOMDocument $domDocument
      * @return string
      */
-    public function getText(): string
+    public function getText(Question $question, DOMDocument $domDocument): string
     {
         if (strpos($this->s3_key, '.html') !== false) {
             try {
@@ -28,6 +31,7 @@ class QuestionMediaUpload extends Model
                     $this->save();
                     $text = $this->text;
                 }
+                $text = $question->addTimeToS3Images($text, new DOMDocument(), false);
             } catch (Exception $e) {
                 $text = "Unable to retrieve the text for this discuss it question.";
             }
