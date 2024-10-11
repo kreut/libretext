@@ -301,6 +301,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/auto-release/statuses/{assignment}', 'AutoReleaseController@getStatuses');
     Route::patch('/auto-release/activated/{assignment}', 'AutoReleaseController@updateActivated');
     Route::patch('/auto-release/global-update/course/{course}', 'AutoReleaseController@globalUpdate');
+    Route::get('/auto-release/global-release-auto-update-options/course/{course}', 'AutoReleaseController@getGlobalAutoReleaseUpdateOptions');
 
 
     Route::get('/auto-release/assignment/{assignment}/property/{property}/timing-message', 'AutoReleaseController@autoReleaseTimingMessage');

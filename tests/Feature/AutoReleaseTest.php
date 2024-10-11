@@ -35,7 +35,7 @@ class AutoReleaseTest extends TestCase
     {
         $user_2 = factory(User::class)->create();
         $this->actingAs($user_2)
-            ->patchJson("/api/auto-release/global-update/course/{$this->course->id}")
+            ->patchJson("/api/auto-release/global-update/course/{$this->course->id}", ['update_item' => -1])
             ->assertJson(['message' => 'You are not allowed to globally update the auto-releases for this course.']);
     }
 

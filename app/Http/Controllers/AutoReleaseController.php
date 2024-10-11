@@ -15,6 +15,38 @@ use Illuminate\Support\Facades\Gate;
 class AutoReleaseController extends Controller
 {
 
+    public function getGlobalAutoReleaseUpdateOptions(Course $course, AutoRelease $autoRelease)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getGlobalAutoReleaseUpdateOptions', [$autoRelease, $course]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $global_auto_release_update_options = [];
+            foreach ($course->assignments as $assignment) {
+                $global_auto_release_update_options[] = ['text' => $assignment->name, 'value' => $assignment->id];
+            }
+
+            $global_auto_release_update_options[] = [
+                'text' => '-----------------------',
+                'value' => 'divider-1',
+                'disabled' => true];
+            $global_auto_release_update_options[] = ['text' => 'Entire Course', 'value' => -1];
+            $response['global_auto_release_update_options'] = $global_auto_release_update_options;
+            $response['type'] = 'success';
+            return $response;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to get the global auto-release options for this course. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     /**
      * @param Request $request
      * @param Course $course
@@ -29,7 +61,11 @@ class AutoReleaseController extends Controller
                                  Assignment  $assignment): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('globalUpdate', [$autoRelease, $course]);
+        $update_item = $request->update_item;
+        $update_name = $request->update_name;
+
+        $authorized = Gate::inspect('globalUpdate', [$autoRelease, $course, $update_item]);
+
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -39,17 +75,19 @@ class AutoReleaseController extends Controller
             $setting = $request->setting;
             $value = $request->value;
             $auto_release_keys = $autoRelease->keys();
-            $course_assignment_ids = $course->assignments->pluck('id')->toArray();
+            $assignment_ids_to_update = $update_item === -1
+                ? $course->assignments->pluck('id')->toArray()
+                : [$update_item];
             foreach ($auto_release_keys as $auto_release) {
                 switch ($setting) {
                     case('manual'):
-                        $assignment->whereIn('id', $course_assignment_ids)
+                        $assignment->whereIn('id', $assignment_ids_to_update)
                             ->update([$auto_release => $value]);
                         break;
                     case('auto'):
                         $assignment_ids = DB::table('assignments')
                             ->where('assignments.assessment_type', '<>', 'clicker')
-                            ->whereIn('id', $course_assignment_ids)
+                            ->whereIn('id', $assignment_ids_to_update)
                             ->get('id')
                             ->pluck('id')
                             ->toArray();
@@ -62,7 +100,8 @@ class AutoReleaseController extends Controller
             }
             $response['type'] = $value ? 'success' : 'info';
             $new_state = $value ? 'on' : 'off';
-            $response['message'] = "The '$setting' setting has been turned $new_state for all assignments in your course.";
+            $updated_text = $update_item === -1 ? 'all assignments in your course' : "the assignment $update_name";
+            $response['message'] = "The '$setting' setting has been turned $new_state for $updated_text.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
