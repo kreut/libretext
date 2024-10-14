@@ -18,12 +18,10 @@
       </template>
     </b-modal>
     <div class="col-lg-8 m-auto">
+      <div class="text-center mb-2">
+        <login-with-libretexts action="Login"/>
+      </div>
       <form v-if="!inIFrame" @submit.prevent="login" @keydown="form.onKeydown($event)">
-        <!-- Email -->
-
-        <div class="text-center mb-2">
-          <login-with-libretexts action="Login"/>
-        </div>
         <div class="text-center mb-2">
           <span class="font-text-bold">or</span>
         </div>
