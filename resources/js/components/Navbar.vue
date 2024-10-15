@@ -12,7 +12,7 @@
         <LibreOne size="sm" class="m-1"/>
 
         <b-navbar-brand>
-          <a :href="getLogoHref()"><img src="https://cdn.libretexts.net/Logos/adapt_full.png"
+          <a :href="getLogoHref()"><img src="https://adapt-promo.libretexts.org/wp-content/uploads/2024/06/ADAPT-v10-FINAL.png"
                                         :alt="user !== null && [2, 3, 4, 5].includes(user.role)
                                           ? 'ADAPT logo with redirect to My Courses' : 'ADAPT logo with redirect to main page'"
                                         @load="logoLoaded = true"
