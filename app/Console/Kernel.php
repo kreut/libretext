@@ -64,6 +64,7 @@ class Kernel extends ConsoleKernel
                 $schedule->command('db:backup')->twiceDaily();
             }
             $schedule->command('get:slowDatabaseQueriesSummary')->daily();
+            $schedule->command('remove:oldSubmissionConfirmations')->daily();
             $schedule->command('email:studentsWithSubmissions')->everyMinute();
             $schedule->command('cache:IMathSolutions')->everyMinute();
 
