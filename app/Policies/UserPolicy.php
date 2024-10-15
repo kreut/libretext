@@ -71,7 +71,7 @@ class UserPolicy
      */
     public function revokeStudentInvitations(User $user, User $instructor_user, Course $course): Response
     {
-        return $course->user_id ===request()->user()->id
+        return $course->user_id === request()->user()->id
             ? Response::allow()
             : Response::deny("You are not allowed to revoke student invitations for this course.");
     }
@@ -152,6 +152,46 @@ class UserPolicy
         return $user->isAdminWithCookie()
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the users from the database.');
+    }
+
+
+
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public
+    function updateEmail(User $user): Response
+    {
+
+        return $user->isAdminWithCookie()
+            ? Response::allow()
+            : Response::deny("You are not allowed to update emails.");
+    }
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public
+    function updateRole(User $user): Response
+    {
+
+        return $user->isAdminWithCookie()
+            ? Response::allow()
+            : Response::deny("You are not allowed to update the user roles.");
+    }
+
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public
+    function getUserInfoByEmail(User $user): Response
+    {
+
+        return $user->isAdminWithCookie()
+            ? Response::allow()
+            : Response::deny("You are not allowed to get the user info by email.");
     }
 
     /**

@@ -12,6 +12,7 @@ use App\Extension;
 use App\ExtraCredit;
 use App\Helpers\Helper;
 use App\Http\Requests\InviteStudentRequest;
+use App\Http\Requests\IsValidEmailUpdateRequest;
 use App\Http\Requests\UpdateStudentEmail;
 use App\LtiGradePassback;
 use App\PendingCourseInvitation;
@@ -39,6 +40,112 @@ use Snowfire\Beautymail\Beautymail;
 class UserController extends Controller
 {
     /**
+     * @param IsValidEmailUpdateRequest $request
+     * @param User $user
+     * @return array
+     * @throws Exception
+     */
+    public function updateEmail(IsValidEmailUpdateRequest $request, User $user)
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateEmail', $user);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $data = $request->validated();
+            $user_to_update = User::find($request->user_id);
+            $user_to_update->email = $data['email'];
+            $user_to_update->save();
+            $response['type'] = 'success';
+            $response['message'] = "The email for $user_to_update->first_name $user_to_update->last_name has been changed to $user_to_update->email.";
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the email.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return array
+     * @throws Exception
+     */
+    public function updateRole(Request $request, User $user): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateRole', $user);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            if (!in_array($request->role, [2, 3, 4, 5])) {
+                $response['message'] = "That is not a valid role.";
+                return $response;
+            }
+            $user = User::find($request->user_id);
+            $user->role = $request->role;
+            $user->save();
+            $formatted_roles = [2 => 'instructor', 3 => 'student', 4 => 'TA', 5 => 'non-instructor editor'];
+            $new_role = $formatted_roles[$request->role];
+            $response['message'] = "$user->first_name $user->last_name now has the role of <strong>$new_role</strong>.";
+            $response['type'] = 'success';
+            return $response;
+
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the role.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return array
+     * @throws Exception
+     */
+    public function getUserInfoByEmail(Request $request, User $user): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('getUserInfoByEmail', $user);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $user_info = explode(' --- ', $request->user);
+            $email = $user_info[1];
+            $user = User::where('email', $email)->first();
+            if (!$user) {
+                $response['message'] = "There is no user with the email address: $email.";
+            } else {
+                $response['user'] = $user;
+                $response['type'] = 'success';
+                return $response;
+
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the user. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    /**
      * @param Course $course
      * @param User $user
      * @param PendingCourseInvitation $pendingCourseInvitation
@@ -52,7 +159,7 @@ class UserController extends Controller
 
         try {
             $response['type'] = 'error';
-            $authorized = Gate::inspect('revokeStudentInvitations', [$user,  $course]);
+            $authorized = Gate::inspect('revokeStudentInvitations', [$user, $course]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
@@ -262,7 +369,7 @@ class UserController extends Controller
     {
 
         try {
-            $authorized = Gate::inspect('getStudentsToInvite',$user);
+            $authorized = Gate::inspect('getStudentsToInvite', $user);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;

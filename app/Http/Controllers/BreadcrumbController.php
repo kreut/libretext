@@ -199,8 +199,8 @@ class BreadcrumbController extends Controller
                             case('metrics'):
                                 $breadcrumbs[0] = ['text' => 'Metrics', 'href' => ""];
                                 break;
-                            case('usersWithNoRole'):
-                                $breadcrumbs[0] = ['text' => 'Users With No Role', 'href' => ""];
+                            case('updateUserInfo'):
+                                $breadcrumbs[0] = ['text' => 'Update User Info', 'href' => ""];
                                 break;
                             case('classificationManager'):
                                 $breadcrumbs[0] = ['text' => 'Classification Manager', 'href' => ""];

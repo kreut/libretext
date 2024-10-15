@@ -147,6 +147,10 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::post('/user/toggle-student-view', 'Auth\UserController@toggleStudentView');
     Route::post('/user/login-as', 'Auth\UserController@loginAs');
+    Route::patch('/user/role', 'UserController@updateRole');
+    Route::patch('/user/email', 'UserController@updateEmail');
+    Route::patch('/user/get-user-info-by-email', 'UserController@getUserInfoByEmail');
+
     Route::post('/user/exit-login-as', 'Auth\UserController@exitLoginAs');
     Route::post('/user/login-as-student-in-course', 'Auth\UserController@loginAsStudentInCourse');
 

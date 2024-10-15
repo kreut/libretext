@@ -227,7 +227,7 @@ class UserController extends Controller
                 $response['message'] = "This is not a formative assignment.";
                 return $response;
             }
-            
+
             $user = new User();
             $user->first_name = '';
             $user->last_name = '';

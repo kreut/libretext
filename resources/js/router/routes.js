@@ -158,7 +158,9 @@ let control_panel_paths = [
     component: page('control_panel/index.vue'),
     children: [
       { path: '', redirect: { name: 'login.as' } },
-      { path: 'login-as', name: 'login.as', component: page('control_panel/login.as.vue') },
+      { path: 'login-as',
+        name: 'login.as',
+        component: page('control_panel/login.as.vue') },
       {
         path: 'refresh-question-requests',
         name: 'refresh.question.requests',
@@ -187,9 +189,9 @@ let control_panel_paths = [
         component: page('control_panel/classification-manager.vue')
       },
       {
-        path: 'users-with-no-role',
-        name: 'usersWithNoRole',
-        component: page('control_panel/users.with.no.role.vue')
+        path: 'update-user-info',
+        name: 'updateUserInfo',
+        component: page('control_panel/update_user_info.vue')
       },
       {
         path: 'metrics',

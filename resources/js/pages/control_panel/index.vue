@@ -48,6 +48,11 @@ export default {
         },
         {
           icon: '',
+          name: 'Update User Info',
+          route: 'updateUserInfo'
+        },
+        {
+          icon: '',
           name: 'Refresh Question Requests',
           route: 'refresh.question.requests'
         },
@@ -80,11 +85,6 @@ export default {
           icon: '',
           name: 'Classification Manager',
           route: 'classificationManager'
-        },
-        {
-          icon: '',
-          name: 'Users with No Role',
-          route: 'usersWithNoRole'
         },
         {
           icon: '',
