@@ -14,7 +14,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Orhanerday\OpenAi\OpenAi;
 
@@ -224,7 +223,6 @@ class ProcessTranscribe implements ShouldQueue
             if ($language) {
                 $whisper_config['language'] = $language;
             }
-            Log::info(json_encode($whisper_config));
             $response = $openai->transcribe($whisper_config);
 
             $json_response = json_decode($response);
