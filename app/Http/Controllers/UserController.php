@@ -11,9 +11,13 @@ use App\Exceptions\Handler;
 use App\Extension;
 use App\ExtraCredit;
 use App\Helpers\Helper;
+use App\Http\Requests\AccountValidationCodeRequest;
 use App\Http\Requests\InviteStudentRequest;
+use App\Http\Requests\EmailLinkToAccountRequest;
 use App\Http\Requests\IsValidEmailUpdateRequest;
 use App\Http\Requests\UpdateStudentEmail;
+use App\LinkedAccount;
+use App\LinkToAccountValidationCode;
 use App\LtiGradePassback;
 use App\PendingCourseInvitation;
 use App\Score;
@@ -39,13 +43,23 @@ use Snowfire\Beautymail\Beautymail;
 
 class UserController extends Controller
 {
+
+    public function switchAccount(Request $request, User $account_to_switch_to)
+    {
+
+        dd($account_to_switch_to);
+
+
+    }
+
+
     /**
      * @param IsValidEmailUpdateRequest $request
      * @param User $user
      * @return array
      * @throws Exception
      */
-    public function updateEmail(IsValidEmailUpdateRequest $request, User $user)
+    public function updateEmail(IsValidEmailUpdateRequest $request, User $user): array
     {
         try {
             $response['type'] = 'error';

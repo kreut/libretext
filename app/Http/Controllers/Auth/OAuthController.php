@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Exceptions\EmailTakenException;
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\OAuthProvider;
 use App\User;
@@ -54,6 +55,7 @@ class OAuthController extends Controller
         $user = Socialite::driver($provider)->stateless()->user();
         $user = $this->findOrCreateUser($provider, $user);
 
+        session()->put('linked_accounts', Helper::getLinkedAccounts($user->id));
         $this->guard()->setToken(
             $token = $this->guard()->login($user)
         );

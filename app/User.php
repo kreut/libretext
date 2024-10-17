@@ -19,13 +19,14 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
 {
     use Notifiable;
 
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'first_name', 'last_name', 'email', 'password', 'time_zone', 'role','student_id'
+        'first_name', 'last_name', 'email', 'password', 'time_zone', 'role', 'student_id'
     ];
 
     /**

@@ -15,7 +15,6 @@ class UserPolicy
     use HandlesAuthorization;
 
     private $admins;
-
     /**
      * @param User $user
      * @return Response

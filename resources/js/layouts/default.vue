@@ -10,7 +10,7 @@
       </b-alert>
     </div>
     <div v-if="!inIFrame">
-      <navbar/>
+      <navbar :linked-accounts="linkedAccounts"/>
     </div>
     <div v-else id="default-padding-top" style="padding-top:30px"/>
     <div id="main-content" role="main" :class="{ 'container': true, 'mt-4': true }" tabindex="-1">
@@ -69,7 +69,8 @@
                 The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project
                 and the
                 <a href="https://opr.ca.gov/learninglab/">California Education Learning Lab</a>. Have questions or
-                comments? For more information please <a href="" @click.prevent="contactUsWidget()">contact us by email</a>.
+                comments? For more information please <a href="" @click.prevent="contactUsWidget()">contact us by
+                email</a>.
               </p>
               <p>
                 For quick navigation, you can use our <a href="" @click.prevent="getSitemapURL()">sitemap</a>. In
@@ -80,7 +81,7 @@
                   target="_blank"
                 >
                   accessibility</a> and our <a href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement"
-                                             target="_blank"
+                                               target="_blank"
               >FERPA statement</a>. And you can also
                 view our <a href="https://libretexts.org/legal/index.html" target="_blank">Terms And Conditions</a>
                 should you
@@ -130,6 +131,7 @@ import Navbar from '~/components/Navbar'
 import { mapGetters } from 'vuex'
 import Email from '~/components/Email'
 import Child from '../components/Child.vue'
+import linked_accounts from '../pages/settings/linked_accounts.vue'
 
 export default {
   name: 'MainLayout',
@@ -139,6 +141,7 @@ export default {
     Email
   },
   data: () => ({
+    linkedAccounts: [],
     intervalId: null,
     showFooter: true,
     skipToContent: '',
@@ -172,6 +175,14 @@ export default {
     }
   },
   mounted () {
+    this.$nextTick(() => {
+      this.linkedAccounts = this.user ? JSON.parse(this.user.linked_accounts) : []
+      if (this.linkedAccounts.length) {
+        this.linkedAccounts = this.linkedAccounts.sort((a, b) => {
+          return a.id === this.user.id ? -1 : b.id === this.user.id ? 1 : 0
+        })
+      }
+    })
 
     if (!this.inIFrame && !this.isLearningTreesEditor) {
       document.getElementById('main-content').style.minHeight = (window.screen.height - 430) + 'px'
@@ -198,7 +209,7 @@ export default {
     }
   },
   methods: {
-    checkQuestionViewDisplay() {
+    checkQuestionViewDisplay () {
       const questionViewDisplay = document.getElementById('questions-loaded')
       if (questionViewDisplay) {
         this.showFooter = true

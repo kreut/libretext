@@ -151,8 +151,15 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/user/email', 'UserController@updateEmail');
     Route::patch('/user/get-user-info-by-email', 'UserController@getUserInfoByEmail');
 
+
+    Route::patch('/linked-account/email-validation-code', 'LinkedAccountController@emailLinkToAccountValidationCode');
+    Route::patch('/linked-account/validate-code', 'LinkedAccountController@validateCodeToLinkToAccount');
+    Route::patch('/linked-account/switch/{account_to_switch_to}', 'LinkedAccountController@switch');
+    Route::patch('/linked-account/unlink/{account_to_unlink}', 'LinkedAccountController@unlink');
+
     Route::post('/user/exit-login-as', 'Auth\UserController@exitLoginAs');
     Route::post('/user/login-as-student-in-course', 'Auth\UserController@loginAsStudentInCourse');
+
 
     Route::get('/user/get-session', 'Auth\UserController@getSession');
     Route::post('/user/instructors-with-public-courses', 'UserController@getInstructorsWithPublicCourses');

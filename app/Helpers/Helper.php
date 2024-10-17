@@ -148,6 +148,45 @@ class Helper
         } else return null;
     }
 
+    public static function getLinkedAccounts(int $user_id)
+    {
+        $user = User::find($user_id);
+        $linked_accounts = [];
+
+        $linked_from_user = DB::table('linked_accounts')
+            ->join('users', 'linked_accounts.linked_to_user_id', '=', 'users.id')
+            ->select('linked_accounts.user_id')
+            ->where('linked_to_user_id', $user->id)
+            ->first();
+        if ($linked_from_user) {
+            $linked_from_user_id = $linked_from_user->user_id;
+        } else {
+            $linked_from_user = DB::table('linked_accounts')->where('user_id', $user_id)->first();
+            if (!$linked_from_user) {
+                return json_encode([]);
+            } else {
+                $linked_from_user_id = $linked_from_user->user_id;
+            }
+        }
+
+        $linked_from_user = User::find($linked_from_user_id);
+        $linked_to_users = DB::table('linked_accounts')
+            ->join('users', 'linked_accounts.linked_to_user_id', '=', 'users.id')
+            ->where('user_id', $linked_from_user_id)
+            ->select('users.*')
+            ->get();
+        $linked_accounts[] = [
+            'id' => $linked_from_user->id,
+            'email' => $linked_from_user->email,
+            'main_account' => true];
+        foreach ($linked_to_users as $linked_to_user) {
+            $linked_accounts[] = ['id' => $linked_to_user->id,
+                'email' => $linked_to_user->email,
+                'main_account' => false];
+        }
+        return json_encode($linked_accounts);
+    }
+
     public
     static function createAccessCode($length = 12)
     {

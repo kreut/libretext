@@ -239,6 +239,7 @@ class BreadcrumbController extends Controller
                             case('settings.password'):
                             case('settings.notifications'):
                             case('settings.account_customizations'):
+                            case('settings.linked_accounts'):
                                 $breadcrumbs[] = ['text' => 'Settings',
                                     'href' => "#",
                                     'active' => true];

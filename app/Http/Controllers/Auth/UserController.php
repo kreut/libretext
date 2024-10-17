@@ -24,6 +24,8 @@ use MiladRahimi\Jwt\Exceptions\InvalidSignatureException;
 use MiladRahimi\Jwt\Generator;
 use MiladRahimi\Jwt\Parser;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class UserController extends Controller
 {
@@ -31,6 +33,8 @@ class UserController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function current(Request $request): JsonResponse
     {
@@ -41,6 +45,7 @@ class UserController extends Controller
             if ($request->user()->is_tester_student) {
                 $request->user()->email = '';
             }
+            $request->user()->linked_accounts = session()->get('linked_accounts');
             $request->user()->is_developer = $request->user()->isDeveloper();
             $request->user()->logged_in_as_user = session()->get('original_user_id');
             $request->user()->is_instructor_logged_in_as_student = is_numeric(session()->get('original_user_id')) || $request->user()->fake_student;
@@ -341,6 +346,9 @@ class UserController extends Controller
                 session()->put(['admin_user_id' => $request->user()->id]);
             }
             session()->put(['original_user_id' => $request->user()->id]);
+            $linked_accounts = Helper::getLinkedAccounts($new_user->id);
+            session()->put('linked_accounts', $linked_accounts);
+            $new_user->linked_accounts = $linked_accounts;
             $response['type'] = 'success';
             $response['token'] = \JWTAuth::fromUser($new_user);
         } catch (Exception $e) {
@@ -373,6 +381,9 @@ class UserController extends Controller
             $new_user = User::find($original_user_id);
             session()->forget('original_user_id');
             session()->forget('admin_user_id');
+            $linked_accounts = Helper::getLinkedAccounts($new_user->id);
+            session()->put('linked_accounts', $linked_accounts);
+            $new_user->linked_accounts = $linked_accounts;
             DB::beginTransaction();
             $response['type'] = 'success';
             $response['token'] = \JWTAuth::fromUser($new_user);
@@ -455,8 +466,7 @@ class UserController extends Controller
             return response()->json(['token_absent'], $e->getStatusCode());
 
         }
-        Log::info(\JWTAuth::parseToken()->getPayload() . "\r\n");
-        Log::info($request->all());
+
         // the token is valid and we have found the user via the sub claim
         return [\JWTAuth::parseToken()->getPayload(), $request->all()];
     }

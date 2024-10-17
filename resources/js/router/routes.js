@@ -306,7 +306,8 @@ let general_paths = [
       { path: '', redirect: { name: 'settings.profile' } },
       { path: 'profile', name: 'settings.profile', component: page('settings/profile.vue') },
       { path: 'password', name: 'settings.password', component: page('settings/password.vue') },
-      { path: 'notifications', name: 'settings.notifications', component: page('settings/notifications.vue')}
+      { path: 'notifications', name: 'settings.notifications', component: page('settings/notifications.vue')},
+      { path: 'linked-accounts', name: 'settings.linked_accounts', component: page('settings/linked_accounts.vue')}
     ]
   },
   {

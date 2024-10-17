@@ -3,11 +3,32 @@
     <div v-show="false" id="support-widget-container"
          style="position: fixed; z-index: 9999; display: inline-flex; bottom: 0; right: 5px;"
     />
+    <b-modal id="modal-switched-account"
+             title="Success!"
+             @hidden="loadCoursesPage"
+    >
+      <p>You are now logged in as <strong>{{ accountToSwitchTo.email }}</strong>.</p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          variant="primary"
+          class="float-right"
+          @click="$bvModal.hide('modal-switched-account')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <Email id="contact-us-modal" ref="email"
            extra-email-modal-text="Please use this form to contact us regarding general questions or issues.  If you have a course specific question, please contact your instructor using your own email client."
            :from-user="user" title="Contact Us" type="contact_us" subject="General Inquiry"
     />
     <div v-if="showNavBar" id="navbar">
+      <b-modal id="modal-switch-account"
+               title="Switch Account"
+      >
+        {{ linkedAccounts }}
+      </b-modal>
       <b-navbar toggleable="lg">
         <LibreOne size="sm" class="m-1"/>
 
@@ -120,7 +141,7 @@
                     :items="breadcrumbs"
                     style="padding-bottom:0 !important; margin-bottom:0 !important"
                     :style="breadcrumbs.length === 1 && breadcrumbs[0].active ?
-      'padding-top:.3em;padding-bottom:.3em !important; margin-bottom:0 !important' : 'padding-top:.3em;padding-bottom:0 !important; margin-bottom:0 !important'"
+                      'padding-top:.3em;padding-bottom:.3em !important; margin-bottom:0 !important' : 'padding-top:.3em;padding-bottom:0 !important; margin-bottom:0 !important'"
       />
       <b-navbar-nav class="ml-auto mt-0 mb-0 d-flex flex-row">
         <b-nav-item-dropdown
@@ -143,6 +164,29 @@
           </b-dropdown-item>
         </b-nav-item-dropdown>
       </b-navbar-nav>
+      <b-nav-item-dropdown v-if="user && user.role === 2 && linkedAccounts.length" right>
+        <template v-slot:button-content>
+          <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
+                :title="`You are currently logged in with the email address: ${user.email}`"
+          >
+            <b-icon-person-circle/>
+          </span>
+        </template>
+
+        <!-- Dropdown listing linked accounts -->
+        <b-dropdown-item
+          v-for="linkedAccount in linkedAccounts"
+          :key="`linked-account-${linkedAccount.id}`"
+          :disabled="linkedAccount.id === user.id"
+          @click="switchAccount(linkedAccount)"
+        >
+          <!-- Conditionally show the current account as muted -->
+          <span :class="linkedAccount.id === user.id ? 'text-muted' : ''">
+            {{ linkedAccount.email }}
+            <span v-if="linkedAccount.id === user.id">(Current)</span> <!-- Label for current account -->
+          </span>
+        </b-dropdown-item>
+      </b-nav-item-dropdown>
     </b-nav>
   </div>
 </template>
@@ -163,7 +207,14 @@ export default {
     Email,
     ToggleButton
   },
+  props: {
+    linkedAccounts: {
+      type: Array,
+      default: () => {}
+    }
+  },
   data: () => ({
+    accountToSwitchTo: {},
     toggleInstructorStudentViewRouteNames: toggleInstructorStudentViewRouteNames,
     toggleColors: window.config.toggleColors,
     isAnonymousUser: false,
@@ -257,6 +308,33 @@ export default {
     document.head.appendChild(widgetScript)
   },
   methods: {
+    loadCoursesPage () {
+      window.location.replace('/instructors/courses')
+    },
+    async switchAccount (accountToSwitchTo) {
+      this.accountToSwitchTo = accountToSwitchTo
+      try {
+        const { data } = await axios.patch(`/api/linked-account/switch/${accountToSwitchTo.id}`)
+        if (data.type === 'success') {
+          await this.$store.dispatch('auth/saveToken', {
+            token: data.token,
+            remember: this.remember
+          })
+          await this.$store.dispatch('auth/fetchUser')
+          // Redirect to the correct home page
+          Object.keys(localStorage).forEach((key) => {
+            if (key !== ('appversion')) {
+              delete localStorage[key]
+            }
+          })
+          this.$bvModal.show('modal-switched-account')
+        } else {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     contactUsWidget () {
       document.getElementById('supportButton').click()
     },

@@ -41,7 +41,8 @@ export default {
       user: 'auth/user'
     }),
     tabs () {
-      return [
+      let tabs
+      tabs = [
         {
           name: this.$t('profile'),
           route: 'settings.profile'
@@ -51,6 +52,10 @@ export default {
           route: 'settings.password'
         }
       ]
+      if (this.user && this.user.role !== 3) {
+        tabs.push({ name: 'Linked Accounts', route: 'settings.linked_accounts' })
+      }
+      return tabs
     }
   }
 }

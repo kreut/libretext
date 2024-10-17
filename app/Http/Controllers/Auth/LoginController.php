@@ -7,6 +7,7 @@ use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Exceptions\VerifyEmailException;
 use App\FCMToken;
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Question;
 use App\User;
@@ -58,10 +59,13 @@ class LoginController extends Controller
         }
 
         $user = $this->guard()->user();
+        $linked_accounts = Helper::getLinkedAccounts($user->id);
+        session()->put('linked_accounts', $linked_accounts);
         session()->forget('original_user_id');
         session()->forget('admin_user_id');
         session()->put('original_role', $user->role);
         session()->put('original_email', $user->email);
+        $user->linked_accounts = $linked_accounts;
         $user->instructor_user_id = null;
         DB::table('users')->where('instructor_user_id', $user->id)->update(['instructor_user_id' => null]);
 
