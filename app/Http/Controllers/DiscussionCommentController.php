@@ -10,7 +10,7 @@ use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateDiscussionRequest;
-use App\Jobs\ProcessTranscribe;
+use App\Jobs\InitProcessTranscribe;
 use App\Question;
 use App\QuestionMediaUpload;
 use App\Score;
@@ -449,7 +449,7 @@ class DiscussionCommentController extends Controller
             $discussionComment->{$type} = $data[$type];
             $discussionComment->created_at = now();
             if ($type === 'file') {
-                ProcessTranscribe::dispatch($data['file'], 'discussion_comment');
+                InitProcessTranscribe::dispatch($data['file'], 'discussion_comment');
             }
             if ($satisfied_requirement) {
                 $discussionComment->satisfied_requirement = 1;

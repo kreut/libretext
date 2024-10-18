@@ -8,7 +8,7 @@ use App\Discussion;
 use App\DiscussionComment;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreDiscussionRequest;
-use App\Jobs\ProcessTranscribe;
+use App\Jobs\InitProcessTranscribe;
 use App\Question;
 use App\QuestionMediaUpload;
 use App\Score;
@@ -90,7 +90,7 @@ class DiscussionController extends Controller
             $discussionComment->satisfied_requirement = $satisfied_requirement;
             $discussionComment->save();
             if ($type === 'file') {
-                ProcessTranscribe::dispatch($data['file'], 'discussion_comment');
+                InitProcessTranscribe::dispatch($data['file'], 'discussion_comment');
             }
 
 

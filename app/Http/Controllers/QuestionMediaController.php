@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\DiscussionComment;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionMediaTextRequest;
-use App\Jobs\ProcessTranscribe;
+use App\Jobs\HandleProcessTranscription;
+use App\Jobs\InitProcessTranscribe;
 use App\Question;
 use App\QuestionMediaUpload;
 use Carbon\Carbon;
@@ -15,24 +17,97 @@ use Exception;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
+use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
+use MiladRahimi\Jwt\Parser;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuestionMediaController extends Controller
 {
+    /**
+     * @return array|void
+     */
+    public function phpInfo()
+    {
+        $response['message'] = "No access to php info.";
+        $response['type'] = 'error';
+        if (Helper::isAdmin()) {
+            phpInfo();
+        } else {
+            return $response;
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function initTranscribe(Request $request): array
+    {
+        try {
+            $this->_hasAccessToTranscribe($request);
+            DB::table('pending_transcriptions')->updateOrInsert(
+                ['filename' => $request->filename], [
+                    'language' => $request->language ? $request->language: '',
+                    'upload_type' => $request->upload_type,
+                    'environment' => $request->environment,
+                    'status' => 'initializing',
+                    'message' => '',
+                    'created_at' => now(),
+                    'updated_at' => now()]
+            );
+            $response['type'] = 'init-processing';
+            $response['message'] = 'Made it to dev server.';
+            HandleProcessTranscription::dispatch($request->filename);
+            return $response;
+        } catch (Exception $e) {
+            $response['message'] = $e->getMessage();
+            return $response;
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     * @throws Exception
+     */
+    public function updateTranscribeStatus(Request $request): array
+    {
+        try {
+            //$this->_hasAccessToTranscribe($request);
+            $upload_type_model = (new QuestionMediaUpload())->getUploadTypeModel($request->upload_type, $request->filename);
+            if (!$upload_type_model) {
+                $response['type'] = 'error';
+                $response['message'] = "Does not exist in the DB: $request->upload_type --- $request->filename";
+            }
+            $upload_type_model->status = $request->status;
+            $upload_type_model->message = $request->message;
+            $upload_type_model->transcript = $request->transcript;
+            $upload_type_model->save();
+            $response['type'] = 'success';
+            $response['message'] = "$request->upload_type updated for $upload_type_model->id.";
+        } catch (Exception $e) {
+            $response['type'] = 'error';
+            $response['message'] = $e->getMessage();
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return $response;
+    }
+
     /**
      * @param StoreQuestionMediaTextRequest $request
      * @param QuestionMediaUpload $questionMediaUpload
      * @return array
      * @throws Exception
      */
-    public function updateText(StoreQuestionMediaTextRequest $request,
-                               QuestionMediaUpload           $questionMediaUpload): array
+    public
+    function updateText(StoreQuestionMediaTextRequest $request,
+                        QuestionMediaUpload           $questionMediaUpload): array
     {
 
         try {
@@ -75,8 +150,9 @@ class QuestionMediaController extends Controller
      * @return array
      * @throws Exception
      */
-    public function storeText(StoreQuestionMediaTextRequest $request,
-                              QuestionMediaUpload           $questionMediaUpload): array
+    public
+    function storeText(StoreQuestionMediaTextRequest $request,
+                       QuestionMediaUpload           $questionMediaUpload): array
     {
         try {
             $response['type'] = 'error';
@@ -108,7 +184,8 @@ class QuestionMediaController extends Controller
      * @return array
      * @throws Exception
      */
-    public function temporaryUrls(Request $request, QuestionMediaUpload $questionMediaUpload): array
+    public
+    function temporaryUrls(Request $request, QuestionMediaUpload $questionMediaUpload): array
     {
         try {
             $response['type'] = 'error';
@@ -145,9 +222,10 @@ class QuestionMediaController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getByQuestion(Assignment          $assignment,
-                                  Question            $question,
-                                  QuestionMediaUpload $questionMediaUpload): array
+    public
+    function getByQuestion(Assignment          $assignment,
+                           Question            $question,
+                           QuestionMediaUpload $questionMediaUpload): array
     {
 
         try {
@@ -186,7 +264,8 @@ class QuestionMediaController extends Controller
      * @param string $src
      * @return Application|Factory|View
      */
-    public function conductorMedia(string $src)
+    public
+    function conductorMedia(string $src)
     {
         return view('conductor_media', ['src' => $src]);
     }
@@ -197,7 +276,8 @@ class QuestionMediaController extends Controller
      * @return array
      * @throws Exception
      */
-    public function validateVTT(QuestionMediaUpload $questionMediaUpload): array
+    public
+    function validateVTT(QuestionMediaUpload $questionMediaUpload): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('validateVTT', $questionMediaUpload);
@@ -253,7 +333,8 @@ class QuestionMediaController extends Controller
      * @return array|StreamedResponse
      * @throws Exception
      */
-    public function downloadTranscript(QuestionMediaUpload $questionMediaUpload)
+    public
+    function downloadTranscript(QuestionMediaUpload $questionMediaUpload)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('download', $questionMediaUpload);
@@ -283,7 +364,8 @@ class QuestionMediaController extends Controller
      * @return array
      * @throws Exception
      */
-    public function destroy(QuestionMediaUpload $questionMediaUpload): array
+    public
+    function destroy(QuestionMediaUpload $questionMediaUpload): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('destroy', $questionMediaUpload);
@@ -320,7 +402,8 @@ class QuestionMediaController extends Controller
     /**
      * @throws Exception
      */
-    public function index(string $media, int $start_time = 0)
+    public
+    function index(string $media, int $start_time = 0)
     {
         $questionMediaUpload = new QuestionMediaUpload();
         $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($media);
@@ -337,9 +420,10 @@ class QuestionMediaController extends Controller
      * @return array
      * @throws Exception
      */
-    public function reProcessTranscript(Request             $request,
-                                        int                 $media_upload_id,
-                                        QuestionMediaUpload $questionMediaUpload)
+    public
+    function reProcessTranscript(Request             $request,
+                                 int                 $media_upload_id,
+                                 QuestionMediaUpload $questionMediaUpload): array
     {
         $response['type'] = 'error';
         try {
@@ -369,7 +453,7 @@ class QuestionMediaController extends Controller
             $model->transcript = '';
             $model->re_processed_transcript = 1;
             $model->save();
-            ProcessTranscribe::dispatch($s3_key, 'discussion_comment');
+            InitProcessTranscribe::dispatch($s3_key, 'discussion_comment');
             $response['type'] = 'success';
             $response['message'] = 'The original transcript has been removed and a new one is being processed.';
         } catch (Exception $e) {
@@ -389,9 +473,10 @@ class QuestionMediaController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateCaption(Request $request,
-                                  int     $media_upload_id,
-                                  int     $caption): array
+    public
+    function updateCaption(Request $request,
+                           int     $media_upload_id,
+                           int     $caption): array
     {
 
         try {
@@ -435,5 +520,30 @@ class QuestionMediaController extends Controller
         }
 
         return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @throws Exception
+     */
+    private function _hasAccessToTranscribe(Request $request): void
+    {
+        if (!$request->bearerToken()) {
+            throw new Exception ('Missing Bearer Token.');
+        }
+
+        $key_secret = DB::table('key_secrets')->where('key', 'adapt_transcribe')->first();
+        if (!$key_secret) {
+            throw new Exception("No key_secret for adapt_transcribe exists.");
+        }
+        $token = $request->bearerToken();
+
+        $key = new HmacKey($key_secret->secret);
+
+        $signer = new HS256($key);
+        $parser = new Parser($signer);
+        if (!$parser->parse($token)) {
+            throw new Exception ('Invalid adapt_transcribe key.');
+        }
     }
 }
