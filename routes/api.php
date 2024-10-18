@@ -20,7 +20,10 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
+Route::get('/php-info', 'QuestionMediaController@phpInfo');
 
+Route::post('/question-media/init-transcribe', 'QuestionMediaController@initTranscribe');
+Route::patch('/question-media/transcribe-status', 'QuestionMediaController@updateTranscribeStatus');
 Route::get('/oidc/redirect', 'OIDCController@redirect');
 Route::get('/oidc/libreone/callback', 'OIDCController@callback');
 Route::post('/oidc/libreone/instructor-verified', 'OIDCController@instructorVerified');

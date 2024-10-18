@@ -63,6 +63,9 @@ class Kernel extends ConsoleKernel
             if (!env('APP_VAPOR')) {
                 $schedule->command('db:backup')->twiceDaily();
             }
+
+
+            $schedule->command('notify:failedTranscriptions')->hourly();
             $schedule->command('get:slowDatabaseQueriesSummary')->daily();
             $schedule->command('remove:oldSubmissionConfirmations')->daily();
             $schedule->command('email:studentsWithSubmissions')->everyMinute();

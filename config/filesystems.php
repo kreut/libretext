@@ -74,6 +74,22 @@ return [
             'visibility' => 'public',
         ],
         's3' => $s3,
+        'production_s3' => [
+            'driver' => 's3',
+            'key' => env('PRODUCTION_AWS_ACCESS_KEY_ID'),
+            'secret' => env('PRODUCTION_AWS_SECRET_ACCESS_KEY'),
+            'region' => env('PRODUCTION_AWS_DEFAULT_REGION'),
+            'bucket' => env('PRODUCTION_AWS_BUCKET'),
+            'url' => env('PRODUCTION_AWS_URL'),
+        ],
+        'staging_s3' => [
+            'driver' => 's3',
+            'key' => env('STAGING_AWS_ACCESS_KEY_ID'),
+            'secret' => env('STAGING_AWS_SECRET_ACCESS_KEY'),
+            'region' => env('STAGING_AWS_DEFAULT_REGION'),
+            'bucket' => env('STAGING_AWS_BUCKET'),
+            'url' => env('STAGING_AWS_URL'),
+        ],
         'backup_s3' => [
             'driver' => 's3',
             'key' => env('BACKUP_AWS_ACCESS_KEY_ID'),

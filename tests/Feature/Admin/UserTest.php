@@ -21,6 +21,14 @@ class UserTest extends TestCase
 
 
     /** @test */
+    public function non_admin_cannot_get_php_info()
+    {
+        $this->getJson("/api/php-info")
+            ->assertJson(['message' => 'No access to php info.']);
+    }
+
+
+    /** @test */
     public function role_must_be_valid()
     {
         $this->actingAs($this->admin_user)

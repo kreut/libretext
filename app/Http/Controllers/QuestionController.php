@@ -12,7 +12,7 @@ use App\Course;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionRequest;
 use App\IMathAS;
-use App\Jobs\ProcessTranscribe;
+use App\Jobs\InitProcessTranscribe;
 use App\Jobs\ProcessValidateQtiFile;
 use App\JWE;
 use App\Libretext;
@@ -1309,7 +1309,7 @@ class QuestionController extends Controller
                         }
                         $qti_json['responses'] = $responses;
                         $request->qti_json = json_encode($qti_json);
-                       // Log::info($request->qti_json);
+                        // Log::info($request->qti_json);
                         //Log::info(print_r($qti_json['responses'], 1));
                         break;
                     case('drag_and_drop_cloze'):
@@ -1664,7 +1664,7 @@ class QuestionController extends Controller
                             $questionMediaUpload->order = $new_media_upload['order'] ?? null;
                             $questionMediaUpload->transcript = '';
                             $questionMediaUpload->save();
-                            ProcessTranscribe::dispatch($questionMediaUpload->s3_key, 'question_media_upload');
+                            InitProcessTranscribe::dispatch($questionMediaUpload->s3_key, 'question_media_upload');
                         } else {
                             QuestionMediaUpload::where('question_id', $question->id)
                                 ->where('s3_key', $new_media_upload['s3_key'])
@@ -1689,7 +1689,7 @@ class QuestionController extends Controller
                         }
                         $questionMediaUpload->transcript = '';
                         $questionMediaUpload->save();
-                        ProcessTranscribe::dispatch($questionMediaUpload->s3_key,'question_media_upload');
+                        InitProcessTranscribe::dispatch($questionMediaUpload->s3_key, 'question_media_upload');
                     }
 
                 }
