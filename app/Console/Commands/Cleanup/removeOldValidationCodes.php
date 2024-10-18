@@ -47,7 +47,7 @@ class removeOldValidationCodes extends Command
             DB::table('link_to_account_validation_codes')
                 ->where('created_at', '<=', Carbon::now()->subMinutes(10)->toDateTimeString())
                 ->delete();
-
+            return 0;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
