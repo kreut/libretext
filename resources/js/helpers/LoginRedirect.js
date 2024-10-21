@@ -36,7 +36,9 @@ export function redirectOnLogin (store, router, landingPage = '') {
       alert('There was an error logging you in since you do not have one of the specified roles.  Please try again or contact us for assistance.')
       return false
   }
-  router.push({ name: name })
+  router.push({ name: name }).then(() => {
+    window.location.reload()
+  })
 }
 
 export function redirectOnSSOCompletion (role) {

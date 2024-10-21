@@ -176,7 +176,7 @@ export default {
   },
   mounted () {
     this.$nextTick(() => {
-      this.linkedAccounts = this.user ? JSON.parse(this.user.linked_accounts) : []
+      this.linkedAccounts = this.user && this.user.linked_accounts ? JSON.parse(this.user.linked_accounts) : []
       if (this.linkedAccounts.length) {
         this.linkedAccounts = this.linkedAccounts.sort((a, b) => {
           return a.id === this.user.id ? -1 : b.id === this.user.id ? 1 : 0

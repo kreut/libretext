@@ -353,7 +353,9 @@ export default {
           // Fetch the user.
           await this.$store.dispatch('auth/fetchUser')
           if (this.$route.name !== 'instructors.courses.index') {
-            await this.$router.push({ name: 'instructors.courses.index' })
+            await this.$router.push({ name: 'instructors.courses.index' }).then(() => {
+              window.location.reload()
+            })
           } else {
             location.reload()
           }
