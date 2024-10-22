@@ -1545,9 +1545,7 @@
                   <b-button
                     size="sm"
                     variant="info"
-                    @click="!questions[currentPage-1].shown_hint
-                      ? $bvModal.show('modal-confirm-show-hint')
-                      : $bvModal.show('modal-hint')"
+                    @click="showHintModal()"
                   >
                     Show Hint
                   </b-button>
@@ -3831,12 +3829,19 @@ export default {
     }
   },
   methods: {
-
     doCopy,
     updateAutoAttribution,
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    showHintModal () {
+      !this.questions[this.currentPage - 1].shown_hint
+        ? this.$bvModal.show('modal-confirm-show-hint')
+        : this.$bvModal.show('modal-hint')
+      this.$nextTick(() => {
+        this.renderMathJax()
+      })
+    },
     isDiscussIt () {
       const question = this.questions[this.currentPage - 1]
       try {
