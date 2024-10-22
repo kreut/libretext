@@ -23,13 +23,13 @@
            extra-email-modal-text="Please use this form to contact us regarding general questions or issues.  If you have a course specific question, please contact your instructor using your own email client."
            :from-user="user" title="Contact Us" type="contact_us" subject="General Inquiry"
     />
-    <div v-if="showNavBar" id="navbar">
+    <div v-if="showNavBar" id="navbar" >
       <b-modal id="modal-switch-account"
                title="Switch Account"
       >
         {{ linkedAccounts }}
       </b-modal>
-      <b-navbar toggleable="lg">
+      <b-navbar toggleable="lg" class="pt-0 pb-0">
         <LibreOne size="sm" class="m-1"/>
 
         <b-navbar-brand>
