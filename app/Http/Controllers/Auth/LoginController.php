@@ -88,7 +88,7 @@ class LoginController extends Controller
             'token' => $token,
             'token_type' => 'bearer',
             'expires_in' => $expiration - time(),
-        ])->withCookie(cookie('clicker_app',0));
+        ])->withCookie(cookie('clicker_app', 0));
     }
 
     /**
@@ -122,7 +122,7 @@ class LoginController extends Controller
         $this->guard()->logout();
         $cookie[0] = Cookie::forget('user_jwt');
         $cookie[1] = Cookie::forget('clicker_app');
-        return redirect('/')->withCookies($cookie);
+        return redirect('https://www.cnn.com')->withCookies($cookie);
 
     }
 

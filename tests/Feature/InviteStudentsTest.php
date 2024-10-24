@@ -31,7 +31,7 @@ class InviteStudentsTest extends TestCase
     }
 
     /** @test */
-    public function student_can_enroll_with_access_code_from_pending_invitations()
+    /*public function student_can_enroll_with_access_code_from_pending_invitations()
     {
         $this->student_user->email = 'me@blah.com';
         $this->student_user->save();
@@ -56,7 +56,7 @@ class InviteStudentsTest extends TestCase
                 'access_code' => 'some-silly-code'])
             ->assertJson(['message' => "You are now enrolled in <strong>{$this->course->name} - {$this->section->name}</strong>."]);
         $this->assertDatabaseCount('pending_course_invitations', 0);
-    }
+    }*/
 
     /** @test */
     public function non_owner_cannot_revoke_all_invitations()

@@ -25,6 +25,19 @@ Route::get('/php-info', 'QuestionMediaController@phpInfo');
 Route::post('/question-media/init-transcribe', 'QuestionMediaController@initTranscribe');
 Route::patch('/question-media/transcribe-status', 'QuestionMediaController@updateTranscribeStatus');
 Route::get('/oidc/redirect', 'OIDCController@redirect');
+Route::get('/embedded-login', function () {
+    $url = request()->query('url'); // Extract the 'url' parameter
+    $components = parse_url($url);
+    $domain = $components['host'] ?? 'Invalid URL';
+    if (!preg_match('/^([a-z0-9-]+\.)?libretexts\.org$/i', $domain)) {
+        return ['type' => 'error', 'message' => "$domain is not a valid Libretexts domain."];
+    }
+    return redirect()->to('/api/oidc/initiate-login/web?redirect_url=' . urlencode($url));
+});
+Route::get('/oidc/initiate-login/{mode}', 'OIDCController@initiateLogin');
+
+Route::get('/oidc/login-by-jwt/{token}', 'OIDCController@loginByJWT');
+
 Route::get('/oidc/libreone/callback', 'OIDCController@callback');
 Route::post('/oidc/libreone/instructor-verified', 'OIDCController@instructorVerified');
 Route::post('/oidc/libreone/new-user-created', 'OIDCController@newUserCreated');
@@ -746,7 +759,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/submissions/submission-array/assignment/{assignment}/question/{question}', 'SubmissionController@submissionArray');
     Route::get('/submissions/exists-in-current-owner-course-by-question/{question}', 'SubmissionController@submissionExistsInCurrentCourseByOwnerAndQuestion');
     Route::post('/submission-history/assignment/{assignment}/question/{question}', 'SubmissionHistoryController@getByAssignmentAndQuestion');
-
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
     Route::patch('/submissions/assignments/{assignment}/question/{question}/reset-submission', 'SubmissionController@resetSubmission');

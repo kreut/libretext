@@ -39,25 +39,26 @@ class StudentsCoursesIndexTest extends TestCase
     }
 
     /** @test */
-    public function case_insensitive_email_works()
-    {
-        $whitelisted_domain = DB::table('whitelisted_domains')
-            ->where('course_id', $this->course->id)
-            ->select('whitelisted_domain')
-            ->pluck('whitelisted_domain')
-            ->first();
-        DB::table('enrollments')->delete();
-        DB::table('sections')->delete();
-        $this->section = factory(Section::class)->create(['course_id' => $this->course->id, 'access_code' => 'sdeefsdfsdf']);
+     public function case_insensitive_email_works()
+     {
+         $whitelisted_domain = DB::table('whitelisted_domains')
+             ->where('course_id', $this->course->id)
+             ->select('whitelisted_domain')
+             ->pluck('whitelisted_domain')
+             ->first();
+         DB::table('enrollments')->delete();
+         DB::table('sections')->delete();
+         $this->section = factory(Section::class)->create(['course_id' => $this->course->id, 'access_code' => 'sdeefsdfsdf']);
 
-        $this->student_user->email = strtoupper($whitelisted_domain);
-        $this->student_user->save();
-        $this->actingAs($this->student_user)->postJson("/api/enrollments", [
-            'section_id' => $this->section->id,
-            'access_code' => $this->section->access_code
-        ])->assertJson(['type' => 'success']);
+         $this->student_user->email = strtoupper($whitelisted_domain);
+         $this->student_user->save();
+         $this->actingAs($this->student_user)->postJson("/api/enrollments", [
+             'section_id' => $this->section->id,
+             'student_id' => 'some sort of id',
+             'access_code' => $this->section->access_code
+         ])->assertJson(['type' => 'success']);
 
-    }
+     }
 
     /** @test */
     public function email_must_be_on_whitelisted_domain()
@@ -99,6 +100,7 @@ class StudentsCoursesIndexTest extends TestCase
 
         $this->actingAs($this->student_user_2)->postJson("/api/enrollments", [
             'section_id' => $this->section_1->id,
+            'student_id' => $this->student_user->student_id,
             'access_code' => $this->section_1->access_code
         ])->assertJson(['message' => 'Someone with your student ID and the same last name is already enrolled in this course.']);
 
@@ -163,6 +165,7 @@ class StudentsCoursesIndexTest extends TestCase
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id, 'access_code' => 'sdeefsdfsdf']);
         $this->actingAs($this->student_user)->postJson("/api/enrollments", [
             'section_id' => $this->section->id,
+            'student_id' => 'some id',
             'access_code' => $this->section->access_code
         ])->assertJson(['type' => 'success']);
 
@@ -179,6 +182,7 @@ class StudentsCoursesIndexTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/enrollments", [
             'section_id' => $this->section_1->id,
+            'student_id' => 'some-other-id',
             'access_code' => $this->section_1->access_code
         ])->assertJson(['message' => 'You are already enrolled in another section of this course.']);
 

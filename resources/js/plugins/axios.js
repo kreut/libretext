@@ -61,7 +61,7 @@ axios.interceptors.response.use(response => {
     }).then(() => {
       store.commit('auth/LOGOUT')
 
-      router.push({ name: 'login' })
+      router.push({ name: 'home' })
     })
   }
 

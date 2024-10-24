@@ -34,7 +34,6 @@
           />
           <has-error :form="form" field="access_code" />
         </b-form-group>
-        <div v-show="isLms">
           <b-form-group
             label-cols-sm="4"
             label-cols-lg="3"
@@ -51,23 +50,6 @@
             />
             <has-error :form="form" field="student_id" />
           </b-form-group>
-          <b-form-group
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="time_zone"
-            label="Time Zone*"
-          >
-            <b-form-select id="time_zone"
-                           v-model="form.time_zone"
-                           title="time zone"
-                           :options="timeZones"
-                           required
-                           :class="{ 'is-invalid': form.errors.has('time_zone') }"
-                           @change="form.errors.clear('time_zone')"
-            />
-            <has-error :form="form" field="time_zone" />
-          </b-form-group>
-        </div>
       </b-form>
       <template #modal-footer>
         <span v-if="!inIFrame">

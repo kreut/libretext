@@ -23,7 +23,7 @@
            extra-email-modal-text="Please use this form to contact us regarding general questions or issues.  If you have a course specific question, please contact your instructor using your own email client."
            :from-user="user" title="Contact Us" type="contact_us" subject="General Inquiry"
     />
-    <div v-if="showNavBar" id="navbar" >
+    <div v-if="showNavBar" id="navbar">
       <b-modal id="modal-switch-account"
                title="Switch Account"
       >
@@ -56,26 +56,15 @@
               <span v-if="!user.formative_student">Logout</span>
               <span v-if="user.formative_student">End Session</span>
             </b-nav-item>
-            <b-nav-item v-show="!user" @click="$router.push({ name: 'login' })">
+            <b-nav-item v-if="!user && libreOneTester">
+              <b-button size="sm" id="initiate-login" variant="primary" @click="beginLogin">Log In</b-button>
+            </b-nav-item>
+            <b-nav-item v-if="!user && !libreOneTester" @click="$router.push({ name: 'login' })">
               <span :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''">Log In</span>
             </b-nav-item>
-            <b-nav-item-dropdown v-show="!user" text="Register" right>
-              <b-dropdown-item @click="$router.push({ path: '/register/student' })">
-                <span class="">Student</span>
-              </b-dropdown-item>
-              <b-dropdown-item @click="$router.push({ path: '/register/instructor' })">
-                <span class="">Instructor</span>
-              </b-dropdown-item>
-              <b-dropdown-item @click="$router.push({ path: '/register/grader' })">
-                <span class="">Grader</span>
-              </b-dropdown-item>
-              <b-dropdown-item @click="$router.push({ path: '/register/question-editor' })">
-                <span class="">Non-Instructor Editor</span>
-              </b-dropdown-item>
-              <b-dropdown-item @click="$router.push({ path: '/register/tester' })">
-                <span class="">Tester</span>
-              </b-dropdown-item>
-            </b-nav-item-dropdown>
+            <b-nav-item v-show="!user" right>
+              <span @click="registerWithLibreOne">Register</span>
+            </b-nav-item>
           </b-navbar-nav>
         </b-collapse>
         <div v-if="logoLoaded
@@ -152,12 +141,40 @@
           <template v-slot:button-content>
             <span class="hover-underline">Hi, {{ user.first_name }}!</span>
           </template>
-          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student"
+
+          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && !libreOneTester"
                            @click="$router.push({ name: 'settings.profile' })"
           >
             <fa icon="cog" fixed-width/>
             <span class="hover-underline pl-3">{{ $t('settings') }}</span>
           </b-dropdown-item>
+
+          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && libreOneTester"
+                           @click="updateLibreOneProfile()"
+          >
+            <fa icon="user" fixed-width/>
+            <span class="hover-underline pl-3">Profile</span>
+          </b-dropdown-item>
+          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && libreOneTester"
+                           @click="updateLibreOnePassword()"
+          >
+            <fa icon="lock" fixed-width/>
+            <span class="hover-underline pl-3">Reset Password</span>
+          </b-dropdown-item>
+          <b-dropdown-item v-if="user.role === 2 && libreOneTester"
+                           @click="$router.push({ name: 'linked_accounts' })"
+          >
+            <fa icon="user-plus" fixed-width/>
+            <span class="hover-underline pl-3">Linked Accounts</span>
+          </b-dropdown-item>
+          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && user.role === 3 && libreOneTester"
+                           @click="$router.push({ name: 'notifications' })"
+          >
+            <fa icon="bell" fixed-width/>
+            <span class="hover-underline pl-3">Notifications</span>
+          </b-dropdown-item>
+
+
           <b-dropdown-item @click.prevent="logout">
             <fa icon="sign-out-alt" fixed-width/>
             <span class="hover-underline pl-3">{{ $t('logout') }}</span>
@@ -210,13 +227,16 @@ export default {
   props: {
     linkedAccounts: {
       type: Array,
-      default: () => {}
+      default: () => {
+      }
     }
   },
   data: () => ({
+    libreOneTester: '',
     accountToSwitchTo: {},
     toggleInstructorStudentViewRouteNames: toggleInstructorStudentViewRouteNames,
     toggleColors: window.config.toggleColors,
+    environment: window.config.environment,
     isAnonymousUser: false,
     showNavBar: true,
     isLearningTreeView: true,
@@ -299,6 +319,7 @@ export default {
     }
   },
   created () {
+    this.libreOneTester = +localStorage.libreOneTester === 1
     this.logout = logout
     const widgetScript = document.createElement('script')
     widgetScript.setAttribute(
@@ -308,6 +329,22 @@ export default {
     document.head.appendChild(widgetScript)
   },
   methods: {
+    updateLibreOneProfile () {
+      window.location.href = this.environment === 'production'
+        ? 'https://one.libretexts.org/profile'
+        : 'https://staging.one.libretexts.org/profile'
+    },
+    updateLibreOnePassword () {
+      window.location.href = this.environment === 'production'
+        ? 'https://one.libretexts.org/security'
+        : 'https://staging.one.libretexts.org/security'
+    },
+    beginLogin () {
+      window.location.href = 'api/oidc/initiate-login/web'
+    },
+    registerWithLibreOne () {
+      location.href = 'https://staging.one.libretexts.org/register?source=adapt-registration'
+    },
     loadCoursesPage () {
       window.location.replace('/instructors/courses')
     },
@@ -323,7 +360,7 @@ export default {
           await this.$store.dispatch('auth/fetchUser')
           // Redirect to the correct home page
           Object.keys(localStorage).forEach((key) => {
-            if (key !== ('appversion')) {
+            if (key !== ('appversion') && key !== ('libreOneTester')) {
               delete localStorage[key]
             }
           })

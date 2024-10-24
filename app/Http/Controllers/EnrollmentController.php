@@ -530,12 +530,10 @@ class EnrollmentController extends Controller
 
             $data = $request->validated();
             DB::beginTransaction();
-            if ($request->is_lms) {
-                $user = request()->user();
-                $user->time_zone = $data['time_zone'];
-                $user->student_id = $data['student_id'];
-                $user->save();
-            }
+            $user = request()->user();
+            $user->student_id = $data['student_id'];
+            $user->save();
+
             $section = $Section->where('access_code', '=', $data['access_code'])
                 ->where('access_code', '<>', null)
                 ->first();
@@ -544,6 +542,15 @@ class EnrollmentController extends Controller
                     ->where('access_code', '<>', null)
                     ->first();
                 $section = Section::find($pending_course_invitation->section_id);
+            }
+            if (!$user->time_zone) {
+                $instructor_info = DB::table('users')
+                    ->join('courses', 'users.id', '=', 'courses.user_id')
+                    ->where('courses.id', $section->course_id)
+                    ->select('users.*')
+                    ->first();
+                $user->time_zone = $instructor_info->time_zone;
+                $user->save();
             }
             if (!$section) {
                 DB::rollback();
