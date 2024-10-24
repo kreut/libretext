@@ -7,6 +7,7 @@ use App\Exceptions\Handler;
 use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\LtiToken;
+use App\OIDC;
 use App\Section;
 use App\User;
 use Exception;
@@ -23,21 +24,55 @@ use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
 use Overrides\IMSGlobal\LTI\LTI_Names_Roles_Provisioning_Service;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use stdClass;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 
 class LTIController extends Controller
 {
 
     /**
-     * @return array
-     * @throws Exception
+     * @param OIDC $OIDC
+     * @return mixed
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function getUser()
+    public function getUser(OIDC $OIDC)
     {
         $response['type'] = 'error';
         try {
             $user = User::where('id', session()->get('lti_user_id'))->firstOrFail();
+            if (!$user->central_identity_id) {
+                $data = ['email' => $user->email,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'user_type' => $user->role === 2 ? 'instructor' : 'student',
+                    'time_zone' => $user->time_zome];
+                $oidc_response = $OIDC->autoProvision($data);
+                if ($oidc_response['type'] === 'success') {
+                    $user->central_identity_id = $response['central_identity_id'];
+                    $user->save();
+                } else {
+                    Telegram::sendMessage([
+                        'chat_id' => config('myconfig.telegram_channel_id'),
+                        'parse_mode' => 'HTML',
+                        'text' => "Unable to auto-provision User: $user->id. Error: " . json_encode($response)
+                    ]);
+                }
+            } else {
+                $lti_user_email = session()->get('lti_user_email');
+                if ($lti_user_email && $lti_user_email !== $user->email) {
+                    $user->email = $lti_user_email;
+                    $user->save();
+                    $OIDC->changeEmail($user->central_identity_id, $lti_user_email);
+
+                }
+
+
+            }
+
             $response['token'] = \JWTAuth::fromUser($user);
             $response['type'] = 'success';
         } catch (ModelNotFoundException $e) {
@@ -171,10 +206,11 @@ class LTIController extends Controller
                 echo "We can't seem to get this user's email.  Typically this happens if you're trying to connect in Student View mode or if you neglected to set the Privacy Level to Public when configuring this tool.";
                 exit;
             }
-            $sub = $launch->get_launch_data()['sub'];
-            $lti_user = $user->where('email', $sub)->first();
+            //check by email first because this is the most recent account *******THINK ABOUT THIS!!!!!!********
+            $lti_user = $user->where('email', $email)->first();
             if (!$lti_user) {
-                $lti_user = $user->where('email', $email)->first();
+                $sub = $launch->get_launch_data()['sub'];
+                $lti_user = $user->where('lms_user_id', $sub)->first();
             }
             if (!$lti_user) {
                 $lti_user = User::create([
@@ -215,6 +251,7 @@ class LTIController extends Controller
             //This code was also testing for Canvas on Dev server, so you can set $lms_launch_in_new_window to true if needed.
             if (!$lms_launch_in_new_window) {
                 session()->put('lti_user_id', $lti_user->id);
+                session()->put('lti_user_email', $email);
             }
             if ($lms_launch_in_new_window) {
                 $lti_token = \JWTAuth::fromUser($lti_user);

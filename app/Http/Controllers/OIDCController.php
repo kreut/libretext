@@ -3,16 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
+use App\OIDC;
 use App\User;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
 use MiladRahimi\Jwt\Exceptions\InvalidSignatureException;
@@ -21,7 +25,10 @@ use MiladRahimi\Jwt\Exceptions\JsonDecodingException;
 use MiladRahimi\Jwt\Exceptions\SigningException;
 use MiladRahimi\Jwt\Exceptions\ValidationException;
 use MiladRahimi\Jwt\Parser;
-use stdClass;
+use Telegram\Bot\Laravel\Facades\Telegram;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 
 class OIDCController extends Controller
 {
@@ -69,7 +76,7 @@ class OIDCController extends Controller
     public function __construct()
     {
 
-        $this->callbackUrl = url('api/oauth/libreone/callback');
+        $this->callbackUrl = url('api/oidc/libreone/callback');
         $this->baseUrl = app()->environment('production')
             ? 'https://auth.libretexts.org'
             : 'https://castest2.libretexts.org';
@@ -90,8 +97,70 @@ class OIDCController extends Controller
 
     }
 
+    public function initiateLogin(string $mode)
+    {
+        $data = [
+            'mode' => $mode,
+            'state' => substr(sha1(mt_rand()), 17, 12),
+            'orgID' => 'ADAPT (' . app()->environment() . ')'
+            //'redirectURI' => $redirectURI, then send to correct page by role
+        ];
+        $nonce = (string)Str::uuid();
+
+        $nonce_hash = Hash::make($nonce);
+
+
+        $oidcAuth = $this->authorizeUrl;
+        $state = json_encode($data);
+        $base64State = base64_encode($state);
+
+
+        $cookie = cookie('oidc_state', $base64State, 1, null, null, true, true, false, 'Strict');
+        $cookie_2 = cookie('oidc_nonce', $nonce, 1, null, null, true, true, false, 'Strict');
+
+        $params = [
+            'client_id' => $this->client_id,
+            'response_type' => 'code',
+            'scope' => 'openid profile email libretexts',
+            'redirect_uri' => $this->callbackUrl,
+            'state' => $state,
+            'nonce' => $nonce_hash
+        ];
+
+        return redirect($oidcAuth . '?' . http_build_query($params))->withCookies([$cookie, $cookie_2]);
+
+
+    }
+
+    public function changeEmail(OIDC $OIDC)
+    {
+        $central_identity_id = "bd42a7db-a35a-47e7-8da2-e6aedafcc952";
+        if (app()->environment('local')) {
+            dd($OIDC->changeEmail($central_identity_id, "newemail@hotmail.com"));
+        } else {
+            dd("Only can be run from local.");
+        }
+    }
+
+    public function autoProvision(OIDC $OIDC)
+    {
+        if (app()->environment('local')) {
+            $data = [
+                'email' => 'some-sillystudent@hotmail.com',
+                'first_name' => 'Test',
+                'last_name' => 'Student',
+                'user_type' => 'student',
+                'time_zone' => 'America/Los_Angeles',
+            ];
+            dd($OIDC->autoProvision($data));
+        } else {
+            dd("Only can be run from local.");
+        }
+    }
+
     public function redirect()
     {
+
         $oidcAuth = $this->authorizeUrl;
         $params = [
             'client_id' => $this->client_id,
@@ -103,6 +172,7 @@ class OIDCController extends Controller
 
         return redirect($oidcAuth . '?' . http_build_query($params));
     }
+
 
     /**
      * @param Request $request
@@ -172,6 +242,43 @@ class OIDCController extends Controller
             }
             $response['type'] = 'success';
             $response['user_created_central_identity_id'] = $claims['central_identity_id'];
+            if (isset($claims['source']) && $claims['source'] === 'adapt-registration') {
+                $response['token'] = \JWTAuth::fromUser($new_user);
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = $e->getMessage();
+        }
+        return $response;
+    }
+
+    /**
+     * @param string $token
+     * @return array
+     * @throws Exception
+     */
+    public function loginByJWT(string $token): array
+    {
+        try {
+            $response['type'] = 'error';
+            if (\JWTAuth::setToken($token)->check()) {
+                $user = \JWTAuth::parseToken()->authenticate();
+                if (!$user) {
+                    throw new Exception ("No user with that JWT exists");
+                }
+                $response['token'] = \JWTAuth::fromUser($user);
+                $response['success'] = 'error';
+            } else {
+                throw new Exception('Token is invalid.');
+            }
+            $response['type'] = 'success';
+        } catch (TokenExpiredException $e) {
+            throw new Exception('Token has expired.');
+        } catch (TokenInvalidException $e) {
+            throw new Exception('Token is invalid.');
+        } catch (JWTException $e) {
+            throw new Exception ('Token is absent.');
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -202,43 +309,107 @@ class OIDCController extends Controller
         return $parser->parse($token);
     }
 
-
+    /**
+     * @param Request $request
+     * @return array|\Illuminate\Http\JsonResponse
+     * @throws Exception
+     */
     public function callback(Request $request)
     {
         try {
-            $client = new Client();
-            $oidcTokenUrl = $this->tokenUrl;
-            // Exchange authorization code for access token
-            $response = $client->post($oidcTokenUrl, [
-                'form_params' => [
-                    'grant_type' => 'authorization_code',
-                    'code' => $request->code,
-                    'redirect_uri' => $this->callbackUrl,
-                    'client_id' => $this->client_id,
-                    'client_secret' => $this->client_secret,
-                ],
+            $response['type'] = 'error';
+            $oidc_state = request()->cookie('oidc_state');
+            $state_query = $request->state;
+
+
+            // Decode the base64-encoded state cookie and parse the JSON
+            $state = json_decode($state_query, true);
+            $state_cookie = json_decode(base64_decode($oidc_state), true); // Decode base64 and parse JSON
+
+
+// Check if state or state_cookie is invalid, or if the states do not match
+            if (!$state || !$state_cookie || ($state['state'] !== $state_cookie['state'])) {
+                return response()->json([
+                    'err' => true,
+                    'err_msg' => 'Bad state or nonce value',
+                ], 400);
+            }
+            // Encode the client ID and secret
+            $encoded = urlencode($this->client_id) . ':' . urlencode($this->client_secret);
+            $authVal = base64_encode($encoded);
+
+// Make the POST request with the authorization header and parameters
+            $http_response = Http::withHeaders([
+                'Authorization' => 'Basic ' . $authVal
+            ])->asForm()->post($this->tokenUrl, [
+                'grant_type' => 'authorization_code',
+                'code' => request()->query('code'),
+                'redirect_uri' => $this->callbackUrl
             ]);
 
-            $tokenData = json_decode((string)$response->getBody(), true);
+// Parse the response
+            $data = $http_response->json();
+            $access_token = $data['access_token'] ?? null;
+            $id_token = $data['id_token'] ?? null;
 
-            $this->_verifyAccessToken($tokenData['id_token'], $this->jwksUrl);
+            if (!$access_token || !$id_token) {
+                throw new Exception("No tokens are present.");
+            }
+
+            $payload = $this->_verifyAccessToken($id_token, $this->jwksUrl);
+
+            $oidc_nonce = request()->cookie('oidc_nonce');
+            $nonce = $payload->nonce;
+
+            if (!$nonce || !$oidc_nonce) {
+                return response()->json([
+                    'err' => true,
+                    'errMsg' => "Non-hashed nonce does not match."
+                ], 400);
+            }
+
+// Verify the nonce values match
+            $nonceValid = Hash::check($oidc_nonce, $nonce);
+
+            if (!$nonceValid) {
+                return response()->json([
+                    'err' => true,
+                    'errMsg' => 'Nonce values do not match'
+                ], 400);
+            }
+
+
             // Get user information
-            $profileUrl = $this->profileUrl;
-            $profileResponse = $client->get($profileUrl, [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $tokenData['access_token'],
-                ],
-            ]);
+            $profileUrl = $this->profileUrl . "?access_token=$access_token";
+            $profileResponse = Http::get($profileUrl);
 
-            $userData = json_decode((string)$profileResponse->getBody(), true);
-            dd($userData);
+            $user_data = json_decode((string)$profileResponse->getBody(), true);
+
+            $central_identity_id= $user_data['id'];
+            $email= $user_data['attributes']['email'];
+            $user = User::where('central_identity_id',  $central_identity_id)->first();
+            if (!$user) {
+                $user = User::where('email', $email)->first();
+                if ($user) {
+                    $user->central_identity_id = $central_identity_id;
+                    $user->save();
+                } else {
+                    throw new Exception("You have not registered with ADAPT.");
+                }
+            } else {
+                //update email;
+                $user->email = $email;
+                $user->save();
+            }
+            $token = \JWTAuth::fromUser($user);
+            return redirect()->to("/login-by-jwt/$token");
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = $e->getMessage();
         }
+        return $response;
 
-        // Do something with the user information (e.g., create or authenticate the user)
     }
 
 
@@ -254,10 +425,10 @@ class OIDCController extends Controller
     /**
      * @param $accessToken
      * @param $jwksUrl
-     * @return void
+     * @return \stdClass
      * @throws Exception
      */
-    private function _verifyAccessToken($accessToken, $jwksUrl): void
+    private function _verifyAccessToken($accessToken, $jwksUrl): \stdClass
     {
         // Fetch the JWKS
         $jwks = $this->_fetchJWKS($jwksUrl);
@@ -279,8 +450,7 @@ class OIDCController extends Controller
         // Verify the token
 
         try {
-            JWT::decode($accessToken, $keys);
-            return; // Return the decoded token payload
+            return JWT::decode($accessToken, $keys);
         } catch (Exception $e) {
             throw new Exception('Token verification failed: ' . $e->getMessage());
         }

@@ -23,7 +23,7 @@
            extra-email-modal-text="Please use this form to contact us regarding general questions or issues.  If you have a course specific question, please contact your instructor using your own email client."
            :from-user="user" title="Contact Us" type="contact_us" subject="General Inquiry"
     />
-    <div v-if="showNavBar" id="navbar" >
+    <div v-if="showNavBar" id="navbar">
       <b-modal id="modal-switch-account"
                title="Switch Account"
       >
@@ -56,26 +56,12 @@
               <span v-if="!user.formative_student">Logout</span>
               <span v-if="user.formative_student">End Session</span>
             </b-nav-item>
-            <b-nav-item v-show="!user" @click="$router.push({ name: 'login' })">
-              <span :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''">Log In</span>
+            <b-nav-item v-show="!user">
+              <b-button size="sm" id="initiate-login" variant="primary" @click="beginLogin">Log In</b-button>
             </b-nav-item>
-            <b-nav-item-dropdown v-show="!user" text="Register" right>
-              <b-dropdown-item @click="$router.push({ path: '/register/student' })">
-                <span class="">Student</span>
-              </b-dropdown-item>
-              <b-dropdown-item @click="$router.push({ path: '/register/instructor' })">
-                <span class="">Instructor</span>
-              </b-dropdown-item>
-              <b-dropdown-item @click="$router.push({ path: '/register/grader' })">
-                <span class="">Grader</span>
-              </b-dropdown-item>
-              <b-dropdown-item @click="$router.push({ path: '/register/question-editor' })">
-                <span class="">Non-Instructor Editor</span>
-              </b-dropdown-item>
-              <b-dropdown-item @click="$router.push({ path: '/register/tester' })">
-                <span class="">Tester</span>
-              </b-dropdown-item>
-            </b-nav-item-dropdown>
+            <b-nav-item v-show="!user" right>
+              <span @click="registerWithLibreOne">Register</span>
+            </b-nav-item>
           </b-navbar-nav>
         </b-collapse>
         <div v-if="logoLoaded
@@ -210,7 +196,8 @@ export default {
   props: {
     linkedAccounts: {
       type: Array,
-      default: () => {}
+      default: () => {
+      }
     }
   },
   data: () => ({
@@ -308,6 +295,12 @@ export default {
     document.head.appendChild(widgetScript)
   },
   methods: {
+    beginLogin () {
+      window.location.href = 'api/oidc/initiate-login/web'
+    },
+    registerWithLibreOne () {
+      location.href = 'https://staging.one.libretexts.org/register?source=adapt-registration'
+    },
     loadCoursesPage () {
       window.location.replace('/instructors/courses')
     },

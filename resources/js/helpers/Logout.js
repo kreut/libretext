@@ -16,6 +16,6 @@ export async function logout () {
     window.location = 'https://sso.libretexts.org/cas/logout'
   } else {
     // Redirect to login.
-    await this.$router.push({ name: 'login' })
+    await this.$router.push({ name: 'home' })
   }
 }

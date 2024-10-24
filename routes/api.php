@@ -25,6 +25,10 @@ Route::get('/php-info', 'QuestionMediaController@phpInfo');
 Route::post('/question-media/init-transcribe', 'QuestionMediaController@initTranscribe');
 Route::patch('/question-media/transcribe-status', 'QuestionMediaController@updateTranscribeStatus');
 Route::get('/oidc/redirect', 'OIDCController@redirect');
+Route::get('/oidc/initiate-login/{mode}', 'OIDCController@initiateLogin');
+
+Route::get('/oidc/login-by-jwt/{token}', 'OIDCController@loginByJWT');
+
 Route::get('/oidc/libreone/callback', 'OIDCController@callback');
 Route::post('/oidc/libreone/instructor-verified', 'OIDCController@instructorVerified');
 Route::post('/oidc/libreone/new-user-created', 'OIDCController@newUserCreated');

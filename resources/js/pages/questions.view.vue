@@ -3713,6 +3713,7 @@ export default {
     this.shownSections = this.$route.params.shownSections
     this.canView = await this.getAssignmentInfo()
     if (!this.canView) {
+      window.parent.postMessage('must authenticate', '*')
       this.isLoading = false
       return false
     }

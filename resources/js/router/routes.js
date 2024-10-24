@@ -158,9 +158,11 @@ let control_panel_paths = [
     component: page('control_panel/index.vue'),
     children: [
       { path: '', redirect: { name: 'login.as' } },
-      { path: 'login-as',
+      {
+        path: 'login-as',
         name: 'login.as',
-        component: page('control_panel/login.as.vue') },
+        component: page('control_panel/login.as.vue')
+      },
       {
         path: 'refresh-question-requests',
         name: 'refresh.question.requests',
@@ -222,19 +224,25 @@ let general_paths = [
     name: 'LaunchClickerApp',
     component: page('auth/launch.clicker.app.vue')
   },
+  { path: '/app-login', name: 'AppLogin', component: page('auth/app_login.vue') },
   {
     path: '/launch-in-new-window/:ltiTokenId/:ltiFinalLocation/:ltiResourceId',
     name: 'launchInNewWindow',
     component: page('launch_in_new_window.vue')
   },
   { path: '/user-jwt-test/:url', component: page('user_jwt_test.vue') },
+  { path: '/login-by-jwt/:token', name: 'LoginByJWT', component: page('login_by_jwt.vue') },
   { path: '/lti-login', name: 'ltiLogin', component: page('lti_login.vue') },
   { path: '/incomplete-registration', name: 'incomplete.registration', component: page('incomplete_registration.vue') },
   { path: '/sitemap', name: 'sitemap', component: page('sitemap.vue') },
   { path: '/question-editor/:tab/:questionId?', name: 'question.editor', component: page('question_editor.vue') },
   { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
   { path: '/canvas/config/api/:campusId', name: 'lti_canvas_config_api', component: page('canvas_config_api.vue') },
-  { path: '/lti/blackboard/config/:campusId?', name: 'lti_blackboard_config', component: page('lti_blackboard_config.vue') },
+  {
+    path: '/lti/blackboard/config/:campusId?',
+    name: 'lti_blackboard_config',
+    component: page('lti_blackboard_config.vue')
+  },
   { path: '/lti/moodle/config/:campusId', name: 'lti_moodle_config', component: page('lti_moodle_config.vue') },
   { path: '/imathas-solutions/:jwt', name: 'imathas-solutions', component: page('imathas_solutions.vue') },
   {
@@ -289,12 +297,16 @@ let general_paths = [
   { path: '/home', name: 'home', component: page('instructors/courses.index.vue') },
   { path: '/open-courses/:type', name: 'open_courses', component: page('open_courses.vue') },
   { path: '/instructors/frameworks', name: 'frameworks', component: page('instructors/frameworks.vue') },
-  { path: '/instructors/framework/:frameworkId', name: 'framework.view', component: page('instructors/framework.view.vue') },
+  {
+    path: '/instructors/framework/:frameworkId',
+    name: 'framework.view',
+    component: page('instructors/framework.view.vue')
+  },
   {
     path: '/courses/:courseId/anonymous',
     name: 'anonymous-users-entry',
     component: page('anonymous.users.entry.vue')
-  },  {
+  }, {
     path: '/instructors/nursing-analytics',
     name: 'nursing.analytics',
     component: page('instructors/nursing.analytics.vue')
@@ -306,8 +318,8 @@ let general_paths = [
       { path: '', redirect: { name: 'settings.profile' } },
       { path: 'profile', name: 'settings.profile', component: page('settings/profile.vue') },
       { path: 'password', name: 'settings.password', component: page('settings/password.vue') },
-      { path: 'notifications', name: 'settings.notifications', component: page('settings/notifications.vue')},
-      { path: 'linked-accounts', name: 'settings.linked_accounts', component: page('settings/linked_accounts.vue')}
+      { path: 'notifications', name: 'settings.notifications', component: page('settings/notifications.vue') },
+      { path: 'linked-accounts', name: 'settings.linked_accounts', component: page('settings/linked_accounts.vue') }
     ]
   },
   {
