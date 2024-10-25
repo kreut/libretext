@@ -117,7 +117,7 @@ class Submission extends Model
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
                     case('submit_molecule'):
-                        $proportion_correct = $this->computeScoreFromSubmitMolecule($submission->question,$submission->student_response);
+                        $proportion_correct = $this->computeScoreFromSubmitMolecule($submission->question, $submission->student_response);
                         break;
                     case('highlight_text'):
                         $student_responses = json_decode($submission->student_response);
@@ -463,7 +463,7 @@ class Submission extends Model
     function correctFillInTheBlank(object $correct_response, string $student_response): bool
     {
         $student_response = trim($student_response);
-       // Log::info($correct_response->value);
+        // Log::info($correct_response->value);
         $correct_values = explode('|', $correct_response->value);
         //Log::info(print_r($correct_values, 1));
         $correct = false;
@@ -953,9 +953,9 @@ class Submission extends Model
                 break;
             case('qti'):
                 $submission = json_decode($submission->submission);
-              if ($submission->question->questionType === 'submit_molecule') {
-                 return $submission->student_response;
-              }
+                if ($submission->question->questionType === 'submit_molecule') {
+                    return $submission->student_response;
+                }
                 $student_response = $submission->student_response ?: '';
                 if ($formatted && $student_response) {
                     $student_response = $this->formattedStudentResponse($submission->question, $student_response);
@@ -1249,7 +1249,7 @@ class Submission extends Model
         $results = DB::table('submission_files')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
-            ->whereIn('type', ['q', 'text','discuss_it'])
+            ->whereIn('type', ['q', 'text', 'discuss_it'])
             ->select('question_id', 'assignment_id')
             ->get();
 
@@ -1649,30 +1649,65 @@ class Submission extends Model
                         $state = json_decode(base64_decode($bodyb64), 1);
                         $state = json_decode(base64_decode(strtr($bodyb64, '-_,', '+/=')), 1);
                         $raw_scores = array_values($state['rawscores']);
-                        //Log::info(print_r($raw_scores, 1));
+                        /**
+                         * If
+                         * stuanswers[qn+1] is an array (indicates a multipart or conditional question)
+                         * AND
+                         * scoreiscorrect[qn+1] is not an array (indicates the question acts like a single score, which would limit us to a conditional question)
+                         *
+                         * With a conditional question:
+                         * rawscores[qn] will always be an array of only one value, the score for the whole question.
+                         * partattemptn[qn] will be an array with a value for each part. The values will always be equal since a conditional question always submits every part.
+                         * stuanswers[qn+1] will be an array with a value for each part
+                         * stuanswersval[qn+1] will be an array with a value for each part
+                         * scoreiscorrect[qn+1] is a scalar
+                         * scorenonzero[qn+1] is a scalar
+                         */
                         if (isset($state['stuanswers']) && $state['stuanswers']) {
-                            foreach ($state['stuanswers'] as $key => $submission) {
-                                if (is_array($submission)) {
-                                    foreach ($submission as $part_key => $part) {
-                                        $raw = $submission_info['raw'][$part_key];
-                                        $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $raw, $submission) : 0;
-                                        $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
-
-                                        $submission_array_value = [
-                                            'submission' => $part !== '' ? '\(' . $part . '\)' : 'Nothing submitted.',
-                                            'correct' => $raw === 1,
-                                            'points' => $points,
-                                            'percent' => $percent];
-                                        $submission_array[] = $submission_array_value;
+                            if (isset($state['qtype']) && $state['qtype'] === 'conditional') {
+                                $qsid= array_key_first($state['qsid']);
+                                $raw = $state['scoreiscorrect'][$qsid+1];
+                                $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $raw, [$submission]) : 0;
+                                $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
+                                $at_least_one_submission = false;
+                                foreach ($state['stuanswers'][$qsid+1] as $submission_value) {
+                                    if ($submission_value !== '') {
+                                        $at_least_one_submission = true;
                                     }
-                                } else {
-                                    $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $submission_info['raw'][0], [$submission]) : 0;
-                                    $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
-                                    $submission_array[] = ['submission' => $submission !== '' ? '\(' . $submission . '\)' : 'Nothing submitted.',
-                                        'points' => $points,
-                                        'percent' => $percent,
-                                        'correct' => $submission_info['raw'][0] === 1];
+                                }
+                                $formatted_submission = implode(', ', $state['stuanswers'][$qsid+1]);
+                                $submission_array_value = [
+                                    'submission' => $at_least_one_submission ? $formatted_submission : 'Nothing submitted.',
+                                    'correct' => $raw === 1,
+                                    'points' => $points,
+                                    'percent' => $percent];
+                                $submission_array[] = $submission_array_value;
+                            } else {
+                                foreach ($state['stuanswers'] as $key => $submission) {
+                                    if (is_array($submission)) {
+                                        if (isset($state['qtype']) && $state['qtype'] !== 'conditional') {
+                                            foreach ($submission as $part_key => $part) {
+                                                $raw = $submission_info['raw'][$part_key];
+                                                $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $raw, $submission) : 0;
+                                                $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
 
+                                                $submission_array_value = [
+                                                    'submission' => $part !== '' ? '\(' . $part . '\)' : 'Nothing submitted.',
+                                                    'correct' => $raw === 1,
+                                                    'points' => $points,
+                                                    'percent' => $percent];
+                                                $submission_array[] = $submission_array_value;
+                                            }
+                                        }
+                                    } else {
+                                        $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $submission_info['raw'][0], [$submission]) : 0;
+                                        $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
+                                        $submission_array[] = ['submission' => $submission !== '' ? '\(' . $submission . '\)' : 'Nothing submitted.',
+                                            'points' => $points,
+                                            'percent' => $percent,
+                                            'correct' => $submission_info['raw'][0] === 1];
+
+                                    }
                                 }
                             }
                         }
