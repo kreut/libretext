@@ -163,7 +163,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.assessment_type = 'real time'
   form.number_of_allowed_attempts = '1'
   form.number_of_allowed_attempts_penalty = ''
-  form.can_view_hint = 0
+  form.can_view_hint = 1
   form.hint_penalty = ''
   form.algorithmic = 0
   form.solutions_availability = 'automatic'

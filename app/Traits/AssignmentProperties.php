@@ -57,14 +57,6 @@ trait AssignmentProperties
         return $request->assessment_type === 'real time' ? $request->solutions_availability : null;
     }
 
-    /**
-     * @param $request
-     * @return int
-     */
-    public function getCanViewHint($request): int
-    {
-        return $request->scoring_type === 'p' && $request->assessment_type !== 'delayed' ? $request->can_view_hint : 0;
-    }
 
     /**
      * @param $request
@@ -73,7 +65,7 @@ trait AssignmentProperties
     public function getHintPenalty($request)
     {
 
-        return $request->scoring_type === 'p' && $request->assessment_type !== 'delayed' && (int)$request->can_view_hint === 1
+        return (int)$request->can_view_hint === 1
             ? str_replace('%', '', $request->hint_penalty)
             : null;
     }
@@ -196,7 +188,7 @@ trait AssignmentProperties
             'formative' => $request->formative,
             'number_of_allowed_attempts' => $this->getNumberOfAllowedAttempts($request),
             'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
-            'can_view_hint' => $this->getCanViewHint($request),
+            'can_view_hint' =>$request->can_view_hint,
             'hint_penalty' => $this->getHintPenalty($request),
             'algorithmic' => $this->getAlgorithmic($request),
             'solutions_availability' => $this->getSolutionsAvailability($request),
@@ -239,7 +231,7 @@ trait AssignmentProperties
     {
         $data['number_of_allowed_attempts'] = $this->getNumberOfAllowedAttempts($request);
         $data['number_of_allowed_attempts_penalty'] = $this->getNumberOfAllowedAttemptsPenalty($request);
-        $data['can_view_hint'] = $this->getCanViewHint($request);
+        $data['can_view_hint'] = $request->can_view_hint;
         $data['hint_penalty'] = $this->getHintPenalty($request);
         $data['public_description'] = $request->public_description;
         $data['private_description'] = $request->private_description;

@@ -120,6 +120,7 @@ class AssignmentsIndex2Test extends TestCase
             'instructions' => 'Some instructions',
             "number_of_randomized_assessments" => null,
             'algorithmic' => 0,
+            'can_view_hint' => 0,
             'notifications' => 1,
             'assignment_group_id' => 1,
             'formative' => 0,
