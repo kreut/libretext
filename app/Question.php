@@ -1707,6 +1707,7 @@ class Question extends Model
                 'CC BY-NC-SA' => 'ccbyncsa',
                 'CC BY-SA' => 'ccbysa',
                 'GNU GPL' => 'gnu',
+                'C' => 'arr',
                 'All Rights Reserved' => 'arr',
                 'GNU FDL' => 'gnufdl',
                 'NCBNS' => 'ncbsn'];
