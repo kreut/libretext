@@ -62,7 +62,6 @@ class QuestionMediaController extends Controller
             );
             $response['type'] = 'init-processing';
             $response['message'] = 'Made it to dev server.';
-            HandleProcessTranscription::dispatch($request->filename);
             return $response;
         } catch (Exception $e) {
             $response['message'] = $e->getMessage();

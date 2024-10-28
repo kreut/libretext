@@ -308,7 +308,7 @@ class QuestionMediaUpload extends Model
             $this->sendUpdatedTranscriptionStatus($pending_transcription->environment, $filename, $pending_transcription->upload_type, 'transcript completed', "Transcript sent to S3", $transcript);
             if ($pending_transcription->upload_type === 'question_media_upload') {
                 $questionMediaUpload = QuestionMediaUpload::where('s3_key', $filename)->first();
-                $questionMediaUpload->emailResult();
+               // $questionMediaUpload->emailResult();
             }
 
         } catch (AwsException $e) {
