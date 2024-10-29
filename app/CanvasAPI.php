@@ -138,7 +138,7 @@ class CanvasAPI extends Model
      */
     public function updateAssignment(int $course_id, int $assignment_id, $assignment_info): array
     {
-        $lms_access_token = $this->_updateAccessToken();
+        //$lms_access_token = $this->_updateAccessToken();
         $lms_message = new stdClass();
         $lms_message->id = $assignment_id;
         $lms_result['message'] = $lms_message;
