@@ -31,6 +31,7 @@ use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
 use App\Traits\S3;
 use App\User;
+use App\Webwork;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use DateTime;
@@ -1998,11 +1999,16 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @param Solution $Solution
      * @param Question $Question
+     * @param Webwork $webwork
      * @return array
      * @throws Exception
      */
     public
-    function getInfoForGrading(Request $request, Assignment $assignment, Solution $Solution, Question $Question): array
+    function getInfoForGrading(Request $request,
+                               Assignment $assignment,
+                               Solution $Solution,
+                               Question $Question,
+                               Webwork $webwork): array
     {
 
         $response['type'] = 'error';
@@ -2057,6 +2063,9 @@ class AssignmentController extends Controller
                 $solution['solution_file_url'] = $uploaded_solutions_by_question_id[$question_id]['solution_file_url'] ?? false;
                 $solution['solution_text'] = $uploaded_solutions_by_question_id[$question_id]['solution_text'] ?? false;
                 $solution['solution_type'] = null;
+                if ($in_code_solution = $webwork->inCodeSolution($questions_by_id[$question_id])) {
+                    $questions_by_id[$question_id]->solution_html = $in_code_solution;
+                }
                 $solution['solution_html'] = $Question->addTimeToS3Images($questions_by_id[$question_id]->solution_html, $dom);
                 if (!$solution['solution_html']) {
                     $solution['solution_html'] = $questions_by_id[$question_id]->answer_html;

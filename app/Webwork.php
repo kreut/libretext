@@ -211,6 +211,29 @@ class Webwork extends Model
         return $question_revision_id ? "$question_id-$question_revision_id" : $question_id;
     }
 
+
+    /**
+     * @param $value
+     * @return string
+     */
+    public function inCodeSolution($value): string
+    {
+        if (
+            strpos($value->webwork_code, 'BEGIN_SOLUTION') !== false &&
+            (
+                preg_match("/#-ULETH-#\s*BEGIN_SOLUTION/", $value->webwork_code) || // Match '#-ULETH-# BEGIN_SOLUTION'
+                !preg_match("/#\s*BEGIN_SOLUTION/", $value->webwork_code) // Exclude lines starting with '# BEGIN_SOLUTION'
+            )
+        ) {
+            // Extract all text between 'BEGIN_SOLUTION' and 'END_SOLUTION', excluding commented 'BEGIN_SOLUTION' lines
+            if (preg_match("/(?<!#)\s*BEGIN_SOLUTION\s*(.*?)\s*END_SOLUTION/s", $value->webwork_code, $matches)) {
+                return $matches[1]; // The solution text is in the first capturing group
+            }
+        }
+        return '';
+    }
+
+
     /**
      * @param $value
      * @return bool
@@ -226,7 +249,7 @@ class Webwork extends Model
                 preg_match("/#-ULETH-#\s*BEGIN_PGML_SOLUTION/", $value->webwork_code) || // Match '#-ULETH-#' with optional spaces before 'BEGIN_PGML_SOLUTION'
                 !preg_match("/#\s*BEGIN_PGML_SOLUTION/", $value->webwork_code) // Ensure it does not start with '# BEGIN_PGML_SOLUTION'
             )
-        ){
+        ) {
             return true;
         }
         return false;

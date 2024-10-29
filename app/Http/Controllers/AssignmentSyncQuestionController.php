@@ -922,6 +922,9 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['render_webwork_solution'] = $webwork->algorithmicSolution($value);
                 $columns['technology_iframe_src'] = null;
                 $columns['solution_html'] = '';
+                if ($webwork->inCodeSolution($value)) {
+                    $value->solution_html = '<div class="mt-section"><h2 class="editable">Solution</h2>' . $webwork->inCodeSolution($value) .'</div>';
+                }
                 if ($columns['render_webwork_solution'] || $columns['imathas_solution']) {
                     $question_id = $value->question_id;
                     $question = $questions_by_question_id[$question_id];
@@ -1550,7 +1553,8 @@ class AssignmentSyncQuestionController extends Controller
                                                 Submission             $Submission,
                                                 Extension              $Extension,
                                                 AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                IMathAS                $IMathAS): array
+                                                IMathAS                $IMathAS,
+                                                Webwork                $webwork): array
     {
         /**helper function to get the response info from server side technologies...*/
 
@@ -1613,6 +1617,9 @@ class AssignmentSyncQuestionController extends Controller
             }
             if ($question->qti_json) {
                 $qti_answer_json = $question->formatQtiJson('answer_json', $question['qti_json'], $seed, true);
+            }
+            if ($webwork->inCodeSolution($question)) {
+                $question->solution_html = $webwork->inCodeSolution($question);
             }
             if (($question->solution_html || $question->answer_html) && !$solution) {
                 $solution_type = 'html';
@@ -2333,6 +2340,10 @@ class AssignmentSyncQuestionController extends Controller
 
                 $local_solution_exists = isset($uploaded_solutions_by_question_id[$question->id]['solution_file_url']);
                 $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->answer_html, $domd) : null;
+
+                if ($webwork->inCodeSolution($assignment->questions[$key])) {
+                    $assignment->questions[$key]->solution_html = $webwork->inCodeSolution($assignment->questions[$key]);
+                }
                 $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->solution_html, $domd) : null;
                 $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id)
