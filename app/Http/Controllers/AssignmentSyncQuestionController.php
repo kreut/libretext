@@ -44,6 +44,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Traits\S3;
@@ -52,6 +53,8 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 
 class AssignmentSyncQuestionController extends Controller
@@ -1777,8 +1780,10 @@ class AssignmentSyncQuestionController extends Controller
      * @param Question $Question
      * @param Solution $solution
      * @param PendingQuestionRevision $pendingQuestionRevision
+     * @param IMathAS $IMathAS
      * @return array
-     * @throws Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public
     function getQuestionsToView(Request                 $request,
@@ -2290,7 +2295,6 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['open_ended_submission_type'] = $submission_file['open_ended_submission_type'];
                     $assignment->questions[$key]['submission'] = $submission_file['submission'];
                     $assignment->questions[$key]['submission_file_exists'] = (boolean)$assignment->questions[$key]['submission'];
-
                     $formatted_submission_file_info = $this->getFormattedSubmissionFileInfo($submission_file, $assignment->id, $this);
                     $assignment->questions[$key]['submission_file_late_penalty_percent'] = $formatted_submission_file_info['applied_late_penalty'];
                     $assignment->questions[$key]['original_filename'] = $formatted_submission_file_info['original_filename'];
@@ -2337,7 +2341,6 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score), 4);
                     $assignment->questions[$key]['submission_score_override'] = $submission_score_overrides_by_question_id[$question->id] ?? null;
                 }
-
                 $local_solution_exists = isset($uploaded_solutions_by_question_id[$question->id]['solution_file_url']);
                 $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->answer_html, $domd) : null;
 
@@ -2348,7 +2351,6 @@ class AssignmentSyncQuestionController extends Controller
                 $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id)
                     : '';
-
                 if ($show_solution || in_array(request()->user()->role, [2, 5])) {
                     $assignment->questions[$key]['solution'] = $uploaded_solutions_by_question_id[$question->id]['original_filename'] ?? false;
                     $assignment->questions[$key]['solution_type'] = $uploaded_solutions_by_question_id[$question->id]['solution_type'] ?? false;
@@ -2489,7 +2491,7 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             $response['type'] = 'success';
-            $response['questions'] = $assignment->questions->values();
+            $response['questions'] =   $assignment->questions->toArray();
             $end_time = microtime(true);
             $execution_time = ($end_time - $start_time);
             DB::table('execution_times')->insert([
