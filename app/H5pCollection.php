@@ -23,7 +23,6 @@ class H5pCollection extends Model
         $questions = DB::table('questions')
             ->where('technology', 'h5p')
             ->where('technology_id', $h5p_id)
-            ->orderBy('questions.id')
             ->select('questions.id AS question_id', 'questions.question_editor_user_id AS user_id')
             ->get();
         $user_ids = [];
