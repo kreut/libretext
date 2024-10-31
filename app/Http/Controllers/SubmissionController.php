@@ -59,7 +59,7 @@ class SubmissionController extends Controller
                 return $response;
             }
 
-            $submission_array = $submission->getSubmissionArray($assignment, $question, $submission);
+            $submission_array = $submission->getSubmissionArray($assignment, $question, $submission, false);
             $response['type'] = 'success';
             $response['submission_array'] = $submission_array;
         } catch (Exception $e) {

@@ -926,7 +926,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['technology_iframe_src'] = null;
                 $columns['solution_html'] = '';
                 if ($webwork->inCodeSolution($value)) {
-                    $value->solution_html = '<div class="mt-section"><h2 class="editable">Solution</h2>' . $webwork->inCodeSolution($value) .'</div>';
+                    $value->solution_html = '<div class="mt-section"><h2 class="editable">Solution</h2>' . $webwork->inCodeSolution($value) . '</div>';
                 }
                 if ($columns['render_webwork_solution'] || $columns['imathas_solution']) {
                     $question_id = $value->question_id;
@@ -1601,7 +1601,7 @@ class AssignmentSyncQuestionController extends Controller
         $imathas_solution = false;
         $problem_jwt = '';
         //use this to show the table.
-        $submission_array = $Submission->getSubmissionArray($assignment, $question, $submission);
+        $submission_array = $Submission->getSubmissionArray($assignment, $question, $submission, false);
 
         $submission = $question->technology === 'imathas' || ($question->technology === 'webwork' && $assignment->assessment_type === 'real time')
             ? $submissions_by_question_id[$question->id]
@@ -2098,6 +2098,12 @@ class AssignmentSyncQuestionController extends Controller
                 ->pluck('question_id')
                 ->toArray();
 
+            $assignment_questions = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->get();
+            foreach ($assignment_questions as $assignment_question) {
+                $assignment_questions_by_question_id[$assignment_question->question_id] = $assignment_question;
+            }
             //get the correct revisions
             $question_revision_ids = [];
             foreach ($assignment_question_info['questions'] as $question) {
@@ -2476,7 +2482,7 @@ class AssignmentSyncQuestionController extends Controller
                     }
                 }
                 $assignment->questions[$key]->submission_array = isset($submissions_by_question_id[$question->id]) && in_array($question->technology, ['imathas', 'webwork'])
-                    ? $Submission->getSubmissionArray($assignment, $question, $submissions_by_question_id[$question->id])
+                    ? $Submission->getSubmissionArray($assignment, $question, $submissions_by_question_id[$question->id], false, $assignment_questions_by_question_id[$question->id])
                     : [];
                 ///////DO I EVEN NEED THE LINE BELOW???????TODO
                 /*   $assignment->questions[$key]->answer_qti_json = $assignment->questions[$key]->technology === 'qti' && $show_solution

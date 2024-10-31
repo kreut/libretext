@@ -1594,19 +1594,20 @@ class Submission extends Model
      * @param Assignment $assignment
      * @param Question $question
      * @param $submission
-     * @param bool $is_learning_tree_node
+     * @param $is_learning_tree_node
+     * @param $assignment_question
      * @return array
      * @throws Exception
      */
     public
-    function getSubmissionArray(Assignment $assignment, Question $question, $submission, bool $is_learning_tree_node = false): array
+    function getSubmissionArray(Assignment $assignment, Question $question, $submission, $is_learning_tree_node, $assignment_question = null): array
     {
         $submission_array = [];
 
         if ($submission &&
             in_array($question->technology, ['webwork', 'imathas'])
             && (in_array(request()->user()->role, [2, 5]) || (in_array($assignment->assessment_type, ['learning tree', 'real time']) || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released)))) {
-            $assignment_question = DB::table('assignment_question')
+            $assignment_question = $assignment_question ?: DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();

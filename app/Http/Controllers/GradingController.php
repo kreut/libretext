@@ -464,7 +464,7 @@ class GradingController extends Controller
                     $grading[$user->id]['non_technology_iframe_src'] = $non_technology_iframe_src;
                     $grading[$user->id]['technology_iframe'] = $technology_iframe;
                     $grading[$user->id]['submission_array'] = isset($submissions_by_user_id[$user->id])
-                        ? $Submission->getSubmissionArray($assignment, $question, $submissions_by_user_id[$user->id])
+                        ? $Submission->getSubmissionArray($assignment, $question, $submissions_by_user_id[$user->id], false)
                         : [];
 
 
