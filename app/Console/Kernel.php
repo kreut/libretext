@@ -47,7 +47,7 @@ class Kernel extends ConsoleKernel
 
         if (env('APP_ENV') !== 'local') {
             $schedule->command('notify:LatestErrors')->everyFiveMinutes();
-            $schedule->command('retry:FailedGradePassbacks')->daily();
+            //$schedule->command('retry:FailedGradePassbacks')->daily();
             $schedule->command('get:editorImageHandles')->hourly();
             $schedule->command('get:emptyParagraphNonTechnologyHtml')->hourly();
 
