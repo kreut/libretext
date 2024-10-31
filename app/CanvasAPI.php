@@ -37,7 +37,7 @@ class CanvasAPI extends Model
     private function _updateAccessToken()
     {
         $lmsAccessToken = new LmsAccessToken();
-        $lms_access_token = $lmsAccessToken->where('user_id', $this->user_id)->first();
+        $lms_access_token = $lmsAccessToken->where('user_id', $this->user_id)->where('school_id', $this->lti_registration->school_id)->first();
         if (!app()->environment('local') && $lms_access_token->updated_at <= Carbon::now()->subMinutes(30)->toDateTimeString()) {
             $result = $this->getAccessToken();
             if ($result['type'] === 'success') {
