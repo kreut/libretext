@@ -2491,7 +2491,7 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             $response['type'] = 'success';
-            $response['questions'] =   $assignment->questions->toArray();
+            $response['questions'] = $assignment->questions->values();
             $end_time = microtime(true);
             $execution_time = ($end_time - $start_time);
             DB::table('execution_times')->insert([
