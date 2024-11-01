@@ -41,6 +41,7 @@ use DateTime;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -1869,21 +1870,15 @@ class CourseController extends Controller
         return $message;
     }
 
+
     /**
-     *
-     * Delete a course
-     *
      * @param DestroyCourse $request
      * @param Course $course
-     * @param AssignToTiming $assignToTiming
-     * @param BetaAssignment $betaAssignment
      * @param BetaCourse $betaCourse
-     * @param BetaCourseApproval $betaCourseApproval
      * @param Discussion $discussion
      * @return array
      * @throws Exception
      */
-
     public
     function destroy(DestroyCourse      $request,
                      Course             $course,
@@ -1997,6 +1992,7 @@ class CourseController extends Controller
             }
             $course->delete();
             DB::commit();
+            Cache::tags('unlinked_assignments_by_course')->forget("unlinked_assignments_by_course_$course->id");
             $response['type'] = 'info';
             $response['message'] = "The course <strong>$course->name</strong> has been deleted.";
         } catch

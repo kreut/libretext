@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\DateFormatter;
@@ -702,32 +703,27 @@ class Assignment extends Model
 
             }
             $unlinked_assignments = [];
-            try {
-                if ($course->lms_course_id) {
-                    $lti_registration = $course->getLtiRegistration();
-                    $lmsApi = new LmsAPI();
-                    $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $course->lms_course_id);
-                    if ($result['type'] === 'error') {
-                        throw new Exception("Could not get LMS course assignments: {$result['message']} for $lti_registration->id");
-                    }
-                    $lms_assignment_ids = [];
-                    foreach ($course->assignments as $assignment) {
-                        $lms_assignment_ids[] = $assignment->lms_assignment_id;
-                    }
-
-                    if ($result['message']) {
-                        foreach ($result['message'] as $lms_assignment) {
-                            if (!in_array($lms_assignment->id, $lms_assignment_ids)) {
-                                $unlinked_assignments[] = $lms_assignment;
+            if (Auth::user()->role === 2) {
+                //need to think of a way to refresh this.  Right now the API call is slow to Canvas.
+                try {
+                    if ($course->lms_course_id) {
+                        $cache_key = "unlinked_assignments_by_course_$course->id";
+                        if (DB::table('active_caches')->where('tag', 'unlinked_assignments_by_course')->first()) {
+                            if (!Cache::get($cache_key)) {
+                                $unlinked_assignments = $this->getUncachedUnlinkedAssignments($course);
+                                Cache::put($cache_key, $unlinked_assignments, now()->addMonths(3));
+                            } else {
+                                $unlinked_assignments = Cache::get($cache_key);
                             }
-
+                        } else {
+                            $unlinked_assignments = $this->getUncachedUnlinkedAssignments($course);
                         }
                     }
+                } catch (Exception $e) {
+                    $response['lms_error'] = $e->getMessage();
+                    $h = new Handler(app());
+                    $h->report($e);
                 }
-            } catch (Exception $e) {
-                $response['lms_error'] = $e->getMessage();
-                $h = new Handler(app());
-                $h->report($e);
             }
 
             $response['assignments'] = array_values($assignments_info);//fix the unset
@@ -749,6 +745,35 @@ class Assignment extends Model
 
         }
         return $response;
+    }
+
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function getUncachedUnlinkedAssignments(Course $course): array
+    {
+        $lti_registration = $course->getLtiRegistration();
+        $unlinked_assignments = [];
+        $lmsApi = new LmsAPI();
+        $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $course->lms_course_id);
+        if ($result['type'] === 'error') {
+            throw new Exception("Could not get LMS course assignments: {$result['message']} for $lti_registration->id");
+        }
+        $lms_assignment_ids = [];
+        foreach ($course->assignments as $assignment) {
+            $lms_assignment_ids[] = $assignment->lms_assignment_id;
+        }
+
+        if ($result['message']) {
+            foreach ($result['message'] as $lms_assignment) {
+                if (!in_array($lms_assignment->id, $lms_assignment_ids)) {
+                    $unlinked_assignments[] = $lms_assignment;
+                }
+            }
+        }
+        return $unlinked_assignments;
     }
 
     /**
