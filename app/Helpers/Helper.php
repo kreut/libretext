@@ -281,7 +281,6 @@ class Helper
             $discussion_comments = DiscussionComment::where('discussion_id', $discussion->id)->get();
             foreach ($discussion_comments as $discussion_comment) {
                 $file = $discussion_comment->file;
-                Log::info($file);
                 if ($file) {
                     if (Storage::disk('s3')->exists("{$questionMediaUpload->getDir()}/$file")) {
                         Storage::disk('s3')->delete("{$questionMediaUpload->getDir()}/$file");
