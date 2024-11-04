@@ -769,7 +769,7 @@ class Assignment extends Model
         if ($result['message']) {
             foreach ($result['message'] as $lms_assignment) {
                 if (!in_array($lms_assignment->id, $lms_assignment_ids)) {
-                    $unlinked_assignments[] = $lms_assignment;
+                    $unlinked_assignments[] = ['id'=> $lms_assignment->id,'name'=>$lms_assignment->name];
                 }
             }
         }
