@@ -29,6 +29,8 @@ Route::get('/oidc/libreone/callback', 'OIDCController@callback');
 Route::post('/oidc/libreone/instructor-verified', 'OIDCController@instructorVerified');
 Route::post('/oidc/libreone/new-user-created', 'OIDCController@newUserCreated');
 
+Route::post('/pending-delete-user', 'PendingDeletedUserController@store');
+
 Route::get('/lms/create-course', 'LmsController@createCourse');
 
 Route::post('/open-ai/results/{type}', 'OpenAIController@results');
