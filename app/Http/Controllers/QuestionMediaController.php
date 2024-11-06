@@ -52,7 +52,7 @@ class QuestionMediaController extends Controller
             $this->_hasAccessToTranscribe($request);
             DB::table('pending_transcriptions')->updateOrInsert(
                 ['filename' => $request->filename], [
-                    'language' => $request->language ? $request->language: '',
+                    'language' => $request->language ? $request->language : '',
                     'upload_type' => $request->upload_type,
                     'environment' => $request->environment,
                     'status' => 'initializing',
@@ -222,20 +222,27 @@ class QuestionMediaController extends Controller
      * @throws Exception
      */
     public
-    function getByQuestion(Assignment          $assignment,
-                           Question            $question,
-                           QuestionMediaUpload $questionMediaUpload): array
+    function getByAssignmentQuestion(Assignment          $assignment,
+                                     Question            $question,
+                                     QuestionMediaUpload $questionMediaUpload): array
     {
 
         try {
 //need the assignment ID for authorization
             $response['type'] = 'error';
+            $assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
             $question_media_uploads = $questionMediaUpload
                 ->where('question_id', $question->id)
+                ->where('question_revision_id', $assignment_question->question_revision_id)
                 ->orderBy('order')
                 ->get();
+           // dd( $assignment_question->question_revision_id);
             $domDocument = new DOMDocument();
             foreach ($question_media_uploads as $key => $value) {
+                $value->order = $key + 1;//in case something weird happened when creating the question
                 if (pathinfo($value->s3_key, PATHINFO_EXTENSION) != 'html') {
                     $question_media_uploads[$key]['temporary_url'] = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$value->s3_key", Carbon::now()->addDays(7));
                 }

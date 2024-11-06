@@ -24,6 +24,36 @@ class QuestionMediaUpload extends Model
     protected $guarded = [];
 
     /**
+     * @param $question_id
+     * @param $question_revision_id
+     * @return mixed
+     * @throws Exception
+     */
+    public function getByQuestionIdAndQuestionRevisionId($question_id, $question_revision_id)
+    {
+        $media_uploads = $this->where('question_id', $question_id)
+            ->where('question_revision_id', $question_revision_id)
+            ->get();
+        if ($media_uploads) {
+            $domDocument = new DOMDocument();
+            $question = new Question();
+            foreach ($media_uploads as $key => $media_upload) {
+                $media_upload->text = $media_upload->getText($question, $domDocument);
+                if (!$media_upload->text) {
+                    if ($media_upload->transcript) {
+                        $media_upload->transcript = $this->parseVtt($media_upload->transcript);
+                    }
+                    $media_upload->url = Helper::schemaAndHost() . "question-media-player/$media_upload->s3_key";
+                } else {
+                    $media_upload->url = '';
+                    $media_upload->transcript = '';
+                }
+            }
+        }
+        return $media_uploads;
+    }
+
+    /**
      * @param string $environment
      * @param string $filename
      * @param string $upload_type
@@ -68,7 +98,7 @@ class QuestionMediaUpload extends Model
             $jwt = $generator->generate(['transcribe' => 1]);
             $this->_logInfo('sending update info to ' . $domain);
             Log::info($status);
-            DB::table('pending_transcriptions')->where('filename', $filename)->update(['status'=>$status, 'message'=>$message]);
+            DB::table('pending_transcriptions')->where('filename', $filename)->update(['status' => $status, 'message' => $message]);
             $response = Http::patch("https://$domain/api/question-media/transcribe-status", [
                 'filename' => $filename,
                 'upload_type' => $upload_type,
@@ -308,7 +338,7 @@ class QuestionMediaUpload extends Model
             $this->sendUpdatedTranscriptionStatus($pending_transcription->environment, $filename, $pending_transcription->upload_type, 'transcript completed', "Transcript sent to S3", $transcript);
             if ($pending_transcription->upload_type === 'question_media_upload') {
                 $questionMediaUpload = QuestionMediaUpload::where('s3_key', $filename)->first();
-               // $questionMediaUpload->emailResult();
+                // $questionMediaUpload->emailResult();
             }
 
         } catch (AwsException $e) {

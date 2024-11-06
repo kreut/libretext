@@ -75,7 +75,7 @@ class QuestionRevisionController extends Controller
                 ->orderBy('order')
                 ->get();
             $rubric_categories_revision_info_by_question_revision_id = [];
-            foreach ( $rubric_categories_revision_info as $report_revision_info) {
+            foreach ($rubric_categories_revision_info as $report_revision_info) {
                 if (!isset($rubric_categories_revision_info_by_question_revision_id[$report_revision_info->question_revision_id])) {
                     $rubric_categories_revision_info_by_question_revision_id[$report_revision_info->question_revision_id] = [];
                 }
@@ -88,6 +88,18 @@ class QuestionRevisionController extends Controller
                 ->select('question_revisions.*',
                     DB::raw('CONCAT(first_name, " " , last_name) AS question_editor'))
                 ->get();
+            $question_media_uploads = DB::table('question_media_uploads')
+                ->where('question_id', $question->id)
+                ->orderBy('order')
+                ->get();
+            $question_media_uploads_by_question_revision_id = [];
+            foreach ($question_media_uploads as $question_media_upload) {
+                if (!isset($question_media_uploads_by_question_revision_id[$question_media_upload->question_revision_id])) {
+                    $question_media_uploads_by_question_revision_id[$question_media_upload->question_revision_id] = [];
+                }
+                $question_media_uploads_by_question_revision_id[$question_media_upload->question_revision_id][] = $question_media_upload;
+            }
+
             $revisions = [];
             foreach ($revision_info as $key => $revision) {
                 $additional_text = '';
@@ -103,6 +115,7 @@ class QuestionRevisionController extends Controller
                 $text .= $additional_text;
                 $revision->text = $text;
                 $revision->rubric_categories = $rubric_categories_revision_info_by_question_revision_id[$revision->id] ?? [];
+                $revision->media_uploads = $question_media_uploads_by_question_revision_id[$revision->id] ?? [];
                 $revisions[] = $revision;
             }
             $response['type'] = 'success';
@@ -134,7 +147,7 @@ class QuestionRevisionController extends Controller
                 return $response;
             }
             $question_revision_id = $questionRevision->id;
-            $question_revision = $question->formatQuestionToEdit($request, $questionRevision, $questionRevision->question_id);
+            $question_revision = $question->formatQuestionToEdit($request, $questionRevision, $questionRevision->question_id, $question_revision_id);
             $question_revision['id'] = $questionRevision->question_id;
             $question_revision['question_revision_id'] = $question_revision_id;
 

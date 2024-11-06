@@ -790,7 +790,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/question-media/temporary-urls', 'QuestionMediaController@temporaryUrls');
     Route::delete('/question-media/{questionMediaUpload}', 'QuestionMediaController@destroy');
     Route::get('/question-media/{questionMediaUpload}/download-transcript', 'QuestionMediaController@downloadTranscript');
-    Route::get('/question-media/assignments/{assignment}/questions/{question}', 'QuestionMediaController@getByQuestion');
+    Route::get('/question-media/assignments/{assignment}/questions/{question}', 'QuestionMediaController@getByAssignmentQuestion');
     Route::get('/question-media/validate-vtt/{questionMediaUpload}', 'QuestionMediaController@validateVTT');
 
 

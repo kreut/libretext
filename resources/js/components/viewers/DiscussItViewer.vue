@@ -745,7 +745,7 @@
             />
             <hr>
           </div>
-          <div v-if="/\.(mp3|mp4)$/.test(currentDiscussionMedia.s3_key)">
+          <div v-if="currentDiscussionMedia && /\.(mp3|mp4)$/.test(currentDiscussionMedia.s3_key)">
             <iframe
               :key="`discussion-media`"
               v-resize="{ log: false }"
@@ -758,10 +758,10 @@
               class="mb-2"
             />
           </div>
-          <div v-if="/\.(pdf)$/.test(currentDiscussionMedia.s3_key)">
+          <div v-if="currentDiscussionMedia && /\.(pdf)$/.test(currentDiscussionMedia.s3_key)">
             <VuePdfEmbed annotation-layer text-layer :source="currentDiscussionMedia.temporary_url" />
           </div>
-          <div v-if="currentDiscussionMedia.text" :class="!previewingQuestion ? 'ml-2 mr-2' : ''"
+          <div v-if="currentDiscussionMedia && currentDiscussionMedia.text" :class="!previewingQuestion ? 'ml-2 mr-2' : ''"
                v-html="currentDiscussionMedia.text"
           />
         </b-col>

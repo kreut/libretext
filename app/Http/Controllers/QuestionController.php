@@ -1216,6 +1216,23 @@ class QuestionController extends Controller
                         $error = true;
                         $response['reason_for_edit_error'] = 'Please provide a reason for the edit.';
                     }
+
+                    if ($question->isDiscussIt()) {
+                        $new_s3_keys = array_column($request->media_uploads, 's3_key');
+                        $question_revision_id = $question->latestQuestionRevision('id');
+                        $current_s3_keys = QuestionMediaUpload::where('question_id', $question->id)
+                            ->where('question_revision_id', $question_revision_id)
+                            ->get('s3_key')
+                            ->pluck('s3_key')
+                            ->toArray();
+                        $current_s3_keys = array_unique($current_s3_keys);
+                        sort($current_s3_keys);
+                        sort($new_s3_keys);
+                        if ($current_s3_keys !== $new_s3_keys) {
+                            $response['message'] = 'You cannot propagate the question revision since there are differing media. This is a non-topical change to the question.';
+                            return $response;
+                        }
+                    }
                     if (!$request->user()->isMe() && $question->nonMetaPropertiesDiffer($request)) {
                         $response['message'] = 'You cannot propagate the question revision since there are differing properties that are not topical in nature.';
                         return $response;
@@ -1281,6 +1298,7 @@ class QuestionController extends Controller
                 }
                 $question_type = json_decode($request->qti_json)->questionType;
                 $data['qti_json_type'] = $question_type;
+
                 switch ($question_type) {
                     case('discuss_it'):
                         $unsets = ['media_uploads'];
@@ -1443,6 +1461,7 @@ class QuestionController extends Controller
                         RubricCategory::where('question_id', $question->id)->update(['question_revision_id' => $initial_question_revision->id]);
                     }
                     WebworkAttachment::where('question_id', $question->id)->update(['question_revision_id' => $initial_question_revision->id]);
+                    QuestionMediaUpload::where('question_id', $question->id)->update(['question_revision_id' => $initial_question_revision->id]);
                 }
                 $question->update($data);
                 $currentQuestionRevision = QuestionRevision::where('question_id', $question->id)->orderBy('revision_number', 'desc')->first();
@@ -1652,29 +1671,18 @@ class QuestionController extends Controller
                         ->get()
                         ->pluck('s3_key')
                         ->toArray();
-                    $new_s3_keys = [];
                     foreach ($media_uploads as $new_media_upload) {
-                        $new_s3_keys[] = $new_media_upload['s3_key'];
+                        $questionMediaUpload = new QuestionMediaUpload();
+                        $questionMediaUpload->question_id = $question->id;
+                        $questionMediaUpload->original_filename = $new_media_upload['original_filename'];
+                        $questionMediaUpload->size = $new_media_upload['size'];
+                        $questionMediaUpload->s3_key = $new_media_upload['s3_key'];
+                        $questionMediaUpload->order = $new_media_upload['order'] ?? null;
+                        $questionMediaUpload->transcript = '';
+                        $questionMediaUpload->question_revision_id = $new_question_revision_id;
+                        $questionMediaUpload->save();
                         if (!in_array($new_media_upload['s3_key'], $current_s3_keys)) {
-                            $questionMediaUpload = new QuestionMediaUpload();
-                            $questionMediaUpload->question_id = $question->id;
-                            $questionMediaUpload->original_filename = $new_media_upload['original_filename'];
-                            $questionMediaUpload->size = $new_media_upload['size'];
-                            $questionMediaUpload->s3_key = $new_media_upload['s3_key'];
-                            $questionMediaUpload->order = $new_media_upload['order'] ?? null;
-                            $questionMediaUpload->transcript = '';
-                            $questionMediaUpload->save();
                             InitProcessTranscribe::dispatch($questionMediaUpload->s3_key, 'question_media_upload');
-                        } else {
-                            QuestionMediaUpload::where('question_id', $question->id)
-                                ->where('s3_key', $new_media_upload['s3_key'])
-                                ->update(['order' => $new_media_upload['order']]);
-
-                        }
-                    }
-                    foreach ($current_s3_keys as $current_s3_key) {
-                        if (!in_array($current_s3_key, $new_s3_keys)) {
-                            QuestionMediaUpload::where('question_id', $question->id)->where('s3_key', $current_s3_key)->delete();
                         }
                     }
                 } else {
@@ -2430,7 +2438,6 @@ class QuestionController extends Controller
     /**
      * @param Request $request
      * @param Question $Question
-     * @param Webwork $webwork
      * @return array
      * @throws Exception
      */
@@ -2439,7 +2446,7 @@ class QuestionController extends Controller
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('viewAny', $Question);
-
+        $questionMediaUpload = new QuestionMediaUpload();
         if (!$authorized->allowed()) {
 
             $response['message'] = $authorized->message();
@@ -2450,11 +2457,15 @@ class QuestionController extends Controller
         $webwork = new Webwork();
         try {
             $question_info = Question::find($Question->id);
-
             $question_info = $question_info->updateWithQuestionRevision('latest');
             $render_webwork_solution = $webwork->algorithmicSolution($question_info);
             $question_revision_id = $question_info->question_revision_id;
             $question = $Question->formatQuestionFromDatabase($request, $question_info);
+            if ($question_info->isDiscussIt()) {
+                $qti_json = json_decode($question['qti_json'], 1);
+                $qti_json['media_uploads'] = $question['media_uploads'];
+                $question['qti_json'] = json_encode($qti_json);
+            }
             $question['render_webwork_solution'] = $render_webwork_solution;
             $question['rubric_categories'] = DB::table('rubric_categories')
                 ->where('question_id', $Question->id)
@@ -2508,7 +2519,8 @@ class QuestionController extends Controller
             $question_to_edit = Question::select('*')
                 ->where('id', $question->id)->first();
             if ($question_to_edit) {
-                $question_to_edit = $question->formatQuestionToEdit($request, $question_to_edit, $question_to_edit->id);
+                $question_revision_id = $question->latestQuestionRevision('id') ? $question->latestQuestionRevision('id') : 0;
+                $question_to_edit = $question->formatQuestionToEdit($request, $question_to_edit, $question_to_edit->id, $question_revision_id);
                 $response['question_to_edit'] = $question_to_edit;
                 $question_to_edit['question_exists_in_own_assignment'] = $question->questionExistsInOneOfTheirAssignments();
                 $question_to_edit['question_exists_in_another_instructors_assignment'] = $question->questionExistsInAnotherInstructorsAssignments();

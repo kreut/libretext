@@ -567,10 +567,10 @@ class Question extends Model
         }
         switch ($question_type) {
             case('discuss_it'):
-                $qti_array['media_uploads'] = QuestionMediaUpload::where('question_id', $this->id)->get();
+              /**  $qti_array['media_uploads'] = QuestionMediaUpload::where('question_id', $this->id)->get();
                 foreach ($qti_array['media_uploads'] as $key => $question_media_upload) {
                     $qti_array['media_uploads'][$key]['text'] = $question_media_upload->getText($this, $domDocument);
-                }
+                }**/
                 break;
             case('submit_molecule'):
                 if (!$show_solution) {
@@ -2554,6 +2554,7 @@ class Question extends Model
             ? $this->formatQtiJson('answer_json', $question_info['qti_json'], [], true)
             : null;
 
+        $question['media_uploads'] = (new QuestionMediaUpload())->getByQuestionIdAndQuestionRevisionId($question_info['id'], $question_info['question_revision_id']);
         if ($question_info['technology'] === 'webwork') {
             $custom_claims['iss'] = $request->getSchemeAndHttpHost();
             $custom_claims['aud'] = $this->getWebworkDomain();
@@ -3117,11 +3118,12 @@ class Question extends Model
      * @param Request $request
      * @param $question_to_edit
      * @param int $question_to_edit_id
+     * @param int $question_revision_id
      * @return mixed
      * @throws Exception
      */
     public
-    function formatQuestionToEdit(Request $request, $question_to_edit, int $question_to_edit_id)
+    function formatQuestionToEdit(Request $request, $question_to_edit, int $question_to_edit_id, int $question_revision_id)
     {
         $clone_history = [];
         $current_question = $question_to_edit;
@@ -3140,24 +3142,9 @@ class Question extends Model
 
         $question_to_edit['learning_outcomes'] = $learning_outcomes;
         $questionMediaUpload = new QuestionMediaUpload();
-        $question_to_edit['media_uploads'] = $questionMediaUpload->where('question_id', $this->id)
-            ->get();
-        if ($question_to_edit['media_uploads']) {
-            $domDocument = new DOMDocument();
-            $question = new Question();
-            foreach ($question_to_edit['media_uploads'] as $key => $media_upload) {
-                $question_to_edit['media_uploads'][$key]->text = $media_upload->getText($question, $domDocument);
-                if (!$question_to_edit['media_uploads'][$key]->text) {
-                    if ($media_upload->transcript) {
-                        $question_to_edit['media_uploads'][$key]->transcript = $questionMediaUpload->parseVtt($media_upload->transcript);
-                    }
-                    $question_to_edit['media_uploads'][$key]->url = Helper::schemaAndHost() . "question-media-player/$media_upload->s3_key";
-                } else {
-                    $question_to_edit['media_uploads'][$key]->url = '';
-                    $question_to_edit['media_uploads'][$key]->transcript = '';
-                }
-            }
-        }
+        $question_to_edit['media_uploads'] = $questionMediaUpload->getByQuestionIdAndQuestionRevisionId($question_to_edit_id, $question_revision_id);
+        $question_to_edit['question_revision_id'] = $question_revision_id;
+        $question_to_edit['id'] = $question_to_edit_id;
         $formatted_question_info = $this->formatQuestionFromDatabase($request, $question_to_edit);
         foreach ($formatted_question_info as $key => $value) {
             $question_to_edit[$key] = $value;
