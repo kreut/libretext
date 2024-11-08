@@ -1,6 +1,6 @@
 <template>
   <span>
-    <span v-show="formativeQuestion" class="h5 mb-0">
+    <span v-show="formativeQuestion" class=" mb-0" :class="small ? '' : 'h5'">
       <a :id="`formative-question-${questionId}`"
          href=""
          aria-label="Used in other assignment"
@@ -24,6 +24,10 @@
 export default {
   name: 'FormativeWarning',
   props: {
+    small: {
+      type: Boolean,
+      default: false
+    },
     questionId: {
       type: Number,
       default: 0
