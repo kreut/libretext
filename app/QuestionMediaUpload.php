@@ -31,9 +31,12 @@ class QuestionMediaUpload extends Model
      */
     public function getByQuestionIdAndQuestionRevisionId($question_id, $question_revision_id)
     {
-        $media_uploads = $this->where('question_id', $question_id)
-            ->where('question_revision_id', $question_revision_id)
-            ->get();
+        $media_uploads = $question_revision_id
+            ? $this->where('question_id', $question_id)
+                ->where('question_revision_id', $question_revision_id)
+                ->get()
+            : $this->where('question_id', $question_id)
+                ->get();
         if ($media_uploads) {
             $domDocument = new DOMDocument();
             $question = new Question();

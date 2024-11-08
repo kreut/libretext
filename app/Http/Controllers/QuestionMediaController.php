@@ -234,12 +234,17 @@ class QuestionMediaController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
-            $question_media_uploads = $questionMediaUpload
-                ->where('question_id', $question->id)
-                ->where('question_revision_id', $assignment_question->question_revision_id)
-                ->orderBy('order')
-                ->get();
-           // dd( $assignment_question->question_revision_id);
+            $question_media_uploads =
+                $assignment_question->question_revision_id ? $questionMediaUpload
+                    ->where('question_id', $question->id)
+                    ->where('question_revision_id', $assignment_question->question_revision_id)
+                    ->orderBy('order')
+                    ->get()
+                    : $questionMediaUpload
+                        ->where('question_id', $question->id)
+                        ->orderBy('order')
+                        ->get();
+
             $domDocument = new DOMDocument();
             foreach ($question_media_uploads as $key => $value) {
                 $value->order = $key + 1;//in case something weird happened when creating the question

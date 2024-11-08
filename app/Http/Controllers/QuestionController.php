@@ -374,7 +374,14 @@ class QuestionController extends Controller
                     $new_rubric_category->save();
                 }
             }
-            $question_media_uploads = $questionMediaUpload->where('question_id', $clone_source->id)->get();
+            $latest_question_revision_id = $clone_source->latestQuestionRevision('id');
+            $question_media_uploads = $latest_question_revision_id
+                ? $questionMediaUpload->where('question_id', $clone_source->id)
+                    ->where('question_revision_id', $latest_question_revision_id)
+                    ->get()
+                : $questionMediaUpload->where('question_id', $clone_source->id)
+                    ->get();
+
             foreach ($question_media_uploads as $question_media_upload) {
                 $question_media_upload = $question_media_upload->replicate();
                 $s3_key = $question_media_upload->s3_key;
