@@ -1283,7 +1283,7 @@
                 <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_answers"
                               @change="initQTIQuestionType($event)"
                 >
-                  Multiple Answers
+                  Multiple Answer
                 </b-form-radio>
                 <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="fill_in_the_blank"
                               @change="initQTIQuestionType($event)"

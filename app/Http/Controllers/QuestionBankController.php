@@ -253,7 +253,6 @@ class QuestionBankController extends Controller
         $question_class = $request->question_class;
         $formatted_question_type = $request->question_type;
 
-
         $qti_question_type = $request->qti_question_type;
         $technology_id = $technology !== 'any' ? $request->technology_id : null;
         $question_id = $request->question_id;
@@ -314,13 +313,15 @@ class QuestionBankController extends Controller
                 $question_ids = $question_ids->whereIn('questions.id', $question_ids_with_tags);
             }
 
-
             if ($formatted_question_type) {
-                $formatted_question_types = DB::table('formatted_question_types')->where('formatted_question_type', $formatted_question_type)->get();
+                $formatted_question_types = DB::table('formatted_question_types')
+                    ->where('formatted_question_type', $formatted_question_type)
+                    ->get();
 
-                if ($formatted_question_types) {
+                if ($formatted_question_types->isNotEmpty()) {
                     $formatted_question_type_question_ids = $formatted_question_types->pluck('question_id')->toArray();
                     $question_ids = $question_ids->whereIn('id', $formatted_question_type_question_ids);
+
                 }
 
             }
@@ -337,16 +338,26 @@ class QuestionBankController extends Controller
                     $question_ids = $question_ids->where('technology_id', $technology_id);
                 }
                 if ($technology === 'qti') {
-                    $basic_types = ['multiple_choice', 'true_false', 'numerical', 'multiple_answers', 'fill_in_the_blank', 'select_choice', 'matching'];
-                    switch ($qti_question_type) {
-                        case('basic'):
-                            $question_ids = $question_ids->whereIn('qti_json_type', $basic_types);
-                            break;
-                        case('nursing'):
-                            $question_ids = $question_ids->whereNotIn('qti_json_type', $basic_types);
-                            break;
-                        default:
-                            break;
+                    if (in_array($request->question_type, ['sketcher', 'discuss_it'])) {
+                        switch ($request->question_type) {
+                            case('discuss_it'):
+                                $question_ids = $question_ids->where('qti_json_type', 'discuss_it');
+                                break;
+                            case('sketcher'):
+                                $question_ids = $question_ids->where('qti_json_type', 'submit_molecule');
+                        }
+                    } else {
+                        $basic_types = ['multiple_choice', 'true_false', 'numerical', 'multiple_answers', 'fill_in_the_blank', 'select_choice', 'matching'];
+                        switch ($qti_question_type) {
+                            case('basic'):
+                                $question_ids = $question_ids->whereIn('qti_json_type', $basic_types);
+                                break;
+                            case('nursing'):
+                                $question_ids = $question_ids->whereNotIn('qti_json_type', $basic_types);
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
                 if ($technology === 'webwork') {
@@ -394,7 +405,6 @@ class QuestionBankController extends Controller
             }
 
             $total_rows = $question_ids->count();
-
             $question_ids = $question_ids->orderBy('id')
                 ->skip($per_page * ($current_page - 1))
                 ->take($per_page)
@@ -403,8 +413,9 @@ class QuestionBankController extends Controller
                 ->pluck('id')
                 ->toArray();
 
+
             $questions_info = DB::table('questions')
-                ->leftJoin('formatted_question_types','questions.id','=','formatted_question_types.question_id')
+                ->leftJoin('formatted_question_types', 'questions.id', '=', 'formatted_question_types.question_id')
                 ->select(
                     'questions.id AS question_id',
                     'questions.id',
@@ -438,6 +449,12 @@ class QuestionBankController extends Controller
             $questions_info = $questionBank->getSupplementaryQuestionInfo($questions_info, $userAssignment);
             foreach ($questions_info as $key => $value) {
                 $questions[$key] = $value;
+                if ( $questions[$key]->qti_json_type === 'submit_molecule'){
+                    $questions[$key]->question_type = 'Sketcher';
+                }
+                if ( $questions[$key]->qti_json_type === 'discuss_it'){
+                    $questions[$key]->question_type = 'Discuss-it';
+                }
                 if (!$value->technology_id) {
                     $questions[$key]->technology_id = 'None';
                 } else {

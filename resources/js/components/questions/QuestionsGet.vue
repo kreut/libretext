@@ -945,9 +945,10 @@
                         inline
                         name="qti-question-type"
                         class="pl-2"
+                        @change="formattedQuestionType = null"
                       >
                         <b-form-radio value="basic">
-                          Basic
+                          Basic (QTI)
                         </b-form-radio>
                         <b-form-radio value="nursing">
                           Nursing
@@ -960,6 +961,12 @@
                             the NCLEX
                             exam.
                           </b-tooltip>
+                        </b-form-radio>
+                        <b-form-radio value="sketcher" @click="setFormattedQuestionType('sketcher')">
+                          Sketcher
+                        </b-form-radio>
+                        <b-form-radio value="discuss_it" @click="setFormattedQuestionType('discuss_it')">
+                          Discuss-it
                         </b-form-radio>
                         <b-form-radio value="all">
                           All
@@ -1029,6 +1036,7 @@
                     </b-form-radio-group>
                   </b-form-group>
                   <b-form-group
+                    v-show="['basic','nursing','all'].includes(qtiContentType)"
                     label-for="adapt-id"
                     label-cols-sm="1"
                     label-align-sm="right"
@@ -1157,6 +1165,7 @@
                     id="all_questions"
                     ref="allQuestionsTable"
                     aria-label="Search Questions"
+                    style="font-size:14px"
                     striped
                     hover
                     :sticky-header="questionBankScrollHeight"
@@ -1220,18 +1229,20 @@
                       <span v-html="data.item.tag" />
                     </template>
                     <template v-slot:cell(type)="data">
-                      {{ data.item.question_type ? data.item.question_type : 'Unknown' }}
-                      <span v-show="interactiveH5PFormattedTypes.includes(data.item.question_type)">
-                        <QuestionCircleTooltip :id="`h5p-interactive-tooltip-${data.item.id}`"
-                                               :color="'text-danger'"
-                        />
-                        <b-tooltip :target="`h5p-interactive-tooltip-${data.item.id}`"
-                                   delay="250"
-                                   triggers="hover focus"
-                        >
-                          This question is an interactive question and has no auto-graded component associated with it.  It acts like an ADAPT open-ended question.
-                        </b-tooltip>
-                      </span>
+                      <div style="white-space: nowrap;">
+                        {{ data.item.question_type ? data.item.question_type : 'Unknown' }}
+                        <span v-show="interactiveH5PFormattedTypes.includes(data.item.question_type)">
+                          <QuestionCircleTooltip :id="`h5p-interactive-tooltip-${data.item.id}`"
+                                                 :color="'text-danger'"
+                          />
+                          <b-tooltip :target="`h5p-interactive-tooltip-${data.item.id}`"
+                                     delay="250"
+                                     triggers="hover focus"
+                          >
+                            This question is an interactive question and has no auto-graded component associated with it.  It acts like an ADAPT open-ended question.
+                          </b-tooltip>
+                        </span>
+                      </div>
                     </template>
                     <template v-slot:cell(action)="data">
                       <GetQuestionsActions :assignment-question="data.item"
@@ -1520,7 +1531,7 @@ export default {
         key: 'question_id',
         label: 'ADAPT ID',
         isRowHeader: true,
-        thStyle: 'width:150px'
+        thStyle: 'width:100px'
       },
       { key: 'title', thStyle: { minWidth: '300px !important' }, tdStyle: { minWidth: '300px !important' } },
       'author',
@@ -1799,7 +1810,7 @@ export default {
           switch (this.qtiContentType) {
             case ('basic'):
               options = [
-                'Multiple Choice', 'True/False', 'Numerical', 'Multiple Answers', 'Fill-in-the-blank', 'Select Choice', 'Matching']
+                'Multiple Choice', 'True/False', 'Numerical', 'Multiple Answer', 'Fill-in-the-blank', 'Select Choice', 'Matching']
               break
             case ('nursing'):
               options = this.nursingFormattedQuestionTypes()
@@ -2529,12 +2540,17 @@ export default {
           url = `/api/assignments/courses/public/${collection}/names`
           break
         case ('all_questions'):
+          let questionType
+          questionType = this.formattedQuestionType
+          if (this.allQuestionsTechnology === 'qti' && ['discuss_it', 'sketcher'].includes(this.qtiContentType)) {
+            questionType = this.qtiContentType
+          }
           allQuestionsData = {
             current_page: this.allQuestionsCurrentPage,
             question_id: this.allQuestionsAdaptId,
             per_page: this.allQuestionsPerPage,
             question_class: this.allQuestionsClass,
-            question_type: this.formattedQuestionType,
+            question_type: questionType,
             question_content: this.allQuestionsContent,
             technology: this.allQuestionsTechnology,
             webwork_content_type: this.webworkContentType,
