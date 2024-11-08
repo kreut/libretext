@@ -1242,6 +1242,11 @@
                 <b-form-radio value="sketcher">
                   Sketcher
                 </b-form-radio>
+                <b-form-radio v-if="[5,173,1344,2743,1].includes(user.id)"
+                              value="discuss_it"
+                >
+                  Discuss-it
+                </b-form-radio>
                 <b-form-radio v-show="false" value="3D visualization">
                   3D Visualization
                 </b-form-radio>
@@ -1288,14 +1293,6 @@
                               @change="initQTIQuestionType($event)"
                 >
                   Matching
-                </b-form-radio>
-                <b-form-radio v-if="[5,173,1344,2743,1].includes(user.id)"
-                              v-model="qtiQuestionType"
-                              name="qti-question-type"
-                              value="discuss_it"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Discuss-it
                 </b-form-radio>
               </div>
               <div v-if="['all','nursing'].includes(nativeType)">
@@ -3351,7 +3348,9 @@ export default {
       }
       if (this.questionToEdit.qti_json) {
         this.qtiJson = JSON.parse(this.questionToEdit.qti_json)
-        if (this.nursingQuestions.includes(this.qtiJson.questionType)) {
+        if (this.qtiJson.questionType === 'discuss_it') {
+          this.nativeType = 'discuss_it'
+        } else if (this.nursingQuestions.includes(this.qtiJson.questionType)) {
           this.nativeType = this.nursingQuestions.includes(this.qtiJson.questionType) ? 'nursing' : 'basic'
         }
         if (this.qtiJson.dropDownCloze) {
@@ -3596,7 +3595,10 @@ export default {
       }
     },
     initNativeType () {
-      if (['nursing', 'sketcher'].includes(this.nativeType)) {
+      if (this.nativeType === 'discuss_it') {
+        this.qtiQuestionType = 'discuss_it'
+        this.initQTIQuestionType('discuss_it')
+      } else if (['nursing', 'sketcher'].includes(this.nativeType)) {
         this.initNonBasicQTIQuestion()
       } else {
         this.qtiQuestionType = 'multiple_choice'
