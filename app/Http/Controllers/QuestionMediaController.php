@@ -120,16 +120,16 @@ class QuestionMediaController extends Controller
             $data = $request->validated();
             $question_media_upload_dir = $questionMediaUpload->getDir();
             $data['text'] = str_replace('<p>&nbsp;</p>','', $data['text']);
-            Storage::disk('s3')->put("$question_media_upload_dir/$s3_key", $data['text']);
+            Storage::disk('s3')->put("$question_media_upload_dir/pending-$s3_key", $data['text']);
             $questionMediaUpload = QuestionMediaUpload::where('s3_key', $s3_key)->first();
-            if ($questionMediaUpload) {
+           /* if ($questionMediaUpload) {
                 $questionMediaUpload->original_filename = $data['description'];
                 $questionMediaUpload->text = $data['text'];
                 $questionMediaUpload->save();
             } else {
                 $response['message'] = 'We were unable to locate that text file. Please try again or contact us for assistance.';
                 return $response;
-            }
+            }*/
             $response['s3_key'] = $s3_key;
             $response['size'] = Storage::disk('s3')->size("$question_media_upload_dir/$s3_key");
             $response['type'] = 'success';

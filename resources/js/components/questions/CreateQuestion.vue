@@ -199,7 +199,7 @@
               stacked
             >
               <b-form-radio name="automatically_update_revision" value="1">
-                Automatically update the question and reset any student submissions
+                Automatically update the question and erase any student submissions
               </b-form-radio>
 
               <b-form-radio name="automatically_update_revision" value="0">

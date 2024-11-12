@@ -1680,6 +1680,16 @@ class QuestionController extends Controller
                         ->toArray();
                     foreach ($media_uploads as $new_media_upload) {
                         $questionMediaUpload = new QuestionMediaUpload();
+                        $question_media_upload_dir = $questionMediaUpload->getDir();
+                        if ($new_media_upload['text']) {
+                            $questionMediaUpload->text = $new_media_upload['text'];
+                            if (Storage::disk('s3')->exists("$question_media_upload_dir/pending-{$new_media_upload['s3_key']}")) {
+                                $text = Storage::disk('s3')->get("$question_media_upload_dir/pending-{$new_media_upload['s3_key']}");
+                                $questionMediaUpload->text = $text;
+                                Storage::disk('s3')->put("$question_media_upload_dir/{$new_media_upload['s3_key']}", $text);
+                                Storage::disk('s3')->delete("$question_media_upload_dir/pending-{$new_media_upload['s3_key']}", $text);
+                            }
+                        }
                         $questionMediaUpload->question_id = $question->id;
                         $questionMediaUpload->original_filename = $new_media_upload['original_filename'];
                         $questionMediaUpload->size = $new_media_upload['size'];
