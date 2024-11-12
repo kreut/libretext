@@ -199,7 +199,7 @@
               stacked
             >
               <b-form-radio name="automatically_update_revision" value="1">
-                Automatically update the question and erase any student submissions
+                Automatically update the question and erase all student submissions
               </b-form-radio>
 
               <b-form-radio name="automatically_update_revision" value="0">
@@ -209,6 +209,9 @@
           </b-form-row>
           <ErrorMessage :message="questionForm.errors.get('automatically_update_revision')"/>
         </b-form-group>
+        <b-alert :show="+questionForm.automatically_update_revision === 1" variant="danger">
+          Once student submissions are erased, they cannot be retrieved.
+        </b-alert>
       </div>
       <div v-if="revisionAction === 'propagate'">
         <div v-if="!powerUser">
