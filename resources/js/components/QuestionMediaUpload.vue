@@ -485,12 +485,10 @@ export default {
       return activeMedia.original_filename && !activeMedia.original_filename.endsWith('.pdf')
     },
     showQuestionMedia (activeMedia) {
-      console.error(activeMedia)
       this.activeMedia = activeMedia
       if (activeMedia.text) {
         this.$emit('editDiscussItText', activeMedia)
       } else {
-        console.error(activeMedia)
         this.transcriptTiming = null
         this.activeTranscript = activeMedia.transcript
         if (this.needsTranscript(activeMedia)) {

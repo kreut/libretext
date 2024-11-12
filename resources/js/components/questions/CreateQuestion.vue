@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`" />
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-discuss-it-text-form" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-discuss-it-text-form"/>
     <b-modal id="modal-discuss-it-text"
              :title="activeQuestionMediaUpload.is_edit ? 'Add Text' : 'Edit Text'"
              size="xl"
@@ -17,7 +17,7 @@
       >
         <template v-slot:label>
           Description
-          <QuestionCircleTooltip :id="'discuss-it-description-tooltip'" />
+          <QuestionCircleTooltip :id="'discuss-it-description-tooltip'"/>
           <b-tooltip target="discuss-it-description-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -33,7 +33,7 @@
                       :class="{ 'is-invalid': discussItTextForm.errors.has('description')}"
                       @keydown="discussItTextForm.errors.clear('description')"
         />
-        <has-error :form="discussItTextForm" field="description" />
+        <has-error :form="discussItTextForm" field="description"/>
       </b-form-group>
       <ckeditor
         id="discuss_it_text"
@@ -49,7 +49,7 @@
         @focus="ckeditorKeyDown=true"
         @keydown="discussItTextForm.errors.clear('text')"
       />
-      <has-error :form="discussItTextForm" field="text" />
+      <has-error :form="discussItTextForm" field="text"/>
       <template #modal-footer>
         <b-button
           variant="secondary"
@@ -177,7 +177,7 @@
                     :class="{ 'is-invalid': questionForm.errors.has('reason_for_edit')}"
                     @keydown="questionForm.errors.clear('reason_for_edit')"
         />
-        <has-error :form="questionForm" field="reason_for_edit" />
+        <has-error :form="questionForm" field="reason_for_edit"/>
 
         <hr class="pt-2 pb-2">
       </div>
@@ -207,7 +207,7 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-row>
-          <ErrorMessage :message="questionForm.errors.get('automatically_update_revision')" />
+          <ErrorMessage :message="questionForm.errors.get('automatically_update_revision')"/>
         </b-form-group>
       </div>
       <div v-if="revisionAction === 'propagate'">
@@ -227,7 +227,7 @@
           >
             The changes I made are topical in nature.
           </b-form-checkbox>
-          <ErrorMessage :message="questionForm.errors.get('changes_are_topical')" />
+          <ErrorMessage :message="questionForm.errors.get('changes_are_topical')"/>
         </div>
       </div>
       <template #modal-footer>
@@ -283,8 +283,8 @@
     >
       <p>
         ADAPT can automatically create the necessary WeBWork to create <a
-          href="https://webwork.maa.org/wiki/StaticImages" target="_blank"
-        >static images</a>. All parameters are optional.
+        href="https://webwork.maa.org/wiki/StaticImages" target="_blank"
+      >static images</a>. All parameters are optional.
       </p>
       <b-card header-html="<h5>Resize Image</h5>" class="mb-2">
         <template #header>
@@ -443,7 +443,7 @@
         <div class="modal-header" style="width:100%;border:none;padding:0px">
           <h2 class="h5 modal-title">
             ADAPT ID <span id="clone-history-question-id">{{ copyHistoryQuestionId }}</span>
-            <span class="text-muted" @click="doCopy('clone-history-question-id')"><font-awesome-icon :icon="copyIcon" /></span>
+            <span class="text-muted" @click="doCopy('clone-history-question-id')"><font-awesome-icon :icon="copyIcon"/></span>
           </h2>
           <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-clone-history')">
             ×
@@ -557,7 +557,7 @@
           :preview-or-solution="showQtiAnswer"
           :previewing-question="previewingQuestion"
         />
-        <div v-if="showQtiAnswer && questionForm.solution_html" v-html="questionForm.solution_html" />
+        <div v-if="showQtiAnswer && questionForm.solution_html" v-html="questionForm.solution_html"/>
       </div>
       <ViewQuestions v-if="questionForm.technology !== 'qti'"
                      :key="questionToViewKey"
@@ -575,9 +575,9 @@
       </template>
     </b-modal>
     <div ref="top-of-form" class="mb-3">
-      <RequiredText />
+      <RequiredText/>
       Fields marked with the
-      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg" />
+      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
       icon contain expandable text areas.
     </div>
     <b-card border-variant="primary"
@@ -587,7 +587,7 @@
     >
       <template #header>
         Meta-Information
-        <QuestionCircleTooltip id="meta-information-tooltip" :icon-style="'color:#fff'" />
+        <QuestionCircleTooltip id="meta-information-tooltip" :icon-style="'color:#fff'"/>
         <b-tooltip target="meta-information-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -604,7 +604,7 @@
       >
         <template v-slot:label>
           Clone History
-          <QuestionCircleTooltip :id="'clone-history-tooltip'" />
+          <QuestionCircleTooltip :id="'clone-history-tooltip'"/>
           <b-tooltip target="clone-history-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -618,9 +618,10 @@
                 :key="`view-clone-history-${index}`"
           >
             <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-clone-history')">{{
-              questionId
-            }}</a>
-            <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1">-></span>
+                questionId
+              }}</a>
+            <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1"
+            >-></span>
           </span>
         </b-form-row>
       </b-form-group>
@@ -688,7 +689,7 @@
             class="mt-2"
             @keydown="questionForm.errors.clear('title')"
           />
-          <has-error :form="questionForm" field="title" />
+          <has-error :form="questionForm" field="title"/>
         </b-form-row>
       </b-form-group>
       <b-form-group
@@ -698,7 +699,7 @@
       >
         <template v-slot:label>
           Description
-          <QuestionCircleTooltip :id="'description-tooltip'" />
+          <QuestionCircleTooltip :id="'description-tooltip'"/>
           <b-tooltip target="description-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -736,7 +737,7 @@
             >
               <b-form-radio name="question_type" value="assessment">
                 Question
-                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
+                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
                 <b-tooltip target="assessment-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -749,7 +750,7 @@
               </b-form-radio>
               <b-form-radio name="question_type" value="exposition">
                 Exposition (use in Learning Trees only)
-                <QuestionCircleTooltip :id="'exposition-question-type-tooltip'" />
+                <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
                 <b-tooltip target="exposition-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -761,7 +762,7 @@
               </b-form-radio>
               <b-form-radio v-if="isMe" name="question_type" value="report">
                 Report
-                <QuestionCircleTooltip :id="'report-question-type-tooltip'" />
+                <QuestionCircleTooltip :id="'report-question-type-tooltip'"/>
                 <b-tooltip target="report-question-type-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -785,7 +786,7 @@
         >
           <template v-slot:label>
             Public*
-            <QuestionCircleTooltip :id="'public-question-tooltip'" />
+            <QuestionCircleTooltip :id="'public-question-tooltip'"/>
             <b-tooltip target="public-question-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -858,7 +859,7 @@
               class="mt-2"
               @keydown="questionForm.errors.clear('author')"
             />
-            <has-error :form="questionForm" field="author" />
+            <has-error :form="questionForm" field="author"/>
           </b-form-row>
         </b-form-group>
       </div>
@@ -879,7 +880,7 @@
                          :options="licenseOptions"
                          @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
           />
-          <has-error :form="questionForm" field="license" />
+          <has-error :form="questionForm" field="license"/>
         </b-form-row>
       </b-form-group>
       <b-form-group
@@ -909,7 +910,7 @@
         >
           <template v-slot:label>
             Source URL*
-            <QuestionCircleTooltip id="source_url-tooltip" />
+            <QuestionCircleTooltip id="source_url-tooltip"/>
             <b-tooltip target="source_url-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -927,7 +928,7 @@
               class="mt-2"
               @keydown="questionForm.errors.clear('source_url')"
             />
-            <has-error :form="questionForm" field="source_url" />
+            <has-error :form="questionForm" field="source_url"/>
           </b-form-row>
         </b-form-group>
         <b-form-group
@@ -956,7 +957,7 @@
                         class="mr-2"
                         style="line-height:.8"
                         @click="removeTag(chosenTag)"
-              ><span v-html="chosenTag" /> x</b-button>
+              ><span v-html="chosenTag"/> x</b-button>
             </span>
           </div>
         </b-form-group>
@@ -982,8 +983,8 @@
                       style="line-height:.8"
                       @click="removeFrameworkItemSyncQuestion('descriptors',descriptor.id)"
             >{{
-              descriptor.text
-            }} x
+                descriptor.text
+              }} x
             </b-button>
           </span>
         </span>
@@ -997,8 +998,8 @@
                       style="line-height:.8"
                       @click="removeFrameworkItemSyncQuestion('levels',level.id)"
             >{{
-              level.text
-            }} x
+                level.text
+              }} x
             </b-button>
           </span>
         </span>
@@ -1011,7 +1012,7 @@
         >
           <template v-slot:label>
             Learning Outcome
-            <QuestionCircleTooltip :id="'learning-outcome-tooltip'" />
+            <QuestionCircleTooltip :id="'learning-outcome-tooltip'"/>
             <b-tooltip target="learning-outcome-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -1050,7 +1051,7 @@
               {{
                 //labels are brought in if it's an edited question otherwise it's done on the fly
                 chosenLearningOutcome.label ? chosenLearningOutcome.label :
-                getLearningOutcomeLabel(chosenLearningOutcome)
+                  getLearningOutcomeLabel(chosenLearningOutcome)
               }} x
             </b-button>
           </div>
@@ -1064,7 +1065,7 @@
     >
       <template #header>
         Content
-        <QuestionCircleTooltip id="content-tooltip" :icon-style="'color:#fff'" />
+        <QuestionCircleTooltip id="content-tooltip" :icon-style="'color:#fff'"/>
         <b-tooltip target="content-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -1085,7 +1086,7 @@
           >
             <template v-if="questionForm.question_type === 'assessment'" v-slot:label>
               <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
-                HTML Block   <QuestionCircleTooltip id="open-ended-content-tooltip" />
+                HTML Block   <QuestionCircleTooltip id="open-ended-content-tooltip"/>
                 <b-tooltip target="open-ended-content-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -1133,7 +1134,7 @@
               @focus="ckeditorKeyDown=true"
               @keydown="questionForm.errors.clear('non_technology_text')"
             />
-            <has-error :form="questionForm" field="non_technology_text" />
+            <has-error :form="questionForm" field="non_technology_text"/>
           </div>
         </div>
       </div>
@@ -1159,7 +1160,7 @@
             <b-form-group v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded">
               <b-form-row class="pb-2 pt-2">
                 <span class="mr-2">Existing
-                  <QuestionCircleTooltip id="existing-question-tooltip" />
+                  <QuestionCircleTooltip id="existing-question-tooltip"/>
                   <b-tooltip target="existing-question-tooltip"
                              delay="250"
                              triggers="hover focus"
@@ -1180,7 +1181,7 @@
               </b-form-row>
 
               <b-form-row>
-                <span style="margin-left:24px" class="mr-2">New  <QuestionCircleTooltip id="new-question-tooltip" />
+                <span style="margin-left:24px" class="mr-2">New  <QuestionCircleTooltip id="new-question-tooltip"/>
                   <b-tooltip target="new-question-tooltip"
                              delay="250"
                              triggers="hover focus"
@@ -1226,19 +1227,20 @@
               >
                 <b-form-radio value="basic">
                   Basic (QTI)
-                  <QuestionCircleTooltip id="basic-questions-tooltip" />
+                  <QuestionCircleTooltip id="basic-questions-tooltip"/>
                   <b-tooltip target="basic-questions-tooltip"
                              delay="250"
                              triggers="hover focus"
                   >
-                    You can export questions in QTI format from your LMS and import them through the Bulk Import tab and then
+                    You can export questions in QTI format from your LMS and import them through the Bulk Import tab and
+                    then
                     edit them in ADAPT.
                     <br><br>Alternatively, you can create new questions directly using the editor below.
                   </b-tooltip>
                 </b-form-radio>
                 <b-form-radio value="nursing">
                   Nursing
-                  <QuestionCircleTooltip id="nursing-questions-tooltip" />
+                  <QuestionCircleTooltip id="nursing-questions-tooltip"/>
                   <b-tooltip target="nursing-questions-tooltip"
                              delay="250"
                              triggers="hover focus"
@@ -1718,7 +1720,7 @@
                 @focus="ckeditorKeyDown=true"
                 @keydown="questionForm.errors.clear('qti_item_body')"
               />
-              <has-error :form="questionForm" field="qti_item_body" />
+              <has-error :form="questionForm" field="qti_item_body"/>
             </div>
             <SelectChoiceDropDownRationale
               v-if="['select_choice','drop_down_rationale_dyad'].includes(qtiQuestionType)"
@@ -1812,7 +1814,7 @@
                         </div>
                       </div>
                       <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
-                        <span v-html="qtiJson.feedback[generalFeedback.key]" />
+                        <span v-html="qtiJson.feedback[generalFeedback.key]"/>
                       </div>
                     </b-form-group>
                     <hr
@@ -1840,7 +1842,7 @@
               />
               <b-button size="sm" @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)">
                 <span v-if="!updatingTempalteWithPreexistingWebworkFilePath">Update template</span>
-                <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow" />
+                <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow"/>
                   Updating...
                 </span>
               </b-button>
@@ -1865,7 +1867,7 @@
                   :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
                   @keydown="questionForm.errors.clear('technology_id')"
                 />
-                <has-error :form="questionForm" field="technology_id" />
+                <has-error :form="questionForm" field="technology_id"/>
               </div>
               <div class="mt-1 ml-3">
                 <b-button v-if="existingQuestionFormTechnology === 'h5p' && questionForm.technology_id" size="sm"
@@ -1881,7 +1883,7 @@
             <div class="mb-2">
               If you need help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
                                                                 target="_blank"
-              >https://webwork.maa.org/wiki/Authors</a>.
+            >https://webwork.maa.org/wiki/Authors</a>.
             </div>
             <b-row>
               <b-col cols="6">
@@ -1893,13 +1895,13 @@
                   drop-placeholder="Drop Image here..."
                 />
                 <div v-if="uploading">
-                  <b-spinner small type="grow" />
+                  <b-spinner small type="grow"/>
                   Uploading file...
                 </div>
                 <div v-for="(errorMessage, errorMessageIndex) in errorMessages"
                      :key="`error-message-${errorMessageIndex}`"
                 >
-                  <ErrorMessage :message="errorMessage" />
+                  <ErrorMessage :message="errorMessage"/>
                 </div>
               </b-col>
               <b-col>
@@ -1929,7 +1931,7 @@
                   ><font-awesome-icon
                     :icon="copyIcon"
                   /></span>
-                  <b-icon-trash @click="confirmDeleteWebworkAttachment(webworkAttachment)" />
+                  <b-icon-trash @click="confirmDeleteWebworkAttachment(webworkAttachment)"/>
                 </li>
               </ul>
             </b-row>
@@ -1939,7 +1941,7 @@
                         rows="10"
                         @keydown="questionForm.errors.clear('webwork_code')"
             />
-            <has-error :form="questionForm" field="webwork_code" />
+            <has-error :form="questionForm" field="webwork_code"/>
           </div>
         </div>
       </div>
@@ -1953,7 +1955,7 @@
     >
       <template #header>
         Report Grading
-        <QuestionCircleTooltip id="report-grading-tooltip" :icon-style="'color:#fff'" />
+        <QuestionCircleTooltip id="report-grading-tooltip" :icon-style="'color:#fff'"/>
         <b-tooltip target="report-grading-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -1986,7 +1988,7 @@
             :class="{ 'is-invalid': questionForm.errors.has('purpose') }"
             @keydown="questionForm.errors.clear('purpose')"
           />
-          <has-error :form="questionForm" field="purpose" />
+          <has-error :form="questionForm" field="purpose"/>
         </b-form-row>
         <div v-show="questionExistsInAnotherInstructorsAssignment">
           {{ questionForm.purpose }}
@@ -2001,7 +2003,7 @@
       >
         <template v-slot:label>
           Grading Style
-          <QuestionCircleTooltip id="grading-style-tooltip" />
+          <QuestionCircleTooltip id="grading-style-tooltip"/>
           <b-tooltip target="grading-style-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -2016,7 +2018,7 @@
                        style="width: 250px"
                        @change="questionForm.errors.clear('grading_style_id')"
         />
-        <has-error :form="questionForm" field="grading_style_id" />
+        <has-error :form="questionForm" field="grading_style_id"/>
         <div v-if="questionExistsInAnotherInstructorsAssignment" class="mt-1">
           {{ gradingStyleOptions.find(item => item.value === questionForm.grading_style_id).text }}
         </div>
@@ -2038,7 +2040,7 @@
     >
       <template #header>
         Accessibility Alternatives
-        <QuestionCircleTooltip id="accessibility-tooltip" :icon-style="'color:#fff'" />
+        <QuestionCircleTooltip id="accessibility-tooltip" :icon-style="'color:#fff'"/>
         <b-tooltip target="accessibility-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -2053,7 +2055,7 @@
           <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
             HTML Block Alternative
 
-            <QuestionCircleTooltip id="text-question-tooltip" />
+            <QuestionCircleTooltip id="text-question-tooltip"/>
             <b-tooltip target="text-question-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -2088,7 +2090,7 @@
         >
           <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded ('a11y_auto_graded_question_id')">
-              Auto-Graded Alternative   <QuestionCircleTooltip id="a11y-auto-graded-tooltip" />
+              Auto-Graded Alternative   <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
               <b-tooltip target="a11y-auto-graded-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -2139,7 +2141,7 @@
               :class="{ 'is-invalid': questionForm.errors.has('a11y_auto_graded_question_id')}"
               @keydown="questionForm.errors.clear('a11y_auto_graded_question_id')"
             />
-            <has-error :form="questionForm" field="a11y_auto_graded_question_id" />
+            <has-error :form="questionForm" field="a11y_auto_graded_question_id"/>
             <b-button size="sm"
                       class="ml-2"
                       variant="primary"
@@ -2159,7 +2161,7 @@
     >
       <template #header>
         Supplemental Content
-        <QuestionCircleTooltip id="supplemental-content-tooltip" :icon-style="'color:#fff'" />
+        <QuestionCircleTooltip id="supplemental-content-tooltip" :icon-style="'color:#fff'"/>
         <b-tooltip target="supplemental-content-tooltip"
                    delay="250"
                    triggers="hover focus"
@@ -2190,17 +2192,18 @@
           <template v-slot:label>
             <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
               {{ editorGroup.label }}
-              <span v-if="editorGroup.label === 'Answer'"><QuestionCircleTooltip id="answer-tooltip" />
+              <span v-if="editorGroup.label === 'Answer'"><QuestionCircleTooltip id="answer-tooltip"/>
                 <b-tooltip target="answer-tooltip"
                            delay="250"
                            triggers="hover focus"
                 >
                   <span v-if="questionForm.technology === 'qti'">
                     Native question types already have the answer built into the question creation process.</span>
-                  <span v-if="questionForm.technology !== 'qti'"> The answer to the question.  Answers are optional.</span>
+                  <span v-if="questionForm.technology !== 'qti'"
+                  > The answer to the question.  Answers are optional.</span>
                 </b-tooltip>
               </span>
-              <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip" />
+              <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
                 <b-tooltip target="solution-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -2208,7 +2211,7 @@
                   A more detailed solution to the question. Solutions are optional.
                 </b-tooltip>
               </span>
-              <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip" />
+              <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"/>
                 <b-tooltip target="hint-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -2216,7 +2219,7 @@
                   Hints can be provided to students within assignments. Hints are optional.
                 </b-tooltip>
               </span>
-              <span v-if="editorGroup.label === 'Notes'"><QuestionCircleTooltip id="notes-tooltip" />
+              <span v-if="editorGroup.label === 'Notes'"><QuestionCircleTooltip id="notes-tooltip"/>
                 <b-tooltip target="notes-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -2225,8 +2228,8 @@
                   will never see this information.  Notes are optional.
                 </b-tooltip>
               </span>
-              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg" />
-              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg" />
+              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
+              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
             </span>
           </template>
           <div v-if="editorGroup.expanded && questionForm.technology === 'qti' && editorGroup.id === 'answer_html'">
@@ -2267,7 +2270,7 @@
                 variant="info"
                 @click="previewQuestion"
       >
-        <span v-if="processingPreview"><b-spinner small type="grow" /> </span>
+        <span v-if="processingPreview"><b-spinner small type="grow"/> </span>
         Preview
       </b-button>
 
@@ -2279,7 +2282,7 @@
       >Save</b-button>
     </span>
     <span v-if="savingQuestion">
-      <b-spinner small type="grow" />
+      <b-spinner small type="grow"/>
       Saving...
     </span>
     <b-container v-if="jsonShown" class="pt-4 mt-4">
@@ -2635,18 +2638,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-    {
-      key: 'incorrect',
-      id: 'incorrect-response-feedback',
-      label: 'Incorrect Response',
-      editorShown: false
-    },
-    {
-      key: 'any',
-      id: 'any-response-feedback',
-      label: 'Any Response',
-      editorShown: false
-    }
+      {
+        key: 'incorrect',
+        id: 'incorrect-response-feedback',
+        label: 'Incorrect Response',
+        editorShown: false
+      },
+      {
+        key: 'any',
+        id: 'any-response-feedback',
+        label: 'Any Response',
+        editorShown: false
+      }
     ],
     webworkTemplate: null,
     webworkTemplateOptions: [],
@@ -2658,18 +2661,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-    {
-      key: 'incorrect',
-      id: 'incorrect-response-feedback',
-      label: 'Incorrect Response',
-      editorShown: false
-    },
-    {
-      key: 'any',
-      id: 'any-response-feedback',
-      label: 'Any Response',
-      editorShown: false
-    }
+      {
+        key: 'incorrect',
+        id: 'incorrect-response-feedback',
+        label: 'Incorrect Response',
+        editorShown: false
+      },
+      {
+        key: 'any',
+        id: 'any-response-feedback',
+        label: 'Any Response',
+        editorShown: false
+      }
     ],
     simpleChoiceFeedbackConfig: simpleChoiceFeedbackConfig,
     jsonShown: false,
@@ -2749,6 +2752,15 @@ export default {
     }
     this.$nextTick(function () {
       if (this.fullyMounted) {
+        if (this.discussItTextForm.text){
+          if (this.discussItTextForm.text.search('<p>&nbsp;</p>') !== -1) {
+            this.fixEmptyParagraphs('discuss_it_text')
+          } else {
+            if (this.discussItTextForm.text.search('<p>&nbsp;</p>') === -1) {
+              console.log('discuss_it text paragraphs have been removed')
+            }
+          }
+        }
         if (this.questionForm.non_technology_text) {
           if (this.questionForm.non_technology_text.search('<p>&nbsp;</p>') !== -1) {
             this.fixEmptyParagraphs('non_technology_text')
@@ -4043,8 +4055,8 @@ export default {
           }
           break
         case
-          ('multiple_response_select_all_that_apply')
-          :
+        ('multiple_response_select_all_that_apply')
+        :
           this.qtiJson = {
             questionType: 'multiple_response_select_all_that_apply',
             prompt: '',
@@ -4649,6 +4661,14 @@ export default {
       const emptyParagraph = '<p>&nbsp;</p>'
       console.log('removing empty paragraphs')
       switch (type) {
+        case ('discuss_it_text'):
+          if (this.discussItTextForm.text) {
+            console.log('discuss-it-text')
+            this.discussItTextForm.text = this.discussItTextForm.text.replaceAll(emptyParagraph, '')
+            this.discussItTextForm.text = this.discussItTextForm.text.trim()
+            console.log('Empty paragraphs in the dicussit-text text have been removed')
+          }
+          break
         case ('non_technology_text'):
           if (this.questionForm.non_technology_text) {
             console.log('non-technology-text')
