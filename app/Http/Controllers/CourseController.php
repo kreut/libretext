@@ -114,9 +114,9 @@ class CourseController extends Controller
             $claims = $analytics->hasAccess($request);
             $course_id = $claims['course_id'];
             $course = Course::find($course_id);
-            $response['mini-summary'] = collect($course->only(['name', 'user_id', 'start_date', 'end_date', 'textbook_url']))
+            $response['mini-summary'] = $course ? collect($course->only(['name', 'user_id', 'start_date', 'end_date', 'textbook_url']))
                 ->merge(['letter_grades_released' => $course->finalGrades->letter_grades_released])
-                ->toArray();
+                ->toArray() : [];
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
