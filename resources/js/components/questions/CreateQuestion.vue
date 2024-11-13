@@ -1255,8 +1255,7 @@
                 <b-form-radio value="sketcher">
                   Sketcher
                 </b-form-radio>
-                <b-form-radio v-if="[5,173,1344,2743,1,172].includes(user.id)"
-                              value="discuss_it"
+                <b-form-radio value="discuss_it"
                 >
                   Discuss-it
                 </b-form-radio>
