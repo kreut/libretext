@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Request;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use stdClass;
+use Telegram\Bot\Laravel\Facades\Telegram;
 
 class Submission extends Model
 {
@@ -765,6 +766,29 @@ class Submission extends Model
                 LearningTreeAnalytics::create($learning_tree_analytics_data);
             }
             $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->lms_grade_passback === 'automatic');
+            try {
+                $assignment_course_info = $assignment->assignmentCourseInfo();
+                if ($assignment_course_info->instructor === 'Brian Lindshield') {
+                    $assignment_score = Score::where('user_id', request()->user()->id)
+                        ->where('assignment_id', $data['assignment_id'])
+                        ->first();
+                    $submission_score = Submission::where('assignment_id', $data['assignment_id'])
+                        ->select(DB::raw('SUM(score) as total_score'))
+                        ->where('user_id', request()->user()->id)
+                        ->first();
+                    if ((int)$assignment_score->score !== (int)$submission_score->total_score) {
+                        Telegram::sendMessage([
+                            'chat_id' => config('myconfig.telegram_channel_id'),
+                            'parse_mode' => 'HTML',
+                            'text' => "Scores don't match up for User " . request()->user()->id . " on assignment " . $data['assignment_id'] . " for question " . $data['question_id']
+                        ]);
+                    }
+                }
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+
+            }
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             UnconfirmedSubmission::where('user_id', $data['user_id'])
                 ->where('assignment_id', $data['assignment_id'])
@@ -1666,17 +1690,17 @@ class Submission extends Model
                          */
                         if (isset($state['stuanswers']) && $state['stuanswers']) {
                             if (isset($state['qtype']) && $state['qtype'] === 'conditional') {
-                                $qsid= array_key_first($state['qsid']);
-                                $raw = $state['scoreiscorrect'][$qsid+1];
+                                $qsid = array_key_first($state['qsid']);
+                                $raw = $state['scoreiscorrect'][$qsid + 1];
                                 $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $raw, [$submission]) : 0;
                                 $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
                                 $at_least_one_submission = false;
-                                foreach ($state['stuanswers'][$qsid+1] as $submission_value) {
+                                foreach ($state['stuanswers'][$qsid + 1] as $submission_value) {
                                     if ($submission_value !== '') {
                                         $at_least_one_submission = true;
                                     }
                                 }
-                                $formatted_submission = implode(', ', $state['stuanswers'][$qsid+1]);
+                                $formatted_submission = implode(', ', $state['stuanswers'][$qsid + 1]);
                                 $submission_array_value = [
                                     'submission' => $at_least_one_submission ? $formatted_submission : 'Nothing submitted.',
                                     'correct' => $raw === 1,
