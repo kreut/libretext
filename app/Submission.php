@@ -1,12 +1,12 @@
 <?php
 
+
 namespace App;
 
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Traits\JWT;
 use \Exception;
-
 use App\Http\Requests\StoreSubmission;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +22,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use stdClass;
 use Telegram\Bot\Laravel\Facades\Telegram;
+
 
 class Submission extends Model
 {
@@ -464,13 +465,18 @@ class Submission extends Model
     function correctFillInTheBlank(object $correct_response, string $student_response): bool
     {
         $student_response = trim($student_response);
-        // Log::info($correct_response->value);
+        $student_response = str_replace('ë', '&euml;', $student_response);//had some encoding issues
+        //Log::info($correct_response->value);
+
         $correct_values = explode('|', $correct_response->value);
         //Log::info(print_r($correct_values, 1));
+
         $correct = false;
         foreach ($correct_values as $correct_value) {
             $correct_value = trim($correct_value);
-            //Log::info($correct_value);
+            $correct_value = str_replace("\xC2\xA0", ' ', $correct_value);//removed the nbsp; which may appear in the question if they copied from Google
+            $correct_value = str_replace('ë', '&euml;', $correct_value);//had some encoding issues
+
             if (!$correct) {
                 switch ($correct_response->matchingType) {
                     case('exact'):
