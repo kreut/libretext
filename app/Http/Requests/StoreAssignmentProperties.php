@@ -123,7 +123,7 @@ class StoreAssignmentProperties extends FormRequest
             }
 
                 $rules['can_view_hint'] = ['required', Rule::in([0, 1])];
-                if ((int)$this->can_view_hint === 1) {
+                if ((int)$this->can_view_hint === 1 && !$formative) {
                     $rules['hint_penalty'] = [new IsValidHintPenalty()];
                 }
 

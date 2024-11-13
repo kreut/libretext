@@ -1992,7 +1992,7 @@ class CourseController extends Controller
             }
             $course->delete();
             DB::commit();
-            Cache::tags('unlinked_assignments_by_course')->forget("unlinked_assignments_by_course_$course->id");
+            Cache::forget("unlinked_assignments_by_course_$course->id");
             $response['type'] = 'info';
             $response['message'] = "The course <strong>$course->name</strong> has been deleted.";
         } catch
