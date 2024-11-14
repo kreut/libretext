@@ -1679,7 +1679,7 @@ class AssignmentSyncQuestionController extends Controller
             if (isset($qti_json_arr['questionType'])
                 && $qti_json_arr['questionType'] === 'submit_molecule'
                 && json_decode($question['qti_json'])) {
-                $answered_correctly = (bool)$Submission->computeScoreFromSubmitMolecule(json_decode($question['qti_json']), $response_info['student_response']);
+                $answered_correctly = (bool)$Submission->computeScoreFromSubmitMolecule(json_decode($question['qti_json']), $response_info['student_response'])['proportion_correct'];
             }
 
         }

@@ -2988,11 +2988,10 @@ export default {
     },
     receiveMessage (event) {
       console.log(event.data)
-      if (event.data.structure && event.data.smiles) {
+      if (event.data.structure) {
         this.receivedStructure = true
         this.qtiJson.solutionStructure = event.data.structure
         this.questionForm.solution_structure = JSON.stringify(this.qtiJson.solutionStructure)
-        this.questionForm.smiles = this.qtiJson.smiles = event.data.smiles
         this.questionForm.qti_prompt = this.qtiJson.prompt
         this.questionForm.qti_json = JSON.stringify(this.qtiJson)
         this.$forceUpdate()

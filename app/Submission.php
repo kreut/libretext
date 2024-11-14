@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 use Carbon\Carbon;
@@ -22,6 +23,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use stdClass;
 use Telegram\Bot\Laravel\Facades\Telegram;
+use function Aws\boolean_value;
 
 
 class Submission extends Model
@@ -119,7 +121,12 @@ class Submission extends Model
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
                     case('submit_molecule'):
-                        $proportion_correct = $this->computeScoreFromSubmitMolecule($submission->question, $submission->student_response);
+                        $proportion_correct_response = $this->computeScoreFromSubmitMolecule($submission->question, $submission->student_response);
+                        if ($proportion_correct_response['type'] === 'error') {
+                            $this->_returnJsonAndExit($proportion_correct_response);
+                        } else {
+                            $proportion_correct = $proportion_correct_response['proportion_correct'];
+                        }
                         break;
                     case('highlight_text'):
                         $student_responses = json_decode($submission->student_response);
@@ -1612,12 +1619,29 @@ class Submission extends Model
     /**
      * @param $question
      * @param $student_response
-     * @return int
+     * @return array
      */
-    public function computeScoreFromSubmitMolecule($question, $student_response): int
+    public function computeScoreFromSubmitMolecule($question, $student_response): array
     {
-        $student_smiles = json_decode($student_response)->smiles;
-        return $question->smiles === $student_smiles ? 1 : 0;
+        $token = DB::table('key_secrets')->where('key', 'sketcher')->first()->secret;
+        $proportion_correct_response['type'] = 'error';
+        $data = [
+            'reference_diagram' => $question->solutionStructure,
+            'student_diagram' => json_decode($student_response)->structure
+        ];
+
+        // Make the POST request
+        $response = Http::withHeaders([
+            'Authorization' => $token  // Add your Bearer token here
+        ])->post('https://api.molview.libretexts.org/api/v1/compare', $data);
+
+        if ($response->successful()) {
+            $proportion_correct_response['type'] = 'success';
+            $proportion_correct_response['proportion_correct'] = (int)$response->json()['equal'];
+        } else {
+            $proportion_correct_response['message'] = "Sketcher error: " . $response->json()['err'] ?: $response->body();
+        }
+        return $proportion_correct_response;
     }
 
     /**

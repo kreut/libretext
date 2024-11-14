@@ -397,9 +397,8 @@ export default {
       this.$emit('openContactGraderModal', type)
     },
     receiveMessage (event) {
-      if (event.data.structure && event.data.smiles) {
+      if (event.data.structure) {
         this.response = {
-          smiles: event.data.smiles,
           structure: event.data.structure
         }
         this.receivedStructure = true
