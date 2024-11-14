@@ -131,13 +131,14 @@ class CanvasAPI extends Model
 
     /**
      * @param int $course_id --- from Canvas
-     * @param int $assignment_id --- from Canvas
+     * @param $assignment_id -- from Canvas
      * @param $assignment_info
      * @return array
      * @throws Exception
      */
-    public function updateAssignment(int $course_id, int $assignment_id, $assignment_info): array
+    public function updateAssignment(int $course_id, $assignment_id, $assignment_info): array
     {
+        //should change $assignment_id to being an int
         //$lms_access_token = $this->_updateAccessToken();
         $lms_message = new stdClass();
         $lms_message->id = $assignment_id;
