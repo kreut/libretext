@@ -1,7 +1,7 @@
 <template>
   <span @mouseover="showModal()" @mouseout="mouseOver = false">
     <a href="#" @click.prevent>
-      <b-icon class="text-muted"
+      <b-icon :class="colorClass"
               icon="question-circle"
               :aria-label="ariaLabel"
       />
@@ -14,6 +14,10 @@
 export default {
   name: 'QuestionCircleTooltipModal',
   props: {
+    colorClass: {
+      type: String,
+      default: 'text-muted'
+    },
     ariaLabel: {
       type: String,
       default: ''

@@ -1255,9 +1255,35 @@
                 <b-form-radio value="sketcher">
                   Sketcher
                 </b-form-radio>
+                <b-modal id="modal-discuss-it"
+                         title="Explanation of Discuss-it Questions"
+                         size="xl"
+                         no-close-on-backdrop
+                >
+                  <b-embed
+                    type="iframe"
+                    aspect="16by9"
+                    src="https://www.youtube.com/embed/7bpEbK0MBrI?si=XjMQ5z2MmV2TZVzL"
+                    allowfullscreen
+                  />
+                  <template #modal-footer>
+                    <b-button
+                      variant="primary"
+                      size="sm"
+                      class="float-right"
+                      @click="$bvModal.hide('modal-discuss-it')"
+                    >
+                      OK
+                    </b-button>
+                  </template>
+                </b-modal>
                 <b-form-radio value="discuss_it"
                 >
                   Discuss-it
+                  <QuestionCircleTooltipModal :aria-label="'Explanation of Discuss-it'"
+                                              :modal-id="'modal-discuss-it'"
+                                              :color-class="'font-bold'"
+                  />
                 </b-form-radio>
                 <b-form-radio v-show="false" value="3D visualization">
                   3D Visualization
@@ -2338,6 +2364,7 @@ import Rubric from './Rubric.vue'
 import QuestionRevisionDifferences from '../QuestionRevisionDifferences.vue'
 import Sketcher from './Sketcher.vue'
 import { updateModalToggleIndex } from '../../helpers/accessibility/fixCKEditor'
+import QuestionCircleTooltipModal from '../QuestionCircleTooltipModal.vue'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2486,6 +2513,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    QuestionCircleTooltipModal,
     Sketcher,
     QuestionMediaUpload,
     QuestionRevisionDifferences,
@@ -2754,7 +2782,7 @@ export default {
     }
     this.$nextTick(function () {
       if (this.fullyMounted) {
-        if (this.discussItTextForm.text){
+        if (this.discussItTextForm.text) {
           if (this.discussItTextForm.text.search('<p>&nbsp;</p>') !== -1) {
             this.fixEmptyParagraphs('discuss_it_text')
           } else {
