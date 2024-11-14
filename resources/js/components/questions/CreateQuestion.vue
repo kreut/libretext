@@ -1260,12 +1260,15 @@
                          size="xl"
                          no-close-on-backdrop
                 >
-                  <b-embed
-                    type="iframe"
-                    aspect="16by9"
-                    src="https://www.youtube.com/embed/7bpEbK0MBrI?si=XjMQ5z2MmV2TZVzL"
-                    allowfullscreen
-                  />
+                  <div style="position: relative; padding-top: 65.26898734177216%;">
+                    <iframe
+                      src="https://customer-9mlff0qha6p39qdq.cloudflarestream.com/1db93b924be23b3ca4809cd889830fc6/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F1db93b924be23b3ca4809cd889830fc6%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600"
+                      loading="lazy"
+                      style="border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;"
+                      allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                      allowfullscreen="true"
+                    />
+                  </div>
                   <template #modal-footer>
                     <b-button
                       variant="primary"
