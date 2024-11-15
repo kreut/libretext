@@ -253,7 +253,7 @@ class QuestionMediaUpload extends Model
             if (preg_match($timePattern, $lines[$i], $matches)) {
                 $start = $matches[1];
                 $end = $matches[2];
-                $text = $lines[$i + 1];
+                $text = $lines[$i + 1] ?? '';//in case the transcript doesn't return text
                 $result[] = [
                     'start' => $start,
                     'end' => $end,
