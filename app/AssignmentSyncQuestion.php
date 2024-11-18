@@ -20,6 +20,19 @@ class AssignmentSyncQuestion extends Model
     protected $table = 'assignment_question';
 
     /**
+     * @param Question $question
+     * @return array
+     */
+    public function getAssignmentIdsWithTheQuestion(Question $question): array
+    {
+        return DB::table('assignment_question')
+            ->where('question_id', $question->id)
+            ->select('assignment_id')
+            ->pluck('assignment_id')
+            ->toArray();
+    }
+
+    /**
      * @param int $assignment_id
      * @param int $question_id
      * @param string $setting

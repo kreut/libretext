@@ -34,6 +34,77 @@ class SubmissionController extends Controller
     use GeneralSubmissionPolicy;
 
     /**
+     * @param Request $request
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Submission $submission
+     * @return array
+     * @throws Exception
+     */
+    public function submissionExistsInCurrentCourseByOwnerAndQuestion(Request                $request,
+                                                                      Question               $question,
+                                                                      AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                                      Assignment             $assignment,
+                                                                      Submission             $submission): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('submissionExistsInCurrentCourseByOwnerAndQuestion', $submission);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $assignment_ids_with_the_question = $assignmentSyncQuestion->getAssignmentIdsWithTheQuestion($question);
+            //get courses with assignment_ids with the question ---- but not open
+
+
+            $open_assignment_ids = $assignment->getOpenAssignmentIdsFromSubsetOfAssignmentIds($assignment_ids_with_the_question);
+            $open_assignment_ids_in_owner_course = $assignment->openAssignmentIdsInOwnerCourse($request->user(), $open_assignment_ids);
+            $response['submissions_exist'] = $this->_submissionsExistByAssignmentIds($open_assignment_ids_in_owner_course);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = $e->getMessage();
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param array $open_assignment_ids_in_owner_course
+     * @return bool
+     */
+    private function _submissionsExistByAssignmentIds(array $open_assignment_ids_in_owner_course): bool
+    {
+        foreach (['submissions', 'submission_files'] as $table) {
+            if (DB::table($table)
+                ->join('users', "$table.user_id", '=','users.id')
+                ->whereIn('assignment_id', $open_assignment_ids_in_owner_course)
+                ->where('fake_student', 0)
+                ->where('formative_student', 0)
+                ->where('role', 3)
+                ->exists()) {
+                return true;
+            }
+            if (DB::table('discussions')
+                ->join('discussion_comments', 'discussions.id', '=', 'discussion_comments.discussion_id')
+                ->join('users', "discussion_comments.user_id", '=','users.id')
+                ->whereIn('assignment_id', $open_assignment_ids_in_owner_course)
+                ->where('fake_student', 0)
+                ->where('formative_student', 0)
+                ->where('role', 3)
+                ->exists()) {
+                return true;
+            }
+            return false;
+        }
+
+
+    }
+
+    /**
      * @param Assignment $assignment
      * @param Question $question
      * @param Submission $Submission
@@ -411,7 +482,7 @@ class SubmissionController extends Controller
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
                     ->delete();
             }
-            $tables = ['submissions', 'h5p_video_interactions', 'submission_files', 'seeds', 'can_give_ups','shown_hints'];
+            $tables = ['submissions', 'h5p_video_interactions', 'submission_files', 'seeds', 'can_give_ups', 'shown_hints'];
             foreach ($tables as $table) {
                 DB::table($table)
                     ->where('user_id', $request->user()->id)

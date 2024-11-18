@@ -33,6 +33,17 @@ class SubmissionPolicy
     /**
      * @param User $user
      * @param Submission $submission
+     * @return Response
+     */
+    public function submissionExistsInCurrentCourseByOwnerAndQuestion(User $user, Submission $submission): Response
+    {
+        return in_array($user->role,[2,5])
+            ? Response::allow()
+            : Response::deny("You are not allowed to check whether submissions exist.");
+    }
+    /**
+     * @param User $user
+     * @param Submission $submission
      * @param Assignment $assignment
      * @return Response
      */

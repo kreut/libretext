@@ -22,6 +22,44 @@ class Assignment extends Model
     protected $guarded = [];
 
     /**
+     * @param User $user
+     * @param array $open_assignment_ids
+     * @return array
+     */
+    public function openAssignmentIdsInOwnerCourse(User $user, array $open_assignment_ids): array
+    {
+        return DB::table('assignments')
+            ->join('courses', 'assignments.course_id', '=', 'courses.id')
+            ->where('courses.user_id', $user->id)
+            ->whereIn('assignments.id', $open_assignment_ids)
+            ->select('assignments.id')
+            ->get()
+            ->pluck('id')
+            ->toArray();
+    }
+
+    /**
+     * @param $assignment_ids_with_the_question
+     * @return array
+     */
+    public function getOpenAssignmentIdsFromSubsetOfAssignmentIds($assignment_ids_with_the_question): array
+    {
+        $current_date_time = Carbon::now();
+        return DB::table('assign_to_timings')
+            ->where(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
+                $query->where('due', '>', $current_date_time)
+                    ->whereIn('assignment_id', $assignment_ids_with_the_question);
+            })
+            ->orWhere(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
+                $query->where('final_submission_deadline', '>', $current_date_time)
+                    ->whereIn('assignment_id', $assignment_ids_with_the_question);
+            })
+            ->select('assignment_id')
+            ->pluck('assignment_id')
+            ->toArray();
+    }
+
+    /**
      * @param $auto_release_deactivated
      * @return string
      */
@@ -769,7 +807,7 @@ class Assignment extends Model
         if ($result['message']) {
             foreach ($result['message'] as $lms_assignment) {
                 if (!in_array($lms_assignment->id, $lms_assignment_ids)) {
-                    $unlinked_assignments[] = ['id'=> $lms_assignment->id,'name'=>$lms_assignment->name];
+                    $unlinked_assignments[] = ['id' => $lms_assignment->id, 'name' => $lms_assignment->name];
                 }
             }
         }

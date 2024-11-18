@@ -1199,7 +1199,8 @@ class QuestionController extends Controller
     function update(StoreQuestionRequest   $request,
                     Question               $question,
                     Libretext              $libretext,
-                    AssignmentSyncQuestion $assignmentSyncQuestion): array
+                    AssignmentSyncQuestion $assignmentSyncQuestion,
+                    Assignment             $assignment): array
     {
         $response['type'] = 'error';
         if ($request->revision_action) {
@@ -1263,7 +1264,8 @@ class QuestionController extends Controller
         return $this->store($request,
             $question,
             $libretext,
-            $assignmentSyncQuestion);
+            $assignmentSyncQuestion,
+            $assignment);
 
     }
 
@@ -1272,6 +1274,7 @@ class QuestionController extends Controller
      * @param Question $question
      * @param Libretext $libretext
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
      * @return array
      * @throws Exception
      */
@@ -1279,7 +1282,8 @@ class QuestionController extends Controller
     function store(StoreQuestionRequest   $request,
                    Question               $question,
                    Libretext              $libretext,
-                   AssignmentSyncQuestion $assignmentSyncQuestion): array
+                   AssignmentSyncQuestion $assignmentSyncQuestion,
+                   Assignment             $assignment): array
     {
         $response['type'] = 'error';
 
@@ -1505,27 +1509,12 @@ class QuestionController extends Controller
                         DB::table('assignment_question')
                             ->where('question_id', $question->id)
                             ->update(['question_revision_id' => $currentQuestionRevision->id]);
-                        $assignment_ids_with_the_question = DB::table('assignment_question')
-                            ->where('question_id', $question->id)
-                            ->select('assignment_id')
-                            ->pluck('assignment_id')
-                            ->toArray();
+                        $assignment_ids_with_the_question = $assignmentSyncQuestion->getAssignmentIdsWithTheQuestion($question);
                         //regular open assignments
-                        $current_date_time = Carbon::now();
 
 
-                        $open_assignment_ids = DB::table('assign_to_timings')
-                            ->where(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
-                                $query->where('due', '>', $current_date_time)
-                                    ->whereIn('assignment_id', $assignment_ids_with_the_question);
-                            })
-                            ->orWhere(function ($query) use ($current_date_time, $assignment_ids_with_the_question) {
-                                $query->where('final_submission_deadline', '>', $current_date_time)
-                                    ->whereIn('assignment_id', $assignment_ids_with_the_question);
-                            })
-                            ->select('assignment_id')
-                            ->pluck('assignment_id')
-                            ->toArray();
+                        $open_assignment_ids = $assignment->getOpenAssignmentIdsFromSubsetOfAssignmentIds($assignment_ids_with_the_question);
+
                         $open_assignment_ids = array_unique($open_assignment_ids);
                         $formative_assignment_ids = DB::table('assignments')
                             ->whereIn('id', $assignment_ids_with_the_question)
@@ -1572,14 +1561,8 @@ class QuestionController extends Controller
                             ->get("assignments.id")
                             ->pluck('id')
                             ->toArray();
-                        $open_assignment_ids_in_owner_course = DB::table('assignments')
-                            ->join('courses', 'assignments.course_id', '=', 'courses.id')
-                            ->where('courses.user_id', $request->user()->id)
-                            ->whereIn('assignments.id', $open_assignment_ids)
-                            ->select('assignments.id')
-                            ->get()
-                            ->pluck('id')
-                            ->toArray();
+                        $open_assignment_ids_in_owner_course = $assignment->openAssignmentIdsInOwnerCourse($request->user(), $open_assignment_ids);
+
 
                         foreach ($updatable_assignment_ids as $key => $updatable_assignment_id) {
                             $auto_update_at_course_level = in_array($updatable_assignment_id, $assignment_ids_from_courses_with_auto_update_question_revision_without_students);
@@ -1597,7 +1580,6 @@ class QuestionController extends Controller
                                     ->where('question_id', $question->id)
                                     ->update(['question_revision_id' => $newQuestionRevision->id]);
                                 $assignment = Assignment::find($updatable_assignment_id);
-
                                 $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
                                 Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
                                 unset($updatable_assignment_ids[$key]);
