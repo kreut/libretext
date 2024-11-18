@@ -113,7 +113,19 @@ class DiscussionComment extends Model
 
         $satisfied_min_number_of_discussion_threads_requirement = !$discuss_it_settings->min_number_of_discussion_threads
             && $number_of_discussion_threads_that_satisfied_the_requirements >= 1 || $discuss_it_settings->min_number_of_discussion_threads && $number_of_discussion_threads_that_satisfied_the_requirements >= $discuss_it_settings->min_number_of_discussion_threads;
-
+        $satisfied_requirement_by_discussion_comment_id = [];
+        $satisfied_requirements = DB::table('discussion_comments')
+            ->where('discussion_comments.user_id', $user_id)
+            ->join('discussions', 'discussion_comments.discussion_id', '=', 'discussions.id')
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->select('discussion_comments.id AS discussion_comment_id', 'satisfied_requirement')
+            ->get();
+        foreach ($satisfied_requirements as $satisfied_requirement) {
+            $satisfied_requirement_by_discussion_comment_id[] = [
+                'discussion_comment_id' => $satisfied_requirement->discussion_comment_id,
+                'satisfied_requirement' => (bool)$satisfied_requirement->satisfied_requirement];
+        }
 
         $response['satisfied_min_number_of_comments_requirement'] = $satisfied_min_number_of_comments_requirement;
         $response['satisfied_min_number_of_discussion_threads_requirement'] = $satisfied_min_number_of_discussion_threads_requirement;
@@ -125,6 +137,7 @@ class DiscussionComment extends Model
         $response['number_of_discussion_threads_participated_in_message'] = "You have participated in $number_of_discussion_threads_that_satisfied_the_requirements discussion thread$number_of_discussion_threads_plural.";
         $response['min_number_of_comments_required'] = $discuss_it_settings->min_number_of_comments;
         $response['min_number_of_discussion_threads'] = $discuss_it_settings->min_number_of_discussion_threads;
+        $response['satisfied_requirement_by_discussion_comment_id'] = $satisfied_requirement_by_discussion_comment_id;
         $submission_summary_info = DB::table('submission_files')
             ->where('assignment_id', $assignment_id)
             ->where('question_id', $question_id)

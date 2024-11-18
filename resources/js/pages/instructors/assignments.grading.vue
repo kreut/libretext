@@ -8,8 +8,10 @@
              size="lg"
     >
       <div v-for="(comment, commentIndex) in activeDiscussion.comments" :key="`active-discussion-${commentIndex}`">
-        <span class="text-muted">{{ comment.created_at }}</span> <span class="font-weight-bold">{{ comment.created_by_name }}</span> <span v-show="comment.created_by_user_id === activeUserId" class="text-success">***</span>
-        <span v-if="comment.text" v-html="comment.text"/>
+        <span class="text-muted">{{ comment.created_at }}</span> <span class="font-weight-bold">{{ comment.created_by_name }}</span> <span v-show="comment.created_by_user_id === activeUserId"
+                                                                                                                                           class="text-success"
+        >***</span>
+        <span v-if="comment.text" v-html="comment.text" />
         <iframe
           v-if="comment.file"
           v-resize="{ log: false }"
@@ -392,56 +394,67 @@
                       </div>
                       <div v-if="grading[currentStudentPage - 1]['qti_json']">
                         <div v-if="isDiscussIt">
-                          <ul style="list-style: none;">
-                            <li>
-                              <CompletedIcon
-                                :completed="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement"
-                              />
-                              <span
-                                :class="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement ? 'text-success' : 'text-danger'"
-                              >
-                                Submitted {{ discussItRequirementsInfo.number_of_discussion_threads_participated_in }} discussion thread<span
-                                  v-if="+discussItRequirementsInfo.number_of_discussion_threads_participated_in !== 1"
-                                >s</span>,
-                                with {{ discussItRequirementsInfo.min_number_of_discussion_threads }} required.
-                              </span>
-                            </li>
-                            <li>
-                              <CompletedIcon
-                                :completed="discussItRequirementsInfo.satisfied_min_number_of_comments_requirement"
-                              />
-                              <span
-                                :class="discussItRequirementsInfo.satisfied_min_number_of_comments_requirement ? 'text-success' : 'text-danger'"
-                              >
-                                Submitted {{ discussItRequirementsInfo.number_of_comments_submitted }} comment<span
-                                  v-if="+discussItRequirementsInfo.number_of_comments_submitted !== 1"
-                                >s</span>, with {{ discussItRequirementsInfo.min_number_of_comments_required }} required.
-                              </span>
-                            </li>
-                          </ul>
+                          <div v-show="showDiscussIt">
+                            <ul style="list-style: none;">
+                              <li>
+                                <CompletedIcon
+                                  :completed="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement"
+                                />
+                                <span
+                                  :class="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement ? 'text-success' : 'text-danger'"
+                                >
+                                  Submitted {{ discussItRequirementsInfo.number_of_discussion_threads_participated_in }} discussion thread<span
+                                    v-if="+discussItRequirementsInfo.number_of_discussion_threads_participated_in !== 1"
+                                  >s</span>,
+                                  with {{ discussItRequirementsInfo.min_number_of_discussion_threads }} required.
+                                </span>
+                              </li>
+                              <li>
+                                <CompletedIcon
+                                  :completed="discussItRequirementsInfo.satisfied_min_number_of_comments_requirement"
+                                />
+                                <span
+                                  :class="discussItRequirementsInfo.satisfied_min_number_of_comments_requirement ? 'text-success' : 'text-danger'"
+                                >
+                                  Submitted {{ discussItRequirementsInfo.number_of_comments_submitted }} comment<span
+                                    v-if="+discussItRequirementsInfo.number_of_comments_submitted !== 1"
+                                  >s</span>, with {{ discussItRequirementsInfo.min_number_of_comments_required }} required.
+                                </span>
+                              </li>
+                            </ul>
 
-                          <div
-                            v-if="discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
-                          >
                             <div
-                              v-for="(comment,commentIndex) in discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
-                              :key="`comments-${commentIndex}`"
+                              v-if="discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
                             >
-                              <a href=""
-                                 @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
-                              >{{ comment.created_at }}:</a> <span v-if="comment.text" v-html="comment.text" />
-                              <iframe
-                                v-if="comment.file"
-                                v-resize="{ log: false }"
-                                :src="`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}`"
-                                width="100%"
-                                frameborder="0"
-                                allowfullscreen=""
-                              />
+                              <div
+                                v-for="(comment,commentIndex) in discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
+                                :key="`comments-${commentIndex}`"
+                              >
+                                <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
+                                      :title="satisfiedRequirement(comment.discussion_comment_id)
+                                        ? 'This discussion comment satisfied the requirement.'
+                                        : 'This discussion comment did not satisfy the requirement.'"
+                                >
+                                  <CompletedIcon
+                                    :completed="satisfiedRequirement(comment.discussion_comment_id)"
+                                  />
+                                </span>
+                                <a href=""
+                                   @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
+                                >{{ comment.created_at }}:</a> <span v-if="comment.text" v-html="comment.text" />
+                                <iframe
+                                  v-if="comment.file"
+                                  v-resize="{ log: false }"
+                                  :src="`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}`"
+                                  width="100%"
+                                  frameborder="0"
+                                  allowfullscreen=""
+                                />
+                              </div>
                             </div>
-                          </div>
-                          <div v-else>
-                            No comments have been submitted by this student.
+                            <div v-else>
+                              No comments have been submitted by this student.
+                            </div>
                           </div>
                         </div>
                         <div v-else>
@@ -986,6 +999,7 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    showDiscussIt: false,
     discussItRequirementsInfo: {},
     activeDiscussion: {},
     activeUserId: 0,
@@ -1128,7 +1142,14 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    satisfiedRequirement (discussionCommentId) {
+      if (this.discussItRequirementsInfo.satisfied_requirement_by_discussion_comment_id) {
+        const discussionCommentInfo = this.discussItRequirementsInfo.satisfied_requirement_by_discussion_comment_id.find(value => +value.discussion_comment_id === +discussionCommentId)
+        return discussionCommentInfo ? discussionCommentInfo.satisfied_requirement : false
+      }
+    },
     async getDiscussItRequirementInfo () {
+      this.showDiscussIt = false
       const questionId = this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_id']
       const userId = this.grading[this.currentStudentPage - 1]['open_ended_submission']['user_id']
       try {
@@ -1141,6 +1162,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.showDiscussIt = true
     },
     hasAtLeastOneComment () {
       for (let i = 0; i < this.discussions.length; i++) {
@@ -1715,7 +1737,9 @@ export default {
 
       this.openEndedType = this.grading[this.currentStudentPage - 1]['open_ended_submission'].open_ended_submission_type
       await this.getFilesFromS3()
-
+      if (this.isDiscussIt) {
+        await this.getDiscussItRequirementInfo()
+      }
       let submission = this.grading[this.currentStudentPage - 1]['open_ended_submission'].submission
       if (submission !== null && submission.split('.').pop() === 'pdf') {
         this.isOpenEndedFileSubmission = true
