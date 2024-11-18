@@ -43,10 +43,23 @@ class fixUnprocessedTranscriptions extends Command
     {
         try {
             $pending_transcriptions = DB::table('pending_transcriptions')
-                ->whereBetween('created_at', [Carbon::now()->subMinutes(2),Carbon::now()->subMinute()])
+                ->whereBetween('created_at', [Carbon::now()->subMinutes(2), Carbon::now()->subMinute()])
                 ->where('message', '')
                 ->where('filename', 'NOT LIKE', '%.webm')
                 ->get();
+
+            $pending_transcriptions = DB::table('pending_transcriptions')
+                ->whereBetween('created_at', [Carbon::now()->subMinutes(2), Carbon::now()->subMinute()])
+                ->where('message', '')
+                ->where('filename', 'NOT LIKE', '%.webm')
+                ->get();
+            $pending_transcriptions = DB::table('pending_transcriptions')        
+                ->where('message', '')
+			    ->where('environment', 'production')
+                ->limit(1)
+                ->get();
+
+
             echo count($pending_transcriptions) . "\r\n";
             foreach ($pending_transcriptions as $pending_transcription) {
                 echo $pending_transcription->filename . "\r\n";
