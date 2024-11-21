@@ -45,10 +45,19 @@ class getSlowDatabaseQueriesSummary extends Command
         try {
             $num_slow_queries = DB::table('execution_times')
                 ->where('created_at', '>=', $last_24_hours)
-                ->where('execution_time', '>=', 4)
+                ->where(function ($query) {
+                    $query->where(function ($subQuery) {
+                        $subQuery->where('execution_time', '>=', 4)
+                            ->where('parameters', 'NOT LIKE', '%user_id": 9770%');
+                    })->orWhere(function ($subQuery) {
+                        $subQuery->where('execution_time', '>', 10)
+                            ->where('parameters', 'LIKE', '%user_id": 9770%');
+                    });
+                })
                 ->count();
             $num_queries = DB::table('execution_times')
                 ->where('created_at', '>=', $last_24_hours)
+                ->where('parameters','NOT LIKE','%user_id": 9770%')
                 ->count();
             if ($num_slow_queries) {
                 $num_slow_queries_percent = round(100* $num_slow_queries / $num_queries,2);
