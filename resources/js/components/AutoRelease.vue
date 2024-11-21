@@ -1,5 +1,5 @@
 <template>
-  <div v-show="showAutoRelease" class="mt-2">
+  <div class="mt-2">
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-auto-release'" />
     <b-modal id="modal-confirm-global-update-auto-release-property"
              title="Confirm Global Update"
@@ -494,7 +494,6 @@ export default {
       update_item: null,
       update_name: ''
     },
-    showAutoRelease: false,
     applyTo: 'all',
     autoReleaseAfterOptions: [],
     headerHtml: '',
@@ -574,7 +573,6 @@ export default {
     if (this.courseId) {
       this.getGlobalAutoReleaseUpdateOptions()
     }
-    this.showAutoRelease = this.isMe || [1387, 1344, 173].includes(this.user.id)
     this.headerHtml = this.courseId ? '<h2 class="h7 m-0">Default Auto-Release</h2>' : '<h2 class="h7 m-0">Auto-Release</h2>'
     if (this.assignmentId) {
       this.getReleasedSettings()

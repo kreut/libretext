@@ -124,7 +124,7 @@
         </b-button>
       </template>
     </b-modal>
-    <div v-show="isMe">
+    <div>
       <b-form-checkbox
         :id="`${property}-${assignment.id}`"
         :key="property"
@@ -150,18 +150,6 @@
         Auto
       </b-form-checkbox>
     </div>
-    <div v-show="!showAutoRelease">
-      <toggle-button
-        tabindex="0"
-        :width="84"
-        :value="Boolean(assignment[property])"
-        :sync="true"
-        :font-size="14"
-        :color="toggleColors"
-        :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-        @change="initShowHideAssignmentProperty()"
-      />
-    </div>
   </div>
 </template>
 
@@ -172,7 +160,6 @@ import axios from 'axios'
 
 export default {
   name: 'ShowHideAssignmentProperties',
-  components: { ToggleButton },
   props: {
     assignment:
       {
@@ -186,9 +173,7 @@ export default {
     }
   },
   data: () => ({
-    showAutoRelease: false,
     disabled: false,
-    isMe: window.config.isMe,
     toggleColors: window.config.toggleColors,
     assessmentType: '',
     deactivateAutoRelease: 1,
@@ -196,7 +181,6 @@ export default {
     autoReleaseTimingMessage: ''
   }),
   mounted () {
-    this.showAutoRelease = this.isMe
     this.assessmentType = this.assignment.assessment_type
     this.disabled = this.assignment.assessment_type === 'clicker' || !this.assignment['auto_release_' + this.property]
   },

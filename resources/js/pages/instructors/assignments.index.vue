@@ -888,7 +888,7 @@
             </th>
             <th v-if="view === 'control panel'" scope="col" style="width:110px">
               Scores
-              <QuestionCircleTooltip v-show="showAutoRelease" :id="`auto-release-scores-tooltip`"/>
+              <QuestionCircleTooltip :id="`auto-release-scores-tooltip`"/>
               <b-tooltip :target="`auto-release-scores-tooltip`"
                          delay="250"
                          triggers="hover focus"
@@ -896,12 +896,12 @@
                 <div v-html="getAutoReleaseTooltip('releasing your scores')"/>
               </b-tooltip>
             </th>
-            <th v-if="view === 'control panel'" v-show="showAutoRelease" scope="col" style="width:85px">
+            <th v-if="view === 'control panel'" scope="col" style="width:85px">
               Scores Released On
             </th>
             <th v-if="view === 'control panel'" scope="col" style="width:120px">
               Solutions
-              <QuestionCircleTooltip v-show="showAutoRelease" :id="`auto-release-solutions-tooltip`"/>
+              <QuestionCircleTooltip  :id="`auto-release-solutions-tooltip`"/>
               <b-tooltip :target="`auto-release-solutions-tooltip`"
                          delay="250"
                          triggers="hover focus"
@@ -909,12 +909,12 @@
                 <div v-html="getAutoReleaseTooltip('showing the solutions')"/>
               </b-tooltip>
             </th>
-            <th v-if="view === 'control panel'" v-show="showAutoRelease" scope="col" style="width:85px">
+            <th v-if="view === 'control panel'"  scope="col" style="width:85px">
               Solutions Released On
             </th>
             <th v-if="view === 'control panel'" scope="col" style="width:120px">
               Statistics
-              <QuestionCircleTooltip v-show="showAutoRelease" :id="`auto-release-statistics-tooltip`"/>
+              <QuestionCircleTooltip  :id="`auto-release-statistics-tooltip`"/>
               <b-tooltip :target="`auto-release-statistics-tooltip`"
                          delay="250"
                          triggers="hover focus"
@@ -922,14 +922,14 @@
                 <div v-html="getAutoReleaseTooltip('showing the assignment statistics')"/>
               </b-tooltip>
             </th>
-            <th v-if="view === 'control panel' && showAutoRelease" scope="col" style="width:85px">
+            <th v-if="view === 'control panel'" scope="col" style="width:85px">
               Statistics Released On
             </th>
-            <th v-if="view === 'control panel'" scope="col" :style="showAutoRelease ? 'width:85px' :''">
+            <th v-if="view === 'control panel'" scope="col" style="width:85px">
               Points Per Question
             </th>
             <th v-if="view === 'control panel' && user.role ===2" scope="col"
-                :style="showAutoRelease ? 'width:100px' :'width:120px'"
+                style="width:100px"
             >
               Student<br>Names
               <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'"/>
@@ -955,7 +955,7 @@
             </th>
             <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:115px">
               Released Status
-              <QuestionCircleTooltip v-show="showAutoRelease" :id="`auto-release-shown-tooltip`"/>
+              <QuestionCircleTooltip :id="`auto-release-shown-tooltip`"/>
               <b-tooltip :target="`auto-release-shown-tooltip`"
                          delay="250"
                          triggers="hover focus"
@@ -966,7 +966,7 @@
             <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
               Group
             </th>
-            <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col" v-show="showAutoRelease">
+            <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
               Released On
             </th>
             <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
@@ -981,7 +981,7 @@
                   <QuestionCircleTooltip/>
                 </span>
             </th>
-            <th v-if="view === 'main view'" scope="col" :style="lms ? 'width: 155px' :'width: 125px'">
+            <th v-if="view === 'main view'" scope="col" :style="lms ? 'width: 175px' :'width: 125px'">
               Actions
             </th>
           </tr>
@@ -1113,7 +1113,7 @@
                 />
               </div>
             </td>
-            <td v-if="view === 'control panel' && showAutoRelease" class="show_scores_date">
+            <td v-if="view === 'control panel'" class="show_scores_date">
               <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
                                :assignment="assignment"
                                :property="'show_scores_date'"
@@ -1133,7 +1133,7 @@
                 />
               </div>
             </td>
-            <td v-if="view === 'control panel' && showAutoRelease" class="solutions_released_date">
+            <td v-if="view === 'control panel'" class="solutions_released_date">
               <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
                                :assignment="assignment"
                                :property="'solutions_released_date'"
@@ -1153,7 +1153,7 @@
                 />
               </div>
             </td>
-            <td v-if="view === 'control panel' &&  showAutoRelease"
+            <td v-if="view === 'control panel'"
                 class="students_can_view_assignment_statistics_date"
             >
               <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
@@ -1208,7 +1208,7 @@
                 {{ assignment.assignment_group }}
               </div>
             </td>
-            <td v-if="view === 'main view' && [2,4].includes(user.role) && showAutoRelease" class="show_date">
+            <td v-if="view === 'main view' && [2,4].includes(user.role)" class="show_date">
               <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
                                :assignment="assignment"
                                :property="'show_date'"
@@ -1478,7 +1478,6 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
-    showAutoRelease: false,
     showHideAssignmentPropertiesKey: 0,
     lmsError: '',
     assignmentToUnlink: {},
@@ -1610,7 +1609,6 @@ export default {
     window.removeEventListener('keydown', this.quickSave)
   },
   async mounted () {
-    this.showAutoRelease = window.config.isMe || [1387, 1344, 173].includes(this.user.id)
     window.addEventListener('keydown', this.quickSave)
     this.initAddAssignment = initAddAssignment
     this.editAssignmentProperties = editAssignmentProperties
@@ -1654,7 +1652,7 @@ export default {
       if (this.user.role === 5) {
         return 'width:90%'
       } else {
-        return this.view === 'main view' ? 'width:400px' : (this.showAutoRelease ? 'width:185px' : 'width:300px')
+        return this.view === 'main view' ? 'width:400px' : 'width:185px'
       }
     },
     getAutoReleaseTooltip (setting) {

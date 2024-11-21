@@ -185,7 +185,6 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
-        v-if="showAutoReleases"
         label-cols-sm="3"
         label-cols-lg="2"
       >
@@ -659,7 +658,6 @@ export default {
     disableYesImportCourse: true,
     importAsBeta: 0,
     showImportAsBeta: false,
-    showAutoReleases: false,
     formattedImportableCourses: [],
     importableCourses: [],
     courseToImport: '',
@@ -715,7 +713,6 @@ export default {
         this.courseToImportForm.import_as_beta = 0
         this.courseToImportForm.auto_releases = false
         this.showImportAsBeta = false
-        this.showAutoReleases = false
         this.disableYesImportCourse = true
       }
     }
@@ -915,7 +912,6 @@ export default {
           this.showImportAsBeta = true
         }
         if (data.has_auto_releases) {
-          this.showAutoReleases = true
           this.courseToImportForm.auto_releases = 'use existing'
         }
         this.disableYesImportCourse = false
@@ -946,7 +942,6 @@ export default {
       this.disableYesImportCourse = true
       this.importAsBeta = 0
       this.showImportAsBeta = false
-      this.showAutoReleases = false
       try {
         const { data } = await axios.get(`/api/courses/importable`)
         if (data.type === 'error') {
