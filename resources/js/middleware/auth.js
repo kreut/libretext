@@ -3,7 +3,8 @@ import { toggleInstructorStudentViewRouteNames } from '~/helpers/StudentInstruct
 
 export default async (to, from, next) => {
   if (!store.getters['auth/check']) {
-    next({ name: 'login' })
+    window.parent.postMessage('must authenticate', '*')
+    location.href = '/login-to-view'
   } else {
     if (store.getters['auth/user'].fake_student &&
       !toggleInstructorStudentViewRouteNames.includes(to.name)) {
