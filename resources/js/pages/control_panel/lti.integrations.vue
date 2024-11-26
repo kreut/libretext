@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="hasAccess">
-      <PageTitle title="LTI Integrations"/>
+      <PageTitle title="LTI Integrations" />
       <div class="vld-parent">
         <loading :active.sync="isLoading"
                  :can-cancel="true"
@@ -26,7 +26,7 @@
             :class="{ 'is-invalid': ltiPendingRegistrationForm.errors.has('campus') }"
             @keydown="ltiPendingRegistrationForm.errors.clear('campus')"
           />
-          <has-error :form="ltiPendingRegistrationForm" field="campus"/>
+          <has-error :form="ltiPendingRegistrationForm" field="campus" />
           <b-button variant="primary" size="sm" class="mt-2" @click="saveLTIPendingRegistration">
             Submit
           </b-button>
@@ -35,17 +35,17 @@
           <div class="mb-2">
             Canvas: <span id="canvas-url">{{ origin }}/lti/canvas/config/{{ campusId }}</span>
 
-            <span style="cursor: pointer;" @click="doCopy('canvas-url')"><font-awesome-icon :icon="copyIcon"/></span>
+            <span style="cursor: pointer;" @click="doCopy('canvas-url')"><font-awesome-icon :icon="copyIcon" /></span>
           </div>
           <div class="mb-2">
             Moodle: <span id="moodle-url">{{ origin }}/lti/moodle/config/{{ campusId }}</span>
-            <span style="cursor: pointer;" @click="doCopy('moodle-url')"><font-awesome-icon :icon="copyIcon"/></span>
+            <span style="cursor: pointer;" @click="doCopy('moodle-url')"><font-awesome-icon :icon="copyIcon" /></span>
           </div>
           <div class="mb-2">
             Blackboard: <span id="blackboard-url">{{ origin }}/lti/blackboard/config/{{
               campusId
             }}</span>
-            <span style="cursor: pointer;" @click="doCopy('blackboard-url')"><font-awesome-icon :icon="copyIcon"/></span>
+            <span style="cursor: pointer;" @click="doCopy('blackboard-url')"><font-awesome-icon :icon="copyIcon" /></span>
           </div>
         </div>
         <b-table v-show="ltiRegistrations.length"
@@ -112,13 +112,13 @@ export default {
       key: 'auth_server',
       label: 'URL'
     },
-      'campus_id',
-      'admin_email',
-      {
-        key: 'api',
-        label: 'API'
-      },
-      'active']
+    'campus_id',
+    'admin_email',
+    {
+      key: 'api',
+      label: 'API'
+    },
+    'active']
   }),
   computed: {
     ...mapGetters({
@@ -169,7 +169,17 @@ export default {
           return false
         }
         this.ltiRegistrations = data.lti_registrations
-      } catch (error) {
+        const blackboard = data.blackboard
+        for (let i = 0; i < blackboard.length; i++) {
+          const value = {
+            auth_server: 'https://blackboard.com',
+            campus_id: blackboard[i].name,
+            api: 'no'
+          }
+          this.ltiRegistrations.push(value)
+        }
+      } catch
+      (error) {
         this.$noty.error(error.message)
       }
       this.isLoading = false
