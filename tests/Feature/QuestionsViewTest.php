@@ -307,9 +307,18 @@ class QuestionsViewTest extends TestCase
     public function non_owner_cannot_get_submission_array()
     {
         $this->actingAs($this->student_user_2)
-            ->getJson("/api/submissions/submission-array/assignment/{$this->assignment->id}/question/{$this->question->id}")
+            ->postJson("/api/submissions/submission-array/assignment/{$this->assignment->id}/question/{$this->question->id}")
             ->assertJson(['message' => 'You are not allowed to access that submission array.']);
     }
+
+    /** @test */
+    public function non_owner_cannot_get_submission_array_history()
+    {
+        $this->actingAs($this->student_user_2)
+            ->postJson("/api/submission-history/assignment/{$this->assignment->id}/question/{$this->question->id}")
+            ->assertJson(['message' => 'You are not allowed to access that submission array.']);
+    }
+
 
 
     /** @test */

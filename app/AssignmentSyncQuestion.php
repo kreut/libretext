@@ -20,6 +20,38 @@ class AssignmentSyncQuestion extends Model
     protected $table = 'assignment_question';
 
     /**
+     * @param $assignment
+     * @param $Submission
+     * @param $submission
+     * @param $question
+     * @return bool
+     */
+    function showRealTimeSolution($assignment, $Submission, $submission, $question): bool
+    {
+        if (!$submission) {
+            return false;
+        }
+        $real_time_show_solution = false;
+        if ($assignment->assessment_type === 'real time'
+            && $assignment->scoring_type === 'p'
+            && $assignment->solutions_availability === 'automatic') {
+            //can view if either they got it right OR they ask to view it (unlimited) OR they
+            $attempt = json_decode($submission->submission);
+            $proportion_correct = $Submission->getProportionCorrect($question->technology, $attempt);
+            $answered_correctly = $question->technology !== 'text' && (abs($proportion_correct - 1) < PHP_FLOAT_EPSILON);
+           if (!$answered_correctly) {
+                $real_time_show_solution = $assignment->number_of_allowed_attempts === 'unlimited'
+                    ? $submission->show_solution
+                    : $submission->submission_count >= $assignment->number_of_allowed_attempts;
+            } else {
+                $real_time_show_solution = true;
+            }
+        }
+        return $real_time_show_solution;
+    }
+
+
+    /**
      * @param Question $question
      * @return array
      */

@@ -156,7 +156,6 @@ class DataShop extends Model
             }
         }
         if ($type === 'submission'
-            && !auth()->user()->fake_student
             && !auth()->user()->formative_student) {
             $submissionHistory = new SubmissionHistory();
             $submissionHistory->user_id = auth()->user()->id;

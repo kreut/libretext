@@ -10,6 +10,7 @@ use \Exception;
 use App\Http\Requests\StoreSubmission;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
@@ -1684,13 +1685,15 @@ class Submission extends Model
                                 : 0;
                             $percent = !$is_learning_tree_node && $assignment_question->points > 0 ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
 
-                            $submission_array_value = ['submission' => $formatted_submission,
+                            $submission_array_value = [
+                                'submission' => $formatted_submission,
                                 'identifier' => $identifier,
                                 'correct' => $is_correct,
                                 'partial_credit' => !$is_correct && $value['score'] > 0,
                                 'points' => $points,
                                 'percent' => $percent];
-                            if (request()->user()->role === 2) {
+                            $show_solution_as_student = Cache::get('show_solution_' . request()->user()->id . '_' . $assignment->id . '_' . $question->id, false);
+                            if (request()->user()->role === 2 || $show_solution_as_student) {
                                 $correct_ans = $value['correct_ans_latex_string'] ?? $value['correct_ans'] ?? "This WeBWorK question is missing the 'correct_ans' key.  Please fix the weBWork code.";
                                 $submission_array_value['correct_ans'] = '\(' . $correct_ans . '\)';
                             }

@@ -1,73 +1,72 @@
 <template>
   <b-container>
-    <b-row v-if="submissionArray && questionSubmissionArray &&
-      questionSubmissionArray.length"
-    >
-      <ul v-show="scoringType === 'p'" class="font-weight-bold p-0" style="list-style-type: none">
-        <li>Total points: {{ sumArrBy(questionSubmissionArray, 'points', 4) }}</li>
-        <li>Percent correct: {{ sumArrBy(questionSubmissionArray, 'percent') }}%</li>
-        <li v-for="(penalty, penaltyIndex) in penalties" v-show="penalty.points>0" :key="`penalties-${penaltyIndex}`">
-          {{ penalty.text }} {{ penalty.points }} ({{ penalty.percent }}%)
-        </li>
-      </ul>
-      <div class="table-responsive">
-        <table class="table table-striped pb-3" :class="smallTable ? 'table-sm' : ''">
-          <thead>
-            <tr>
-              <th scope="col">
-                Submission
-              </th>
-              <th scope="col">
-                Result
-              </th>
-              <th v-if="userRole === 2 && technology === 'webwork'" scope="col">
-                Correct Answer
-              </th>
-              <th v-if="scoringType === 'p'" scope="col">
-                Points
-              </th>
-              <th v-if="scoringType === 'p'" scope="col">
-                Percent
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(item, itemIndex) in questionSubmissionArray"
-                :key="`submission-result-${itemIndex}`"
-            >
-              <td>
-                <span :class="item.correct ? 'text-success' : 'text-danger'">
-                  {{ item.submission ? item.submission : 'Nothing submitted' }}
-                </span>
-              </td>
-              <td>
-                <span v-show="item.correct" class="text-success">Correct</span>
-                <span v-show="!item.correct" class="text-danger">
-                  {{ item.partial_credit ? 'Partial Credit' : 'Incorrect' }}
-                </span>
-              </td>
-              <td v-if="userRole === 2 && technology === 'webwork'">
-                <span :class="item.correct ? 'text-success' : 'text-danger'">{{ item.correct_ans }}</span>
-              </td>
-              <td v-if="scoringType === 'p'">
-                <span :class="item.correct ? 'text-success' : 'text-danger'">
-                  {{ item.points }}</span>
-              </td>
-              <td v-if="scoringType === 'p'">
-                <span :class="item.correct ? 'text-success' : 'text-danger'">{{ item.percent }}%</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <b-row v-if="submissionHistory.length > 1" class="mb-2">
+      <label class="col-form-label col-form-label-sm text-right pr-2" for="submission-history">Current View:</label>
+      <b-form-select
+        id="submission-history"
+        v-model="questionSubmissionHistoryId"
+        size="sm"
+        style="width: 300px"
+        :options="submissionHistoryOptions"
+        @input="getSubmissionArrayByHistory($event)"
+      />
     </b-row>
+    <div v-if="showFullHistory">
+      <div v-for="(value,submissionHistoryIndex) in  submissionHistory"
+           :key="`active-discussion-${submissionHistoryIndex}`"
+      >
+        <SubmissionArrayTable
+          :key="`submission-array-table-${submissionHistoryIndex}`"
+          :created-at="value.created_at"
+          :current-question-submission-array="value.submission_array"
+          :scoring-type="scoringType"
+          :small-table="smallTable"
+          :penalties="penalties"
+          :user-role="userRole"
+          :technology="technology"
+          :show-correct-answer="showCorrectAnswer"
+        />
+        <hr v-if="submissionHistoryIndex !== submissionHistory.length -1">
+      </div>
+    </div>
+    <div v-if="!showFullHistory">
+      <SubmissionArrayTable
+        :current-question-submission-array="currentQuestionSubmissionArray"
+        :scoring-type="scoringType"
+        :small-table="smallTable"
+        :penalties="penalties"
+        :user-role="userRole"
+        :technology="technology"
+        :show-correct-answer="showCorrectAnswer"
+      />
+    </div>
   </b-container>
 </template>
 
 <script>
+import axios from 'axios'
+import SubmissionArrayTable from './SubmissionArrayTable.vue'
+
 export default {
   name: 'SubmissionArray',
+  components: { SubmissionArrayTable },
   props: {
+    solutionsReleased: {
+      type: Boolean,
+      default: false
+    },
+    userId: {
+      type: Number,
+      default: 0
+    },
+    questionId: {
+      type: Number,
+      default: 0
+    },
+    assignmentId: {
+      type: Number,
+      default: 0
+    },
     penalties: {
       type: Array,
       default: () => {
@@ -100,15 +99,63 @@ export default {
       default: 3
     }
   },
+  data: () => ({
+    showFullHistory: false,
+    submissionHistory: [],
+    submissionHistoryOptions: [],
+    questionSubmissionHistoryId: null,
+    currentQuestionSubmissionArray: [],
+    showCorrectAnswer: false
+  }),
+  async mounted () {
+    await this.getSubmissionHistory()
+    await this.getSubmissionArrayByHistory(this.questionSubmissionHistoryId)
+  },
   methods: {
-    sumArrBy (arr, key, places = 0) {
-      let sum
-      let factor
-      sum = arr.reduce((sum, item) => {
-        return sum + Number(item[key])
-      }, 0)
-      factor = 10 ** places
-      return Math.round(sum * factor) / factor
+    async getSubmissionArrayByHistory (submissionHistoryId) {
+      this.showFullHistory = submissionHistoryId === -1
+      if (submissionHistoryId !== -1) {
+        try {
+          const { data } = await axios.post(`/api/submissions/submission-array/assignment/${this.assignmentId}/question/${this.questionId}`,
+            { user_id: this.userId, submission_history_id: this.questionSubmissionHistoryId })
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+          }
+          this.currentQuestionSubmissionArray = []
+          this.showCorrectAnswer = data.show_correct_answer
+          await this.$nextTick(() => {
+            this.currentQuestionSubmissionArray = data.submission_array
+          })
+        } catch (error) {
+          this.error(error.message)
+        }
+      }
+      await this.$nextTick(() => {
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+      })
+    },
+    async getSubmissionHistory () {
+      try {
+        const { data } = await axios.post(`/api/submission-history/assignment/${this.assignmentId}/question/${this.questionId}`,
+          { user_id: this.userId })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+        this.submissionHistory = data.submission_history
+        this.submissionHistoryOptions = []
+        if (this.submissionHistory.length) {
+          this.questionSubmissionHistoryId = this.submissionHistory[0].id
+          for (let i = 0; i < this.submissionHistory.length; i++) {
+            const submissionHistory = this.submissionHistory[i]
+            const text = i === 0 ? `${submissionHistory.created_at} (Current)` : submissionHistory.created_at
+            this.submissionHistoryOptions.push({ text: text, value: submissionHistory.id })
+          }
+          this.submissionHistoryOptions.push({ text: '--------', disabled: true })
+          this.submissionHistoryOptions.push({ text: 'Full History', value: -1 })
+        }
+      } catch (error) {
+        this.error(error.message)
+      }
     }
   }
 }

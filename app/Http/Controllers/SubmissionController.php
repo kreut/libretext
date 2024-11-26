@@ -13,6 +13,7 @@ use App\Http\Requests\UpdateScoresRequest;
 use App\LearningTree;
 use App\LearningTreeNodeSubmission;
 use App\QuestionLevelOverride;
+use App\SubmissionHistory;
 use Carbon\Carbon;
 use Exception;
 use App\Submission;
@@ -80,7 +81,7 @@ class SubmissionController extends Controller
     {
         foreach (['submissions', 'submission_files'] as $table) {
             if (DB::table($table)
-                ->join('users', "$table.user_id", '=','users.id')
+                ->join('users', "$table.user_id", '=', 'users.id')
                 ->whereIn('assignment_id', $open_assignment_ids_in_owner_course)
                 ->where('fake_student', 0)
                 ->where('formative_student', 0)
@@ -90,7 +91,7 @@ class SubmissionController extends Controller
             }
             if (DB::table('discussions')
                 ->join('discussion_comments', 'discussions.id', '=', 'discussion_comments.discussion_id')
-                ->join('users', "discussion_comments.user_id", '=','users.id')
+                ->join('users', "discussion_comments.user_id", '=', 'users.id')
                 ->whereIn('assignment_id', $open_assignment_ids_in_owner_course)
                 ->where('fake_student', 0)
                 ->where('formative_student', 0)
@@ -105,13 +106,17 @@ class SubmissionController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
      * @param Submission $Submission
      * @return array
      * @throws Exception
      */
-    public function submissionArray(Assignment $assignment, Question $question, Submission $Submission): array
+    public function submissionArray(Request $request,
+                                    Assignment $assignment,
+                                    Question   $question,
+                                    Submission $Submission): array
     {
 
         try {
@@ -121,7 +126,9 @@ class SubmissionController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
-            $submission = $Submission->where('user_id', request()->user()->id)
+            $submission_history_id = $request->submission_history_id;
+            $user_id = $request->user_id;
+            $submission = $Submission->where('user_id', $user_id)
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
@@ -130,9 +137,13 @@ class SubmissionController extends Controller
                 return $response;
             }
 
-            $submission_array = $submission->getSubmissionArray($assignment, $question, $submission, false);
+            if ($submission_history_id) {
+                $submission = SubmissionHistory::find($submission_history_id);
+            }
+            $submission_array = (new Submission())->getSubmissionArray($assignment, $question, $submission, false);
             $response['type'] = 'success';
             $response['submission_array'] = $submission_array;
+            $response['show_correct_answer'] = isset($submission_array[0]) && isset($submission_array[0]['correct_ans']);
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -482,7 +493,13 @@ class SubmissionController extends Controller
                     ->where('learning_tree_id', $assignment_question_learning_tree->learning_tree_id)
                     ->delete();
             }
-            $tables = ['submissions', 'h5p_video_interactions', 'submission_files', 'seeds', 'can_give_ups', 'shown_hints'];
+            $tables = ['submissions',
+                'h5p_video_interactions',
+                'submission_files',
+                'seeds',
+                'can_give_ups',
+                'shown_hints',
+                'submission_histories'];
             foreach ($tables as $table) {
                 DB::table($table)
                     ->where('user_id', $request->user()->id)

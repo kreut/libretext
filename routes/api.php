@@ -323,8 +323,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/auto-release/assignment/{assignment}/property/{property}/timing-message', 'AutoReleaseController@autoReleaseTimingMessage');
 
 
-
-
     Route::patch('/courses/{course}/auto-update-question-revisions', 'CourseController@autoUpdateQuestionRevisions');
     Route::patch('/courses/{course}/link-to-lms', 'CourseController@linkToLMS');
     Route::patch('/courses/{course}/unlink-from-lms', 'CourseController@unlinkFromLMS');
@@ -745,9 +743,9 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 
     Route::get('/submissions/can-submit/assignment/{assignment}/question/{question}', 'SubmissionController@canSubmit');
-    Route::get('/submissions/submission-array/assignment/{assignment}/question/{question}', 'SubmissionController@submissionArray');
+    Route::post('/submissions/submission-array/assignment/{assignment}/question/{question}', 'SubmissionController@submissionArray');
     Route::get('/submissions/exists-in-current-owner-course-by-question/{question}', 'SubmissionController@submissionExistsInCurrentCourseByOwnerAndQuestion');
-
+    Route::post('/submission-history/assignment/{assignment}/question/{question}', 'SubmissionHistoryController@getByAssignmentAndQuestion');
 
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');

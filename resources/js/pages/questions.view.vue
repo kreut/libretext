@@ -676,6 +676,7 @@
       :hide-footer="!learningTreeMessage"
       :title="modalSubmissionAcceptedTitle"
       size="lg"
+      :no-close-on-backdrop="true"
       @hidden="hideModalSubmissionAccepted"
     >
       <div v-if="learningTreeMessage">
@@ -684,8 +685,13 @@
       <div v-if="questions[currentPage - 1] && questions[currentPage - 1].report">
         Be sure to paste the different sections of the report in the form below.
       </div>
-      <div v-if="questions[currentPage-1]">
+      <div v-if="questions[currentPage-1]
+      && (assessmentType === 'real time' || (assessmentType === 'delayed' && solutionsReleased))"
+      >
         <SubmissionArray :submission-array="submissionArray"
+                         :question-id="questions[currentPage-1].id"
+                         :user-id="user.id"
+                         :assignment-id="+assignmentId"
                          :question-submission-array="questions[currentPage-1].submission_array"
                          :technology="questions[currentPage-1].technology"
                          :scoring-type="scoringType"
@@ -4071,7 +4077,8 @@ export default {
     },
     async showSubmissionArray () {
       try {
-        const { data } = await axios.get(`/api/submissions/submission-array/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
+        const { data } = await axios.post(`/api/submissions/submission-array/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`,
+          { user_id: this.user.id, submission_history_id: 0 })
         if (data.type === 'error') {
           this.$noty.error(data.message)
         } else {

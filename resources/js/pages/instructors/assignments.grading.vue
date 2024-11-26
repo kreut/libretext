@@ -1,17 +1,18 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'" />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
     <b-modal id="modal-discussion"
              :title="`Started by ${activeDiscussion.started_by} on ${activeDiscussion.created_at}`"
              no-close-on-backdrop
              size="lg"
     >
       <div v-for="(comment, commentIndex) in activeDiscussion.comments" :key="`active-discussion-${commentIndex}`">
-        <span class="text-muted">{{ comment.created_at }}</span> <span class="font-weight-bold">{{ comment.created_by_name }}</span> <span v-show="comment.created_by_user_id === activeUserId"
-                                                                                                                                           class="text-success"
-        >***</span>
-        <span v-if="comment.text" v-html="comment.text" />
+        <span class="text-muted">{{ comment.created_at }}</span> <span class="font-weight-bold"
+      >{{ comment.created_by_name }}</span> <span v-show="comment.created_by_user_id === activeUserId"
+                                                  class="text-success"
+      >***</span>
+        <span v-if="comment.text" v-html="comment.text"/>
         <iframe
           v-if="comment.file"
           v-resize="{ log: false }"
@@ -81,7 +82,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response" />
+          <has-error :form="cannedResponseForm" field="canned_response"/>
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -119,7 +120,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow" />
+              <b-spinner small type="grow"/>
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -178,7 +179,7 @@
         </template>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <div v-if="grading.length>0">
           <b-container class="pb-3">
             <b-row>
@@ -266,7 +267,7 @@
               </b-col>
               <b-col lg="2">
                 <span v-if="processing">
-                  <b-spinner small type="grow" />
+                  <b-spinner small type="grow"/>
                   Processing...
                 </span>
               </b-col>
@@ -313,12 +314,6 @@
                 </b-row>
               </b-container>
               <div class="mb-2">
-                <b-button variant="outline-info"
-                          size="sm"
-                          @click="viewQuestion(grading[currentStudentPage - 1]['open_ended_submission'].question_id)"
-                >
-                  View Question
-                </b-button>
                 <SolutionFileHtml :key="`solution-file-html-${questionView}`"
                                   :questions="solutions"
                                   :current-page="1"
@@ -328,16 +323,6 @@
             </div>
             <hr>
             <b-container>
-              <div v-show="submissionArray.length" class="mb-2 border border-dark border-1 p-3">
-                <SubmissionArray :submission-array="submissionArray"
-                                 :question-submission-array="submissionArray"
-                                 :technology="technology"
-                                 :scoring-type="scoringType"
-                                 :user-role="user.role"
-                                 :small-table="true"
-                                 :penalties="grading[currentStudentPage - 1]['penalties']"
-                />
-              </div>
               <div
                 v-if="grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission'] !== false"
               >
@@ -364,7 +349,8 @@
               </div>
               <b-row>
                 <b-col>
-                  <b-card header="default" :header-html="questionHeader">
+                  <b-card ref="questionCard" header="default" :header-html="questionHeader">
+
                     <b-card-text>
                       <div v-if="grading[currentStudentPage - 1]['technology_iframe']
                              && technology === 'h5p'
@@ -375,8 +361,8 @@
                           && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
                         >
                           <span class="font-weight-bold">Student Submission: </span> <span
-                            v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
-                          />
+                          v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
+                        />
                         </div>
                       </div>
                       <div v-if="grading[currentStudentPage - 1]['non_technology_iframe_src']">
@@ -404,8 +390,8 @@
                                   :class="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement ? 'text-success' : 'text-danger'"
                                 >
                                   Submitted {{ discussItRequirementsInfo.number_of_discussion_threads_participated_in }} discussion thread<span
-                                    v-if="+discussItRequirementsInfo.number_of_discussion_threads_participated_in !== 1"
-                                  >s</span>,
+                                  v-if="+discussItRequirementsInfo.number_of_discussion_threads_participated_in !== 1"
+                                >s</span>,
                                   with {{ discussItRequirementsInfo.min_number_of_discussion_threads }} required.
                                 </span>
                               </li>
@@ -417,8 +403,8 @@
                                   :class="discussItRequirementsInfo.satisfied_min_number_of_comments_requirement ? 'text-success' : 'text-danger'"
                                 >
                                   Submitted {{ discussItRequirementsInfo.number_of_comments_submitted }} comment<span
-                                    v-if="+discussItRequirementsInfo.number_of_comments_submitted !== 1"
-                                  >s</span>, with {{ discussItRequirementsInfo.min_number_of_comments_required }} required.
+                                  v-if="+discussItRequirementsInfo.number_of_comments_submitted !== 1"
+                                >s</span>, with {{ discussItRequirementsInfo.min_number_of_comments_required }} required.
                                 </span>
                               </li>
                             </ul>
@@ -441,7 +427,7 @@
                                 </span>
                                 <a href=""
                                    @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
-                                >{{ comment.created_at }}:</a> <span v-if="comment.text" v-html="comment.text" />
+                                >{{ comment.created_at }}:</a> <span v-if="comment.text" v-html="comment.text"/>
                                 <iframe
                                   v-if="comment.file"
                                   v-resize="{ log: false }"
@@ -497,8 +483,8 @@
                               The student will see the override score for this question.
                             </b-alert>
                             <span class="pr-2"><strong>Override Score:</strong> {{
-                              grading[currentStudentPage - 1]['submission_score_override']
-                            }}
+                                grading[currentStudentPage - 1]['submission_score_override']
+                              }}
                             </span>
                             <b-button size="sm"
                                       variant="outline-primary"
@@ -586,7 +572,8 @@
                             label-for="open_ended_score"
                           >
                             <template v-slot:label>
-                              <span class="font-weight-bold" :style="isDiscussIt ? 'margin-left:20px' : ''">{{ isOpenEnded ? 'Open-ended' : 'Discuss-it' }} score:</span>
+                              <span class="font-weight-bold" :style="isDiscussIt ? 'margin-left:20px' : ''"
+                              >{{ isOpenEnded ? 'Open-ended' : 'Discuss-it' }} score:</span>
                             </template>
                             <div v-show="isOpenEnded || isDiscussIt" class="pt-1">
                               <div class="d-flex">
@@ -683,9 +670,9 @@
                           <span style="margin-left:108px">
                             <strong>Total:</strong>
                             <span style="margin-left:7px">{{
-                              (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
+                                (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
                                 + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
-                            }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
+                              }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                             </span>
                           </span>
                           <br>
@@ -709,7 +696,7 @@
                   </div>
                   <b-card header="default"
                           :header-html="getGraderFeedbackTitle()"
-                          class="h-50"
+                          style="height: 50%"
                   >
                     <b-card-text align="center">
                       <div v-show="isOpenEnded || isDiscussIt">
@@ -759,7 +746,7 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
-                            <has-error :form="gradingForm" field="textFeedback" />
+                            <has-error :form="gradingForm" field="textFeedback"/>
 
                             <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                            v-model="cannedResponse"
@@ -839,8 +826,29 @@
                   </b-row>
                 </b-col>
               </b-row>
+
             </b-container>
-            <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
+            <b-container>
+              <b-row class="mt-2">
+                <b-col>
+                  <b-card header="default" :header-html="getSubmissionSummaryTitle()">
+                    <SubmissionArray :submission-array="submissionArray"
+                                     :question-submission-array="submissionArray"
+                                     :question-id="+questionView"
+                                     :assignment-id="+assignmentId"
+                                     :technology="technology"
+                                     :scoring-type="scoringType"
+                                     :user-id="grading[currentStudentPage - 1].student.user_id"
+                                     :user-role="user.role"
+                                     :small-table="true"
+                                     :penalties="grading[currentStudentPage - 1]['penalties']"
+                    />
+                  </b-card>
+                </b-col>
+                <b-col></b-col>
+              </b-row>
+            </b-container>
+            <b-container v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
               <b-row align-h="center" class="pb-2">
                 <toggle-button
                   v-if="grading[currentStudentPage - 1]['rubric_category_submission'].length"
@@ -855,7 +863,7 @@
                   @change="updateFullView()"
                 />
               </b-row>
-            </div>
+            </b-container>
             <div v-if="!fullView && grading[currentStudentPage - 1]['rubric_category_submission'] && rubricCategories">
               <Report
                 v-if="rubricCategories.length"
@@ -1142,6 +1150,9 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    getSubmissionSummaryTitle () {
+      return '<h2 class="h7 mb-0">Submission History</h2>'
+    },
     satisfiedRequirement (discussionCommentId) {
       if (this.discussItRequirementsInfo.satisfied_requirement_by_discussion_comment_id) {
         const discussionCommentInfo = this.discussItRequirementsInfo.satisfied_requirement_by_discussion_comment_id.find(value => +value.discussion_comment_id === +discussionCommentId)
@@ -1472,9 +1483,6 @@ export default {
     },
     getStudentScoresTitle () {
       return `<h2 class="h7 mb-0">Scores for ${this.grading[this.currentStudentPage - 1]['open_ended_submission']['name']}</h2>`
-    },
-    viewQuestion (questionId) {
-      window.open(`/assignments/${this.assignmentId}/questions/view/${questionId}/view`)
     },
     openInNewTab (url) {
       console.log(url)

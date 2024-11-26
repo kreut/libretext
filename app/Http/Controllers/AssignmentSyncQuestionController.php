@@ -1585,7 +1585,10 @@ class AssignmentSyncQuestionController extends Controller
 
         $qti_answer_json = null;
 
-        $real_time_show_solution = $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
+        ///MAYBE I need to cache it here as well ---- do by user and assignment?????
+        /// START
+        ///
+        $real_time_show_solution = $assignmentSyncQuestion->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
 
         $seed = null;
         if ($question->qti_json || in_array($question->technology, ['webwork', 'imathas'])) {
@@ -2237,7 +2240,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['open_ended_default_text'] = $open_ended_default_texts[$question->id];
                 $assignment->questions[$key]['completion_scoring_mode'] = $completion_scoring_modes[$question->id];
 
-                $real_time_show_solution = isset($submissions_by_question_id[$question->id]) && $this->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
+                $real_time_show_solution = isset($submissions_by_question_id[$question->id]) && $assignmentSyncQuestion->showRealTimeSolution($assignment, $Submission, $submissions_by_question_id[$question->id], $question);
                 $can_give_up = in_array($question->id, $can_give_ups);
                 $gave_up = in_array($question->id, $gave_ups);
                 $show_solution = (!Helper::isAnonymousUser() || !Helper::hasAnonymousUserSession())
@@ -2578,37 +2581,6 @@ class AssignmentSyncQuestionController extends Controller
         }
         return false;
 
-    }
-
-    /**
-     * @param $assignment
-     * @param $Submission
-     * @param $submission
-     * @param $question
-     * @return bool
-     */
-    function showRealTimeSolution($assignment, $Submission, $submission, $question): bool
-    {
-        if (!$submission) {
-            return false;
-        }
-        $real_time_show_solution = false;
-        if ($assignment->assessment_type === 'real time'
-            && $assignment->scoring_type === 'p'
-            && $assignment->solutions_availability === 'automatic') {
-            //can view if either they got it right OR they ask to view it (unlimited) OR they
-            $attempt = json_decode($submission->submission);
-            $proportion_correct = $Submission->getProportionCorrect($question->technology, $attempt);
-            $answered_correctly = $question->technology !== 'text' && (abs($proportion_correct - 1) < PHP_FLOAT_EPSILON);
-            if (!$answered_correctly) {
-                $real_time_show_solution = $assignment->number_of_allowed_attempts === 'unlimited'
-                    ? $submission->show_solution
-                    : $submission->submission_count >= $assignment->number_of_allowed_attempts;
-            } else {
-                $real_time_show_solution = true;
-            }
-        }
-        return $real_time_show_solution;
     }
 
     /**
