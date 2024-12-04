@@ -58,10 +58,18 @@
                'bow_tie'].includes(questionType)"
       >
         <div style="font-family: Sans-Serif,serif;" :style="presentationMode ? 'font-size:20px' : 'font-size:16px'">
-          <span v-html="prompt"/>
+          <span v-html="prompt" />
         </div>
         <b-form-group>
           <div>
+            <div v-if="questionType === 'submit_molecule'
+              && user.role === 2
+              && +JSON.parse(qtiJson).matchStereo === 1"
+            >
+              <b-alert show variant="info">
+                Only identical stereoisomers will be approved for this question.
+              </b-alert>
+            </div>
             <iframe
               v-if="questionType === 'submit_molecule' && previewingQuestion"
               id="emptySketcher"
@@ -151,7 +159,6 @@
                        :can-start-discussion-or-add-comments="submitButtonActive"
                        :previewing-question="previewingQuestion"
                        @openContactGraderModal="openContactGraderModal"
-
       />
       <DragAndDropClozeViewer
         v-if="questionType === 'drag_and_drop_cloze'"
@@ -298,21 +305,21 @@ export default {
 
   },
   data: () => ({
-      response: '',
-      receivedStructure: false,
-      clickerApp: window.config.clickerApp,
-      qtiJsonCacheKey: 0,
-      matchingFeedback: '',
-      termsToMatch: [],
-      possibleMatches: [],
-      jsonShown: false,
-      submissionErrorMessage: '',
-      questionType: '',
-      selectChoices: [],
-      question: {},
-      prompt: '',
-      simpleChoice: []
-    }
+    response: '',
+    receivedStructure: false,
+    clickerApp: window.config.clickerApp,
+    qtiJsonCacheKey: 0,
+    matchingFeedback: '',
+    termsToMatch: [],
+    possibleMatches: [],
+    jsonShown: false,
+    submissionErrorMessage: '',
+    questionType: '',
+    selectChoices: [],
+    question: {},
+    prompt: '',
+    simpleChoice: []
+  }
   ),
   computed: {
     isLocalMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
@@ -339,7 +346,7 @@ export default {
     }
     this.questionType = this.question.questionType
     switch (this.questionType) {
-      case('discuss_it'):
+      case ('discuss_it'):
         break
       case ('submit_molecule'):
       case ('numerical'):

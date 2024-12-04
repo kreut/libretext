@@ -1674,8 +1674,20 @@
             </div>
             <div v-if="isLocalMe || user.id === 36892">
               Debugging: {{ qtiJson }}
+              {{qtiJson.matchStereo}}aaa
             </div>
             <div v-if="qtiQuestionType === 'submit_molecule'">
+              <div  class="border border-dark p-2" style="width:320px;margin:auto">
+              <b-form-checkbox
+                id="match_stereo"
+                v-model="qtiJson.matchStereo"
+                name="match_stereo"
+                value="1"
+                unchecked-value="0"
+              >
+                Only approve identical stereoisomers
+              </b-form-checkbox>
+              </div>
               <Sketcher :error-message="questionForm.errors.get(`solution_structure`)"
                         :solution-structure="solutionStructure"
               />
@@ -3462,6 +3474,7 @@ export default {
             this.qtiQuestionType = this.qtiJson.questionType
             this.qtiPrompt = this.qtiJson['prompt']
             this.solutionStructure = this.qtiJson.solutionStructure
+            this.nativeType = 'sketcher'
             break
           case ('drag_and_drop_cloze'):
             this.qtiQuestionType = this.qtiJson.questionType
@@ -4026,7 +4039,8 @@ export default {
             questionType: 'submit_molecule',
             prompt: '',
             solutionStructure: '',
-            solution: ''
+            solution: '',
+            matchStereo: '1'
           }
           this.qtiQuestionType = 'submit_molecule'
           break
