@@ -1629,9 +1629,8 @@ class Submission extends Model
         $data = [
             'reference_diagram' => $question->solutionStructure,
             'student_diagram' => json_decode($student_response)->structure,
-            'match_stereo' => +$question->matchStereo
+            'match_stereo' => property_exists($question, 'matchStereo') ? +$question->matchStereo: 0
         ];
-
         // Make the POST request
         $response = Http::withHeaders([
             'Authorization' => $token  // Add your Bearer token here
