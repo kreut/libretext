@@ -2635,7 +2635,7 @@
                         Attribution
                       </b-button>
                     </span>
-                    <span v-if="!inIFrame && !isFormative && assessmentType !== 'clicker'">
+                    <span v-if="!inIFrame && !isFormative && assessmentType !== 'clicker' && !isPhone">
                       <b-button v-if="showRightColumn"
                                 id="expand-question-tooltip"
                                 size="sm"
@@ -2984,8 +2984,11 @@
                        && (showSubmissionInformation || openEndedSubmissionType === 'file')
                        && !isAnonymousUser"
                      :class="{ 'mt-3': (questions[currentPage-1].technology_iframe && showSubmissionInformation) || zoomedOut, 'mb-3': true }"
+
               >
-                <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
+                <b-card header="Default" :header-html="getOpenEndedTitle()"
+                        class="sidebar-card"
+                >
                   <b-card-text>
                     <span
                       v-if="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
@@ -3332,6 +3335,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    isPhone: false,
     showSketcherSubmission: false,
     showSolutionFileHTML: false,
     modalInstructorClickerQuestionShown: false,
@@ -3695,6 +3699,7 @@ export default {
     window.removeEventListener('visibilitychange', this.visibilityChange)
   },
   async mounted () {
+   this.isPhone = window.innerWidth < 768
     if (localStorage.ltiTokenId) {
       await this.refreshToken()
     }
@@ -3813,6 +3818,14 @@ export default {
       $('.row').removeClass('row')
       $('.col-12').removeClass('col-12')
       $('.container').removeClass('container')
+    } else if (this.isPhone) {
+      $('.page-title').addClass('ml-2')
+      $('#main-content').removeClass('container')
+      $('#questionContainer').removeClass('container')
+      $('.col-8').removeClass('col-8').addClass('col-12')
+      $('.col-4').removeClass('col-4').addClass('col-12')
+      $('.sidebar-card').removeClass('sidebar-card')
+      $('.row').removeClass('row')
     }
   },
   beforeDestroy () {
