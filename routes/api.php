@@ -21,7 +21,7 @@ Route:*/
 //Must support both get and post according to the docs
 
 Route::get('/php-info', 'QuestionMediaController@phpInfo');
-
+Route::get('/auto-provision', 'OIDCController@autoProvision');
 Route::post('/question-media/init-transcribe', 'QuestionMediaController@initTranscribe');
 Route::patch('/question-media/transcribe-status', 'QuestionMediaController@updateTranscribeStatus');
 Route::get('/oidc/redirect', 'OIDCController@redirect');

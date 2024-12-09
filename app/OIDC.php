@@ -50,15 +50,15 @@ class OIDC extends Model
     {
 
 
-        $response = Http::withBasicAuth($this->username, $this->password)
+        $auto_provision_response = Http::withBasicAuth($this->username, $this->password)
             ->post("{$this->base_url}/auth/auto-provision", $data);
 
-        if ($response->successful()) {
-            $response = $response->json(); // if the response is JSON
+        if ($auto_provision_response->successful()) {
+            $response = $auto_provision_response->json();
             $response['type'] = 'success';
         } else {
             $response['type'] = 'error';
-            $response['message'] = $response['errors'];
+            $response['message'] = json_encode($auto_provision_response->json());
 
         }
         return $response;

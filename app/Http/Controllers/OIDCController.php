@@ -156,7 +156,7 @@ class OIDCController extends Controller
     {
         if (app()->environment('local')) {
             $data = [
-                'email' => 'some-sillystudent@hotmail.com',
+                'email' => 'some-sillystudents@hotmail.com',
                 'first_name' => 'Test',
                 'last_name' => 'Student',
                 'user_type' => 'student',

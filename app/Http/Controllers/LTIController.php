@@ -58,7 +58,7 @@ class LTIController extends Controller
                     Telegram::sendMessage([
                         'chat_id' => config('myconfig.telegram_channel_id'),
                         'parse_mode' => 'HTML',
-                        'text' => "Unable to auto-provision User: $user->id. Error: " . json_encode($response)
+                        'text' => "Unable to auto-provision User: $user->id. Error: " . json_encode($oidc_response)
                     ]);
                 }
             } else {
@@ -207,11 +207,15 @@ class LTIController extends Controller
                 exit;
             }
             //check by email first because this is the most recent account *******THINK ABOUT THIS!!!!!!********
-            $lti_user = $user->where('email', $email)->first();
-            if (!$lti_user) {
-                $sub = $launch->get_launch_data()['sub'];
+            $sub = $launch->get_launch_data()['sub'];
+            $lti_user = null;
+            if ($sub) {
                 $lti_user = $user->where('lms_user_id', $sub)->first();
             }
+            if (!$lti_user) {
+                $lti_user = $user->where('email', $email)->first();
+            }
+
             if (!$lti_user) {
                 $lti_user = User::create([
                     'first_name' => $launch->get_launch_data()['given_name'],
@@ -219,7 +223,7 @@ class LTIController extends Controller
                     'email' => $email,
                     'role' => 3,
                     'time_zone' => 'America/Los_Angeles',
-                    'sub' => $sub,
+                    'lms_user_id' => $sub,
                     'email_verified_at' => now(),
                 ]);
             } else {
