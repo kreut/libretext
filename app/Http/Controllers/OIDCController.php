@@ -18,6 +18,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
@@ -156,7 +157,7 @@ class OIDCController extends Controller
     {
         if (app()->environment('local')) {
             $data = [
-                'email' => 'some-sillystudent@hotmail.com',
+                'email' => 'some-sillystudents@hotmail.com',
                 'first_name' => 'Test',
                 'last_name' => 'Student',
                 'user_type' => 'student',
@@ -364,8 +365,8 @@ class OIDCController extends Controller
                     'err_msg' => 'Bad state or nonce value',
                 ], 400);
             }
-            // Encode the client ID and secret
-            $encoded = urlencode($this->client_id) . ':' . urlencode($this->client_secret);
+
+            $encoded = $this->client_id . ':' . $this->client_secret;//actually don't encode these! encoding broke this piece
             $authVal = base64_encode($encoded);
 
 // Make the POST request with the authorization header and parameters
@@ -376,8 +377,9 @@ class OIDCController extends Controller
                 'code' => request()->query('code'),
                 'redirect_uri' => $this->callbackUrl
             ]);
-
-// Parse the response
+            if ($http_response->failed()) {
+                throw new Exception($http_response->body());
+            }
             $data = $http_response->json();
             $access_token = $data['access_token'] ?? null;
             $id_token = $data['id_token'] ?? null;

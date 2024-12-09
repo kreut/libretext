@@ -18,8 +18,9 @@ class OIDC extends Model
     public function __construct()
     {
         parent::__construct();
-        $this->username = 'adapt_staging';
-        $this->password = DB::table('key_secrets')->where('key', 'libreone_staging')->first()->secret;
+        $username = app()->environment('production') ? 'adapt_production' : 'libreone_staging';
+        $this->username = $username;
+        $this->password = DB::table('key_secrets')->where('key', $username)->first()->secret;
         $this->base_url = app()->environment('production')
             ? 'https://one.libretexts.org/api/v1'
             : 'https://staging.one.libretexts.org/api/v1';
@@ -50,15 +51,15 @@ class OIDC extends Model
     {
 
 
-        $response = Http::withBasicAuth($this->username, $this->password)
+        $auto_provision_response = Http::withBasicAuth($this->username, $this->password)
             ->post("{$this->base_url}/auth/auto-provision", $data);
 
-        if ($response->successful()) {
-            $response = $response->json(); // if the response is JSON
+        if ($auto_provision_response->successful()) {
+            $response = $auto_provision_response->json();
             $response['type'] = 'success';
         } else {
             $response['type'] = 'error';
-            $response['message'] = $response['errors'];
+            $response['message'] = json_encode($auto_provision_response->json());
 
         }
         return $response;
