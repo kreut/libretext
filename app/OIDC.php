@@ -18,9 +18,14 @@ class OIDC extends Model
     public function __construct()
     {
         parent::__construct();
-        $username = app()->environment('production') ? 'adapt_production' : 'libreone_staging';
-        $this->username = $username;
-        $this->password = DB::table('key_secrets')->where('key', $username)->first()->secret;
+        if (app()->environment('production')) {
+            $username = app()->environment('production') ? 'adapt_production' : 'libreone_staging';
+            $this->username = $username;
+            $this->password = DB::table('key_secrets')->where('key', $username)->first()->secret;
+        } else {
+            $this->username = 'some';
+            $this->username = 'fake-thing';
+        }
         $this->base_url = app()->environment('production')
             ? 'https://one.libretexts.org/api/v1'
             : 'https://staging.one.libretexts.org/api/v1';
