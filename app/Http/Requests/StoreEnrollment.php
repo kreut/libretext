@@ -30,7 +30,6 @@ class StoreEnrollment extends FormRequest
             new IsValidStudentAccessCode(),
             new IsValidWhitelistedDomain($this->user()->email, $this->access_code)];
         $rules['student_id'] = 'required';
-        $rules['time_zone'] = new IsValidTimeZone();
         return $rules;
     }
 }
