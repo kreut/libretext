@@ -114,7 +114,8 @@ class OIDCController extends Controller
             'mode' => $mode,
             'state' => substr(sha1(mt_rand()), 17, 12),
             'orgID' => 'ADAPT (' . app()->environment() . ')',
-            'redirectURI' => $request->redirect_url ? $request->redirect_url : ''
+            'redirectURI' => $request->redirect_url ? $request->redirect_url : '',
+            'clicker_app' => $mode === 'app'
         ];
         $nonce = (string)Str::uuid();
 
@@ -434,12 +435,22 @@ class OIDCController extends Controller
                 $user->save();
             }
             $token = \JWTAuth::fromUser($user);
-            if (isset($state['redirectURI']) && $state['redirectURI']) {
-                session()->put('landing_page', $state['redirectURI']);
+            $clicker_app = isset($state['clicker_app']) && $state['clicker_app'];
+            $cookie = $clicker_app
+                ? Cookie::make('clicker_app', 1)
+                : Cookie::forget('clicker_app');
+
+            if ($clicker_app) {
+                return redirect()->to("/launch-clicker-app/$token/0")->withCookie($cookie);
             } else {
-                session()->put('landing_page', '');
+
+                if (isset($state['redirectURI']) && $state['redirectURI']) {
+                    session()->put('landing_page', $state['redirectURI']);
+                } else {
+                    session()->put('landing_page', '');
+                }
+                return redirect()->to("/login-by-jwt/$token");
             }
-            return redirect()->to("/login-by-jwt/$token");
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
