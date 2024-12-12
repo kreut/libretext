@@ -69,6 +69,7 @@ class WhitelistedDomainController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
+            $response['show_whitelisted_domains'] = !$course->formative && !$course->lms;
             $response['whitelisted_domains'] = $whitelistedDomain->where('course_id', $course->id)->get();
             $response['type'] = 'success';
             return $response;

@@ -18,54 +18,6 @@
       </b-row>
     </b-container>
 
-    <b-container class="mt-5">
-      <b-row>
-        <b-col sm="12" md="6">
-          <div>
-            <b-card no-body class="overflow-hidden" style="max-width: 540px;">
-              <b-row no-gutters>
-                <!-- <b-col md="3">
-                  <b-card-img src="/assets/img/adapt-student-welcome.jpg" alt="Image" class="rounded-0"></b-card-img>
-                </b-col> -->
-                <b-col md="12">
-                  <b-card-body title="Students">
-                    <b-card-text>
-                      Create your Student account to enroll your course.
-                    </b-card-text>
-                    <b-button variant="dark" @click="$router.push({ path: '/register/student' })">
-                      Create your Student Account
-                    </b-button>
-                  </b-card-body>
-                </b-col>
-              </b-row>
-            </b-card>
-          </div>
-        </b-col>
-        <div class="spacer" style="height: 50px;"></div>
-        <b-col sm="12" md="6">
-          <div>
-            <b-card no-body class="overflow-hidden" style="max-width: 540px;">
-              <b-row no-gutters>
-                <!-- <b-col md="3">
-                  <b-card-img src="/assets/img/adapt_welcome_instructor.jpg" alt="Image" class="rounded-0"></b-card-img>
-                </b-col> -->
-                <b-col md="12">
-                  <b-card-body title="Instructors">
-                    <b-card-text>
-                      Create your Instructor account to enroll your course.
-                    </b-card-text>
-                    <b-button variant="dark" @click="$router.push({ path: '/register/instructor' })">
-                      Create your Instructor Account
-                    </b-button>
-                  </b-card-body>
-                </b-col>
-              </b-row>
-            </b-card>
-          </div>
-        </b-col>
-      </b-row>
-    </b-container>
-
     <b-container class="mt-5 d-none">
       <b-row>
         <b-col>

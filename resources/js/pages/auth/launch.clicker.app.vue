@@ -64,6 +64,7 @@ export default {
   },
   layout: 'blank',
   data: () => ({
+    environment: window.config.environment,
     allFormErrors: [],
     token: '',
     url: '',
@@ -85,11 +86,11 @@ export default {
       : `adaptclicker://${host}/courses?token=${this.token}`
   },
   async mounted () {
-    if (this.isRegistration) {
+    if (this.isRegistration === '0') {
+      document.getElementById('launch-url').click()
+    } else {
       this.timeZones = await getTimeZones()
       this.$bvModal.show('modal-finish-clicker-app-sso-registration')
-    } else {
-      document.getElementById('launch-url').click()
     }
   },
   methods: {

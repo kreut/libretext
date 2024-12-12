@@ -32,7 +32,8 @@ class SSOController extends Controller
     public function isSSOUser()
     {
         $is_sso_user = DB::table('oauth_providers')->where('user_id', Auth::user()->id)->get();
-        $response['is_sso_user'] = $is_sso_user->isNotEmpty();
+        $is_libreone_user = Auth::user()->central_identity_id !== null;
+        $response['is_sso_user'] = $is_sso_user->isNotEmpty() || $is_libreone_user;
         return $response;
     }
 

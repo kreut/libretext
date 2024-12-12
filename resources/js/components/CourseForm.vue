@@ -158,18 +158,6 @@
       If you allow anonymous users, then anybody can view all assessments in your course. However, submissions
       are not saved and answers are not provided.
     </b-tooltip>
-    <b-tooltip target="whitelisted_domains_tooltip">
-      <p>
-        For courses not served through an LMS, whitelisted domains determine acceptable emails for students in your
-        course. For example, if you just want
-        to accept
-        mySchool.edu
-        email addresses, you can whitelist mySchool.edu.
-      </p>
-      <p>
-        Then, only students using email addresses that contain mySchool.edu will be able to enroll.
-      </p>
-    </b-tooltip>
     <b-tooltip target="summative_formative_tooltip"
                delay="250"
                triggers="hover focus"
@@ -578,46 +566,6 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-        <b-form-group
-          v-show="user.role === 2 && !+form.formative && showWhiteListedDomain"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="whitelisted_domains"
-        >
-          <template v-slot:label>
-            Whitelisted Domains*
-            <QuestionCircleTooltip id="whitelisted_domains_tooltip"/>
-          </template>
-          <b-form-row class="mt-2">
-            <b-form-input
-              id="tags"
-              v-model="whitelistedDomain"
-              style="width:200px"
-              type="text"
-              :class="{ 'is-invalid': form.errors.has('whitelisted_domains') }"
-              required
-              class="mr-2"
-              size="sm"
-              @blur="addWhitelistedDomain(whitelistedDomain)"
-            />
-            <b-button variant="outline-primary" size="sm" @click="addWhitelistedDomain(whitelistedDomain)">
-              Add whitelisted domain
-            </b-button>
-            <has-error :form="form" field="whitelisted_domains"/>
-          </b-form-row>
-          <div class="d-flex flex-row">
-            <span v-for="chosenWhitelistedDomain in form.whitelisted_domains" :key="chosenWhitelistedDomain"
-                  class="mt-2"
-            >
-              <b-button size="sm"
-                        variant="secondary"
-                        class="mr-2"
-                        style="line-height:.8"
-                        @click="removeWhitelistedDomain(chosenWhitelistedDomain)"
-              ><span v-html="chosenWhitelistedDomain"/> x</b-button>
-            </span>
-          </div>
-        </b-form-group>
       </div>
     </b-form>
   </div>
@@ -645,8 +593,6 @@ export default {
     newDisciplineForm: new Form({ name: '' }),
     disciplineOptions: [{ text: 'Please choose a discipline', value: null }],
     showGradePassback: false,
-    showWhiteListedDomain: false,
-    whitelistedDomain: '',
     modality: 'summative_formative',
     ltiIsEnabled: false,
     ltiSchools: [],
@@ -674,7 +620,6 @@ export default {
     console.log(this.course)
     if (this.course) {
       this.setModality(this.form)
-      this.showWhiteListedDomain = +this.form.lms === 0
       this.showGradePassback = +this.form.lms === 1
     }
   },
@@ -733,28 +678,7 @@ export default {
       }
     },
     updateShowLMSItems (value) {
-      this.showWhiteListedDomain = value === '0'
       this.$forceUpdate()
-    },
-    removeWhitelistedDomain (chosenWhitelistedDomain) {
-      if (this.form.whitelisted_domains.length === 1) {
-        this.$noty.error('You need at least 1 whitelisted domain.')
-        return
-      }
-      this.form.whitelisted_domains = this.form.whitelisted_domains.filter(whitelistedDomain => whitelistedDomain !== chosenWhitelistedDomain)
-      this.$forceUpdate()
-      this.$noty.info(`${chosenWhitelistedDomain} has been removed.`)
-    },
-    addWhitelistedDomain (whitelistedDomain) {
-      whitelistedDomain = whitelistedDomain.replace(/(.*)@/, '')
-      if (whitelistedDomain) {
-        if (!this.form.whitelisted_domains.includes(whitelistedDomain)) {
-          this.form.whitelisted_domains.push(whitelistedDomain)
-        } else {
-          this.$noty.info(`${whitelistedDomain} is already on your list of whitelisted domains.`)
-        }
-      }
-      this.whitelistedDomain = ''
     },
     setModality (form) {
       if (form.anonymous_users) {

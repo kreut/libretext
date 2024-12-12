@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\OIDC;
 use App\User;
 use Exception;
@@ -127,8 +128,8 @@ class OIDCController extends Controller
         $base64State = base64_encode($state);
 
 
-        $cookie = cookie('oidc_state', $base64State, 1, null, null, true, true, false, 'Strict');
-        $cookie_2 = cookie('oidc_nonce', $nonce, 1, null, null, true, true, false, 'Strict');
+        $cookie = cookie('oidc_state', $base64State, 1, null, null, true, true, false, 'None');
+        $cookie_2 = cookie('oidc_nonce', $nonce, 1, null, null, true, true, false, 'None');
 
         $params = [
             'client_id' => $this->client_id,
@@ -352,13 +353,15 @@ class OIDCController extends Controller
         try {
             $response['type'] = 'error';
             $oidc_state = request()->cookie('oidc_state');
+
             $state_query = $request->state;
 
             // Decode the base64-encoded state cookie and parse the JSON
+
+
             $state = json_decode($state_query, true);
+
             $state_cookie = json_decode(base64_decode($oidc_state), true); // Decode base64 and parse JSON
-
-
 // Check if state or state_cookie is invalid, or if the states do not match
             if (!$state || !$state_cookie || ($state['state'] !== $state_cookie['state'])) {
                 return response()->json([
@@ -434,6 +437,17 @@ class OIDCController extends Controller
                 $user->email = $email;
                 $user->save();
             }
+
+            $linked_accounts = Helper::getLinkedAccounts($user->id);
+            session()->put('linked_accounts', $linked_accounts);
+            session()->forget('original_user_id');
+            session()->forget('admin_user_id');
+            session()->put('original_role', $user->role);
+            session()->put('original_email', $user->email);
+            $user->linked_accounts = $linked_accounts;
+            $user->instructor_user_id = null;
+
+            DB::table('users')->where('instructor_user_id', $user->id)->update(['instructor_user_id' => null]);
             $token = \JWTAuth::fromUser($user);
             $clicker_app = isset($state['clicker_app']) && $state['clicker_app'];
             $cookie = $clicker_app

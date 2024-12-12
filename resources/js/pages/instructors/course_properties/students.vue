@@ -643,6 +643,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading && user.role === 2">
+        <WhitelistedDomains :course-id="courseId"/>
         <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Students</h2>">
           <b-card-text>
             <b-container class="pb-3">
@@ -853,6 +854,7 @@ import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import Vue from 'vue'
 import ErrorMessage from '~/components/ErrorMessage.vue'
 import draggable from 'vuedraggable'
+import WhitelistedDomains from '~/components/WhitelistedDomains.vue'
 
 const VueUploadComponent = require('vue-upload-component')
 const defaultSingleStudentCourseInvitationForm = {
@@ -868,6 +870,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    WhitelistedDomains,
     ErrorMessage,
     Loading,
     FontAwesomeIcon,

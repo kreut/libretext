@@ -19,6 +19,7 @@ use App\Http\Requests\UpdateStudentEmail;
 use App\LinkedAccount;
 use App\LinkToAccountValidationCode;
 use App\LtiGradePassback;
+use App\OIDC;
 use App\PendingCourseInvitation;
 use App\Score;
 use App\Section;
@@ -196,10 +197,13 @@ class UserController extends Controller
     /**
      * @param InviteStudentRequest $request
      * @param User $user
+     * @param OIDC $OIDC
      * @return array
      * @throws Exception
      */
-    public function inviteStudent(InviteStudentRequest $request, User $user): array
+    public function inviteStudent(InviteStudentRequest $request,
+                                  User                 $user,
+                                  OIDC                 $OIDC): array
     {
 
         try {
@@ -271,10 +275,25 @@ class UserController extends Controller
                     $request->validated();
                     $section = DB::table('sections')->where('id', $request->section_id)->first();
                     $course_id = $section->course_id;
+                    $instructor = DB::table('courses')
+                        ->join('users', 'courses.user_id', '=', 'users.id')
+                        ->where('course_id', $course_id)
+                        ->first();
                     $section_id = $request->section_id;
                     $email = trim($request->email);
                     $last_name = $request->last_name;
                     $first_name = $request->first_name;
+                    $data = ['email' => $email,
+                        'first_name' => $first_name,
+                        'last_name' => $last_name,
+                        'user_type' => 'student',
+                        'time_zone' => $instructor->time_zone];
+                    try {
+                        $OIDC->autoProvision($data);
+                    } catch (Exception $e) {
+                        $h = new Handler(app());
+                        $h->report($e);
+                    }
                     break;
                 case('email_list'):
                     $email = trim($request->email);

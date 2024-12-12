@@ -134,7 +134,7 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
      */
     public function isAdminWithCookie(): bool
     {
-        $admins = ['adapt@libretexts.org', 'dlarsen@ucdavis.edu', 'justin.shorb@gmail.com'];
+        $admins = ['adapt@libretexts.org', ' dlarsen@ucdavis.edu', 'dlarsen@ucdavis.edu', 'justin.shorb@gmail.com'];
         if (app()->environment('local', 'testing')) {
             $admins[] = 'me@me.com';
         }

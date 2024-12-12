@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'"/>
     <b-modal
       id="modal-delete-section"
       ref="modal"
@@ -39,7 +39,7 @@
              ref="modal"
              :title="sectionId ? 'Edit Section Name' : 'Add Section'"
     >
-      <RequiredText />
+      <RequiredText/>
       <b-form-group
         label-cols-sm="5"
         label-cols-lg="4"
@@ -57,7 +57,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
         />
-        <has-error :form="sectionForm" field="name" />
+        <has-error :form="sectionForm" field="name"/>
       </b-form-group>
       <b-form-group
         label-cols-sm="5"
@@ -77,7 +77,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('crn') }"
           @keydown="sectionForm.errors.clear('crn')"
         />
-        <has-error :form="sectionForm" field="crn" />
+        <has-error :form="sectionForm" field="crn"/>
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -113,17 +113,18 @@
           </b-alert>
         </div>
         <div v-else>
+          <WhitelistedDomains :course-id="+courseId"/>
           <b-card header="default" header-html="<h2 class=&quot;h7&quot;>General Information</h2>">
             <b-card-text>
               <div v-if="user.email !== 'commons@libretexts.org'">
                 <p>
                   This course currently runs from
                   <span class="font-weight-bold">{{
-                    $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                  }}</span> to
+                      $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                    }}</span> to
                   <span class="font-weight-bold">{{
-                    $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                  }}</span>.
+                      $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                    }}</span>.
                   The access codes will only be valid within the start and end dates of
                   this course. If you need to change these dates, you can always do so
                   <a href="" @click.prevent="$router.push({name: 'course_properties.general_info'})">here</a>.
@@ -131,7 +132,7 @@
                 <b-table striped hover :fields="fields" :items="sections" title="Sections">
                   <template v-slot:head(crn)>
                     CRN
-                    <QuestionCircleTooltip :id="'crn-tooltip'" />
+                    <QuestionCircleTooltip :id="'crn-tooltip'"/>
                     <b-tooltip target="crn-tooltip" triggers="hover focus" delay="500">
                       The Course Reference Number is the number that identifies a specific section of a course being
                       offered.
@@ -149,18 +150,21 @@
                           :aria-label="`Copy access code for ${data.item.name}`"
                           @click.prevent="doCopy(`access_code-${data.item.id}`)"
                         >
-                          <font-awesome-icon :icon="copyIcon" />
+                          <font-awesome-icon :icon="copyIcon"/>
                         </a>
                       </span>
                     </div>
                     <div v-else>
-                      No access code required. <QuestionCircleTooltip id="no_access_code_required_tooltip" />
+                      No access code required.
+                      <QuestionCircleTooltip id="no_access_code_required_tooltip"/>
                       <b-tooltip target="no_access_code_required_tooltip"
                                  delay="500"
                                  triggers="hover focus"
                       >
-                        You do not need to provide an access code for courses served through an LMS that only have a single
-                        section.  ADAPT will automatically enroll your students when they enter their first assignment through your LMS.
+                        You do not need to provide an access code for courses served through an LMS that only have a
+                        single
+                        section. ADAPT will automatically enroll your students when they enter their first assignment
+                        through your LMS.
                       </b-tooltip>
                     </div>
                   </template>
@@ -180,7 +184,7 @@
                          class="pr-1"
                          @click.prevent="initEditSection(data.item)"
                       >
-                        <b-icon icon="pencil" class="text-muted" :aria-label="`Edit ${data.item.name}`" />
+                        <b-icon icon="pencil" class="text-muted" :aria-label="`Edit ${data.item.name}`"/>
                       </a>
 
                       <span v-if="data.index >0">
@@ -242,6 +246,7 @@
 </template>
 <script>
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
+import WhitelistedDomains from '~/components/WhitelistedDomains.vue'
 import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
@@ -257,6 +262,7 @@ export default {
   middleware: 'auth',
   components: {
     Loading,
+    WhitelistedDomains,
     AllFormErrors,
     FontAwesomeIcon
   },

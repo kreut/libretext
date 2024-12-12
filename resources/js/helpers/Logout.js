@@ -13,7 +13,9 @@ export async function logout () {
   })
   console.log(Object.keys(localStorage))
   if (data.is_sso_user) {
-    window.location = 'https://sso.libretexts.org/cas/logout'
+    window.location = this.environment === 'production'
+      ? 'https://auth.libretexts.org/cas/logout'
+      : 'https://castest2.libretexts.org/cas/logout'
   } else {
     await this.$router.push({ name: 'welcome' })
   }
