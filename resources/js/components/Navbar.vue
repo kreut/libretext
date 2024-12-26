@@ -343,7 +343,9 @@ export default {
       window.location.href = 'api/oidc/initiate-login/web'
     },
     registerWithLibreOne () {
-      location.href = 'https://staging.one.libretexts.org/register?source=adapt-registration'
+      window.location.href = this.environment === 'production'
+        ? 'https://one.libretexts.org/register?source=adapt-registration'
+        : 'https://staging.one.libretexts.org/register?source=adapt-registration'
     },
     loadCoursesPage () {
       window.location.replace('/instructors/courses')
