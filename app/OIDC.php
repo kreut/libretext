@@ -24,7 +24,7 @@ class OIDC extends Model
             $this->password = DB::table('key_secrets')->where('key', $username)->first()->secret;
         } else {
             $this->username = 'some';
-            $this->username = 'fake-thing';
+            $this->password = 'fake-thing';
         }
         $this->base_url = app()->environment('production')
             ? 'https://one.libretexts.org/api/v1'

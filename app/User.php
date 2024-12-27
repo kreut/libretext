@@ -141,7 +141,6 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
         if (app()->environment('local', 'testing')) {
             $admins[] = 'me@me.com';
         }
-
         $isValidEmail = in_array(session()->get('original_email'), $admins);//get the original email since they may be in student view
         $isValidCookie = $this->isMe();
         return $isValidEmail && $isValidCookie;

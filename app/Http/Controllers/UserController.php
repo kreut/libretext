@@ -222,7 +222,13 @@ class UserController extends Controller
             $first_name = '';
             $email = '';
             $student_id = $student_to_invite["Student ID"] ?? 'None provided.';
-
+            $section = DB::table('sections')->where('id', $request->section_id)->first();
+            $course_id = $section->course_id;
+            $instructor = DB::table('courses')
+                ->join('users', 'courses.user_id', '=', 'users.id')
+                ->where('courses.id', $course_id)
+                ->first();
+            $section_id = $request->section_id;
             switch ($request->invitation_type) {
                 case('student_from_roster_invitation'):
 
@@ -273,27 +279,9 @@ class UserController extends Controller
 
                 case('single_student'):
                     $request->validated();
-                    $section = DB::table('sections')->where('id', $request->section_id)->first();
-                    $course_id = $section->course_id;
-                    $instructor = DB::table('courses')
-                        ->join('users', 'courses.user_id', '=', 'users.id')
-                        ->where('course_id', $course_id)
-                        ->first();
-                    $section_id = $request->section_id;
                     $email = trim($request->email);
                     $last_name = $request->last_name;
                     $first_name = $request->first_name;
-                    $data = ['email' => $email,
-                        'first_name' => $first_name,
-                        'last_name' => $last_name,
-                        'user_type' => 'student',
-                        'time_zone' => $instructor->time_zone];
-                    try {
-                        $OIDC->autoProvision($data);
-                    } catch (Exception $e) {
-                        $h = new Handler(app());
-                        $h->report($e);
-                    }
                     break;
                 case('email_list'):
                     $email = trim($request->email);
@@ -302,12 +290,39 @@ class UserController extends Controller
                     }
                     break;
                 default:
-                    $errors = "$request->inivitation_type is not a valid invitation type.";
+                    $errors = "$request->invitation_type is not a valid invitation type.";
             }
             if ($errors) {
                 $response['type'] = 'error';
                 $response['message'] = "Error: $errors";
             } else {
+                if ($request->invitation_type !== 'email_list'){
+
+                    $data = ['email' => $email,
+                        'first_name' => $first_name,
+                        'last_name' => $last_name,
+                        'role' => 3,
+                        'time_zone' => $instructor->time_zone];
+                    $user = User::where('email', $email)->first();
+                    if (!$user) {
+                        $user = User::create($data);
+                    }
+                    try {
+                        $data = ['email' => $email,
+                            'first_name' => $first_name,
+                            'last_name' => $last_name,
+                            'user_type' => 'student',
+                            'time_zone' => $instructor->time_zone];
+                        $oidc_response = $OIDC->autoProvision($data);
+                        if ($oidc_response['type'] === 'success') {
+                            $user->central_identity_id = $oidc_response['central_identity_id'];
+                            $user->save();
+                        }
+                    } catch (Exception $e) {
+                        $h = new Handler(app());
+                        $h->report($e);
+                    }
+                }
                 $access_code = Helper::createAccessCode(8);
                 $pendingCourseInvitation = PendingCourseInvitation::updateOrCreate(
                     [
