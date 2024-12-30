@@ -39,6 +39,7 @@ Route::get('/oidc/initiate-login/{mode}', 'OIDCController@initiateLogin');
 Route::get('/oidc/login-by-jwt/{token}', 'OIDCController@loginByJWT');
 
 Route::get('/oidc/libreone/callback', 'OIDCController@callback');
+Route::post('/oidc/libreone/callback', 'OIDCController@logoutCallback');
 Route::post('/oidc/libreone/instructor-verified', 'OIDCController@instructorVerified');
 Route::post('/oidc/libreone/new-user-created', 'OIDCController@newUserCreated');
 

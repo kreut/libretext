@@ -10,6 +10,7 @@ use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\UrlGenerator;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
@@ -103,6 +104,13 @@ class OIDCController extends Controller
 
     }
 
+    public function logoutCallback()
+    {
+        $response['message'] = "POST to /oidc/libreone/callback is not currently used for anything.";
+        $response['type'] = 'info';
+        return $response;
+    }
+
     /**
      * @param Request $request
      * @param string $mode
@@ -128,8 +136,8 @@ class OIDCController extends Controller
         $base64State = base64_encode($state);
 
 
-        $cookie = cookie('oidc_state', $base64State, 1, null, null, true, true, false, 'None');
-        $cookie_2 = cookie('oidc_nonce', $nonce, 1, null, null, true, true, false, 'None');
+        $cookie = cookie('oidc_state', $base64State, 20, null, null, true, true, false, 'None');
+        $cookie_2 = cookie('oidc_nonce', $nonce, 20, null, null, true, true, false, 'None');
 
         $params = [
             'client_id' => $this->client_id,
@@ -284,12 +292,11 @@ class OIDCController extends Controller
 
     /**
      * @param string $token
-     * @return array
+     * @return JsonResponse
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
-     * @throws Exception
      */
-    public function loginByJWT(string $token): array
+    public function loginByJWT(string $token): JsonResponse
     {
         try {
             $landing_page = session()->has('landing_page') ? session()->get('landing_page') : '';
@@ -318,7 +325,14 @@ class OIDCController extends Controller
             $h->report($e);
             $response['message'] = $e->getMessage();
         }
-        return $response;
+
+        $expiredCookie1 = cookie('oidc_state', '', -1, null, null, true, true, false, 'None');
+        $expiredCookie2 = cookie('oidc_nonce', '', -1, null, null, true, true, false, 'None');
+
+        return response()->json($response)
+            ->withCookie($expiredCookie1)
+            ->withCookie($expiredCookie2);
+
     }
 
     /**
@@ -345,7 +359,7 @@ class OIDCController extends Controller
 
     /**
      * @param Request $request
-     * @return array|\Illuminate\Http\JsonResponse
+     * @return array|JsonResponse
      * @throws Exception
      */
     public function callback(Request $request)

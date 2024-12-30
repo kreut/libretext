@@ -48,7 +48,12 @@
             <b-nav-item v-show="!isAnonymousUser && !(user && (user.fake_student || user.testing_student))"
                         @click="contactUsWidget()"
             >
-              <span class="" :class="{ 'hidden-nav-link': isLearningTreesEditor }">Support</span>
+              <div :class="{
+    'mt-1': libreOneTester,
+    'hidden-nav-link': isLearningTreesEditor
+}"
+              >Support
+              </div>
             </b-nav-item>
             <b-nav-item v-if="user && (user.fake_student || user.testing_student || user.formative_student)"
                         @click.prevent="logout"
@@ -57,12 +62,19 @@
               <span v-if="user.formative_student">End Session</span>
             </b-nav-item>
             <b-nav-item v-if="!user && libreOneTester">
-              <b-button size="sm" id="initiate-login" variant="primary" @click="beginLogin">Log In</b-button>
+              <b-button
+                size="sm"
+                variant="primary"
+                class="btn-rounded d-flex align-items-center"
+                @click="beginLogin"
+              >
+                <i class="fas fa-user me-2"></i> Log In/Register
+              </b-button>
             </b-nav-item>
             <b-nav-item v-if="!user && !libreOneTester" @click="$router.push({ name: 'login' })">
               <span :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''">Log In</span>
             </b-nav-item>
-            <b-nav-item v-show="!user" right>
+            <b-nav-item v-show="!user && !libreOneTester" right>
               <span @click="registerWithLibreOne">Register</span>
             </b-nav-item>
           </b-navbar-nav>
@@ -319,6 +331,8 @@ export default {
     }
   },
   created () {
+    const libreOneTester = window.config.environment === 'local' ? '0' : '1'
+    localStorage.setItem('libreOneTester', libreOneTester)
     this.libreOneTester = +localStorage.libreOneTester === 1
     this.logout = logout
     const widgetScript = document.createElement('script')
@@ -498,4 +512,10 @@ export default {
 .nav-link {
   padding-top: .25em;
 }
+
+.btn-rounded {
+  border-radius: 6px; /* Rounded corners for modern look */
+  padding: 6px; /* Adequate spacing */
+}
+
 </style>
