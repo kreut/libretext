@@ -185,6 +185,23 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function cannot_submit_work_if_not_assigned_question()
+    {
+        $this->actingAs($this->student_user_2)->patchJson("/api/submissions/assignments/{$this->assignment->id}/questions/{$this->question->id}/submit-work")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to submit work for this question.']);
+    }
+
+    /** @test */
+    public function cannot_delete_submitted_work_if_not_assigned_question()
+    {
+        $this->actingAs($this->student_user_2)->deleteJson("/api/submissions/assignments/{$this->assignment->id}/questions/{$this->question->id}/submitted-work")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to delete submitted work for this question.']);
+    }
+
+
+    /** @test */
     public function non_owner_cannot_set_the_current_page_for_a_clicker_assessment()
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/set-current-page")
@@ -198,7 +215,6 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/start-clicker-assessment")
             ->assertJson(['message' => 'You are not allowed to start this clicker assessment.']);
     }
-
 
 
     /** @test */
@@ -318,7 +334,6 @@ class QuestionsViewTest extends TestCase
             ->postJson("/api/submission-history/assignment/{$this->assignment->id}/question/{$this->question->id}")
             ->assertJson(['message' => 'You are not allowed to access that submission array.']);
     }
-
 
 
     /** @test */
@@ -768,7 +783,6 @@ class QuestionsViewTest extends TestCase
             ->where('question_id', $question_id)->first();
         $this->assertEquals(floatVal($points), floatVal($submission->score));
         DB::table('submissions')->delete();
-
 
 
     }
@@ -2034,7 +2048,6 @@ class QuestionsViewTest extends TestCase
     }
 
 
-
     /** @test */
     public function owner_can_submit_solution_text_attached_to_audio()
     {
@@ -2160,8 +2173,6 @@ class QuestionsViewTest extends TestCase
         )->assertJson(['message' => 'You did not submit any text.']);
 
     }
-
-
 
 
     /** @test */

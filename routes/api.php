@@ -391,7 +391,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('rubric-category-submissions/{rubricCategorySubmission}/test-rubric-criteria', 'RubricCategorySubmissionController@testRubricCriteria');
 
     Route::patch('/assignments/{assignment}/questions/{question}/custom-title', 'AssignmentSyncQuestionController@updateCustomTitle');
-
+    Route::patch('/assignments/{assignment}/questions/{question}/can-submit-work-override/{can_submit_work_override}', 'AssignmentSyncQuestionController@updateCanSubmitWorkOverride');
 
     Route::post('rubric-category-custom-criteria', 'RubricCategoryCustomCriteriaController@store');
 
@@ -763,7 +763,8 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
     Route::patch('/submissions/assignments/{assignment}/question/{question}/reset-submission', 'SubmissionController@resetSubmission');
-
+    Route::patch('/submissions/assignments/{assignment}/questions/{question}/submit-work', 'SubmissionController@submitWork');
+    Route::delete('/submissions/assignments/{assignment}/questions/{question}/submitted-work', 'SubmissionController@deleteSubmittedtWork');
     Route::patch('/submissions/time-spent/assignment/{assignment}/question/{question}', 'AssignmentQuestionTimeOnTaskController@update');
     Route::patch('/assignment-question-time-spents/assignment/{assignment}/question/{question}', 'AssignmentQuestionTimeOnTaskController@update');
     Route::get('/assignment-question-time-spents/assignment/{assignment}', 'AssignmentQuestionTimeOnTaskController@getTimeOnTasksByAssignment');

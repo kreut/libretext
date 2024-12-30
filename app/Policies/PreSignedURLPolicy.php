@@ -21,7 +21,24 @@ class PreSignedURLPolicy
     {
         return $user->role === 2
             ? Response::allow()
-            : Response::deny('You are not allowed to upload upload a student roster.');
+            : Response::deny('You are not allowed to upload a student roster.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param PreSignedURL $preSignedURL
+     * @param Assignment $assignment
+     * @param int $question_id
+     * @return Response
+     */
+    public function submittedWork(User $user, PreSignedURL $preSignedURL, Assignment $assignment, int $question_id): Response
+    {
+        $authorized = in_array($question_id, $assignment->questions->pluck('id')->toArray())
+            && $assignment->course->enrollments->contains('user_id', $user->id);
+        return  $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to submit work for this question.');
 
     }
 

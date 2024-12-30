@@ -26,6 +26,7 @@ class AssignmentTemplateTest extends TestCase
             'formative' => 0,
             'scoring_type' => 'p',
             'source' => 'a',
+            'can_submit_work' => 0,
             'points_per_question' => 'number of points',
             'default_points_per_question' => 2,
             'students_can_view_assignment_statistics' => 0,

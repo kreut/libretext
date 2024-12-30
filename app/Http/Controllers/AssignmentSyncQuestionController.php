@@ -53,12 +53,53 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
+use PhpParser\Node\Expr\Assign;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 
 class AssignmentSyncQuestionController extends Controller
 {
+
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param int $can_submit_work_override
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function updateCanSubmitWorkOverride(Request                $request,
+                                                Assignment             $assignment,
+                                                Question               $question,
+                                                int                    $can_submit_work_override,
+                                                AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateCanSubmitWorkOverride', [$assignmentSyncQuestion, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['can_submit_work_override' => $can_submit_work_override]);
+            $response['type'] = $can_submit_work_override ? 'success' : 'info';
+            $verb = $can_submit_work_override ? 'can' : 'cannot';
+            $response['message'] = "Your students $verb submit their work for review.";
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the 'can submit work' option.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
     /**
      * @param Request $request
      * @param Assignment $assignment
@@ -1742,7 +1783,8 @@ class AssignmentSyncQuestionController extends Controller
         $submission_count = 0;
         $late_question_submission = false;
         $answered_correctly_at_least_once = 0;
-
+        $submitted_work = null;
+        $submitted_work_at = null;
 
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
@@ -1756,11 +1798,14 @@ class AssignmentSyncQuestionController extends Controller
             $late_penalty_percent = $Submission->latePenaltyPercent($assignment, Carbon::parse($last_submitted));
             $late_question_submission = $this->isLateSubmission($Extension, $assignment, Carbon::parse($last_submitted));
             $answered_correctly_at_least_once = $submission->answered_correctly_at_least_once;
-
+            $submitted_work = $submission->submitted_work;
+            $submitted_work_at = $submission->submitted_work_at;
             $student_response = $Submission->getStudentResponse($submission, $question_technologies[$question_id]);
 
         }
         return compact('student_response',
+            'submitted_work',
+            'submitted_work_at',
             'correct_response',
             'submission_score',
             'last_submitted',
@@ -2165,6 +2210,9 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['question_editor_name'] = $question_editor_names_by_question_editor_user_id[$question->question_editor_user_id] ?? 'None provided';
 
+                $assignment->questions[$key]['can_submit_work'] = isset($assignment_questions_by_question_id[$question->id]->can_submit_work_override) && $assignment_questions_by_question_id[$question->id]->can_submit_work_override !== null
+                    ? $assignment_questions_by_question_id[$question->id]->can_submit_work_override
+                    : $assignment->can_submit_work;
                 $assignment->questions[$key]['question_revision_id'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->id : null;
                 $assignment->questions[$key]['question_revision_number'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->revision_number : null;
                 $assignment->questions[$key]['question_revision_id_latest'] = $latest_question_revisions_by_question_id[$question->id] ?? null;
@@ -2225,9 +2273,16 @@ class AssignmentSyncQuestionController extends Controller
                     : "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
 
                 $response_info = $this->getResponseInfo($assignment, $extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
-
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
+                $submitted_work = $response_info['submitted_work']
+                    ? Storage::disk('s3')->temporaryUrl("submitted-work/{$assignment->id}/{$response_info['submitted_work']}", now()->addDay())
+                    : null;
+                $submitted_work_at = $response_info['submitted_work_at']
+                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(
+                        $response_info['submitted_work_at'],
+                        $request->user()->time_zone, 'M d, Y \a\t g:i:s a')
+                    : null;
                 $submission_score = Helper::removeZerosAfterDecimal($response_info['submission_score']);
                 $last_submitted = $response_info['last_submitted'];
                 $submission_count = $response_info['submission_count'];
@@ -2235,6 +2290,8 @@ class AssignmentSyncQuestionController extends Controller
 
 
                 $assignment->questions[$key]['student_response'] = $student_response;
+                $assignment->questions[$key]['submitted_work'] = $submitted_work;
+                $assignment->questions[$key]['submitted_work_at'] = $submitted_work_at;
                 $assignment->questions[$key]['open_ended_submission_type'] = $open_ended_submission_types[$question->id];
                 $assignment->questions[$key]['open_ended_text_editor'] = $open_ended_text_editors[$question->id];
                 $assignment->questions[$key]['open_ended_default_text'] = $open_ended_default_texts[$question->id];

@@ -67,6 +67,7 @@ class StoreAssignmentProperties extends FormRequest
             ];
             if (!$formative) {
                 $rules['assignment_group_id'] = 'required|exists:assignment_groups,id';
+                $rules['can_submit_work'] = ['required', Rule::in([0, 1])];
                 $auto_releases = ['auto_release_shown',
                     'auto_release_show_scores',
                     'auto_release_solutions_released',
@@ -122,10 +123,10 @@ class StoreAssignmentProperties extends FormRequest
                 $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
             }
 
-                $rules['can_view_hint'] = ['required', Rule::in([0, 1])];
-                if ((int)$this->can_view_hint === 1 && !$formative) {
-                    $rules['hint_penalty'] = [new IsValidHintPenalty()];
-                }
+            $rules['can_view_hint'] = ['required', Rule::in([0, 1])];
+            if ((int)$this->can_view_hint === 1 && !$formative) {
+                $rules['hint_penalty'] = [new IsValidHintPenalty()];
+            }
 
             if ($formative) {
                 $this->number_of_allowed_attempts_penalty = 0;
@@ -225,7 +226,7 @@ class StoreAssignmentProperties extends FormRequest
     public function messages(): array
     {
         $autoRelease = new AutoRelease();
-        $messages= $autoRelease->requestMessages();
+        $messages = $autoRelease->requestMessages();
         if (!$this->is_template) {
             foreach ($this->assign_tos as $key => $assign_to) {
                 $index = $key + 1;

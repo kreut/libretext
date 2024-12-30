@@ -352,6 +352,27 @@
                   <b-card ref="questionCard" header="default" :header-html="questionHeader">
 
                     <b-card-text>
+                      <b-modal id="modal-submitted-work"
+                               :title="`Submitted on ${grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work_at']}`"
+                               size="xl"
+                      >
+                        <b-embed
+                          v-resize="{ log: false, checkOrigin: false }"
+                          width="100%"
+                          :src="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
+                          allowfullscreen
+                        />
+                        <template #modal-footer>
+                          <b-button
+                            size="sm"
+                            variant="primary"
+                            class="float-right"
+                            @click="$bvModal.hide('modal-submitted-work')"
+                          >
+                            OK
+                          </b-button>
+                        </template>
+                      </b-modal>
                       <div v-if="grading[currentStudentPage - 1]['technology_iframe']
                              && technology === 'h5p'
                              && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
@@ -832,6 +853,20 @@
               <b-row class="mt-2">
                 <b-col>
                   <b-card header="default" :header-html="getSubmissionSummaryTitle()">
+                    <b-row v-if="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
+                    class="pb-2 pl-2">
+                       <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
+                             title="This submitted work is only applicable to the current submission."
+                       >
+                    <b-button
+                      variant="primary"
+                      size="sm"
+                      @click="$bvModal.show('modal-submitted-work')"
+                    >
+                      View Submitted Work
+                    </b-button>
+                       </span>
+                    </b-row>
                     <SubmissionArray :submission-array="submissionArray"
                                      :question-submission-array="submissionArray"
                                      :question-id="+questionView"

@@ -686,7 +686,7 @@
         Be sure to paste the different sections of the report in the form below.
       </div>
       <div v-if="questions[currentPage-1]
-      && (assessmentType === 'real time' || (assessmentType === 'delayed' && solutionsReleased))"
+        && (assessmentType === 'real time' || (assessmentType === 'delayed' && solutionsReleased))"
       >
         <SubmissionArray :submission-array="submissionArray"
                          :question-id="questions[currentPage-1].id"
@@ -1877,6 +1877,29 @@
                   </div>
                 </b-col>
               </b-form-row>
+              <b-row
+                v-if="questions
+                  && questions[currentPage-1]
+                  && !isOpenEnded
+                  && !isFormative
+                  && ['real time', 'delayed'].includes(assessmentType)"
+              >
+                <label for="can_submit_work_override" class="pl-3 mr-2">Can submit work</label>
+                <b-form-radio-group
+                  id="can_submit_work_override"
+                  v-model="questions[currentPage-1].can_submit_work"
+                  stacked
+                  @change="updateCanSubmitWorkOverride"
+                >
+                  <b-form-radio name="can_submit_work" value="1">
+                    Yes
+                    <CanSubmitWorkTooltip/>
+                  </b-form-radio>
+                  <b-form-radio name="can_submit_work" value="0">
+                    No
+                  </b-form-radio>
+                </b-form-radio-group>
+              </b-row>
               <b-row align-h="center">
                 <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage"/>
                 <a href="" @click.prevent="openUpdateCompletionScoringModeModal()">
@@ -2920,7 +2943,7 @@
                     </span>
                     <ul style="list-style-type:none" class="pl-0">
                       <li v-if="!['qti','webwork','imathas'].includes(questions[currentPage-1].technology)">
-                        <span class="font-weight-bold">Submission
+                        <span class="font-weight-bold pr-1">Submission
                           <span v-if="!questions[currentPage - 1].has_h5p_video_interaction_submissions">
                             <span
                               :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
@@ -2934,16 +2957,47 @@
                                     @click="$bvModal.show('modal-h5p-video-interaction-submissions')"
                           >View</b-button>
                         </span>
+                        <span v-if="!isOpenEnded
+                        && questions[currentPage - 1].last_submitted !== 'N/A'
+                        && questions[currentPage-1].can_submit_work"
+                        >
+                          <SubmitWork class="pl-1"
+                                      :submit-button-active="submitButtonActive"
+                                      :key="`submit-work-${submitWorkKey}`"
+                                      :user-id="questions[currentPage-1].user_id"
+                                      :assignment-id="+assignmentId"
+                                      :question-id="+questions[currentPage-1].id"
+                                      :submitted-work="questions[currentPage-1].submitted_work"
+                                      :submitted-work-at="questions[currentPage-1].submitted_work_at"
+                                      @updateSubmittedWork="updateSubmittedWork"
+                          />
+                      </span>
                       </li>
                       <li
                         v-if="['webwork','imathas'].includes(questions[currentPage-1].technology) && submissionArray.length"
+                        class="flex d-inline-flex"
                       >
-                        <span class="font-weight-bold">Submission:
+                        <span class="font-weight-bold pr-1">Submission:
                           <span v-if="questions[currentPage - 1].last_submitted === 'N/A'" class="text-danger"
                           >N/A</span>
                         </span>
                         <span v-if="questions[currentPage - 1].last_submitted !== 'N/A'">
                           <b-button size="sm" variant="info" @click="showSubmissionArray">View Summary</b-button></span>
+                        <span v-if="!isOpenEnded
+                        && questions[currentPage - 1].last_submitted !== 'N/A'
+                        && questions[currentPage-1].can_submit_work"
+                        >
+                  <SubmitWork class="pl-1"
+                              :submit-button-active="submitButtonActive"
+                              :key="`submit-work-${submitWorkKey}`"
+                              :user-id="questions[currentPage-1].user_id"
+                              :assignment-id="+assignmentId"
+                              :question-id="+questions[currentPage-1].id"
+                              :submitted-work="questions[currentPage-1].submitted_work"
+                              :submitted-work-at="questions[currentPage-1].submitted_work_at"
+                              @updateSubmittedWork="updateSubmittedWork"
+                  />
+                      </span>
                       </li>
                       <li>
                         <span class="font-weight-bold">Submitted At:
@@ -2984,7 +3038,6 @@
                        && (showSubmissionInformation || openEndedSubmissionType === 'file')
                        && !isAnonymousUser"
                      :class="{ 'mt-3': (questions[currentPage-1].technology_iframe && showSubmissionInformation) || zoomedOut, 'mb-3': true }"
-
               >
                 <b-card header="Default" :header-html="getOpenEndedTitle()"
                         class="sidebar-card"
@@ -3295,6 +3348,8 @@ import {
 import { initCentrifuge } from '../helpers/Centrifuge'
 import SubmissionArray from '../components/SubmissionArray.vue'
 import SketcherSubmission from '../components/SketcherSubmission.vue'
+import CanSubmitWorkTooltip from '../components/CanSubmitWorkTooltip.vue'
+import SubmitWork from '~/components/SubmitWork.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3305,6 +3360,8 @@ export default {
   middleware: 'auth',
   layout: window.config.clickerApp ? 'blank' : 'default',
   components: {
+    SubmitWork,
+    CanSubmitWorkTooltip,
     SketcherSubmission,
     SubmissionArray,
     UpdateRevision,
@@ -3335,6 +3392,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    submitWorkKey: 0,
     isPhone: false,
     showSketcherSubmission: false,
     showSolutionFileHTML: false,
@@ -3699,7 +3757,7 @@ export default {
     window.removeEventListener('visibilitychange', this.visibilityChange)
   },
   async mounted () {
-   this.isPhone = window.innerWidth < 768
+    this.isPhone = window.innerWidth < 768
     if (localStorage.ltiTokenId) {
       await this.refreshToken()
     }
@@ -3853,6 +3911,22 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    updateSubmittedWork (data) {
+      this.questions[this.currentPage - 1].submitted_work = data.submittedWorkUrl
+      this.questions[this.currentPage - 1].submitted_work_at = data.submittedWorkAt
+    },
+    async updateCanSubmitWorkOverride () {
+      const newValue = 1 - this.questions[this.currentPage - 1].can_submit_work
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/can-submit-work-override/${newValue}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          this.questions[this.currentPage - 1].can_submit_work = 1 - this.questions[this.currentPage - 1].can_submit_work
+        }
+      } catch (error) {
+        this.questions[this.currentPage - 1].can_submit_work = 1 - this.questions[this.currentPage - 1].can_submit_work
+      }
+    },
     showHintModal () {
       !this.questions[this.currentPage - 1].shown_hint
         ? this.$bvModal.show('modal-confirm-show-hint')

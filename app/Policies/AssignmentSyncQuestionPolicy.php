@@ -24,6 +24,22 @@ class AssignmentSyncQuestionPolicy
      * @param Assignment $assignment
      * @return Response
      */
+    public function updateCanSubmitWorkOverride(User                   $user,
+                                                AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                Assignment             $assignment): Response
+    {
+        return $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed update the can submit work override for this question.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
     public function getDiscussItQuestionsByAssignment(User                   $user,
                                                       AssignmentSyncQuestion $assignmentSyncQuestion,
                                                       Assignment             $assignment): Response

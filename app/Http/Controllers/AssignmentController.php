@@ -1876,6 +1876,7 @@ class AssignmentController extends Controller
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
                 'can_view_hint' => $assignment->can_view_hint,
+                'can_submit_work' =>$assignment->can_submit_work,
                 'hint_penalty' => $assignment->hint_penalty,
                 'file_upload_mode' => $assignment->file_upload_mode,
                 'has_submissions_or_file_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
@@ -2204,6 +2205,7 @@ class AssignmentController extends Controller
                 $formatted_items['formative'] = (bool)$assignment->formative;
                 $formatted_items['is_beta_assignment'] = $assignment->isBetaAssignment();
                 $formatted_items['is_alpha_course'] = (bool)$assignment->course->alpha;
+                $formatted_items['can_submit_work'] = $assignment->can_submit_work;
                 $formatted_items['course_end_date'] = $assignment->course->end_date;
                 $formatted_items['course_start_date'] = $assignment->course->start_date;
                 $formatted_items['anonymous_users'] = $assignment->course->anonymous_users;

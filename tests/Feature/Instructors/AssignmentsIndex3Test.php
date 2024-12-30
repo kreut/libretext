@@ -69,6 +69,7 @@ class AssignmentsIndex3Test extends TestCase
             'source' => 'a',
             'points_per_question' => 'number of points',
             'default_points_per_question' => 2,
+            'can_submit_work' => 0,
             'students_can_view_assignment_statistics' => 0,
             'include_in_weighted_average' => 1,
             'late_policy' => 'not accepted',

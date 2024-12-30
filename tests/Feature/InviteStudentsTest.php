@@ -102,7 +102,7 @@ class InviteStudentsTest extends TestCase
         $this->actingAs($this->student_user)
             ->postJson("/api/s3/pre-signed-url", ['upload_file_type' => 'student-roster',
                 'file_name' => 'student-roster-template.csv'])
-            ->assertJson(['message' => 'You are not allowed to upload upload a student roster.']);
+            ->assertJson(['message' => 'You are not allowed to upload a student roster.']);
 
     }
 

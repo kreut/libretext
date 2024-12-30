@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Storage;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use stdClass;
@@ -63,6 +64,13 @@ class Submission extends Model
         foreach ($enrolled_users as $enrolled_user) {
             if (isset($submissions_by_user[$enrolled_user->id])) {
                 $submission = $submissions_by_user[$enrolled_user->id];
+                $submitted_work = $submission->submitted_work
+                    ? Storage::disk('s3')->temporaryUrl("submitted-work/$assignment->id/$submission->submitted_work", now()->addDay())
+                    : null;
+                $submitted_work_at = $submission->submitted_work_at
+                    ? Carbon::now('UTC') // Get the current UTC time
+                    ->setTimezone(request()->user()->time_zone) // Adjust to the user's timezone
+                    ->format('M d, Y \a\t g:i:s a') : null;
                 $auto_graded_submission_info_by_user[] = [
                     'user_id' => $enrolled_user->id,
                     'question_id' => $question->id,
@@ -70,6 +78,8 @@ class Submission extends Model
                     'last_first' => $enrolled_user->last_name . ', ' . $enrolled_user->first_name,
                     'email' => $enrolled_user->email,
                     'submission' => $this->getStudentResponse($submission, $question->technology, true),
+                    'submitted_work' => $submitted_work,
+                    'submitted_work_at' => $submitted_work_at,
                     'submission_count' => $submission->submission_count,
                     'score' => Helper::removeZerosAfterDecimal($submission->score),
                     'updated_at' => $submission->updated_at
@@ -1629,7 +1639,7 @@ class Submission extends Model
         $data = [
             'reference_diagram' => $question->solutionStructure,
             'student_diagram' => json_decode($student_response)->structure,
-            'match_stereo' => property_exists($question, 'matchStereo') ? +$question->matchStereo: 0
+            'match_stereo' => property_exists($question, 'matchStereo') ? +$question->matchStereo : 0
         ];
         // Make the POST request
         $response = Http::withHeaders([

@@ -37,10 +37,11 @@ class SubmissionPolicy
      */
     public function submissionExistsInCurrentCourseByOwnerAndQuestion(User $user, Submission $submission): Response
     {
-        return in_array($user->role,[2,5])
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny("You are not allowed to check whether submissions exist.");
     }
+
     /**
      * @param User $user
      * @param Submission $submission
@@ -177,6 +178,41 @@ class SubmissionPolicy
             : Response::deny($response['message']);
     }
 
+
+    /**
+     * @param User $user
+     * @param $submission
+     * @param $assignment
+     * @param int $assignment_id
+     * @param int $question_id
+     * @return Response
+     */
+    public function deleteSubmittedWork(User $user, $submission, $assignment, int $assignment_id, int $question_id): Response
+    {
+        $response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id);
+        $has_access = $response['type'] === 'success';
+        return $has_access
+            ? Response::allow()
+            : Response::deny("You are not allowed to delete submitted work for this question.");
+    }
+
+    /**
+     * @param User $user
+     * @param $submission
+     * @param $assignment
+     * @param int $assignment_id
+     * @param int $question_id
+     * @return Response
+     */
+    public function submitWork(User $user, $submission, $assignment, int $assignment_id, int $question_id): Response
+    {
+        $response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id);
+        $has_access = $response['type'] === 'success';
+        return $has_access
+            ? Response::allow()
+            : Response::deny("You are not allowed to submit work for this question.");
+    }
+
     public function delete(User $user, $submission, $assignment, int $assignment_id, int $question_id)
     {
         $response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id);
@@ -198,7 +234,7 @@ class SubmissionPolicy
             case(2):
                 $has_access = $question_in_assignment
                     && ($assignment->course->user_id === (int)$user->id
-                    || $assignment->course->public);
+                        || $assignment->course->public);
                 break;
             case(3):
                 $has_access = $question_in_assignment && $assignment->course->enrollments->contains('user_id', $user->id);

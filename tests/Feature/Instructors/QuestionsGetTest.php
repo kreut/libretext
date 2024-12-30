@@ -141,6 +141,14 @@ class QuestionsGetTest extends TestCase
     }
 
     /** @test */
+    public function cannot_update_submit_work_override_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/can-submit-work-override/1")
+            ->assertJson(['message' => 'You are not allowed update the can submit work override for this question.']);
+    }
+
+
+    /** @test */
     public function cannot_remove_a_question_from_an_assignment_if_there_are_submissions_and_using_weights()
     {
         DB::table('assignment_question')->insert([
@@ -430,8 +438,6 @@ class QuestionsGetTest extends TestCase
                 ['direct_import' => "{$this->question->id}", 'type' => 'adapt id']
             )->assertJson(['message' => "You do not own {$this->question->id} so you cannot add it to this assignment which is part of a formative assignment."]);
     }
-
-
 
 
     /** @test */
