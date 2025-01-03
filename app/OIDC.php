@@ -38,11 +38,11 @@ class OIDC extends Model
                 ['email' => $email]);
 
         if ($response->successful()) {
-            $response = $response->json(); // if the response is JSON
-            $response['type'] = 'success';
+            //$response = $response->json(); // if the response is JSON
+           // $response['type'] = 'success';
         } else {
-            $response['type'] = 'error';
-            $response['message'] = $response['errors'];
+            //$response['type'] = 'error';
+           // $response['message'] = $response['errors'];
         }
         return $response;
 
