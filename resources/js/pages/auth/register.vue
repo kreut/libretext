@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-show="false">
     <Email id="request-instructor-access-code-modal"
            ref="request_instructor_access_code_email"
            extra-email-modal-text="Please use this form to request an instructor access code."
@@ -222,6 +222,7 @@ export default {
   metaInfo () {
     return { title: this.registrationTitle }
   },
+  layout: 'blank',
   data: () => ({
     allFormErrors: [],
     form: new Form({
@@ -250,6 +251,9 @@ export default {
     '$route' (to) {
       this.setRegistrationType(to.path)
     }
+  },
+  created() {
+    window.location.href = '/api/oidc/initiate-login/web'
   },
   async mounted () {
     this.setRegistrationType(this.$route.path)
