@@ -1663,7 +1663,7 @@ class QuestionController extends Controller
                     foreach ($media_uploads as $new_media_upload) {
                         $questionMediaUpload = new QuestionMediaUpload();
                         $question_media_upload_dir = $questionMediaUpload->getDir();
-                        if ($new_media_upload['text']) {
+                        if (isset($new_media_upload['text']) && $new_media_upload['text']) {
                             $questionMediaUpload->text = $new_media_upload['text'];
                             if (Storage::disk('s3')->exists("$question_media_upload_dir/pending-{$new_media_upload['s3_key']}")) {
                                 $text = Storage::disk('s3')->get("$question_media_upload_dir/pending-{$new_media_upload['s3_key']}");
