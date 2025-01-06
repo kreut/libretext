@@ -222,8 +222,10 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/discussion-comments/{discussionComment}/deleting-will-make-requirements-not-satisfied', 'DiscussionCommentController@deletingWillMakeRequirementsNotSatisfied');
     Route::get('/discussions/assignment/{assignment}/question/{question}', 'DiscussionController@show');
-    Route::post('/discussions/assignment/{assignment}/question/{question}/{media_upload_id}/{discussion_id}', 'DiscussionController@store');
+    Route::post('/discussions/assignment/{assignment}/question/{question}/{media_upload_id}/{discussion_id}/{group}', 'DiscussionController@store');
     Route::get('/discussions/assignment/{assignment}/question/{question}/media-upload/{media_upload_id}', 'DiscussionController@getByAssignmentQuestionMediaUploadId');
+
+    Route::get('/discussion-groups/assignment/{assignment}/question/{question}', 'DiscussionGroupController@getByAssignmentQuestionUser');
 
     Route::post('/assignment-topics', 'AssignmentTopicController@store');
     Route::patch('/assignment-topics', 'AssignmentTopicController@update');

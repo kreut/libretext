@@ -56,6 +56,17 @@ class DiscussionTest extends TestCase
     }
 
     /** @test */
+    public function non_enrolled_student_cannot_get_discussion_group()
+    {
+
+        $new_user = factory(User::class)->create(['role'=>3]);
+        $this->actingAs($new_user)
+            ->getJson("/api/discussion-groups/assignment/{$this->assignment->id}/question/{$this->question->id}")
+            ->assertJson(['message' => "You are not allowed to get the discussion group information."]);
+
+    }
+
+    /** @test */
     public function must_be_in_course_to_view_discussions()
     {
         $new_user = factory(User::class)->create();
@@ -70,12 +81,12 @@ class DiscussionTest extends TestCase
     {
         $new_student_user = factory(User::class)->create(['role' => 3]);
         $this->actingAs($new_student_user)
-            ->postJson("/api/discussions/assignment/{$this->assignment->id}/question/{$this->question->id}/1/0", ['type' => 'text', 'text' => 'sdfdsf'])
+            ->postJson("/api/discussions/assignment/{$this->assignment->id}/question/{$this->question->id}/1/0/1", ['type' => 'text', 'text' => 'sdfdsf'])
             ->assertJson(['message' => "No responses will be saved since you were not assigned to this assignment."]);
 
         $new_instructor_user = factory(User::class)->create(['role' => 2]);
         $this->actingAs($new_instructor_user)
-            ->postJson("/api/discussions/assignment/{$this->assignment->id}/question/{$this->question->id}/1/0", ['type' => 'text', 'text' => 'sdfdsf'])
+            ->postJson("/api/discussions/assignment/{$this->assignment->id}/question/{$this->question->id}/1/0/1", ['type' => 'text', 'text' => 'sdfdsf'])
             ->assertJson(['message' => "You are not allowed to create a discussion for that assignment."]);
 
     }
@@ -84,7 +95,7 @@ class DiscussionTest extends TestCase
     public function text_is_required_for_creating_text_discussion()
     {
         $this->actingAs($this->student_user)
-            ->postJson("/api/discussions/assignment/{$this->assignment->id}/question/{$this->question->id}/1/0", ['type' => 'text'])
+            ->postJson("/api/discussions/assignment/{$this->assignment->id}/question/{$this->question->id}/1/0/1", ['type' => 'text'])
             ->assertJsonValidationErrors('text');
     }
 }

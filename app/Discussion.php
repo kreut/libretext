@@ -30,7 +30,7 @@ class Discussion extends Model
                 $discussion_comment->delete();
             }
             $discussion->delete();
-
+            DB::table('discussion_groups')->where('assignment_id', $assignment->id)->delete();
         }
     }
 
@@ -85,6 +85,7 @@ class Discussion extends Model
             ->select('discussions.id AS discussion_id',
                 'discussions.created_at AS discussion_created_at',
                 'discussions.user_id AS discussion_user_id',
+                'discussions.group',
                 'discussion_comments.id AS discussion_comments_id',
                 'discussion_comments.user_id AS discussion_comments_user_id',
                 'discussion_comments.id AS comment_id',
@@ -109,6 +110,7 @@ class Discussion extends Model
                     'id' => $discussion_id,
                     'created_at' => $this->_formatDate($value->discussion_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_user_id]),
                     'started_by' => $enrolled_students_by_user_id[$value->discussion_user_id],
+                    'group' => $value->group,
                     'comments' => []
                 ];
             }
@@ -134,11 +136,11 @@ class Discussion extends Model
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_comments_user_id])
             ];
         }
-      foreach ($discussions as $key => $discussion){
-          if (isset($discussion['comments'])){
-              $discussion['comments'][$key] = rsort($discussion['comments']);
-          }
-      }
+        foreach ($discussions as $key => $discussion) {
+            if (isset($discussion['comments'])) {
+                $discussion['comments'][$key] = rsort($discussion['comments']);
+            }
+        }
         foreach ($enrolled_students as $enrolled_student) {
             $discussions_by_user_id[$enrolled_student->id]['user_id'] = $enrolled_student->id;
         }

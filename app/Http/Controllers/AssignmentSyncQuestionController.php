@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\BetaCourseApproval;
 use App\Custom\FCMNotification;
+use App\DiscussionGroup;
 use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
@@ -230,6 +231,7 @@ class AssignmentSyncQuestionController extends Controller
                 return $response;
             }
             $data = $request->validated();
+            DB::beginTransaction();
             $grading_criteria = ['min_length_of_audio_video' => '',
                 "min_number_of_comments" => '',
                 "min_number_of_discussion_threads" => '',
@@ -239,6 +241,18 @@ class AssignmentSyncQuestionController extends Controller
                     $data[$key] = $value;
                 }
             }
+
+            DB::table('discussion_groups')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->delete();
+
+            for ($i = 1; $i <= $data['number_of_groups']; $i++) {
+                DiscussionGroup::create(['assignment_id' => $assignment->id,
+                        'question_id' => $question->id,
+                        'user_id'=> $request->user()->id,
+                        'group' => $i]);
+            }
             DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
@@ -247,7 +261,9 @@ class AssignmentSyncQuestionController extends Controller
             Cache::put("discuss_it_settings_{$assignment->course->user_id}", json_encode($data));
             $response['type'] = 'success';
             $response['message'] = 'The discuss-it settings have been updated.';
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating the discuss-it settings.  Please try again or contact us for assistance.";

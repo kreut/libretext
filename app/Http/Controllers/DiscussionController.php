@@ -6,6 +6,7 @@ use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\Discussion;
 use App\DiscussionComment;
+use App\DiscussionGroup;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreDiscussionRequest;
 use App\Jobs\InitProcessTranscribe;
@@ -36,9 +37,11 @@ class DiscussionController extends Controller
      * @param StoreDiscussionRequest $request
      * @param Assignment $assignment
      * @param Question $question
+     * @param int $group
      * @param string $media_upload_id
      * @param int $discussion_id
      * @param Discussion $discussion
+     * @param DiscussionGroup $discussionGroup
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Submission $submission
      * @param SubmissionFile $submissionFile
@@ -51,7 +54,9 @@ class DiscussionController extends Controller
                           Question               $question,
                           string                 $media_upload_id,
                           int                    $discussion_id,
+                          int                    $group,
                           Discussion             $discussion,
+                          DiscussionGroup        $discussionGroup,
                           AssignmentSyncQuestion $assignmentSyncQuestion,
                           Submission             $submission,
                           SubmissionFile         $submissionFile,
@@ -70,11 +75,15 @@ class DiscussionController extends Controller
             $type = $request->type;
             DB::beginTransaction();
             if (!$discussion_id) {
+                if ($request->user()->role === 3) {
+                    $group = $discussionGroup->store($assignment->id, $question->id, $request->user()->id);
+                }
                 $discussion = new Discussion();
                 $discussion->assignment_id = $assignment->id;
                 $discussion->question_id = $question->id;
                 $discussion->user_id = $request->user()->id;
                 $discussion->media_upload_id = $media_upload_id;
+                $discussion->group = $group;
                 $discussion->save();
             } else {
                 $discussion = Discussion::find($discussion_id);

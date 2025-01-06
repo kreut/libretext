@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IsValidNumberOfDiscussItGroups;
 use App\Rules\IsValidPeriodOfTime;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class UpdateDiscussItSettingsRequest extends FormRequest
@@ -23,10 +25,13 @@ class UpdateDiscussItSettingsRequest extends FormRequest
      *
      * @return array
      */
-    public function rules(): array
+    public function rules(Request $request): array
     {
+        $assignment_id = $request->route('assignment')->id;
+        $question_id =  $request->route('question')->id;
         $rules = [
             'response_modes' => ['required'],
+            'number_of_groups' =>  new IsValidNumberOfDiscussItGroups($assignment_id, $question_id),
             "students_can_edit_comments" => ['required', Rule::in([0, 1])],
             "students_can_delete_comments" => ['required', Rule::in([0, 1])],
             "min_number_of_discussion_threads" => ['required', 'integer', 'min:1'],

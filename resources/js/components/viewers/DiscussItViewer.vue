@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :modal-id="'modal-form-errors-comments'" :all-form-errors="allFormErrors" />
-    <AllFormErrors :modal-id="'modal-form-errors-discussion-settings'" :all-form-errors="allFormErrors" />
+    <AllFormErrors :modal-id="'modal-form-errors-comments'" :all-form-errors="allFormErrors"/>
+    <AllFormErrors :modal-id="'modal-form-errors-discussion-settings'" :all-form-errors="allFormErrors"/>
     <b-modal id="modal-cannot-delete-comment"
              title="Cannot delete comment"
              size="lg"
@@ -45,20 +45,20 @@
     >
       <table class="table table-striped">
         <thead>
-          <tr>
-            <th scope="col">
-              Description
-            </th>
-            <th scope="col">
-              Minimum Number Required
-            </th>
-            <th scope="col">
-              Number Submitted
-            </th>
-            <th scope="col">
-              Requirement Satisfied
-            </th>
-          </tr>
+        <tr>
+          <th scope="col">
+            Description
+          </th>
+          <th scope="col">
+            Minimum Number Required
+          </th>
+          <th scope="col">
+            Number Submitted
+          </th>
+          <th scope="col">
+            Requirement Satisfied
+          </th>
+        </tr>
         </thead>
         <tr
           v-show="completionRequirements.find(item => item.key === 'min_number_of_discussion_threads')"
@@ -146,7 +146,7 @@
         {{ alreadyScoredWarning }}
       </b-alert>
       <p>Please confirm that would like to delete the comment {{ confirmDeleteCommentText }}:</p>
-      <div v-show="activeDiscussionComment.text" v-html="activeDiscussionComment.text" />
+      <div v-show="activeDiscussionComment.text" v-html="activeDiscussionComment.text"/>
       <div v-if="activeDiscussionComment.file">
         <iframe
           v-resize="{ log: false }"
@@ -289,9 +289,85 @@
              title="Settings"
              size="lg"
              no-close-on-backdrop
+             @hidden="getDiscussItSettings"
              @shown="initDiscussItSettings"
     >
       <b-container>
+        <b-card header="default" header-html="<h2 class='h7'>General</h2>" class="mb-3">
+          <b-card-text>
+            <b-form-group
+              label-cols-sm="5"
+              label-cols-lg="4"
+              label-for="number_of_groups"
+              label-size="sm"
+              label-align="right"
+            >
+              <template #label>
+                Number of Groups
+                <QuestionCircleTooltip :id="'number-of-groups-tooltip'"/>
+                <b-tooltip target="number-of-groups-tooltip" triggers="hover focus" delay="500">
+                  If you choose more than 1 group, ADAPT will randomly assign students to the different groups allowing
+                  for more manageable discussions in larger classes.
+                </b-tooltip>
+              </template>
+              <div class="flex d-inline-flex">
+                <b-form-input
+                  v-model="discussItSettingsForm.number_of_groups"
+                  style="width:50px"
+                  size="sm"
+                  :class="{ 'is-invalid': discussItSettingsForm.errors.has('number_of_groups') }"
+                  @keydown="discussItSettingsForm.errors.clear('number_of_groups')"
+                />
+                <ErrorMessage
+                  :message="discussItSettingsForm.errors.get('number_of_groups')"
+                />
+              </div>
+            </b-form-group>
+            <b-form-group
+              label-cols-sm="5"
+              label-cols-lg="4"
+              label-size="sm"
+              label-align="right"
+            >
+              <template #label>
+                Language
+                <QuestionCircleTooltip :id="'language-tooltip'"/>
+                <b-tooltip target="language-tooltip" triggers="hover focus" delay="500">
+                  We use AI to create audio/video transcriptions. To obtain the best quality transcription, please
+                  specify
+                  the language of the audio/video comments. If the comments may contain multiple languages, then
+                  please
+                  choose the 'Multiple' option. Note that in this case transcription results may not be as expected.
+                </b-tooltip>
+              </template>
+              <b-form-select v-model="discussItSettingsForm.language"
+                             :options="languageOptions"
+                             size="sm"
+                             :class="{ 'is-invalid': discussItSettingsForm.errors.has('language') }"
+                             style="width:200px"
+                             @change="discussItSettingsForm.errors.clear('language')"
+              />
+              <has-error :form="discussItSettingsForm" field="language'"/>
+            </b-form-group>
+            <b-form-radio-group v-model="discussItSettingsForm.auto_grade"
+                                class="mb-2"
+            >
+              <label class="col-sm-5 col-lg-4 col-form-label col-form-label-sm text-right">Auto-grade
+                <QuestionCircleTooltip :id="'autograde-tooltip'"/>
+                <b-tooltip target="autograde-tooltip" triggers="hover focus" delay="500">
+                  If you choose "yes", once a student completes the criteria above, they will get full credit for the
+                  question.
+                </b-tooltip>
+              </label>
+              <b-form-radio name="auto-grade-discuss-it" value="1">
+                Yes
+              </b-form-radio>
+              <b-form-radio name="auto-grade-discuss-it" value="0">
+                No
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-card-text>
+        </b-card>
         <b-card header="default" header-html="<h2 class='h7'>Student Actions</h2>">
           <b-card-text>
             <b-form-group
@@ -304,7 +380,7 @@
             >
               <template #label>
                 Students can edit comments
-                <QuestionCircleTooltip id="edit-comments-tooltip" />
+                <QuestionCircleTooltip id="edit-comments-tooltip"/>
                 <b-tooltip target="edit-comments-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -328,7 +404,7 @@
                   No
                 </b-form-radio>
               </b-form-radio-group>
-              <ErrorMessage :message="discussItSettingsForm.errors.get('students_can_edit_comments')" />
+              <ErrorMessage :message="discussItSettingsForm.errors.get('students_can_edit_comments')"/>
             </b-form-group>
             <b-form-group
               label-cols-sm="5"
@@ -339,7 +415,7 @@
             >
               <template #label>
                 Students can delete comments
-                <QuestionCircleTooltip id="delete-comments-tooltip" />
+                <QuestionCircleTooltip id="delete-comments-tooltip"/>
                 <b-tooltip target="delete-comments-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -363,8 +439,8 @@
                   No
                 </b-form-radio>
               </b-form-radio-group>
-              <ErrorMessage :message="discussItSettingsForm.errors.get('students_can_delete_comments')" />
-              <has-error :form="discussItSettingsForm" field="students_can_delete_comments" />
+              <ErrorMessage :message="discussItSettingsForm.errors.get('students_can_delete_comments')"/>
+              <has-error :form="discussItSettingsForm" field="students_can_delete_comments"/>
             </b-form-group>
           </b-card-text>
         </b-card>
@@ -386,7 +462,7 @@
               >
                 <template #label>
                   Participate in at least
-                  <QuestionCircleTooltip :id="'discussion-thread-tooltip'" />
+                  <QuestionCircleTooltip :id="'discussion-thread-tooltip'"/>
                   <b-tooltip target="discussion-thread-tooltip" triggers="hover focus" delay="500">
                     A discussion thread can be started by either you or any student. Students then add text or
                     audio/video
@@ -403,8 +479,10 @@
                     @keydown="discussItSettingsForm.errors.clear('min_number_of_discussion_threads')"
                   />
                   <div class="col-form-label col-form-label-sm text-right pl-2">
-                    {{ +discussItSettingsForm.min_number_of_discussion_threads === 1
-                      ? 'discussion thread' : 'discussion threads' }}
+                    {{
+                      +discussItSettingsForm.min_number_of_discussion_threads === 1
+                        ? 'discussion thread' : 'discussion threads'
+                    }}
                   </div>
                   <ErrorMessage
                     :message="discussItSettingsForm.errors.get('min_number_of_discussion_threads')"
@@ -420,7 +498,7 @@
               >
                 <template #label>
                   Submit at least
-                  <QuestionCircleTooltip :id="'discussion-thread-tooltip'" />
+                  <QuestionCircleTooltip :id="'discussion-thread-tooltip'"/>
                   <b-tooltip target="discussion-thread-tooltip" triggers="hover focus" delay="500">
                     You or any of your students can submit comments. Each comment can be text or audio/video. Comments
                     are
@@ -437,10 +515,10 @@
                     @keydown="discussItSettingsForm.errors.clear('min_number_of_comments')"
                   />
                   <div class="col-form-label col-form-label-sm text-right pl-2">
-                    {{ +discussItSettingsForm.min_number_of_comments === 1 ?'comment' : 'comments' }}
+                    {{ +discussItSettingsForm.min_number_of_comments === 1 ? 'comment' : 'comments' }}
                   </div>
                 </div>
-                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_comments')" />
+                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_comments')"/>
               </b-form-group>
               <div class="pb-1 flex d-inline-flex col-form-label col-form-label-sm">
                 <label for="response-modes" class="mr-2">Students may respond using:
@@ -462,7 +540,7 @@
                   text-field="name"
                   @change="discussItSettingsForm.errors.clear('response_modes')"
                 />
-                <ErrorMessage :message="discussItSettingsForm.errors.get('response_modes')" />
+                <ErrorMessage :message="discussItSettingsForm.errors.get('response_modes')"/>
               </div>
               <div v-show="getAudioVideoLabel()" class="pb-2 col-form-label col-form-label-sm">
                 A comment will receive credit towards completion if:
@@ -486,7 +564,7 @@
                     />
                   </b-input-group>
                 </div>
-                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_words')" />
+                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_words')"/>
               </b-form-group>
               <b-form-group
                 v-show="getAudioVideoLabel()"
@@ -507,51 +585,8 @@
                               :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_length_of_audio_video') }"
                               @keydown="discussItSettingsForm.errors.clear('min_length_of_audio_video')"
                 />
-                <ErrorMessage :message="discussItSettingsForm.errors.get('min_length_of_audio_video')" />
+                <ErrorMessage :message="discussItSettingsForm.errors.get('min_length_of_audio_video')"/>
               </b-form-group>
-              <b-form-group
-                label-cols-sm="4"
-                label-cols-lg="3"
-                label-size="sm"
-                label-align="right"
-              >
-                <template #label>
-                  Language
-                  <QuestionCircleTooltip :id="'language-tooltip'" />
-                  <b-tooltip target="language-tooltip" triggers="hover focus" delay="500">
-                    We use AI to create audio/video transcriptions. To obtain the best quality transcription, please
-                    specify
-                    the language of the audio/video comments. If the comments may contain multiple languages, then
-                    please
-                    choose the 'Multiple' option. Note that in this case transcription results may not be as expected.
-                  </b-tooltip>
-                </template>
-                <b-form-select v-model="discussItSettingsForm.language"
-                               :options="languageOptions"
-                               size="sm"
-                               :class="{ 'is-invalid': discussItSettingsForm.errors.has('language') }"
-                               style="width:200px"
-                               @change="discussItSettingsForm.errors.clear('language')"
-                />
-                <has-error :form="discussItSettingsForm" field="language'" />
-              </b-form-group>
-              <b-form-radio-group v-model="discussItSettingsForm.auto_grade"
-                                  class="mb-2"
-              >
-                <label class="col-sm-5 col-lg-4 col-form-label col-form-label-sm text-right">Auto-grade
-                  <QuestionCircleTooltip :id="'autograde-tooltip'" />
-                  <b-tooltip target="autograde-tooltip" triggers="hover focus" delay="500">
-                    If you choose "yes", once a student completes the criteria above, they will get full credit for the
-                    question.
-                  </b-tooltip>
-                </label>
-                <b-form-radio name="auto-grade-discuss-it" value="1">
-                  Yes
-                </b-form-radio>
-                <b-form-radio name="auto-grade-discuss-it" value="0">
-                  No
-                </b-form-radio>
-              </b-form-radio-group>
             </b-card-text>
           </b-card>
         </div>
@@ -728,7 +763,7 @@
     </b-modal>
 
     <b-container>
-      <div v-html="qtiJson.prompt" />
+      <div v-html="qtiJson.prompt"/>
       <hr>
       <b-row>
         <b-col :cols="previewingQuestion ? 12 : 8" class="border border-dark" :class="previewingQuestion ? '' : 'mr-2'">
@@ -760,7 +795,7 @@
             />
           </div>
           <div v-if="currentDiscussionMedia && /\.(pdf)$/.test(currentDiscussionMedia.s3_key)">
-            <VuePdfEmbed annotation-layer text-layer :source="currentDiscussionMedia.temporary_url" />
+            <VuePdfEmbed annotation-layer text-layer :source="currentDiscussionMedia.temporary_url"/>
           </div>
           <div v-if="currentDiscussionMedia && currentDiscussionMedia.text"
                :class="!previewingQuestion ? 'ml-2 mr-2' : ''"
@@ -775,13 +810,13 @@
                   v-for="(completionRequirement,completionRequirementIndex) in completionRequirements.filter(item =>item.show)"
                   :key="`completion-requirement-${completionRequirementIndex}`"
                 >
-                  <CompletedIcon :completed="completionRequirement.requirement_satisfied" />
+                  <CompletedIcon :completed="completionRequirement.requirement_satisfied"/>
                   <span :class="completionRequirement.requirement_satisfied ? 'text-success' : 'text-danger'">
                     {{ completionRequirement.text }} <span
-                      v-if="completionRequirement.key === 'min_number_of_comments'"
-                    >   <QuestionCircleTooltip
-                          id="min-number-of-comments-tooltip"
-                        />
+                    v-if="completionRequirement.key === 'min_number_of_comments'"
+                  >   <QuestionCircleTooltip
+                    id="min-number-of-comments-tooltip"
+                  />
                       <b-tooltip target="min-number-of-comments-tooltip"
                                  delay="250"
                                  triggers="hover focus"
@@ -789,8 +824,8 @@
                         {{ numberOfCommentsSubmittedMessage }}  <br><br>  {{ completionRequirementsToolTipText }}
                       </b-tooltip></span>
                     <span v-if="completionRequirement.key === 'min_number_of_discussion_threads'">   <QuestionCircleTooltip
-                                                                                                       id="min-number-of-threads-participated-in-tooltip"
-                                                                                                     />
+                      id="min-number-of-threads-participated-in-tooltip"
+                    />
                       <b-tooltip target="min-number-of-threads-participated-in-tooltip"
                                  delay="250"
                                  triggers="hover focus"
@@ -816,7 +851,7 @@
                 </li>
                 <li v-if="discussionCommentSubmissionResults.submission_summary.text_feedback">
                   <span class="font-weight-bold">Feedback:</span>
-                  <span v-html="discussionCommentSubmissionResults.submission_summary.text_feedback" />
+                  <span v-html="discussionCommentSubmissionResults.submission_summary.text_feedback"/>
                 </li>
                 <li v-if="discussionCommentSubmissionResults.submission_summary.file_feedback">
                   <strong>{{ discussionCommentSubmissionResults.submission_summary.file_feedback_type }} Feedback:
@@ -843,33 +878,33 @@
               </div>
             </b-card>
           </div>
-          <div>
-            <b-button v-if="!discussions.length && canStartDiscussionOrAddComments && !previewingQuestion"
-                      variant="success"
-                      size="sm"
-                      @click="startDiscussion"
+          <hr v-if="discussions.length && canStartDiscussionOrAddComments && !previewingQuestion">
+          <div v-if="canStartDiscussionOrAddComments && !previewingQuestion">
+                <span v-if="groupOptions.length > 1 && user.role === 2" class="mr-2">
+              <b-form-select id="group"
+                             v-model="group"
+                             :options="groupOptions"
+                             size="sm"
+                             style="width:100px"
+                             @change="updateGroup($event)"
+              />
+            </span>
+            <b-button
+              variant="success"
+              size="sm"
+              @click="startDiscussion"
             >
               New Thread
             </b-button>
+            <span v-show="discussions.length > 1" class="float-right">
+              <b-button variant="outline-info" size="sm" @click="showAllDiscussions">Show All</b-button> <b-button
+              size="sm" @click="hideAllDiscussions"
+            >Hide All</b-button>
+            </span>
           </div>
-          <hr v-if="discussions.length && canStartDiscussionOrAddComments && !previewingQuestion">
           <div v-if="discussions.length">
             <div class="accordion" role="tablist">
-              <div class="mb-2">
-                <b-button
-                  variant="success"
-                  size="sm"
-                  @click="startDiscussion"
-                >
-                  New Thread
-                </b-button>
-                <span v-show="discussions.length>1" class="float-right">
-                  <b-button variant="outline-info" size="sm" @click="showAllDiscussions">Show All</b-button> <b-button
-                    size="sm" @click="hideAllDiscussions"
-                  >Hide All</b-button>
-                </span>
-              </div>
-              <div class="clearfix mb-2" />
+              <div class="clearfix mb-2"/>
               <b-card v-for="(discussion, discussionIndex) in discussions" :key="`discussion-${discussionIndex}`"
                       no-body
                       class="mb-1"
@@ -878,8 +913,8 @@
                   <b-button v-b-toggle="`accordion-${discussionIndex}`" block variant="info">
                     {{ discussion.started_by }} on
                     {{ discussion.created_at }} <span class="float-right"><b-icon-eye
-                      v-show="!isOpen(discussionIndex)"
-                    /> <b-icon-eye-slash v-show="isOpen(discussionIndex)" />
+                    v-show="!isOpen(discussionIndex)"
+                  /> <b-icon-eye-slash v-show="isOpen(discussionIndex)"/>
                     </span>
                   </b-button>
                 </b-card-header>
@@ -901,9 +936,10 @@
                           style="cursor: pointer"
                         />
                         <span class="text-muted">{{ comment.created_at }}</span>
-                        <div v-show="comment.text" v-html="comment.text" />
+                        <div v-show="comment.text" v-html="comment.text"/>
                         <span v-show="comment.file">
-                          <b-button size="sm" variant="outline-info" @click="listenOrViewComment(comment)">{{ listenOrViewCommentText(comment) }}</b-button>
+                          <b-button size="sm" variant="outline-info" @click="listenOrViewComment(comment)"
+                          >{{ listenOrViewCommentText(comment) }}</b-button>
                         </span>
                         <a :id="getTooltipTarget('editComment',comment.id)"
                            href=""
@@ -1005,98 +1041,101 @@ export default {
     }
   },
   data: () => ({
-    languageOptions: [
-      { text: 'Choose a Language', value: null },
-      { text: 'English', value: 'en' },
-      { text: 'French', value: 'fr' },
-      { text: 'Spanish', value: 'es' },
-      { text: 'German', value: 'de' },
-      { text: 'Mandarin Chinese', value: 'zh' },
-      { text: 'Arabic', value: 'ar' },
-      { text: 'Italian', value: 'it' },
-      { text: 'Russian', value: 'ru' },
-      { text: 'Portuguese', value: 'pt' },
-      { text: 'Japanese', value: 'ja' },
-      { text: 'Hindi', value: 'hi' },
-      { text: 'Bengali', value: 'bn' },
-      { text: 'Lahnda (Punjabi)', value: 'pa' },
-      { value: '--------------', text: '--------------------', disabled: true },
-      { text: 'Multiple', value: 'multiple' }
-    ],
-    responseModeOptions: [
-      { item: 'text', name: 'Text' },
-      { item: 'audio', name: 'Audio' },
-      { item: 'video', name: 'Video' }],
-    listenOrViewCommentKey: 0,
-    currentFile: '',
-    fileRequirementSatisfied: false,
-    alreadyScoredWarning: '',
-    discussionCommentsExist: false,
-    millisecondsTimeUntilRequirementSatisfied: 0,
-    humanReadableTimeUntilRequirementSatisfied: '',
-    discussItEditorConfig: {
-      toolbar: [
-        { name: 'image', items: ['Image'] },
-        { name: 'math', items: ['Mathjax'] }
+      group: 1,
+      groupOptions: [{ value: 1, text: 'Group 1' }],
+      languageOptions: [
+        { text: 'Choose a Language', value: null },
+        { text: 'English', value: 'en' },
+        { text: 'French', value: 'fr' },
+        { text: 'Spanish', value: 'es' },
+        { text: 'German', value: 'de' },
+        { text: 'Mandarin Chinese', value: 'zh' },
+        { text: 'Arabic', value: 'ar' },
+        { text: 'Italian', value: 'it' },
+        { text: 'Russian', value: 'ru' },
+        { text: 'Portuguese', value: 'pt' },
+        { text: 'Japanese', value: 'ja' },
+        { text: 'Hindi', value: 'hi' },
+        { text: 'Bengali', value: 'bn' },
+        { text: 'Lahnda (Punjabi)', value: 'pa' },
+        { value: '--------------', text: '--------------------', disabled: true },
+        { text: 'Multiple', value: 'multiple' }
       ],
-      // Configure the Enhanced Image plugin to use classes instead of styles and to disable the
-      // resizer (because image size is controlled by widget styles or the image takes maximum
-      // 100% of the editor width).
-      image2_alignClasses: ['image-align-left', 'image-align-center', 'image-align-right'],
-      image2_altRequired: true,
-      removeButtons: '',
-      extraPlugins: 'mathjax,embed,dialog,contextmenu,liststyle,image2,autogrow',
-      mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
-      embed_provider: '//ckeditor.iframe.ly/api/oembed?url={url}&callback={callback}',
-      filebrowserUploadUrl: '/api/ckeditor/upload',
-      filebrowserUploadMethod: 'form',
-      format_tags: 'p;h2;h3;pre',
-      allowedContent: true,
-      disableNativeSpellChecker: false
-    },
-    questionMediaUploads: [],
-    discussionCommentSubmissionResultsError: '',
-    openStates: [true],
-    openIndex: 0,
-    discussionCommentVideo: false,
-    discussItSatisfiesRequirementKey: 0,
-    showSatisfiesRequirementTimer: false,
-    minNumberOfWords: 0,
-    discussionCommentSubmissionResults: { min_number_of_discussion_threads: '' },
-    numberOfThreadsParticipatedInMessage: '',
-    numberOfCommentsSubmittedMessage: '',
-    completionRequirementsToolTipText: '',
-    hasCompletionRequirements: false,
-    currentDiscussionMedia: {},
-    reRecording: false,
-    confirmDeleteCommentText: '',
-    discussItSettingsForm: new Form({
-      response_modes: [],
-      language: null,
-      min_number_of_comments: '',
-      students_can_edit_comments: '',
-      students_can_delete_comments: ''
-    }),
-    activeDiscussionComment: {},
-    activeDiscussionCommentId: 0,
-    audioHeaders: {},
-    discussionCommentAudio: false,
-    stoppedAudioRecording: false,
-    showPDF: true,
-    activeUserId: 0,
-    discussionsByUserId: [],
-    activeDiscussion: {},
-    allFormErrors: [],
-    commentForm: new Form({
-      text: '',
-      commentType: 'text'
-    }),
-    commentType: 'text',
-    discussions: [],
-    currentMediaUploadOrder: 1,
-    numPages: 0,
-    completionRequirements: []
-  }),
+      responseModeOptions: [
+        { item: 'text', name: 'Text' },
+        { item: 'audio', name: 'Audio' },
+        { item: 'video', name: 'Video' }],
+      listenOrViewCommentKey: 0,
+      currentFile: '',
+      fileRequirementSatisfied: false,
+      alreadyScoredWarning: '',
+      discussionCommentsExist: false,
+      millisecondsTimeUntilRequirementSatisfied: 0,
+      humanReadableTimeUntilRequirementSatisfied: '',
+      discussItEditorConfig: {
+        toolbar: [
+          { name: 'image', items: ['Image'] },
+          { name: 'math', items: ['Mathjax'] }
+        ],
+        // Configure the Enhanced Image plugin to use classes instead of styles and to disable the
+        // resizer (because image size is controlled by widget styles or the image takes maximum
+        // 100% of the editor width).
+        image2_alignClasses: ['image-align-left', 'image-align-center', 'image-align-right'],
+        image2_altRequired: true,
+        removeButtons: '',
+        extraPlugins: 'mathjax,embed,dialog,contextmenu,liststyle,image2,autogrow',
+        mathJaxLib: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML',
+        embed_provider: '//ckeditor.iframe.ly/api/oembed?url={url}&callback={callback}',
+        filebrowserUploadUrl: '/api/ckeditor/upload',
+        filebrowserUploadMethod: 'form',
+        format_tags: 'p;h2;h3;pre',
+        allowedContent: true,
+        disableNativeSpellChecker: false
+      },
+      questionMediaUploads: [],
+      discussionCommentSubmissionResultsError: '',
+      openStates: [true],
+      openIndex: 0,
+      discussionCommentVideo: false,
+      discussItSatisfiesRequirementKey: 0,
+      showSatisfiesRequirementTimer: false,
+      minNumberOfWords: 0,
+      discussionCommentSubmissionResults: { min_number_of_discussion_threads: '' },
+      numberOfThreadsParticipatedInMessage: '',
+      numberOfCommentsSubmittedMessage: '',
+      completionRequirementsToolTipText: '',
+      hasCompletionRequirements: false,
+      currentDiscussionMedia: {},
+      reRecording: false,
+      confirmDeleteCommentText: '',
+      discussItSettingsForm: new Form({
+        response_modes: [],
+        language: null,
+        min_number_of_comments: '',
+        students_can_edit_comments: '',
+        students_can_delete_comments: ''
+      }),
+      activeDiscussionComment: {},
+      activeDiscussionCommentId: 0,
+      audioHeaders: {},
+      discussionCommentAudio: false,
+      stoppedAudioRecording: false,
+      showPDF: true,
+      activeUserId: 0,
+      discussionsByUserId: [],
+      activeDiscussion: {},
+      allFormErrors: [],
+      commentForm: new Form({
+        text: '',
+        commentType: 'text'
+      }),
+      commentType: 'text',
+      discussions: [],
+      currentMediaUploadOrder: 1,
+      numPages: 0,
+      completionRequirements: []
+    }
+  ),
   computed: {
     ...mapGetters({
       user: 'auth/user'
@@ -1104,6 +1143,11 @@ export default {
   },
   async mounted () {
     if (this.assignmentId && this.questionId) {
+      if (this.user.role === 2) {
+        this.group = 1
+      } else {
+        await this.getDiscussionGroupByAssignmentIdQuestionIdUserId()
+      }
       const questionMediaUploads = await this.getMediaUploadsByQuestionId()
       if (questionMediaUploads !== false) {
         this.questionMediaUploads = questionMediaUploads
@@ -1126,6 +1170,30 @@ export default {
   },
   methods: {
     updateModalToggleIndex,
+    async updateGroup (group) {
+      this.group = group
+      await this.getDiscussionsByMediaUploadId()
+    },
+    async getDiscussionGroupByAssignmentIdQuestionIdUserId () {
+      try {
+        const { data } = await axios.get(`/api/discussion-groups/assignment/${this.assignmentId}/question/${this.questionId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+        this.group = data.group
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    updateNumberOfGroups () {
+      this.groupOptions = [{ value: 1, text: 'Group 1' }]
+      const numberOfGroups = +this.discussItSettingsForm.number_of_groups
+      if (numberOfGroups > 1) {
+        for (let i = 2; i <= numberOfGroups; i++) {
+          this.groupOptions.push({ value: i, text: `Group ${i}` })
+        }
+      }
+    },
     removeCurrentTranscript () {
       this.activeDiscussionComment.transcript = ''
       this.activeDiscussionComment.re_processed_transcript = 1
@@ -1323,6 +1391,9 @@ export default {
         if (data.type === 'success') {
           this.discussionCommentsExist = data.discussion_comments_exist
           this.discussItSettingsForm = new Form(JSON.parse(data.discuss_it_settings))
+          if (this.user.role === 2) {
+            this.updateNumberOfGroups()
+          }
           if (!this.discussItSettingsForm.language) {
             this.discussItSettingsForm.language = null
           }
@@ -1502,9 +1573,10 @@ export default {
       const mediaUploadId = this.getMediaUploadId()
       const discussionId = this.activeDiscussion.id ? this.activeDiscussion.id : 0
       const action = this.activeDiscussionComment.id ? 'patch' : 'post'
+      const group = this.user.role === 2 ? this.group : 0 // server side check for students
       const url = this.activeDiscussionComment.id
         ? `/api/discussion-comments/${this.activeDiscussionComment.id}`
-        : `/api/discussions/assignment/${this.assignmentId}/question/${this.questionId}/${mediaUploadId}/${discussionId}`
+        : `/api/discussions/assignment/${this.assignmentId}/question/${this.questionId}/${mediaUploadId}/${discussionId}/${group}`
       this.commentForm.type = this.commentType
       if (file || ['audio', 'video'].includes(this.commentType)) {
         this.commentForm.file = file
@@ -1544,7 +1616,8 @@ export default {
           this.$noty[data.type](data.message)
           return false
         }
-        this.discussions = data.discussions
+        this.discussions = data.discussions.filter(item => item.group === this.group)
+
         this.$nextTick(() => {
           MathJax.Hub.Queue(['Typeset', MathJax.Hub])
         })

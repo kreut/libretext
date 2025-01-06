@@ -850,11 +850,12 @@
 
             </b-container>
             <b-container>
-              <b-row class="mt-2">
+              <b-row class="mt-2" v-if="!isDiscussIt">
                 <b-col>
                   <b-card header="default" :header-html="getSubmissionSummaryTitle()">
                     <b-row v-if="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
-                    class="pb-2 pl-2">
+                           class="pb-2 pl-2"
+                    >
                        <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
                              title="This submitted work is only applicable to the current submission."
                        >
@@ -867,17 +868,17 @@
                     </b-button>
                        </span>
                     </b-row>
-                    <SubmissionArray :submission-array="submissionArray"
-                                     :question-submission-array="submissionArray"
-                                     :question-id="+questionView"
-                                     :assignment-id="+assignmentId"
-                                     :technology="technology"
-                                     :scoring-type="scoringType"
-                                     :user-id="grading[currentStudentPage - 1].student.user_id"
-                                     :user-role="user.role"
-                                     :small-table="true"
-                                     :penalties="grading[currentStudentPage - 1]['penalties']"
-                    />
+                      <SubmissionArray :submission-array="submissionArray"
+                                       :question-submission-array="submissionArray"
+                                       :question-id="+questionView"
+                                       :assignment-id="+assignmentId"
+                                       :technology="technology"
+                                       :scoring-type="scoringType"
+                                       :user-id="grading[currentStudentPage - 1].student.user_id"
+                                       :user-role="user.role"
+                                       :small-table="true"
+                                       :penalties="grading[currentStudentPage - 1]['penalties']"
+                      />
                   </b-card>
                 </b-col>
                 <b-col></b-col>
