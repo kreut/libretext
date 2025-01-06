@@ -3008,6 +3008,22 @@
                             }} </span>
                         </span>
                       </li>
+                      <li v-if="!isOpenEnded
+                        && questions[currentPage - 1].last_submitted !== 'N/A'
+                        && questions[currentPage-1].can_submit_work
+                       && !(['webwork','imathas'].includes(questions[currentPage-1].technology) && submissionArray.length)"
+                      >
+                        <SubmitWork class="pl-1"
+                                    :submit-button-active="submitButtonActive"
+                                    :key="`submit-work-${submitWorkKey}`"
+                                    :user-id="questions[currentPage-1].user_id"
+                                    :assignment-id="+assignmentId"
+                                    :question-id="+questions[currentPage-1].id"
+                                    :submitted-work="questions[currentPage-1].submitted_work"
+                                    :submitted-work-at="questions[currentPage-1].submitted_work_at"
+                                    @updateSubmittedWork="updateSubmittedWork"
+                        />
+                      </li>
                       <li v-if="showScores">
                         <span class="font-weight-bold">Score: {{
                             questions[currentPage - 1].submission_score
