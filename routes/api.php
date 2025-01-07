@@ -35,6 +35,7 @@ Route::get('/embedded-login', function () {
     return redirect()->to('/api/oidc/initiate-login/web?redirect_url=' . urlencode($url));
 });
 Route::get('/oidc/initiate-login/{mode}', 'OIDCController@initiateLogin');
+Route::delete('/oidc/libreone/deprovision', 'OIDCController@deprovision');
 
 Route::get('/oidc/login-by-jwt/{token}', 'OIDCController@loginByJWT');
 

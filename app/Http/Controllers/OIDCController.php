@@ -225,6 +225,34 @@ class OIDCController extends Controller
      * @return array
      * @throws Exception
      */
+    public function deprovision(Request $request, User $user)
+    {
+        try {
+            $response['type'] = 'error';
+            $claims = $this->_hasAccess($request);
+            if ($claims['central_identity_id']) {
+                $user->where('central_identity_id', $claims['central_identity_id'])
+                    ->update(['final_deletion_date' => $claims['final_deletion_date']]);
+            } else {
+                throw new Exception($claims['central_identity_id'] . " does not exist so they cannot be deprovisioned.");
+            }
+            $response['type'] = 'success';
+            $response['message'] = $claims['central_identity_id'] . ' will be deleted on ' . $claims['final_deletion_date'];
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = $e->getMessage();
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return array
+     * @throws Exception
+     */
     public function newUserCreated(Request $request, User $user): array
     {
         try {
