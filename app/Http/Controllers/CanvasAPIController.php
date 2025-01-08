@@ -6,13 +6,54 @@ use App\CanvasAPI;
 use App\Course;
 use App\Exceptions\Handler;
 use App\Jobs\ProcessUpdateCanvasAssignments;
+use App\LmsAPI;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 
 class CanvasAPIController extends Controller
 {
+
+    /**
+     * @param Request $request
+     * @return array
+     * @throws Exception
+     */
+    public function validateCourseUrl(Request $request)
+    {
+        try {
+            $response['type'] = 'error';
+            $course = Course::find($request->course_id);
+            $url = $request->url;
+            if (filter_var($url, FILTER_VALIDATE_URL) === false) {
+                $response['message'] = "{$request->url} is not a valid URL.";
+                return $response;
+            }
+            $path = parse_url($url, PHP_URL_PATH);
+
+            $segments = explode('/', rtrim($path, '/'));
+            $lms_course_id = end($segments);
+            $lmsApi = new LmsAPI();
+            $lms_result = $lmsApi->getCourse($course->getLtiRegistration(),
+                $course->user_id, $lms_course_id);
+
+            if ($lms_result['type'] === 'error') {
+                $response['message'] = $lms_result['message'];
+            } else {
+                $response['lms_course_name'] = $lms_result['message']->name;
+                $response['lms_course_id'] = $lms_result['message']->id;
+                $response['type'] = 'success';
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error validating this Canvas course URL.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     /**
      * @param Course $course

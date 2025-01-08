@@ -367,6 +367,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/courses/{course}/show-z-scores', 'CourseController@updateShowZScores');
 
     Route::post('/canvas-api/course/{course}/{property}', 'CanvasAPIController@updateCanvasAssignments');
+    Route::post('/canvas-api/validate-course-url', 'CanvasAPIController@validateCourseUrl');
     Route::patch('/canvas-api/course/{course}/{property}/already-updated', 'CanvasAPIController@alreadyUpdated');
 
     Route::patch('/courses/{course}/show-progress-report', 'CourseController@updateShowProgressReport');

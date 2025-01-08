@@ -2,7 +2,82 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-form'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-link-course-to-lms-form'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-canvas-url-form'"/>
+
     <PageTitle v-if="canViewAssignments" :title="title"/>
+    <b-modal id="modal-confirm-link-course"
+             title="Confirmation"
+    >
+      <p>Please confirm that you would like to link the following Canvas course:</p>
+      <p class="text-center font-weight-bold">{{ linkCourseToLMSForm.lms_course_name }}</p>
+      <template #modal-footer="{ cancel, ok }">
+        <b-button size="sm"
+                  @click="$bvModal.hide('modal-confirm-link-course')"
+        >
+          Cancel
+        </b-button>
+        <b-button size="sm"
+                  variant="primary"
+                  @click="submitManualCourseLink"
+        >Submit
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-copy-course-url"
+             title="Copy Course URL"
+             size="lg"
+    >
+      <ul>
+        <li>Navigate to your Canvas course</li>
+        <li>Copy the URL that you see in your browser</li>
+      </ul>
+      <b-embed
+        type="iframe"
+        aspect="16by9"
+        src="https://www.youtube.com/embed/Cxm-y9Ku4LM?rel=0"
+        allowfullscreen
+      />
+      <template #modal-footer>
+        <b-button size="sm"
+                  variant="primary"
+                  @click="$bvModal.hide('modal-copy-course-url')"
+        >OK
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-link-course-manually"
+             title="Link Course Manually"
+             size="lg"
+    >
+      <p>Canvas allows at most 100 courses to be returned. Because of this, some of your courses may not appear on the list.
+        You can manually link the course by providing the
+        course URL. Navigate to the course and copy the
+        URL that <a href="" @click.prevent="$bvModal.show('modal-copy-course-url')">you see in your browser</a>.</p>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="canvas-course-url"
+        label="Canvas Course URL*"
+      >
+        <b-form-input
+          id="crn"
+          v-model="canvasCourseUrlForm.url"
+          type="text"
+          placeholder=""
+          required
+          :class="{ 'is-invalid': errorMessage }"
+          @keydown="errorMessage = ''"
+        />
+        <ErrorMessage :message="errorMessage"/>
+      </b-form-group>
+      <template #modal-footer>
+        <b-button size="sm"
+                  variant="primary"
+                  @click="validateLinkCourseByCanvasUrl"
+        >Link Course
+        </b-button>
+      </template>
+    </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -230,8 +305,10 @@
             </td>
           </tr>
         </table>
-        <template #modal-footer="{ cancel, ok }">
-          <b-button size="sm" @click="$bvModal.hide('modal-link-assignments-to-lms')">
+        <template #modal-footer>
+          <b-button size="sm"
+                    variant="primary"
+                    @click="$bvModal.hide('modal-link-assignments-to-lms')">
             OK
           </b-button>
         </template>
@@ -707,6 +784,7 @@
                         assignment.
                       </p>
                       <b-form-group
+                        v-show="!processingLinkCourseToLMS"
                         label-cols-sm="3"
                         label-cols-lg="2"
                         label-size="sm"
@@ -901,7 +979,7 @@
             </th>
             <th v-if="view === 'control panel'" scope="col" style="width:120px">
               Solutions
-              <QuestionCircleTooltip  :id="`auto-release-solutions-tooltip`"/>
+              <QuestionCircleTooltip :id="`auto-release-solutions-tooltip`"/>
               <b-tooltip :target="`auto-release-solutions-tooltip`"
                          delay="250"
                          triggers="hover focus"
@@ -909,12 +987,12 @@
                 <div v-html="getAutoReleaseTooltip('showing the solutions')"/>
               </b-tooltip>
             </th>
-            <th v-if="view === 'control panel'"  scope="col" style="width:85px">
+            <th v-if="view === 'control panel'" scope="col" style="width:85px">
               Solutions Released On
             </th>
             <th v-if="view === 'control panel'" scope="col" style="width:120px">
               Statistics
-              <QuestionCircleTooltip  :id="`auto-release-statistics-tooltip`"/>
+              <QuestionCircleTooltip :id="`auto-release-statistics-tooltip`"/>
               <b-tooltip :target="`auto-release-statistics-tooltip`"
                          delay="250"
                          triggers="hover focus"
@@ -1455,10 +1533,12 @@ import { isMobile } from '~/helpers/mobileCheck'
 import ShowHideAssignmentProperties from '~/components/ShowHideAssignmentProperties.vue'
 import showHideAssignmentProperties from '../../components/ShowHideAssignmentProperties.vue'
 import AutoReleaseDate from '../../components/AutoReleaseDate.vue'
+import ErrorMessage from '../../components/ErrorMessage.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    ErrorMessage,
     AutoReleaseDate,
     ShowHideAssignmentProperties,
     GrantLmsApiAccess,
@@ -1478,6 +1558,8 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    errorMessage: '',
+    canvasCourseUrlForm: new Form({ url: '', course_id: 0 }),
     showHideAssignmentPropertiesKey: 0,
     lmsError: '',
     assignmentToUnlink: {},
@@ -1503,7 +1585,8 @@ export default {
     processingLinkAssignmentsToLMS: false,
     processingLinkCourseToLMS: false,
     linkCourseToLMSForm: new Form({
-      lms_course_id: 0
+      lms_course_id: 0,
+      lms_course_name: ''
     }),
     lmsCourseOptions: [],
     ownsAllQuestions: false,
@@ -1648,6 +1731,29 @@ export default {
     isMobile,
     checkIfReleased,
     getStatusTextClass,
+    submitManualCourseLink () {
+      this.$bvModal.hide('modal-confirm-link-course')
+      this.$bvModal.hide('modal-link-course-manually')
+      this.linkCourseToLMS()
+    },
+    async validateLinkCourseByCanvasUrl () {
+      try {
+        const { data } = await this.canvasCourseUrlForm.post('/api/canvas-api/validate-course-url')
+        if (data.type === 'success') {
+          this.linkCourseToLMSForm = new Form({
+            lms_course_id: data.lms_course_id,
+            lms_course_name: data.lms_course_name
+          })
+          this.$bvModal.show('modal-confirm-link-course')
+        } else {
+          this.errorMessage = data.message
+          this.allFormErrors = [this.errorMessage]
+          this.$bvModal.show('modal-form-errors-canvas-url-form')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     getAssignmentNameWidth () {
       if (this.user.role === 5) {
         return 'width:90%'
@@ -1741,6 +1847,19 @@ export default {
     async linkCourseToLMS () {
       if (!this.linkCourseToLMSForm.lms_course_id) {
         return
+      }
+      if (this.linkCourseToLMSForm.lms_course_id === -1) {
+        this.canvasCourseUrlForm = new Form({
+          url: '',
+          course_id: this.courseId
+        })
+        this.linkCourseToLMSForm = new Form({
+          lms_course_id: 0,
+          lms_course_name: ''
+        })
+        this.errorMessage = ''
+        this.$bvModal.show('modal-link-course-manually')
+        return false
       }
       this.processingLinkCourseToLMS = true
       try {
@@ -2155,6 +2274,13 @@ What assignment parameters??? */
             this.lmsCourseOptions.push({ text: lmsCourse.name, value: lmsCourse.id })
           }
         }
+        this.lmsCourseOptions.push({
+          text: '-----------------------',
+          value: 'divider-1',
+          disabled: true
+        })
+        this.lmsCourseOptions.push(
+          { value: -1, text: 'I don\'t see my course' })
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)
