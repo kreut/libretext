@@ -47,6 +47,11 @@ class Question extends Model
                 Cache::put($cache_key, $discuss_it_settings);
             }
             $discuss_it_settings = Cache::get($cache_key);
+            $discuss_it_settings = json_decode($discuss_it_settings, 1);
+            if (!isset($discuss_it_settings['number_of_groups'])) {
+                $discuss_it_settings['number_of_groups'] = "1";
+            }
+            $discuss_it_settings = json_encode($discuss_it_settings);
         } else {
             $discuss_it_settings = null;
         }
