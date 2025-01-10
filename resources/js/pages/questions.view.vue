@@ -1882,6 +1882,7 @@
                   && questions[currentPage-1]
                   && !isOpenEnded
                   && !isFormative
+                  && !isDiscussIt()
                   && ['real time', 'delayed'].includes(assessmentType)"
               >
                 <label for="can_submit_work_override" class="pl-3 mr-2">Can submit work</label>
