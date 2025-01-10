@@ -1930,12 +1930,15 @@ class CourseController extends Controller
                 'learning_tree_time_lefts',
                 'learning_tree_successful_branches',
                 'learning_tree_node_seeds',
+                'lti_launches',
+                'lti_grade_passbacks',
                 'remediation_submissions',
                 'assignment_question_time_on_tasks',
                 'shown_hints',
                 'review_histories',
                 'shown_hints',
                 'unconfirmed_submissions',
+                'submission_histories',
                 'submission_confirmations',
                 'pending_question_revisions'];
             foreach ($tables as $table) {
