@@ -442,6 +442,7 @@ class ScoreController extends Controller
 
 
             if ($viewable_users->isNotEmpty()) {
+                $sorted_users = [];
                 $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
                 foreach ($viewable_users as $key => $viewable_user) {
                     if (!isset($assign_to_timings_by_user[$viewable_user->id])) {
@@ -452,6 +453,7 @@ class ScoreController extends Controller
                     $sorted_users[] = ['name' => "$value->last_name, $value->first_name",
                         'id' => $value->id];
                 }
+
 
                 usort($sorted_users, function ($a, $b) {
                     return $a['name'] <=> $b['name'];

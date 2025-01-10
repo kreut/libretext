@@ -261,7 +261,7 @@ class OIDCController extends Controller
             $email = $claims['email'];
             $new_user = $user->where('email', $email)->first();
             if ($new_user) {
-                throw new Exception("$new_user with email $email already exists in ADAPT.");
+                //nothing to do
             } else {
                 $new_user = new User();
                 $new_user->time_zone = $claims['time_zone'];
@@ -323,6 +323,7 @@ class OIDCController extends Controller
      * @return JsonResponse
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
+     * @throws Exception
      */
     public function loginByJWT(string $token): JsonResponse
     {
@@ -349,8 +350,14 @@ class OIDCController extends Controller
         } catch (JWTException $e) {
             throw new Exception ('Token is absent.');
         } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
+            if (!in_array($e->getMessage(), [
+                'No user with that JWT exists',
+                'Token is invalid.',
+                'Token has expired.',
+                'Token is absent.'])) {
+                $h = new Handler(app());
+                $h->report($e);
+            }
             $response['message'] = $e->getMessage();
         }
 
