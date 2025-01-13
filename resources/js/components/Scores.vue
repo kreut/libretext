@@ -10,17 +10,7 @@ export default {
     },
     options: {
       type: Object,
-      default: null
-    }
-  },
-  computed: {
-    chartData: function () {
-      return this.chartdata
-    }
-  },
-  watch: {
-    chartdata: function () {
-      this.renderChart(this.chartdata, {
+      default: () => ({
         legend: {
           display: false
         },
@@ -38,6 +28,9 @@ export default {
             scaleLabel: {
               display: true,
               labelString: 'Number of Students'
+            },
+            ticks: {
+              beginAtZero: true // Ensures the y-scale starts at 0
             }
           }]
         }
@@ -45,28 +38,16 @@ export default {
     }
   },
   mounted () {
-    this.renderChart(this.chartdata, {
-      legend: {
-        display: false
+    this.renderChart(this.chartdata, this.options)
+  },
+  watch: {
+    chartdata: {
+      handler (newData) {
+        // Re-render the chart with updated data
+        this.renderChart(newData, this.options)
       },
-      animation: false,
-      scales: {
-        xAxes: [{
-          display: true,
-          scaleLabel: {
-            display: true,
-            labelString: 'Score'
-          }
-        }],
-        yAxes: [{
-          display: true,
-          scaleLabel: {
-            display: true,
-            labelString: 'Number of Students'
-          }
-        }]
-      }
-    })
+      deep: true
+    }
   }
 }
 </script>
