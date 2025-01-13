@@ -404,7 +404,7 @@ export default {
     activeRubricCategory: {},
     computedPointsNotEqualToQuestionPointsError: '',
     computedPoints: 0,
-    isMe: () => window.config.isMe,
+    isAdmin: () => window.config.isAdmin,
     reportToggle: { section_scores: false, comments: false, criteria: false },
     showScores: false,
     loaded: false,

@@ -290,7 +290,7 @@ class QuestionController extends Controller
             $acting_as = $request->acting_as;
             $clone_to_folder_id = $request->clone_to_folder_id;
 
-            if ($acting_as === 'admin' && !request()->user()->isMe()) {
+            if ($acting_as === 'admin' && !Helper::isAdmin()) {
                 $response['message'] = 'You are not Admin.';
                 return $response;
             }
@@ -1220,7 +1220,7 @@ class QuestionController extends Controller
                     }
                     break;
                 case('propagate'):
-                    if (!$request->reason_for_edit && !$request->user()->isMe()) {
+                    if (!$request->reason_for_edit && !Helper::isAdmin()) {
                         $error = true;
                         $response['reason_for_edit_error'] = 'Please provide a reason for the edit.';
                     }
@@ -1241,11 +1241,11 @@ class QuestionController extends Controller
                             return $response;
                         }
                     }
-                    if (!$request->user()->isMe() && $question->nonMetaPropertiesDiffer($request)) {
+                    if (!Helper::isAdmin() && $question->nonMetaPropertiesDiffer($request)) {
                         $response['message'] = 'You cannot propagate the question revision since there are differing properties that are not topical in nature.';
                         return $response;
                     }
-                    if ($request->user()->isMe() && !$request->changes_are_topical) {
+                    if (Helper::isAdmin() && !$request->changes_are_topical) {
                         $error = true;
                         $response['changes_are_topical_error'] = "You must confirm that the changes are topical.";
                     }
@@ -2472,7 +2472,7 @@ class QuestionController extends Controller
                 ->orderBy('order')
                 ->get();
             $user = request()->user();
-            if ($user->isMe()) {
+            if (Helper::isAdmin()) {
                 $can_edit = true;
             } else if ($user->role === 5) {
                 $can_edit = true;

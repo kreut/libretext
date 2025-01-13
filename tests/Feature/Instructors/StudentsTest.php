@@ -315,7 +315,7 @@ class StudentsTest extends TestCase
     public function admin_can_unenroll_all_students()
     {
 
-        $user = User::find(1) ?? factory(User::class)->create(['id' => 1]);
+        $user = User::find(1) ?? factory(User::class)->create(['email' => 'me@me.com']);
         $course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
         $this->actingAs($user)->deleteJson("/api/courses/$course_2->id/reset", ['confirmation' => $course_2->name])
             ->assertJson(['message' => 'All students from <strong>First Course</strong> have been unenrolled and their data removed.']);

@@ -3737,8 +3737,8 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe,
-    isLocalMe: () => window.config.isMe && window.location.hostname === 'local.adapt'
+    isAdmin: () => window.config.isAdmin,
+    isLocalMe: () => window.config.isAdmin && window.location.hostname === 'local.adapt'
   },
   watch: {
     openEndedSubmissionType: function (newVal, oldVal) {

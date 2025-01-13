@@ -44,21 +44,15 @@ class UsersWithNoRolesTest extends TestCase
     {
 
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->withSession(['original_email' => $this->admin_user->email])
             ->delete("/api/users-with-no-role/{$this->user->id}")
             ->assertJson(['message' => 'You cannot delete the user since they already have a role.']);
     }
 
     /** @test */
-    public function admin_with_cookie_can_delete_user()
+    public function admin_can_delete_user()
     {
         $this->assertDatabaseCount('users', 3);
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->withSession(['original_email' => $this->admin_user->email])
             ->delete("/api/users-with-no-role/{$this->no_role_user->id}")
             ->assertJson(['type' => 'info']);
         $this->assertDatabaseCount('users', 2);
@@ -74,13 +68,10 @@ class UsersWithNoRolesTest extends TestCase
     }
 
     /** @test */
-    public function admin_with_cookie_can_get_users_with_no_roles()
+    public function admin_can_get_users_with_no_roles()
     {
 
         $response = $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
-            ->withSession(['original_email' => $this->admin_user->email])
             ->get('/api/users-with-no-role')
             ->content();
         $this->assertCount(1, json_decode($response)->users_with_no_role);

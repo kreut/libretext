@@ -224,8 +224,6 @@ class MetaTagTest extends TestCase
         $this->meta_tags_course_assignment_info['owner'] = ['value' => -1];
 
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['message' => 'The user new owner must be either an instructor or a non-instructor question editor.']);
     }
@@ -236,8 +234,6 @@ class MetaTagTest extends TestCase
         $this->meta_tags_course_assignment_info['owner'] = ['value' => $this->user->id];
 
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['type' => 'success']);
 
@@ -268,8 +264,6 @@ class MetaTagTest extends TestCase
             ->get();
         $this->meta_tags_course_assignment_info['author'] = "Steven Smith";
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['type' => 'success']);
         $questions = DB::table('questions')->where('author', $this->meta_tags_course_assignment_info['author'])->count();
@@ -289,8 +283,6 @@ class MetaTagTest extends TestCase
         ]);
         $this->meta_tags_course_assignment_info['author'] = "Steven Smith";
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['type' => 'success']);
         $questions = DB::table('questions')->where('author', $this->meta_tags_course_assignment_info['author'])->count();
@@ -315,8 +307,6 @@ class MetaTagTest extends TestCase
         $this->assertEquals(0, $question_revisions);
         $this->meta_tags_course_assignment_info['author'] = "Steven Smith";
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['type' => 'success']);
         $questions = DB::table('questions')->where('author', $this->meta_tags_course_assignment_info['author'])->count();
@@ -334,8 +324,6 @@ class MetaTagTest extends TestCase
         $this->assertCount(1, $question_tags, 'tag initially exists');
         $this->meta_tags_course_assignment_info['tag_to_remove'] = $tag->id;
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['type' => 'success']);
         $question_tags = DB::table('question_tag')->where('tag_id', $tag->id)->get();
@@ -349,8 +337,6 @@ class MetaTagTest extends TestCase
     {
         $this->meta_tags_course_assignment_info['tags_to_add'] = "tag 1, tag 2";
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['type' => 'success']);
         $tag_1 = Tag::where('tag', 'tag 1')->first()->id;
@@ -366,8 +352,6 @@ class MetaTagTest extends TestCase
         $this->meta_tags_course_assignment_info['license'] = "new license";
         $this->meta_tags_course_assignment_info['license_version'] = "new license version";
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['type' => 'success']);
         $question = Question::find($this->question->id);
@@ -383,8 +367,6 @@ class MetaTagTest extends TestCase
         $this->meta_tags_course_assignment_info['author'] = "Steven Smith";
         $original_question_2_author = Question::find($this->question_2->id)->author;
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['type' => 'success']);
         $question_author = Question::find($this->question->id)->author;
@@ -400,8 +382,6 @@ class MetaTagTest extends TestCase
     public function is_me_can_get_assignment_names_ids_by_course()
     {
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->get("/api/assignments/names-ids-by-course/{$this->course->id}")
             ->assertJson(['type' => 'success']);
 
@@ -430,8 +410,6 @@ class MetaTagTest extends TestCase
     public function admin_can_get_all_courses()
     {
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->withSession(['original_email' => $this->admin_user->email])
             ->get("/api/courses/all")
             ->assertJson(['type' => 'success']);
@@ -453,10 +431,7 @@ class MetaTagTest extends TestCase
     public function is_me_can_update_meta_tags()
     {
 
-        $this->actingAs($this->user)
-            ->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+        $this->actingAs($this->admin_user)
             ->patch("/api/meta-tags", $this->meta_tags_course_assignment_info)
             ->assertJson(['type' => 'success']);
 

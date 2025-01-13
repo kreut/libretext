@@ -322,7 +322,7 @@ export default {
   }
   ),
   computed: {
-    isLocalMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
+    isLocalMe: () => window.config.isAdmin && window.location.hostname === 'local.adapt',
     ...mapGetters({
       user: 'auth/user'
     })

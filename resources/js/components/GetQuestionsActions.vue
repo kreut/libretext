@@ -179,7 +179,7 @@
       </b-tooltip>
     </span>
     <span
-      v-if="user.is_developer || isMe || questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)"
+      v-if="user.is_developer || isAdmin || questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)"
     >
       <b-tooltip :target="getTooltipTarget(`edit${componentId}`,assignmentQuestion.question_id)"
                  delay="500"
@@ -310,7 +310,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe
+    isAdmin: () => window.config.isAdmin
   },
   created () {
     this.getTooltipTarget = getTooltipTarget

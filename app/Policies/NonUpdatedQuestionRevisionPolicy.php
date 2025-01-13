@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Course;
+use App\Helpers\Helper;
 use App\NonUpdatedQuestionRevision;
 use App\PendingQuestionRevision;
 use App\User;
@@ -40,7 +41,7 @@ class NonUpdatedQuestionRevisionPolicy
                                             NonUpdatedQuestionRevision $nonUpdatedQuestionRevision,
                                             Course $course): Response
      {
-         return $user->isMe() || $course->realStudentsWhoCanSubmit()->isEmpty()
+         return Helper::isAdmin() || $course->realStudentsWhoCanSubmit()->isEmpty()
              ? Response::allow()
              : Response::deny('You are not allowed to update the course questions to the latest revision since there are students enrolled.');
 

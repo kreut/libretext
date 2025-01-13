@@ -172,7 +172,7 @@
                          :options="disciplineOptions"
                          class="mt-2 mr-2"
           />
-          <b-button v-show="isMe"
+          <b-button v-show="isAdmin"
                     size="sm"
                     variant="outline-primary"
                     style="height:30px;margin-top:8px"
@@ -281,10 +281,10 @@
           </a>
         </template>
         <template v-slot:cell(discipline_id)="data">
-          <div v-if="!isMe">
+          <div v-if="!isAdmin">
             {{ data.item.discipline_name ? data.item.discipline_name : 'None specified' }}
           </div>
-          <div v-if="isMe">
+          <div v-if="isAdmin">
             <DisciplineSelect :key="`discipline-${disciplineCache}`"
                               :current-discipline-id="data.item.discipline_id ? data.item.discipline_id : null"
                               :discipline-options="disciplineOptions"
@@ -393,7 +393,7 @@ export default {
   },
   created () {
     this.logout = logout
-    this.isMe = this.user && window.config.isMe
+    this.isAdmin = this.user && window.config.isAdmin
   },
   mounted () {
     this.getTooltipTarget = getTooltipTarget

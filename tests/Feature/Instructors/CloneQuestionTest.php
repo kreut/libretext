@@ -23,7 +23,7 @@ class CloneQuestionTest extends TestCase
 
         parent::setUp();
         $this->question = factory(Question::class)->create(['library' => 'adapt', 'page_id' => 2989818, 'title' => 'Some title']);
-        $this->admin_user = factory(User::class)->create();
+        $this->admin_user = factory(User::class)->create(['email' => 'me@me.com']);
         $this->user = factory(User::class)->create();
 
     }
@@ -155,8 +155,6 @@ class CloneQuestionTest extends TestCase
     {
 
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->post('/api/questions/clone', [
                     'acting_as' => 'admin',
                     'assignment_id' => 0,
@@ -173,8 +171,6 @@ class CloneQuestionTest extends TestCase
         $this->user->role = 3;
         $this->user->save();
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->post('/api/questions/clone', [
                     'acting_as' => 'admin',
                     'question_id' => $this->question->id,
@@ -188,8 +184,6 @@ class CloneQuestionTest extends TestCase
     public function question_id_must_be_valid()
     {
         $this->actingAs($this->admin_user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->post('/api/questions/clone', [
                     'question_id' => 0,
                     'question_editor_user_id' => $this->user->id

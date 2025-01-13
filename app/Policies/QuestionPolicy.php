@@ -72,7 +72,7 @@ class QuestionPolicy
                                     AssignmentSyncQuestion $assignmentSyncQuestion,
                                                            $assignment)
     {
-        if ($user->isAdminWithCookie()) {
+        if (Helper::isAdmin()) {
             return true;
         }
         $has_access = true;
@@ -80,13 +80,13 @@ class QuestionPolicy
         if (!in_array($user->role, [2, 5])) {
             $message = "You are not allowed to refresh questions.";
             $has_access = false;
-        } else if (!$user->isMe()
+        } else if (!Helper::isAdmin()
             && $assignmentSyncQuestion->questionExistsInOtherAssignments($assignment, $question)
             && $assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question)) {
             $has_access = false;
             $message = "You cannot refresh this question since there are already submissions in other assignments.";
 
-        } else if (!$user->isMe() && $assignment->isBetaAssignment()) {
+        } else if (!Helper::isAdmin() && $assignment->isBetaAssignment()) {
             $has_access = false;
             $message = "You cannot refresh this question since this is a Beta assignment. Please contact the Alpha instructor to request the refresh.";
         }
@@ -178,7 +178,7 @@ class QuestionPolicy
     public function destroy(User $user, Question $question): Response
     {
 
-        return ((int)$question->question_editor_user_id === (int)$user->id) || $user->isMe()
+        return ((int)$question->question_editor_user_id === (int)$user->id) || Helper::isAdmin()
             ? Response::allow()
             : Response::deny("You are not allowed to delete that question.");
     }
@@ -214,7 +214,7 @@ class QuestionPolicy
     {
 
         $message = 'Unknown authorization user to update question';
-        if ($user->isAdminWithCookie()) {
+        if (Helper::isAdmin()) {
             $authorize = true;
         } else if ($user->role === 5) {
             $authorize = true;
@@ -224,7 +224,7 @@ class QuestionPolicy
                 $message = "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor.";
             }
         } else {
-            $authorize = $user->isDeveloper() || $user->isMe() || ((int)$user->id == $question->question_editor_user_id
+            $authorize = $user->isDeveloper() || Helper::isAdmin() || ((int)$user->id == $question->question_editor_user_id
                     //&& !$question->questionExistsInAnotherInstructorsAssignments()
                     && ($user->role === 2)
                     && $this->_ownsFolder($folder_id));

@@ -31,7 +31,7 @@ class AccessCodeTest extends TestCase
     {
 
         parent::setUp();
-        $this->admin_user = factory(User::class)->create(['id' => 1]);//Admin
+        $this->admin_user = factory(User::class)->create(['email' => 'me@me.com']);//Admin
         $this->user = factory(User::class)->create(['id' => 9999]);//not Admin
         $this->types = ['instructor', 'non-instructor editor'];
     }

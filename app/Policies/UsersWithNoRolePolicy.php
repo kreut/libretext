@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Helpers\Helper;
 use App\User;
 use App\UsersWithNoRole;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -19,7 +20,7 @@ class UsersWithNoRolePolicy
      */
     public function index(User $user, UsersWithNoRole $usersWithNoRole): Response
     {
-        return $user->isAdminWithCookie()
+        return Helper::isAdmin()
             ? Response::allow()
             : Response::deny("You are not allowed to get the users without roles.");
 
@@ -31,7 +32,7 @@ class UsersWithNoRolePolicy
         $message = '';
         if (app()->environment() !== 'testing') {
             //couldn't get the local test to work with the cookie.
-            if (!$user->isAdminWithCookie()) {
+            if (!Helper::isAdmin()) {
                 $authorized = false;
                 $message = "You are not allowed to update users without roles.";
             }
@@ -50,7 +51,7 @@ class UsersWithNoRolePolicy
 
         $authorized = true;
         $message = '';
-        if (!$user->isAdminWithCookie()) {
+        if (!Helper::isAdmin()) {
             $authorized = false;
             $message = "You are not allowed to delete users.";
         }

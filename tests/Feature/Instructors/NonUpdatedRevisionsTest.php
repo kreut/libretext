@@ -23,7 +23,7 @@ class NonUpdatedRevisionsTest extends TestCase
     public function setup(): void
     {
         parent::setUp();
-        $this->user = factory(User::class)->create(['id' => 1]);
+        $this->user = factory(User::class)->create(['email' => 'me@me.com']);
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
@@ -115,8 +115,6 @@ class NonUpdatedRevisionsTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/non-updated-question-revisions/update-to-latest/course/{$this->course->id}", ['understand_student_submissions_removed' => true])
             ->assertJson(['type' => 'success', 'message' => 'The question has been updated to the latest revision. There were no student submissions which needed to be removed.']);
         //first 2 in the course
@@ -141,8 +139,6 @@ class NonUpdatedRevisionsTest extends TestCase
     {
 
         $this->actingAs($this->user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/non-updated-question-revisions/update-to-latest/course/{$this->course->id}")
             ->assertJson(['message' => "You need to confirm that you understand that all student submissions will be removed."]);
     }
@@ -158,8 +154,6 @@ class NonUpdatedRevisionsTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/non-updated-question-revisions/update-to-latest/course/{$this->course->id}", ['understand_student_submissions_removed' => true])
             ->assertJson(['message' => "The question has been updated to the latest revision. There were no student submissions which needed to be removed."]);
     }
@@ -173,7 +167,8 @@ class NonUpdatedRevisionsTest extends TestCase
             'section_id' => $section->id,
             'course_id' => $this->course->id
         ]);
-
+        $this->user->email = 'nonadmin@hotmail.com';
+        $this->user->save();
         $this->actingAs($this->user)
             ->patchJson("/api/non-updated-question-revisions/update-to-latest/course/{$this->course->id}")
             ->assertJson(['message' => "You are not allowed to update the course questions to the latest revision since there are students enrolled."]);

@@ -1703,7 +1703,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe
+    isAdmin: () => window.config.isAdmin
   },
   created () {
     this.doCopy = doCopy

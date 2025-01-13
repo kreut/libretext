@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\Course;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Question;
 use App\QuestionBank;
 use App\Tag;
@@ -290,7 +291,7 @@ class QuestionBankController extends Controller
                     }
                 }
             } else {
-                if (!$request->user()->isMe()) {
+                if (!Helper::isAdmin()) {
                     $question_ids = $question_ids->where(function ($query) use ($request) {
                         $query->where('public', '=', 1)
                             ->orWhere('question_editor_user_id', '=', $request->user()->id);

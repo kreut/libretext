@@ -10,7 +10,7 @@
         <b-alert variant="info" show>After cloning a question, you'll have full editing rights to the newly created question. However, if you would just
         like to use the question in your course without making any changes to the question, please just add the question to your assignment instead of cloning it.
         </b-alert>
-        <div v-if="isMe">
+        <div v-if="isAdmin">
           <span>Acting as</span>
           <toggle-button
             style="margin-bottom:5px"
@@ -121,10 +121,10 @@
                triggers="hover"
                delay="750"
     > <span v-if="canClone">
-        <span v-if="isMe">Make a clone of question {{
+        <span v-if="isAdmin">Make a clone of question {{
             questionId
           }} to your account or that of another instructor's.</span>
-        <span v-if="!isMe">Clone {{ title }}.</span>
+        <span v-if="!isAdmin">Clone {{ title }}.</span>
       </span>
       <span v-if="!canClone">
         <span v-if="['ccbyncnd', 'ccbynd', 'arr'].includes(license)">
@@ -220,7 +220,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe
+    isAdmin: () => window.config.isAdmin
   },
   mounted () {
     this.actingAs = this.user.first_name

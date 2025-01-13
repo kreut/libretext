@@ -43,7 +43,7 @@ class NonUpdatedQuestionRevisionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        if ($request->user()->isMe() && !$request->understand_student_submissions_removed) {
+        if (Helper::isAdmin() && !$request->understand_student_submissions_removed) {
             $response['message'] = "You need to confirm that you understand that all student submissions will be removed.";
             return $response;
         }

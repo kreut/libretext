@@ -25,7 +25,7 @@ class QuestionRevisionsTest extends TestCase
     public function setup(): void
     {
         parent::setUp();
-        $this->user = factory(User::class)->create(['id' => 1]);
+        $this->user = factory(User::class)->create(['email' => 'me@me.com']);
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
@@ -199,8 +199,6 @@ class QuestionRevisionsTest extends TestCase
         $question_info['check_webwork_dir'] = true;
         $question_info['automatically_update_revision'] = "0";
         $webwork_dir = json_decode($this->actingAs($this->user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/questions/{$this->question->id}",
                 $question_info)
             ->getContent(), 1)['webwork_dir'];
@@ -285,8 +283,6 @@ class QuestionRevisionsTest extends TestCase
         $question_info = $this->_getQuestionInfo($this->user->id);
         $question_info['revision_action'] = 'propagate';
         $this->actingAs($this->user)
-            ->disableCookieEncryption()
-            ->withCookie('IS_ME', env('IS_ME_COOKIE'))
             ->patch("/api/questions/{$this->question->id}",
                 $question_info)
             ->assertJson(['changes_are_topical_error' => 'You must confirm that the changes are topical.']);

@@ -247,7 +247,7 @@ export default {
     scoreSum: 0
   }),
   computed: {
-    isMe: () => window.config.isMe
+    isAdmin: () => window.config.isAdmin
   },
   watch: {
     rubricCategories: {

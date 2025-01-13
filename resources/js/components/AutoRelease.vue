@@ -511,7 +511,7 @@ export default {
   }
   ),
   computed: {
-    isMe: () => window.config.isMe,
+    isAdmin: () => window.config.isAdmin,
     ...mapGetters({
       user: 'auth/user'
     })

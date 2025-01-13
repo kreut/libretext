@@ -190,7 +190,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe
+    isAdmin: () => window.config.isAdmin
   },
   // eslint-disable-next-line vue/order-in-components
   data: () => ({
@@ -220,7 +220,7 @@ export default {
     console.log(this.$refs)
     window.addEventListener('keydown', this.hotKeys)
     this.courseId = this.$route.params.courseId
-    this.powerUser = this.isMe
+    this.powerUser = this.isAdmin
     this.getCourseInfo(this.courseId)
     this.getNonUpdatedAssignmentQuestionsByCourse(this.courseId)
   },

@@ -5,10 +5,9 @@
       'locales' => config('app.locales'),
       'githubAuth' => config('services.github.client_id'),
       'libretextsAuth' => config('services.libretexts.client_id'),
-      'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present') || config('myconfig.temp_is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present'),
+      'isAdmin' =>\App\Helpers\Helper::isAdmin(),
       'showEnvironment' => $_COOKIE['show_environment'] ?? false,
       'environment' => config('app.env'),
-      'isAdmin' => \App\Helpers\Helper::isAdmin(),
       'clickerApp' => isset($_COOKIE['clicker_app']) &&  $_COOKIE['clicker_app'] === '1',
       'toggleColors' => [  'checked' => '#008600', 'unchecked' => '#6c757d' ]
   ];

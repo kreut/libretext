@@ -546,7 +546,7 @@ class CoursePolicy
      */
     public function getAllCourses(User $user): Response
     {
-        return $user->isAdminWithCookie()
+        return Helper::isAdmin()
             ? Response::allow()
             : Response::deny('You are not allowed to get all courses.');
     }

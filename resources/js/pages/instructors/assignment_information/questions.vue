@@ -338,7 +338,7 @@
                 Solution
               </th>
               <th v-if="user.role === 2" scope="col"
-                  :style="(isMe && isCommonsCourse) || assessmentType === 'learning tree' ? 'width:115px;' : 'width:90px;'"
+                  :style="(isAdmin && isCommonsCourse) || assessmentType === 'learning tree' ? 'width:115px;' : 'width:90px;'"
               >
                 Actions
               </th>
@@ -656,7 +656,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe
+    isAdmin: () => window.config.isAdmin
   },
   created () {
     this.updateOpenEndedInRealTimeMessage = updateOpenEndedInRealTimeMessage

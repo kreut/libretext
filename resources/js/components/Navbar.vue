@@ -95,7 +95,7 @@
             :aria-label="isInstructorView ? 'Instructor view shown' : 'Student view shown'"
             @change="toggleStudentView()"
           />
-          <span v-if="user && (!user.logged_in_as_user && user.id === 7665 && !isMe)">
+          <span v-if="user && (!user.logged_in_as_user && user.id === 7665 && !isAdmin)">
             <router-link :to="{ name: 'loginAsSingle' }">
               <b-button size="sm" variant="outline-primary">Login As</b-button>
             </router-link>
@@ -104,7 +104,7 @@
             <b-button size="sm" variant="outline-danger" @click="exitLoginAs">Exit Login As</b-button>
           </span>
           <span
-            v-if="isMe && (user !== null) && (!user.logged_in_as_user) && !user.fake_student && ('instructors.learning_trees.editor' !== $route.name)"
+            v-if="isAdmin && (user !== null) && (!user.logged_in_as_user) && !user.fake_student && ('instructors.learning_trees.editor' !== $route.name)"
           >
             <router-link :to="{ name: 'login.as' }">
               <b-button size="sm" variant="outline-primary">Control Panel</b-button>
@@ -276,7 +276,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe,
+    isAdmin: () => window.config.isAdmin,
     currentRouteName () {
       return this.$route.name
     },
@@ -303,7 +303,7 @@ export default {
           { routePath: '/instructors/frameworks', text: 'Frameworks' }]
         dashboards = [...dashboards, ...instructorDashboards]
       }
-      if (!this.isMe) {
+      if (!this.isAdmin) {
         dashboards = dashboards.filter(dashboard => dashboard.routeName !== 'question.editor')
       }
       return dashboards

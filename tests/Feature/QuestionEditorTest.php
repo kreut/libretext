@@ -71,7 +71,7 @@ class QuestionEditorTest extends TestCase
     public function setup(): void
     {
         parent::setUp();
-        $this->admin_user = factory(User::class)->create(['id' => 1]);
+        $this->admin_user = factory(User::class)->create(['email' => 'me@me.com']);
         $this->user = factory(User::class)->create();
         $this->student_user = factory(User::class)->create(['role' => 3]);
         $this->default_question_editor_user = factory(User::class)->create(['role' => 5, 'first_name' => 'Default Non-Instructor Editor']);

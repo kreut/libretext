@@ -18,11 +18,18 @@ use phpcent\Client;
 class Helper
 {
 
-
     public static function isAdmin(): bool
     {
-        return Auth::user() && in_array(Auth::user()->id, [1, 5]);
-
+        $admins = DB::table('admin_emails')
+            ->select('email')
+            ->get()
+            ->pluck('email')->toArray();
+        if (app()->environment('local', 'testing')) {
+            $admins[] = 'me@me.com';
+        }
+       return Auth::user()
+        && (in_array(Auth::user()->email, $admins)
+         || in_array(session()->get('original_email'), $admins));//get the original email since they may be in student view
     }
 
 
@@ -34,10 +41,6 @@ class Helper
         return app()->environment() === 'production' ? "private/ww_files/" : "private/ww_files/" . app()->environment() . "/";
     }
 
-    public static function isMeLoggedInAsAnotherUser($user): bool
-    {
-        return $user->isMe() && !Helper::isAdmin();
-    }
 
     public static function defaultNonInstructorEditor()
     {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Course;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\LearningTree;
 use App\MetaTag;
 use App\PendingQuestionOwnershipTransfer;
@@ -91,7 +92,7 @@ class MetaTagController extends Controller
                         $question_ids = array_unique($question_ids);
 
                     }
-                    if (!$request->user()->isMe() && $learning_tree_assignments) {
+                    if (!Helper::isAdmin() && $learning_tree_assignments) {
                         $unowned_questions = DB::table('questions')->whereIn('id', $question_ids)
                             ->where('question_editor_user_id', !$request->user()->id)
                             ->select('id')
@@ -124,7 +125,7 @@ class MetaTagController extends Controller
                 $owns_question = DB::table('questions')->where('id', $apply_to)
                     ->where('question_editor_user_id', $request->user()->id)
                     ->first();
-                if (!$request->user()->isMe() && !$owns_question) {
+                if (!Helper::isAdmin() && !$owns_question) {
                     $response['message'] = "You do not own that question.  You cannot update the meta-tags.";
                     return $response;
                 }
@@ -156,7 +157,7 @@ class MetaTagController extends Controller
                     $response['message'] = "The user new owner must be either an instructor or a non-instructor question editor.";
                     return $response;
                 } else {
-                    if (!$request->user()->isMe()) {
+                    if (!Helper::isAdmin()) {
                         $number_owned_questions = Question::whereIn('id', $question_ids)
                             ->where('question_editor_user_id', $request->user()->id)
                             ->count();
@@ -166,7 +167,7 @@ class MetaTagController extends Controller
                         }
                     }
                 }
-                if ($request->user()->isMe()) {
+                if (Helper::isAdmin()) {
                     $savedQuestionsFolder->moveQuestionsToNewOwnerInTransferredQuestions($owner['value'], $question_ids);
                 } else {
                     $response = $pendingQuestionOwnershipTransfer->createPendingOwnershipTransferRequest(User::where('id', $owner['value'])->first(), $request->user(), $question_ids);
@@ -253,7 +254,7 @@ class MetaTagController extends Controller
             }
             $response['type'] = 'success';
 
-            if ($owner && !$request->user()->isMe()) {
+            if ($owner && !Helper::isAdmin()) {
                 $response['message'] = "All meta-tags have been updated except for the owner.  Once the new owner accepts ownership via email, ownership will be transferred.";
             } else {
                 $response['message'] = "The meta-tags have been updated.";

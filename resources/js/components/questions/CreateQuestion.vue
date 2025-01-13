@@ -779,7 +779,7 @@
                   nodes within Learning Trees.
                 </b-tooltip>
               </b-form-radio>
-              <b-form-radio v-if="isMe" name="question_type" value="report">
+              <b-form-radio v-if="isAdmin" name="question_type" value="report">
                 Report
                 <QuestionCircleTooltip :id="'report-question-type-tooltip'" />
                 <b-tooltip target="report-question-type-tooltip"
@@ -2794,8 +2794,8 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isLocalMe: () => window.config.isMe && window.location.hostname === 'local.adapt',
-    isMe: () => window.config.isMe
+    isLocalMe: () => window.config.isAdmin && window.location.hostname === 'local.adapt',
+    isAdmin: () => window.config.isAdmin
   },
   created () {
     this.getLearningOutcomes = getLearningOutcomes
@@ -3439,7 +3439,7 @@ export default {
         this.checkForOtherNonInstructorEditors()
       }
       this.isEdit = true
-      this.powerUser = this.isMe
+      this.powerUser = this.isAdmin
       console.log(this.questionToEdit)
       await this.getRevisions(this.questionToEdit)
       if (this.questionToEdit.technology === 'webwork' && this.questionToEdit.webwork_code) {

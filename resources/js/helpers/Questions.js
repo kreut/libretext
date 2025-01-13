@@ -53,7 +53,7 @@ export async function editQuestionSource (question) {
     this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
     return false
   }
-  if (!this.isMe && !this.user.is_developer) {
+  if (!this.isAdmin && !this.user.is_developer) {
     if (question.library === 'adapt' &&
       this.user.role !== 5 &&
       question.question_editor_user_id !== this.user.id) {

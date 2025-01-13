@@ -67,7 +67,7 @@
                 }}  --- {{ getQuestionTitleByID(metaTagsForm.apply_to) }}</span>
             </li>
           </ul>
-          <div v-if="metaTagsForm.owner && (!adminView && !isMe)">
+          <div v-if="metaTagsForm.owner && (!adminView && !isAdmin)">
             <b-alert variant="info" show>
               The new owner will receive an email verifying whether they would like ownership of the question(s).
             </b-alert>
@@ -567,7 +567,7 @@ export default {
     adminView: false
   }),
   computed: {
-    isMe: () => window.config.isMe,
+    isAdmin: () => window.config.isAdmin,
     ...mapGetters({
       user: 'auth/user'
     })

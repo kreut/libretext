@@ -24,7 +24,7 @@ class MetaTagPolicy
         $message = '';
         switch ($admin_view) {
             case(true):
-                if (!$user->isAdminWithCookie()) {
+                if (!Helper::isAdmin()) {
                     $message = 'You are not allowed to retrieve the meta-tags from the database; you claim to be an admin but are not.';
                     $has_access = false;
                 }

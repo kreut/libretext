@@ -135,7 +135,7 @@ class Question extends Model
 
     function folderIdRequired($user, $question_editor_user_id): bool
     {
-        if ($user->isDeveloper() || $user->isMe() || $user->role === 5) {
+        if ($user->isDeveloper() || Helper::isAdmin() || $user->role === 5) {
             return $question_editor_user_id === $user->id;
         }
         return true;

@@ -62,10 +62,10 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe
+    isAdmin: () => window.config.isAdmin
   },
   mounted () {
-    this.hasAccess = (this.user !== null) && (this.isMe || this.user.id === 7665)
+    this.hasAccess = (this.user !== null) && (this.isAdmin || this.user.id === 7665)
     if (!this.hasAccess) {
       this.$router.push({ name: 'no.access' })
       return false

@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Exceptions\TreeNotCreatedInAdaptException;
+use App\Helpers\Helper;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -312,7 +313,7 @@ class LearningTree extends Model
     public function inAssignment(Request $request,  string $action): string
     {
 
-        if ($request->user()->isAdminWithCookie()) {
+        if (Helper::isAdmin()) {
             // return false;
         }
         $assignment_learning_tree_info = DB::table('assignment_question_learning_tree')->where('learning_tree_id', $this->id)

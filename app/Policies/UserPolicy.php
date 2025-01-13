@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Course;
+use App\Helpers\Helper;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
@@ -148,7 +149,7 @@ class UserPolicy
     public function getAll(User $user): Response
     {
 
-        return $user->isAdminWithCookie()
+        return Helper::isAdmin()
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the users from the database.');
     }
@@ -163,7 +164,7 @@ class UserPolicy
     function updateEmail(User $user): Response
     {
 
-        return $user->isAdminWithCookie()
+        return Helper::isAdmin()
             ? Response::allow()
             : Response::deny("You are not allowed to update emails.");
     }
@@ -175,7 +176,7 @@ class UserPolicy
     function updateRole(User $user): Response
     {
 
-        return $user->isAdminWithCookie()
+        return Helper::isAdmin()
             ? Response::allow()
             : Response::deny("You are not allowed to update the user roles.");
     }
@@ -188,7 +189,7 @@ class UserPolicy
     function getUserInfoByEmail(User $user): Response
     {
 
-        return $user->isAdminWithCookie()
+        return Helper::isAdmin()
             ? Response::allow()
             : Response::deny("You are not allowed to get the user info by email.");
     }
@@ -209,7 +210,7 @@ class UserPolicy
                 $message = "You are not allowed to log in as $email.";
             }
         } else {
-            $has_access = $user->isAdminWithCookie();
+            $has_access = Helper::isAdmin();
         }
         return $has_access
             ? Response::allow()

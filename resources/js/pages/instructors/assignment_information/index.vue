@@ -112,7 +112,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe,
+    isAdmin: () => window.config.isAdmin,
     tabs () {
       return [
         {
@@ -191,7 +191,7 @@ export default {
     },
     showTab (name) {
       if (name === 'Lab Report') {
-        return this.isMe || ['dlarsen@ucdavis.edu', 'bjcutler@ucdavis.edu'].includes(this.user.email)
+        return this.isAdmin || ['dlarsen@ucdavis.edu', 'bjcutler@ucdavis.edu'].includes(this.user.email)
       }
       if (this.isFormative && !['Questions', 'Case Study Notes', 'Properties'].includes(name)) {
         return false

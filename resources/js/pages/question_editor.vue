@@ -66,7 +66,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isMe: () => window.config.isMe
+    isAdmin: () => window.config.isAdmin
   },
   mounted () {
     if (this.$route.params.questionId) {

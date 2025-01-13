@@ -24,7 +24,7 @@ class WebworkAttachmentPolicy
     public function actOnWebworkAttachmentByQuestion(User $user, WebworkAttachment $webworkAttachment, Question $question, string $action): Response
     {
         $message = 'Unknown authorization user to update question';
-        if ($user->isAdminWithCookie()) {
+        if (Helper::isAdmin()) {
             $authorize = true;
         } else if ($user->role === 5) {
             $authorize = true;
@@ -34,7 +34,7 @@ class WebworkAttachmentPolicy
                 $message = "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor.  You are not allowed to $action the question's attachments.";
             }
         } else {
-            $authorize = $user->isDeveloper() || $user->isMe() || ((int)$user->id == $question->question_editor_user_id
+            $authorize = $user->isDeveloper() || Helper::isAdmin() || ((int)$user->id == $question->question_editor_user_id
                     && ($user->role === 2));
             if (!$authorize) {
                 if ((int)$user->id !== $question->question_editor_user_id) {

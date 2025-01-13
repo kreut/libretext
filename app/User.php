@@ -127,35 +127,6 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
         return $assignments;
     }
 
-    /**
-     * @return bool
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     */
-    public function isAdminWithCookie(): bool
-    {
-        $admins = DB::table('admin_emails')
-            ->select('email')
-            ->get()
-            ->pluck('email')->toArray();
-        if (app()->environment('local', 'testing')) {
-            $admins[] = 'me@me.com';
-        }
-        $isValidEmail = in_array(session()->get('original_email'), $admins);//get the original email since they may be in student view
-        $isValidCookie = $this->isMe();
-        return $isValidEmail && $isValidCookie;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isMe(): bool
-    {
-        return isset(request()->cookie()['IS_ME'])
-            && ((request()->cookie()['IS_ME'] === config('myconfig.is_me_cookie'))
-                || (request()->cookie()['IS_ME'] === config('myconfig.temp_is_me_cookie')));
-
-    }
 
     public function isDeveloper(): bool
     {

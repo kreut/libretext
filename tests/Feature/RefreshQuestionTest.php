@@ -44,7 +44,7 @@ class RefreshQuestionTest extends TestCase
         $this->beta_user = factory(User::class)->create();
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-        $this->admin_user = factory(User::class)->create(['id' => 5]);
+        $this->admin_user = factory(User::class)->create(['email'=>'me@me.com']);
 
 
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
@@ -137,7 +137,7 @@ class RefreshQuestionTest extends TestCase
     {
         factory(RefreshQuestionRequest::class)->create(['question_id' => $this->question->id,
             'user_id' => $this->user_2->id]);
-        $this->user->id = 5; ///this should be whatever the admin user id is
+        $this->user->email = 'me@me.com'; ///this should be whatever the admin user id is
         $this->actingAs($this->user)
             ->postJson("/api/refresh-question-requests/deny/{$this->question->id}")
             ->assertJson(['message' => 'You have denied this request and the instructor has been notified by email.']);
