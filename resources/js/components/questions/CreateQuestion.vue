@@ -3746,7 +3746,7 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    copyWebworkImageCode () {
+    async copyWebworkImageCode () {
       let optionsArray = [`"${this.webworkImageOptions.filename}"`]
       if (this.resizeImageBy === 'percentage') {
         this.initImageSize('pixels')
@@ -3767,16 +3767,14 @@ export default {
       }
       let options = optionsArray.join(', ')
 
-      let elem = document.createElement('input')
-      document.body.appendChild(elem)
-
-      elem.value = this.questionForm.webwork_code && this.questionForm.webwork_code.search('BEGIN_PGML') > 0 ? `[@ image( ${options} ) @]*` : `\\{ image( ${options} ) \\}`
-      elem.select()
-      elem.focus()
-      document.execCommand('copy', false)
-      elem.remove()
+      const content = this.questionForm.webwork_code && this.questionForm.webwork_code.search('BEGIN_PGML') > 0 ? `[@ image( ${options} ) @]*` : `\\{ image( ${options} ) \\}`
+      try {
+        await navigator.clipboard.writeText(content)
+        this.$noty.success('Successfully copied!')
+      } catch (err) {
+        this.$noty.error(`The code could not be copied.`)
+      }
       this.$bvModal.hide('modal-webwork-image-options')
-      this.$noty.success('Successfully copied!')
     },
     async uploadWebworkAttachment () {
       this.errorMessages = ''
