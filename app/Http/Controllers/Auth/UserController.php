@@ -117,10 +117,7 @@ class UserController extends Controller
             $response['message'] = 'InvalidSignatureException: cannot log do auto-login.';
             return $response;
         } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $message = $e->getMessage() ?: 'Cannot log in do to JWT error.';
-            $response['message'] = $e->getMessage();
+            $response['message']= $e->getMessage() ?: 'Cannot log in due to JWT error.';
         }
         return $response;
 
