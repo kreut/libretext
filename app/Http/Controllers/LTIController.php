@@ -55,11 +55,11 @@ class LTIController extends Controller
                     $user->central_identity_id = $oidc_response['central_identity_id'];
                     $user->save();
                 } else {
-                    Telegram::sendMessage([
+                   /* Telegram::sendMessage([
                         'chat_id' => config('myconfig.telegram_channel_id'),
                         'parse_mode' => 'HTML',
                         'text' => "Unable to auto-provision User: $user->id. Error: " . json_encode($oidc_response)
-                    ]);
+                    ]);*/
                 }
             } else {
                 $lti_user_email = session()->get('lti_user_email');
