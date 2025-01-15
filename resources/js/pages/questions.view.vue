@@ -1361,7 +1361,10 @@
                    :show-formative-warning="questions[currentPage - 1] && questions[currentPage - 1].is_formative_question"
                    :show-pencil="user && user.role===2"
                    :assignment-id="+assignmentId"
+                   :algorithmic-question="questions[currentPage -1] && questions[currentPage - 1].algorithmic"
+                   :algorithmic-assignment="algorithmicAssignment"
                    :question-id="questions.length && questions[currentPage-1].id"
+                   :is-instructor-with-anonymous-view="isInstructorWithAnonymousView"
                    :clone-source-id="+(user && user.role===2 && questions[currentPage - 1] && questions[currentPage - 1].clone_source_id)"
                    @updateCustomQuestionTitle="updateCustomQuestionTitle"
         />
@@ -3409,6 +3412,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    algorithmicAssignment: false,
     submitWorkKey: 0,
     isPhone: false,
     showSketcherSubmission: false,
@@ -5941,6 +5945,7 @@ export default {
           $('#skip-link').remove()
         }
         let assignment = data.assignment
+        this.algorithmicAssignment = Boolean(assignment.algorithmic)
         this.canContactGrader = assignment.can_contact_grader
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment

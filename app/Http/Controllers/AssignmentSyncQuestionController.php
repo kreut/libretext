@@ -979,7 +979,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['solution_file_url'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
                 $columns['solution_text'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
                 $columns['solution_type'] = null;
-                $columns['render_webwork_solution'] = $webwork->algorithmicSolution($value);
+                $columns['render_webwork_solution'] = $columns['algorithmic'] = $webwork->algorithmicSolution($value);
                 $columns['technology_iframe_src'] = null;
                 $columns['solution_html'] = '';
                 if ($webwork->inCodeSolution($value)) {
@@ -1043,6 +1043,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['is_commons_course'] = Helper::isCommonsCourse($assignment->course);
             $response['submissions_exist'] = $assignment->hasSubmissionsOrFileSubmissions();
             $response['is_question_weight'] = $assignment->points_per_question === 'question weight';
+            $response['is_algorithmic_assignment']  = $assignment->algorithmic;
             $response['course_has_anonymous_users'] = $assignment->course->anonymous_users === 1;
             $response['solutions_availability'] = $assignment->solutions_availability;
             $response['h5p_questions_exist'] = $h5p_questions_exists;
@@ -2329,7 +2330,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['can_give_up'] = $can_give_up;
                 $render_webwork_solution = $webwork->algorithmicSolution($assignment->questions[$key]);
-
+                $assignment->questions[$key]['algorithmic'] = $webwork->algorithmicSolution($assignment->questions[$key]);
                 $imathas_solution = ($show_solution || in_array(request()->user()->role, [2, 5]))
                     && $IMathAS->solutionExists($assignment->questions[$key]);
                 $assignment->questions[$key]['solution_exists'] = isset($uploaded_solutions_by_question_id[$question->id])

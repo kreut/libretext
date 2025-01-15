@@ -30,6 +30,11 @@
                    pencil-class="mb-1"
                    @updateCustomQuestionTitle="updateCustomQuestionTitle"
       />
+      <AlgorithmicIcon :algorithmic-question="algorithmicQuestion"
+                       :algorithmic-assignment="algorithmicAssignment"
+                       :isInstructorWithAnonymousView="isInstructorWithAnonymousView"
+                       :isTitle="true"
+      />
       <FormativeWarning v-if="showFormativeWarning && title"
                         :formative-question="true"
       />
@@ -64,15 +69,28 @@ import { doCopy } from '~/helpers/Copy'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import FormativeWarning from './FormativeWarning.vue'
 import CustomTitle from './CustomTitle.vue'
-
+import AlgorithmicIcon from './AlgorithmicIcon.vue'
 export default {
   name: 'PageTitle',
   components: {
     CustomTitle,
     FormativeWarning,
-    FontAwesomeIcon
+    FontAwesomeIcon,
+    AlgorithmicIcon
   },
   props: {
+    isInstructorWithAnonymousView: {
+      type: Boolean,
+      default: false
+    },
+    algorithmicQuestion: {
+      type: Boolean,
+      default: false
+    },
+    algorithmicAssignment: {
+      type: Boolean,
+      default: false
+    },
     title: {
       type: String,
       default: ''
