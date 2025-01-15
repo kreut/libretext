@@ -1,5 +1,5 @@
 <template>
-  <div class="row pb-5">
+  <div class="row pb-5" v-show="showPage">
     <b-modal id="modal-form-errors-login"
              title="Incorrect Credentials"
              no-close-on-backdrop
@@ -121,8 +121,8 @@ export default {
   metaInfo () {
     return { title: 'Login' }
   },
-
   data: () => ({
+    showPage: false,
     form: new Form({
       email: '',
       password: ''
@@ -131,6 +131,11 @@ export default {
     inIFrame: false
   }),
   created () {
+    this.showPage = window.config.environment === 'local'
+    if (!this.showPage) {
+      window.location.href = '/'
+      return
+    }
     try {
       this.inIFrame = window.self !== window.top
     } catch (e) {
@@ -156,7 +161,7 @@ export default {
         await this.$store.dispatch('auth/fetchUser')
         // Redirect to the correct home page
         Object.keys(localStorage).forEach((key) => {
-          if (key !== ('appversion') && key !== ('libreOneTester')) {
+          if (key !== ('appversion')) {
             delete localStorage[key]
           }
         })

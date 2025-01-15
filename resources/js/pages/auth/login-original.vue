@@ -156,7 +156,7 @@ export default {
         await this.$store.dispatch('auth/fetchUser')
         // Redirect to the correct home page
         Object.keys(localStorage).forEach((key) => {
-          if (key !== ('appversion') && key !== ('libreOneTester')) {
+          if (key !== ('appversion')) {
             delete localStorage[key]
           }
         })

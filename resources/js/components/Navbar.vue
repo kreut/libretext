@@ -49,7 +49,7 @@
                         @click="contactUsWidget()"
             >
               <div :class="{
-    'mt-1': libreOneTester,
+    'mt-1': !localEnvironment,
     'hidden-nav-link': isLearningTreesEditor
 }"
               >Support
@@ -61,7 +61,7 @@
               <span v-if="!user.formative_student">Logout</span>
               <span v-if="user.formative_student">End Session</span>
             </b-nav-item>
-            <b-nav-item v-if="!user && libreOneTester">
+            <b-nav-item v-if="!user && !isLocal">
               <b-button
                 size="sm"
                 variant="primary"
@@ -71,10 +71,10 @@
                 <i class="fas fa-user me-2"></i> Log In/Register
               </b-button>
             </b-nav-item>
-            <b-nav-item v-if="!user && !libreOneTester" @click="$router.push({ name: 'login' })">
+            <b-nav-item v-if="!user && isLocal" @click="$router.push({ name: 'login' })">
               <span :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''">Log In</span>
             </b-nav-item>
-            <b-nav-item v-show="!user && !libreOneTester" right>
+            <b-nav-item v-show="!user && isLocal" right>
               <span @click="registerWithLibreOne">Register</span>
             </b-nav-item>
           </b-navbar-nav>
@@ -154,32 +154,32 @@
             <span class="hover-underline">Hi, {{ user.first_name }}!</span>
           </template>
 
-          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && !libreOneTester"
+          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && localEnvironment"
                            @click="$router.push({ name: 'settings.profile' })"
           >
             <fa icon="cog" fixed-width/>
             <span class="hover-underline pl-3">{{ $t('settings') }}</span>
           </b-dropdown-item>
 
-          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && libreOneTester"
+          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && !localEnvironment"
                            @click="updateLibreOneProfile()"
           >
             <fa icon="user" fixed-width/>
             <span class="hover-underline pl-3">Profile</span>
           </b-dropdown-item>
-          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && libreOneTester"
+          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && !localEnvironment"
                            @click="updateLibreOnePassword()"
           >
             <fa icon="lock" fixed-width/>
             <span class="hover-underline pl-3">Reset Password</span>
           </b-dropdown-item>
-          <b-dropdown-item v-if="user.role === 2 && libreOneTester"
+          <b-dropdown-item v-if="user.role === 2 && localEnvironment"
                            @click="$router.push({ name: 'linked_accounts' })"
           >
             <fa icon="user-plus" fixed-width/>
             <span class="hover-underline pl-3">Linked Accounts</span>
           </b-dropdown-item>
-          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && user.role === 3 && libreOneTester"
+          <b-dropdown-item v-if="!isAnonymousUser && !user.formative_student && user.role === 3 && !localEnvironment"
                            @click="$router.push({ name: 'notifications' })"
           >
             <fa icon="bell" fixed-width/>
@@ -229,6 +229,7 @@ import { logout } from '~/helpers/Logout'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { toggleInstructorStudentViewRouteNames } from '~/helpers/StudentInstructorViewToggles'
 import LibreOne from './LibreOne.vue'
+import { updateLibreOnePassword, updateLibreOneProfile } from '../helpers/LibreOne'
 
 export default {
   components: {
@@ -244,7 +245,7 @@ export default {
     }
   },
   data: () => ({
-    libreOneTester: '',
+    localEnvironment: false,
     accountToSwitchTo: {},
     toggleInstructorStudentViewRouteNames: toggleInstructorStudentViewRouteNames,
     toggleColors: window.config.toggleColors,
@@ -280,6 +281,7 @@ export default {
     currentRouteName () {
       return this.$route.name
     },
+    isLocal: () => window.config.environment === 'local',
     dashboards () {
       if (!this.user) {
         return []
@@ -331,9 +333,6 @@ export default {
     }
   },
   created () {
-    const libreOneTester = window.config.environment === 'local' ? '0' : '1'
-    localStorage.setItem('libreOneTester', libreOneTester)
-    this.libreOneTester = +localStorage.libreOneTester === 1
     this.logout = logout
     const widgetScript = document.createElement('script')
     widgetScript.setAttribute(
@@ -342,17 +341,12 @@ export default {
     )
     document.head.appendChild(widgetScript)
   },
+  mounted () {
+    this.localEnvironment = window.config.environment === 'local'
+  },
   methods: {
-    updateLibreOneProfile () {
-      window.location.href = this.environment === 'production'
-        ? 'https://one.libretexts.org/profile'
-        : 'https://staging.one.libretexts.org/profile'
-    },
-    updateLibreOnePassword () {
-      window.location.href = this.environment === 'production'
-        ? 'https://one.libretexts.org/security'
-        : 'https://staging.one.libretexts.org/security'
-    },
+    updateLibreOnePassword,
+    updateLibreOneProfile,
     beginLogin () {
       window.location.href = 'api/oidc/initiate-login/web'
     },
@@ -376,7 +370,7 @@ export default {
           await this.$store.dispatch('auth/fetchUser')
           // Redirect to the correct home page
           Object.keys(localStorage).forEach((key) => {
-            if (key !== ('appversion') && key !== ('libreOneTester')) {
+            if (key !== ('appversion')) {
               delete localStorage[key]
             }
           })

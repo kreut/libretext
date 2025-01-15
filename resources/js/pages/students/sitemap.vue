@@ -10,14 +10,14 @@
             </router-link>
           </li>
           <li>
-            <router-link :to="{name: 'settings.profile'}">
+            <a href="" @click.prevent="updateLibreOneProfile">
               Settings - Profile
-            </router-link>
+            </a>
           </li>
           <li>
-            <router-link :to="{name: 'settings.password'}">
+            <a href="" @click.prevent="updateLibreOnePassword">
               Settings - Password
-            </router-link>
+            </a>
           </li>
           <li>
             <router-link :to="{name: 'settings.notifications'}">
@@ -57,6 +57,7 @@
 
 <script>
 import axios from 'axios'
+import { updateLibreOneProfile, updateLibreOnePassword } from '~/helpers/LibreOne'
 
 export default {
   metaInfo () {
@@ -69,6 +70,8 @@ export default {
     this.getEnrolledInCoursesAndAssignments()
   },
   methods: {
+    updateLibreOneProfile,
+    updateLibreOnePassword,
     async getEnrolledInCoursesAndAssignments () {
       const { data } = await axios.get('/api/courses/enrolled-in-courses-and-assignments')
       if (data.type === 'error') {

@@ -7,7 +7,7 @@ export async function logout () {
   await this.$store.dispatch('auth/logout')
   // For Blackboard, I have to force a new window and use this to tell ADAPT to hide the Breadcrumbs
   Object.keys(localStorage).forEach((key) => {
-    if (key !== ('appversion') && key !== ('libreOneTester')) {
+    if (key !== ('appversion')) {
       delete localStorage[key]
     }
   })

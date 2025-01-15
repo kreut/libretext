@@ -101,7 +101,7 @@ export default {
         })
         await this.$store.dispatch('auth/fetchUser')
         Object.keys(localStorage).forEach((key) => {
-          if (key !== ('appversion') && key !== ('libreOneTester')) {
+          if (key !== ('appversion')) {
             delete localStorage[key]
           }
         })

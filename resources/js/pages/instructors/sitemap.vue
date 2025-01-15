@@ -87,14 +87,14 @@
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{name: 'settings.profile'}">
+                  <a href="" @click.prevent="updateLibreOneProfile">
                     Settings - Profile
-                  </router-link>
+                  </a>
                 </li>
                 <li>
-                  <router-link :to="{name: 'settings.password'}">
+                  <a href="" @click.prevent="updateLibreOnePassword">
                     Settings - Password
-                  </router-link>
+                  </a>
                 </li>
               </ul>
             </b-card-text>
@@ -254,7 +254,7 @@
 
 <script>
 import axios from 'axios'
-
+import { updateLibreOneProfile, updateLibreOnePassword } from '~/helpers/LibreOne'
 export default {
   metaInfo () {
     return { title: 'Sitemap' }
@@ -270,6 +270,8 @@ export default {
     this.getLearningTrees()
   },
   methods: {
+    updateLibreOneProfile,
+    updateLibreOnePassword,
     getQuestionsRouterLink (assignment) {
       return {
         name: assignment.assessment_type === 'learning tree' ? 'learning_trees.get' : 'questions.get',
