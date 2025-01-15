@@ -185,12 +185,10 @@ class LTIController extends Controller
                     //moodle needs the custom params to be some sort of object (even though it's really empty).  As a hack I'm just sending them
                     $resource = LTI\LTI_Deep_Link_Resource::new()
                         ->set_url($url)
-                        ->set_custom_params(json_decode('{"name" : "value"}'))
-                        ->set_title('ADAPT');
+                        ->set_custom_params(json_decode('{"name" : "value"}'));
                 } else {
                     $resource = LTI\LTI_Deep_Link_Resource::new()
-                        ->set_url($url)
-                        ->set_title('ADAPT');
+                        ->set_url($url);
                 }
                 $launch->get_deep_link()
                     ->output_response_form([$resource]);
