@@ -56,6 +56,7 @@
 import AllFormErrors from '~/components/AllFormErrors'
 import Form from 'vform'
 import { getTimeZones } from '~/helpers/TimeZones'
+import axios from 'axios'
 
 export default {
   name: 'LaunchClickerApp',
@@ -86,6 +87,31 @@ export default {
       : `adaptclicker://${host}/courses?token=${this.token}`
   },
   async mounted () {
+    if (+this.$route.params.role === 2) {
+      try {
+        const { data } = await axios.get(`/api/oidc/login-by-jwt/${this.token}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return
+        }
+        // Save the token.
+        await this.$store.dispatch('auth/saveToken', {
+          token: data.token,
+          remember: this.remember
+        })
+        await this.$store.dispatch('auth/fetchUser')
+        Object.keys(localStorage).forEach((key) => {
+          if (key !== ('appversion') && key !== ('libreOneTester')) {
+            delete localStorage[key]
+          }
+        })
+        window.location.href = '/instructors/courses'
+        return
+      } catch (error) {
+        this.$noty.error(error.message)
+        return
+      }
+    }
     if (this.isRegistration === '0') {
       document.getElementById('launch-url').click()
     } else {

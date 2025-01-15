@@ -504,7 +504,12 @@ class OIDCController extends Controller
                 : Cookie::forget('clicker_app');
 
             if ($clicker_app) {
-                return redirect()->to("/launch-clicker-app/$token/0")->withCookie($cookie);
+                $expiredCookie1 = cookie('oidc_state', '', -1, null, null, true, true, false, 'None');
+                $expiredCookie2 = cookie('oidc_nonce', '', -1, null, null, true, true, false, 'None');
+                return redirect()->to("/launch-clicker-app/$token/$user->role/0")
+                    ->withCookie($expiredCookie1)
+                    ->withCookie($expiredCookie2)
+                    ->withCookie($cookie);
             } else {
 
                 if (isset($state['redirectURI']) && $state['redirectURI']) {

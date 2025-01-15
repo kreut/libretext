@@ -221,7 +221,7 @@ let general_paths = [
     component: page('instructors/pending_question_ownership_transfer_request.vue')
   },
   {
-    path: '/launch-clicker-app/:token/:isRegistration?',
+    path: '/launch-clicker-app/:token/:role/:isRegistration?',
     name: 'LaunchClickerApp',
     component: page('auth/launch.clicker.app.vue')
   },

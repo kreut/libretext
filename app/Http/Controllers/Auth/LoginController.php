@@ -122,7 +122,7 @@ class LoginController extends Controller
         $this->guard()->logout();
         $cookie[0] = Cookie::forget('user_jwt');
         $cookie[1] = Cookie::forget('clicker_app');
-        return redirect('https://www.cnn.com')->withCookies($cookie);
+        return redirect(request()->getSchemeAndHttpHost())->withCookies($cookie);
 
     }
 
