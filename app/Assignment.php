@@ -486,8 +486,9 @@ class Assignment extends Model
                             ? json_decode($lti_assignment['jwt_body'])
                             : null;
                         if ($jwt_body) {
-                            $lms_course_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/context"}->title;
-                            $lms_assignment_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/resource_link"}->title;
+                            $lms_course_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/context"}->title ?? 'No LMS course name provided';
+                            $lms_assignment_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/resource_link"}->title ?? 'No LMS title provided';
+
                             $lti_launches_by_assignment_id[$assignment_id]['lms_course_name'] = $lms_course_name;
                             $lti_launches_by_assignment_id[$assignment_id]['lms_assignment_name'] = $lms_assignment_name;
                         }
