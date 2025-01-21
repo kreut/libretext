@@ -25,6 +25,7 @@ class AssignmentTemplateTest extends TestCase
             'can_view_hint' => 0,
             'formative' => 0,
             'scoring_type' => 'p',
+            'can_contact_instructor_auto_graded' => 'never',
             'source' => 'a',
             'can_submit_work' => 0,
             'points_per_question' => 'number of points',

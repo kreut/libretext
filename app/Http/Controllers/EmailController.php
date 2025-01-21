@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Exceptions\Handler;
+use App\Mail\ContactGrader;
 use \Exception;
 
 
@@ -65,9 +66,12 @@ class EmailController extends Controller
             $from_name = $request->user()->first_name . ' ' . $request->user()->last_name;
             $from_email = $request->user()->email;
             $student_user_id = Auth::user()->id;
+            if ( $request->user()->fake_student){
+                $from_email = 'fake@fake.com';
+            }
             $link = $request->getSchemeAndHttpHost() . "/assignments/$assignment_id/grading/$question_id/$student_user_id";
             Mail::to($to_email)
-                ->send(new \App\Mail\ContactGrader($data['subject'], $data['text'], $from_email, $from_name, $link));
+                ->send(new ContactGrader($data['subject'], $data['text'], $from_email, $from_name, $link));
 
             $response['type'] = 'success';
             $response['message'] = 'Thank you for your message!  Please expect a response within 1 business day.';

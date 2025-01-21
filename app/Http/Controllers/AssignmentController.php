@@ -38,11 +38,11 @@ use DateTime;
 use DOMDocument;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
 class AssignmentController extends Controller
@@ -1877,7 +1877,7 @@ class AssignmentController extends Controller
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
                 'can_view_hint' => $assignment->can_view_hint,
-                'can_submit_work' =>$assignment->can_submit_work,
+                'can_submit_work' => $assignment->can_submit_work,
                 'hint_penalty' => $assignment->hint_penalty,
                 'file_upload_mode' => $assignment->file_upload_mode,
                 'has_submissions_or_file_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
@@ -1912,6 +1912,7 @@ class AssignmentController extends Controller
                     ->where('user_id', -1)->first()];
 
             if (Auth::user()->role === 3) {
+                $response['assignment']['can_contact_instructor_auto_graded'] = $assignment->can_contact_instructor_auto_graded;
                 $response['assignment']['full_pdf_url'] = '';
                 $submission_file = $submissionFile->where('user_id', $request->user()->id)
                     ->where('assignment_id', $assignment->id)
@@ -2006,11 +2007,11 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function getInfoForGrading(Request $request,
+    function getInfoForGrading(Request    $request,
                                Assignment $assignment,
-                               Solution $Solution,
-                               Question $Question,
-                               Webwork $webwork): array
+                               Solution   $Solution,
+                               Question   $Question,
+                               Webwork    $webwork): array
     {
 
         $response['type'] = 'error';

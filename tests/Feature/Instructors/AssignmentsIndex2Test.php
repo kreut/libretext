@@ -116,6 +116,7 @@ class AssignmentsIndex2Test extends TestCase
             'include_in_weighted_average' => 1,
             'late_policy' => 'not accepted',
             'can_submit_work' => 0,
+            'can_contact_instructor_auto_graded' => 'never',
             'assessment_type' => 'delayed',
             'default_open_ended_submission_type' => 'file',
             'instructions' => 'Some instructions',

@@ -72,6 +72,7 @@ class AssignmentsIndex3Test extends TestCase
             'can_submit_work' => 0,
             'students_can_view_assignment_statistics' => 0,
             'include_in_weighted_average' => 1,
+            'can_contact_instructor_auto_graded' => 'never',
             'late_policy' => 'not accepted',
             'assessment_type' => 'delayed',
             'default_open_ended_submission_type' => 'file',

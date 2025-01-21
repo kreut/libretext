@@ -2962,12 +2962,12 @@
                           >View</b-button>
                         </span>
                         <span v-if="!isOpenEnded
-                        && questions[currentPage - 1].last_submitted !== 'N/A'
-                        && questions[currentPage-1].can_submit_work"
+                          && questions[currentPage - 1].last_submitted !== 'N/A'
+                          && questions[currentPage-1].can_submit_work"
                         >
-                          <SubmitWork class="pl-1"
+                          <SubmitWork :key="`submit-work-${submitWorkKey}`"
+                                      class="pl-1"
                                       :submit-button-active="submitButtonActive"
-                                      :key="`submit-work-${submitWorkKey}`"
                                       :user-id="questions[currentPage-1].user_id"
                                       :assignment-id="+assignmentId"
                                       :question-id="+questions[currentPage-1].id"
@@ -2975,7 +2975,7 @@
                                       :submitted-work-at="questions[currentPage-1].submitted_work_at"
                                       @updateSubmittedWork="updateSubmittedWork"
                           />
-                      </span>
+                        </span>
                       </li>
                       <li
                         v-if="['webwork','imathas'].includes(questions[currentPage-1].technology) && submissionArray.length"
@@ -2988,20 +2988,20 @@
                         <span v-if="questions[currentPage - 1].last_submitted !== 'N/A'">
                           <b-button size="sm" variant="info" @click="showSubmissionArray">View Summary</b-button></span>
                         <span v-if="!isOpenEnded
-                        && questions[currentPage - 1].last_submitted !== 'N/A'
-                        && questions[currentPage-1].can_submit_work"
+                          && questions[currentPage - 1].last_submitted !== 'N/A'
+                          && questions[currentPage-1].can_submit_work"
                         >
-                  <SubmitWork class="pl-1"
-                              :submit-button-active="submitButtonActive"
-                              :key="`submit-work-${submitWorkKey}`"
-                              :user-id="questions[currentPage-1].user_id"
-                              :assignment-id="+assignmentId"
-                              :question-id="+questions[currentPage-1].id"
-                              :submitted-work="questions[currentPage-1].submitted_work"
-                              :submitted-work-at="questions[currentPage-1].submitted_work_at"
-                              @updateSubmittedWork="updateSubmittedWork"
-                  />
-                      </span>
+                          <SubmitWork :key="`submit-work-${submitWorkKey}`"
+                                      class="pl-1"
+                                      :submit-button-active="submitButtonActive"
+                                      :user-id="questions[currentPage-1].user_id"
+                                      :assignment-id="+assignmentId"
+                                      :question-id="+questions[currentPage-1].id"
+                                      :submitted-work="questions[currentPage-1].submitted_work"
+                                      :submitted-work-at="questions[currentPage-1].submitted_work_at"
+                                      @updateSubmittedWork="updateSubmittedWork"
+                          />
+                        </span>
                       </li>
                       <li>
                         <span class="font-weight-bold">Submitted At:
@@ -3015,11 +3015,11 @@
                       <li v-if="!isOpenEnded
                         && questions[currentPage - 1].last_submitted !== 'N/A'
                         && questions[currentPage-1].can_submit_work
-                       && !(['webwork','imathas'].includes(questions[currentPage-1].technology) && submissionArray.length)"
+                        && !(['webwork','imathas'].includes(questions[currentPage-1].technology) && submissionArray.length)"
                       >
-                        <SubmitWork class="pl-1"
+                        <SubmitWork :key="`submit-work-${submitWorkKey}`"
+                                    class="pl-1"
                                     :submit-button-active="submitButtonActive"
-                                    :key="`submit-work-${submitWorkKey}`"
                                     :user-id="questions[currentPage-1].user_id"
                                     :assignment-id="+assignmentId"
                                     :question-id="+questions[currentPage-1].id"
@@ -3042,7 +3042,7 @@
                           }}%</span>
                       </li>
                     </ul>
-                    <div v-show="showContactGrader()">
+                    <div v-show="showContactGrader() || showContactInstructorAutoGraded()">
                       <hr>
                       <span class="pr-2">
                         <b-button size="sm" variant="outline-primary"
@@ -3412,6 +3412,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    canContactInstructorAutoGraded: false,
     algorithmicAssignment: false,
     submitWorkKey: 0,
     isPhone: false,
@@ -4241,7 +4242,27 @@ export default {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])
       })
     },
-
+    showContactInstructorAutoGraded () {
+      let canContactInstructorAutoGraded
+      canContactInstructorAutoGraded = false
+      switch (this.canContactInstructorAutoGraded) {
+        case ('before submission'):
+          canContactInstructorAutoGraded = this.questions &&
+            ['webwork', 'qti', 'h5p', 'imathas'].includes(this.questions[this.currentPage - 1].technology) &&
+            this.questions[this.currentPage - 1].last_submitted === 'N/A'
+          break
+        case ('before due date'):
+          canContactInstructorAutoGraded = !this.pastDue
+          break
+        case ('after due date'):
+          canContactInstructorAutoGraded = this.pastDue
+          break
+        case ('never'):
+          canContactInstructorAutoGraded = false
+          break
+      }
+      return canContactInstructorAutoGraded
+    },
     showContactGrader () {
       return (this.questions && this.questions[this.currentPage - 1].grader_id && (this.showScores ||
         this.solutionsReleased ||
@@ -5945,6 +5966,7 @@ export default {
           $('#skip-link').remove()
         }
         let assignment = data.assignment
+        this.canContactInstructorAutoGraded = assignment.can_contact_instructor_auto_graded
         this.algorithmicAssignment = Boolean(assignment.algorithmic)
         this.canContactGrader = assignment.can_contact_grader
         this.betaAssignmentsExist = assignment.beta_assignments_exist

@@ -13,6 +13,7 @@ export const assignmentForm = new Form({
   assignment_group_id: null,
   default_open_ended_submission_type: 0,
   can_submit_work: 0,
+  can_contact_instructor_auto_graded: 'never',
   default_completion_scoring_mode: '100% for either',
   completion_split_auto_graded_percentage: '50',
   file_upload_mode: 'individual_assessment',
@@ -153,6 +154,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   }
   form.late_policy = 'not accepted'
   form.can_submit_work = 0
+  form.can_contact_instructor_auto_graded = 'never'
   form.late_deduction_percent = null
   form.late_deduction_applied_once = 1
   form.late_deduction_application_period = null
@@ -195,7 +197,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.solutionsReleased = assignmentProperties.solutions_released
   vm.number_of_questions = assignmentProperties.num_questions
   vm.form.can_submit_work = assignmentProperties.can_submit_work
-
+  vm.form.can_contact_instructor_auto_graded = assignmentProperties.can_contact_instructor_auto_graded
   // auto-release
   vm.form.auto_release_shown = assignmentProperties.auto_release_shown
   vm.form.auto_release_show_scores = assignmentProperties.auto_release_show_scores

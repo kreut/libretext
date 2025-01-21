@@ -690,7 +690,8 @@
             label-for="can_submit_work"
           >
             <template v-slot:label>
-              Can Submit Work* <CanSubmitWorkTooltip/>
+              Can Submit Work*
+              <CanSubmitWorkTooltip/>
             </template>
             <b-form-radio-group id="can_submit_work"
                                 v-model="form.can_submit_work"
@@ -698,10 +699,43 @@
                                 stacked
             >
               <b-form-radio name="can_submit_work" value="1">
-             Yes
+                Yes
               </b-form-radio>
               <b-form-radio name="can_submit_work" value="0">
                 No
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+          <b-form-group
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="can_contact_instructor_auto_graded"
+          >
+            <template v-slot:label>
+              Can Contact Instructor (auto-graded)     <QuestionCircleTooltip id="can_contact_instructor_auto_graded_tooltip"/>
+              <b-tooltip target="can_contact_instructor_auto_graded_tooltip"
+                                                            delay="250"
+                                                            triggers="hover focus"
+            >
+              For auto-graded questions, optionally allow your students to contact you or your grader (if one exists for a given section) directly through ADAPT.  This may be for clarifying purposes or if they need a question to be regraded.
+            </b-tooltip>
+            </template>
+            <b-form-radio-group id="can_contact_instructor_auto_graded"
+                                v-model="form.can_contact_instructor_auto_graded"
+                                required
+                                stacked
+            >
+              <b-form-radio name="before_submission" value="before submission">
+                Before submission
+              </b-form-radio>
+              <b-form-radio name="before_due_date" value="before due date">
+                Before due date
+              </b-form-radio>
+              <b-form-radio name="before_due_date" value="after due date">
+                Only after due date
+              </b-form-radio>
+              <b-form-radio name="never" value="never">
+                Never
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
