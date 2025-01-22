@@ -43,6 +43,8 @@ Route::get('/oidc/libreone/callback', 'OIDCController@callback');
 Route::post('/oidc/libreone/callback', 'OIDCController@logoutCallback');
 Route::post('/oidc/libreone/instructor-verified', 'OIDCController@instructorVerified');
 Route::post('/oidc/libreone/new-user-created', 'OIDCController@newUserCreated');
+Route::post('/oidc/back-channel-slo', 'OIDCController@backChannelSingleLogOut');
+
 
 Route::post('/pending-delete-user', 'PendingDeletedUserController@store');
 

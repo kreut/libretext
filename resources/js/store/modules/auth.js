@@ -52,7 +52,6 @@ export const actions = {
   async fetchUser ({ commit }) {
     try {
       const { data } = await axios.get('/api/user')
-
       commit(types.FETCH_USER_SUCCESS, { user: data })
     } catch (e) {
       commit(types.FETCH_USER_FAILURE)
@@ -67,7 +66,8 @@ export const actions = {
     try {
       await axios.post('/api/logout')
       window.location.href = '/'
-    } catch (e) { }
+    } catch (e) {
+    }
 
     commit(types.LOGOUT)
   },

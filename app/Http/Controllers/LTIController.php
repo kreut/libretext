@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enrollment;
 use App\Exceptions\Handler;
+use App\LoggedInUserToken;
 use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\LtiToken;
@@ -44,8 +45,9 @@ class LTIController extends Controller
         $response['type'] = 'error';
         try {
             $user = User::where('id', session()->get('lti_user_id'))->firstOrFail();
+            $email = $user->email;
             if (!$user->central_identity_id) {
-                $data = ['email' => $user->email,
+                $data = ['email' => $email,
                     'first_name' => $user->first_name,
                     'last_name' => $user->last_name,
                     'user_type' => $user->role === 2 ? 'instructor' : 'student',
@@ -55,25 +57,24 @@ class LTIController extends Controller
                     $user->central_identity_id = $oidc_response['central_identity_id'];
                     $user->save();
                 } else {
-                   /* Telegram::sendMessage([
-                        'chat_id' => config('myconfig.telegram_channel_id'),
-                        'parse_mode' => 'HTML',
-                        'text' => "Unable to auto-provision User: $user->id. Error: " . json_encode($oidc_response)
-                    ]);*/
+                    /* Telegram::sendMessage([
+                         'chat_id' => config('myconfig.telegram_channel_id'),
+                         'parse_mode' => 'HTML',
+                         'text' => "Unable to auto-provision User: $user->id. Error: " . json_encode($oidc_response)
+                     ]);*/
                 }
             } else {
                 $lti_user_email = session()->get('lti_user_email');
                 if ($lti_user_email && $lti_user_email !== $user->email) {
-                    $user->email = $lti_user_email;
+                    $email = $lti_user_email;
+                    $user->email = $email;
                     $user->save();
                     $OIDC->changeEmail($user->central_identity_id, $lti_user_email);
 
                 }
-
-
             }
-
-            $response['token'] = \JWTAuth::fromUser($user);
+            $token = \JWTAuth::fromUser($user);
+            $response['token'] = $token;
             $response['type'] = 'success';
         } catch (ModelNotFoundException $e) {
             $h = new Handler(app());

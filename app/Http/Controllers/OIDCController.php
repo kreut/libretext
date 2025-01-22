@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
+use App\LoggedInUserToken;
 use App\OIDC;
 use App\User;
 use Exception;
-use GuzzleHttp\Client;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Http\JsonResponse;
@@ -32,10 +32,10 @@ use MiladRahimi\Jwt\Exceptions\ValidationException;
 use MiladRahimi\Jwt\Parser;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use Telegram\Bot\Laravel\Facades\Telegram;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
+
 
 class OIDCController extends Controller
 {
@@ -104,7 +104,27 @@ class OIDCController extends Controller
 
     }
 
-    public function logoutCallback()
+    /**
+     * @param Request $request
+     * @param LoggedInUserToken $loggedInUserToken
+     * @return array
+     */
+    public function backChannelSingleLogOut(Request $request, LoggedInUserToken $loggedInUserToken)
+    {
+        try {
+            $response['type'] = 'error';
+            $payload = $this->_decodeJwtWithoutSecret($request->logout_token);
+            $loggedInUserToken->where('sid', $payload['sid'])->update(['logged_out' => 1]);
+            $response['message'] = "User with sid {$payload['sid']} has logged out.";
+            $response['type'] = 'info';
+        } catch (Exception $e) {
+            $response['message'] = "There was an error logging out user with token $request->logout_token.";
+        }
+        return $response;
+    }
+
+    public
+    function logoutCallback()
     {
         $response['message'] = "POST to /oidc/libreone/callback is not currently used for anything.";
         $response['type'] = 'info';
@@ -116,7 +136,8 @@ class OIDCController extends Controller
      * @param string $mode
      * @return Application|RedirectResponse|Redirector
      */
-    public function initiateLogin(Request $request, string $mode)
+    public
+    function initiateLogin(Request $request, string $mode)
     {
 
         $data = [
@@ -153,7 +174,8 @@ class OIDCController extends Controller
 
     }
 
-    public function changeEmail(OIDC $OIDC)
+    public
+    function changeEmail(OIDC $OIDC)
     {
         $central_identity_id = "bd42a7db-a35a-47e7-8da2-e6aedafcc952";
         if (app()->environment('local')) {
@@ -163,7 +185,8 @@ class OIDCController extends Controller
         }
     }
 
-    public function autoProvision(OIDC $OIDC)
+    public
+    function autoProvision(OIDC $OIDC)
     {
         if (app()->environment('local')) {
             $data = [
@@ -179,7 +202,8 @@ class OIDCController extends Controller
         }
     }
 
-    public function redirect()
+    public
+    function redirect()
     {
 
         $oidcAuth = $this->authorizeUrl;
@@ -201,7 +225,8 @@ class OIDCController extends Controller
      * @return array
      * @throws Exception
      */
-    public function instructorVerified(Request $request, User $user): array
+    public
+    function instructorVerified(Request $request, User $user): array
     {
         try {
             $response['type'] = 'error';
@@ -225,7 +250,8 @@ class OIDCController extends Controller
      * @return array
      * @throws Exception
      */
-    public function deprovision(Request $request, User $user)
+    public
+    function deprovision(Request $request, User $user)
     {
         try {
             $response['type'] = 'error';
@@ -253,7 +279,8 @@ class OIDCController extends Controller
      * @return array
      * @throws Exception
      */
-    public function newUserCreated(Request $request, User $user): array
+    public
+    function newUserCreated(Request $request, User $user): array
     {
         try {
             $response['type'] = 'error';
@@ -325,7 +352,8 @@ class OIDCController extends Controller
      * @throws NotFoundExceptionInterface
      * @throws Exception
      */
-    public function loginByJWT(string $token): JsonResponse
+    public
+    function loginByJWT(string $token): JsonResponse
     {
         try {
             $landing_page = session()->has('landing_page') ? session()->get('landing_page') : '';
@@ -336,7 +364,8 @@ class OIDCController extends Controller
                 if (!$user) {
                     throw new Exception ("No user with that JWT exists");
                 }
-                $response['token'] = \JWTAuth::fromUser($user);
+                $token = \JWTAuth::fromUser($user);
+                $response['token'] = $token;
                 $response['success'] = 'error';
                 $response['landing_page'] = $landing_page;
             } else {
@@ -380,7 +409,8 @@ class OIDCController extends Controller
      * @throws ValidationException
      * @throws Exception
      */
-    private function _hasAccess(Request $request): array
+    private
+    function _hasAccess(Request $request): array
     {
         if (!$request->bearerToken()) {
             throw new Exception ('Missing Bearer Token.');
@@ -397,7 +427,8 @@ class OIDCController extends Controller
      * @return array|JsonResponse
      * @throws Exception
      */
-    public function callback(Request $request)
+    public
+    function callback(Request $request)
     {
         try {
             $response['type'] = 'error';
@@ -442,7 +473,6 @@ class OIDCController extends Controller
             }
 
             $payload = $this->_verifyAccessToken($id_token, $this->jwksUrl);
-
             $oidc_nonce = request()->cookie('oidc_nonce');
             $nonce = $payload->nonce;
 
@@ -486,7 +516,6 @@ class OIDCController extends Controller
                 $user->email = $email;
                 $user->save();
             }
-
             $linked_accounts = Helper::getLinkedAccounts($user->id);
             session()->put('linked_accounts', $linked_accounts);
             session()->forget('original_user_id');
@@ -502,6 +531,11 @@ class OIDCController extends Controller
             $cookie = $clicker_app
                 ? Cookie::make('clicker_app', 1)
                 : Cookie::forget('clicker_app');
+
+
+            LoggedInUserToken::firstOrCreate(['email' => $user->email,
+                'sid' => $payload->sid]);
+            session()->put('sid', $payload->sid);
 
             if ($clicker_app) {
                 $expiredCookie1 = cookie('oidc_state', '', -1, null, null, true, true, false, 'None');
@@ -544,7 +578,8 @@ class OIDCController extends Controller
      * @return \stdClass
      * @throws Exception
      */
-    private function _verifyAccessToken($accessToken, $jwksUrl): \stdClass
+    private
+    function _verifyAccessToken($accessToken, $jwksUrl): \stdClass
     {
         // Fetch the JWKS
         $jwks = $this->_fetchJWKS($jwksUrl);
@@ -570,6 +605,25 @@ class OIDCController extends Controller
         } catch (Exception $e) {
             throw new Exception('Token verification failed: ' . $e->getMessage());
         }
+    }
+
+    private
+    function _decodeJwtWithoutSecret($jwt)
+    {
+
+        $parts = explode('.', $jwt);
+
+        if (count($parts) !== 3) {
+            throw new Exception("Invalid JWT structure");
+        }
+
+        $payload = base64_decode(strtr($parts[1], '-_', '+/'));
+
+        if ($payload === false) {
+            throw new Exception("Failed to decode JWT payload");
+        }
+
+        return json_decode($payload, true);
     }
 
 

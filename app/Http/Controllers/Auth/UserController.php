@@ -51,6 +51,26 @@ class UserController extends Controller
             $request->user()->is_instructor_logged_in_as_student = is_numeric(session()->get('original_user_id')) || $request->user()->fake_student;
 
         }
+
+        $sid = session()->get('sid');
+        $request->user()->back_channel_single_logout = DB::table('logged_in_user_tokens')
+            ->where('sid', $sid)
+            ->where('logged_out', 1)
+            ->exists();
+        if ($request->user()->back_channel_single_logout) {
+            DB::beginTransaction();
+            DB::table('logged_in_user_tokens')
+                ->where('sid', $sid)
+                ->delete();
+            try {
+                auth()->logout();
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollback();
+                return response()->json(['message' => 'Token invalidation failed', 'error' => $e->getMessage()], 500);
+            }
+            return response()->json(['message' => 'User has been logged out due to backchannel single logout.'], 200);
+        }
         return response()->json($request->user());
     }
 
@@ -117,7 +137,7 @@ class UserController extends Controller
             $response['message'] = 'InvalidSignatureException: cannot log do auto-login.';
             return $response;
         } catch (Exception $e) {
-            $response['message']= $e->getMessage() ?: 'Cannot log in due to JWT error.';
+            $response['message'] = $e->getMessage() ?: 'Cannot log in due to JWT error.';
         }
         return $response;
 
