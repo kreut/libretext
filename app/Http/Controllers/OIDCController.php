@@ -276,11 +276,11 @@ class OIDCController extends Controller
     /**
      * @param Request $request
      * @param User $user
+     * @param OIDC $OIDC
      * @return array
      * @throws Exception
      */
-    public
-    function newUserCreated(Request $request, User $user): array
+    public function newUserCreated(Request $request, User $user, OIDC $OIDC): array
     {
         try {
             $response['type'] = 'error';
@@ -300,34 +300,8 @@ class OIDCController extends Controller
                 $new_user->email = $email;
                 $new_user->formative_student = 0;
                 $new_user->testing_student = 0;
-                $roles = ['instructor' => 2,
-                    'student' => 3,
-                    'grader' => 4,
-                    'question-editor' => 5,
-                    'tester' => 6];
-                $role = $claims['role'];
-                if (!isset($roles[$role])) {
-                    throw new Exception("$role is not yet set up yet.");
-                }
-                switch ($role) {
-                    case('instructor'):
-                        $adapt_role = 2;
-                        break;
-                    case('student'):
-                        $adapt_role = 3;
-                        break;
-                    case('grader'):
-                        $adapt_role = 4;
-                        break;
-                    case('question-editor'):
-                        $adapt_role = 5;
-                        break;
-                    case('tester'):
-                        $adapt_role = 6;
-                        break;
-                    default:
-                        throw new Exception("$role is not yet set up yet.");
-                }
+
+                $adapt_role = $OIDC->getAdaptRole($claims['role']);
                 $new_user->role = $adapt_role;
                 $new_user->save();
             }
@@ -424,11 +398,12 @@ class OIDCController extends Controller
 
     /**
      * @param Request $request
-     * @return array|JsonResponse
+     * @param OIDC $OIDC
+     * @return array|JsonResponse|RedirectResponse
      * @throws Exception
      */
-    public
-    function callback(Request $request)
+    public function callback(Request $request, OIDC $OIDC)
+
     {
         try {
             $response['type'] = 'error';
@@ -501,15 +476,34 @@ class OIDCController extends Controller
             $user_data = json_decode((string)$profileResponse->getBody(), true);
 
             $central_identity_id = $user_data['id'];
-            $email = $user_data['attributes']['email'];
+            $attributes = $user_data['attributes'];
+            $email = $attributes['email'];
             $user = User::where('central_identity_id', $central_identity_id)->first();
+
             if (!$user) {
                 $user = User::where('email', $email)->first();
                 if ($user) {
                     $user->central_identity_id = $central_identity_id;
                     $user->save();
                 } else {
-                    throw new Exception("You have not registered with ADAPT.");
+                    $principal_attributes_response = $OIDC->getPrincipalAttributes($email);
+                    if ($principal_attributes_response['type'] === 'error') {
+                        throw new Exception($principal_attributes_response['message']);
+                    }
+                    $user_info = $principal_attributes_response['principal_attributes'];
+                    $user = new User();
+                    $user->time_zone = $user_info['time_zone'];
+                    $user->central_identity_id = $central_identity_id;
+                    $user->first_name = $user_info['first_name'];
+                    $user->last_name = $user_info['last_name'];
+                    $user->verify_status = $user_info['verify_status'];
+                    $user->fake_student = 0;
+                    $user->email = $email;
+                    $user->formative_student = 0;
+                    $user->testing_student = 0;
+                    $adapt_role = $OIDC->getAdaptRole($user_info['user_type']);
+                    $user->role = $adapt_role;
+                    $user->save();
                 }
             } else {
                 //update email;

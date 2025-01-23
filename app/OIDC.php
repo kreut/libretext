@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
@@ -18,17 +19,54 @@ class OIDC extends Model
     public function __construct()
     {
         parent::__construct();
-        if (app()->environment('production')) {
-            $username = app()->environment('production') ? 'adapt_production' : 'libreone_staging';
+        if (app()->environment('testing')){
+            $username = 'some-username';
+            $secret = 'some-secret';
+        } else {
+            $username = app()->environment('production') ? 'adapt_production' : 'adapt_staging';
             $this->username = $username;
             $this->password = DB::table('key_secrets')->where('key', $username)->first()->secret;
-        } else {
-            $this->username = 'some';
-            $this->password = 'fake-thing';
         }
         $this->base_url = app()->environment('production')
             ? 'https://one.libretexts.org/api/v1'
             : 'https://staging.one.libretexts.org/api/v1';
+    }
+
+    /**
+     * @param string $role
+     * @return int
+     * @throws Exception
+     */
+    public function getAdaptRole(string $role)
+    {
+        $roles = ['instructor' => 2,
+            'student' => 3,
+            'grader' => 4,
+            'question-editor' => 5,
+            'tester' => 6];
+        if (!isset($roles[$role])) {
+            throw new Exception("$role is not yet set up yet.");
+        }
+        switch ($role) {
+            case('instructor'):
+                $adapt_role = 2;
+                break;
+            case('student'):
+                $adapt_role = 3;
+                break;
+            case('grader'):
+                $adapt_role = 4;
+                break;
+            case('question-editor'):
+                $adapt_role = 5;
+                break;
+            case('tester'):
+                $adapt_role = 6;
+                break;
+            default:
+                throw new Exception("$role is not yet set up yet.");
+        }
+        return $adapt_role;
     }
 
     public function changeEmail(string $central_identity_id, string $email)
@@ -39,10 +77,10 @@ class OIDC extends Model
 
         if ($response->successful()) {
             //$response = $response->json(); // if the response is JSON
-           // $response['type'] = 'success';
+            // $response['type'] = 'success';
         } else {
             //$response['type'] = 'error';
-           // $response['message'] = $response['errors'];
+            // $response['message'] = $response['errors'];
         }
         return $response;
 
@@ -69,5 +107,26 @@ class OIDC extends Model
         }
         return $response;
 
+    }
+
+    /**
+     * @param string $email
+     * @return array|mixed
+     */
+    public function getPrincipalAttributes(string $email)
+    {
+
+        $principal_attributes_response = Http::withBasicAuth($this->username, $this->password)
+            ->get("{$this->base_url}/users/principal-attributes", [
+                'username' => $email,
+            ]);
+        if ($principal_attributes_response->successful()) {
+            $response['principal_attributes'] = $principal_attributes_response->json();
+            $response['type'] = 'success';
+        } else {
+            $response['type'] = 'error';
+            $response['message'] = json_encode($principal_attributes_response->json());
+        }
+        return $response;
     }
 }
