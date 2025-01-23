@@ -165,6 +165,14 @@ export default {
         document.getElementById('footer-div').style.marginTop = '0px'
         document.getElementById('main-content').style.minHeight = '0px'
       }
+      if (to.name === 'welcome' && this.user){
+        if ([3, 4].includes(this.user.role)) {
+          window.location = '/students/courses'
+        }
+        if ([2, 5].includes(this.user.role)) {
+          window.location = '/instructors/courses'
+        }
+      }
     }
   },
   created () {
