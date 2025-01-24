@@ -211,15 +211,46 @@
             />
           </b-form-group>
           <b-form-group
+            id="renderMathJax"
+            label-cols-sm="2"
+            label-cols-lg="1"
+            label-for="MathJax"
+            label-size="sm"
+          >
+            <template #label>
+               MathJax <QuestionCircleTooltip id="mathjax"/>
+              <b-tooltip target="mathjax"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Render student submissions that contain mathematical notation
+              </b-tooltip>
+            </template>
+            <toggle-button
+              class="mt-2"
+              :width="55"
+              :value="renderMathJax"
+              :sync="true"
+              :font-size="14"
+              :margin="4"
+              :color="toggleColors"
+              :labels="{checked: 'On', unchecked: 'Off'}"
+              size="sm"
+              @change="updateRenderMathJax()"
+            />
+          </b-form-group>
+          <b-form-group
             v-if="hasMultipleSections"
-            label-cols-sm="3"
-            label-cols-lg="2"
+            label-cols-sm="2"
+            label-cols-lg="1"
             label="Section View"
             label-for="section_view"
+            label-size="sm"
           >
             <b-form-row>
               <b-col lg="3">
                 <b-form-select
+                  size="sm"
                   id="section_view"
                   v-model="sectionId"
                   :options="sections"
@@ -868,17 +899,18 @@
                     </b-button>
                        </span>
                     </b-row>
-                      <SubmissionArray :submission-array="submissionArray"
-                                       :question-submission-array="submissionArray"
-                                       :question-id="+questionView"
-                                       :assignment-id="+assignmentId"
-                                       :technology="technology"
-                                       :scoring-type="scoringType"
-                                       :user-id="grading[currentStudentPage - 1].student.user_id"
-                                       :user-role="user.role"
-                                       :small-table="true"
-                                       :penalties="grading[currentStudentPage - 1]['penalties']"
-                      />
+                    <SubmissionArray :submission-array="submissionArray"
+                                     :question-submission-array="submissionArray"
+                                     :question-id="+questionView"
+                                     :assignment-id="+assignmentId"
+                                     :technology="technology"
+                                     :scoring-type="scoringType"
+                                     :user-id="grading[currentStudentPage - 1].student.user_id"
+                                     :user-role="user.role"
+                                     :small-table="true"
+                                     :penalties="grading[currentStudentPage - 1]['penalties']"
+                                     :render-math-jax="renderMathJax"
+                    />
                   </b-card>
                 </b-col>
                 <b-col></b-col>
@@ -1043,6 +1075,7 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    renderMathJax: false,
     showDiscussIt: false,
     discussItRequirementsInfo: {},
     activeDiscussion: {},
@@ -1173,6 +1206,7 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   mounted () {
+    this.renderMathJax = +localStorage.renderMathJax === 1
     window.addEventListener('message', this.receiveMessage)
     h5pResizer()
     this.assignmentId = this.$route.params.assignmentId
@@ -1186,6 +1220,18 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    updateRenderMathJax () {
+      this.renderMathJax = !this.renderMathJax
+      if (this.renderMathJax) {
+        localStorage.renderMathJax = 1
+        this.$nextTick(() => {
+          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+        })
+      } else {
+        localStorage.renderMathJax = 0
+        location.reload()
+      }
+    },
     getSubmissionSummaryTitle () {
       return '<h2 class="h7 mb-0">Submission History</h2>'
     },
@@ -1827,9 +1873,11 @@ export default {
             this.addGlow(this.event, this.submissionArray, this.technology)
             this.addGlowTwiceMore()
           })
-          this.$nextTick(() => {
-            MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-          })
+          if (this.renderMathJax) {
+            this.$nextTick(() => {
+              MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+            })
+          }
         }
       } catch (error) {
         this.$noty.error(error.message)

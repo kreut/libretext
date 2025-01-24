@@ -51,6 +51,10 @@ export default {
   name: 'SubmissionArray',
   components: { SubmissionArrayTable },
   props: {
+    renderMathJax: {
+      type: Boolean,
+      default: true
+    },
     solutionsReleased: {
       type: Boolean,
       default: false
@@ -130,9 +134,11 @@ export default {
           this.error(error.message)
         }
       }
-      await this.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
+      if (this.renderMathJax) {
+        await this.$nextTick(() => {
+          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+        })
+      }
     },
     async getSubmissionHistory () {
       try {
