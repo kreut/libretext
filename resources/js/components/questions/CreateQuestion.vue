@@ -4038,7 +4038,7 @@ export default {
             prompt: '',
             solutionStructure: '',
             solution: '',
-            matchStereo: '1'
+            matchStereo: '0'
           }
           this.qtiQuestionType = 'submit_molecule'
           break
