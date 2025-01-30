@@ -478,6 +478,13 @@ class Assignment extends Model
                         if (in_array($lti_launch->assignment_id, $lti_assignments->pluck('id')->toArray()))
                             $lti_launches_by_assignment_id[$lti_launch->assignment_id]['jwt_body'] = $lti_launch->jwt_body;
                     }
+                    $lms_course_name = $course->lms_course_name;
+                    $assignments = $course->assignments;
+                    $lms_assignment_names = [];
+                    foreach ($assignments as $assignment) {
+                        $lms_assignment_names[$assignment->id] = $assignment->lms_assignment_name;
+                    }
+
                     foreach ($lti_launches_by_assignment_id as $lti_assignment) {
                         $assignment_id = $lti_assignment['assignment_id'];
                         $lti_launches_by_assignment_id[$assignment_id]['lms_course_name'] = '';
@@ -485,13 +492,21 @@ class Assignment extends Model
                         $jwt_body = isset($lti_assignment['jwt_body'])
                             ? json_decode($lti_assignment['jwt_body'])
                             : null;
-                        if ($jwt_body) {
-                            $lms_course_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/context"}->title ?? 'No LMS course name provided';
-                            $lms_assignment_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/resource_link"}->title ?? 'No LMS title provided';
+                        $lms_assignment_name =
+                            isset($lms_assignment_names[$assignment_id]) && $lms_assignment_names[$assignment_id]
+                                ? $lms_assignment_names[$assignment_id]
+                                : '';
 
-                            $lti_launches_by_assignment_id[$assignment_id]['lms_course_name'] = $lms_course_name;
-                            $lti_launches_by_assignment_id[$assignment_id]['lms_assignment_name'] = $lms_assignment_name;
+                        if ($jwt_body) {
+                            if (!$lms_course_name) {
+                                $lms_course_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/context"}->title ?? '';
+                            }
+                            if (!$lms_assignment_name) {
+                                $lms_assignment_name = $jwt_body->{"https://purl.imsglobal.org/spec/lti/claim/resource_link"}->title ?? 'No LMS title provided';
+                            }
                         }
+                        $lti_launches_by_assignment_id[$assignment_id]['lms_course_name'] = $lms_course_name ?: 'No LMS course name provided';
+                        $lti_launches_by_assignment_id[$assignment_id]['lms_assignment_name'] = $lms_assignment_name;
                     }
 
                     $num_to_passback_by_assignment_id = [];

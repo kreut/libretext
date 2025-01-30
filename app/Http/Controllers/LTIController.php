@@ -115,13 +115,19 @@ class LTIController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             DB::table('assignments')
                 ->where('id', $assignment->id)
-                ->update(['lms_resource_link_id' => $lms_resource_link_id]);
-
+                ->update(['lms_resource_link_id' => $lms_resource_link_id,
+                    'lms_assignment_name' => session()->get('lms_assignment_name')]);
+            DB::table('courses')
+                ->where('id', $assignment->course->id)
+                ->update(['lms_course_name' => session()->get('lms_course_name')]);
+            DB::commit();
             $response['assignment_id'] = $assignment->id;
             $response['type'] = 'success';
         } catch (Exception $e) {
+            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error linking the assignment to your LMS.  Please try again by refreshing the page or contact us for assistance.";
@@ -235,6 +241,10 @@ class LTIController extends Controller
             DB::table('users')->where('instructor_user_id', $lti_user->id)->update(['instructor_user_id' => null]);
             session()->forget('original_user_id');
             session()->forget('admin_user_id');
+            $lms_course_name = $launch->get_launch_data()["https://purl.imsglobal.org/spec/lti/claim/context"]['title'] ?? 'No LMS course name provided';
+            $lms_assignment_name = $launch->get_launch_data()["https://purl.imsglobal.org/spec/lti/claim/resource_link"]['title'] ?? 'No LMS title provided';
+            session()->put('lms_course_name', trim($lms_course_name));
+            session()->put('lms_assignment_name', trim($lms_assignment_name));
             //Canvas opens in a new window so I use this to make sure that students don't see the breadcrumbs
             //Blackboard automatically opens in an iframe so this session value will do nothing
 
