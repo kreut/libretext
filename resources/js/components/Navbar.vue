@@ -173,7 +173,7 @@
             <fa icon="lock" fixed-width/>
             <span class="hover-underline pl-3">Reset Password</span>
           </b-dropdown-item>
-          <b-dropdown-item v-if="user.role === 2 && localEnvironment"
+          <b-dropdown-item v-if="user.role === 2"
                            @click="$router.push({ name: 'linked_accounts' })"
           >
             <fa icon="user-plus" fixed-width/>
