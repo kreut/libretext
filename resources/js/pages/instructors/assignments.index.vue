@@ -2101,7 +2101,6 @@ What assignment parameters??? */
 
       this.prepareForm(this.form)
       console.log(this.form)
-      console.log('sdfsdf')
       try {
         this.form.course_id = this.courseId
         if (this.form.assessment_type === 'clicker') {

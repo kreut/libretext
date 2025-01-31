@@ -67,7 +67,7 @@ trait AssignmentProperties
 
         return (int)$request->can_view_hint === 1
             ? str_replace('%', '', $request->hint_penalty)
-            : null;
+            : 0;
     }
 
     /**
@@ -88,7 +88,7 @@ trait AssignmentProperties
 
         return in_array($request->assessment_type, ['real time', 'learning tree']) && $request->scoring_type === 'p' && (int)$request->number_of_allowed_attempts !== 1
             ? str_replace('%', '', $request->number_of_allowed_attempts_penalty)
-            : null;
+            : 0;
     }
 
     /**

@@ -1674,7 +1674,7 @@
             </div>
             <div v-if="isLocalMe || user.id === 36892">
               Debugging: {{ qtiJson }}
-              {{qtiJson.matchStereo}}aaa
+              {{qtiJson.matchStereo}}
             </div>
             <div v-if="qtiQuestionType === 'submit_molecule'">
               <div  class="border border-dark p-2" style="width:320px;margin:auto">

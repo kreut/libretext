@@ -104,7 +104,7 @@ export function defaultAssignTos (moment, courseStartDate, courseEndDate) {
 
 export function prepareForm (form) {
   let assignTos = JSON.parse(JSON.stringify(form.assign_tos))
-
+  this.$forceUpdate()
   for (let i = 0; i < form.assign_tos.length; i++) {
     form[`groups_${i}`] = assignTos[i].groups
     form[`available_from_date_${i}`] = assignTos[i].available_from_date
@@ -241,9 +241,10 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
       if (vm.form.assign_tos[i].due_time) {
         vm.form.assign_tos[i].due_time = reformatTime(vm, vm.form.assign_tos[i].due_time)
       }
-      if (vm.form.assign_tos[i].final_submission_deadline_time) {
-        vm.form.assign_tos[i].final_submission_deadline_time = reformatTime(vm, vm.form.assign_tos[i].final_submission_deadline_time)
-      }
+
+      vm.form.assign_tos[i].final_submission_deadline_time = assignmentProperties.late_policy !== 'not accepted'
+        ? reformatTime(vm, vm.form.assign_tos[i].final_submission_deadline_time)
+        : null
     }
   }
   vm.form.algorithmic = assignmentProperties.algorithmic
@@ -256,11 +257,17 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.form.number_of_allowed_attempts_penalty = assignmentProperties.number_of_allowed_attempts_penalty !== null
     ? `${assignmentProperties.number_of_allowed_attempts_penalty}%`
     : ''
+  if (vm.form.number_of_allowed_attempts_penalty === '' && ['2', '3', '4', 'unlimited'].includes(vm.form.number_of_allowed_attempts)) {
+    vm.form.number_of_allowed_attempts_penalty = '0%'
+  }
+
   vm.form.can_view_hint = parseInt(assignmentProperties.can_view_hint)
   vm.form.hint_penalty = assignmentProperties.hint_penalty !== null
     ? `${assignmentProperties.hint_penalty}%`
     : ''
-
+  if (vm.form.can_view_hint_penalyt === '' && vm.form.can_view_hint) {
+    vm.form.hint_penalty = '0%'
+  }
   vm.form.shown = assignmentProperties.shown
   vm.form.show_scores = assignmentProperties.show_scores
   vm.form.solutions_released = assignmentProperties.solutions_released
