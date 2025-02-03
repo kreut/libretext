@@ -42,8 +42,9 @@
              title="Submission Accepted"
              size="lg"
              no-close-on-backdrop
+             :hide-footer="!+discussItSettingsForm.completion_criteria"
     >
-      <table class="table table-striped">
+      <table class="table table-striped" v-if="+discussItSettingsForm.completion_criteria">
         <thead>
         <tr>
           <th scope="col">
@@ -108,6 +109,7 @@
       <DiscussItSatisfiesRequirement :min-number-of-words="+minNumberOfWords"
                                      :comment-form-text="commentForm.text"
                                      :comment-type="'text'"
+                                     v-if="+discussItSettingsForm.completion_criteria"
       />
 
       <ckeditor
@@ -185,7 +187,7 @@
               frameborder="0"
               allowfullscreen=""
       />
-      <DiscussItSatisfiesRequirement v-if="reRecording"
+      <DiscussItSatisfiesRequirement v-if="reRecording && Boolean(+discussItSettingsForm.completion_criteria)"
                                      ref="discussItSatisfiesRequirement"
                                      :key="`discussItSatisfiesRequirement-${discussItSatisfiesRequirementKey}`"
                                      :milliseconds-time-until-requirement-satisfied="millisecondsTimeUntilRequirementSatisfied"
@@ -366,7 +368,49 @@
                 No
               </b-form-radio>
             </b-form-radio-group>
+            <b-form-radio-group v-model="discussItSettingsForm.completion_criteria"
+                                class="mb-2"
+            >
+              <label class="col-sm-5 col-lg-4 col-form-label col-form-label-sm text-right">Completion Criteria
+                <QuestionCircleTooltip :id="'show-completion-criteria-tooltip'"/>
+                <b-tooltip target="show-completion-criteria-tooltip" triggers="hover focus" delay="500">
+                  Please choose "yes" if you would like to show your students the completion criteria (minimum number of
+                  words
+                  or minimum length of audio).
+                </b-tooltip>
+              </label>
+              <b-form-radio name="show-completion-criteria" value="1">
+                Yes
+              </b-form-radio>
+              <b-form-radio name="show-completion-criteria" value="0">
+                No
+              </b-form-radio>
+            </b-form-radio-group>
           </b-card-text>
+          <div class="pb-1 flex d-inline-flex col-form-label col-form-label-sm"
+               v-if="!+discussItSettingsForm.completion_criteria"
+          >
+            <label for="response-modes" class="mr-2">Students may respond using:
+              <QuestionCircleTooltip
+                id="response-modes-tooltip"
+              />
+              <b-tooltip target="response-modes-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >Choose the type of comments that students are allowed to make.
+              </b-tooltip>
+            </label>
+            <b-form-checkbox-group
+              id="response-modes"
+              v-model="discussItSettingsForm.response_modes"
+              :options="responseModeOptions"
+              class="mb-3"
+              value-field="item"
+              text-field="name"
+              @change="discussItSettingsForm.errors.clear('response_modes')"
+            />
+            <ErrorMessage :message="discussItSettingsForm.errors.get('response_modes')"/>
+          </div>
         </b-card>
         <b-card header="default" header-html="<h2 class='h7'>Student Actions</h2>">
           <b-card-text>
@@ -444,7 +488,7 @@
             </b-form-group>
           </b-card-text>
         </b-card>
-        <div class="pt-3">
+        <div class="pt-3" v-if="+discussItSettingsForm.completion_criteria">
           <b-card header="default" header-html="<h2 class='h7'>Completion Criteria</h2>">
             <b-card-text>
               <b-alert :show="discussionCommentsExist" variant="info">
@@ -636,6 +680,7 @@
         <DiscussItSatisfiesRequirement :min-number-of-words="+minNumberOfWords"
                                        :comment-form-text="commentForm.text"
                                        :comment-type="'text'"
+                                       v-if="+discussItSettingsForm.completion_criteria"
         />
         <ckeditor
           id="discuss_it_text"
@@ -660,6 +705,7 @@
                                          :comment-type="'audio'"
                                          :show-satisfies-requirement-timer="showSatisfiesRequirementTimer"
                                          @setRequirementSatisfied="setRequirementSatisfied"
+                                         v-if="+discussItSettingsForm.completion_criteria"
           />
           <DiscussItCommentUpload :key="'new-audio'"
                                   :comment-type="'audio'"
@@ -702,14 +748,15 @@
         </div>
       </div>
       <div v-show="commentType === 'video'">
-        <DiscussItSatisfiesRequirement v-if="!discussionCommentVideo"
-                                       ref="discussItSatisfiesRequirement"
-                                       :key="`discussItSatisfiesRequirement-${discussItSatisfiesRequirementKey}`"
-                                       :milliseconds-time-until-requirement-satisfied="millisecondsTimeUntilRequirementSatisfied"
-                                       :human-readable-time-until-requirement-satisfied="humanReadableTimeUntilRequirementSatisfied"
-                                       :comment-type="'audio'"
-                                       :show-satisfies-requirement-timer="showSatisfiesRequirementTimer"
-                                       @setRequirementSatisfied="setRequirementSatisfied"
+        <DiscussItSatisfiesRequirement
+          v-if="!discussionCommentVideo &&  Boolean(+discussItSettingsForm.completion_criteria)"
+          ref="discussItSatisfiesRequirement"
+          :key="`discussItSatisfiesRequirement-${discussItSatisfiesRequirementKey}`"
+          :milliseconds-time-until-requirement-satisfied="millisecondsTimeUntilRequirementSatisfied"
+          :human-readable-time-until-requirement-satisfied="humanReadableTimeUntilRequirementSatisfied"
+          :comment-type="'audio'"
+          :show-satisfies-requirement-timer="showSatisfiesRequirementTimer"
+          @setRequirementSatisfied="setRequirementSatisfied"
         />
         <DiscussItCommentUpload :key="'new-video'"
                                 :comment-type="'video'"
@@ -804,7 +851,9 @@
         </b-col>
         <b-col v-if="!previewingQuestion" class="border p-2 border-dark" style="font-size:small">
           <div class="mb-2">
-            <b-card header="default" header-html="<h2 class='h7'>Submission Information</h2>">
+            <b-card header="default" header-html="<h2 class='h7'>Submission Information</h2>"
+                    v-if="+discussItSettingsForm.completion_criteria"
+            >
               <ul style="list-style: none">
                 <li
                   v-for="(completionRequirement,completionRequirementIndex) in completionRequirements.filter(item =>item.show)"
@@ -880,7 +929,7 @@
           </div>
           <hr v-if="discussions.length && canStartDiscussionOrAddComments && !previewingQuestion">
           <div v-if="canStartDiscussionOrAddComments && !previewingQuestion">
-                <span v-if="groupOptions.length > 1 && user.role === 2" class="mr-2">
+            <span v-if="groupOptions.length > 1 && user.role === 2" class="mr-2">
               <b-form-select id="group"
                              v-model="group"
                              :options="groupOptions"
@@ -1140,6 +1189,31 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     })
+  },
+  watch: {
+    'discussItSettingsForm.auto_grade': {
+      handler (newValue) {
+        this.$forceUpdate()
+        if (+newValue === 1 && +this.discussItSettingsForm.completion_criteria !== 1) {
+          this.$noty.info('Auto-graded questions must have a completion criteria associated with it.')
+          this.$nextTick(() =>
+            this.discussItSettingsForm.completion_criteria = 1
+          )
+        }
+      },
+      deep: true
+    },
+    'discussItSettingsForm.completion_criteria': {
+      handler (newValue) {
+        if (+newValue === 0 && +this.discussItSettingsForm.auto_grade === 1) {
+          this.$noty.info('Auto-graded questions must have a completion criteria associated with it.')
+          this.$nextTick(() =>
+            this.discussItSettingsForm.completion_criteria = 1
+          )
+        }
+      },
+      deep: true
+    }
   },
   async mounted () {
     if (this.assignmentId && this.questionId) {
@@ -1406,37 +1480,39 @@ export default {
             { key: 'min_length_of_audio_video', show: false }
           ]
           this.completionRequirementsToolTipText = ''
-          for (let i = 0; i < this.completionRequirements.length; i++) {
-            const key = this.completionRequirements[i].key
-            const requirementExists = this.discussItSettingsForm[key] !== ''
-            this.completionRequirements[i].requirementExists = requirementExists
-            if (requirementExists) {
-              const value = this.discussItSettingsForm[key]
-              const plural = +value === 1 ? '' : 's'
-              switch (key) {
-                case ('min_number_of_discussion_threads'):
-                  this.completionRequirements[i].text = `Participate in at least ${value} discussion thread${plural}.`
-                  break
-                case ('min_number_of_comments'):
-                  this.completionRequirements[i].text = `Submit at least ${value} comment${plural}.`
-                  break
-                case ('min_number_of_words'):
-                  if (this.discussItSettingsForm && this.discussItSettingsForm.response_modes.includes('text')) {
-                    this.completionRequirementsToolTipText += `Text comments need to be at least ${value} word${plural}.  `
-                  }
-                  this.minNumberOfWords = value
-                  break
-                case ('min_length_of_audio_video'):
-                  const audioVideoLabel = this.getAudioVideoLabel()
-                  if (audioVideoLabel) {
-                    this.completionRequirementsToolTipText += `${audioVideoLabel} comments need to be at least ${value}.`
-                  }
-                  break
+          if (+this.discussItSettingsForm.completion_criteria) {
+            for (let i = 0; i < this.completionRequirements.length; i++) {
+              const key = this.completionRequirements[i].key
+              const requirementExists = this.discussItSettingsForm[key] !== ''
+              this.completionRequirements[i].requirementExists = requirementExists
+              if (requirementExists) {
+                const value = this.discussItSettingsForm[key]
+                const plural = +value === 1 ? '' : 's'
+                switch (key) {
+                  case ('min_number_of_discussion_threads'):
+                    this.completionRequirements[i].text = `Participate in at least ${value} discussion thread${plural}.`
+                    break
+                  case ('min_number_of_comments'):
+                    this.completionRequirements[i].text = `Submit at least ${value} comment${plural}.`
+                    break
+                  case ('min_number_of_words'):
+                    if (this.discussItSettingsForm && this.discussItSettingsForm.response_modes.includes('text')) {
+                      this.completionRequirementsToolTipText += `Text comments need to be at least ${value} word${plural}.  `
+                    }
+                    this.minNumberOfWords = value
+                    break
+                  case ('min_length_of_audio_video'):
+                    const audioVideoLabel = this.getAudioVideoLabel()
+                    if (audioVideoLabel) {
+                      this.completionRequirementsToolTipText += `${audioVideoLabel} comments need to be at least ${value}.`
+                    }
+                    break
+                }
               }
             }
+            this.completionRequirements = this.completionRequirements.filter(item => item.requirementExists)
+            await this.getSatisfiedRequirements()
           }
-          this.completionRequirements = this.completionRequirements.filter(item => item.requirementExists)
-          await this.getSatisfiedRequirements()
         } else {
           this.$noty.error(data.message)
         }

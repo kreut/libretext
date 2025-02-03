@@ -218,7 +218,8 @@
             label-size="sm"
           >
             <template #label>
-               MathJax <QuestionCircleTooltip id="mathjax"/>
+              MathJax
+              <QuestionCircleTooltip id="mathjax"/>
               <b-tooltip target="mathjax"
                          delay="250"
                          triggers="hover focus"
@@ -433,7 +434,7 @@
                       <div v-if="grading[currentStudentPage - 1]['qti_json']">
                         <div v-if="isDiscussIt">
                           <div v-show="showDiscussIt">
-                            <ul style="list-style: none;">
+                            <ul style="list-style: none;" v-show="discussItCompletionCriteria">
                               <li>
                                 <CompletedIcon
                                   :completed="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement"
@@ -468,6 +469,7 @@
                                 v-for="(comment,commentIndex) in discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
                                 :key="`comments-${commentIndex}`"
                               >
+                                <span v-show="discussItCompletionCriteria">
                                 <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
                                       :title="satisfiedRequirement(comment.discussion_comment_id)
                                         ? 'This discussion comment satisfied the requirement.'
@@ -477,6 +479,7 @@
                                     :completed="satisfiedRequirement(comment.discussion_comment_id)"
                                   />
                                 </span>
+                                  </span>
                                 <a href=""
                                    @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
                                 >{{ comment.created_at }}:</a> <span v-if="comment.text" v-html="comment.text"/>
@@ -1075,6 +1078,7 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    discussItCompletionCriteria: false,
     renderMathJax: false,
     showDiscussIt: false,
     discussItRequirementsInfo: {},
@@ -1250,6 +1254,7 @@ export default {
         if (data.type === 'error') {
           this.$noty.error(data.message)
         } else {
+          this.discussItCompletionCriteria = data.completion_criteria
           this.discussItRequirementsInfo = data.satisfied_requirements
         }
       } catch (error) {
