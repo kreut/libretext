@@ -327,12 +327,14 @@ class DiscussionCommentController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
+            $discuss_it_settings = json_decode($assignmentSyncQuestion->discussItSettings($assignment->id, $question->id));
             $satisfied_requirements = $discussionComment->satisfiedRequirements($assignment,
                 $question->id,
                 $user->id,
                 $discussion,
                 $assignmentSyncQuestion);
             $response['type'] = 'success';
+            $response['completion_criteria'] = (bool) +$discuss_it_settings->completion_criteria;
             $response['satisfied_requirements'] = $satisfied_requirements;
         } catch (Exception $e) {
             $h = new Handler(app());

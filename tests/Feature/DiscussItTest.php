@@ -119,6 +119,7 @@ class DiscussItTest extends TestCase
             'min_length_of_audio_video' => '2 minutes',
             "response_modes" => ["text", "audio", "video"],
             'auto_grade' => 1,
+            "completion_criteria" => 1,
             'language' => 'en'];
         $new_user = factory(User::class)->create(['role' => 3]);
         $this->actingAs($new_user)
@@ -137,6 +138,7 @@ class DiscussItTest extends TestCase
                 "min_number_of_discussion_threads",
                 "min_number_of_comments",
                 "response_modes",
+                "completion_criteria",
                 "min_number_of_words",
                 'min_length_of_audio_video',
                 'auto_grade']);

@@ -45,8 +45,10 @@ class IsValidNumberOfDiscussItGroups implements Rule
             $this->message = "Should be an integer greater than or equal to 1.";
             return false;
         }
+
         if (Discussion::where('assignment_id', $this->assignment_id)
                 ->where('question_id', $this->question_id)
+                ->where('group','<>', $value)
                 ->count() !== 0) {
             $this->message = 'If you would like to alter the number of groups, please first delete all discussions for this question.';
        return false;
