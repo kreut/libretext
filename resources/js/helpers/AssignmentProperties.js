@@ -265,7 +265,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.form.hint_penalty = assignmentProperties.hint_penalty !== null
     ? `${assignmentProperties.hint_penalty}%`
     : ''
-  if (vm.form.can_view_hint_penalyt === '' && vm.form.can_view_hint) {
+  if (['',null].includes(vm.form.hint_penalty) && vm.form.can_view_hint) {
     vm.form.hint_penalty = '0%'
   }
   vm.form.shown = assignmentProperties.shown
