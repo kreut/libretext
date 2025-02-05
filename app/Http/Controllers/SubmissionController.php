@@ -572,7 +572,7 @@ class SubmissionController extends Controller
                     ->delete();
             }
             $tables = ['submissions',
-                'h5p_video_interactions',
+                'h5p_activity_sets',
                 'submission_files',
                 'seeds',
                 'can_give_ups',

@@ -264,8 +264,8 @@
         </b-button>
       </template>
     </b-modal>
-    <b-modal v-if="questions[currentPage - 1] && questions[currentPage - 1].has_h5p_video_interaction_submissions"
-             id="modal-h5p-video-interaction-submissions"
+    <b-modal v-if="questions[currentPage - 1] && questions[currentPage - 1].has_h5p_activity_set_submissions"
+             id="modal-h5p-activity-set-submissions"
              title="Partial Submissions"
              hide-footer
              size="lg"
@@ -275,7 +275,7 @@
         striped
         hover
         :no-border-collapse="true"
-        :items="questions[currentPage - 1].h5p_video_interaction_submissions"
+        :items="questions[currentPage - 1].h5p_activity_set_submissions"
         :fields="h5pVideoInteractionSubmissionsFields"
       >
         <template #cell(question)="data">
@@ -687,7 +687,7 @@
       </div>
       <div v-if="questions[currentPage-1]
         && (assessmentType === 'real time' || (assessmentType === 'delayed' && solutionsReleased))
-        && !isH5pVideoInteraction"
+        && !ish5pActivitySet"
       >
         <SubmissionArray :submission-array="submissionArray"
                          :question-id="questions[currentPage-1].id"
@@ -2594,6 +2594,11 @@
                             <div
                               v-if="[4,5].includes(user.role) ||(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')"
                             >
+                            <span v-show="testingH5p">
+                              <b-alert :show="true" type="alert">
+                                You are testing on H5P staging.
+                              </b-alert>
+                            </span>
                               <iframe
                                 :key="`technology-iframe-${currentPage}-${cacheIndex}`"
                                 v-resize="{ log: false }"
@@ -2949,7 +2954,7 @@
                     <ul style="list-style-type:none" class="pl-0">
                       <li v-if="!['qti','webwork','imathas'].includes(questions[currentPage-1].technology)">
                         <span class="font-weight-bold pr-1">Submission
-                          <span v-if="!questions[currentPage - 1].has_h5p_video_interaction_submissions">
+                          <span v-if="!questions[currentPage - 1].has_h5p_activity_set_submissions">
                             <span
                               :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                             >{{
@@ -2957,9 +2962,9 @@
                               }}</span>
                           </span>
                         </span>
-                        <span v-if="questions[currentPage - 1].has_h5p_video_interaction_submissions">
+                        <span v-if="questions[currentPage - 1].has_h5p_activity_set_submissions">
                           <b-button size="sm" variant="primary"
-                                    @click="$bvModal.show('modal-h5p-video-interaction-submissions')"
+                                    @click="$bvModal.show('modal-h5p-activity-set-submissions')"
                           >View</b-button>
                         </span>
                         <span v-if="!isOpenEnded
@@ -3413,6 +3418,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    testingH5p: false,
     canContactInstructorAutoGraded: false,
     algorithmicAssignment: false,
     submitWorkKey: 0,
@@ -3454,7 +3460,7 @@ export default {
     caseStudyNotesViewerKey: 0,
     caseStudyNotesByQuestion: [],
     reviewQuestionPollingSetInterval: null,
-    isH5pVideoInteraction: false,
+    ish5pActivitySet: false,
     qtiJson: '',
     maxScore: null,
     h5pVideoInteractionSubmissionsFields: [
@@ -3847,7 +3853,11 @@ export default {
           }
         })
       }
-      console.log(this.questions[this.currentPage - 1])
+      this.testingH5p = this.isLocalMe && true
+      if (this.testingH5p) {
+        this.questions[this.currentPage - 1].technology_iframe = this.questions[this.currentPage - 1].technology_iframe.replace('https://studio.libretexts.org', 'https://staging.studio.libretexts.org')
+      }
+
       this.hasAtLeastOneSubmission = this.questions[this.currentPage - 1].has_at_least_one_submission
       if (this.inIFrame) {
         this.showSubmissionInformation = this.questions[this.currentPage - 1].submission_information_shown_in_iframe &&
@@ -4392,18 +4402,18 @@ export default {
     },
     async getH5pVideoInteractionSubmissions () {
       try {
-        const { data } = await axios.get(`/api/h5p-video-interaction/submissions/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
+        const { data } = await axios.get(`/api/h5p-activity-set/submissions/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        let hasH5pVideoInteractionSubmissions = data.h5p_video_interaction_submissions.length > 0
-        this.questions[this.currentPage - 1].has_h5p_video_interaction_submissions = hasH5pVideoInteractionSubmissions
+        let hasH5pVideoInteractionSubmissions = data.h5p_activity_set_submissions.length > 0
+        this.questions[this.currentPage - 1].has_h5p_activity_set_submissions = hasH5pVideoInteractionSubmissions
         if (hasH5pVideoInteractionSubmissions) {
           let h5pVideoInteractionSubmissions = []
-          for (let i = 0; i < data.h5p_video_interaction_submissions.length; i++) {
+          for (let i = 0; i < data.h5p_activity_set_submissions.length; i++) {
             let question
-            let submission = JSON.parse(data.h5p_video_interaction_submissions[i].submission)
+            let submission = JSON.parse(data.h5p_activity_set_submissions[i].submission)
             try {
               question = submission.object.definition.description['en-US']
               let submissionResultsResponses
@@ -4426,7 +4436,7 @@ export default {
               console.log(submission)
             }
           }
-          this.questions[this.currentPage - 1].h5p_video_interaction_submissions = h5pVideoInteractionSubmissions
+          this.questions[this.currentPage - 1].h5p_activity_set_submissions = h5pVideoInteractionSubmissions
           console.log(h5pVideoInteractionSubmissions)
         }
 
@@ -4539,7 +4549,7 @@ export default {
     },
     getNumberOfRemainingAttempts () {
       let plural = this.numberOfAllowedAttempts > 1 ? 's' : ''
-      return this.isH5pVideoInteraction
+      return this.ish5pActivitySet
         ? `For each partial submission you are allowed ${this.numberOfAllowedAttempts} attempt${plural}.`
         : `${this.questions[this.currentPage - 1].submission_count}/${this.numberOfAllowedAttempts} attempts`
     },
@@ -5590,7 +5600,7 @@ export default {
         if (data.not_updated_message) {
           this.$bvModal.show('modal-not-updated')
         } else {
-          if (this.isH5pVideoInteraction) {
+          if (this.ish5pActivitySet) {
             await this.getH5pVideoInteractionSubmissions()
             this.completedAllAssignmentQuestions = false
             this.$bvModal.show('modal-submission-accepted')
@@ -5865,11 +5875,12 @@ export default {
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
       this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
-      this.isH5pVideoInteraction = this.questions[currentPage - 1].h5p_type === 'Interactive Video'
+
+      this.ish5pActivitySet = ['Interactive Video', 'Question Set'].includes(this.questions[currentPage - 1].h5p_type)
       this.isOpenEndedAudioSubmission = (this.openEndedSubmissionType === 'audio')
       this.showAudioUploadComponent = this.isOpenEndedAudioSubmission
       this.isOpenEndedFileSubmission = (this.openEndedSubmissionType === 'file')
-      if (this.isH5pVideoInteraction) {
+      if (this.ish5pActivitySet) {
         await this.getH5pVideoInteractionSubmissions()
       }
       this.setCompletionScoringModeMessage()

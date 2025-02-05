@@ -190,18 +190,18 @@ export async function processReceiveMessage (vm, routeName, event) {
             console.log('event object for h5p')
             console.log(h5pEventObject)
             isAnsweredH5p = h5pEventObject.verb.id === 'http://adlnet.gov/expapi/verbs/answered'
-            if (vm.isH5pVideoInteraction && isAnsweredH5p && !('response' in h5pEventObject.result)) {
+            if (vm.ish5pActivitySet && isAnsweredH5p && !('response' in h5pEventObject.result)) {
               isAnsweredH5p = false // what is seen on the final screen for a submission with a video interaction
               console.info('Final screen for video interaction so no submit')
             }
             if (routeName === 'questions.view' && !isAnsweredH5p) {
-              if (!vm.isH5pVideoInteraction) {
+              if (!vm.ish5pActivitySet) {
                 vm.numberOfRemainingAttempts = vm.getNumberOfRemainingAttempts()
               }
             }
           } else if (h5pEventObject.hasOwnProperty('maxScore') && !vm.maxScore) {
             vm.maxScore = h5pEventObject.maxScore
-            console.log(`Max score set: ${vm.maxScore}`)
+            console.error(`Max score set: ${vm.maxScore}`)
           } else {
             console.log('Nothing to set for question')
             console.log(h5pEventObject)
@@ -281,8 +281,9 @@ export async function processReceiveMessage (vm, routeName, event) {
         'assignment_id': vm.assignmentId,
         'technology': technology,
         'max_score': vm.maxScore,
-        'is_h5p_video_interaction': vm.isH5pVideoInteraction
+        'is_h5p_activity_set': vm.ish5pActivitySet
       }
+      console.error(submissionData)
       if (isLearningTreeNode) {
         submissionData.learning_tree_id = vm.learningTreeId
         submissionData.is_learning_tree_node = isLearningTreeNode

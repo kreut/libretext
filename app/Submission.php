@@ -591,11 +591,11 @@ class Submission extends Model
                     $response['message'] = $response['not_updated_message'] = "It looks like you submitted a blank response.  Please make a selection before submitting.";
                     return $response;
                 }
-                if ($data['is_h5p_video_interaction']) {
+                if ($data['is_h5p_activity_set']) {
                     $url_components = parse_url($submission->object->id);
                     parse_str($url_components['query'], $params);
                     if (isset($params['subContentId'])) {
-                        return $this->processH5PVideoInteraction($assignment_question, $submission, $data, $assignment, $score, $assignmentSyncQuestion, $dataShop, $params['subContentId']);
+                        return $this->processh5pActivitySet($assignment_question, $submission, $data, $assignment, $score, $assignmentSyncQuestion, $dataShop, $params['subContentId']);
                     }
                 }
 
@@ -1439,15 +1439,15 @@ class Submission extends Model
      * @return float
      */
     public
-    function getH5pVideoInteractionProportionCorrect(int $user_id, int $assignment_id, int $question_id, int $max_score): float
+    function geth5pActivitySetProportionCorrect(int $user_id, int $assignment_id, int $question_id, int $max_score): float
     {
-        $h5p_video_interactions = H5pVideoInteraction::where('assignment_id', $assignment_id)
+        $h5p_activity_sets = H5pActivitySet::where('assignment_id', $assignment_id)
             ->where('question_id', $question_id)
             ->where('user_id', $user_id)
             ->get();
         $total_raw = 0;
-        foreach ($h5p_video_interactions as $h5p_video_interaction) {
-            $partial_submission = json_decode($h5p_video_interaction->submission);
+        foreach ($h5p_activity_sets as $h5p_activity_set) {
+            $partial_submission = json_decode($h5p_activity_set->submission);
             $total_raw += $partial_submission->result->score->raw;
         }
         return floatval($total_raw / $max_score);
@@ -1468,7 +1468,7 @@ class Submission extends Model
      * @throws Exception
      */
     public
-    function processH5PVideoInteraction(
+    function processh5pActivitySet(
         object                 $assignment_question,
         object                 $submission,
         StoreSubmission        $data,
@@ -1488,41 +1488,41 @@ class Submission extends Model
                     'max_score' => $data['max_score']
                 ]);
             }
-            $h5pVideoInteraction = H5pVideoInteraction::where('user_id', $data['user_id'])
+            $h5pActivitySet = H5pActivitySet::where('user_id', $data['user_id'])
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $data['question_id'])
                 ->where('sub_content_id', $subContentId)
                 ->first();
             DB::beginTransaction();
-            if (!$h5pVideoInteraction) {
-                $h5pVideoInteraction = H5pVideoInteraction::create(
+            if (!$h5pActivitySet) {
+                $h5pActivitySet = H5pActivitySet::create(
                     ['user_id' => $data['user_id'],
                         'assignment_id' => $assignment->id,
                         'question_id' => $data['question_id'],
                         'sub_content_id' => $subContentId,
-                        'correct' => $this->getH5pVideoInteractionNumCorrect($assignment, json_decode($data['submission'])),
+                        'correct' => $this->geth5pActivitySetNumCorrect($assignment, json_decode($data['submission'])),
                         'submission' => $data['submission'],
                         'submission_count' => 1
                     ]
                 );
             } else {
-                if ($h5pVideoInteraction->submission === $data['submission']) {
-                    $h5pVideoInteraction->save();
+                if ($h5pActivitySet->submission === $data['submission']) {
+                    $h5pActivitySet->save();
                     $response['type'] = 'info';
                     $response['message'] = 'Partial submission re-saved.';
                     return $response;
                 }
                 if ($assignment->number_of_allowed_attempts !== 'unlimited'
-                    && (int)$h5pVideoInteraction->submission_count === (int)$assignment->number_of_allowed_attempts) {
+                    && (int)$h5pActivitySet->submission_count === (int)$assignment->number_of_allowed_attempts) {
                     $response['type'] = 'error';
                     $plural = $assignment->number_of_allowed_attempts > 1 ? 's' : '';
                     $response['message'] = "Nothing saved since you are only allowed $assignment->number_of_allowed_attempts attempt$plural.";
                     return $response;
                 }
-                $h5pVideoInteraction->submission = $data['submission'];
-                $h5pVideoInteraction->submission_count = $h5pVideoInteraction->submission_count + 1;
-                $h5pVideoInteraction->correct = $this->getH5pVideoInteractionNumCorrect($assignment, json_decode($data['submission']));
-                $h5pVideoInteraction->save();
+                $h5pActivitySet->submission = $data['submission'];
+                $h5pActivitySet->submission_count = $h5pActivitySet->submission_count + 1;
+                $h5pActivitySet->correct = $this->geth5pActivitySetNumCorrect($assignment, json_decode($data['submission']));
+                $h5pActivitySet->save();
             }
 
             if ($this->latePenaltyPercent($assignment, Carbon::now('UTC'))) {
@@ -1539,15 +1539,15 @@ class Submission extends Model
                 ->where('question_id', $data['question_id'])
                 ->first();
 
-            $h5pVideoInteractions = $h5pVideoInteraction->where('user_id', $data['user_id'])
+            $h5pActivitySets = $h5pActivitySet->where('user_id', $data['user_id'])
                 ->where('assignment_id', $data['assignment_id'])
                 ->where('question_id', $data['question_id'])
                 ->get();
 
             $num_correct = 0;
-            foreach ($h5pVideoInteractions as $h5pVideoInteraction) {
-                $h5p_video_interaction_submission = json_decode($h5pVideoInteraction->submission);
-                $num_correct += $this->getH5pVideoInteractionNumCorrect($assignment, $h5p_video_interaction_submission);
+            foreach ($h5pActivitySets as $h5pActivitySet) {
+                $h5p_activity_set_submission = json_decode($h5pActivitySet->submission);
+                $num_correct += $this->geth5pActivitySetNumCorrect($assignment, $h5p_activity_set_submission);
             }
 
             $all_correct = $num_correct === $h5pMaxScore->max_score;
@@ -1592,7 +1592,7 @@ class Submission extends Model
         return $response;
     }
 
-    function getH5pVideoInteractionNumCorrect(Assignment $assignment, object $submission)
+    function geth5pActivitySetNumCorrect(Assignment $assignment, object $submission)
     {
         // there was an issue with question 172535.  it had multiple parts for each and the scoring wasn't correct.
         //However, I'm not sure if this screws something else up.  The old code was to return scaled if performance

@@ -1090,7 +1090,7 @@ class QuestionController extends Controller
                          'qti_imports',
                          'h5p_max_scores',
                          'my_favorites',
-                         'h5p_video_interactions',
+                         'h5p_activity_sets',
                          'question_learning_outcome',
                          'seeds',
                          'assignment_question_time_on_tasks',

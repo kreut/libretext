@@ -238,7 +238,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/assignment-topics/assignment/{assignment}', 'AssignmentTopicController@getAssignmentTopicsByAssignment');
 
 
-    Route::get('/h5p-video-interaction/submissions/assignment/{assignment}/question/{question}', 'H5pVideoInteractionController@getSubmissions');
+    Route::get('/h5p-activity-set/submissions/assignment/{assignment}/question/{question}', 'H5pActivitySetController@getSubmissions');
 
     Route::get('/saved-questions-folders/options/my-questions-folders', 'SavedQuestionsFoldersController@getMyQuestionsFoldersAsOptions');
     Route::get('/saved-questions-folders/cloned-questions-folder', 'SavedQuestionsFoldersController@getClonedQuestionsFolder');
