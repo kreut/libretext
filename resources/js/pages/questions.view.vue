@@ -686,7 +686,8 @@
         Be sure to paste the different sections of the report in the form below.
       </div>
       <div v-if="questions[currentPage-1]
-        && (assessmentType === 'real time' || (assessmentType === 'delayed' && solutionsReleased))"
+        && (assessmentType === 'real time' || (assessmentType === 'delayed' && solutionsReleased))
+        && !isH5pVideoInteraction"
       >
         <SubmissionArray :submission-array="submissionArray"
                          :question-id="questions[currentPage-1].id"
