@@ -1940,7 +1940,8 @@ class CourseController extends Controller
                 'unconfirmed_submissions',
                 'submission_histories',
                 'submission_confirmations',
-                'pending_question_revisions'];
+                'pending_question_revisions',
+                'submission_score_overrides'];
             foreach ($tables as $table) {
                 DB::table($table)->whereIn('assignment_id', $assignment_ids)->delete();
             }
