@@ -64,7 +64,7 @@ class Kernel extends ConsoleKernel
                 $schedule->command('db:backup')->twiceDaily();
             }
 
-
+            $schedule->command('send:frameworkItemsByQuestionUpdates')->daily();
             $schedule->command('notify:failedTranscriptions')->hourly();
             $schedule->command('get:slowDatabaseQueriesSummary')->daily();
             $schedule->command('remove:oldSubmissionConfirmations')->daily();
