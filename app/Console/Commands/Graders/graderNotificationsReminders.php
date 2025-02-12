@@ -124,7 +124,7 @@ class graderNotificationsReminders extends Command
 
             $ungraded_submissions = DB::select(DB::raw($sql));
             $process_ungraded_submissions = $graderNotification->processUngradedSubmissions($ungraded_submissions, $assignment);
-            $graders_by_id = $process_ungraded_submissions['graders_by_id'];
+          $graders_by_id = $process_ungraded_submissions['graders_by_id'];
             $formatted_ungraded_submissions_by_grader = $process_ungraded_submissions['formatted_ungraded_submissions_by_grader'];
 
             //send the emails to the graders
@@ -136,19 +136,27 @@ class graderNotificationsReminders extends Command
             //do for the instructors and head graders
             $formatted_ungraded_submissions_by_course = [];
             foreach ($copy_to_course_ids as $course_id) {
-                $formatted_ungraded_submissions_by_course[$course_id] = '';
                 foreach ($formatted_ungraded_submissions_by_grader as $grader_id => $formatted_ungraded_submission) {
-                    $formatted_ungraded_submissions_by_course[$course_id] .= "<p style='margin-top:50px'><strong>{$graders_by_id[$grader_id]['first_name']} {$graders_by_id[$grader_id]['last_name']}</strong></p>";
-                    $formatted_ungraded_submissions_by_course[$course_id] .= $formatted_ungraded_submission;
+                    if ($graders_by_id[$grader_id]['course_id'] === $course_id) {
+                        if (!isset($formatted_ungraded_submissions_by_course[$course_id])) {
+                            $formatted_ungraded_submissions_by_course[$course_id] = '';
+                        }
+                        $formatted_ungraded_submissions_by_course[$course_id] .= "<p style='margin-top:50px'><strong>{$graders_by_id[$grader_id]['first_name']} {$graders_by_id[$grader_id]['last_name']}</strong></p>";
+                        $formatted_ungraded_submissions_by_course[$course_id] .= $formatted_ungraded_submission;
+                    }
                 }
             }
 
             foreach ($copy_to_instructors_by_course_id as $course_id => $copy_to_instructor) {
-                $this->sendCopyTo($copy_to_instructor, $formatted_ungraded_submissions_by_course[$course_id]);
+                if (isset($formatted_ungraded_submissions_by_course[$course_id])) {
+                    $this->sendCopyTo($copy_to_instructor, $formatted_ungraded_submissions_by_course[$course_id]);
+                }
             }
 
             foreach ($copy_to_head_graders_by_course_id as $course_id => $copy_to_grader) {
-                $this->sendCopyTo($copy_to_grader, $formatted_ungraded_submissions_by_course[$course_id]);
+                if (isset($formatted_ungraded_submissions_by_course[$course_id])) {
+                    $this->sendCopyTo($copy_to_grader, $formatted_ungraded_submissions_by_course[$course_id]);
+                }
             }
 
 

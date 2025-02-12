@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -80,16 +81,19 @@ EOD;
         $graders = DB::table('graders')
             ->join('users', 'graders.user_id', '=', 'users.id')
             ->join('sections', 'graders.section_id', '=', 'sections.id')
+            ->join('courses', 'sections.course_id', '=', 'courses.id')
             ->whereIn('section_id', $section_ids)
-            ->select('first_name', 'last_name', 'email', 'users.id', 'section_id', 'course_id')
-            ->get();
+            ->where('courses.end_date', '>=', Carbon::now())
+            ->select('first_name', 'last_name', 'email', 'users.id', 'section_id', 'course_id','courses.user_id AS instructor_user_id')
+            ->get();;
         $graders_by_id = [];
         $grader_sections_by_id = [];
         foreach ($graders as $grader) {
             $graders_by_id[$grader->id] = ['first_name' => $grader->first_name,
                 'last_name' => $grader->last_name,
                 'email' => $grader->email,
-                'course_id' => $grader->course_id];
+                'course_id' => $grader->course_id,
+                'instructor_user_id' => $grader->instructor_user_id];
             if (!isset($grader_sections_by_id[$grader->id])) {
                 $grader_sections_by_id[$grader->id] = [];
             }
