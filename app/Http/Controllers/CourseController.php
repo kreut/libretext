@@ -544,7 +544,7 @@ class CourseController extends Controller
         }
         $request->validated();
         try {
-            if (app()->environment('testing')){
+            if (app()->environment('testing')) {
                 return $course->reset();
             } else {
                 ProcessResetCourse::dispatch($course);
@@ -1880,10 +1880,10 @@ class CourseController extends Controller
      * @throws Exception
      */
     public
-    function destroy(DestroyCourse      $request,
-                     Course             $course,
-                     BetaCourse         $betaCourse,
-                     Discussion         $discussion): array
+    function destroy(DestroyCourse $request,
+                     Course        $course,
+                     BetaCourse    $betaCourse,
+                     Discussion    $discussion): array
 
     {
 
@@ -1941,6 +1941,7 @@ class CourseController extends Controller
                 'submission_histories',
                 'submission_confirmations',
                 'pending_question_revisions',
+                'release_assignment_contacted_instructors',
                 'submission_score_overrides'];
             foreach ($tables as $table) {
                 DB::table($table)->whereIn('assignment_id', $assignment_ids)->delete();

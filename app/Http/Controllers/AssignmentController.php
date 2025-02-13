@@ -43,6 +43,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Snowfire\Beautymail\Beautymail;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
 class AssignmentController extends Controller
@@ -50,6 +51,62 @@ class AssignmentController extends Controller
     use DateFormatter;
     use S3;
     use AssignmentProperties;
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function contactInstructorToReleaseAssignment(Assignment $assignment)
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('contactInstructorToReleaseAssignment', $assignment);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $instructor_user_id = $assignment->course->user_id;
+            $course_id = $assignment->course->id;
+            if (DB::table('release_assignment_contacted_instructors')
+                ->where('user_id', $instructor_user_id)
+                ->where('assignment_id', $assignment->id)
+                ->first()) {
+                $response['message'] = "Your instructor has already been notified about this issue. Please be patient while they
+                resolve it or email them directly.";
+                $response['type'] = 'info';
+            } else {
+                $beauty_mail = app()->make(Beautymail::class);
+                $instructor = User::find($instructor_user_id);
+                $email_info = ['assignment_name' => $assignment->name,
+                    'course_name' => $assignment->course->name,
+                    'url' => Helper::schemaAndHost() . "instructors/courses/$course_id/assignments"
+                ];
+                $to_email = $instructor->email;
+                $beauty_mail->send('emails.unpublished_adapt_assignment', $email_info, function ($message)
+                use ($to_email) {
+                    $message
+                        ->from('adapt@noreply.libretexts.org', 'ADAPT')
+                        ->to($to_email)
+                        ->subject('Unreleased ADAPT Assignment');
+                });
+                DB::table('release_assignment_contacted_instructors')
+                    ->insert(['user_id' => $instructor_user_id,
+                        'assignment_id' => $assignment->id,
+                        'created_at' => now(),
+                        'updated_at' => now()]);
+                $response['type'] = 'success';
+                $response['message'] = "Your instructor has been notified.";
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error contacting your instructor.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
 
     /**
      * @param Assignment $assignment

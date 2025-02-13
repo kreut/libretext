@@ -152,6 +152,7 @@ class QuestionsViewTest extends TestCase
             ->score;
     }
 
+
     public function createQTIMatchingQuestion($points): int
     {
 
@@ -182,6 +183,14 @@ class QuestionsViewTest extends TestCase
             'open_ended_submission_type' => 'file'
         ]);
         return $question_id;
+    }
+
+    /** @test */
+    public function cannot_ask_instructor_to_release_asignment_if_not_student()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/contact-instructor-to-release-assignment")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to contact this instructor.']);
     }
 
     /** @test */

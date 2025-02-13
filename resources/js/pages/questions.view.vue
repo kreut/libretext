@@ -1413,9 +1413,11 @@
       </div>
       <div v-if="user.role === 3 && cannotViewAssessmentMessage">
         <b-alert variant="info" show>
-          <span v-if="!assignmentShown" class="font-weight-bold">
-            This assessment is part of an assignment which is not yet being shown to any students in this course.
-          </span>
+          <span v-if="!assignmentShown">
+            This assessment is part of an assignment which is not yet being shown to any students in this course. If you would like,
+            we can ask your instructor to <b-button size="sm" variant="primary"
+                                                    @click="contactInstructorToReleaseAssignment"
+          >publish the assignment</b-button>.</span>
           <span v-if="assignmentShown" class="font-weight-bold">
             This assignment will become available on {{
               $moment(availableOn, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY')
@@ -3944,6 +3946,14 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    async contactInstructorToReleaseAssignment () {
+      try {
+        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/contact-instructor-to-release-assignment`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateSubmittedWork (data) {
       this.questions[this.currentPage - 1].submitted_work = data.submittedWorkUrl
       this.questions[this.currentPage - 1].submitted_work_at = data.submittedWorkAt

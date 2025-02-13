@@ -413,6 +413,9 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/assignments/download-users-for-assignment-override/{assignment}', 'AssignmentController@downloadUsersForAssignmentOverride');
     Route::get('/assignments/options/{course}', 'AssignmentController@getAssignmentOptions');
+    Route::post('/assignments/{assignment}/contact-instructor-to-release-assignment', 'AssignmentController@contactInstructorToReleaseAssignment');
+
+
     Route::get('/assignments/clicker/enrolled-open-courses', 'AssignmentController@getClickerAssignmentsForEnrolledAndOpenCourses');
 
     Route::patch('/assignments/{course}/order', 'AssignmentController@order');

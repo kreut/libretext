@@ -22,6 +22,18 @@ class AssignmentPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function contactInstructorToReleaseAssignment(User $user, Assignment $assignment){
+        return    $assignment->course->enrollments->contains('user_id', $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to contact this instructor.');
+
+
+    }
     public function shiftDates(User $user, Assignment $assignment, array $assignment_ids): Response
     {
         $assignments_not_owned = DB::table('assignments')
