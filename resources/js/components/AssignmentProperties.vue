@@ -728,13 +728,16 @@
                                 required
                                 stacked
             >
-              <b-form-radio name="before_submission" value="before submission">
+              <b-form-radio name="can_contact_instructor" value="always">
+                Always
+              </b-form-radio>
+              <b-form-radio name="can_contact_instructor" value="before submission">
                 Before submission
               </b-form-radio>
-              <b-form-radio name="before_due_date" value="before due date">
+              <b-form-radio name="can_contact_instructor" value="before due date">
                 Before due date
               </b-form-radio>
-              <b-form-radio name="before_due_date" value="after due date">
+              <b-form-radio name="can_contact_instructor" value="after due date">
                 Only after due date
               </b-form-radio>
               <b-form-radio name="never" value="never">

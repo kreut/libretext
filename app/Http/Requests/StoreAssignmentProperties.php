@@ -64,10 +64,10 @@ class StoreAssignmentProperties extends FormRequest
                 'default_open_ended_submission_type' => Rule::in(['file', 'rich text', 'audio', 0]),
                 'notifications' => Rule::in([0, 1]),
                 'formative' => Rule::in([0, 1]),
-                'can_contact_instructor_auto_graded' => Rule::in(['before submission', 'before due date', 'after due date', 'never'])
+                'can_contact_instructor_auto_graded' => Rule::in(['always', 'before submission', 'before due date', 'after due date', 'never'])
             ];
             if (!$formative) {
-                $rules['can_contact_instructor_auto_graded'] = ['required', Rule::in(['before submission', 'before due date', 'after due date', 'never'])];
+                $rules['can_contact_instructor_auto_graded'] = ['required', Rule::in(['always','before submission', 'before due date', 'after due date', 'never'])];
                 $rules['assignment_group_id'] = 'required|exists:assignment_groups,id';
                 $rules['can_submit_work'] = ['required', Rule::in([0, 1])];
                 $auto_releases = ['auto_release_shown',

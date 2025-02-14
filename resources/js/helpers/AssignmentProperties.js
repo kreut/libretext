@@ -154,7 +154,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   }
   form.late_policy = 'not accepted'
   form.can_submit_work = 0
-  form.can_contact_instructor_auto_graded = 'never'
+  form.can_contact_instructor_auto_graded = 'always'
   form.late_deduction_percent = null
   form.late_deduction_applied_once = 1
   form.late_deduction_application_period = null

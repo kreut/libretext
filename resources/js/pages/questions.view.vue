@@ -4267,6 +4267,9 @@ export default {
       let canContactInstructorAutoGraded
       canContactInstructorAutoGraded = false
       switch (this.canContactInstructorAutoGraded) {
+        case('always'):
+          canContactInstructorAutoGraded = true
+          break
         case ('before submission'):
           canContactInstructorAutoGraded = this.questions &&
             ['webwork', 'qti', 'h5p', 'imathas'].includes(this.questions[this.currentPage - 1].technology) &&
