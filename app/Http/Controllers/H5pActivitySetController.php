@@ -13,7 +13,7 @@ use SebastianBergmann\ObjectReflector\Exception;
 /**
  *
  */
-class h5pActivitySetController extends Controller
+class H5pActivitySetController extends Controller
 {
     /**
      * @param Request $request
