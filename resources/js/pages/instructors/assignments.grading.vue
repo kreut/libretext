@@ -346,11 +346,17 @@
                 </b-row>
               </b-container>
               <div class="mb-2">
+                <b-button variant="outline-primary"
+                          size="sm"
+                          @click="visitQuestion">Visit Question</b-button>
                 <SolutionFileHtml :key="`solution-file-html-${questionView}`"
                                   :questions="solutions"
                                   :current-page="1"
                                   :show-na="false"
                 />
+                <b-button variant="outline-primary"
+                          size="sm"
+                          @click="openRegrader">Open Regrader</b-button>
               </div>
             </div>
             <hr>
@@ -1225,6 +1231,12 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    openRegrader () {
+      window.open(`/assignments/${this.assignmentId}/regrader`, '_blank');
+    },
+    visitQuestion () {
+      window.open(`/assignments/${this.assignmentId}/questions/view/${this.questionView}`, '_blank');
+    },
     updateRenderMathJax () {
       this.renderMathJax = !this.renderMathJax
       if (this.renderMathJax) {
