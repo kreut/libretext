@@ -859,7 +859,7 @@
                       </div>
                     </b-card-text>
                   </b-card>
-                  <b-row align-h="center" class="pt-3">
+                  <b-row align-h="center" class="pt-3 pb-3">
                     <b-button variant="primary"
                               :class="{ 'disabled': noSubmission}"
                               :aria-disabled="noSubmission"
@@ -884,7 +884,7 @@
 
             </b-container>
             <b-container>
-              <b-row class="mt-2" v-if="!isDiscussIt">
+              <b-row class="mt-2" v-if="!isDiscussIt && submissionArray.length">
                 <b-col>
                   <b-card header="default" :header-html="getSubmissionSummaryTitle()">
                     <b-row v-if="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
@@ -902,7 +902,8 @@
                     </b-button>
                        </span>
                     </b-row>
-                    <SubmissionArray :submission-array="submissionArray"
+                    <SubmissionArray
+                                     :submission-array="submissionArray"
                                      :question-submission-array="submissionArray"
                                      :question-id="+questionView"
                                      :assignment-id="+assignmentId"
