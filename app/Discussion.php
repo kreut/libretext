@@ -18,7 +18,7 @@ class Discussion extends Model
      */
     public function deleteByAssignment(Assignment $assignment)
     {
-        $discussions = DB::table('discussions')->where('assignment_id', $assignment->id)->get();
+        $discussions = Discussion::where('assignment_id', $assignment->id)->get();
         $questionMediaUpload = new QuestionMediaUpload();
 
         foreach ($discussions as $discussion) {
