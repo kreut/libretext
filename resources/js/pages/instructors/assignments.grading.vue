@@ -920,6 +920,7 @@
                        </span>
                     </b-row>
                     <SubmissionArray
+                      :key="`submission-array-${+renderMathJax}`"
                       :submission-array="submissionArray"
                       :question-submission-array="submissionArray"
                       :question-id="+questionView"
@@ -1260,7 +1261,6 @@ export default {
         })
       } else {
         localStorage.renderMathJax = 0
-        location.reload()
       }
     },
     getSubmissionSummaryTitle () {
