@@ -371,7 +371,9 @@
               <div class="mb-2">
                 <b-button variant="outline-primary"
                           size="sm"
-                          @click="visitQuestion">Visit Question</b-button>
+                          @click="visitQuestion"
+                >Visit Question
+                </b-button>
                 <SolutionFileHtml :key="`solution-file-html-${questionView}`"
                                   :questions="solutions"
                                   :current-page="1"
@@ -379,7 +381,14 @@
                 />
                 <b-button variant="outline-primary"
                           size="sm"
-                          @click="openRegrader">Open Regrader</b-button>
+                          @click="openRegrader"
+                >Open Regrader
+                </b-button>
+                <b-button variant="outline-primary"
+                          size="sm"
+                          @click="openAssignmentGradebook"
+                >Open Assignment Gradebook
+                </b-button>
               </div>
             </div>
             <hr>
@@ -911,17 +920,17 @@
                        </span>
                     </b-row>
                     <SubmissionArray
-                                     :submission-array="submissionArray"
-                                     :question-submission-array="submissionArray"
-                                     :question-id="+questionView"
-                                     :assignment-id="+assignmentId"
-                                     :technology="technology"
-                                     :scoring-type="scoringType"
-                                     :user-id="grading[currentStudentPage - 1].student.user_id"
-                                     :user-role="user.role"
-                                     :small-table="true"
-                                     :penalties="grading[currentStudentPage - 1]['penalties']"
-                                     :render-math-jax="renderMathJax"
+                      :submission-array="submissionArray"
+                      :question-submission-array="submissionArray"
+                      :question-id="+questionView"
+                      :assignment-id="+assignmentId"
+                      :technology="technology"
+                      :scoring-type="scoringType"
+                      :user-id="grading[currentStudentPage - 1].student.user_id"
+                      :user-role="user.role"
+                      :small-table="true"
+                      :penalties="grading[currentStudentPage - 1]['penalties']"
+                      :render-math-jax="renderMathJax"
                     />
                   </b-card>
                 </b-col>
@@ -1233,11 +1242,14 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    openAssignmentGradebook () {
+      window.open(`//instructors/assignments/${this.assignmentId}/information/gradebook`, '_blank')
+    },
     openRegrader () {
-      window.open(`/assignments/${this.assignmentId}/regrader`, '_blank');
+      window.open(`/assignments/${this.assignmentId}/regrader`, '_blank')
     },
     visitQuestion () {
-      window.open(`/assignments/${this.assignmentId}/questions/view/${this.questionView}`, '_blank');
+      window.open(`/assignments/${this.assignmentId}/questions/view/${this.questionView}`, '_blank')
     },
     updateRenderMathJax () {
       this.renderMathJax = !this.renderMathJax
