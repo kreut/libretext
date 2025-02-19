@@ -2,6 +2,29 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
+    <div v-if="grading[currentStudentPage - 1] && grading[currentStudentPage - 1]['auto_graded_submission']">
+    <b-modal id="modal-submitted-work"
+             :title="`Submitted on ${grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work_at']}`"
+             size="xl"
+    >
+      <b-embed
+        v-resize="{ log: false, checkOrigin: false }"
+        width="100%"
+        :src="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
+        allowfullscreen
+      />
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          variant="primary"
+          class="float-right"
+          @click="$bvModal.hide('modal-submitted-work')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
+    </div>
     <b-modal id="modal-discussion"
              :title="`Started by ${activeDiscussion.started_by} on ${activeDiscussion.created_at}`"
              no-close-on-backdrop
@@ -390,27 +413,6 @@
                   <b-card ref="questionCard" header="default" :header-html="questionHeader">
 
                     <b-card-text>
-                      <b-modal id="modal-submitted-work"
-                               :title="`Submitted on ${grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work_at']}`"
-                               size="xl"
-                      >
-                        <b-embed
-                          v-resize="{ log: false, checkOrigin: false }"
-                          width="100%"
-                          :src="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
-                          allowfullscreen
-                        />
-                        <template #modal-footer>
-                          <b-button
-                            size="sm"
-                            variant="primary"
-                            class="float-right"
-                            @click="$bvModal.hide('modal-submitted-work')"
-                          >
-                            OK
-                          </b-button>
-                        </template>
-                      </b-modal>
                       <div v-if="grading[currentStudentPage - 1]['technology_iframe']
                              && technology === 'h5p'
                              && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
