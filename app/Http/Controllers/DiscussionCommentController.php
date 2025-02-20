@@ -186,8 +186,8 @@ class DiscussionCommentController extends Controller
                 $discussionComment->user_id,
                 $discussion,
                 $assignmentSyncQuestion);
-            $satisfied_all_requirements = $satisfied_requirements['satisfied_min_number_of_comments_requirement']
-                && $satisfied_requirements['satisfied_min_number_of_discussion_threads_requirement'];
+
+            $satisfied_all_requirements = $satisfied_requirements['satisfied_all_requirements'];
             if (!$satisfied_all_requirements) {
                 $response['type'] = 'success';
                 $response['deleting_will_make_requirements_not_satisfied'] = false;
@@ -199,8 +199,7 @@ class DiscussionCommentController extends Controller
                     $discussionComment->user_id,
                     $discussion,
                     $assignmentSyncQuestion);
-                $satisfied_all_requirements = $satisfied_requirements['satisfied_min_number_of_comments_requirement']
-                    && $satisfied_requirements['satisfied_min_number_of_discussion_threads_requirement'];
+                $satisfied_all_requirements = $satisfied_requirements['satisfied_all_requirements'];
                 $response['type'] = 'success';
                 $response['deleting_will_make_requirements_not_satisfied'] = !$satisfied_all_requirements;
                 DB::rollback();
@@ -322,6 +321,7 @@ class DiscussionCommentController extends Controller
                                    Discussion             $discussion): array
     {
         try {
+            $response['type'] = 'error';
             $authorized = Gate::inspect('getSatisfiedRequirements', [$discussionComment, $assignment->id, $user->id]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
@@ -333,8 +333,9 @@ class DiscussionCommentController extends Controller
                 $user->id,
                 $discussion,
                 $assignmentSyncQuestion);
+
             $response['type'] = 'success';
-            $response['completion_criteria'] = (bool) +$discuss_it_settings->completion_criteria;
+            $response['completion_criteria'] = (bool)+$discuss_it_settings->completion_criteria;
             $response['satisfied_requirements'] = $satisfied_requirements;
         } catch (Exception $e) {
             $h = new Handler(app());

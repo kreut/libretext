@@ -200,6 +200,10 @@ class AssignmentSyncQuestionController extends Controller
             $response['discuss_it_settings'] = $discuss_it_settings;
             $response['discuss_it_completion_status'] = $discuss_it_completion_status;
             $response['discussion_comments_exist'] = $discussion_comments_exist;
+            $response['show_submit_at_least_x_comments'] = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->first()
+                    ->id < 2382618;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -233,8 +237,6 @@ class AssignmentSyncQuestionController extends Controller
             $data = $request->validated();
             DB::beginTransaction();
             $grading_criteria = ['min_length_of_audio_video' => '',
-                "min_number_of_comments" => '',
-                "min_number_of_discussion_threads" => '',
                 "min_number_of_words" => ''];
             foreach ($grading_criteria as $key => $value) {
                 if (!isset($data[$key])) {
@@ -249,9 +251,9 @@ class AssignmentSyncQuestionController extends Controller
 
             for ($i = 1; $i <= $data['number_of_groups']; $i++) {
                 DiscussionGroup::create(['assignment_id' => $assignment->id,
-                        'question_id' => $question->id,
-                        'user_id'=> $request->user()->id,
-                        'group' => $i]);
+                    'question_id' => $question->id,
+                    'user_id' => $request->user()->id,
+                    'group' => $i]);
             }
             DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
@@ -1043,7 +1045,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['is_commons_course'] = Helper::isCommonsCourse($assignment->course);
             $response['submissions_exist'] = $assignment->hasSubmissionsOrFileSubmissions();
             $response['is_question_weight'] = $assignment->points_per_question === 'question weight';
-            $response['is_algorithmic_assignment']  = $assignment->algorithmic;
+            $response['is_algorithmic_assignment'] = $assignment->algorithmic;
             $response['course_has_anonymous_users'] = $assignment->course->anonymous_users === 1;
             $response['solutions_availability'] = $assignment->solutions_availability;
             $response['h5p_questions_exist'] = $h5p_questions_exists;

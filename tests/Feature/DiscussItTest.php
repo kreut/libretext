@@ -113,8 +113,9 @@ class DiscussItTest extends TestCase
     {
         $info = ["students_can_edit_comments" => 1,
             "students_can_delete_comments" => 1,
-            "min_number_of_discussion_threads" => 1,
-            "min_number_of_comments" => 1,
+            "min_number_of_initiated_discussion_threads" => 1,
+            "min_number_of_initiate_or_reply_in_threads" => 1,
+            "min_number_of_replies" => 1,
             "min_number_of_words" => 1,
             'min_length_of_audio_video' => '2 minutes',
             "response_modes" => ["text", "audio", "video"],
@@ -135,8 +136,9 @@ class DiscussItTest extends TestCase
             ->assertJsonValidationErrors([
                 'students_can_edit_comments',
                 'students_can_delete_comments',
-                "min_number_of_discussion_threads",
-                "min_number_of_comments",
+                "min_number_of_initiated_discussion_threads",
+                "min_number_of_initiate_or_reply_in_threads",
+                "min_number_of_replies",
                 "response_modes",
                 "completion_criteria",
                 "min_number_of_words",

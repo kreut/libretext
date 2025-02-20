@@ -57,9 +57,9 @@ class DiscussionComment extends Model
                                 Score $score
     )
     {
+
         if (+$discuss_it_settings->auto_grade === 1
-            && $discussion_comment_submission_results['satisfied_min_number_of_comments_requirement']
-            && $discussion_comment_submission_results['satisfied_min_number_of_discussion_threads_requirement']) {
+            && $discussion_comment_submission_results['satisfied_all_requirements']) {
 
             $assignment_question = $assignmentSyncQuestion->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
@@ -105,14 +105,27 @@ class DiscussionComment extends Model
         $user = User::find($user_id);
         $assignment_id = $assignment->id;
         $discuss_it_settings = json_decode($assignmentSyncQuestion->discussItSettings($assignment_id, $question_id));
+
+        $number_of_initiated_discussion_threads_that_satisfied_the_requirements = $this->numberOfInitiatedDiscussionThreadsThatSatisfiedTheRequirements($assignment_id, $question_id, $user_id);
+        $number_of_replies_that_satisfied_the_requirements = $this->numberOfRepliesThatSatisfiedTheRequirements($assignment_id, $question_id, $user_id);
+        $number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements = $this->numberOfInitiateOrReplyInThreadsThatSatisfiedTheRequirements($assignment_id, $question_id, $user_id);
         $number_of_comments_that_satisfied_the_requirements = $this->numberOfCommentsThatSatisfiedTheRequirements($assignment_id, $question_id, $user_id);
-        $number_of_discussion_threads_that_satisfied_the_requirements = $discussion->numberOfDiscussionsThatSatisfiedTheRequirements($assignment_id, $question_id, $user_id);
 
-        $satisfied_min_number_of_comments_requirement = !$discuss_it_settings->min_number_of_comments
-            && $number_of_comments_that_satisfied_the_requirements >= 1 || $discuss_it_settings->min_number_of_comments && $number_of_comments_that_satisfied_the_requirements >= $discuss_it_settings->min_number_of_comments;
+        $satisfied_min_number_of_initiated_discussion_threads_requirement =
+            +$discuss_it_settings->min_number_of_initiated_discussion_threads === 0
+            || $number_of_initiated_discussion_threads_that_satisfied_the_requirements >= $discuss_it_settings->min_number_of_initiated_discussion_threads;
 
-        $satisfied_min_number_of_discussion_threads_requirement = !$discuss_it_settings->min_number_of_discussion_threads
-            && $number_of_discussion_threads_that_satisfied_the_requirements >= 1 || $discuss_it_settings->min_number_of_discussion_threads && $number_of_discussion_threads_that_satisfied_the_requirements >= $discuss_it_settings->min_number_of_discussion_threads;
+        $satisfied_min_number_of_replies_requirement =
+            +$discuss_it_settings->min_number_of_replies === 0
+            || $number_of_replies_that_satisfied_the_requirements >= $discuss_it_settings->min_number_of_replies;
+
+        $satisfied_min_number_of_initiate_or_reply_in_threads_requirement =
+            +$discuss_it_settings->min_number_of_initiate_or_reply_in_threads === 0
+            || $number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements >= $discuss_it_settings->min_number_of_initiate_or_reply_in_threads;
+
+        $satisfied_min_number_of_comments_requirement = (!property_exists($discuss_it_settings, 'min_number_of_comments'))
+            || (+$discuss_it_settings->min_number_of_comments === 0) || ($discuss_it_settings->min_number_of_comments && $number_of_comments_that_satisfied_the_requirements >= $discuss_it_settings->min_number_of_comments);
+
         $satisfied_requirement_by_discussion_comment_id = [];
         $satisfied_requirements = DB::table('discussion_comments')
             ->where('discussion_comments.user_id', $user_id)
@@ -127,17 +140,38 @@ class DiscussionComment extends Model
                 'satisfied_requirement' => (bool)$satisfied_requirement->satisfied_requirement];
         }
 
-        $response['satisfied_min_number_of_comments_requirement'] = $satisfied_min_number_of_comments_requirement;
-        $response['satisfied_min_number_of_discussion_threads_requirement'] = $satisfied_min_number_of_discussion_threads_requirement;
-        $number_of_comments_plural = $number_of_comments_that_satisfied_the_requirements !== 1 ? 's' : '';
-        $number_of_discussion_threads_plural = $number_of_discussion_threads_that_satisfied_the_requirements !== 1 ? 's' : '';
-        $response['number_of_comments_submitted'] = $number_of_comments_that_satisfied_the_requirements;
-        $response['number_of_discussion_threads_participated_in'] = $number_of_discussion_threads_that_satisfied_the_requirements;
-        $response['number_of_comments_submitted_message'] = "You have submitted $number_of_comments_that_satisfied_the_requirements comment$number_of_comments_plural.";
-        $response['number_of_discussion_threads_participated_in_message'] = "You have participated in $number_of_discussion_threads_that_satisfied_the_requirements discussion thread$number_of_discussion_threads_plural.";
-        $response['min_number_of_comments_required'] = $discuss_it_settings->min_number_of_comments;
-        $response['min_number_of_discussion_threads'] = $discuss_it_settings->min_number_of_discussion_threads;
+        $response['satisfied_min_number_of_initiated_discussion_threads_requirement'] = $satisfied_min_number_of_initiated_discussion_threads_requirement;
+        $response['satisfied_min_number_of_replies_requirement'] = $satisfied_min_number_of_replies_requirement;
+        $response['satisfied_min_number_of_initiate_or_reply_in_threads_requirement'] = $satisfied_min_number_of_initiate_or_reply_in_threads_requirement;
+
+
+        $response['number_of_initiated_discussion_threads'] = $number_of_initiated_discussion_threads_that_satisfied_the_requirements;
+        $number_of_initiated_discussion_threads_plural = $number_of_initiated_discussion_threads_that_satisfied_the_requirements !== 1 ? 's' : '';
+        $response['number_of_initiated_discussion_threads_message'] = "You have initiated $number_of_initiated_discussion_threads_that_satisfied_the_requirements discussion thread$number_of_initiated_discussion_threads_plural.";
+
+        $response['number_of_replies_that_satisfied_the_requirements'] = $number_of_replies_that_satisfied_the_requirements;
+        $reply_or_ies = $number_of_replies_that_satisfied_the_requirements !== 1 ? 'replies' : 'reply';
+        $response['number_of_replies_message'] = "You have submitted $number_of_replies_that_satisfied_the_requirements  $reply_or_ies to existing threads.";
+
+
+        $response['number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements'] = $number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements;
+        $number_of_initiate_or_reply_in_threads_plural = $number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements !== 1 ? 's' : '';
+        $response['number_of_initiate_or_reply_in_threads_message'] = "You have participated in (initiate or reply) $number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements thread$number_of_initiate_or_reply_in_threads_plural.";
+
+
+        $response['min_number_of_initiated_discussion_threads'] = $discuss_it_settings->min_number_of_initiated_discussion_threads;
+        $response['min_number_of_replies'] = $discuss_it_settings->min_number_of_replies;
+        $response['min_number_of_initiate_or_reply_in_threads'] = $discuss_it_settings->min_number_of_initiate_or_reply_in_threads;
+
         $response['satisfied_requirement_by_discussion_comment_id'] = $satisfied_requirement_by_discussion_comment_id;
+
+
+        $number_of_comments_plural = $number_of_comments_that_satisfied_the_requirements !== 1 ? 's' : '';
+        $response['number_of_comments_submitted'] = $number_of_comments_that_satisfied_the_requirements;
+        $response['number_of_comments_submitted_message'] = "You have submitted $number_of_comments_that_satisfied_the_requirements comment$number_of_comments_plural.";
+        $response['min_number_of_comments_required'] = !property_exists($discuss_it_settings, 'min_number_of_comments') || $discuss_it_settings->min_number_of_comments;
+
+
         $submission_summary_info = DB::table('submission_files')
             ->where('assignment_id', $assignment_id)
             ->where('question_id', $question_id)
@@ -174,8 +208,55 @@ class DiscussionComment extends Model
 
 
         $response['submission_summary'] = $submission_summary;
+        $response['satisfied_all_requirements'] = $satisfied_min_number_of_initiated_discussion_threads_requirement
+            && $satisfied_min_number_of_replies_requirement
+            && $satisfied_min_number_of_initiate_or_reply_in_threads_requirement
+            && $satisfied_min_number_of_comments_requirement;
 
         return $response;
+    }
+
+    /**
+     * @param int $assignment_id
+     * @param int $question_id
+     * @param int $user_id
+     * @return mixed
+     */
+    public
+    function numberOfInitiatedDiscussionThreadsThatSatisfiedTheRequirements(int $assignment_id, int $question_id, int $user_id)
+    {
+        return $this->join('discussions', 'discussion_comments.discussion_id', '=', 'discussions.id')
+            ->where('discussions.assignment_id', $assignment_id)
+            ->where('discussions.question_id', $question_id)
+            ->where('discussions.user_id', $user_id)
+            ->where('discussion_comments.user_id', $user_id)
+            ->where('discussion_comments.satisfied_requirement', 1)
+            ->distinct('discussion_comments.discussion_id')
+            ->count('discussion_comments.discussion_id');
+    }
+
+    /**
+     * @param int $assignment_id
+     * @param int $question_id
+     * @param int $user_id
+     * @return mixed
+     */
+    public
+    function numberOfRepliesThatSatisfiedTheRequirements(int $assignment_id, int $question_id, int $user_id)
+    {
+        return $this->join('discussions', 'discussion_comments.discussion_id', '=', 'discussions.id')
+            ->where('discussions.assignment_id', $assignment_id)
+            ->where('discussions.question_id', $question_id)
+            ->where('discussion_comments.user_id', $user_id)
+            ->where('discussion_comments.satisfied_requirement', 1)
+            ->whereNotIn('discussion_comments.id', function ($query) {
+                $query->selectRaw('MIN(discussion_comments.id)')
+                    ->from('discussion_comments')
+                    ->join('discussions', 'discussion_comments.discussion_id', '=', 'discussions.id')
+                    ->whereColumn('discussions.user_id', 'discussion_comments.user_id')
+                    ->groupBy('discussion_comments.discussion_id');
+            })
+            ->count();
     }
 
     /**
@@ -193,6 +274,23 @@ class DiscussionComment extends Model
             ->where('discussion_comments.user_id', $user_id)
             ->where('discussion_comments.satisfied_requirement', 1)
             ->count();
+    }
+
+    /**
+     * @param $assignment_id
+     * @param $question_id
+     * @param $user_id
+     * @return mixed
+     */
+    public function numberOfInitiateOrReplyInThreadsThatSatisfiedTheRequirements($assignment_id, $question_id, $user_id)
+    {
+        return $this->join('discussions', 'discussion_comments.discussion_id', '=', 'discussions.id')
+            ->where('discussions.assignment_id', $assignment_id)
+            ->where('discussions.question_id', $question_id)
+            ->where('discussion_comments.user_id', $user_id)
+            ->where('discussion_comments.satisfied_requirement', 1)
+            ->count();
+
     }
 
     public

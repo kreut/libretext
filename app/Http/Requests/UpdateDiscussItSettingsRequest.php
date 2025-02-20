@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IsValidMinNumberForDiscussIt;
 use App\Rules\IsValidNumberOfDiscussItGroups;
 use App\Rules\IsValidPeriodOfTime;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,14 +29,16 @@ class UpdateDiscussItSettingsRequest extends FormRequest
     public function rules(Request $request): array
     {
         $assignment_id = $request->route('assignment')->id;
-        $question_id =  $request->route('question')->id;
+        $question_id = $request->route('question')->id;
         $rules = [
             'response_modes' => ['required'],
-            'number_of_groups' =>  new IsValidNumberOfDiscussItGroups($assignment_id, $question_id),
+            'number_of_groups' => new IsValidNumberOfDiscussItGroups($assignment_id, $question_id),
             "students_can_edit_comments" => ['required', Rule::in([0, 1])],
             "students_can_delete_comments" => ['required', Rule::in([0, 1])],
-            "min_number_of_discussion_threads" => ['required', 'integer', 'min:1'],
-            "min_number_of_comments" => ['required', 'integer', 'min:1'],
+            "min_number_of_initiated_discussion_threads" => ['required', 'integer', 'min:0'],
+            "min_number_of_comments" => ['integer', 'min:0'],
+            "min_number_of_replies" => ['required', new IsValidMinNumberForDiscussIt($this->min_number_of_initiated_discussion_threads, $this->min_number_of_initiate_or_reply_in_threads)],
+            "min_number_of_initiate_or_reply_in_threads" => ['required', 'integer', 'min:0'],
             "min_number_of_words" => ['required', 'integer', 'min:1'],
             'min_length_of_audio_video' => ['required', new IsValidPeriodOfTime()],
             'auto_grade' => ['required', Rule::in(0, 1)],
