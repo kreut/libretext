@@ -1244,7 +1244,7 @@ export default {
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
     openAssignmentGradebook () {
-      window.open(`//instructors/assignments/${this.assignmentId}/information/gradebook`, '_blank')
+      window.open(`/instructors/assignments/${this.assignmentId}/information/gradebook`, '_blank')
     },
     openRegrader () {
       window.open(`/assignments/${this.assignmentId}/regrader`, '_blank')
