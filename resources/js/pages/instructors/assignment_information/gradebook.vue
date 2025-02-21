@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="vld-parent">
-      <ErrorMessage modal-id="modal-form-errors-assignment-score-overrides" :all-form-errors="allFormErrors"/>
+      <ErrorMessage modal-id="modal-form-errors-assignment-score-overrides" :all-form-errors="allFormErrors" />
       <b-modal
         id="modal-override-assignment-score"
         title="Override Assignment Score"
@@ -10,7 +10,7 @@
           <li>Student: {{ firstLast }}</li>
           <li>Original Score: {{ originalScore }}</li>
         </ul>
-        <RequiredText :plural="false"/>
+        <RequiredText :plural="false" />
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
@@ -26,7 +26,7 @@
             :class="{ 'is-invalid':overrideAssignmentScoreForm.errors.has('score') }"
             @keydown="overrideAssignmentScoreForm.errors.clear('score')"
           />
-          <has-error :form="overrideAssignmentScoreForm" field="score"/>
+          <has-error :form="overrideAssignmentScoreForm" field="score" />
         </b-form-group>
         <template #modal-footer>
           <b-button
@@ -62,7 +62,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Assignment Gradebook"/>
+        <PageTitle title="Assignment Gradebook" />
         <p class="pb-2">
           Below is a table of the scores at the question level for each student. You can override individual question
           scores by clicking on any of the entries.
@@ -73,7 +73,7 @@
         >
           Download Scores
         </a>
-        <TimeSpent @updateView="getAssignmentQuestionScoresByUser"/>
+        <TimeSpent @updateView="getAssignmentQuestionScoresByUser" />
         <b-table
           v-show="items.length"
           aria-label="Assignment Gradebook"
@@ -88,7 +88,19 @@
           <template v-slot:cell()="data">
             <span v-if="data.field.key !== 'total_points'">
               <span v-if="nonEditableFields.includes(data.field.key)">
-                {{ data.value }}
+                {{ data.value }} <span v-if="data.field.key === 'name'">
+
+                  <QuestionCircleTooltip :id="`student-${data.item.userId}`" />
+                  <b-tooltip :target="`student-${data.item.userId}`"
+                             delay="250"
+                             width="600"
+                             triggers="hover focus"
+                             custom-class="custom-tooltip"
+                  >
+                    Student ID: {{ data.item.student_id }}<br>
+                    Email: {{ data.item.email }}
+                  </b-tooltip>
+                </span>
               </span>
               <span v-if="!nonEditableFields.includes(data.field.key)"
                     style="cursor:pointer"
@@ -266,3 +278,9 @@ export default {
   }
 }
 </script>
+<style>
+.custom-tooltip .tooltip-inner {
+  max-width: 800px; /* Set the desired width */
+  white-space: normal;
+}
+</style>

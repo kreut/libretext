@@ -451,16 +451,19 @@ class ScoreController extends Controller
                 }
                 foreach ($viewable_users as $value) {
                     $sorted_users[] = ['name' => "$value->last_name, $value->first_name",
-                        'id' => $value->id];
+                        'id' => $value->id,
+                        'email' => $value->email,
+                        'student_id' => $value->student_id];
                 }
 
 
                 usort($sorted_users, function ($a, $b) {
                     return $a['name'] <=> $b['name'];
                 });
-
+                $sorted_users_by_user_id = [];
                 foreach ($sorted_users as $value) {
                     $enrolled_users[$value['id']] = $value['name'];
+                    $sorted_users_by_user_id[$value['id']] = $value;
                 }
             }
             $submission_score_overrides_by_assignment = DB::table('submission_score_overrides')
@@ -519,6 +522,7 @@ class ScoreController extends Controller
 
             $submission_score_overrides = [];
             $original_submission_scores = [];
+
             foreach ($enrolled_users as $user_id => $name) {
                 $columns = [];
                 $assignment_score = 0;
@@ -576,6 +580,8 @@ class ScoreController extends Controller
                     }
                 }
                 $columns['userId'] = $user_id;
+                $columns['email'] = $sorted_users_by_user_id[$user_id]['email'] ?? 'None provided';
+                $columns['student_id'] = $sorted_users_by_user_id[$user_id]['student_id'] ?? 'None provided';
                 $rows[] = $columns;
 
             }
