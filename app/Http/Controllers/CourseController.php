@@ -487,6 +487,55 @@ class CourseController extends Controller
 
     }
 
+    public
+    function getCommonsCoursesAndAssignmentsByCourse(Course $course): array
+    {
+        $response['type'] = 'error';
+
+        try {
+            $commons_user = User::where('email', 'commons@libretexts.org')->first();
+            $commons_courses_and_assignments = DB::table('assignments')
+                ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                ->select('courses.id AS course_id',
+                    'courses.name AS course_name',
+                    'courses.public_description AS course_description',
+                    'courses.anonymous_users AS anonymous_users',
+                    'assignments.id AS assignment_id',
+                    'assignments.public_description AS assignment_description',
+                    'assignments.name AS assignment_name',
+                  )
+                ->where('courses.user_id', $commons_user->id)
+                ->orderBy('course_name')
+                ->orderBy('assignment_name')
+                ->get();
+            $commons_courses_and_assignments_by_course = [];
+            $course_ids = [];
+            foreach ($commons_courses_and_assignments as $value) {
+                if (!in_array($value->course_id, $course_ids)) {
+                    $commons_courses_and_assignments_by_course[$value->course_id] = [
+                        'course_id' => $value->course_id,
+                        'course_description' => $value->course_description,
+                        'course_name' => $value->course_name,
+                        'anonymous_users' => $value->anonymous_users,
+                        'assignments' => [['id' => $value->assignment_id, 'name' => $value->assignment_name, 'description' => $value->assignment_description]]
+                    ];
+                } else {
+                    $commons_courses_and_assignments_by_course[$value->course_id]['assignments'][] = ['id' => $value->assignment_id, 'name' => $value->assignment_name, 'description' => $value->assignment_description];
+                }
+                $course_ids[] = $value->course_id;
+            }
+            $commons_courses_and_assignments_by_course = array_values( $commons_courses_and_assignments_by_course);
+            $response['commons_courses_and_assignments_by_course'] = $commons_courses_and_assignments_by_course;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the Commons courses and assignments.";
+        }
+        return $response;
+    }
+
     /**
      * @param Course $course
      * @return array

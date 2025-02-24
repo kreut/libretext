@@ -21,6 +21,8 @@ Route:*/
 //Must support both get and post according to the docs
 
 Route::get('/php-info', 'QuestionMediaController@phpInfo');
+Route::get('/courses/commons-courses-and-assignments-by-course', 'CourseController@getCommonsCoursesAndAssignmentsByCourse');
+
 Route::get('/auto-provision', 'OIDCController@autoProvision');
 Route::post('/question-media/init-transcribe', 'QuestionMediaController@initTranscribe');
 Route::patch('/question-media/transcribe-status', 'QuestionMediaController@updateTranscribeStatus');
@@ -354,6 +356,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/courses/anonymous-user', 'CourseController@getAnonymousUserCourses');
     Route::get('/courses/commons-courses-and-assignments', 'CourseController@getCommonsCoursesAndAssignments');
+
 
 
     Route::get('/account-customizations', 'AccountCustomizationController@show');
