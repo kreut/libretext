@@ -459,6 +459,8 @@ class GradingController extends Controller
                     $grading[$user->id] = [];
                     $grading[$user->id]['student'] = [
                         'name' => "$user->first_name $user->last_name",
+                        'email' => $user->email,
+                        'student_id'=> $user->student_id,
                         'user_id' => $user->id];
                     //open_ended
                     $grading[$user->id]['non_technology_iframe_src'] = $non_technology_iframe_src;

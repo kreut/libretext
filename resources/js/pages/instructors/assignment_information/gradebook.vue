@@ -278,7 +278,7 @@ export default {
   }
 }
 </script>
-<style>
+<style scoped>
 .custom-tooltip .tooltip-inner {
   max-width: 800px; /* Set the desired width */
   white-space: normal;

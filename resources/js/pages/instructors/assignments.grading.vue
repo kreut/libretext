@@ -3,27 +3,27 @@
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
     <div v-if="grading[currentStudentPage - 1] && grading[currentStudentPage - 1]['auto_graded_submission']">
-    <b-modal id="modal-submitted-work"
-             :title="`Submitted on ${grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work_at']}`"
-             size="xl"
-    >
-      <b-embed
-        v-resize="{ log: false, checkOrigin: false }"
-        width="100%"
-        :src="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
-        allowfullscreen
-      />
-      <template #modal-footer>
-        <b-button
-          size="sm"
-          variant="primary"
-          class="float-right"
-          @click="$bvModal.hide('modal-submitted-work')"
-        >
-          OK
-        </b-button>
-      </template>
-    </b-modal>
+      <b-modal id="modal-submitted-work"
+               :title="`Submitted on ${grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work_at']}`"
+               size="xl"
+      >
+        <b-embed
+          v-resize="{ log: false, checkOrigin: false }"
+          width="100%"
+          :src="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
+          allowfullscreen
+        />
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            variant="primary"
+            class="float-right"
+            @click="$bvModal.hide('modal-submitted-work')"
+          >
+            OK
+          </b-button>
+        </template>
+      </b-modal>
     </div>
     <b-modal id="modal-discussion"
              :title="`Started by ${activeDiscussion.started_by} on ${activeDiscussion.created_at}`"
@@ -543,11 +543,24 @@
 
                 <b-col>
                   <div class="mb-2">
-                    <b-card header="default"
-                            :header-html="getStudentScoresTitle()"
-                            class="h-50"
-                            :style="{ borderColor: cardBorderColor, borderWidth:'2px' }"
+                    <b-card
+                      class="h-50"
+                      :style="{ borderColor: cardBorderColor, borderWidth:'2px' }"
                     >
+                      <template #header>
+                        <h2 class="h7 mb-0">Scores for {{ grading[currentStudentPage - 1]['student']['name'] }}
+                          <QuestionCircleTooltip :id="`student-info`"/>
+                          <b-tooltip :target="`student-info`"
+                                     delay="250"
+                                     width="600"
+                                     triggers="hover focus"
+                                     custom-class="custom-tooltip"
+                          >
+                            Student ID: {{ grading[currentStudentPage - 1]['student']['student_id'] }}<br>
+                            Email: {{ grading[currentStudentPage - 1]['student']['email'] }}
+                          </b-tooltip>
+                        </h2>
+                      </template>
                       <b-card-text>
                         <b-form ref="form">
                           <div v-show="grading[currentStudentPage - 1]['submission_score_override']">
@@ -1594,9 +1607,6 @@ export default {
         ? 'by ' + this.grading[this.currentStudentPage - 1]['open_ended_submission'].grader_name
         : ''
       return `<h2 class="h7 mb-0">Grader Feedback ${grader}</h2>`
-    },
-    getStudentScoresTitle () {
-      return `<h2 class="h7 mb-0">Scores for ${this.grading[this.currentStudentPage - 1]['open_ended_submission']['name']}</h2>`
     },
     openInNewTab (url) {
       console.log(url)
