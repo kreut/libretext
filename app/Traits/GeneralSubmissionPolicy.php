@@ -141,6 +141,13 @@ trait GeneralSubmissionPolicy
                 }
                 break;
             case(true):
+                if (DB::table('assignment_level_overrides')
+                    ->where('assignment_id', $assignment_id)
+                    ->where('user_id', $user->id)
+                    ->exists()) {
+                    $response['type'] = 'success';
+                    return $response;
+                }
                 if ($assignment->late_policy === 'not accepted') {
                     $response['message'] = 'No responses will be saved since the due date for this assignment has passed.';
                     return $response;
