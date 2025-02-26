@@ -19,6 +19,9 @@ class LTI_Service_Connector
         $this->registration = $registration;
     }
 
+    /**
+     * @throws Exception
+     */
     public function get_access_token($scopes)
     {
 
@@ -35,7 +38,7 @@ class LTI_Service_Connector
         //Storage::disk('s3')->put("lti_registration.txt", $this->registration->get_auth_token_url());
         //Storage::disk('s3')->put("issuer.txt", $this->registration->get_issuer());
         $issuer = $this->registration->get_issuer();
-        if (strpos($issuer,'moodle') !== false){
+        if (strpos($issuer, 'moodle') !== false || strpos($issuer, 'brightspace') !== false) {
             $aud = $this->registration->get_auth_token_url();
         } else {
             switch ($issuer) {
@@ -169,7 +172,7 @@ class LTI_Service_Connector
 
         rewind($streamVerboseHandle);
         $verboseLog = stream_get_contents($streamVerboseHandle);
-        file_put_contents("/Users/franciscaparedes/adapt_laravel_8/storage/app/grade_passbacks/" . now(),$verboseLog);
+        file_put_contents("/Users/franciscaparedes/adapt_laravel_8/storage/app/grade_passbacks/" . now(), $verboseLog);
 
     }
 }

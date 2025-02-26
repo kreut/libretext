@@ -62,6 +62,8 @@
         ref="modal"
         title="Link Assignment To LMS"
         size="lg"
+        no-close-on-backdrop
+        no-close-on-esc
       >
         <p>
           Below you can find the list of courses which you have enabled as LMS courses in the Course Properties panel

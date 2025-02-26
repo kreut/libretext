@@ -524,7 +524,7 @@ class CourseController extends Controller
                 }
                 $course_ids[] = $value->course_id;
             }
-            $commons_courses_and_assignments_by_course = array_values( $commons_courses_and_assignments_by_course);
+            $commons_courses_and_assignments_by_course = array_values($commons_courses_and_assignments_by_course);
             $response['commons_courses_and_assignments_by_course'] = $commons_courses_and_assignments_by_course;
             $response['type'] = 'success';
 
@@ -1564,7 +1564,8 @@ class CourseController extends Controller
                     ->first();
                 $course->lms_has_access_token = $course->lms_has_access_token !== null;
                 $lti_registration = $school->LTIRegistration();
-
+                $course->is_brightspace = $lti_registration && strpos($lti_registration->iss, 'brightspace') !== false;
+                $course->is_canvas = $lti_registration && strpos($lti_registration->iss, 'instructure') !== false;
                 $course->lms_has_api_key = $lti_registration && $lti_registration->api_key;
                 if (!app()->environment('local') && $course->lms_has_api_key) {
                     if ($course->lms_has_access_token) {
@@ -1606,6 +1607,8 @@ class CourseController extends Controller
                 'school' => $course->school->name,
                 'discipline' => $course->discipline_id,
                 'name' => $course->name,
+                'is_brightspace' => $course->is_brightspace,
+                'is_canvas' => $course->is_canvas,
                 'public_description' => $course->public_description,
                 'private_description' => $course->private_description,
                 'textbook_url' => $course->textbook_url,

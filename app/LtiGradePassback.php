@@ -77,7 +77,7 @@ class LtiGradePassback extends Model
                 $is_canvas = strpos($iss, "canvas") !== false;
                 $is_blackboard = strpos($iss, "blackboard") !== false;
                 $is_moodle = strpos($iss, "moodle") !== false;
-
+                $is_brightspace = str_contains($iss, "brightspace") || str_contains($iss, "desire2learn");
                 if ($is_canvas && !$launch->has_nrps()) {
                     throw new Exception("no names and roles");
                 }
@@ -98,10 +98,11 @@ class LtiGradePassback extends Model
                     ->set_activity_progress('Completed')
                     ->set_grading_progress('FullyGraded')
                     ->set_user_id($launch->get_launch_data()['sub']);
+
                 //  file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID: " . $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'] . "\r\n", FILE_APPEND);
                 $response = $grades->put_grade($score);
                 $body = $response['body'];
-                if ($is_moodle) {
+                if ($is_moodle || $is_brightspace) {
                     $success = $response['body'] === null;
                 } else {
                     $success = !isset($body['errors']);
@@ -113,7 +114,7 @@ class LtiGradePassback extends Model
                         $success_message = $body['resultUrl'];
                     } else if ($is_blackboard) {
                         $success_message = $body['id'];
-                    } else if ($is_moodle) {
+                    } else if ($is_moodle || $is_brightspace) {
                         $success_message = 'successful passback';
                     } else {
                         $success_message = "$iss not in database";

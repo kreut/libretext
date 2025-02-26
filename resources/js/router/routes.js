@@ -238,6 +238,7 @@ let general_paths = [
   { path: '/sitemap', name: 'sitemap', component: page('sitemap.vue') },
   { path: '/question-editor/:tab/:questionId?', name: 'question.editor', component: page('question_editor.vue') },
   { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
+  { path: '/lti/brightspace/config/:campusId', name: 'lti_brightspace_config', component: page('lti_brightspace_config.vue') },
   { path: '/canvas/config/api/:campusId', name: 'lti_canvas_config_api', component: page('canvas_config_api.vue') },
   {
     path: '/lti/blackboard/config/:campusId?',

@@ -1,15 +1,17 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-form'"/>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-link-course-to-lms-form'"/>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-canvas-url-form'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-form'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-link-course-to-lms-form'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-canvas-url-form'" />
 
-    <PageTitle v-if="canViewAssignments" :title="title"/>
+    <PageTitle v-if="canViewAssignments" :title="title" />
     <b-modal id="modal-confirm-link-course"
              title="Confirmation"
     >
       <p>Please confirm that you would like to link the following Canvas course:</p>
-      <p class="text-center font-weight-bold">{{ linkCourseToLMSForm.lms_course_name }}</p>
+      <p class="text-center font-weight-bold">
+        {{ linkCourseToLMSForm.lms_course_name }}
+      </p>
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm"
                   @click="$bvModal.hide('modal-confirm-link-course')"
@@ -19,7 +21,8 @@
         <b-button size="sm"
                   variant="primary"
                   @click="submitManualCourseLink"
-        >Submit
+        >
+          Submit
         </b-button>
       </template>
     </b-modal>
@@ -41,7 +44,8 @@
         <b-button size="sm"
                   variant="primary"
                   @click="$bvModal.hide('modal-copy-course-url')"
-        >OK
+        >
+          OK
         </b-button>
       </template>
     </b-modal>
@@ -49,11 +53,13 @@
              title="Link Course Manually"
              size="lg"
     >
-      <p>Canvas allows at most 100 courses to be returned. Because of this, some of your courses may not appear on the
+      <p>
+        Canvas allows at most 100 courses to be returned. Because of this, some of your courses may not appear on the
         list.
         You can manually link the course by providing the
         course URL. Navigate to the course and copy the
-        URL that <a href="" @click.prevent="$bvModal.show('modal-copy-course-url')">you see in your browser</a>.</p>
+        URL that <a href="" @click.prevent="$bvModal.show('modal-copy-course-url')">you see in your browser</a>.
+      </p>
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
@@ -69,13 +75,14 @@
           :class="{ 'is-invalid': errorMessage }"
           @keydown="errorMessage = ''"
         />
-        <ErrorMessage :message="errorMessage"/>
+        <ErrorMessage :message="errorMessage" />
       </b-form-group>
       <template #modal-footer>
         <b-button size="sm"
                   variant="primary"
                   @click="validateLinkCourseByCanvasUrl"
-        >Link Course
+        >
+          Link Course
         </b-button>
       </template>
     </b-modal>
@@ -96,41 +103,41 @@
 
         <table class="table table-striped table-sm">
           <thead>
-          <tr>
-            <th scope="col">
-              Show
-            </th>
-            <th scope="col">
-              Timing
-            </th>
-          </tr>
+            <tr>
+              <th scope="col">
+                Show
+              </th>
+              <th scope="col">
+                Timing
+              </th>
+            </tr>
           </thead>
           <tbody>
-          <tr v-for="(nonMatchingAutoRelease, nonMatchingAutoReleaseIndex) in nonMatchingAutoReleases"
-              :key="`auto-releases-${nonMatchingAutoReleaseIndex}`"
-          >
-            <td>
-              {{ nonMatchingAutoRelease.label }}
-            </td>
-            <td>
-              <b-form-group>
-                <b-form-radio v-model="importedAssignmentAutoRelease[nonMatchingAutoRelease.key]"
-                              :name="`imported-assignment-auto-release-${nonMatchingAutoRelease.key}`"
-                              :value="nonMatchingAutoRelease.course_default"
-                >
-                  {{ nonMatchingAutoRelease.course_default ? nonMatchingAutoRelease.course_default : 'N/A' }} (Course
-                  Default)
-                </b-form-radio>
-                <b-form-radio v-model="importedAssignmentAutoRelease[nonMatchingAutoRelease.key]"
-                              :name="`imported-assignment-auto-release-${nonMatchingAutoRelease.key}`"
-                              :value="nonMatchingAutoRelease.assignment"
-                >
-                  {{ nonMatchingAutoRelease.assignment ? nonMatchingAutoRelease.assignment : 'N/A' }}(Imported
-                  Assignment)
-                </b-form-radio>
-              </b-form-group>
-            </td>
-          </tr>
+            <tr v-for="(nonMatchingAutoRelease, nonMatchingAutoReleaseIndex) in nonMatchingAutoReleases"
+                :key="`auto-releases-${nonMatchingAutoReleaseIndex}`"
+            >
+              <td>
+                {{ nonMatchingAutoRelease.label }}
+              </td>
+              <td>
+                <b-form-group>
+                  <b-form-radio v-model="importedAssignmentAutoRelease[nonMatchingAutoRelease.key]"
+                                :name="`imported-assignment-auto-release-${nonMatchingAutoRelease.key}`"
+                                :value="nonMatchingAutoRelease.course_default"
+                  >
+                    {{ nonMatchingAutoRelease.course_default ? nonMatchingAutoRelease.course_default : 'N/A' }} (Course
+                    Default)
+                  </b-form-radio>
+                  <b-form-radio v-model="importedAssignmentAutoRelease[nonMatchingAutoRelease.key]"
+                                :name="`imported-assignment-auto-release-${nonMatchingAutoRelease.key}`"
+                                :value="nonMatchingAutoRelease.assignment"
+                  >
+                    {{ nonMatchingAutoRelease.assignment ? nonMatchingAutoRelease.assignment : 'N/A' }}(Imported
+                    Assignment)
+                  </b-form-radio>
+                </b-form-group>
+              </td>
+            </tr>
           </tbody>
         </table>
         <template #modal-footer="{ cancel, ok }">
@@ -201,10 +208,10 @@
           Please confirm that you would like to unlink the ADAPT assignment
           <strong>{{ assignmentToUnlink.name }}</strong> <span v-show="assignmentToUnlink.lms_assignment_name">
             from your LMS assignment <strong>{{
-            assignmentToUnlink.lms_assignment_name
-          }}</strong> in your LMS course <strong>{{
-            assignmentToUnlink.lms_course_name
-          }}</strong>
+              assignmentToUnlink.lms_assignment_name
+            }}</strong> in your LMS course <strong>{{
+              assignmentToUnlink.lms_course_name
+            }}</strong>
           </span>.
         </p>
         <p>Your students will not be able to access this ADAPT assignment until it is relinked in your LMS.</p>
@@ -227,51 +234,51 @@
       >
         <table v-if="assignments.length" :key="`link-to-lms-${updateKey}`" class="table table-striped">
           <thead>
-          <tr>
-            <th scope="col">
-              Submission Status
-            </th>
-            <th scope="col">
-              Explanation
-            </th>
-          </tr>
+            <tr>
+              <th scope="col">
+                Submission Status
+              </th>
+              <th scope="col">
+                Explanation
+              </th>
+            </tr>
           </thead>
           <tbody>
-          <tr>
-            <th>Upcoming</th>
-            <td>
-              Students cannot yet access the assignment.
-            </td>
-          </tr>
+            <tr>
+              <th>Upcoming</th>
+              <td>
+                Students cannot yet access the assignment.
+              </td>
+            </tr>
 
-          <tr>
-            <th>Open</th>
-            <td>
-              Students can access the assignment and submit.
-            </td>
-          </tr>
-          <tr>
-            <th>Partial</th>
-            <td>
-              Based on differing due dates, only some students can access the assignment and submit.
-            </td>
-          </tr>
-          <tr>
-            <th>Closed</th>
-            <td>
-              Students can access the assignment yet no longer submit since the due date has passed.
-            </td>
-          </tr>
-          <tr>
-            <th>
-              Released
-            </th>
-            <td>
-              Students can access the assignment but they can't submit because the assignment is a delayed assignment
-              and either the solutions are shown or the scores are released.
-              Click the Main View toggle to show/hide the solutions or scores.
-            </td>
-          </tr>
+            <tr>
+              <th>Open</th>
+              <td>
+                Students can access the assignment and submit.
+              </td>
+            </tr>
+            <tr>
+              <th>Partial</th>
+              <td>
+                Based on differing due dates, only some students can access the assignment and submit.
+              </td>
+            </tr>
+            <tr>
+              <th>Closed</th>
+              <td>
+                Students can access the assignment yet no longer submit since the due date has passed.
+              </td>
+            </tr>
+            <tr>
+              <th>
+                Released
+              </th>
+              <td>
+                Students can access the assignment but they can't submit because the assignment is a delayed assignment
+                and either the solutions are shown or the scores are released.
+                Click the Main View toggle to show/hide the solutions or scores.
+              </td>
+            </tr>
           </tbody>
         </table>
         <template #modal-footer="{ cancel, ok }">
@@ -285,19 +292,18 @@
         title="Link Course to LMS"
       >
         <b-alert show variant="success">
-          The course has been successfully linked. <span v-if="assignments.length"
-        >Assignments are now being linked.</span>
+          The course has been successfully linked. <span v-if="assignments.length">Assignments are now being linked.</span>
         </b-alert>
         <table v-if="assignments.length" :key="`link-to-lms-${updateKey}`" class="table table-striped">
           <thead>
-          <tr>
-            <th scope="col">
-              Assignment
-            </th>
-            <th scope="col">
-              Submission Status
-            </th>
-          </tr>
+            <tr>
+              <th scope="col">
+                Assignment
+              </th>
+              <th scope="col">
+                Submission Status
+              </th>
+            </tr>
           </thead>
           <tr v-for="(assignment,index) in assignments" :key="`assignments-${index}`">
             <td>{{ assignment.name }}</td>
@@ -321,8 +327,8 @@
       >
         <p>
           Please confirm whether you would like to unlink this course from your LMS course <span
-          class="font-weight-bold"
-        >{{ course.lms_course }}</span>.
+            class="font-weight-bold"
+          >{{ course.lms_course }}</span>.
           If you unlink this course, your students will no longer be able to access the course through your LMS until
           you
           relink the course.
@@ -421,7 +427,7 @@
             Save
           </b-button>
           <span v-show="savingAssignment" class="pl-2">
-            <b-spinner small type="grow"/>
+            <b-spinner small type="grow" />
             Saving...processing
           </span>
         </template>
@@ -432,7 +438,7 @@
         title="Assigned To"
         size="lg"
       >
-        <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView"/>
+        <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView" />
       </b-modal>
 
       <b-modal
@@ -574,7 +580,7 @@
         >
           <template v-slot:label>
             LMS Grade Passback*
-            <QuestionCircleTooltip :id="'lms_grade_passback_tooltip'"/>
+            <QuestionCircleTooltip :id="'lms_grade_passback_tooltip'" />
             <b-tooltip target="lms_grade_passback_tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -698,15 +704,31 @@
           </div>
           <div v-else>
             <b-alert variant="info" :show="true">
-              <div v-if="!course.lms_course_id">
+              <p v-if="!course.lms_course_id">
                 This is a course which is being served through your LMS. You will create your assignments
                 in ADAPT including determining due dates, but will use your LMS's gradebook.
-              </div>
+              </p>
+              <p v-if="course.is_brightspace">
+                LTI URL:
+                <span id="lti-url"> https://adapt.libretexts.org/api/lti/redirect-uri</span> <a href=""
+                                                                                                aria-label="Copy LTI URL"
+                                                                                                @click.prevent="doCopy('lti-url')"
+                >
+                  <font-awesome-icon :icon="copyIcon" />
+                </a>
+                <QuestionCircleTooltip :id="`lti-url-tooltip`" />
+                <b-tooltip :target="`lti-url-tooltip`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Copy this URL into your Brightspace assignment in order to link your Brightspace assignment to your
+                  ADAPT assignment.
+                </b-tooltip>
+              </p>
               <div v-if="course.lms_has_api_key && enableCanvasAPI">
                 <div v-if="course.lms_course_id">
                   <div>
-                    This course is directly linked to the LMS course <span class="font-weight-bold"
-                  >{{ course.lms_course_name }}</span>.
+                    This course is directly linked to the LMS course <span class="font-weight-bold">{{ course.lms_course_name }}</span>.
                     <span class="pr-2"><b-button
                       v-b-tooltip="{ title: 'You can use this option if you accidentally linked your ADAPT course to an incorrect Canvas course.',delay: '500'}"
                       size="sm"
@@ -724,7 +746,7 @@
                       @click="reSyncLMSCourse"
                     >
                       <span v-show="processingResync">
-                        <b-spinner small type="grow"/>
+                        <b-spinner small type="grow" />
                         Re-syncing Course
                       </span> <span v-show="!processingResync">
                         Re-sync Course
@@ -743,10 +765,10 @@
                     <p>The following table describes how ADAPT and your LMS are linked.</p>
                     <table class="table table-striped">
                       <thead>
-                      <tr>
-                        <th>ADAPT</th>
-                        <th>LMS</th>
-                      </tr>
+                        <tr>
+                          <th>ADAPT</th>
+                          <th>LMS</th>
+                        </tr>
                       </thead>
                       <tr>
                         <td>
@@ -844,10 +866,10 @@
                       </b-form-group>
                     </div>
                     <span v-if="processingLinkCourseToLMS" class="pl-2">
-                      <b-spinner small type="grow"/>
+                      <b-spinner small type="grow" />
                       Processing...
                     </span>
-                    <has-error :form="linkCourseToLMSForm" field="lms_course_id"/>
+                    <has-error :form="linkCourseToLMSForm" field="lms_course_id" />
                   </div>
                 </div>
               </div>
@@ -976,12 +998,9 @@
               >
                 Course Properties
               </b-button>
-            <ConsultInsight v-if="user && user.role === 2 && course.lms"
-                            :url="course.lms_has_api_key
-                              ? 'https://commons.libretexts.org/insight/lti-and-api'
-                            : 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-canvas-via-lti-only'"
-            />
-
+              <ConsultInsight v-if="user && user.role === 2 && course.lms && consultInsightUrl"
+                              :url="consultInsightUrl"
+              />
             </span>
           </b-col>
         </b-row>
@@ -1009,109 +1028,109 @@
                style="table-layout: fixed; width: 100%;"
         >
           <thead>
-          <tr>
-            <th scope="col" :style="getAssignmentNameWidth()">
-              Assignment Name
-            </th>
-            <th v-if="view === 'control panel'" scope="col" style="width:110px">
-              Scores
-              <QuestionCircleTooltip :id="`auto-release-scores-tooltip`"/>
-              <b-tooltip :target="`auto-release-scores-tooltip`"
-                         delay="250"
-                         triggers="hover focus"
+            <tr>
+              <th scope="col" :style="getAssignmentNameWidth()">
+                Assignment Name
+              </th>
+              <th v-if="view === 'control panel'" scope="col" style="width:110px">
+                Scores
+                <QuestionCircleTooltip :id="`auto-release-scores-tooltip`" />
+                <b-tooltip :target="`auto-release-scores-tooltip`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  <div v-html="getAutoReleaseTooltip('releasing your scores')" />
+                </b-tooltip>
+              </th>
+              <th v-if="view === 'control panel'" scope="col" style="width:85px">
+                Scores Released On
+              </th>
+              <th v-if="view === 'control panel'" scope="col" style="width:120px">
+                Solutions
+                <QuestionCircleTooltip :id="`auto-release-solutions-tooltip`" />
+                <b-tooltip :target="`auto-release-solutions-tooltip`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  <div v-html="getAutoReleaseTooltip('showing the solutions')" />
+                </b-tooltip>
+              </th>
+              <th v-if="view === 'control panel'" scope="col" style="width:85px">
+                Solutions Released On
+              </th>
+              <th v-if="view === 'control panel'" scope="col" style="width:120px">
+                Statistics
+                <QuestionCircleTooltip :id="`auto-release-statistics-tooltip`" />
+                <b-tooltip :target="`auto-release-statistics-tooltip`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  <div v-html="getAutoReleaseTooltip('showing the assignment statistics')" />
+                </b-tooltip>
+              </th>
+              <th v-if="view === 'control panel'" scope="col" style="width:85px">
+                Statistics Released On
+              </th>
+              <th v-if="view === 'control panel'" scope="col" style="width:85px">
+                Points Per Question
+              </th>
+              <th v-if="view === 'control panel' && user.role ===2" scope="col"
+                  style="width:100px"
               >
-                <div v-html="getAutoReleaseTooltip('releasing your scores')"/>
-              </b-tooltip>
-            </th>
-            <th v-if="view === 'control panel'" scope="col" style="width:85px">
-              Scores Released On
-            </th>
-            <th v-if="view === 'control panel'" scope="col" style="width:120px">
-              Solutions
-              <QuestionCircleTooltip :id="`auto-release-solutions-tooltip`"/>
-              <b-tooltip :target="`auto-release-solutions-tooltip`"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                <div v-html="getAutoReleaseTooltip('showing the solutions')"/>
-              </b-tooltip>
-            </th>
-            <th v-if="view === 'control panel'" scope="col" style="width:85px">
-              Solutions Released On
-            </th>
-            <th v-if="view === 'control panel'" scope="col" style="width:120px">
-              Statistics
-              <QuestionCircleTooltip :id="`auto-release-statistics-tooltip`"/>
-              <b-tooltip :target="`auto-release-statistics-tooltip`"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                <div v-html="getAutoReleaseTooltip('showing the assignment statistics')"/>
-              </b-tooltip>
-            </th>
-            <th v-if="view === 'control panel'" scope="col" style="width:85px">
-              Statistics Released On
-            </th>
-            <th v-if="view === 'control panel'" scope="col" style="width:85px">
-              Points Per Question
-            </th>
-            <th v-if="view === 'control panel' && user.role ===2" scope="col"
-                style="width:100px"
-            >
-              Student<br>Names
-              <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'"/>
-              <b-tooltip target="viewable-by-graders-tooltip"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                You can optionally hide your students' names from your graders to avoid any sort of
-                conscious or subconscious bias.
-              </b-tooltip>
-            </th>
-            <th v-if="view === 'control panel' && user.role ===2" scope="col">
-              Question URL View
-              <QuestionCircleTooltip id="question-url-view-tooltip"/>
-              <b-tooltip target="question-url-view-tooltip"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                You can provide your students with a URL taking them directly to any question in the assignment, found
-                within a given question's properties. From this question you can either show the entire assignment
-                or just limit the view to that specific question.
-              </b-tooltip>
-            </th>
-            <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:115px">
-              Released Status
-              <QuestionCircleTooltip :id="`auto-release-shown-tooltip`"/>
-              <b-tooltip :target="`auto-release-shown-tooltip`"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                <div v-html="getAutoReleaseTooltip('showing the assignment')"/>
-              </b-tooltip>
-            </th>
-            <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
-              Group
-            </th>
-            <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
-              Released On
-            </th>
-            <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
-              Available On
-            </th>
-            <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
-              Due
-            </th>
-            <th v-show="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:100px">
-              Submission Status
-              <span @mouseover="showAssignmentStatusModal()" @mouseout="mouseOverAssignmentStatus = false">
-                  <QuestionCircleTooltip/>
+                Student<br>Names
+                <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'" />
+                <b-tooltip target="viewable-by-graders-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  You can optionally hide your students' names from your graders to avoid any sort of
+                  conscious or subconscious bias.
+                </b-tooltip>
+              </th>
+              <th v-if="view === 'control panel' && user.role ===2" scope="col">
+                Question URL View
+                <QuestionCircleTooltip id="question-url-view-tooltip" />
+                <b-tooltip target="question-url-view-tooltip"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  You can provide your students with a URL taking them directly to any question in the assignment, found
+                  within a given question's properties. From this question you can either show the entire assignment
+                  or just limit the view to that specific question.
+                </b-tooltip>
+              </th>
+              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:115px">
+                Released Status
+                <QuestionCircleTooltip :id="`auto-release-shown-tooltip`" />
+                <b-tooltip :target="`auto-release-shown-tooltip`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  <div v-html="getAutoReleaseTooltip('showing the assignment')" />
+                </b-tooltip>
+              </th>
+              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
+                Group
+              </th>
+              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
+                Released On
+              </th>
+              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
+                Available On
+              </th>
+              <th v-if="view === 'main view' && [2,4].includes(user.role)" scope="col">
+                Due
+              </th>
+              <th v-show="view === 'main view' && [2,4].includes(user.role)" scope="col" style="width:100px">
+                Submission Status
+                <span @mouseover="showAssignmentStatusModal()" @mouseout="mouseOverAssignmentStatus = false">
+                  <QuestionCircleTooltip />
                 </span>
-            </th>
-            <th v-if="view === 'main view'" scope="col" :style="lms ? 'width: 175px' :'width: 125px'">
-              Actions
-            </th>
-          </tr>
+              </th>
+              <th v-if="view === 'main view'" scope="col" :style="lms ? 'width: 175px' :'width: 125px'">
+                Actions
+              </th>
+            </tr>
           </thead>
           <tbody is="draggable" :key="assignments.length"
                  v-model="assignments"
@@ -1119,42 +1138,42 @@
                  :options="{handle: '.handle'}"
                  @end="saveNewOrder"
           >
-          <tr
-            v-for="assignment in assignments"
-            v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
-            :key="assignment.id"
-            :style="getAssignmentRowStyle(assignment)"
-          >
-            <th scope="row">
-              <b-icon icon="list" class="handle"/>
-              <a v-show="assignment.is_beta_assignment"
-                 :id="getTooltipTarget('betaAssignment',assignment.id)"
-                 href="#"
-                 class="text-muted"
-              >
-                &beta;
-              </a>
-              <b-tooltip :target="getTooltipTarget('betaAssignment',assignment.id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                This Beta assignment was automatically generated from its corresponding Alpha course. Because of the
-                tethered
-                nature, you cannot remove the assignment nor add/remove assessments.
-              </b-tooltip>
-              <a v-show="Boolean(course.alpha)"
-                 :id="getTooltipTarget('alphaCourse',assignment.id)"
-                 href="#"
-                 class="text-muted"
-              >&alpha; </a>
-              <b-tooltip :target="getTooltipTarget('alphaCourse',assignment.id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                This assignment is part of an Alpha course. Any assignments/assessments that you create or remove will
-                be reflected in the tethered Beta courses.
-              </b-tooltip>
-              <span v-show="assignment.source === 'a'">
+            <tr
+              v-for="assignment in assignments"
+              v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
+              :key="assignment.id"
+              :style="getAssignmentRowStyle(assignment)"
+            >
+              <th scope="row">
+                <b-icon icon="list" class="handle" />
+                <a v-show="assignment.is_beta_assignment"
+                   :id="getTooltipTarget('betaAssignment',assignment.id)"
+                   href="#"
+                   class="text-muted"
+                >
+                  &beta;
+                </a>
+                <b-tooltip :target="getTooltipTarget('betaAssignment',assignment.id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  This Beta assignment was automatically generated from its corresponding Alpha course. Because of the
+                  tethered
+                  nature, you cannot remove the assignment nor add/remove assessments.
+                </b-tooltip>
+                <a v-show="Boolean(course.alpha)"
+                   :id="getTooltipTarget('alphaCourse',assignment.id)"
+                   href="#"
+                   class="text-muted"
+                >&alpha; </a>
+                <b-tooltip :target="getTooltipTarget('alphaCourse',assignment.id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  This assignment is part of an Alpha course. Any assignments/assessments that you create or remove will
+                  be reflected in the tethered Beta courses.
+                </b-tooltip>
+                <span v-show="assignment.source === 'a'">
                   <span v-show="isLocked(assignment.has_submissions_or_file_submissions) && !isFormative (assignment)"
                         :id="getTooltipTarget('getQuestions',assignment.id)"
                   >
@@ -1163,43 +1182,42 @@
                     />
                   </span>
                 </span>
-              <b-icon
-                v-if="assignment.assessment_type === 'learning tree'"
-                icon="tree"
-                variant="success"
-              />
-              <router-link v-if="assignment.source !== 'x'"
-                           :to="{ name: 'instructors.assignments.questions',params:{assignmentId:assignment.id}}"
-              >
-                {{ assignment.name }}
-              </router-link>
-              <a v-if="assignment.source === 'x'" href="" @click.prevent="showExternalAssignmentNoty()"
-              >{{ assignment.name }}</a> <span v-show="!assignment.include_in_weighted_average"
-                                               :id="`not-shown-assignment-tooltip-${assignment.id}`" class="text-danger"
-            >*</span>
-              <b-tooltip :target="`not-shown-assignment-tooltip-${assignment.id}`"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                {{ assignment.name }} will not be included when computing the final weighted average.
-              </b-tooltip>
-              <span v-if="user && [2,4].includes(user.role)">
+                <b-icon
+                  v-if="assignment.assessment_type === 'learning tree'"
+                  icon="tree"
+                  variant="success"
+                />
+                <router-link v-if="assignment.source !== 'x'"
+                             :to="{ name: 'instructors.assignments.questions',params:{assignmentId:assignment.id}}"
+                >
+                  {{ assignment.name }}
+                </router-link>
+                <a v-if="assignment.source === 'x'" href="" @click.prevent="showExternalAssignmentNoty()">{{ assignment.name }}</a> <span v-show="!assignment.include_in_weighted_average"
+                                                                                                                                          :id="`not-shown-assignment-tooltip-${assignment.id}`" class="text-danger"
+                >*</span>
+                <b-tooltip :target="`not-shown-assignment-tooltip-${assignment.id}`"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  {{ assignment.name }} will not be included when computing the final weighted average.
+                </b-tooltip>
+                <span v-if="user && [2,4].includes(user.role)">
                   <b-tooltip :target="getTooltipTarget('getQuestions',assignment.id)"
                              delay="500"
                              triggers="hover focus"
                   >
-                    <div v-html="getLockedQuestionsMessage(assignment)"/>
+                    <div v-html="getLockedQuestionsMessage(assignment)" />
                   </b-tooltip>
 
                 </span>
-              <b-tooltip :target="getTooltipTarget('alphaCourse',assignment.id)"
-                         delay="500"
-                         triggers="hover focus"
-              >
-                This assignment is part of an Alpha course. Any assignments/assessments that you create or remove will
-                be reflected in the tethered Beta courses.
-              </b-tooltip>
-              <span v-show="assignment.formative">
+                <b-tooltip :target="getTooltipTarget('alphaCourse',assignment.id)"
+                           delay="500"
+                           triggers="hover focus"
+                >
+                  This assignment is part of an Alpha course. Any assignments/assessments that you create or remove will
+                  be reflected in the tethered Beta courses.
+                </b-tooltip>
+                <span v-show="assignment.formative">
                   <b-tooltip :target="getTooltipTarget('formative-assignment',assignment.id)"
                              delay="500"
                              triggers="hover focus"
@@ -1210,9 +1228,9 @@
                     :id="getTooltipTarget('formative-assignment',assignment.id)"
                     href="#"
                     class="text-muted"
-                  ><b-icon-question-circle/></a>
+                  ><b-icon-question-circle /></a>
                 </span>
-              <span v-show="assignment.assessment_type === 'clicker'">
+                <span v-show="assignment.assessment_type === 'clicker'">
                   <b-tooltip :target="getTooltipTarget('clicker-assignment',assignment.id)"
                              delay="500"
                              triggers="hover focus"
@@ -1224,143 +1242,143 @@
                     :id="getTooltipTarget('clicker-assignment',assignment.id)"
                     href="#"
                     class="text-muted"
-                  ><b-icon-question-circle/></a>
+                  ><b-icon-question-circle /></a>
                 </span>
-            </th>
-            <td v-if="view === 'control panel'">
-              <div v-if="isFormative (assignment)">
-                N/A
-              </div>
-              <div v-if="!isFormative (assignment)">
+              </th>
+              <td v-if="view === 'control panel'">
+                <div v-if="isFormative (assignment)">
+                  N/A
+                </div>
+                <div v-if="!isFormative (assignment)">
+                  <ShowHideAssignmentProperties
+                    :key="`show-scores-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
+                    :assignment="assignment"
+                    :property="'show_scores'"
+                    @refreshPage="getAssignments"
+                  />
+                </div>
+              </td>
+              <td v-if="view === 'control panel'" class="show_scores_date">
+                <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
+                                 :assignment="assignment"
+                                 :property="'show_scores_date'"
+                                 :auto-release-activated="assignment.auto_release_activated_show_scores"
+                />
+              </td>
+              <td v-if="view === 'control panel'">
+                <div v-if="isFormative (assignment)">
+                  N/A
+                </div>
+                <div v-if="!isFormative (assignment)">
+                  <ShowHideAssignmentProperties
+                    :key="`show-solutions-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
+                    :assignment="assignment"
+                    :property="'solutions_released'"
+                    @refreshPage="getAssignments"
+                  />
+                </div>
+              </td>
+              <td v-if="view === 'control panel'" class="solutions_released_date">
+                <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
+                                 :assignment="assignment"
+                                 :property="'solutions_released_date'"
+                                 :auto-release-activated="assignment.auto_release_activated_solutions_released"
+                />
+              </td>
+              <td v-if="view === 'control panel'">
+                <div v-if="isFormative (assignment)">
+                  N/A
+                </div>
+                <div v-if="!isFormative (assignment)">
+                  <ShowHideAssignmentProperties
+                    :key="`students-can-view-assignment-statistics-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
+                    :assignment="assignment"
+                    :property="'students_can_view_assignment_statistics'"
+                    @refreshPage="getAssignments"
+                  />
+                </div>
+              </td>
+              <td v-if="view === 'control panel'"
+                  class="students_can_view_assignment_statistics_date"
+              >
+                <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
+                                 :assignment="assignment"
+                                 :property="'students_can_view_assignment_statistics_date'"
+                                 :auto-release-activated="assignment.auto_release_activated_students_can_view_assignment_statistics"
+                />
+              </td>
+              <td v-if="view === 'control panel'">
+                <div v-if="isFormative (assignment)">
+                  N/A
+                </div>
+                <div v-if="!isFormative (assignment)">
+                  <ShowPointsPerQuestionToggle
+                    :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
+                    :assignment="assignment"
+                    :radio-buttons="true"
+                  />
+                </div>
+              </td>
+              <td v-if="view === 'control panel' && user.role === 2">
+                <div v-if="isFormative (assignment)">
+                  N/A
+                </div>
+                <div v-if="!isFormative (assignment)">
+                  <GradersCanSeeStudentNamesToggle
+                    :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
+                    :assignment="assignment"
+                    :radio-buttons="true"
+                  />
+                </div>
+              </td>
+              <td v-if="view === 'control panel' && user.role === 2">
+                <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`"
+                                       :assignment="assignment"
+                                       :radio-buttons="true"
+                />
+              </td>
+              <td v-if="view === 'main view' && [2,4].includes(user.role)">
                 <ShowHideAssignmentProperties
-                  :key="`show-scores-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
+                  :key="`shown-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                   :assignment="assignment"
-                  :property="'show_scores'"
+                  :property="'shown'"
                   @refreshPage="getAssignments"
                 />
-              </div>
-            </td>
-            <td v-if="view === 'control panel'" class="show_scores_date">
-              <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
-                               :assignment="assignment"
-                               :property="'show_scores_date'"
-                               :auto-release-activated="assignment.auto_release_activated_show_scores"
-              />
-            </td>
-            <td v-if="view === 'control panel'">
-              <div v-if="isFormative (assignment)">
-                N/A
-              </div>
-              <div v-if="!isFormative (assignment)">
-                <ShowHideAssignmentProperties
-                  :key="`show-solutions-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
-                  :assignment="assignment"
-                  :property="'solutions_released'"
-                  @refreshPage="getAssignments"
+              </td>
+              <td v-if="view === 'main view' && [2,4].includes(user.role)">
+                <div v-if="isFormative (assignment)">
+                  N/A
+                </div>
+                <div v-if="!isFormative (assignment)">
+                  {{ assignment.assignment_group }}
+                </div>
+              </td>
+              <td v-if="view === 'main view' && [2,4].includes(user.role)" class="show_date">
+                <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
+                                 :assignment="assignment"
+                                 :property="'show_date'"
+                                 :auto-release-activated="assignment.auto_release_activated_shown"
                 />
-              </div>
-            </td>
-            <td v-if="view === 'control panel'" class="solutions_released_date">
-              <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
-                               :assignment="assignment"
-                               :property="'solutions_released_date'"
-                               :auto-release-activated="assignment.auto_release_activated_solutions_released"
-              />
-            </td>
-            <td v-if="view === 'control panel'">
-              <div v-if="isFormative (assignment)">
-                N/A
-              </div>
-              <div v-if="!isFormative (assignment)">
-                <ShowHideAssignmentProperties
-                  :key="`students-can-view-assignment-statistics-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
-                  :assignment="assignment"
-                  :property="'students_can_view_assignment_statistics'"
-                  @refreshPage="getAssignments"
-                />
-              </div>
-            </td>
-            <td v-if="view === 'control panel'"
-                class="students_can_view_assignment_statistics_date"
-            >
-              <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
-                               :assignment="assignment"
-                               :property="'students_can_view_assignment_statistics_date'"
-                               :auto-release-activated="assignment.auto_release_activated_students_can_view_assignment_statistics"
-              />
-            </td>
-            <td v-if="view === 'control panel'">
-              <div v-if="isFormative (assignment)">
-                N/A
-              </div>
-              <div v-if="!isFormative (assignment)">
-                <ShowPointsPerQuestionToggle
-                  :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
-                  :assignment="assignment"
-                  :radio-buttons="true"
-                />
-              </div>
-            </td>
-            <td v-if="view === 'control panel' && user.role === 2">
-              <div v-if="isFormative (assignment)">
-                N/A
-              </div>
-              <div v-if="!isFormative (assignment)">
-                <GradersCanSeeStudentNamesToggle
-                  :key="`students-can-view-assignment-statistics-toggle-${assignment.id}`"
-                  :assignment="assignment"
-                  :radio-buttons="true"
-                />
-              </div>
-            </td>
-            <td v-if="view === 'control panel' && user.role === 2">
-              <QuestionUrlViewToggle :key="`question-url-view-toggle-${assignment.id}`"
-                                     :assignment="assignment"
-                                     :radio-buttons="true"
-              />
-            </td>
-            <td v-if="view === 'main view' && [2,4].includes(user.role)">
-              <ShowHideAssignmentProperties
-                :key="`shown-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
-                :assignment="assignment"
-                :property="'shown'"
-                @refreshPage="getAssignments"
-              />
-            </td>
-            <td v-if="view === 'main view' && [2,4].includes(user.role)">
-              <div v-if="isFormative (assignment)">
-                N/A
-              </div>
-              <div v-if="!isFormative (assignment)">
-                {{ assignment.assignment_group }}
-              </div>
-            </td>
-            <td v-if="view === 'main view' && [2,4].includes(user.role)" class="show_date">
-              <AutoReleaseDate :key="`auto-release-date-${assignment.id}`"
-                               :assignment="assignment"
-                               :property="'show_date'"
-                               :auto-release-activated="assignment.auto_release_activated_shown"
-              />
-            </td>
-            <td v-if="view === 'main view' && [2,4].includes(user.role)">
-              <div v-if="!showAssignTos(assignment)">
-                N/A
-              </div>
-              <div v-if="showAssignTos(assignment)">
+              </td>
+              <td v-if="view === 'main view' && [2,4].includes(user.role)">
+                <div v-if="!showAssignTos(assignment)">
+                  N/A
+                </div>
+                <div v-if="showAssignTos(assignment)">
                   <span v-if="assignment.assign_tos.length === 1">
                     {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
                     {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mmA') }}
                   </span>
-                <span v-if="assignment.assign_tos.length > 1">
+                  <span v-if="assignment.assign_tos.length > 1">
                     <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
                   </span>
-              </div>
-            </td>
-            <td v-if="view === 'main view' && [2,4].includes(user.role)" style="width:200px">
-              <div v-if="!showAssignTos(assignment)">
-                N/A
-              </div>
-              <div v-if="showAssignTos(assignment)">
+                </div>
+              </td>
+              <td v-if="view === 'main view' && [2,4].includes(user.role)" style="width:200px">
+                <div v-if="!showAssignTos(assignment)">
+                  N/A
+                </div>
+                <div v-if="showAssignTos(assignment)">
                   <span v-if="assignment.assign_tos.length === 1">
                     <span v-if="!showFinalSubmissionDeadline(assignment.assign_tos[0])">
                       {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
@@ -1375,86 +1393,86 @@
                       }}
                     </span>
                   </span>
-              </div>
-            </td>
-            <td v-if="view === 'main view' && [2,4].includes(user.role)">
-              <div v-if="!showAssignTos(assignment)">
-                N/A
-              </div>
-              <div v-if="showAssignTos(assignment)">
+                </div>
+              </td>
+              <td v-if="view === 'main view' && [2,4].includes(user.role)">
+                <div v-if="!showAssignTos(assignment)">
+                  N/A
+                </div>
+                <div v-if="showAssignTos(assignment)">
                   <span v-if="assignment.assign_tos.length === 1"
                         :class="getStatusTextClass(assignment.assign_tos[0].status)"
                   >{{ assignment.assign_tos[0].status }}</span>
-                <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status"/>
-              </div>
-            </td>
-            <td v-if="view === 'main view'">
-              <div class="mb-0">
-                <b-tooltip :target="getTooltipTarget('linkToLMS',assignment.id)"
-                           delay="500"
-                           triggers="hover focus"
-                >
-                  <div v-if="!assignment.lms_resource_link_id">
-                    {{ assignment.name }} is not currently linked to your LMS. Please visit your LMS to link this
-                    assignment.
-                  </div>
-                  <div v-if="assignment.lms_resource_link_id">
-                    <div v-if="assignment.lms_assignment_name">
-                      The ADAPT assignment {{ assignment.name }} is linked to your LMS assignment
-                      {{ assignment.lms_assignment_name }} in your LMS
-                      course
-                      {{ assignment.lms_course_name }}.
+                  <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status" />
+                </div>
+              </td>
+              <td v-if="view === 'main view'">
+                <div class="mb-0">
+                  <b-tooltip :target="getTooltipTarget('linkToLMS',assignment.id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    <div v-if="!assignment.lms_resource_link_id">
+                      {{ assignment.name }} is not currently linked to your LMS. Please visit your LMS to link this
+                      assignment.
                     </div>
-                    <div v-if="!assignment.lms_assignment_name">
-                      This assignment is linked to an assignment in your LMS.
+                    <div v-if="assignment.lms_resource_link_id">
+                      <div v-if="assignment.lms_assignment_name">
+                        The ADAPT assignment {{ assignment.name }} is linked to your LMS assignment
+                        {{ assignment.lms_assignment_name }} in your LMS
+                        course
+                        {{ assignment.lms_course_name }}.
+                      </div>
+                      <div v-if="!assignment.lms_assignment_name">
+                        This assignment is linked to an assignment in your LMS.
+                      </div>
+                      <div>
+                        <br>If you have incorrectly linked this assignment, you can unlink it. Unlinking the ADAPT
+                        assignment will
+                        not delete your associated LMS assignment.
+                      </div>
                     </div>
-                    <div>
-                      <br>If you have incorrectly linked this assignment, you can unlink it. Unlinking the ADAPT
-                      assignment will
-                      not delete your associated LMS assignment.
-                    </div>
-                  </div>
-                </b-tooltip>
+                  </b-tooltip>
 
-                <a v-show="course.lms && !assignment.lms_assignment_id"
-                   :id="getTooltipTarget('linkToLMS',assignment.id)"
-                   href=""
-                   class="pr-1"
-                   @click.prevent="unlinkAssignment(assignment)"
-                >
-                  <font-awesome-icon
-                    :icon="linkIcon"
-                    :class="assignment.lms_resource_link_id ? 'text-success' : 'dark-red'"
-                    :aria-label="`Open Grader for ${assignment.name}`"
-                  />
-                </a>
+                  <a v-show="course.lms && !assignment.lms_assignment_id"
+                     :id="getTooltipTarget('linkToLMS',assignment.id)"
+                     href=""
+                     class="pr-1"
+                     @click.prevent="unlinkAssignment(assignment)"
+                  >
+                    <font-awesome-icon
+                      :icon="linkIcon"
+                      :class="assignment.lms_resource_link_id ? 'text-success' : 'dark-red'"
+                      :aria-label="`Open Grader for ${assignment.name}`"
+                    />
+                  </a>
 
-                <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',assignment.id)"
-                           delay="500"
-                           triggers="hover focus"
-                >
-                  <span v-show="assignment.num_to_grade === 0">Grading</span><span v-show="assignment.num_to_grade > 0">There are {{
-                    assignment.num_to_grade
-                  }}
+                  <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',assignment.id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    <span v-show="assignment.num_to_grade === 0">Grading</span><span v-show="assignment.num_to_grade > 0">There are {{
+                      assignment.num_to_grade
+                    }}
                       submission<span v-show="assignment.num_to_grade >1">s</span> which still need to be graded.</span>
-                </b-tooltip>
-                <a v-if="user && user.role !== 5 && !isFormative (assignment)"
-                   v-show="assignment.source === 'a' & assignment.submission_files !== '0'"
-                   :id="getTooltipTarget('viewSubmissionFiles',assignment.id)"
-                   href=""
-                   class="pr-1"
-                   @click.prevent="getSubmissionFileView(assignment.id, assignment.submission_files)"
-                >
-                  <b-icon-check-circle
-                    :class="assignment.num_to_grade > 0 ? 'dark-red' : 'assignment-icon'"
-                    :aria-label="`Open Grader for ${assignment.name}`"
+                  </b-tooltip>
+                  <a v-if="user && user.role !== 5 && !isFormative (assignment)"
+                     v-show="assignment.source === 'a' & assignment.submission_files !== '0'"
+                     :id="getTooltipTarget('viewSubmissionFiles',assignment.id)"
+                     href=""
+                     class="pr-1"
+                     @click.prevent="getSubmissionFileView(assignment.id, assignment.submission_files)"
+                  >
+                    <b-icon-check-circle
+                      :class="assignment.num_to_grade > 0 ? 'dark-red' : 'assignment-icon'"
+                      :aria-label="`Open Grader for ${assignment.name}`"
+                    />
+                  </a>
+                  <LMSGradePassback v-show="assignment.lms_grade_passback === 'manual'"
+                                    :key="`LMSGradePassback-${assignment.id}`" :assignment="assignment"
+                                    class="pr-2"
                   />
-                </a>
-                <LMSGradePassback v-show="assignment.lms_grade_passback === 'manual'"
-                                  :key="`LMSGradePassback-${assignment.id}`" :assignment="assignment"
-                                  class="pr-2"
-                />
-                <span v-show="user && [2,5].includes(user.role)">
+                  <span v-show="user && [2,5].includes(user.role)">
                     <b-tooltip :target="getTooltipTarget('editAssignmentProperties',assignment.id)"
                                delay="500"
                                triggers="hover focus"
@@ -1515,12 +1533,12 @@
                        href=""
                        @click.prevent="deleteAssignment(assignment)"
                     >
-                      <b-icon icon="trash" class="assignment-icon" :aria-label="`Delete ${assignment.name}`"/>
+                      <b-icon icon="trash" class="assignment-icon" :aria-label="`Delete ${assignment.name}`" />
                     </a>
                   </span>
-              </div>
-            </td>
-          </tr>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -1584,6 +1602,8 @@ import showHideAssignmentProperties from '../../components/ShowHideAssignmentPro
 import AutoReleaseDate from '../../components/AutoReleaseDate.vue'
 import ErrorMessage from '../../components/ErrorMessage.vue'
 import ConsultInsight from '~/components/ConsultInsight.vue'
+import { doCopy } from '../../helpers/Copy'
+import consultInsight from '../../components/ConsultInsight.vue'
 
 export default {
   middleware: 'auth',
@@ -1609,6 +1629,7 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    consultInsightUrl: '',
     discussItQuestionsExist: false,
     errorMessage: '',
     canvasCourseUrlForm: new Form({ url: '', course_id: 0 }),
@@ -1711,6 +1732,9 @@ export default {
     showNoAssignmentsAlert: false
   }),
   computed: {
+    consultInsight () {
+      return consultInsight
+    },
     ...mapGetters({
       user: 'auth/user'
     }),
@@ -1752,6 +1776,13 @@ export default {
     initTooltips(this)
     this.isLoading = true
     if (!await this.getCourseInfo()) {
+      if (this.course.is_brightspace) {
+        this.consultInsightUrl = 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-d2l-via-lti-only'
+      } else if (this.course.is_canvas) {
+        this.consultInsightUrl = this.course.lms_has_api_key
+          ? 'https://commons.libretexts.org/insight/lti-and-api'
+          : 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-canvas-via-lti-only'
+      }
       this.isLoading = false
       return false
     }
@@ -1779,6 +1810,7 @@ export default {
     }
   },
   methods: {
+    doCopy,
     getAssignments,
     isMobile,
     checkIfReleased,

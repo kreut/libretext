@@ -35,6 +35,15 @@
       Once a course is given this capability an instructor can <a href="https://youtu.be/watch?v=mQpklvhb6Vo">link
         up their assignments</a>.</p>
   @endif
+  @if ($lms === 'd2l_brightspace')
+    <p>Thank you for registering your Blackboard LTI information with ADAPT.</p>
+    <p>Within ADAPT, instructors should navigate to a particular course that they would like to use within Brightspace.
+      Then,
+      under <a href="https://youtu.be/watch?v=CjvAzBTRM9o">Course Properties</a> for that course
+      they should choose "Yes" for LMS to enable the LTI grade passback feature.
+      Once a course is given this capability an instructor can <a href="https://youtu.be/MK7mwedF0gI">link
+        up their assignments</a>.</p>
+  @endif
   <p>-ADAPT Support</p>
   @include('beautymail::templates.sunny.contentEnd')
 

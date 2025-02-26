@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Jose\Component\KeyManagement\JWKFactory;
 use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
@@ -139,10 +140,13 @@ class LTIController extends Controller
 
     public function initiateLoginRequest(Request $request)
     {
+
         $campus_id = basename($request['target_link_uri']);
         $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
         $is_moodle = isset($request['iss']) && strpos($request['iss'], 'moodle') !== false;
-        if ($is_moodle || $campus_id === 'configure' || $campus_id === 'redirect-uri') {
+        $is_brightspace = isset($request['iss'])
+            && (strpos($request['iss'], 'brightspace') !== false || strpos($request['iss'], 'd2l') !== false);
+        if ($is_brightspace || $is_moodle || $campus_id === 'configure' || $campus_id === 'redirect-uri') {
             $campus_id = '';
             $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri";
         }
@@ -181,7 +185,6 @@ class LTIController extends Controller
         try {
             $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
                 ->validate();
-
             $url = $campus_id === ''
                 ? request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri"
                 : request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
@@ -499,5 +502,53 @@ class LTIController extends Controller
 
     }
 
+
+    public function publicKey(string $lms)
+    {
+        //currently just for Brightspace
+        if ($lms === 'brightspace') {
+            return '{
+    "keys": [
+        {
+            "kty": "RSA",
+            "n": "8grT-rRbqBOiw3XoQjxJmg4F_-edChksSVGfGrfq8LDknP3N5S6dYNK2xRojzpLgKopo0WUN56pwsaa4KOHH_1A9Ysb4lm3WRzqr_OSApPJ0u-B8Lw3YuPRvPn0azMIRsmVSZlVnbEw82fq9eehkC9zNxQe4nTeBiOGlWIk-NrXcWZECAvgEuiomyQ2yZxPt8aaAKZRJPvv5RYfJ5RUEk_ilA74rYNe1nQM4VHEhXU5uR4vPP6pFc8dsrUVdx0ceBjmW_pJN2FlVjAldgbQ4TKoSc5AJxg-KcosB6QFOSEnomYN-hyR0smfmR2yFgwpkY0q-fKtGY2ZOTD_EibuxoQ",
+            "e": "AQAB",
+            "use": "sig",
+            "alg": "RS256",
+            "kid": "ADAPT"
+        }
+    ]
+}';
+        }
+    }
+
+    /**
+     * @return string|void
+     */
+    public function generateJWK()
+    {
+//openssl genpkey -algorithm RSA -out private.key -pkeyopt rsa_keygen_bits:2048
+//openssl rsa -in private.key -pubout -out public.key
+        if (!app()->environment('local')) {
+            return "Can only run generateJWT locally";
+        }
+        $privateKeyPem = file_get_contents('/Users/franciscaparedes/private.key');
+
+        $jwk = JWKFactory::createFromKey($privateKeyPem, null, [
+            'use' => 'sig', // Signature key
+            'alg' => 'RS256', // Algorithm
+            'kid' => 'ADAPT', // Key ID
+        ]);
+
+        $publicJwk = ['keys' => [array_filter($jwk->toPublic()->all(), function ($key) {
+            return $key !== 'd';
+        })]];
+
+        file_put_contents('/Users/franciscaparedes/Downloads/jwks.json', json_encode($publicJwk, JSON_PRETTY_PRINT));
+
+        echo "JWK file generated: jwks.json\n";
+
+
+    }
 
 }

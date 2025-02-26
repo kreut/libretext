@@ -37,7 +37,7 @@
 
             <span style="cursor: pointer;" @click="doCopy('canvas-url')"><font-awesome-icon :icon="copyIcon" /></span>
           </div>
-          <div class="mb-2">
+          <div class="mb-2" v-show="false">
             Moodle: <span id="moodle-url">{{ origin }}/lti/moodle/config/{{ campusId }}</span>
             <span style="cursor: pointer;" @click="doCopy('moodle-url')"><font-awesome-icon :icon="copyIcon" /></span>
           </div>
@@ -46,6 +46,12 @@
               campusId
             }}</span>
             <span style="cursor: pointer;" @click="doCopy('blackboard-url')"><font-awesome-icon :icon="copyIcon" /></span>
+          </div>
+          <div class="mb-2">
+            Brightspace: <span id="brightspace-url">{{ origin }}/lti/brightspace/config/{{
+              campusId
+            }}</span>
+            <span style="cursor: pointer;" @click="doCopy('brightspace-url')"><font-awesome-icon :icon="copyIcon" /></span>
           </div>
         </div>
         <b-table v-show="ltiRegistrations.length"
