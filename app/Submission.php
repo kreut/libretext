@@ -1525,15 +1525,6 @@ class Submission extends Model
                 $h5pActivitySet->save();
             }
 
-            if ($this->latePenaltyPercent($assignment, Carbon::now('UTC'))) {
-                $score_with_late_penalty = $this->applyLatePenalyToScore($assignment, $data['score']);
-                if ($score_with_late_penalty < $submission->score) {
-                    $response['type'] = 'error';
-                    $response['message'] = "With the late deduction, submitting will give you a lower score than you currently have so the submission will not be accepted.";
-                    return $response;
-                }
-            }
-
             $submission = Submission::where('user_id', $data['user_id'])
                 ->where('assignment_id', $data['assignment_id'])
                 ->where('question_id', $data['question_id'])
