@@ -25,6 +25,19 @@ class StoreLTIRegistration extends FormRequest
     public function rules()
     {
         switch ($this->lms) {
+            case('d2l_brightspace'):
+                $rules = [
+                    'admin_name' => 'required|string',
+                    'admin_email' => 'required|email',
+                    'brightspace_keyset_url' => 'required|url',
+                    'campus_id' => 'required|string',
+                    'client_id' => 'required|string',
+                    'issuer' => 'required|string',
+                    'openid_connect_authentication_endpoint' => 'required|url',
+                    'brightspace_oauth2_access_token_url' => 'required|url',
+                    'school' => ['required', 'string', 'school' => new IsValidSchoolName()]
+                ];
+                break;
             case('canvas'):
                 $rules = [
                     'admin_name' => 'required|string',

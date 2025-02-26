@@ -6,8 +6,10 @@ use App\CanvasVanityUrl;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreLTIRegistration;
 use App\Http\Requests\UpdateAPIKeyRequest;
+use App\LtiKey;
 use App\LtiRegistration;
 use App\LtiSchool;
+use App\Rules\IsValidSchoolName;
 use App\School;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -157,6 +159,22 @@ class LtiRegistrationController extends Controller
                 $ltiRegistration->admin_email = $data['admin_email'];
             }
             switch ($request->lms) {
+                case('d2l_brightspace'):
+                    $lti_private_key = LtiKey::where('private_key_file','LIKE','%brightspace%')->first();
+                    $ltiRegistration->admin_name = $data['admin_name'];
+                    $ltiRegistration->admin_email = $data['admin_email'];
+                    $ltiRegistration->key_set_url = $data['brightspace_keyset_url'];
+                    $ltiRegistration->campus_id = $data['campus_id'];
+                    $ltiRegistration->client_id = $data['client_id'];
+                    $ltiRegistration->iss = $data['issuer'];
+                    $ltiRegistration->auth_server = $data['issuer'];
+                    $ltiRegistration->auth_login_url = $data['openid_connect_authentication_endpoint'];
+                    $ltiRegistration->auth_token_url = $data['brightspace_oauth2_access_token_url'];
+                    $ltiRegistration->kid = "ADAPT";
+                    $ltiRegistration->lti_key_id =  $lti_private_key->id;
+                    $ltiRegistration->active = 1;
+                    $ltiRegistration->save();
+                    break;
                 case('canvas'):
                     $auth_server = rtrim(trim($data['url'], '/'));
                     $ltiRegistration->iss = "https://canvas.instructure.com";
