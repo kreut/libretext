@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Assignment;
 
 use App\AssignmentSyncQuestion;
+use App\Helpers\Helper;
 use App\SubmissionFile;
 use App\User;
 use App\Question;
@@ -61,7 +62,9 @@ class AssignmentSyncQuestionPolicy
         $question_in_assignment = in_array($question->id, $assignment->questions->pluck('id')->toArray());
 
         $is_instructor = (int)$user->id === $assignment->course->user_id;
-        $is_student = in_array($user->id, $assignment->course->enrolledUsers->pluck('id')->toArray()) || $user->fake_student;
+        $is_student = in_array($user->id, $assignment->course->enrolledUsers->pluck('id')->toArray())
+            || $user->fake_student
+            || ($assignment->formative && $user->formative_student);
         return $question_in_assignment && ($is_instructor || $is_student)
             ? Response::allow()
             : Response::deny('You are not allowed to get the discuss-it settings for that question.');
