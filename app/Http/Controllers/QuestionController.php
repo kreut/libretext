@@ -838,6 +838,12 @@ class QuestionController extends Controller
                                         unset($assignment_info[$value]);
                                     }
                                     $assignment = Assignment::create($assignment_info);
+                                    if ($assignment->late_policy !== 'not accepted') {
+                                        $assign_tos[0]['final_submission_deadline_date'] = Carbon::parse($assign_tos[0]['due_date'])
+                                            ->addDay()
+                                            ->toDateString();
+                                        $assign_tos[0]['final_submission_deadline_time'] = $assign_tos[0]['due_time'];
+                                    }
                                     $this->addAssignTos($assignment, $assign_tos, $section, $request->user());
                                 } else {
                                     $assignment_template_error = true;
