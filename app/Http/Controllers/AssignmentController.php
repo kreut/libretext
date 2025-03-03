@@ -1928,7 +1928,7 @@ class AssignmentController extends Controller
                 'question_view' => $request->hasCookie('question_view') ? $request->cookie('question_view') : 'basic',
                 'name' => $assignment->name,
                 'algorithmic' => $assignment->algorithmic,
-                'is_anonymous_user' => session('anonymous_user') && $assignment->course->user_id !== $request->user()->id,
+                'is_anonymous_user' => $request->user()->email === 'anonymous' && $assignment->course->user_id !== $request->user()->id,
                 'assessment_type' => $assignment->assessment_type,
                 'formative' => $assignment->formative,
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
