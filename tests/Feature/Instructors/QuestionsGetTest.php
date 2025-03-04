@@ -106,6 +106,32 @@ class QuestionsGetTest extends TestCase
 
 
     }
+    /** @test */
+    public function heck_for_discuss_it_questions_over_course_or_assignment_should_be_course_or_assignment()
+    {
+        $this->actingAs($this->user)
+            ->getJson("/api/assignment-sync-question/check-for-discuss-it-questions-by-course-or-assignment/blah/1")
+            ->assertJson(['message' => 'There was an error determining whether discuss it questions exist in the blah.  Please try again or contact us for assistance.']);
+
+    }
+
+    /** @test */
+    public function non_instructor_cannot_check_for_discuss_it_questions_over_course_or_assignment()
+    {
+        $this->actingAs($this->user_2)
+            ->getJson("/api/assignment-sync-question/check-for-discuss-it-questions-by-course-or-assignment/assignment/1")
+            ->assertJson(['message' => 'You are not allowed to check for Discuss-it questions by course or assignment.']);
+
+    }
+    /** @test */
+    public function non_instructor_cannot_check_for_discuss_it_questions_over_multiple_assignment_questions()
+    {
+        $this->actingAs($this->user_2)
+            ->postJson("/api/assignment-sync-question/check-for-discuss-it-questions-over-multiple-assignment-questions",[])
+            ->assertJson(['message' => 'You are not allowed to check for Discuss-it questions over multiple assignment questions.']);
+
+    }
+
 
     /** @test */
     public function cannot_remix_assignment_of_based_on_weights_and_submissions_exist()

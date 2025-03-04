@@ -61,7 +61,94 @@ use Psr\Container\NotFoundExceptionInterface;
 
 class AssignmentSyncQuestionController extends Controller
 {
+    /**
+     * @param Request $request
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function checkForDiscussItQuestionsOverMultipleAssignmentQuestions(Request $request,
+                                                                              AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
 
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('checkForDiscussItQuestionsOverMultipleAssignmentQuestions', $assignmentSyncQuestion);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $assignment_questions = $request->all();
+            $discuss_it_question_exists = DB::table('assignment_question')
+                ->whereNotNull('discuss_it_settings')
+                ->where(function ($query) use ($assignment_questions) {
+                    foreach ($assignment_questions as $question) {
+                        $query->orWhere([
+                            ['assignment_id', '=', $question['assignment_id']],
+                            ['question_id', '=', $question['question_id']]
+                        ]);
+                    }
+                })
+                ->exists();
+            $response['type'] = 'success';
+            $response['discuss_it_question_exists'] = $discuss_it_question_exists;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error determining whether discuss it questions exist in this group of assignment questions.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
+    /**
+     * @param string $level
+     * @param int $id
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function checkForDiscussItQuestionsByCourseOrAssignment(string                 $level,
+                                                                   int                    $id,
+                                                                   AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('checkForDiscussItQuestionsByCourseOrAssignment', $assignmentSyncQuestion);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            switch ($level) {
+                case('course'):
+                    $discuss_it_questions_exist = DB::table('courses')
+                        ->join('assignments', 'courses.id', '=', 'assignments.course_id')
+                        ->join('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
+                        ->where('courses.id', $id)
+                        ->whereNotNull('assignment_question.discuss_it_settings')
+                        ->exists();
+                    break;
+                case('assignment'):
+                    $discuss_it_questions_exist = DB::table('assignments')
+                        ->join('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
+                        ->where('assignments.id', $id)
+                        ->whereNotNull('assignment_question.discuss_it_settings')
+                        ->exists();
+                    break;
+                default:
+                    throw new Exception("$level is not a valid level.");
+            }
+            $response['discuss_it_questions_exist'] = $discuss_it_questions_exist;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error determining whether discuss it questions exist in the $level.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
 
     /**
      * @param Request $request
@@ -72,11 +159,12 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateCanSubmitWorkOverride(Request                $request,
-                                                Assignment             $assignment,
-                                                Question               $question,
-                                                int                    $can_submit_work_override,
-                                                AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function updateCanSubmitWorkOverride(Request                $request,
+                                         Assignment             $assignment,
+                                         Question               $question,
+                                         int                    $can_submit_work_override,
+                                         AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         try {
             $response['type'] = 'error';
@@ -109,10 +197,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getDiscussItQuestionsByAssignment(Request                $request,
-                                                      Assignment             $assignment,
-                                                      Question               $question,
-                                                      AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function getDiscussItQuestionsByAssignment(Request                $request,
+                                               Assignment             $assignment,
+                                               Question               $question,
+                                               AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         try {
             $response['type'] = 'error';
@@ -173,10 +262,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getDiscussItSettings(Request                $request,
-                                         Assignment             $assignment,
-                                         Question               $question,
-                                         AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function getDiscussItSettings(Request                $request,
+                                  Assignment             $assignment,
+                                  Question               $question,
+                                  AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         try {
@@ -221,10 +311,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateDiscussItSettings(UpdateDiscussItSettingsRequest $request,
-                                            Assignment                     $assignment,
-                                            Question                       $question,
-                                            AssignmentSyncQuestion         $assignmentSyncQuestion): array
+    public
+    function updateDiscussItSettings(UpdateDiscussItSettingsRequest $request,
+                                     Assignment                     $assignment,
+                                     Question                       $question,
+                                     AssignmentSyncQuestion         $assignmentSyncQuestion): array
     {
 
         try {
@@ -285,10 +376,11 @@ class AssignmentSyncQuestionController extends Controller
     use Statistics;
     use Seed;
 
-    public function updateIFrameProperties(Request                $request,
-                                           Assignment             $assignment,
-                                           Question               $question,
-                                           AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function updateIFrameProperties(Request                $request,
+                                    Assignment             $assignment,
+                                    Question               $question,
+                                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
@@ -336,7 +428,8 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function validateCanSwitchToOrFromCompiledPdf(Assignment $assignment): array
+    public
+    function validateCanSwitchToOrFromCompiledPdf(Assignment $assignment): array
     {
         $response['type'] = 'error';
         try {
@@ -364,7 +457,8 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function validateCanSwitchToCompiledPdf(Assignment $assignment): array
+    public
+    function validateCanSwitchToCompiledPdf(Assignment $assignment): array
     {
         $response['type'] = 'error';
         try {
@@ -397,10 +491,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function remixAssignmentWithChosenQuestions(Request                $request,
-                                                       Assignment             $assignment,
-                                                       AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                       BetaCourseApproval     $betaCourseApproval): array
+    public
+    function remixAssignmentWithChosenQuestions(Request                $request,
+                                                Assignment             $assignment,
+                                                AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                BetaCourseApproval     $betaCourseApproval): array
     {
 
         $response['type'] = 'error';
@@ -448,6 +543,12 @@ class AssignmentSyncQuestionController extends Controller
                             DB::rollBack();
                             return $response;
                         }
+                        if ($assignment_question->discuss_it_settings) {
+                            $assignment_question->discuss_it_settings = +$request->reset_discuss_it_settings_to_default === 1
+                                ? Helper::defaultDiscussItSettings()
+                                : Helper::makeDiscussItSettingsBackwardsCompatible($assignment_question->discuss_it_settings);
+                        }
+
                         $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
                             ->where('assignment_question_id', $assignment_question->id)
                             ->first();
@@ -460,8 +561,15 @@ class AssignmentSyncQuestionController extends Controller
                                 $assignment_question = DB::table('my_favorites')
                                     ->where('question_id', $question['question_id'])
                                     ->where('user_id', $request->user()->id)
-                                    ->select('question_id', 'open_ended_submission_type', 'open_ended_text_editor', 'learning_tree_id')
+                                    ->select('question_id',
+                                        'open_ended_submission_type',
+                                        'open_ended_text_editor',
+                                        'learning_tree_id')
                                     ->first();
+                                $possible_discuss_it_question = Question::find($assignment_question->question_id);
+                                if ($possible_discuss_it_question->isDiscussIt()) {
+                                    $assignment_question->discuss_it_settings = Helper::defaultDiscussItSettings();
+                                }
                                 $assignment_question_learning_tree = $assignment_question->learning_tree_id !== null;
                                 $learning_tree_id = $assignment_question->learning_tree_id;
                                 unset($assignment_question->learning_tree_id);
@@ -472,6 +580,10 @@ class AssignmentSyncQuestionController extends Controller
                                     ->where('id', $question['question_id'])
                                     ->select('id AS question_id')
                                     ->first();
+                                $possible_discuss_it_question = Question::find($assignment_question->question_id);
+                                if ($possible_discuss_it_question->isDiscussIt()) {
+                                    $assignment_question->discuss_it_settings = Helper::defaultDiscussItSettings();
+                                }
                                 //they can always change the stuff below.  Since the question is not in an assignment I can't tell what the instructor wants
                                 $assignment_question->open_ended_submission_type = 0;
                                 $assignment_question->open_ended_text_editor = null;
@@ -500,7 +612,6 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment_question->assignment_id = $assignment->id;
                     $assignment_question->order = count($assignment_questions) + $key + 1;
                     $question_to_add = Question::find($question['question_id']);
-                    $assignment_question->discuss_it_settings = $question_to_add->getDefaultDiscussItSettings($assignment);
                     switch ($assignment->points_per_question) {
                         case('number of points'):
                             $assignment_question->points = $assignment->default_points_per_question;
@@ -654,9 +765,10 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function setCurrentPage(Assignment             $assignment,
-                                   Question               $question,
-                                   AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function setCurrentPage(Assignment             $assignment,
+                            Question               $question,
+                            AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['message'] = 'Current page has been set.';
@@ -686,9 +798,10 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function endClickerAssessment(Assignment             $assignment,
-                                         Question               $question,
-                                         AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function endClickerAssessment(Assignment             $assignment,
+                                  Question               $question,
+                                  AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('endClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
@@ -726,9 +839,10 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function resetClickerTimer(Assignment             $assignment,
-                                      Question               $question,
-                                      AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function resetClickerTimer(Assignment             $assignment,
+                               Question               $question,
+                               AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('resetClickerTimer', [$assignmentSyncQuestion, $assignment, $question]);
@@ -1140,10 +1254,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function hasNonScoredSubmissionFiles(Assignment             $assignment,
-                                                Question               $question,
-                                                AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                SubmissionFile         $submissionFile)
+    public
+    function hasNonScoredSubmissionFiles(Assignment             $assignment,
+                                         Question               $question,
+                                         AssignmentSyncQuestion $assignmentSyncQuestion,
+                                         SubmissionFile         $submissionFile)
     {
         $response['type'] = 'error';
 

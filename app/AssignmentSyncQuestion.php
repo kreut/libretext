@@ -39,7 +39,7 @@ class AssignmentSyncQuestion extends Model
             $attempt = json_decode($submission->submission);
             $proportion_correct = $Submission->getProportionCorrect($question->technology, $attempt);
             $answered_correctly = $question->technology !== 'text' && (abs($proportion_correct - 1) < PHP_FLOAT_EPSILON);
-           if (!$answered_correctly) {
+            if (!$answered_correctly) {
                 $real_time_show_solution = $assignment->number_of_allowed_attempts === 'unlimited'
                     ? $submission->show_solution
                     : $submission->submission_count >= $assignment->number_of_allowed_attempts;
@@ -150,21 +150,19 @@ class AssignmentSyncQuestion extends Model
 
         if ($assignment_question_info->discuss_it_settings) {
             $discuss_it_settings = json_decode($assignment_question_info->discuss_it_settings);
+            if ($discuss_it_settings->min_length_of_audio_video) {
+                $base = Carbon::now();
+                $min_length_of_audio_video = $discuss_it_settings->min_length_of_audio_video;
+                $min_length_of_audio_video = str_replace('and', ',', $min_length_of_audio_video);
+                $parsedTime = Carbon::parse($min_length_of_audio_video);
+                $discuss_it_settings->min_length_of_audio_video_in_milliseconds = $base->diffInMilliseconds($parsedTime);
+            }
         } else {
-            $question = Question::find($question_id);
-            $assignment = Assignment::find($assignment_id);
-            $discuss_it_settings = json_decode($question->getDefaultDiscussItSettings($assignment));
+            $discuss_it_settings = Helper::defaultDiscussItSettings();
             AssignmentSyncQuestion::where('assignment_id', $assignment_id)
                 ->where('question_id', $question_id)
-                ->update(['discuss_it_settings' => $question->getDefaultDiscussItSettings($assignment)]);
-        }
-
-        if ($discuss_it_settings->min_length_of_audio_video) {
-            $base = Carbon::now();
-            $min_length_of_audio_video = $discuss_it_settings->min_length_of_audio_video;
-            $min_length_of_audio_video = str_replace('and', ',', $min_length_of_audio_video);
-            $parsedTime = Carbon::parse($min_length_of_audio_video);
-            $discuss_it_settings->min_length_of_audio_video_in_milliseconds = $base->diffInMilliseconds($parsedTime);
+                ->update(['discuss_it_settings' => Helper::defaultDiscussItSettings()]);
+            $discuss_it_settings = json_decode($discuss_it_settings);
         }
         return json_encode($discuss_it_settings);
 
@@ -233,7 +231,7 @@ class AssignmentSyncQuestion extends Model
             'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
             'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
             'open_ended_submission_type' => $question->isDiscussIt() ? 0 : $open_ended_submission_type,
-            'discuss_it_settings' => $question->getDefaultDiscussItSettings($assignment),
+            'discuss_it_settings' => Helper::defaultDiscussItSettings(),
             'open_ended_text_editor' => $open_ended_text_editor];
 
         $assignment_question_id = DB::table('assignment_question')
@@ -335,7 +333,7 @@ class AssignmentSyncQuestion extends Model
                 'weight' => $weight,
                 'question_revision_id' => $question_revision_id,
                 'open_ended_submission_type' => $question->isDiscussIt() ? 0 : $open_ended_submission_type,
-                'discuss_it_settings' => $question->getDefaultDiscussItSettings($assignment),
+                'discuss_it_settings' => Helper::defaultDiscussItSettings(),
                 'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                 'open_ended_text_editor' => $open_ended_text_editor]);
         $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
@@ -552,8 +550,11 @@ class AssignmentSyncQuestion extends Model
 
     }
 
-    public function importAssignmentQuestionsAndLearningTrees(int $from_assignment_id, int $to_assignment_id)
+    public function importAssignmentQuestionsAndLearningTrees(int  $from_assignment_id,
+                                                              int  $to_assignment_id,
+                                                              bool $reset_discuss_it_settings_to_default)
     {
+
         $assignment_questions = DB::table('assignment_question')
             ->where('assignment_id', $from_assignment_id)
             ->get();
@@ -566,7 +567,13 @@ class AssignmentSyncQuestion extends Model
         foreach ($assignment_questions as $assignment_question) {
             $assignment_question->assignment_id = $to_assignment_id;
             $assignment_question->question_revision_id = $question_revision_ids_by_question_ids[$assignment_question->question_id] ?? null;
-            //add each question
+            if ($assignment_question->discuss_it_settings) {
+                if ($reset_discuss_it_settings_to_default) {
+                    $assignment_question->discuss_it_settings = Helper::defaultDiscussItSettings();
+                } else {
+                    $assignment_question->discuss_it_settings = Helper::makeDiscussItSettingsBackwardsCompatible($assignment_question->discuss_it_settings);
+                }
+            }//add each question
             $assignment_question_array = json_decode(json_encode($assignment_question), true);
             unset($assignment_question_array['id']);
             $new_assignment_question_id = DB::table('assignment_question')->insertGetId($assignment_question_array);

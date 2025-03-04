@@ -141,8 +141,6 @@ class DiscussItTest extends TestCase
                 "min_number_of_replies",
                 "response_modes",
                 "completion_criteria",
-                "min_number_of_words",
-                'min_length_of_audio_video',
                 'auto_grade']);
     }
 

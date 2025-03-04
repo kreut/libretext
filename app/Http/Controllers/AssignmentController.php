@@ -1163,7 +1163,8 @@ class AssignmentController extends Controller
             $assignment->saveAssignmentTimingAndGroup($imported_assignment);
 
             if ($level === 'properties_and_questions') {
-                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
+                $reset_discuss_it_settings_to_default = +$request->reset_discuss_it_settings_to_default === 1;
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $reset_discuss_it_settings_to_default);
                 $case_study_notes = CaseStudyNote::where('assignment_id', $assignment->id)->get();
                 foreach ($case_study_notes as $case_study_note) {
                     $imported_case_study_note = $case_study_note->replicate()->fill([
@@ -1293,7 +1294,8 @@ class AssignmentController extends Controller
                 $new_auto_release->save();
             }
             if ($request->level === 'properties_and_questions') {
-                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $new_assignment->id);
+                $reset_discuss_it_settings_to_default = +$request->reset_discuss_it_settings_to_default === 1;
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $new_assignment->id, $reset_discuss_it_settings_to_default);
             }
 
 

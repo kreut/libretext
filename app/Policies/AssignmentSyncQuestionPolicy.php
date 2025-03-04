@@ -22,6 +22,34 @@ class AssignmentSyncQuestionPolicy
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return Response
+     */
+    public function checkForDiscussItQuestionsOverMultipleAssignmentQuestions(User                   $user,
+                                                                              AssignmentSyncQuestion $assignmentSyncQuestion): Response
+    {
+        return in_array($user->role, [2, 4])
+            ? Response::allow()
+            : Response::deny('You are not allowed to check for Discuss-it questions over multiple assignment questions.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return Response
+     */
+    public function checkForDiscussItQuestionsByCourseOrAssignment(User                   $user,
+                                                                   AssignmentSyncQuestion $assignmentSyncQuestion): Response
+    {
+        return in_array($user->role, [2, 4])
+            ? Response::allow()
+            : Response::deny('You are not allowed to check for Discuss-it questions by course or assignment.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Assignment $assignment
      * @return Response
      */

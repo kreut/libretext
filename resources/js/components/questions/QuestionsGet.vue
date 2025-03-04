@@ -4,6 +4,48 @@
                          :modal-id="questionToView.question_id"
                          :qti-json="questionToView.qti_answer_json"
     />
+    <b-modal id="modal-discussion-questions-exist"
+             title="Discuss-it Question Settings"
+             no-close-on-esc
+             no-close-on-backdrop
+             size="lg"
+    >
+      <p>
+        You are adding <span v-show="questionsToAdd.length>1">at least</span> one Discuss-it question. You can use the settings of the imported
+        questions or reset the settings to the default ADAPT settings. After adding the question<span v-show="questionsToAdd.length>1">s</span>, you can always
+        manually adjust
+        any settings.
+      </p>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label="Reset Settings to Default"
+        label-for="reset_discuss_it_settings_to_default"
+      >
+        <b-form-radio-group
+          id="reset_discuss_it_settings_to_default"
+          v-model="resetDiscussItSettingsToDefault"
+          class="mt-2"
+        >
+          <b-form-radio value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="addQuestions(questionsToAdd)"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-formatted-question-types"
              title="Choose Type"
              size="xl"
@@ -1469,6 +1511,9 @@ export default {
     }
   },
   data: () => ({
+    checkedForDiscussItQuestions: false,
+    resetDiscussItSettingsToDefault: '1',
+    questionsToAdd: [],
     interactiveH5PFormattedTypes: [
       'Accordion',
       'Advent Calendar (beta)',
@@ -2398,6 +2443,25 @@ export default {
       }
       this.addQuestions(questionsToAdd)
     },
+    async checkForDiscussItQuestions (questionsToAdd) {
+      try {
+        const { data } = await axios.post('/api/assignment-sync-question/check-for-discuss-it-questions-over-multiple-assignment-questions',
+          questionsToAdd)
+        if (data.type === 'success') {
+          this.checkedForDiscussItQuestions = true
+          if (data.discuss_it_question_exists) {
+            this.questionsToAdd = questionsToAdd
+            this.$bvModal.show('modal-discussion-questions-exist')
+          } else {
+            await this.addQuestions(questionsToAdd)
+          }
+        } else {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async addQuestions (questionsToAdd) {
       this.$root.$emit('bv::hide::tooltip')
       if (['commons', 'my_courses', 'all_public_courses'].includes(this.questionSource)) {
@@ -2406,13 +2470,19 @@ export default {
             ? this.chosenAssignmentId
             : this.assignmentQuestions.find(question => question.question_id === questionsToAdd[i].question_id).assignment_id
         }
+        if (!this.checkedForDiscussItQuestions) {
+          this.resetDiscussItSettingsToDefault = '1'
+          await this.checkForDiscussItQuestions(questionsToAdd)
+          return
+        }
+        this.$bvModal.hide('modal-discussion-questions-exist')
       }
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/remix-assignment-with-chosen-questions`,
           {
             'chosen_questions': questionsToAdd,
-            'question_source': this.questionSource
-
+            'question_source': this.questionSource,
+            'reset_discuss_it_settings_to_default': this.resetDiscussItSettingsToDefault
           })
         if (data.type === 'error') {
           this.$noty.error(data.message, {
@@ -2436,7 +2506,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-
+      this.checkedForDiscussItQuestions = false
       await this.getQuestionWarningInfo()
 
       if (this.typeOfRemixer === 'saved-questions') {
@@ -2731,6 +2801,7 @@ export default {
       this.chosenTags = []
     },
     async directImportQuestions (type) {
+      this.$bvModal.hide('modal-discussion-questions-exist')
       if (this.directImportingQuestions) {
         let timeToProcess = Math.ceil(((this.directImport.match(/,/g) || []).length) / 3)
         let message = `Please be patient.  Validating all of your Libretexts Ids  will take about ${timeToProcess} seconds.`

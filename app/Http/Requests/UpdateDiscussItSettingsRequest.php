@@ -30,6 +30,7 @@ class UpdateDiscussItSettingsRequest extends FormRequest
     {
         $assignment_id = $request->route('assignment')->id;
         $question_id = $request->route('question')->id;
+        $response_modes = $this->response_modes ?: [];
         $rules = [
             'response_modes' => ['required'],
             'number_of_groups' => new IsValidNumberOfDiscussItGroups($assignment_id, $question_id),
@@ -39,12 +40,12 @@ class UpdateDiscussItSettingsRequest extends FormRequest
             "min_number_of_comments" => ['integer', 'min:0'],
             "min_number_of_replies" => ['required', new IsValidMinNumberForDiscussIt($this->min_number_of_initiated_discussion_threads, $this->min_number_of_initiate_or_reply_in_threads)],
             "min_number_of_initiate_or_reply_in_threads" => ['required', 'integer', 'min:0'],
-            "min_number_of_words" => ['required', 'integer', 'min:1'],
-            'min_length_of_audio_video' => ['required', new IsValidPeriodOfTime()],
+            "min_number_of_words" => in_array('text', $response_modes) ? ['required', 'integer', 'min:1'] : '',
+            'min_length_of_audio_video' => in_array('audio', $response_modes) || in_array('video', $response_modes) ? ['required', new IsValidPeriodOfTime()] : '',
             'auto_grade' => ['required', Rule::in(0, 1)],
             'completion_criteria' => ['required', Rule::in(0, 1)]];
 
-        if (is_array($this->response_modes) && (in_array('audio', $this->response_modes) || in_array('video', $this->response_modes))) {
+        if (is_array($response_modes) && (in_array('audio', $response_modes) || in_array('video', $response_modes))) {
             $language_codes = [
                 'en', 'fr', 'es', 'de', 'zh', 'ar', 'it', 'ru', 'pt', 'ja', 'hi', 'bn', 'pa'
             ];

@@ -49,7 +49,8 @@
              title="Link Course Manually"
              size="lg"
     >
-      <p>Canvas allows at most 100 courses to be returned. Because of this, some of your courses may not appear on the list.
+      <p>Canvas allows at most 100 courses to be returned. Because of this, some of your courses may not appear on the
+        list.
         You can manually link the course by providing the
         course URL. Navigate to the course and copy the
         URL that <a href="" @click.prevent="$bvModal.show('modal-copy-course-url')">you see in your browser</a>.</p>
@@ -308,7 +309,8 @@
         <template #modal-footer>
           <b-button size="sm"
                     variant="primary"
-                    @click="$bvModal.hide('modal-link-assignments-to-lms')">
+                    @click="$bvModal.hide('modal-link-assignments-to-lms')"
+          >
             OK
           </b-button>
         </template>
@@ -477,6 +479,26 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
+
+        <b-form-group
+          v-if="discussItQuestionsExist && createAssignmentFromTemplateForm.level === 'properties_and_questions'"
+          id="reset_discuss_it_settings_to_default"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Discuss-it Settings"
+        >
+          <b-form-radio-group
+            v-model="createAssignmentFromTemplateForm.reset_discuss_it_settings_to_default"
+            stacked
+          >
+            <b-form-radio value="0">
+              Copy current settings
+            </b-form-radio>
+            <b-form-radio value="1">
+              Reset settings to default settings
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
         <template #modal-footer>
           <b-button
             size="sm"
@@ -523,6 +545,7 @@
               v-model="importableAssignment"
               :disabled="importableCourse === null"
               :options="importableAssignmentOptions"
+              @change="checkIfDiscussItQuestionsExistsInAssignment($event)"
             />
           </b-row>
         </b-container>
@@ -574,6 +597,26 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
+        <b-form-group
+          v-if="discussItQuestionsExist && importAssignmentForm.level === 'properties_and_questions'"
+          id="reset_discuss_it_settings_to_default"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Discuss-it Settings"
+        >
+          <b-form-radio-group
+            v-model="importAssignmentForm.reset_discuss_it_settings_to_default"
+            stacked
+          >
+            <b-form-radio value="0">
+              Copy current settings
+            </b-form-radio>
+            <b-form-radio value="1">
+              Reset settings to default settings
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+
         <template #modal-footer>
           <b-button
             size="sm"
@@ -1558,6 +1601,7 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    discussItQuestionsExist: false,
     errorMessage: '',
     canvasCourseUrlForm: new Form({ url: '', course_id: 0 }),
     showHideAssignmentPropertiesKey: 0,
@@ -2193,7 +2237,8 @@ What assignment parameters??? */
       try {
         const importData = {
           level: this.importAssignmentForm.level,
-          lms_grade_passback: this.importAssignmentForm.lms_grade_passback
+          lms_grade_passback: this.importAssignmentForm.lms_grade_passback,
+          reset_discuss_it_settings_to_default: this.importAssignmentForm.reset_discuss_it_settings_to_default
         }
         if (this.nonMatchingAutoReleases.length) {
           importData.auto_releases = this.importedAssignmentAutoRelease
@@ -2224,9 +2269,35 @@ What assignment parameters??? */
         this.$noty.error(error.message)
       }
     },
-    initCreateAssignmentFromTemplate (assignmentId) {
+    async checkIfDiscussItQuestionsExistsInAssignment (assignmentId) {
+      this.discussItQuestionsExist = false
+      try {
+        const { data } = await axios.get(`/api/assignment-sync-question/check-for-discuss-it-questions-by-course-or-assignment/assignment/${assignmentId}`)
+        if (data.type === 'success') {
+          this.importAssignmentForm.reset_discuss_it_settings_to_default = '0'
+          this.discussItQuestionsExist = data.discuss_it_questions_exist
+        } else {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async initCreateAssignmentFromTemplate (assignmentId) {
       this.createAssignmentFromTemplateAssignmentId = assignmentId
-      this.$bvModal.show('modal-create-assignment-from-template')
+      this.discussItQuestionsExist = false
+      try {
+        const { data } = await axios.get(`/api/assignment-sync-question/check-for-discuss-it-questions-by-course-or-assignment/assignment/${assignmentId}`)
+        if (data.type === 'success') {
+          this.createAssignmentFromTemplateForm.reset_discuss_it_settings_to_default = '0'
+          this.discussItQuestionsExist = data.discuss_it_questions_exist
+          this.$bvModal.show('modal-create-assignment-from-template')
+        } else {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async handleCreateAssignmentFromTemplate () {
       try {

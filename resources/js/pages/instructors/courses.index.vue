@@ -5,14 +5,56 @@
                           :imported-course="importedCourse"
                           :import-actioning="courseToImportForm.action === 'clone' ? 'Cloning' : 'Importing'"
     />
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course"/>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course" />
+    <b-modal id="modal-discussion-questions-exist"
+             title="Discuss-it Question Settings"
+             no-close-on-esc
+             no-close-on-backdrop
+             size="lg"
+    >
+      <p>
+        There are questions in this course which are Discuss-it questions. You can use the settings of the imported
+        questions or reset the settings to the default ADAPT settings. After you import the course, you can always
+        manually adjust
+        any settings.
+      </p>
+      <b-form-group
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label="Reset Settings to Default"
+        label-for="reset_discuss_it_settings_to_default"
+      >
+        <b-form-radio-group
+          id="reset_discuss_it_settings_to_default"
+          v-model="resetDiscussItSettingsToDefault"
+          class="mt-2"
+        >
+          <b-form-radio value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="continueToCloneOrImport"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-shift-assignments"
              title="Shift Assignments"
              size="lg"
     >
       <p>
-       After cloning this course, you can easily
+        After cloning this course, you can easily
       </p>
       <b-form-group
         label-cols-sm="3"
@@ -51,7 +93,7 @@
               class="datepicker"
               :class="{ 'is-invalid': courseToImportForm.errors.has('due_date') }"
             />
-            <has-error :form="courseToImportForm" field="due_date"/>
+            <has-error :form="courseToImportForm" field="due_date" />
           </b-col>
           <b-col>
             <vue-timepicker v-model="courseToImportForm.due_time"
@@ -63,10 +105,10 @@
                             @shown="courseToImportForm.errors.clear('due_time')"
             >
               <template v-slot:icon>
-                <b-icon-clock/>
+                <b-icon-clock />
               </template>
             </vue-timepicker>
-            <ErrorMessage :message="courseToImportForm.errors.get('due_time')"/>
+            <ErrorMessage :message="courseToImportForm.errors.get('due_time')" />
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -128,7 +170,7 @@
           variant="primary"
           size="sm"
           class="float-right"
-          @click="clone(courseToClone)"
+          @click="checkedForDiscussItQuestions = false;clone(courseToClone)"
         >
           Submit
         </b-button>
@@ -168,11 +210,11 @@
         <template v-slot:label>
           Import as Beta Course
           <span id="beta_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
           <b-tooltip target="beta_course_tooltip"
                      delay="250"
           >
-            <ImportAsBetaText/>
+            <ImportAsBetaText />
           </b-tooltip>
         </template>
         <b-form-radio-group v-model="courseToImportForm.import_as_beta" class="mt-2">
@@ -194,9 +236,11 @@
              v-b-tooltip="'This course has auto-releases set for at least one assignment (when the assignment is shown, solutions are released, statistics can be viewed for students, and when scores are released). Auto-releases can always be changed at the assignment level after you import the course.'"
              href="#"
              aria-label="Explanation of auto-release"
-          ><b-icon class="text-muted"
-                   icon="question-circle"
-          /></a>
+          >
+            <b-icon class="text-muted"
+                    icon="question-circle"
+            />
+          </a>
         </template>
         <b-form-radio-group v-model="courseToImportForm.auto_releases" class="mt-2">
           <b-form-radio name="auto-releases" value="use existing">
@@ -205,7 +249,6 @@
           <b-form-radio name="auto-releases" value="clear existing">
             Clear all existing release dates
           </b-form-radio>
-
         </b-form-radio-group>
       </b-form-group>
       <template #modal-footer>
@@ -221,13 +264,13 @@
           size="sm"
           class="float-right"
           :disabled="disableYesImportCourse || importingCourse"
-          @click="handleImportCourse"
+          @click="checkedForDiscussItQuestions=false;handleImportCourse()"
         >
           Yes, import course!
         </b-button>
       </template>
     </b-modal>
-    <PageTitle v-if="canViewCourses" title="My Courses"/>
+    <PageTitle v-if="canViewCourses" title="My Courses" />
     <b-container v-if="canViewCourses && user && [2,5].includes(user.role)">
       <b-row align-h="end" class="mb-4">
         <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
@@ -254,7 +297,7 @@
       :no-close-on-backdrop="true"
       @hidden="resetModalForms"
     >
-      <CourseForm :form="newCourseForm"/>
+      <CourseForm :form="newCourseForm" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -302,7 +345,7 @@
           <li>All submitted student responses</li>
           <li>All student scores</li>
         </ol>
-        <RequiredText :plural="false"/>
+        <RequiredText :plural="false" />
         <b-form-group
           label-cols-sm="1"
           label-cols-lg="2"
@@ -321,7 +364,7 @@
             :class="{ 'is-invalid': deleteCourseForm.errors.has('confirmation') }"
             @keydown="deleteCourseForm.errors.clear('confirmation')"
           />
-          <has-error :form="deleteCourseForm" field="confirmation"/>
+          <has-error :form="deleteCourseForm" field="confirmation" />
         </b-form-group>
       </b-form>
       <template #modal-footer>
@@ -340,7 +383,7 @@
           @click="handleDeleteCourse"
         >
           <span v-if="!processingDeletingCourse">Yes, delete course!</span>
-          <span v-if="processingDeletingCourse"><b-spinner small type="grow"/>
+          <span v-if="processingDeletingCourse"><b-spinner small type="grow" />
             Deleting Course...
           </span>
         </b-button>
@@ -401,7 +444,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('access_code') }"
             @keydown="graderForm.errors.clear('access_code')"
           />
-          <has-error :form="graderForm" field="access_code"/>
+          <has-error :form="graderForm" field="access_code" />
         </b-form-group>
       </b-form>
     </b-modal>
@@ -423,68 +466,68 @@
       <div class="table-responsive">
         <table class="table table-striped" aria-label="Course List">
           <thead>
-          <tr>
-            <th scope="col">
-              Course
-            </th>
-            <th v-if="[2,4].includes(user.role)" style="width:100px">
+            <tr>
+              <th scope="col">
+                Course
+              </th>
+              <th v-if="[2,4].includes(user.role)" style="width:100px">
                 <span v-show="user.role === 2">
                   Shown <a id="course_shown"
                            v-b-tooltip="showCourseShownTooltip"
                            href="#"
                            aria-label="Toggle courses shown"
-                ><b-icon class="text-muted"
-                         icon="question-circle"
-                /></a></span>
-              <span v-show="user.role === 4">
+                  ><b-icon class="text-muted"
+                           icon="question-circle"
+                  /></a></span>
+                <span v-show="user.role === 4">
                   Sections
                 </span>
-            </th>
-            <th v-if="[2,4].includes(user.role)">
-              Term
-            </th>
-            <th :style="[2,4].includes(user.role) ? 'width:120px' : ''">
-              Actions
-            </th>
-          </tr>
+              </th>
+              <th v-if="[2,4].includes(user.role)">
+                Term
+              </th>
+              <th :style="[2,4].includes(user.role) ? 'width:120px' : ''">
+                Actions
+              </th>
+            </tr>
           </thead>
           <tbody is="draggable" v-model="courses" tag="tbody"
                  :options="{disabled : user.role === 4, handle: '.handle'}"
                  @end="saveNewOrder"
           >
-          <tr v-for="course in courses"
-              :key="course.id"
-              :style="!course.shown && user.role === 2 ? 'background: #ffe8e7' : ''"
-          >
-            <th scope="row">
-              <div class="mb-0">
-                <b-icon v-if="user.role === 2" icon="list" class="handle"/>
-                <span v-show="parseInt(course.alpha) === 1"
-                      :id="getTooltipTarget('alphaCourse',course.id)"
-                      class="text-muted"
-                >&alpha; </span>
-                <b-tooltip :target="getTooltipTarget('alphaCourse',course.id)"
-                           delay="500"
-                >
-                  This course is an Alpha course. Adding/removing assignments or assessments from this
-                  course will be directly reflected in the associated Beta courses.
-                </b-tooltip>
-                <span v-show="parseInt(course.is_beta_course) === 1"
-                      :id="getTooltipTarget('betaCourse',course.id)"
-                      class="text-muted"
-                >&beta; </span>
-                <b-tooltip :target="getTooltipTarget('betaCourse',course.id)"
-                           delay="500"
-                >
-                  This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which
-                  are
-                  added/removed in the Alpha course will be directly reflected in this course.
-                </b-tooltip>
-                <a :href="`/instructors/courses/${course.id}/assignments`">{{ course.name }}</a>
-              </div>
-            </th>
+            <tr v-for="course in courses"
+                :key="course.id"
+                :style="!course.shown && user.role === 2 ? 'background: #ffe8e7' : ''"
+            >
+              <th scope="row">
+                <div class="mb-0">
+                  <b-icon v-if="user.role === 2" icon="list" class="handle" />
+                  <span v-show="parseInt(course.alpha) === 1"
+                        :id="getTooltipTarget('alphaCourse',course.id)"
+                        class="text-muted"
+                  >&alpha; </span>
+                  <b-tooltip :target="getTooltipTarget('alphaCourse',course.id)"
+                             delay="500"
+                  >
+                    This course is an Alpha course. Adding/removing assignments or assessments from this
+                    course will be directly reflected in the associated Beta courses.
+                  </b-tooltip>
+                  <span v-show="parseInt(course.is_beta_course) === 1"
+                        :id="getTooltipTarget('betaCourse',course.id)"
+                        class="text-muted"
+                  >&beta; </span>
+                  <b-tooltip :target="getTooltipTarget('betaCourse',course.id)"
+                             delay="500"
+                  >
+                    This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which
+                    are
+                    added/removed in the Alpha course will be directly reflected in this course.
+                  </b-tooltip>
+                  <a :href="`/instructors/courses/${course.id}/assignments`">{{ course.name }}</a>
+                </div>
+              </th>
 
-            <td v-if="[2,4].includes(user.role)">
+              <td v-if="[2,4].includes(user.role)">
                 <span v-if="user.role === 2">
                   <toggle-button
                     tabindex="0"
@@ -500,15 +543,15 @@
                     @change="showCourseWarning(course)"
                   />
                 </span>
-              <span v-if="user.role === 4">
+                <span v-if="user.role === 4">
                   {{ course.sections }}
                 </span>
-            </td>
-            <td v-if="[2,4].includes(user.role)">
-              {{ course.term }}
-            </td>
-            <td>
-              <div class="mb-0">
+              </td>
+              <td v-if="[2,4].includes(user.role)">
+                {{ course.term }}
+              </td>
+              <td>
+                <div class="mb-0">
                   <span v-if="[2,4].includes(user.role)" class="pr-1">
                     <b-tooltip :target="getTooltipTarget('gradebook',course.id)"
                                delay="500"
@@ -526,7 +569,7 @@
                       />
                     </a>
                   </span>
-                <span v-if="user && [2,5].includes(user.role)">
+                  <span v-if="user && [2,5].includes(user.role)">
                     <span class="pr-1">
                       <b-tooltip :target="getTooltipTarget('properties',course.id)"
                                  delay="500"
@@ -579,9 +622,9 @@
                     </a>
 
                   </span>
-              </div>
-            </td>
-          </tr>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -633,6 +676,9 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    importType: '',
+    resetDiscussItSettingsToDefault: false,
+    checkedForDiscussItQuestions: false,
     centrifuge: {},
     importedCourse: { name: '', id: 0 },
     importingCourseMessage: {},
@@ -745,37 +791,44 @@ export default {
         label: 'Course',
         sortable: true
       },
-        'shown',
-        {
-          key: 'start_date',
-          sortable: true
-        },
-        {
-          key: 'end_date',
-          sortable: true
-        },
-        'actions'
+      'shown',
+      {
+        key: 'start_date',
+        sortable: true
+      },
+      {
+        key: 'end_date',
+        sortable: true
+      },
+      'actions'
       ]
       : [{
         key: 'name',
         label: 'Course',
         sortable: true
       },
-        'sections',
-        {
-          key: 'start_date',
-          sortable: true
-        },
-        {
-          key: 'end_date',
-          sortable: true
-        },
-        'actions'
+      'sections',
+      {
+        key: 'start_date',
+        sortable: true
+      },
+      {
+        key: 'end_date',
+        sortable: true
+      },
+      'actions'
       ]
   },
   methods: {
     initCentrifuge,
     isMobile,
+    async continueToCloneOrImport () {
+      this.checkedForDiscussItQuestions = true
+      this.$bvModal.hide('modal-discussion-questions-exist')
+      this.importType === 'clone'
+        ? await this.clone(this.courseToClone)
+        : await this.handleImportCourse()
+    },
     forceImportModalClose (event) {
       if (event.key === 'Escape') {
         this.$bvModal.hide('modal-import-course')
@@ -787,12 +840,14 @@ export default {
       }
     },
     initCloneCourse (course) {
-      //no longer do the shift assignment modal
+      // no longer do the shift assignment modal
+      this.importType = 'clone'
       this.courseToClone = course
       this.cloneCourseOption = null
       this.checkForBeta()
     },
     checkForBeta () {
+      this.checkedForDiscussItQuestions = false
       if (this.courseToClone.is_beta_course) {
         this.cloneCourseOption = 'as-beta'
         this.$bvModal.show('modal-clone-beta')
@@ -813,7 +868,31 @@ export default {
       }
       return false
     },
+    async checkForDiscussItQuestions (course, importType) {
+      try {
+        const { data } = await axios.get(`/api/assignment-sync-question/check-for-discuss-it-questions-by-course-or-assignment/course/${course.id}`)
+        if (data.type === 'success') {
+          if (data.discuss_it_questions_exist) {
+            this.$bvModal.show('modal-discussion-questions-exist')
+          } else {
+            this.checkedForDiscussItQuestions = true
+            this.importType = importType
+            this.importType === 'clone' ? await this.clone(course) : await this.handleImportCourse()
+          }
+        } else {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async clone (course) {
+      if (!this.checkedForDiscussItQuestions) {
+        this.courseToClone = course
+        this.resetDiscussItSettingsToDefault = false
+        await this.checkForDiscussItQuestions(course, 'clone')
+        return
+      }
       this.courseToImportForm.action = 'clone'
       if (this.cloneCourseOption === 'as-beta') {
         course = await this.getAlphaCourseFromBetaCourse(course)
@@ -831,7 +910,11 @@ export default {
         courseImportedCopied(ctx)
       }).subscribe()
       this.importingCourse = true
-      this.importedCourse = { name: course.name, id: course.id }
+      this.importedCourse = {
+        name: course.name,
+        id: course.id
+      }
+      this.courseToImportForm.reset_discuss_it_settings_to_default = +this.resetDiscussItSettingsToDefault === 1
       try {
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${course.id}`)
         this.$bvModal.hide('modal-clone-beta')
@@ -939,6 +1022,7 @@ export default {
       await this.getCourses()
     },
     async initImportCourse () {
+      this.importType = 'import'
       this.disableYesImportCourse = true
       this.importAsBeta = 0
       this.showImportAsBeta = false
@@ -968,7 +1052,23 @@ export default {
       }
       return 0
     },
+    addIdToCourseToImport (courseToImport) {
+      for (let i = 0; i < this.importableCourses.length; i++) {
+        if (this.importableCourses[i]['formatted_course'] === courseToImport) {
+          return { id: this.importableCourses[i]['course_id'] }
+        }
+      }
+    },
     async handleImportCourse () {
+      if (!this.checkedForDiscussItQuestions) {
+        this.resetDiscussItSettingsToDefault = false
+        console.error(this.courseToImport)
+        console.error(this.addIdToCourseToImport(this.courseToImport))
+        console.error(this.courseToImport)
+        console.error(this.getIdOfCourseToImport(this.courseToImport))
+        await this.checkForDiscussItQuestions(this.addIdToCourseToImport(this.courseToImport), 'import')
+        return
+      }
       this.centrifuge = await initCentrifuge()
       const sub = this.centrifuge.newSubscription(`import-copy-course-${this.user.id}`)
       const courseImportedCopied = this.courseImportedCopied
@@ -978,8 +1078,11 @@ export default {
       this.importingCourse = true
       try {
         let IdOfCourseToImport = this.getIdOfCourseToImport(this.courseToImport)
+        console.error(IdOfCourseToImport)
         this.courseToImportForm.action = 'import'
         this.importedCourse = { name: this.courseToImport, id: IdOfCourseToImport }
+        console.error(this.importedCourse)
+        this.courseToImportForm.reset_discuss_it_settings_to_default = +this.resetDiscussItSettingsToDefault === 1
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${IdOfCourseToImport}`)
         this.courseToImport = ''
         if (data.type === 'error') {
