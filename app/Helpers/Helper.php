@@ -27,9 +27,9 @@ class Helper
         if (app()->environment('local', 'testing')) {
             $admins[] = 'me@me.com';
         }
-       return Auth::user()
-        && (in_array(Auth::user()->email, $admins)
-         || in_array(session()->get('original_email'), $admins));//get the original email since they may be in student view
+        return Auth::user()
+            && (in_array(Auth::user()->email, $admins)
+                || in_array(session()->get('original_email'), $admins));//get the original email since they may be in student view
     }
 
 
@@ -279,7 +279,9 @@ class Helper
             ->where('question_id', $question_id)
             ->delete();
         $questionMediaUpload = new QuestionMediaUpload();
-        $discussions = Discussion::where('assignment_id', $assignment_id)->get();
+        $discussions = Discussion::where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->get();
         foreach ($discussions as $discussion) {
             $discussion_comments = DiscussionComment::where('discussion_id', $discussion->id)->get();
             foreach ($discussion_comments as $discussion_comment) {
