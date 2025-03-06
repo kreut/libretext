@@ -5,6 +5,8 @@ namespace App\Console;
 use App\Jobs\LogFromCRONJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
@@ -32,7 +34,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-
 
         $schedule->command('process:autoRelease')->everyMinute();
 
@@ -114,6 +115,23 @@ class Kernel extends ConsoleKernel
         if (env('APP_ENV') === 'dev') {
             $schedule->command('s3:backup')->daily();
             $schedule->command('fix:unprocessedTranscriptions')->everyMinute();
+        }
+        foreach ($schedule->events() as $event) {
+            $event->before(function () use ($event) {
+                Cache::put("cron_start_{$event->command}", microtime(true));
+            });
+
+            $event->after(function () use ($event) {
+                $startTime = Cache::pull("cron_start_{$event->command}");
+                if ($startTime) {
+                    $executionTime = microtime(true) - $startTime;
+                    DB::table('cron_job_times')->insert([
+                        'command' => preg_replace("/^.*?\s'artisan'\s/", '', $event->command),
+                        'time (seconds)' => $executionTime,
+                        'updated_at' => now(),
+                        'created_at' => now()]);
+                }
+            });
         }
 
     }
