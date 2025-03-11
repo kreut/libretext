@@ -2181,6 +2181,22 @@ class AssignmentController extends Controller
     }
 
     /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function getCourseNameFromAssignment(Assignment $assignment){
+        try {
+            $response['type'] = 'error';
+            $response['course_name'] = $assignment->course->name;
+            $response['type'] = 'success';
+        } catch (Exception $e){
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return $response;
+    }
+    /**
      * @param Request $request
      * @param Assignment $assignment
      * @param AssignmentGroup $assignmentGroup

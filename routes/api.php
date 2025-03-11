@@ -104,6 +104,7 @@ Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCou
 Route::get('/user/login-as-formative-student/assignment/{assignment}', 'Auth\UserController@loginToAssignmentAsFormativeStudent');
 
 Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
+Route::get('/assignments/{assignment}/get-course-name-from-assignment', 'AssignmentController@getCourseNameFromAssignment');
 Route::get('assignments/{assignment}/review-history', 'AssignmentController@getReviewHistoryByAssignment');
 Route::get('/analytics/nursing/{download}', 'AnalyticsController@nursing');
 
@@ -356,7 +357,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/courses/anonymous-user', 'CourseController@getAnonymousUserCourses');
     Route::get('/courses/commons-courses-and-assignments', 'CourseController@getCommonsCoursesAndAssignments');
-
 
 
     Route::get('/account-customizations', 'AccountCustomizationController@show');

@@ -746,7 +746,7 @@
            :from-user="user"
            title="Contact Grader"
            type="contact_grader"
-           :subject="getSubject()"
+           :subject="emailToGraderSubject"
     />
     <CannotAddAssessmentToBetaAssignmentModal/>
     <b-modal
@@ -3420,6 +3420,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    emailToGraderSubject: '',
     testingH5p: false,
     canContactInstructorAutoGraded: false,
     algorithmicAssignment: false,
@@ -3920,6 +3921,7 @@ export default {
       $('.sidebar-card').removeClass('sidebar-card')
       $('.row').removeClass('row')
     }
+    this.getEmailToGraderSubject()
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
@@ -5471,8 +5473,16 @@ export default {
     openShowAssignmentStatisticsModal () {
       this.showAssignmentStatisticsModal = true
     },
-    getSubject () {
-      return `${this.name}, Question #${this.currentPage}`
+    async getEmailToGraderSubject () {
+      let courseName
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/get-course-name-from-assignment`)
+        if (data.type === 'success') {
+          courseName = data.course_name + ' --- '
+        }
+      } catch (error) {
+      }
+      this.emailToGraderSubject = `${courseName} ${this.name}, Question #${this.currentPage}`
     },
 
     async openContactGraderModal (type = 'open-ended') {
