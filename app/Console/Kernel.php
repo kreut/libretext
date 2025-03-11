@@ -59,9 +59,6 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('remove:NoRoles')->everyMinute();
         if (env('APP_ENV') === 'production') {
-            if (!env('APP_VAPOR')) {
-                $schedule->command('db:backup')->twiceDaily();
-            }
 
             $schedule->command('send:frameworkItemsByQuestionUpdates')->daily();
             $schedule->command('notify:failedTranscriptions')->hourly();
