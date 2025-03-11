@@ -29,7 +29,7 @@ class UpdateGraderNotification extends FormRequest
         return ($this->num_reminders_per_week
             || $this->copy_grading_reminder_to_head_grader
             || $this->copy_grading_reminder_to_instructor)
-            ? ['num_reminders_per_week' => Rule::in(0,1,2,7)]
+            ? ['num_reminders_per_week' => Rule::in(0,1,2,3,7)]
             : [];
 
     }
