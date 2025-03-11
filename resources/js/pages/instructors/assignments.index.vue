@@ -971,11 +971,17 @@
                 v-if="user && user.role === 2"
                 :class="(user && user.role === 4) ? 'float-right' : ''"
                 size="sm"
-                variant="info"
+                variant="outline-primary"
                 @click="$router.push(`/instructors/courses/${courseId}/properties`)"
               >
                 Course Properties
               </b-button>
+            <ConsultInsight v-if="user && user.role === 2 && course.lms"
+                            :url="course.lms_has_api_key
+                              ? 'https://commons.libretexts.org/insight/lti-and-api'
+                            : 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-canvas-via-lti-only'"
+            />
+
             </span>
           </b-col>
         </b-row>
@@ -1577,10 +1583,12 @@ import ShowHideAssignmentProperties from '~/components/ShowHideAssignmentPropert
 import showHideAssignmentProperties from '../../components/ShowHideAssignmentProperties.vue'
 import AutoReleaseDate from '../../components/AutoReleaseDate.vue'
 import ErrorMessage from '../../components/ErrorMessage.vue'
+import ConsultInsight from '~/components/ConsultInsight.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    ConsultInsight,
     ErrorMessage,
     AutoReleaseDate,
     ShowHideAssignmentProperties,

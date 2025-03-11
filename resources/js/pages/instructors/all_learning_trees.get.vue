@@ -46,7 +46,7 @@
                  aria-label="Copy Learning Tree ID"
                  @click.prevent="doCopy(`learning-tree-to-show-id-${learningTreeToShow.id}`)"
               >
-                <font-awesome-icon :icon="copyIcon" class="text-muted" />
+                <font-awesome-icon :icon="copyIcon" class="text-muted"/>
               </a>
             </h6>
           </div>
@@ -65,7 +65,7 @@
         />
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle title="Browse Learning Trees" />
+        <PageTitle title="Browse Learning Trees"/>
         <b-container>
           <b-row class="pb-3">
             <b-col>
@@ -100,6 +100,12 @@
                   @change="getAllLearningTrees"
                 />
               </b-form-group>
+            </b-col>
+            <b-col>
+              <ConsultInsight
+                :url="'https://commons.libretexts.org/insight/introduction-to-learning-trees'"
+                class="float-right"
+              />
             </b-col>
           </b-row>
         </b-container>
@@ -137,8 +143,8 @@
             Update Results
           </b-button>
           <span class="font-weight-bold ml-5"> {{
-            Number(totalRows).toLocaleString()
-          }} learning trees</span>
+              Number(totalRows).toLocaleString()
+            }} learning trees</span>
         </div>
       </div>
     </div>
@@ -158,7 +164,7 @@
            aria-label="Copy Learning Tree ID"
            @click.prevent="doCopy(`learning_tree_id-${data.item.id}`)"
         >
-          <font-awesome-icon :icon="copyIcon" class="text-muted" />
+          <font-awesome-icon :icon="copyIcon" class="text-muted"/>
         </a>
       </template>
       <template v-slot:cell(title)="data">
@@ -178,35 +184,37 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { increaseLearningTreeModalSize } from '~/helpers/LearningTrees'
 import Form from 'vform'
+import ConsultInsight from '../../components/ConsultInsight.vue'
 
 export default {
   components: {
+    ConsultInsight,
     Loading,
     FontAwesomeIcon
   },
   data: () => ({
-    learningTreeCloneForm: new Form({
-      learning_tree_ids: 0
-    }),
-    activeLearningTreeId: 0,
-    learningTreeToShow: {},
-    learningTreeSrc: '',
-    fields: [
-      { key: 'id', label: 'ID' },
-      'title', 'author'
-    ],
-    learningTreeId: 0,
-    copyIcon: faCopy,
-    perPageOptions: [10, 50, 100, 500, 1000],
-    totalRows: 0,
-    isLoading: true,
-    title: '',
-    author: '',
-    currentPage: 1,
-    perPage: 50,
-    branchDescription: '',
-    learningTrees: []
-  }
+      learningTreeCloneForm: new Form({
+        learning_tree_ids: 0
+      }),
+      activeLearningTreeId: 0,
+      learningTreeToShow: {},
+      learningTreeSrc: '',
+      fields: [
+        { key: 'id', label: 'ID' },
+        'title', 'author'
+      ],
+      learningTreeId: 0,
+      copyIcon: faCopy,
+      perPageOptions: [10, 50, 100, 500, 1000],
+      totalRows: 0,
+      isLoading: true,
+      title: '',
+      author: '',
+      currentPage: 1,
+      perPage: 50,
+      branchDescription: '',
+      learningTrees: []
+    }
   ),
   computed: {
     ...mapGetters({

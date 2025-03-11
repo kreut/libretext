@@ -19,11 +19,15 @@
         <b-button
           class="mr-1"
           size="sm"
-          variant="info"
+          variant="outline-primary"
           @click="cloneLearningTrees()"
         >
           Clone Learning Trees
         </b-button>
+        <ConsultInsight
+          :url="'https://commons.libretexts.org/insight/introduction-to-learning-trees'"
+          class="float-right"
+        />
       </div>
       <b-modal
         id="modal-clone-learning-tree"
@@ -179,10 +183,12 @@ import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import Form from 'vform'
 import LearningTreeProperties from '../../components/LearningTreeProperties.vue'
 import AllFormErrors from '../../components/AllFormErrors.vue'
+import ConsultInsight from '../../components/ConsultInsight.vue'
 
 export default {
   middleware: 'auth',
   components: {
+    ConsultInsight,
     AllFormErrors,
     LearningTreeProperties,
     FontAwesomeIcon

@@ -1199,13 +1199,11 @@
                   :aria-required="!isEdit"
                   @change="initChangeExistingAutoGradedTechnology($event)"
                 />
-                <b-button v-if="newAutoGradedTechnology === 'webwork'"
-                          class="ml-auto mr-1"
-                          size="sm"
-                          variant="info"
-                          @click="consultInsight"
-                >Consult Insight
-                </b-button>
+                <b-col>
+                <ConsultInsight v-if="newAutoGradedTechnology === 'webwork'"
+                                :url="'https://commons.libretexts.org/insight/webwork-techniques'"
+                />
+                </b-col>
               </b-form-row>
 
               <b-form-row>
@@ -2404,6 +2402,7 @@ import QuestionRevisionDifferences from '../QuestionRevisionDifferences.vue'
 import Sketcher from './Sketcher.vue'
 import { updateModalToggleIndex } from '../../helpers/accessibility/fixCKEditor'
 import QuestionCircleTooltipModal from '../QuestionCircleTooltipModal.vue'
+import ConsultInsight from '../ConsultInsight.vue'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2552,6 +2551,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    ConsultInsight,
     QuestionCircleTooltipModal,
     Sketcher,
     QuestionMediaUpload,
@@ -2908,9 +2908,6 @@ export default {
   },
   methods: {
     updateModalToggleIndex,
-    consultInsight () {
-      window.open('https://commons.libretexts.org/insight/webwork-techniques', '_blank')
-    },
     async checkForStudentSubmissions (automaticallyUpdateRevision) {
       let checkSubmissions
       checkSubmissions = true
