@@ -3921,7 +3921,6 @@ export default {
       $('.sidebar-card').removeClass('sidebar-card')
       $('.row').removeClass('row')
     }
-    this.getEmailToGraderSubject()
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
@@ -5947,6 +5946,7 @@ export default {
       if (this.questions[this.currentPage - 1].qti_json || this.questions[this.currentPage - 1].a11y_qti_json) {
         this.showQtiJsonQuestionViewer = true
       }
+      await this.getEmailToGraderSubject()
     },
     async updateReviewQuestionTime () {
       try {
