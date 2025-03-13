@@ -66,37 +66,38 @@ class LTIController extends Controller
             } else {
                 $lti_user_email = session()->get('lti_user_email');
                 if ($lti_user_email && $lti_user_email !== $user->email) {
-                    $email = $lti_user_email;
-                    $user->email = $email;
-                    $user->save();
-                    $OIDC->changeEmail($user->central_identity_id, $lti_user_email);
+                    /*  go back to this at some point.
+                     $email = $lti_user_email;
+                     $user->email = $email;
+                     $user->save();
+                     $OIDC->changeEmail($user->central_identity_id, $lti_user_email);
+                    */
+                 }
+             }
+             $token = \JWTAuth::fromUser($user);
+             $response['token'] = $token;
+             $response['type'] = 'success';
+         } catch (ModelNotFoundException $e) {
+             $h = new Handler(app());
+             $h->report($e);
+             $response['message'] = "It looks like your LTI User ID was not valid.  Instructors using Canvas should make sure that they have checked 'Load This Tool In A New Tab' (where you selected ADAPT as an External Tool from within Canvas).";
 
-                }
-            }
-            $token = \JWTAuth::fromUser($user);
-            $response['token'] = $token;
-            $response['type'] = 'success';
-        } catch (ModelNotFoundException $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "It looks like your LTI User ID was not valid.  Instructors using Canvas should make sure that they have checked 'Load This Tool In A New Tab' (where you selected ADAPT as an External Tool from within Canvas).";
+         } catch (Exception $e) {
+             $h = new Handler(app());
+             $h->report($e);
+             $response['message'] = 'We could not link up your LMS user account with ADAPT.  Please try again or contact us for assistance.';
 
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = 'We could not link up your LMS user account with ADAPT.  Please try again or contact us for assistance.';
+         }
+         return $response;
 
-        }
-        return $response;
+     }
 
-    }
-
-    /**
-     * @param Request $request
-     * @param Assignment $assignment
-     * @return array
-     * @throws Exception
-     */
+     /**
+      * @param Request $request
+      * @param Assignment $assignment
+      * @return array
+      * @throws Exception
+      */
     public function linkAssignmentToLMS(Request $request, Assignment $assignment): array
     {
         $response['type'] = 'error';
