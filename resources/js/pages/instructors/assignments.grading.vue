@@ -779,9 +779,10 @@
                       </b-card-text>
                     </b-card>
                   </div>
+                  <div class="mb-2">
                   <b-card header="default"
                           :header-html="getGraderFeedbackTitle()"
-                          style="height: 50%"
+
                   >
                     <b-card-text align="center">
                       <div v-show="isOpenEnded || isDiscussIt">
@@ -864,7 +865,7 @@
                         <div
                           v-show="isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission']"
                         >
-                          <h4 class="pt-5">
+                          <h4 class="pt-2">
                             <span class="text-muted">
                               There is no open-ended submission for which to provide feedback.
                             </span>
@@ -889,7 +890,8 @@
                       </div>
                     </b-card-text>
                   </b-card>
-                  <b-row align-h="center" class="pt-3 pb-3">
+                  </div>
+                  <div class="text-center pt-3 pb-3">
                     <b-button variant="primary"
                               :class="{ 'disabled': noSubmission}"
                               :aria-disabled="noSubmission"
@@ -908,7 +910,7 @@
                     >
                       Submit And Next
                     </b-button>
-                  </b-row>
+                  </div>
                 </b-col>
               </b-row>
 
