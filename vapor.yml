@@ -9,7 +9,7 @@ environments:
         runtime: docker
         firewall:
           rate-limit: 2000
-        database: production
+        database: production-mysql8-v2
         cache: production
         domain: adapt.libretexts.org
         network: vapor-network-1622550320

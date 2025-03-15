@@ -8,7 +8,7 @@
       <b-alert :show="showEnvironment && environment === 'production'" variant="danger">
         <span class="font-weight-bold">Production</span>
       </b-alert>
-      <b-alert show variant="info">
+      <b-alert v-if="false" variant="info">
         ADAPT will be unavailable on Saturday, March 15, from to 7 to 9 am PST due to a scheduled maintenance.
       </b-alert>
     </div>
