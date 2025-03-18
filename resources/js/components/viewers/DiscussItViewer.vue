@@ -929,7 +929,7 @@
       >
         <b-alert variant="warning" show>
           Currently your students cannot respond to this question because you have not chosen any response mode in
-          your Discuss-it settings.  Please choose whether your students can respond using text, audio, or video.
+          your Discuss-it settings. Please choose whether your students can respond using text, audio, or video.
         </b-alert>
       </div>
 
@@ -939,6 +939,8 @@
         <b-col :cols="previewingQuestion ? 12 : 8" class="border border-dark" :class="previewingQuestion ? '' : 'mr-2'">
           <div class="mt-2">
             <b-pagination
+              v-show="questionMediaUploads.length >1"
+              id="discuss-it-pagination"
               v-model="currentMediaUploadOrder"
               :total-rows="questionMediaUploads.length"
               :per-page="1"
@@ -949,7 +951,7 @@
               limit="17"
               @change="updateDiscussions($event)"
             />
-            <hr>
+            <hr v-show="questionMediaUploads.length >1">
           </div>
           <div v-if="currentDiscussionMedia && /\.(mp3|mp4)$/.test(currentDiscussionMedia.s3_key)">
             <iframe
@@ -1385,7 +1387,6 @@ export default {
         }
       }
     }
-
   },
   methods: {
     updateModalToggleIndex,
