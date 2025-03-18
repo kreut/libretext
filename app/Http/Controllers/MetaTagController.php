@@ -9,7 +9,9 @@ use App\LearningTree;
 use App\MetaTag;
 use App\PendingQuestionOwnershipTransfer;
 use App\Question;
+use App\Question_Tag;
 use App\QuestionRevision;
+use App\QuestionTag;
 use App\SavedQuestionsFolder;
 use App\Tag;
 use App\User;
@@ -211,19 +213,11 @@ class MetaTagController extends Controller
                     } else {
                         $tag_id = $existing_tag->id;
                     }
-                    $question_tag_exists_array = DB::table('question_tag')
-                        ->whereIn('question_id', $question_ids)
-                        ->where('tag_id', $tag_id)
-                        ->pluck('question_id')
-                        ->toArray();
+
                     foreach ($question_ids as $question_id) {
-                        if (!in_array( $question_id,$question_tag_exists_array)) {
-                            DB::table('question_tag')->insert([
-                                'question_id' => $question_id,
-                                'tag_id' => $tag_id,
-                                'created_at' => now(),
-                                'updated_at' => now()]);
-                        }
+                        QuestionTag::firstOrCreate(
+                            ['question_id' => $question_id, 'tag_id' => $tag_id]
+                        );
                     }
                 }
             }
