@@ -780,116 +780,116 @@
                     </b-card>
                   </div>
                   <div class="mb-2">
-                  <b-card header="default"
-                          :header-html="getGraderFeedbackTitle()"
+                    <b-card header="default"
+                            :header-html="getGraderFeedbackTitle()"
 
-                  >
-                    <b-card-text align="center">
-                      <div v-show="isOpenEnded || isDiscussIt">
-                        <div v-show="(isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
+                    >
+                      <b-card-text align="center">
+                        <div v-show="isOpenEnded || isDiscussIt">
+                          <div v-show="(isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
                           ||(isDiscussIt && discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
-                        >
-                          <b-row class="mb-2">
-                            <b-col>
-                              <b-form-select id="text_feedback_mode"
-                                             v-model="textFeedbackMode"
-                                             title="Text Feedback Mode"
-                                             :options="textFeedbackModeOptions"
-                                             size="sm"
-                              />
-                            </b-col>
-                            <b-col>
-                              <b-button v-if="textFeedbackMode === 'canned_response'"
-                                        variant="info"
-                                        size="sm"
-                                        @click="openEditCannedResponsesModal"
-                              >
-                                Edit Responses
-                              </b-button>
-                            </b-col>
-                          </b-row>
-                          <b-form ref="form">
-                            <ckeditor v-if="textFeedbackMode === 'rich_text'"
-                                      :key="`${currentQuestionPage}-${currentStudentPage}`"
-                                      v-model="richTextFeedback"
-                                      :config="richEditorConfig"
-                                      tabindex="0"
-                                      style="margin-bottom: 23px"
-                                      rows="5"
-                                      max-rows="5"
-                                      :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
-                                      @namespaceloaded="onCKEditorNamespaceLoaded"
-                                      @ready="handleFixCKEditor()"
-                            />
-                            <b-form-textarea
-                              v-if="textFeedbackMode === 'plain_text'"
-                              id="text_comments"
-                              v-model="plainTextFeedback"
-                              style="margin-bottom: 23px"
-                              placeholder="Enter something..."
-                              rows="5"
-                              max-rows="5"
-                              :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
-                              @keydown="gradingForm.errors.clear('textFeedback')"
-                            />
-                            <has-error :form="gradingForm" field="textFeedback"/>
-
-                            <b-form-select v-if="textFeedbackMode === 'canned_response'"
-                                           v-model="cannedResponse"
-                                           title="Canned response"
-                                           :options="cannedResponseOptions"
-                                           class="mb-5"
-                            />
-                            <hr>
-                            <b-row class="float-right">
-                              <b-button
-                                variant="primary"
-                                size="sm"
-                                @click="openUploadFileModal()"
-                              >
-                                Upload Feedback File
-                              </b-button>
-
-                              <b-button
-                                :class="{ 'disabled': !viewSubmission}"
-                                :aria-disabled="!viewSubmission"
-                                size="sm"
-                                class="ml-2 mr-4"
-                                @click="!viewSubmission ? '' : toggleView()"
-                              >
-                                View Feedback File
-                              </b-button>
+                          >
+                            <b-row class="mb-2">
+                              <b-col>
+                                <b-form-select id="text_feedback_mode"
+                                               v-model="textFeedbackMode"
+                                               title="Text Feedback Mode"
+                                               :options="textFeedbackModeOptions"
+                                               size="sm"
+                                />
+                              </b-col>
+                              <b-col>
+                                <b-button v-if="textFeedbackMode === 'canned_response'"
+                                          variant="info"
+                                          size="sm"
+                                          @click="openEditCannedResponsesModal"
+                                >
+                                  Edit Responses
+                                </b-button>
+                              </b-col>
                             </b-row>
-                          </b-form>
-                        </div>
-                        <div
-                          v-show="isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission']"
-                        >
-                          <h4 class="pt-2">
+                            <b-form ref="form">
+                              <ckeditor v-if="textFeedbackMode === 'rich_text'"
+                                        :key="`${currentQuestionPage}-${currentStudentPage}`"
+                                        v-model="richTextFeedback"
+                                        :config="richEditorConfig"
+                                        tabindex="0"
+                                        style="margin-bottom: 23px"
+                                        rows="5"
+                                        max-rows="5"
+                                        :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
+                                        @namespaceloaded="onCKEditorNamespaceLoaded"
+                                        @ready="handleFixCKEditor()"
+                              />
+                              <b-form-textarea
+                                v-if="textFeedbackMode === 'plain_text'"
+                                id="text_comments"
+                                v-model="plainTextFeedback"
+                                style="margin-bottom: 23px"
+                                placeholder="Enter something..."
+                                rows="5"
+                                max-rows="5"
+                                :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
+                                @keydown="gradingForm.errors.clear('textFeedback')"
+                              />
+                              <has-error :form="gradingForm" field="textFeedback"/>
+
+                              <b-form-select v-if="textFeedbackMode === 'canned_response'"
+                                             v-model="cannedResponse"
+                                             title="Canned response"
+                                             :options="cannedResponseOptions"
+                                             class="mb-5"
+                              />
+                              <hr>
+                              <b-row class="float-right">
+                                <b-button
+                                  variant="primary"
+                                  size="sm"
+                                  @click="openUploadFileModal()"
+                                >
+                                  Upload Feedback File
+                                </b-button>
+
+                                <b-button
+                                  :class="{ 'disabled': !viewSubmission}"
+                                  :aria-disabled="!viewSubmission"
+                                  size="sm"
+                                  class="ml-2 mr-4"
+                                  @click="!viewSubmission ? '' : toggleView()"
+                                >
+                                  View Feedback File
+                                </b-button>
+                              </b-row>
+                            </b-form>
+                          </div>
+                          <div
+                            v-show="isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                          >
+                            <h4 class="pt-2">
                             <span class="text-muted">
                               There is no open-ended submission for which to provide feedback.
                             </span>
-                          </h4>
-                        </div>
-                        <div
-                          v-show="isDiscussIt && !discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments"
-                        >
-                          <h4 class="pt-5">
+                            </h4>
+                          </div>
+                          <div
+                            v-show="isDiscussIt && !discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments"
+                          >
+                            <h4 class="pt-5">
                             <span class="text-muted">
                               There are no comments for which to provide feedback.
                             </span>
-                          </h4>
+                            </h4>
+                          </div>
                         </div>
-                      </div>
-                      <div v-show="!isOpenEnded && !isDiscussIt">
-                        <h4 class="pt-5">
+                        <div v-show="!isOpenEnded && !isDiscussIt">
+                          <h4 class="pt-5">
                           <span class="text-muted">
                             This panel is applicable to open-ended assessments.
                           </span>
-                        </h4>
-                      </div>
-                    </b-card-text>
-                  </b-card>
+                          </h4>
+                        </div>
+                      </b-card-text>
+                    </b-card>
                   </div>
                   <div class="text-center pt-3 pb-3">
                     <b-button variant="primary"
@@ -1112,6 +1112,8 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    routeStudentUserId: null,
+    routeQuestionId: null,
     discussItCompletionCriteria: false,
     renderMathJax: false,
     showDiscussIt: false,
@@ -1244,6 +1246,9 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   mounted () {
+    this.routeStudentUserId = this.$route.params.studentUserId
+    this.routeQuestionId = this.$route.params.questionId
+
     this.renderMathJax = +localStorage.renderMathJax === 1
     window.addEventListener('message', this.receiveMessage)
     h5pResizer()
@@ -1965,7 +1970,7 @@ export default {
       }
     },
     async getGrading (showMessage = true) {
-      if (this.$route.params.questionId && this.$route.params.studentUserId) {
+      if (this.routeQuestionId && this.routeStudentUserId) {
         this.questionView = this.$route.params.questionId
         this.gradeView = 'allStudents'
         this.sectionId = 0
@@ -2047,8 +2052,10 @@ export default {
 
         // loop through questions, inner loop through students, if match, then set question and student)
 
-        if (this.$route.params.questionId && this.$route.params.studentUserId) {
-          this.setQuestionAndStudentByQuestionIdAndStudentUserId(this.$route.params.questionId, this.$route.params.studentUserId)
+        if (this.routeQuestionId && this.routeStudentUserId) {
+          this.setQuestionAndStudentByQuestionIdAndStudentUserId(this.routeQuestionId, this.routeStudentUserId)
+          this.routeQuestionId = null
+          this.routeStudentUserId = null
         }
         let questionOptions = JSON.parse(JSON.stringify(this.questionOptions))
         this.solutions = [questionOptions.find(question => +question.value === +this.questionView).solution]
