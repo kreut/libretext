@@ -607,13 +607,17 @@ export default {
     fixDatePicker('start_date', 'start date')
     fixDatePicker('end_date', 'end date')
     let startDate = document.getElementById('start_date')
-    startDate.style.opacity = '0'
-    startDate.style.width = '0'
-    startDate.style.padding = '5px'
+    if (startDate) {
+      startDate.style.opacity = '0'
+      startDate.style.width = '0'
+      startDate.style.padding = '5px'
+    }
     let endDate = document.getElementById('end_date')
-    endDate.style.opacity = '0'
-    endDate.style.width = '0'
-    endDate.style.padding = '5px'
+    if (endDate) {
+      endDate.style.opacity = '0'
+      endDate.style.width = '0'
+      endDate.style.padding = '5px'
+    }
     this.getSchools()
     this.getLTISchools()
     this.getDisciplines()
