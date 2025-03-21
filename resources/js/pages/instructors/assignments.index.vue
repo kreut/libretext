@@ -1776,15 +1776,15 @@ export default {
     initTooltips(this)
     this.isLoading = true
     if (!await this.getCourseInfo()) {
-      if (this.course.is_brightspace) {
-        this.consultInsightUrl = 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-d2l-via-lti-only'
-      } else if (this.course.is_canvas) {
-        this.consultInsightUrl = this.course.lms_has_api_key
-          ? 'https://commons.libretexts.org/insight/lti-and-api'
-          : 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-canvas-via-lti-only'
-      }
       this.isLoading = false
       return false
+    }
+    if (this.course.is_brightspace) {
+      this.consultInsightUrl = 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-d2l-via-lti-only'
+    } else if (this.course.is_canvas) {
+      this.consultInsightUrl = this.course.lms_has_api_key
+        ? 'https://commons.libretexts.org/insight/lti-and-api'
+        : 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-canvas-via-lti-only'
     }
     this.assignmentGroups = await getAssignmentGroups(this.courseId, this.$noty)
     if (this.user.role === 2) {

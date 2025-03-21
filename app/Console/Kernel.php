@@ -113,23 +113,6 @@ class Kernel extends ConsoleKernel
             $schedule->command('s3:backup')->daily();
             $schedule->command('fix:unprocessedTranscriptions')->everyMinute();
         }
-        foreach ($schedule->events() as $event) {
-            $event->before(function () use ($event) {
-                Cache::put("cron_start_{$event->command}", microtime(true));
-            });
-
-            $event->after(function () use ($event) {
-                $startTime = Cache::pull("cron_start_{$event->command}");
-                if ($startTime) {
-                    $executionTime = microtime(true) - $startTime;
-                    DB::table('cron_job_times')->insert([
-                        'command' => preg_replace("/^.*?\s'artisan'\s/", '', $event->command),
-                        'time (seconds)' => $executionTime,
-                        'updated_at' => now(),
-                        'created_at' => now()]);
-                }
-            });
-        }
 
     }
 
