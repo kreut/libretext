@@ -324,6 +324,10 @@ class LTI_Message_Launch
 
     private function validate_jwt_signature()
     {
+        if (app()->environment('local')){
+
+            return $this;
+        }
         // Fetch public key.
         $public_key = $this->get_public_key();
 

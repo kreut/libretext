@@ -19,7 +19,7 @@ class OIDC extends Model
     public function __construct()
     {
         parent::__construct();
-        if (app()->environment('testing')){
+        if (app()->environment('testing') || app()->environment('local')){
             $username = 'some-username';
             $secret = 'some-secret';
         } else {

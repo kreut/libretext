@@ -7,7 +7,17 @@
     <AllFormErrors :all-form-errors="allFormErrors"
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
-
+    <b-modal id="modal-no-assignment-and-grades-url"
+             title="Not Linked to LMS"
+             hide-footer
+             no-close-on-esc
+             no-close-on-backdrop
+             hide-header-close
+    >
+      This assignment may be entered through your LMS or through the ADAPT website. However, the assignment has not been
+      linked to your LMS yet.
+      Please contact your instructor and ask them to link the assignment.
+    </b-modal>
     <b-modal id="modal-question-statistics"
              title="Question Statistics"
              size="lg"
@@ -3817,8 +3827,9 @@ export default {
       this.isLoading = false
       return false
     }
-
+    await this.createLtiLaunchIfNeeded()
     if (this.source === 'a') {
+
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       if (!this.questions.length) {
         this.isLoading = false
@@ -3947,6 +3958,20 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    async createLtiLaunchIfNeeded () {
+      if (this.user.role === 3 && !this.user.fake_student) {
+        try {
+          const { data } = await axios.post(`/api/lti-launch/assignment/${this.assignmentId}/create-lti-launch-if-needed`)
+          if (data.redirect) {
+            location.href = data.redirect
+          }
+          data.type === 'success'
+            ? console.log(data.message) : console.error(data.message)
+        } catch (error) {
+          console.error(error.message)
+        }
+      }
+    },
     async contactInstructorToReleaseAssignment () {
       try {
         const { data } = await axios.post(`/api/assignments/${this.assignmentId}/contact-instructor-to-release-assignment`)
@@ -5987,6 +6012,10 @@ export default {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/view-questions-info`)
         if (data.type === 'error') {
+          if (data.message === 'no assignment and grades url') {
+            this.$bvModal.show('modal-no-assignment-and-grades-url')
+            return false
+          }
           if (data.message === 'You are not allowed to access this assignment.') {
             this.isLMS = data.is_lms
             this.$bvModal.show('modal-enroll-in-course')

@@ -139,6 +139,7 @@ class SectionController extends Controller
             $response['course_start_date'] = $course->start_date;
             $response['course_end_date'] = $course->end_date;
             $response['is_lms'] = (bool) $course->lms;
+            $response['is_lms_only_entry'] = (bool) $course->lms_only_entry;
             $response['type'] = 'success';
 
         } catch (Exception $e) {

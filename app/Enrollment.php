@@ -23,7 +23,7 @@ class Enrollment extends Model
         $this->course_id = $course_id;
         $this->save();
         $course = Course::find($course_id);
-        if (!$course ->shown){
+        if (!$course->shown) {
             $course->shown = 1;
             $course->save();
         }
@@ -182,7 +182,8 @@ class Enrollment extends Model
                 'courses.end_date',
                 'courses.id',
                 'courses.public_description',
-                'courses.lms')
+                'courses.lms',
+                'courses.lms_only_entry')
             ->get();
     }
 }

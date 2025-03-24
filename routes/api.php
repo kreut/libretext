@@ -151,6 +151,10 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/lti-registration/active/{ltiRegistration}', 'LtiRegistrationController@active');
 
 
+    Route::post('/lti-launch/assignment/{assignment}/create-lti-launch-if-needed', 'LtiLaunchController@createLtiLaunchIfNeeded');
+
+
+
     Route::post('/access-code', 'AccessCodeController@store');
     Route::post('/access-code/email', 'AccessCodeController@email');
 

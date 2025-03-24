@@ -139,7 +139,7 @@
                     </b-tooltip>
                   </template>
                   <template v-slot:cell(access_code)="data">
-                    <div v-if="!isLMS || sections.length >1">
+                    <div v-if="!isLMS || (isLMS && !isLmsOnlyEntry) || sections.length >1">
                       <span :id="`access_code-${data.item.id}`">
                         {{ data.item.access_code ? data.item.access_code : 'None Available' }}
                       </span>
@@ -152,7 +152,19 @@
                         >
                           <font-awesome-icon :icon="copyIcon"/>
                         </a>
+
+                          <QuestionCircleTooltip id="access_code_for_non_lms_entry_tooltip"/>
+                        <span v-show="isLMS && !isLmsOnlyEntry && sections.length === 1">
+                      <b-tooltip target="access_code_for_non_lms_entry_tooltip"
+                                 delay="500"
+                                 triggers="hover focus"
+                      >
+                       Your students can either use your school's LMS or use the ADAPT website directly to access their homework.  If they enter through your school's LMS, they
+                        will be enrolled automatically in your course upon entering the first assignment and won't need an access code.<br><br>However, if they
+                        enroll in the course through the ADAPT website, they will need to enter this access code in order to complete their enrollment.
+                      </b-tooltip>
                       </span>
+                        </span>
                     </div>
                     <div v-else>
                       No access code required.
@@ -270,6 +282,7 @@ export default {
     return { title: 'Course Sections' }
   },
   data: () => ({
+    isLmsOnlyEntry: true,
     copyIcon: faCopy,
     allFormErrors: [],
     isLMS: false,
@@ -396,6 +409,7 @@ export default {
       this.courseStartDate = data.course_start_date
       this.courseEndDate = data.course_end_date
       this.isLMS = data.is_lms
+      this.isLmsOnlyEntry = data.is_lms_only_entry
     },
     async refreshAccessCode (sectionId) {
       try {

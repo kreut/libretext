@@ -20,6 +20,7 @@ use App\Helpers\Helper;
 use App\Http\Requests\ShiftDatesRequest;
 use App\Http\Requests\StoreAssignmentProperties;
 use App\LmsAPI;
+use App\LtiAssignmentsAndGradesUrl;
 use App\PendingQuestionRevision;
 use App\Question;
 use App\Score;
@@ -332,14 +333,17 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
+            DB::beginTransaction();
             $assignment->lms_resource_link_id = null;
             $assignment->lms_assignment_id = null;
             $assignment->lms_assignment_group_id = null;
             $assignment->save();
+            DB::table('lti_assignments_and_grades_urls')->where('assignment_id', $assignment->id)->delete();
             $response['type'] = 'info';
             $response['message'] = "$assignment->name has been unlinked from your LMS.";
+            DB::commit();
         } catch (Exception $e) {
-
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error unsyncing this assignment from your LMS.  Please try again or contact us for assistance.";
@@ -565,15 +569,20 @@ class AssignmentController extends Controller
                 }
             }
             $assignment_arr['total_points'] = $total_points;
-            $lms_result = $existing_lms_assignment ? $lmsApi->updateAssignment($course->getLtiRegistration(),
+            $lti_registration = $course->getLtiRegistration();
+            $lms_result = $existing_lms_assignment ? $lmsApi->updateAssignment($lti_registration,
                 $course->user_id, $course->lms_course_id, $existing_lms_assignment['id'], $assignment_arr)
-                : $lmsApi->createAssignment($course->getLtiRegistration(),
+                : $lmsApi->createAssignment($lti_registration,
                     $course->user_id, $course->lms_course_id, $assignment_arr);
 
             if ($lms_result['type'] === 'error') {
                 $response['message'] = 'Error: ' . $lms_result['message'];
                 return $response;
             }
+            $url = "$lti_registration->auth_server/api/lti/courses/$course->lms_course_id/line_items/$assignment->lms_assignment_id";
+            LtiAssignmentsAndGradesUrl::updateOrCreate(['assignment_id' => $assignment->id,
+                'url' => $url]);
+
             $assignment->lms_assignment_id = $lms_result['message']->id;
             $assignment->save();
             $response['type'] = 'success';
@@ -604,12 +613,15 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
+            DB::beginTransaction();
             $assignment->lms_resource_link_id = null;
             $assignment->save();
+            DB::table('lti_assignments_and_grades_urls')->where('assignment_id', $assignment->id)->delete();
             $response['message'] = "$assignment->name has been unlinked from your LMS.";
             $response['type'] = 'success';
-
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error unlinking the assignment.  Please try again or contact us for assistance.";
@@ -1925,6 +1937,12 @@ class AssignmentController extends Controller
 
         try {
             $assignment = Assignment::find($assignment->id);
+            if ($assignment->course->lms
+                && !$assignment->course->lms_only_entry
+                && !DB::table('lti_assignments_and_grades_urls')->where('assignment_id', $assignment->id)->exists()) {
+                $response['message'] = 'no assignment and grades url';
+                return $response;
+            }
             $can_view_assignment_statistics = $request->user()->role === 2 || ($request->user()->role === 3 && $assignment->students_can_view_assignment_statistics);
             $response['assignment'] = [
                 'question_view' => $request->hasCookie('question_view') ? $request->cookie('question_view') : 'basic',
@@ -2185,17 +2203,19 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getCourseNameFromAssignment(Assignment $assignment){
+    public function getCourseNameFromAssignment(Assignment $assignment)
+    {
         try {
             $response['type'] = 'error';
             $response['course_name'] = $assignment->course->name;
             $response['type'] = 'success';
-        } catch (Exception $e){
+        } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
         }
         return $response;
     }
+
     /**
      * @param Request $request
      * @param Assignment $assignment

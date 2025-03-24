@@ -698,7 +698,9 @@
           <div v-if="lmsError">
             <b-alert variant="danger" show>
               There was an error trying to connect to your LMS with ADAPT. Please reach out
-              to support so that we can troubleshoot the issue. In the meantime, you can still work on your ADAPT
+              to support so that we can troubleshoot the issue:
+              <br><br>{{lmsError}}<br><br>
+              In the meantime, you can still work on your ADAPT
               assignments.
             </b-alert>
           </div>

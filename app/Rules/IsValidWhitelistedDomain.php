@@ -50,6 +50,7 @@ class IsValidWhitelistedDomain implements Rule
         $course_id = $section->course_id;
 
         if (Course::find($course_id)->lms) {
+            //I check for the lms only stuff within the store function
             return true;
         }
         $whitelisted_domains = DB::table('whitelisted_domains')

@@ -566,6 +566,70 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
+        <div v-if="showLmsOnlyEntry">
+          <b-form-group
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="lms_only_entry"
+          >
+            <template v-slot:label>
+              LMS Only Entry*
+              <QuestionCircleTooltip id="lms_only_entry_tooltip"/>
+              <b-tooltip target="lms_only_entry_tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                If you choose "yes", then your students will only be able to enter through your LMS. If you choose "no",
+                then your
+                students will be able to enter
+                either through your LMS or ADAPT.
+              </b-tooltip>
+            </template>
+            <b-form-radio-group v-model="form.lms_only_entry"
+                                required
+                                stacked
+                                @change="updateShowAdaptEnrollmentNotificationDate($event)"
+            >
+              <b-form-radio name="lms_only_entry" value="1">
+                Yes
+              </b-form-radio>
+              <b-form-radio name="lms_only_entry" value="0">
+                No
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+          <div v-if="showAdaptEnrollmentNotificationDate">
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label-for="adapt_enrollment_notification_date"
+            >
+              <template v-slot:label>
+                ADAPT Enrollment Notification Date*
+                <QuestionCircleTooltip id="adapt_enrollment_notification_date_tooltip"/>
+                <b-tooltip target="adapt_enrollment_notification_date_tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Your LMS roster will be checked once per day and students who enter the course on or after this date
+                  will receive an email informing them that they have been registered with ADAPT
+                  and that they may use either the ADAPT website or your LMS to access
+                  their homework.
+                </b-tooltip>
+              </template>
+              <b-form-datepicker
+                id="adapt_enrollment_notification_date"
+                v-model="form.adapt_enrollment_notification_date"
+                tabindex="0"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has('adapt_enrollment_notification_date') }"
+                required
+                @shown="form.errors.clear('adapt_enrollment_notification_date')"
+              />
+              <has-error :form="form" field="adapt_enrollment_notification_date"/>
+            </b-form-group>
+          </div>
+        </div>
       </div>
     </b-form>
   </div>
@@ -589,6 +653,9 @@ export default {
     course: { type: Object, default: null }
   },
   data: () => ({
+    lmsEntryTester: false,
+    showAdaptEnrollmentNotificationDate: false,
+    showLmsOnlyEntry: false,
     allFormErrors: [],
     newDisciplineForm: new Form({ name: '' }),
     disciplineOptions: [{ text: 'Please choose a discipline', value: null }],
@@ -603,6 +670,7 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
+    this.lmsEntryTester = ['local', 'staging', 'dev'].includes(window.config.environment) || [1, 5, 173].includes(this.user.id)
     fixRequired(this)
     fixDatePicker('start_date', 'start date')
     fixDatePicker('end_date', 'end date')
@@ -625,9 +693,20 @@ export default {
     if (this.course) {
       this.setModality(this.form)
       this.showGradePassback = +this.form.lms === 1
+      this.showLmsOnlyEntry = +this.form.lms === 1 && this.lmsEntryTester
+      this.showAdaptEnrollmentNotificationDate = +this.form.lms_only_entry === 0
     }
   },
   methods: {
+    updateShowAdaptEnrollmentNotificationDate (value) {
+      this.$nextTick(() => {
+        this.showAdaptEnrollmentNotificationDate = +value === 0
+        if (this.showAdaptEnrollmentNotificationDate) {
+          this.form.adapt_enrollment_notification_date = this.form.start_date
+        }
+      })
+      this.$forceUpdate()
+    },
     async submitNewDiscipline () {
       try {
         const { data } = await this.newDisciplineForm.post(`/api/disciplines/request-new`)
@@ -682,6 +761,7 @@ export default {
       }
     },
     updateShowLMSItems (value) {
+      this.showLmsOnlyEntry = +value === 1 && this.lmsEntryTester
       this.$forceUpdate()
     },
     setModality (form) {

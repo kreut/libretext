@@ -14,6 +14,7 @@ use App\BetaAssignment;
 use App\BetaCourse;
 use App\BetaCourseApproval;
 use App\Course;
+use App\Custom\LTIDatabase;
 use App\Discussion;
 use App\DiscussionComment;
 use App\Enrollment;
@@ -29,6 +30,8 @@ use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\Jobs\ProcessImportCourse;
 use App\Jobs\ProcessResetCourse;
 use App\LmsAPI;
+use App\LtiNamesAndRoles;
+use App\LtiNamesAndRolesUrl;
 use App\QuestionMediaUpload;
 use App\Rules\atLeastOneSelectChoice;
 use App\Section;
@@ -54,6 +57,8 @@ use MiladRahimi\Jwt\Exceptions\JsonDecodingException;
 use MiladRahimi\Jwt\Exceptions\SigningException;
 use MiladRahimi\Jwt\Exceptions\ValidationException;
 use MiladRahimi\Jwt\Parser;
+use Overrides\IMSGlobal\LTI\LTI_Names_Roles_Provisioning_Service;
+use Overrides\IMSGlobal\LTI\LTI_Service_Connector;
 
 class CourseController extends Controller
 {
@@ -335,6 +340,13 @@ class CourseController extends Controller
             DB::table('assignments')
                 ->where('course_id', $course->id)
                 ->update(['lms_resource_link_id' => null, 'lms_assignment_id' => null]);
+            $assignment_ids = $course->assignments->pluck('id')->toArray();
+            DB::table('lti_assignments_and_grades_urls')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->delete();
+            DB::table('lti_names_and_roles_urls')
+                ->where('course_id', $course->id)
+                ->delete();
             DB::commit();
             $response['type'] = 'info';
             $response['message'] = "Your ADAPT course has been successfully unlinked from your LMS.";
@@ -373,6 +385,7 @@ class CourseController extends Controller
             return $response;
         }
         try {
+            DB::beginTransaction();
             $lti_registration = $course->getLtiRegistration();
             $lmsApi = new LmsAPI();
             $result = $lmsApi->getAssignments($lti_registration, $course->user_id, $data['lms_course_id']);
@@ -385,10 +398,21 @@ class CourseController extends Controller
             }
             $course->lms_course_id = $lms_course_id;
             $course->save();
+            $lti_names_and_roles_url = LtiNamesAndRolesUrl::where('course_id', $course->id)->first();
+            if (!$lti_names_and_roles_url) {
+                $lti_names_and_roles_url = new LtiNamesAndRolesUrl();
+                $lti_names_and_roles_url->course_id = $course->id;
+            }
+            $url = "$lti_registration->auth_server/api/lti/courses/$lms_course_id/names_and_roles";
+            $lti_names_and_roles_url->url = $url;
+            $lti_names_and_roles_url->save();
+
             $response['type'] = 'success';
             $response['unlinked_assignments'] = $unlinked_assignments;
             $response['message'] = "Your ADAPT course has been successfully linked to your LMS.";
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error linking this course to your LMS.  Please try again or contact us for assistance.";
@@ -1529,11 +1553,14 @@ class CourseController extends Controller
     /**
      * @param Course $course
      * @param WhitelistedDomain $whitelistedDomain
+     * @param LTIDatabase $lti_database
      * @return array
      * @throws Exception
      */
     public
-    function show(Course $course, WhitelistedDomain $whitelistedDomain): array
+    function show(Course            $course,
+                  WhitelistedDomain $whitelistedDomain,
+                  LTIDatabase       $lti_database): array
     {
 
         $response['type'] = 'error';
@@ -1555,8 +1582,39 @@ class CourseController extends Controller
             $lms_error = '';
             $course->lms_has_api_key = false;
             $course->lms_has_access_token = false;
+            $course->non_active_users = [];
             $updated_canvas_api = ['points' => false, 'everybodys' => false];
             if (request()->user()->role === 2 && $course->lms) {
+                $lti_names_and_roles_url = LtiNamesAndRolesUrl::where('course_id', $course->id)->first();
+                /* The following code will be used to determine if anyone has dropped the course or not
+                if ($lti_names_and_roles_url) {
+                     $lti_registration = $course->getLtiRegistration();
+
+                     $service_connector = new LTI_Service_Connector($lti_database->find_registration_by_client_id($lti_registration->client_id));
+                     $names_and_roles = new LTI_Names_Roles_Provisioning_Service($service_connector,
+                         ['context_memberships_url' => $lti_names_and_roles_url->url]);
+                     $members = $names_and_roles->get_members();
+                     $course_enrollments = DB::table('courses')
+                         ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
+                         ->join('users', 'enrollments.user_id', '=', 'users.id')
+                         ->where('courses.id', $course->id)
+                         ->where('fake_student', 0)
+                         ->select('users.*')
+                         ->get();
+                     foreach ($course_enrollments as $course_enrollment) {
+                         if ($course_enrollment->lms_user_id) {
+                             $course_enrollments_by_lms_user_id[$course_enrollment->lms_user_id] = $course_enrollment;
+
+                         }
+                         foreach ($members as $member) {
+                             //not in LMS but in the ADAPT course
+                             if (in_array($member['status'], ['Inactive', 'Deleted'])
+                                 && isset($course_enrollments_by_lms_user_id[$member->user_id])) {
+                                 $course->non_active_users[] = $member;
+                             }
+                         }
+                     }
+                 }  */
                 $school = School::find($course->school_id);
                 $course->lms_has_access_token = DB::table('lms_access_tokens')
                     ->where('user_id', request()->user()->id)
@@ -1567,7 +1625,8 @@ class CourseController extends Controller
                 $course->is_brightspace = $lti_registration && strpos($lti_registration->iss, 'brightspace') !== false;
                 $course->is_canvas = $lti_registration && strpos($lti_registration->iss, 'instructure') !== false;
                 $course->lms_has_api_key = $lti_registration && $lti_registration->api_key;
-                if (!app()->environment('local') && $course->lms_has_api_key) {
+
+                if ((!app()->environment('local') || $lti_registration->auth_server === 'http://canvas.docker') && $course->lms_has_api_key) {
                     if ($course->lms_has_access_token) {
                         $canvas_updates = DB::table('canvas_updates')->where('course_id', $course->id)->first();
                         if ($canvas_updates) {
@@ -1585,22 +1644,25 @@ class CourseController extends Controller
                                 $linked_lms_course_ids[] = $linked_lms_course->lms_course_id;
                             }
                         }
-                        $lmsApi = new LmsAPI();
-                        $lms_courses = $lmsApi->getCourses($lti_registration, $course->user_id);
-                        if ($lms_courses['type'] === 'error') {
-                            $lms_error = $lms_courses['message'];
-                        } else {
-                            $all_lms_courses = $lms_courses['courses'];
-                            $lms_courses = [];
-                            foreach ($all_lms_courses as $lms_course) {
-                                if (!in_array($lms_course->id, $linked_lms_course_ids)) {
-                                    $lms_courses[] = $lms_course;
+                        if (!$course->lms_course_id) {
+                            $lmsApi = new LmsAPI();
+                            $lms_courses = $lmsApi->getCourses($lti_registration, $course->user_id);
+                            if ($lms_courses['type'] === 'error') {
+                                $lms_error = $lms_courses['message'];
+                            } else {
+                                $all_lms_courses = $lms_courses['courses'];
+                                $lms_courses = [];
+                                foreach ($all_lms_courses as $lms_course) {
+                                    if (!in_array($lms_course->id, $linked_lms_course_ids)) {
+                                        $lms_courses[] = $lms_course;
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+
 
             $response['course'] = [
                 'id' => $course->id,
@@ -1616,6 +1678,7 @@ class CourseController extends Controller
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
                 'sections' => $course->sections,
+                'show_z_scores' => $course->show_z_scores,
                 'show_z_scores' => $course->show_z_scores,
                 'graders' => $course->graderInfo(),
                 'start_date' => $course->start_date,
@@ -1633,6 +1696,8 @@ class CourseController extends Controller
                 'lms' => $course->lms,
                 'lms_error' => $lms_error,
                 'lms_course_id' => $course->lms_course_id,
+                'lms_only_entry' => $course->lms_only_entry,
+                'adapt_enrollment_notification_date' => $course->adapt_enrollment_notification_date,
                 'lms_has_api_key' => $course->lms_has_api_key,
                 'lms_has_access_token' => $course->lms_has_access_token,
                 'lms_courses' => $lms_courses,
@@ -1665,7 +1730,8 @@ class CourseController extends Controller
             }
             $response['type'] = 'success';
 
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error retrieving your course.  Please try again or contact us for assistance.";
@@ -1773,6 +1839,7 @@ class CourseController extends Controller
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
 
+            $data['adapt_enrollment_notification_date'] = $this->_adaptEnrollmentNotificationDate($request, $data);
             $data['shown'] = 0;
             $data['public_description'] = $request->public_description;
             $data['private_description'] = $request->private_description;
@@ -1867,6 +1934,7 @@ class CourseController extends Controller
                 $data['discipline_id'] = $request->discipline;
             }
             if ($request->user()->role === 2) {
+                $data['adapt_enrollment_notification_date'] = $this->_adaptEnrollmentNotificationDate($request, $data);
                 $lms_grade_passback = $data['lms'] ? 'automatic' : null;
                 Assignment::where('course_id', $course->id)->update(['lms_grade_passback' => $lms_grade_passback]);
                 $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
@@ -2028,6 +2096,16 @@ class CourseController extends Controller
             DB::table('grader_notifications')
                 ->where('course_id', $course->id)
                 ->delete();
+
+            DB::table('lti_names_and_roles')
+                ->where('course_id', $course->id)
+                ->delete();
+
+            DB::table('lti_names_and_roles_urls')
+                ->where('course_id', $course->id)
+                ->delete();
+
+
             $course->extensions()->delete();
 
             $course->assignments()->delete();
@@ -2098,7 +2176,8 @@ class CourseController extends Controller
      * @return void
      * @throws Exception
      */
-    public function updateLMSAssignmentDates(LmsAPI $lmsAPI, Course $course)
+    public
+    function updateLMSAssignmentDates(LmsAPI $lmsAPI, Course $course)
     {
         foreach ($course->assignments as $assignment) {
             try {
@@ -2116,6 +2195,19 @@ class CourseController extends Controller
                 $h->report($e);
             }
         }
-
     }
+
+    /**
+     * @param $request
+     * @param $data
+     * @return string|null
+     */
+    private function _adaptEnrollmentNotificationDate($request, $data): ?string
+    {
+        return $request->lms && +$request->lms_only_entry === 0
+            ? $this->convertLocalMysqlFormattedDateToUTC($data['adapt_enrollment_notification_date'], auth()->user()->time_zone)
+            :
+            null;
+    }
+
 }

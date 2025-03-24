@@ -55,6 +55,12 @@ class StoreCourse extends FormRequest
                 $rules['crn'] = 'required';
                 $rules['section'] = ['required', 'max:255', 'regex:/^((?!---).)*$/'];
             }
+            if ($this->lms) {
+                $rules['lms_only_entry'] = Rule::in([0, 1]);
+                if (+$this->lms_only_entry === 0) {
+                    $rules['adapt_enrollment_notification_date'] = 'required|date';
+                }
+            }
         }
         return $rules;
 

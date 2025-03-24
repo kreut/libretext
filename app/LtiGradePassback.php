@@ -32,10 +32,20 @@ class LtiGradePassback extends Model
                         'message' => 'none'
                     ]
                 );
+                $ltiGradePassback = new LtiGradePassback();
+                $perform_passback = false;
                 if (!in_array(app()->environment(), ['testing', 'local'])) {
-                    $ltiGradePassback = new LtiGradePassback();
+                    $perform_passback = true;
+                }
+
+                if (app()->environment('local')) {
+                    $course = Assignment::find($assignment_id)->course;
+                    $lti_registration = $course->getLtiRegistration();
+                    $perform_passback = $lti_registration->auth_server === 'http://canvas.docker';
+                }
+                if ($perform_passback) {
                     $ltiGradePassback->passBackByUserIdAndAssignmentId($score_to_passback, $ltiLaunch);
-                    //ProcessPassBackByUserIdAndAssignment::dispatch($score_to_passback, $ltiLaunch);
+
                 }
             }
         } catch (Exception $e) {
@@ -78,9 +88,7 @@ class LtiGradePassback extends Model
                 $is_blackboard = strpos($iss, "blackboard") !== false;
                 $is_moodle = strpos($iss, "moodle") !== false;
                 $is_brightspace = str_contains($iss, "brightspace") || str_contains($iss, "desire2learn");
-                if ($is_canvas && !$launch->has_nrps()) {
-                    throw new Exception("no names and roles");
-                }
+
                 $score_maximum = 0 + DB::table('assignment_question')
                         ->where('assignment_id', $assignment_id)
                         ->sum('points');
@@ -91,6 +99,7 @@ class LtiGradePassback extends Model
                 }
 
                 //  file_put_contents('/var/www/dev.adapt/lti_log.text', "launch data" . print_r($launch->get_launch_data(), true) . "\r\n", FILE_APPEND);
+
                 $score = LTI\LTI_Grade::new()
                     ->set_score_given($score_to_passback)
                     ->set_score_maximum($score_maximum)

@@ -218,6 +218,18 @@ class CanvasAPI extends Model
         return $this->_doCurl($lms_access_token->access_token, 'GET', $url);
     }
 
+    /**
+     * @param int $course_id
+     * @return array
+     * @throws Exception
+     */
+    public function getEnrollments(int $course_id){
+        $lms_access_token = $this->_updateAccessToken();
+        $url = "/api/v1/courses/$course_id/enrollments";
+        return $this->_doCurl($lms_access_token->access_token, 'GET', $url);
+
+    }
+
 
     /**
      * @param string $authorization_code

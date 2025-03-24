@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\AssignToGroup;
 use App\AssignToUser;
+use App\Custom\LTIDatabase;
 use App\Enrollment;
 use App\Course;
 use App\Extension;
@@ -14,6 +15,8 @@ use App\Http\Requests\AutoEnrollStudent;
 use App\Http\Requests\DestroyEnrollment;
 use App\Http\Requests\UpdateEnrollment;
 use App\LtiGradePassback;
+use App\LtiNamesAndRoles;
+use App\LtiNamesAndRolesUrl;
 use App\PendingCourseInvitation;
 use App\Score;
 use App\Section;
@@ -36,7 +39,6 @@ use App\Exceptions\Handler;
 use \Exception;
 
 use App\Traits\DateFormatter;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class EnrollmentController extends Controller
@@ -510,6 +512,9 @@ class EnrollmentController extends Controller
      * @param Enrollment $enrollment
      * @param Section $Section
      * @param PendingCourseInvitation $pendingCourseInvitation
+     * @param LtiNamesAndRoles $ltiNamesAndRoles
+     * @param LtiNamesAndRolesUrl $ltiNamesAndRolesUrl
+     * @param LTIDatabase $LTIDatabase
      * @return array|Application|ResponseFactory|Response|string
      * @throws Exception
      */
@@ -517,7 +522,10 @@ class EnrollmentController extends Controller
     function store(StoreEnrollment         $request,
                    Enrollment              $enrollment,
                    Section                 $Section,
-                   PendingCourseInvitation $pendingCourseInvitation)
+                   PendingCourseInvitation $pendingCourseInvitation,
+                   LtiNamesAndRoles        $ltiNamesAndRoles,
+                   LtiNamesAndRolesUrl     $ltiNamesAndRolesUrl,
+                   LTIDatabase             $LTIDatabase)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $enrollment);
@@ -558,10 +566,17 @@ class EnrollmentController extends Controller
                 $response = '{"message":"The given data was invalid.","errors":{"access_code":["The selected access code is invalid."]}}';
                 return response($response, 422);
             }
-            if ($section->course->lms && !$request->session()->has('lti_user_id')) {
+            if ($section->course->lms && $section->course->lms_only_entry && !$request->session()->has('lti_user_id')) {
                 DB::rollback();
-                $response = '{"message":"The given data was invalid.","errors":{"access_code":["You are trying to enroll in a course that is being served through an LMS such as Canvas, Blackboard, or Moodle.  Please log into your LMS and enter the first ADAPT assignment; you will then be prompted to enter the access code."]}}';
+                $response = '{"message":"The given data was invalid.","errors":{"access_code":["You are trying to enroll in a course that is being served through an LMS such as Canvas, Blackboard, or Brightspace.  Please log into your LMS and enter the first ADAPT assignment; you will then be prompted to enter the access code."]}}';
                 return response($response, 422);
+            }
+            if ($section->course->lms && !$section->course->lms_only_entry && !$user->fake_student) {
+                $exists_in_lms_roster = $ltiNamesAndRoles->existsInLmsRoster($ltiNamesAndRolesUrl, $LTIDatabase, $section->course, $user);
+                if (!$exists_in_lms_roster) {
+                    $response = '{"message":"The given data was invalid.","errors":{"access_code":["You are trying to enroll in a course that is being served through an LMS such as Canvas, Blackboard, or Brightspace.  However, you are enrolling using an email that is not part of your instructor\'s LMS roster. Please use an ADAPT account with an email tied your school\'s LMS email address. "]}}';
+                    return response($response, 422);
+                }
             }
             if ($section->course->enrollments->isNotEmpty()) {
                 $enrolled_user_ids = $section->course->enrollments->pluck('user_id')->toArray();

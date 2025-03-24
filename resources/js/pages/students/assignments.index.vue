@@ -54,7 +54,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -70,10 +70,10 @@
     >
       <table class="table table-striped">
         <thead>
-          <tr>
-            <th>Status</th>
-            <th>Explanation</th>
-          </tr>
+        <tr>
+          <th>Status</th>
+          <th>Explanation</th>
+        </tr>
         </thead>
         <tr>
           <td>
@@ -131,11 +131,11 @@
       </b-card>
       <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
-          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"/>
         </div>
       </div>
     </b-modal>
-    <PageTitle v-if="canViewAssignments" :title="title" />
+    <PageTitle v-if="canViewAssignments" :title="title"/>
     <div class="vld-parent">
       <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
       <loading :active.sync="loading"
@@ -147,13 +147,13 @@
                background="#FFFFFF"
       />
       <div v-if="hasAssignments && !loading">
-        <div v-if="isInLmsCourse && !user.is_instructor_logged_in_as_student">
+        <div v-if="lmsOnlyEntry && !user.is_instructor_logged_in_as_student">
           <b-alert show variant="info">
-            All assignments are served through your LMS such as Canvas, Blackboard, or Moodle. Please log in to your LMS
+            All assignments are served through your LMS such as Canvas, Blackboard, or Brightspace. Please log in to your LMS
             to access your assignments.
           </b-alert>
         </div>
-        <div v-if="!isInLmsCourse || user.is_instructor_logged_in_as_student">
+        <div v-if="!lmsOnlyEntry || user.is_instructor_logged_in_as_student">
           <div class="text-center">
             <div class="text-center">
               <p v-show="letterGradesReleased" class="font-weight-bold">
@@ -170,7 +170,7 @@
               <a id="course-z-score-tooltip"
                  href="#"
               >
-                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score" />
+                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
               </a>
               <b-tooltip target="course-z-score-tooltip"
                          triggers="hover focus"
@@ -237,12 +237,12 @@
           >
             <template v-slot:head(z_score)="data">
               Z-Score
-              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'" />
+              <QuestionCircleTooltipModal :aria-label="'z-score-explained'" :modal-id="'modal-z-score'"/>
             </template>
 
             <template v-slot:head(status)="data">
               Status
-              <QuestionCircleTooltipModal :aria-label="'status-explained'" :modal-id="'modal-status'" />
+              <QuestionCircleTooltipModal :aria-label="'status-explained'" :modal-id="'modal-status'"/>
             </template>
             <template #cell(name)="data">
               <span v-show="data.item.is_available">
@@ -285,8 +285,8 @@
             <template #cell(score)="data">
               <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
               <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
-                data.item.total_points
-              }}</span>
+                  data.item.total_points
+                }}</span>
             </template>
           </b-table>
         </div>
@@ -329,7 +329,7 @@ export default {
     chosenAssignmentStatus: null,
     assignmentStatuses: [],
     centrifugo: {},
-    isInLmsCourse: false,
+    lmsOnlyEntry: false,
     showProgressReport: false,
     atLeastOneAssignmentNotIncludedInWeightedAverage: false,
     scoreInfoByAssignmentGroup: [],
@@ -514,7 +514,7 @@ export default {
         this.scoreInfoByAssignmentGroup = data.score_info_by_assignment_group
         this.canViewAssignments = true
         this.hasAssignments = data.assignments.length > 0
-        this.isInLmsCourse = this.hasAssignments && data.assignments[0].is_in_lms_course
+        this.lmsOnlyEntry = this.hasAssignments && data.assignments[0].lms && data.assignments[0].lms_only_entry
         this.showNoAssignmentsAlert = !this.hasAssignments
         this.assignments = data.assignments
         for (let i = 0; i < this.assignments.length; i++) {
@@ -618,6 +618,10 @@ export default {
       // alert('reset modal')
     },
     getAssignmentSummaryView (assignment) {
+      if (Boolean(assignment.lms) && !assignment.lms_only_entry && !assignment.lti_assignments_and_grades_url) {
+        this.$noty.info('This assignment is not yet linked to your LMS.  Please ask your instructor to link it to ADAPT.')
+        return false
+      }
       if (assignment.source === 'x') {
         this.$noty.info('This assignment has no questions to view because it is an external assignment.  Please contact your instructor for more information.')
         return false

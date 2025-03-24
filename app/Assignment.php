@@ -131,6 +131,7 @@ class Assignment extends Model
         DB::table('seeds')->where('assignment_id', $this->id)->delete();
         DB::table('cutups')->where('assignment_id', $this->id)->delete();
         DB::table('lti_launches')->where('assignment_id', $this->id)->delete();
+        DB::table('lti_assignments_and_grades_urls')->where('assignment_id', $this->id)->delete();
         DB::table('randomized_assignment_questions')->where('assignment_id', $this->id)->delete();
         DB::table('compiled_pdf_overrides')->where('assignment_id', $this->id)->delete();
         DB::table('question_level_overrides')->where('assignment_id', $this->id)->delete();
@@ -444,6 +445,15 @@ class Assignment extends Model
                 $total_points_by_assignment = $this->getTotalPointsForShownAssignments($course);
                 [$scores_by_assignment, $z_scores_by_assignment] = $Score->getUserScoresByAssignment($course, Auth::user());
                 $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
+                if ($course->lms && !$course->lms_entry_only) {
+
+                    $lti_assignments_and_grades_urls = DB::table('lti_assignments_and_grades_urls')
+                        ->whereIn('assignment_id', $assigned_assignment_ids)
+                        ->get();
+                    foreach ($lti_assignments_and_grades_urls as $lti_assignments_and_grades_url) {
+                        $lti_assignments_and_grades_url_by_assignment_id[$lti_assignments_and_grades_url->assignment_id] = $lti_assignments_and_grades_url->url;
+                    }
+                }
 
             } else {
                 $assignment_ids_with_submissions_or_file_submissions = $course->assignmentIdsWithSubmissionsOrFileSubmissions();
@@ -461,7 +471,16 @@ class Assignment extends Model
                 foreach ($need_to_grades as $need_to_grade) {
                     $need_to_grade_by_assignment_id[$need_to_grade->assignment_id] = $need_to_grade->count;
                 }
+
                 if ($course->lms) {
+
+                    $lti_assignments_and_grades_urls = DB::table('lti_assignments_and_grades_urls')
+                        ->whereIn('assignment_id', $assignment_ids)
+                        ->get();
+                    foreach ($lti_assignments_and_grades_urls as $lti_assignments_and_grades_url) {
+                        $lti_assignments_and_grades_url_by_assignment_id[$lti_assignments_and_grades_url->assignment_id] = $lti_assignments_and_grades_url->url;
+                    }
+
                     $lti_assignments = DB::table('assignments')
                         ->whereIn('id', $assignment_ids)
                         ->whereNotNull('lms_resource_link_id')
@@ -611,7 +630,9 @@ class Assignment extends Model
                     continue;
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
-                $assignments_info[$key]['is_in_lms_course'] = $course->lms;
+                $assignments_info[$key]['lms'] = $course->lms;
+                $assignments_info[$key]['lms_only_entry'] =  $course->lms_only_entry;
+                $assignments_info[$key]['lti_assignments_and_grades_url'] = $lti_assignments_and_grades_url_by_assignment_id[$assignment->id] ?? null;
                 $assignments_info[$key]['auto_release_show_dates'] = $auto_release_show_dates_by_assignment_id[$assignment->id] ?? null;
                 $assignments_info[$key]['lms_api'] = (bool)$course->lms_course_id;
                 foreach ($auto_release_keys as $auto_release_key) {

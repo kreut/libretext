@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enrollment;
 use App\Exceptions\Handler;
-use App\LoggedInUserToken;
+use App\LtiAssignmentsAndGradesUrl;
 use App\LtiGradePassback;
 use App\LtiLaunch;
+use App\LtiNamesAndRolesUrl;
 use App\LtiToken;
 use App\OIDC;
 use App\Section;
@@ -19,17 +20,14 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Jose\Component\KeyManagement\JWKFactory;
 use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
-use Overrides\IMSGlobal\LTI\LTI_Names_Roles_Provisioning_Service;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use stdClass;
-use Telegram\Bot\Laravel\Facades\Telegram;
 
 
 class LTIController extends Controller
@@ -53,16 +51,21 @@ class LTIController extends Controller
                     'last_name' => $user->last_name,
                     'user_type' => $user->role === 2 ? 'instructor' : 'student',
                     'time_zone' => $user->time_zone];
-                $oidc_response = $OIDC->autoProvision($data);
-                if ($oidc_response['type'] === 'success') {
-                    $user->central_identity_id = $oidc_response['central_identity_id'];
-                    $user->save();
+                if (!app()->environment('local')) {
+                    $oidc_response = $OIDC->autoProvision($data);
+                    if ($oidc_response['type'] === 'success') {
+                        $user->central_identity_id = $oidc_response['central_identity_id'];
+                        $user->save();
+                    } else {
+                        /* Telegram::sendMessage([
+                             'chat_id' => config('myconfig.telegram_channel_id'),
+                             'parse_mode' => 'HTML',
+                             'text' => "Unable to auto-provision User: $user->id. Error: " . json_encode($oidc_response)
+                         ]);*/
+                    }
                 } else {
-                    /* Telegram::sendMessage([
-                         'chat_id' => config('myconfig.telegram_channel_id'),
-                         'parse_mode' => 'HTML',
-                         'text' => "Unable to auto-provision User: $user->id. Error: " . json_encode($oidc_response)
-                     ]);*/
+                    $user->central_identity_id = (string)Str::uuid();
+                    $user->save();
                 }
             } else {
                 $lti_user_email = session()->get('lti_user_email');
@@ -73,32 +76,32 @@ class LTIController extends Controller
                      $user->save();
                      $OIDC->changeEmail($user->central_identity_id, $lti_user_email);
                     */
-                 }
-             }
-             $token = \JWTAuth::fromUser($user);
-             $response['token'] = $token;
-             $response['type'] = 'success';
-         } catch (ModelNotFoundException $e) {
-             $h = new Handler(app());
-             $h->report($e);
-             $response['message'] = "It looks like your LTI User ID was not valid.  Instructors using Canvas should make sure that they have checked 'Load This Tool In A New Tab' (where you selected ADAPT as an External Tool from within Canvas).";
+                }
+            }
+            $token = \JWTAuth::fromUser($user);
+            $response['token'] = $token;
+            $response['type'] = 'success';
+        } catch (ModelNotFoundException $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "It looks like your LTI User ID was not valid.  Instructors using Canvas should make sure that they have checked 'Load This Tool In A New Tab' (where you selected ADAPT as an External Tool from within Canvas).";
 
-         } catch (Exception $e) {
-             $h = new Handler(app());
-             $h->report($e);
-             $response['message'] = 'We could not link up your LMS user account with ADAPT.  Please try again or contact us for assistance.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'We could not link up your LMS user account with ADAPT.  Please try again or contact us for assistance.';
 
-         }
-         return $response;
+        }
+        return $response;
 
-     }
+    }
 
-     /**
-      * @param Request $request
-      * @param Assignment $assignment
-      * @return array
-      * @throws Exception
-      */
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
     public function linkAssignmentToLMS(Request $request, Assignment $assignment): array
     {
         $response['type'] = 'error';
@@ -125,6 +128,24 @@ class LTIController extends Controller
             DB::table('courses')
                 ->where('id', $assignment->course->id)
                 ->update(['lms_course_name' => session()->get('lms_course_name')]);
+
+            $current_lti_launch_by_assignment_id = LTILaunch::where('assignment_id', $assignment->id)
+                ->where('user_id', $request->user()->id)
+                ->where('launch_id', '<>', session()->get('lms_launch_id'))
+                ->first();
+            if ($current_lti_launch_by_assignment_id) {
+                //in case some manual linking happened, unlink it
+                $current_lti_launch_by_assignment_id->delete();
+            }
+            $launch = LtiLaunch::where('launch_id', session()->get('lms_launch_id'))->first();
+
+            $launch->update(['assignment_id' => $assignment->id]);
+            $launch_data = json_decode($launch->jwt_body, true);
+            $assignments_and_grades_url = $launch_data["https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"]["lineitem"];
+            LtiAssignmentsAndGradesUrl::updateOrCreate(['assignment_id' => $assignment->id], ['url' => $assignments_and_grades_url]);
+            $names_and_roles_url = $launch_data["https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice"]["context_memberships_url"];
+            LtiNamesAndRolesUrl::firstOrCreate(['course_id' => $assignment->course->id, 'url' => $names_and_roles_url]);
+            session()->forget('lms_launch_id');
             DB::commit();
             $response['assignment_id'] = $assignment->id;
             $response['type'] = 'success';
@@ -284,14 +305,6 @@ class LTIController extends Controller
                     ->where('user_id', $lti_user->id)
                     ->where('assignment_id', $linked_assignment->id)
                     ->first();
-                if (!$lti_launch_by_user_and_assignment) {
-                    $lti_launch_by_user_and_assignment = new LtiLaunch();
-                    $lti_launch_by_user_and_assignment->user_id = $lti_user->id;
-                    $lti_launch_by_user_and_assignment->assignment_id = $linked_assignment->id;
-                    $lti_launch_by_user_and_assignment->launch_id = $launch_id;
-                    $lti_launch_by_user_and_assignment->jwt_body = json_encode($launch->get_launch_data());
-                    $lti_launch_by_user_and_assignment->save();
-                }
                 if ($lti_user->role === 3) {
                     if (!$lti_launch_by_user_and_assignment) {
                         $lti_launch_by_user_and_assignment = new LtiLaunch();
@@ -353,6 +366,16 @@ class LTIController extends Controller
                     redirect("/launch-in-new-window/$lti_token_id/init/$linked_assignment->id")
                     : redirect("/init-lms-assignment/$linked_assignment->id");
             } else {
+                if (!LtiLaunch::where('launch_id', $launch_id)->exists()) {
+                    $lti_launch_by_user_and_assignment = new LtiLaunch();
+                    $lti_launch_by_user_and_assignment->user_id = $lti_user->id;
+                    $lti_launch_by_user_and_assignment->assignment_id = null;
+                    $lti_launch_by_user_and_assignment->launch_id = $launch_id;
+                    $lti_launch_by_user_and_assignment->jwt_body = json_encode($launch->get_launch_data());
+                    $lti_launch_by_user_and_assignment->save();
+                }
+                session()->put('lms_launch_id', $launch_id);
+
                 return $lms_launch_in_new_window ?
                     redirect("/launch-in-new-window/$lti_token_id/link/$resource_link_id")
                     : redirect("/instructors/link-assignment-to-lms/$resource_link_id");

@@ -145,8 +145,8 @@ export default {
     },
     getAssignments (courseId) {
       const course = this.enrolledInCourses.find(item => item.id === courseId)
-      if (course.lms && !this.user.is_instructor_logged_in_as_student) {
-        this.$noty.info('All assignments are served through your LMS such as Canvas, Blackboard, or Moodle. Please log in to your LMS to access your assignments.')
+      if (course.lms && course.lms_only_entry && !this.user.is_instructor_logged_in_as_student) {
+        this.$noty.info('All assignments are served through your LMS such as Canvas, Blackboard, or Brightspace. Please log in to your LMS to access your assignments.')
         return false
       }
       this.isAnonymousUser

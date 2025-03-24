@@ -112,6 +112,8 @@ export default {
         this.editCourseForm.public = course.public
         this.editCourseForm.alpha = course.alpha
         this.editCourseForm.lms = course.lms
+        this.editCourseForm.lms_only_entry = course.lms_only_entry
+        this.editCourseForm.adapt_enrollment_notification_date = course.adapt_enrollment_notification_date
         this.editCourseForm.anonymous_users = course.anonymous_users
         this.editCourseForm.formative = course.formative
         this.editCourseForm.untether_beta_course = 0

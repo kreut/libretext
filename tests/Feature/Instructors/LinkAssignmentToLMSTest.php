@@ -2,15 +2,16 @@
 
 namespace Tests\Feature\Instructors;
 
-use App\AssignmentGroupWeight;
+
 use App\Course;
-use App\Grader;
-use App\Section;
+use App\LtiAssignmentsAndGradesUrl;
+use App\LtiLaunch;
 use App\User;
 use App\Assignment;
-use App\Extension;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 use App\Traits\Test;
@@ -32,7 +33,6 @@ class LinkAssignmentToLMSTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->assignment_2 = factory(Assignment::class)->create(['course_id' => $this->course->id]);
     }
-
 
 
     /** @test */
@@ -59,9 +59,16 @@ class LinkAssignmentToLMSTest extends TestCase
 
     public function owner_can_link_assignment_to_lms()
     {
-
+        $jwt_body["https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"]["lineitem"] = 'some url';
+        $jwt_body["https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice"]["context_memberships_url"] = 'some other url';
+        $lti_launch = LtiLaunch::create(['launch_id' => (string)Str::uuid(),
+            'user_id' => $this->user->id,
+            'assignment_id' => $this->assignment->id,
+            'jwt_body' => json_encode($jwt_body)]);
+        Log::info($lti_launch->launch_id);
         $this->actingAs($this->user)
-            ->postJson("/api/lti/link-assignment-to-lms/{$this->assignment->id}", ['lms_resource_link_id' => 1])
+            ->withSession(['lms_launch_id' => $lti_launch->launch_id])
+            ->post("/api/lti/link-assignment-to-lms/{$this->assignment->id}", ['lms_resource_link_id' => 1])
             ->assertJson(["type" => "success"]);
 
     }
