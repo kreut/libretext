@@ -124,6 +124,7 @@ class Assignment extends Model
         DB::table('assignment_question')->where('assignment_id', $this->id)->delete();
         DB::table('extensions')->where('assignment_id', $this->id)->delete();
         DB::table('scores')->where('assignment_id', $this->id)->delete();
+        DB::table('submission_score_overrides')->where('assignment_id', $this->id)->delete();
         DB::table('submission_files')->where('assignment_id', $this->id)->delete();
         DB::table('submissions')->where('assignment_id', $this->id)->delete();
         DB::table('can_give_ups')->where('assignment_id', $this->id)->delete();
@@ -1337,12 +1338,16 @@ class Assignment extends Model
         $extension->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $ltiGradePassback->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $seed->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
-        DB::table('review_histories')->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
-        DB::table('assignment_question_time_on_tasks')->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
-        DB::table('randomized_assignment_questions')->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        foreach (['submission_score_overrides',
+                     'review_histories',
+                     'assignment_question_time_on_tasks',
+                     'randomized_assignment_questions'] as $table) {
+            DB::table($table)->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        }
     }
 
-    public function assignToTimingsByUser()
+    public
+    function assignToTimingsByUser()
     {
         $assign_to_timings_by_user = [];
         $assign_to_timings = DB::table('assign_to_timings')
@@ -1363,7 +1368,8 @@ class Assignment extends Model
      * @param int $num_late
      * @return string
      */
-    public function getOverallStatus(int $num_assign_tos, int $num_open, int $num_closed, int $num_upcoming, int $num_late): string
+    public
+    function getOverallStatus(int $num_assign_tos, int $num_open, int $num_closed, int $num_upcoming, int $num_late): string
     {
         if ($num_assign_tos === $num_open) {
             return 'Open';
@@ -1384,7 +1390,8 @@ class Assignment extends Model
     /**
      * @return array
      */
-    public function questionInAssignmentInformation(): array
+    public
+    function questionInAssignmentInformation(): array
     {
         $assignment_ids = $this->course->assignments->pluck('id')->toArray();
         $assignment_questions = DB::table('assignment_question')
@@ -1403,7 +1410,8 @@ class Assignment extends Model
 
     }
 
-    public function scaleColumnsWithNewTotalPoints($new_total_points)
+    public
+    function scaleColumnsWithNewTotalPoints($new_total_points)
     {
         $tables_columns = [
             ['table' => 'assignment_question', 'column' => 'points'],
@@ -1430,7 +1438,8 @@ class Assignment extends Model
      * @param array $assignment_ids
      * @return array
      */
-    public function getTopicsByAssignmentId(Course $course, array $assignment_ids): array
+    public
+    function getTopicsByAssignmentId(Course $course, array $assignment_ids): array
     {
         $topics_by_assignment_id = [];
         $num_questions_by_topic_id = [];
@@ -1460,7 +1469,8 @@ class Assignment extends Model
         return $topics_by_assignment_id;
     }
 
-    public function assignmentCourseInfo()
+    public
+    function assignmentCourseInfo()
     {
         return DB::table('assignments')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
@@ -1477,7 +1487,8 @@ class Assignment extends Model
      * @param $data
      * @return array
      */
-    public function getIsoUnlockAtDueAt($data): array
+    public
+    function getIsoUnlockAtDueAt($data): array
     {
         $course_assign_to_timing = DB::table('assign_to_timings')
             ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
