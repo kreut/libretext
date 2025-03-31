@@ -4,6 +4,7 @@
       id="modal-progress-report"
       title="Progress Report"
       hide-footer
+      size="lg"
     >
       <p v-show="!atLeastOneAssignmentNotIncludedInWeightedAverage">
         The progress report only includes scores for assignments in which the scores are already released.
@@ -352,6 +353,12 @@ export default {
       },
       {
         key: 'percent',
+        tdClass: 'text-center',
+        thClass: 'text-center'
+      },
+      {
+        key: 'z_score',
+        label: 'Z-Score',
         tdClass: 'text-center',
         thClass: 'text-center'
       }

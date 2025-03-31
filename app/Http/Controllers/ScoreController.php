@@ -714,6 +714,7 @@ class ScoreController extends Controller
 
             $enrolled_users_by_id = [];
             $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection(Auth::user()->role, $course, 0);
+
             if ($course->show_progress_report || $course->show_z_scores || $course->finalGrades->letter_grades_released || $course->students_can_view_weighted_average) {
                 foreach ($enrolled_users as $enrolled_user) {//ignore the test student
                     $enrolled_users_by_id[$enrolled_user->id] =
@@ -725,14 +726,39 @@ class ScoreController extends Controller
 
                 $assignment_groups = $AssignmentGroup->summaryFromAssignments($user->role, $assignments, $total_points_by_assignment_id);
 
+
+
                 foreach ($assignment_groups as $assignment_group_id => $assignment_group) {
                     $percent = isset($sum_of_scores_by_user_and_assignment_group[Auth::user()->id][$assignment_group_id]) && $assignment_group['total_points']
                         ? number_format(100 * $sum_of_scores_by_user_and_assignment_group[Auth::user()->id][$assignment_group_id] / $assignment_group['total_points'], 2) . "%"
                         : '-';
+
+                    $z_score = "N/A";
+                    $average = "N/A";
+                    $std_dev = "N/A";
+                    $assignment_group_scores =[];
+                    if (isset($sum_of_scores_by_user_and_assignment_group[Auth::user()->id][$assignment_group_id])) {
+                        foreach ($sum_of_scores_by_user_and_assignment_group as $value){
+                            if (isset($value[$assignment_group_id])) {
+                                $assignment_group_scores[] = $value[$assignment_group_id];
+                            }
+                        }
+                        $mean_and_std_dev_by_assignment_group = $this->getMeanAndStDDevForArray($assignment_group_scores);
+                        $z_score = $this->computeZScore($sum_of_scores_by_user_and_assignment_group[Auth::user()->id][$assignment_group_id], $mean_and_std_dev_by_assignment_group);
+                   $average = $mean_and_std_dev_by_assignment_group['average'];
+                        $std_dev = $mean_and_std_dev_by_assignment_group['std_dev'];
+                    }
+
+
                     $score_info_by_assignment_group[] = ['assignment_group' => $assignment_group['assignment_group'],
                         'sum_of_scores' => $sum_of_scores_by_user_and_assignment_group[Auth::user()->id][$assignment_group_id] ?? '-',
                         'total_points' => $assignment_group['total_points'],
-                        'percent' => $percent];
+                        'percent' => $percent,
+                        'average' => $average,
+                        'std_dev' => $std_dev,
+                        'z_score' => $z_score];
+
+
                 }
 
                 foreach ($rows as $row) {
