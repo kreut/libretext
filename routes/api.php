@@ -448,6 +448,18 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/assignments/{assignment}/unlink-from-lms', 'AssignmentController@unlinkFromLMS');
 
 
+    Route::post('/rubric-templates', 'RubricTemplateController@store');
+    Route::patch('/rubric-templates/{rubricTemplate}', 'RubricTemplateController@update');
+    Route::patch('/rubric-templates/{rubricTemplate}/copy', 'RubricTemplateController@copy');
+    Route::delete('/rubric-templates/{rubricTemplate}', 'RubricTemplateController@destroy');
+    Route::get('/rubric-templates', 'RubricTemplateController@index');
+    Route::post('/rubric-templates/validate-rubric-items', 'RubricTemplateController@validateRubricItems');
+
+
+
+
+
+
     Route::post('/sso/finish-registration', 'Auth\SSOController@finishRegistration');
     Route::post('sso/finish-clicker-app-sso-registration', 'Auth\SSOController@finishClickerAppRegistration');
     Route::get('/sso/completed-registration', 'Auth\SSOController@completedRegistration');
@@ -585,6 +597,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/assignment-sync-question/check-for-discuss-it-questions-over-multiple-assignment-questions', 'AssignmentSyncQuestionController@checkForDiscussItQuestionsOverMultipleAssignmentQuestions');
     Route::get('/assignment-sync-question/check-for-discuss-it-questions-by-course-or-assignment/{level}/{id}', 'AssignmentSyncQuestionController@checkForDiscussItQuestionsByCourseOrAssignment');
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
+    Route::patch('/assignments/{assignment}/questions/{question}/update-custom-rubric', 'AssignmentSyncQuestionController@updateCustomRubric');
     Route::get('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@getDiscussItSettings');
     Route::patch('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@updateDiscussItSettings');
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
@@ -841,6 +854,11 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::post('/grading', 'GradingController@store');
     Route::get('/grading/{assignment}/{question}/{sectionId}/{gradeView}', 'GradingController@index');
+
+    Route::get('/rubric-points-breakdown/assignment/{assignment}/question/{question}/user/{user}', 'RubricPointsBreakdownController@getByAssignmentQuestionUser');
+    Route::get('/rubric-points-breakdown/assignment/{assignment}/question/{question}/exists', 'RubricPointsBreakdownController@existsByAssignmentQuestion');
+
+
 
     Route::get('/can-give-up/assignments/{assignment}/questions/{question}/validate', 'CanGiveUpController@validateCanGiveUp');
 

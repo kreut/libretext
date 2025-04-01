@@ -12,6 +12,7 @@ use App\Http\Requests\GradingRequest;
 use App\JWE;
 use App\Question;
 use App\RubricCategorySubmission;
+use App\RubricPointsBreakdown;
 use App\Score;
 use App\Submission;
 use App\SubmissionFile;
@@ -63,6 +64,7 @@ class GradingController extends Controller
         $question_id = $request->question_id;
         $student_user_id = $request->user_id;
         $assignment = $Assignment->find($assignment_id);
+
 
         $authorized = Gate::inspect('storeScore', [$assignmentFile, $user->find($student_user_id), $assignment]);
         if (!$authorized->allowed()) {
@@ -121,6 +123,24 @@ class GradingController extends Controller
                         'date_graded' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                         'grader_id' => $request->user()->id]);
+            }
+            if ($request->rubric_points_breakdown) {
+                $rubric_points_breakdown = $request->rubric_points_breakdown;
+                if (!is_array($rubric_points_breakdown)) {
+                    $rubric_points_breakdown = json_decode($rubric_points_breakdown, 1);
+                }
+                foreach ($rubric_points_breakdown as $key => $value) {
+                    if (+$request->file_submission_score === 0) {
+                        $rubric_points_breakdown[$key]['points'] = 0;
+                    }
+                }
+
+                $rubricPointsBreakdown = new RubricPointsBreakdown();
+                $rubricPointsBreakdown->updateOrCreate([
+                    'assignment_id' => $assignment_id,
+                    'question_id' => $question_id,
+                    'user_id' => $student_user_id],
+                    ['points_breakdown' => json_encode($rubric_points_breakdown)]);
             }
             if ($request->question_submission_score !== null) {
                 DB::table('submissions')
@@ -209,10 +229,20 @@ class GradingController extends Controller
             $current_question_submission_score = 0 + Helper::removeZerosAfterDecimal($current_question_submission_score);
         }
 //keeping as == because too confusing with null, ''
-
+        $current_rubric_points_breakdown = DB::table('rubric_points_breakdowns')
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->where('user_id', $student_user_id)
+            ->first();
+        if (!$current_rubric_points_breakdown) {
+            $rubric_points_breakdown_updated = true;
+        } else {
+            $rubric_points_breakdown_updated = $current_rubric_points_breakdown !== $request->rubric_points_breakdown;
+        }
         if ($current_file_submission_score == $request->file_submission_score
             && $current_question_submission_score == $request->question_submission_score
-            && $current_text_feedback == $request->textFeedback) { // == in case of null vs ''
+            && $current_text_feedback == $request->textFeedback
+            && !$rubric_points_breakdown_updated) { // == in case of null vs ''
             $response['type'] = 'info';
             $response['message'] = "Neither the total score nor the overall feedback has been updated.";
             return $response;
@@ -307,7 +337,7 @@ class GradingController extends Controller
 
             $submission_files = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users, $question->id) : [];
 
-           if ($submission_files) {
+            if ($submission_files) {
                 $submission_files = $submission_files[0];//comes back as an array of an array
             }
 
@@ -460,7 +490,7 @@ class GradingController extends Controller
                     $grading[$user->id]['student'] = [
                         'name' => "$user->first_name $user->last_name",
                         'email' => $user->email,
-                        'student_id'=> $user->student_id,
+                        'student_id' => $user->student_id,
                         'user_id' => $user->id];
                     //open_ended
                     $grading[$user->id]['non_technology_iframe_src'] = $non_technology_iframe_src;
@@ -505,6 +535,7 @@ class GradingController extends Controller
 
             $response['is_auto_graded'] = $is_auto_graded;
             $response['show_auto_graded_submission'] = $is_auto_graded && $question->technology === 'h5p';
+            $response['rubric'] = $assignment_question->custom_rubric ?: $question->rubric;
             $response['technology'] = $question->technology;
             $response['is_open_ended'] = $is_open_ended;
             $response['algorithmic'] = $webwork->algorithmicSolution($question);

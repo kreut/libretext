@@ -546,6 +546,30 @@
     </b-modal>
 
     <b-modal
+      id="modal-confirm-delete-rubric"
+      title="Confirm Delete Rubric"
+    >
+      Deleting this rubric will remove it from the question. However, any associated rubric template will be unaffected.
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-confirm-delete-rubric')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="deleteRubric"
+        >
+          Delete
+        </b-button>
+      </template>
+    </b-modal>
+
+    <b-modal
       :id="modalId"
       title="Preview Question"
       ok-title="OK"
@@ -779,19 +803,6 @@
                   An Exposition consists of source (text, video, simulation, any other HTML) without an auto-graded
                   component. They can be used in any of the non-root
                   nodes within Learning Trees.
-                </b-tooltip>
-              </b-form-radio>
-              <b-form-radio v-if="isAdmin" name="question_type" value="report">
-                Report
-                <QuestionCircleTooltip :id="'report-question-type-tooltip'"/>
-                <b-tooltip target="report-question-type-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  For a report, you'll create a rubric which will then be used to grade each of the sections of the
-                  report. The
-                  analysis of the
-                  reports is integrated with AI.
                 </b-tooltip>
               </b-form-radio>
             </b-form-radio-group>
@@ -1125,12 +1136,12 @@
             </template>
           </b-form-group>
           <div
-            v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || ['exposition','report'].includes(questionForm.question_type)"
+            v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || ('exposition' === questionForm.question_type)"
           >
             <b-container class="mt-2">
               <b-row>
                 <QuestionMediaUpload
-                  v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded || ['exposition','report'].includes(questionForm.question_type)"
+                  v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded || ('exposition' === questionForm.question_type)"
                   :key="`question-media-upload-key-${questionMediaUploadKey}`"
                   :media-uploads="questionForm.media_uploads"
                   :question-media-upload-id="questionMediaUploadId"
@@ -1200,9 +1211,9 @@
                   @change="initChangeExistingAutoGradedTechnology($event)"
                 />
                 <b-col>
-                <ConsultInsight v-if="newAutoGradedTechnology === 'webwork'"
-                                :url="'https://commons.libretexts.org/insight/webwork-techniques'"
-                />
+                  <ConsultInsight v-if="newAutoGradedTechnology === 'webwork'"
+                                  :url="'https://commons.libretexts.org/insight/webwork-techniques'"
+                  />
                 </b-col>
               </b-form-row>
 
@@ -2011,92 +2022,6 @@
         </div>
       </div>
     </b-card>
-    <b-card
-      v-if="questionForm.question_type === 'report'"
-      border-variant="primary"
-      header-bg-variant="primary"
-      header-text-variant="white"
-      class="mb-3"
-    >
-      <template #header>
-        Report Grading
-        <QuestionCircleTooltip id="report-grading-tooltip" :icon-style="'color:#fff'"/>
-        <b-tooltip target="report-grading-tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          Specify the purpose of the report and the report's rubric to help the AI process the report
-        </b-tooltip>
-      </template>
-      <div v-if="questionExistsInAnotherInstructorsAssignment">
-        <b-alert :show="true" class="font-weight-bold">
-          This question exists is another instructor's assignment so the rubric information may not be edited.
-        </b-alert>
-      </div>
-      <div class="mb-3">
-        <div v-if="questionExistsInAnotherInstructorsAssignment">
-          The purpose of the report:
-        </div>
-        <div v-if="!questionExistsInAnotherInstructorsAssignment">
-          Please specify the purpose of the report so the AI has some context in which to grade.
-        </div>
-      </div>
-      <b-form-group>
-        <b-form-row>
-          <b-textarea
-            v-show="!questionExistsInAnotherInstructorsAssignment"
-            id="purpose"
-            v-model="questionForm.purpose"
-            required
-            rows="3"
-            type="text"
-            :class="{ 'is-invalid': questionForm.errors.has('purpose') }"
-            @keydown="questionForm.errors.clear('purpose')"
-          />
-          <has-error :form="questionForm" field="purpose"/>
-        </b-form-row>
-        <div v-show="questionExistsInAnotherInstructorsAssignment">
-          {{ questionForm.purpose }}
-        </div>
-      </b-form-group>
-
-      <b-form-group
-        label-for="grading-style"
-        label-cols-sm="2"
-        label-align-sm="center"
-        class="mb-0"
-      >
-        <template v-slot:label>
-          Grading Style
-          <QuestionCircleTooltip id="grading-style-tooltip"/>
-          <b-tooltip target="grading-style-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            Choosing the grading style will affect how the AI responds with feedback and how it scores the lab
-          </b-tooltip>
-        </template>
-        <b-form-select v-show="!questionExistsInAnotherInstructorsAssignment"
-                       v-model="questionForm.grading_style_id"
-                       :options="gradingStyleOptions"
-                       :class="{ 'is-invalid': questionForm.errors.has('grading_style_id') }"
-                       style="width: 250px"
-                       @change="questionForm.errors.clear('grading_style_id')"
-        />
-        <has-error :form="questionForm" field="grading_style_id"/>
-        <div v-if="questionExistsInAnotherInstructorsAssignment" class="mt-1">
-          {{ gradingStyleOptions.find(item => item.value === questionForm.grading_style_id).text }}
-        </div>
-      </b-form-group>
-      <Rubric :key="`rubric-${revision}`"
-              class="mt-3"
-              :question-id="isEdit && questionForm.question_type === 'report' ? questionToEdit.id : 0"
-              :question-revision-id="revision"
-              :question-form="questionForm"
-              :question-exists-in-another-instructors-assignment="questionExistsInAnotherInstructorsAssignment"
-              @updateQuestionFormRubricCategories="updateQuestionFormRubricCategories"
-      />
-    </b-card>
     <b-card v-if="questionForm.question_type === 'assessment'"
             border-variant="primary"
             header-bg-variant="primary"
@@ -2315,6 +2240,52 @@
       </div>
     </b-card>
 
+    <b-card
+      v-if="questionForm.rubric"
+      border-variant="primary"
+      header-bg-variant="primary"
+      header-text-variant="white"
+      class="mb-3"
+    >
+      <template #header>
+        Rubric
+        <QuestionCircleTooltip id="rubric-tooltip" :icon-style="'color:#fff'"/>
+        <b-tooltip target="rubric-tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          This rubric may be overwritten at the assignment level.
+        </b-tooltip>
+        <b-icon icon="pencil"
+                target="edit-rubric-tooltip"
+                style="cursor:pointer;color:#fff;"
+                :aria-label="`Edit Rubric`"
+                @click="initEditRubric"
+        />
+        <b-icon icon="trash"
+                target="delete-rubric-tooltip"
+                style="cursor:pointer;color:#fff;"
+                :aria-label="`Delete Rubric`"
+                @click="$bvModal.show('modal-confirm-delete-rubric')"
+        />
+      </template>
+      <b-table
+        aria-label="Rubric"
+        striped
+        hover
+        :no-border-collapse="true"
+        :fields="rubricFields"
+        :items="JSON.parse(questionForm.rubric)"
+      />
+    </b-card>
+    <RubricProperties :key="`show-rubric-properties-${+showRubricProperties}`"
+                      :show-rubric-properties="showRubricProperties"
+                      :rubric-info="{'rubric' : questionForm.rubric}"
+                      :is-edit="isEditRubric"
+                      :is-template="false"
+                      @hideRubricProperties="showRubricProperties = false"
+                      @setRubric="setRubric"
+    />
     <span class="float-right">
       <b-button v-if="isEdit"
                 size="sm"
@@ -2331,6 +2302,11 @@
       >
         Show json
       </b-button>
+      <b-button v-if="!questionForm.rubric && user.id === 5"
+                size="sm"
+                variant="outline-info"
+                @click="showRubricProperties = true"
+      >Add Rubric</b-button>
       <b-button size="sm"
                 variant="info"
                 @click="previewQuestion"
@@ -2403,6 +2379,7 @@ import Sketcher from './Sketcher.vue'
 import { updateModalToggleIndex } from '../../helpers/accessibility/fixCKEditor'
 import QuestionCircleTooltipModal from '../QuestionCircleTooltipModal.vue'
 import ConsultInsight from '../ConsultInsight.vue'
+import RubricProperties from '../RubricProperties.vue'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2551,6 +2528,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    RubricProperties,
     ConsultInsight,
     QuestionCircleTooltipModal,
     Sketcher,
@@ -2616,6 +2594,10 @@ export default {
     }
   },
   data: () => ({
+    rubricFields: ['criterion', 'points'],
+    showRubricProperties: false,
+    isEditRubric: false,
+    rubric: {},
     activeQuestionMediaUpload: {},
     discussItTextForm: new Form({
       text: '',
@@ -2908,6 +2890,19 @@ export default {
   },
   methods: {
     updateModalToggleIndex,
+    deleteRubric () {
+      this.questionForm.rubric = null
+      this.$bvModal.hide('modal-confirm-delete-rubric')
+      this.$noty.info('The rubric has been removed.  Please remember to save your question to put the change into effect.')
+    },
+    initEditRubric () {
+      this.isEditRubric = true
+      this.showRubricProperties = true
+    },
+    setRubric (rubric) {
+      this.questionForm.rubric = rubric
+      this.showRubricProperties = false
+    },
     async checkForStudentSubmissions (automaticallyUpdateRevision) {
       let checkSubmissions
       checkSubmissions = true
@@ -4446,12 +4441,8 @@ export default {
       this.simpleChoices = []
       this.qtiJson = {}
       this.questionForm.rubric_categories = []
-      if (questionType === 'report') {
-        this.questionForm.purpose = ''
-        this.questionForm.grading_style_id = null
-      }
       let nonTechnologyText = this.questionForm.non_technology_text
-      if (['exposition', 'report'].includes(questionType)) {
+      if (questionType === 'exposition') {
         this.questionForm.technology = this.questionFormTechnology = 'text'
         this.questionForm.technology_id = ''
         this.questionForm.non_technology_text = this.switchingType ? nonTechnologyText : ''

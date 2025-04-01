@@ -2062,7 +2062,8 @@ class CourseController extends Controller
                 'submission_confirmations',
                 'pending_question_revisions',
                 'release_assignment_contacted_instructors',
-                'submission_score_overrides'];
+                'submission_score_overrides',
+                'rubric_points_breakdowns'];
             foreach ($tables as $table) {
                 DB::table($table)->whereIn('assignment_id', $assignment_ids)->delete();
             }

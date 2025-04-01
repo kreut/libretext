@@ -19,6 +19,7 @@ use App\LearningTree;
 use App\PendingQuestionRevision;
 use App\RandomizedAssignmentQuestion;
 use App\ReportToggle;
+use App\RubricPointsBreakdown;
 use App\Solution;
 use App\Traits\LibretextFiles;
 use App\Traits\Seed;
@@ -62,12 +63,80 @@ use Psr\Container\NotFoundExceptionInterface;
 class AssignmentSyncQuestionController extends Controller
 {
     /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param RubricPointsBreakdown $rubricPointsBreakdown
+     * @param Request $request
+     * @return array
+     * @throws Exception
+     */
+    public function updateCustomRubric(Assignment            $assignment,
+                                       Question              $question,
+                                       RubricPointsBreakdown $rubricPointsBreakdown,
+                                       AssignmentSyncQuestion $assignmentSyncQuestion,
+                                       Request               $request): array
+    {
+        try {
+
+            $authorized = Gate::inspect('updateCustomRubric', [$assignmentSyncQuestion, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $response['type'] = 'error';
+            $assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            $rubric_points = 0;
+            $custom_rubric = json_decode($request->custom_rubric);
+            /*
+             * I don't think I need to check this....
+            foreach ($custom_rubric as $item){
+                $rubric_points += $item->points;
+            }
+            if ((float) $rubric_points !== (float) $request->question_points){
+                $response['message'] = "The points should sum to $request->question_points.";
+                return $response;
+            }  */
+            if (json_encode(json_decode($assignment_question->custom_rubric)) !== json_encode($custom_rubric)) {
+                DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->update(['custom_rubric' => $request->custom_rubric]);
+                $rubric_points_breakdown_exists = $rubricPointsBreakdown->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->exists();
+                $rubricPointsBreakdown->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->delete();
+                $response['message'] = 'The rubric for this assignment question has been updated.';
+                if ($rubric_points_breakdown_exists) {
+                    $response['message'] .= "<br><br>In addition, the existing student rubric point breakdowns have been deleted for this assignment question.";
+                }
+                $response['type'] = 'success';
+            } else {
+                $response['type'] = 'info';
+                $response['message'] = 'No updating of rubric.';
+            }
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save your custom rubric to this assignment question.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+    /**
      * @param Request $request
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
-    public function checkForDiscussItQuestionsOverMultipleAssignmentQuestions(Request $request,
+    public function checkForDiscussItQuestionsOverMultipleAssignmentQuestions(Request                $request,
                                                                               AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
@@ -1676,6 +1745,9 @@ class AssignmentSyncQuestionController extends Controller
             DB::table('submission_histories')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
                 ->delete();
+            DB::table('rubric_points_breakdowns')->where('question_id', $question->id)
+                ->where('assignment_id', $assignment->id)
+                ->delete();
             $currently_ordered_questions = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->orderBy('order')
@@ -2422,7 +2494,9 @@ class AssignmentSyncQuestionController extends Controller
                 $submission_count = $response_info['submission_count'];
                 $late_question_submission = $response_info['late_question_submission'];
 
-
+                $assignment->questions[$key]['rubric'] = isset($assignment_questions_by_question_id[$question->id]) && $assignment_questions_by_question_id[$question->id]->custom_rubric
+                    ? $assignment_questions_by_question_id[$question->id]->custom_rubric
+                    : $question->rubric;
                 $assignment->questions[$key]['student_response'] = $student_response;
                 $assignment->questions[$key]['submitted_work'] = $submitted_work;
                 $assignment->questions[$key]['submitted_work_at'] = $submitted_work_at;

@@ -81,7 +81,21 @@ class AssignmentSyncQuestionPolicy
 
 
     }
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function updateCustomRubric(User $user,
+                                       AssignmentSyncQuestion $assignmentSyncQuestion,
+                                       Assignment             $assignment): Response
+    {
 
+        return (int)$user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the custom rubric for that question.');
+    }
     public function getDiscussItSettings(User                   $user,
                                          AssignmentSyncQuestion $assignmentSyncQuestion,
                                          Assignment             $assignment,

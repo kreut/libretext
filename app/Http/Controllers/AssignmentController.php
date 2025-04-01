@@ -2133,8 +2133,13 @@ class AssignmentController extends Controller
             $question_ids = $assignment->questions->pluck('id')->toArray();
             $uploaded_solutions_by_question_id = $Solution->getUploadedSolutionsByQuestionId($assignment, $question_ids);
             $questions = DB::table('questions')->whereIn('id', $question_ids)->get();
+
+            $rubrics_by_question_id = [];
             foreach ($questions as $question) {
                 $questions_by_id[$question->id] = $question;
+            }
+            foreach ($assignment_questions_where_student_can_upload_file as $value) {
+                $rubrics_by_question_id[$value->question_id] = $value->custom_rubric ?: $questions_by_id[$question->id]->rubric;
             }
 
             $dom = new DOMDocument();
@@ -2162,7 +2167,8 @@ class AssignmentController extends Controller
                 }
                 $response['questions'][] = ['text' => "$question->order",
                     'value' => $question->question_id,
-                    'solution' => $solution];
+                    'solution' => $solution,
+                    'rubric' => $rubrics_by_question_id[$question->question_id]];
             }
             $response['assignment'] = [
                 'name' => $assignment->name,

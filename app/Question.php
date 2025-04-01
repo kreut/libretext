@@ -2524,6 +2524,7 @@ class Question extends Model
         $question['iframe_id'] = $this->createIframeId();
         $question['technology'] = $question_info['technology'];
         $question['non_technology'] = $question_info['non_technology'];
+        $question['rubric'] = $question_info['rubric'];
         $question['webwork_code'] = $question_info['webwork_code'];
         $question['non_technology_iframe_src'] = $this->getHeaderHtmlIframeSrc($question_info, $question_info['revision_number']);
         $question['technology_iframe'] = $question_info['technology_iframe'];

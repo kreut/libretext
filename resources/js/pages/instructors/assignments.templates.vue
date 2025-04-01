@@ -51,8 +51,8 @@
         title="Assignment Template"
         size="lg"
         no-close-on-backdrop
-        @hidden="resetAssignmentForm(form,0)"
-        @shown="updateModalToggleIndex('modal-assignment-template')"
+        @hidden="resetAssignmentForm()(form,0)"
+        @shown="updateModalToggleIndex()('modal-assignment-template')"
       >
         <AssignmentProperties
           :assignment-groups="assignmentGroups"
@@ -156,12 +156,10 @@
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import AssignmentProperties from '~/components/AssignmentProperties'
-import { updateModalToggleIndex } from '~/helpers/accessibility/fixCKEditor'
 import AllFormErrors from '~/components/AllFormErrors'
 import draggable from 'vuedraggable'
 import {
   getAssignmentGroups,
-  resetAssignmentForm,
   assignmentForm,
   initAddAssignment,
   editAssignmentProperties
@@ -171,6 +169,8 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { doCopy } from '~/helpers/Copy'
 import axios from 'axios'
+import { resetAssignmentForm } from '../../helpers/AssignmentProperties'
+import { updateModalToggleIndex } from '../../helpers/accessibility/fixCKEditor'
 
 export default {
   components: {
@@ -212,6 +212,12 @@ export default {
     this.initAddAssignment(this.form, 0, this.assignmentGroups, this.$noty, null, null, null, null)
   },
   methods: {
+    updateModalToggleIndex () {
+      return updateModalToggleIndex
+    },
+    resetAssignmentForm () {
+      return resetAssignmentForm
+    },
     async saveNewOrder () {
       let orderedAssignmentTemplates = []
       for (let i = 0; i < this.assignmentTemplates.length; i++) {

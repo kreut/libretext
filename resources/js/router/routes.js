@@ -51,6 +51,11 @@ let instructor_paths = [
     component: page('instructors/assignments.templates.vue')
   },
   {
+    path: '/instructors/rubric-templates',
+    name: 'rubric.templates',
+    component: page('instructors/rubric.templates.vue')
+  },
+  {
     path: '/instructors/sitemap',
     name: 'instructors.sitemap',
     component: page('instructors/sitemap.vue')

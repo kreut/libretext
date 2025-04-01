@@ -119,6 +119,11 @@ class BreadcrumbController extends Controller
                             $breadcrumbs[0] = ['text' => 'My Courses',
                                 'href' => "/testers/courses"];
                             break;
+                        case('rubric.templates'):
+                            $breadcrumbs[0] = ['text' => 'Rubric Templates',
+                                'href' => "#",
+                                'active' => true];
+                            break;
                         case('students.sitemap'):
                         case('instructors.sitemap'):
                             $breadcrumbs[0] = ['text' => 'Sitemap',

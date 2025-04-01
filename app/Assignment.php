@@ -156,6 +156,7 @@ class Assignment extends Model
         DB::table('passback_by_assignments')->where('assignment_id', $this->id)->delete();
         DB::table('submission_histories')->where('assignment_id', $this->id)->delete();
         DB::table('release_assignment_contacted_instructors')->where('assignment_id', $this->id)->delete();
+        DB::table('rubric_points_breakdowns')->where('assignment_id', $this->id)->delete();
         DB::table('auto_releases')->where('type', 'assignment')
             ->where('type_id', $this->id)
             ->delete();

@@ -274,9 +274,9 @@
             <b-form-row>
               <b-col lg="3">
                 <b-form-select
-                  size="sm"
                   id="section_view"
                   v-model="sectionId"
+                  size="sm"
                   :options="sections"
                   @change="processing=true;getGrading()"
                 />
@@ -369,10 +369,28 @@
                 </b-row>
               </b-container>
               <div class="mb-2">
+                <RubricProperties :key="`rubric-properties-modal-${+showRubricProperties}`"
+                                  :rubric-info="{'rubric': rubric}"
+                                  :is-edit="rubric !== null"
+                                  :show-rubric-properties="showRubricProperties"
+                                  :question-points="+grading[currentStudentPage - 1]['open_ended_submission']['points']"
+                                  :assignment-id="+assignmentId"
+                                  :question-id="+grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
+                                  @setRubric="setCustomRubric"
+                                  @hideRubricProperties="showRubricProperties = false"
+                />
                 <b-button variant="outline-primary"
                           size="sm"
                           @click="visitQuestion"
-                >Visit Question
+                >
+                  Visit Question
+                </b-button>
+                <b-button v-show="isOpenEnded"
+                          size="sm"
+                          variant="outline-primary"
+                          @click="showRubricProperties = true"
+                >
+                  {{ rubric ? 'View' : 'Add' }} Rubric
                 </b-button>
                 <SolutionFileHtml :key="`solution-file-html-${questionView}`"
                                   :questions="solutions"
@@ -382,12 +400,14 @@
                 <b-button variant="outline-primary"
                           size="sm"
                           @click="openRegrader"
-                >Open Regrader
+                >
+                  Open Regrader
                 </b-button>
                 <b-button variant="outline-primary"
                           size="sm"
                           @click="openAssignmentGradebook"
-                >Open Assignment Gradebook
+                >
+                  Open Assignment Gradebook
                 </b-button>
               </div>
             </div>
@@ -420,7 +440,6 @@
               <b-row>
                 <b-col>
                   <b-card ref="questionCard" header="default" :header-html="questionHeader">
-
                     <b-card-text>
                       <div v-if="grading[currentStudentPage - 1]['technology_iframe']
                              && technology === 'h5p'
@@ -451,7 +470,7 @@
                       <div v-if="grading[currentStudentPage - 1]['qti_json']">
                         <div v-if="isDiscussIt">
                           <div v-show="showDiscussIt">
-                            <ul style="list-style: none;" v-show="discussItCompletionCriteria">
+                            <ul v-show="discussItCompletionCriteria" style="list-style: none;">
                               <li>
                                 <CompletedIcon
                                   :completed="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement"
@@ -487,16 +506,16 @@
                                 :key="`comments-${commentIndex}`"
                               >
                                 <span v-show="discussItCompletionCriteria">
-                                <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
-                                      :title="satisfiedRequirement(comment.discussion_comment_id)
-                                        ? 'This discussion comment satisfied the requirement.'
-                                        : 'This discussion comment did not satisfy the requirement.'"
-                                >
-                                  <CompletedIcon
-                                    :completed="satisfiedRequirement(comment.discussion_comment_id)"
-                                  />
-                                </span>
+                                  <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
+                                        :title="satisfiedRequirement(comment.discussion_comment_id)
+                                          ? 'This discussion comment satisfied the requirement.'
+                                          : 'This discussion comment did not satisfy the requirement.'"
+                                  >
+                                    <CompletedIcon
+                                      :completed="satisfiedRequirement(comment.discussion_comment_id)"
+                                    />
                                   </span>
+                                </span>
                                 <a href=""
                                    @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
                                 >{{ comment.created_at }}:</a> <span v-if="comment.text" v-html="comment.text"/>
@@ -548,7 +567,8 @@
                       :style="{ borderColor: cardBorderColor, borderWidth:'2px' }"
                     >
                       <template #header>
-                        <h2 class="h7 mb-0">Scores for {{ grading[currentStudentPage - 1]['student']['name'] }}
+                        <h2 class="h7 mb-0">
+                          Scores for {{ grading[currentStudentPage - 1]['student']['name'] }}
                           <QuestionCircleTooltip :id="`student-info`"/>
                           <b-tooltip :target="`student-info`"
                                      delay="250"
@@ -650,6 +670,21 @@
                               {{ questionSubmissionScoreErrorMessage }}
                             </div>
                           </b-form-group>
+                          <div
+                            v-if="rubric && (isOpenEnded || isDiscussIt) && grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                          >
+
+                            <RubricPointsBreakdown
+                              :key="`rubric-points-breakdown-${rubricPointsBreakdownIndex}-${grading[currentStudentPage - 1]['open_ended_submission']['user_id']}-${grading[currentStudentPage - 1]['open_ended_submission']['question_id']}`"
+                              :user-id="grading[currentStudentPage - 1]['open_ended_submission']['user_id']"
+                              :assignment-id="+assignmentId"
+                              :original-rubric="rubric"
+                              :question-id="grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
+                              :question-points="grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 -gradingForm.question_submission_score* 1"
+                              @updateOpenEndedSubmissionScore="updateOpenEndedSubmissionScore"
+                              @setRubricPointsBreakdown="setRubricPointsBreakdown"
+                            />
+                          </div>
                           <b-form-group
                             v-show="isOpenEnded || isDiscussIt"
                             label-cols-sm="5"
@@ -755,8 +790,7 @@
                           <span style="margin-left:108px">
                             <strong>Total:</strong>
                             <span style="margin-left:7px">{{
-                                (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
-                                + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
+                                totalScore
                               }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                             </span>
                           </span>
@@ -782,12 +816,11 @@
                   <div class="mb-2">
                     <b-card header="default"
                             :header-html="getGraderFeedbackTitle()"
-
                     >
                       <b-card-text align="center">
                         <div v-show="isOpenEnded || isDiscussIt">
                           <div v-show="(isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
-                          ||(isDiscussIt && discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
+                            ||(isDiscussIt && discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
                           >
                             <b-row class="mb-2">
                               <b-col>
@@ -866,26 +899,26 @@
                             v-show="isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission']"
                           >
                             <h4 class="pt-2">
-                            <span class="text-muted">
-                              There is no open-ended submission for which to provide feedback.
-                            </span>
+                              <span class="text-muted">
+                                There is no open-ended submission for which to provide feedback.
+                              </span>
                             </h4>
                           </div>
                           <div
                             v-show="isDiscussIt && !discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments"
                           >
                             <h4 class="pt-5">
-                            <span class="text-muted">
-                              There are no comments for which to provide feedback.
-                            </span>
+                              <span class="text-muted">
+                                There are no comments for which to provide feedback.
+                              </span>
                             </h4>
                           </div>
                         </div>
                         <div v-show="!isOpenEnded && !isDiscussIt">
                           <h4 class="pt-5">
-                          <span class="text-muted">
-                            This panel is applicable to open-ended assessments.
-                          </span>
+                            <span class="text-muted">
+                              This panel is applicable to open-ended assessments.
+                            </span>
                           </h4>
                         </div>
                       </b-card-text>
@@ -913,26 +946,25 @@
                   </div>
                 </b-col>
               </b-row>
-
             </b-container>
             <b-container>
-              <b-row class="mt-2" v-if="!isDiscussIt && submissionArray.length">
+              <b-row v-if="!isDiscussIt && submissionArray.length" class="mt-2">
                 <b-col>
                   <b-card header="default" :header-html="getSubmissionSummaryTitle()">
                     <b-row v-if="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
                            class="pb-2 pl-2"
                     >
-                       <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
-                             title="This submitted work is only applicable to the current submission."
-                       >
-                    <b-button
-                      variant="primary"
-                      size="sm"
-                      @click="$bvModal.show('modal-submitted-work')"
-                    >
-                      View Submitted Work
-                    </b-button>
-                       </span>
+                      <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
+                            title="This submitted work is only applicable to the current submission."
+                      >
+                        <b-button
+                          variant="primary"
+                          size="sm"
+                          @click="$bvModal.show('modal-submitted-work')"
+                        >
+                          View Submitted Work
+                        </b-button>
+                      </span>
                     </b-row>
                     <SubmissionArray
                       :key="`submission-array-${+renderMathJax}`"
@@ -950,7 +982,7 @@
                     />
                   </b-card>
                 </b-col>
-                <b-col></b-col>
+                <b-col/>
               </b-row>
             </b-container>
             <b-container v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
@@ -1091,11 +1123,15 @@ import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates } from '~/helpers/CSSUpdat
 import QtiJsonQuestionViewer from '../../components/QtiJsonQuestionViewer.vue'
 import SubmissionArray from '../../components/SubmissionArray.vue'
 import CompletedIcon from '../../components/CompletedIcon.vue'
+import RubricProperties from '../../components/RubricProperties.vue'
+import RubricPointsBreakdown from '../../components/RubricPointsBreakdown.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    RubricPointsBreakdown,
+    RubricProperties,
     CompletedIcon,
     SubmissionArray,
     QtiJsonQuestionViewer,
@@ -1112,6 +1148,10 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    rubricPointsBreakdownIndex: 0,
+    totalScore: 0,
+    rubric: null,
+    showRubricProperties: false,
     routeStudentUserId: null,
     routeQuestionId: null,
     discussItCompletionCriteria: false,
@@ -1238,6 +1278,14 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  watch: {
+    'gradingForm.file_submission_score' (newVal, oldVal) {
+      this.totalScore = +this.gradingForm.question_submission_score + +newVal || 0
+    },
+    'gradingForm.question_submission_score' (newVal, oldVal) {
+      this.totalScore = +this.gradingForm.file_submission_score + +newVal || 0
+    }
+  },
   created () {
     window.addEventListener('keydown', this.arrowListener)
   },
@@ -1263,6 +1311,33 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    updateOpenEndedSubmissionScore (rubricPointsBreakdown, points) {
+      this.gradingForm.file_submission_score = points
+      this.setRubricPointsBreakdown(rubricPointsBreakdown)
+    },
+    setRubricPointsBreakdown (rubricPointsBreakdown) {
+      this.gradingForm.rubric_points_breakdown = rubricPointsBreakdown
+      console.error('rubric points breakdown set')
+    },
+    async setCustomRubric (customRubric) {
+      const questionId = this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_id']
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-custom-rubric`,
+          { custom_rubric: customRubric })
+        if (data.type !== 'info') {
+          this.$noty[data.type](data.message)
+        }
+        if (data.type !== 'error') {
+          this.showRubricProperties = false
+          await this.changePage()
+          this.$nextTick(() => {
+            this.rubricPointsBreakdownIndex++
+          })
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     openAssignmentGradebook () {
       window.open(`/instructors/assignments/${this.assignmentId}/information/gradebook`, '_blank')
     },
@@ -1665,6 +1740,7 @@ export default {
     },
     async submitGradingForm (next, prepopulatedScore = {}, justShowErrorMessage = false) {
       if (prepopulatedScore.scoreType) {
+        this.gradingForm.rubric_points_breakdown = prepopulatedScore.scoreType === 'file_submission_score' && this.rubric
         this.gradingForm[prepopulatedScore.scoreType] = prepopulatedScore.score
       }
       try {
@@ -1682,7 +1758,6 @@ export default {
         this.gradingForm.assignment_id = this.assignmentId
         this.gradingForm.question_id = this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_id']
         this.gradingForm.user_id = this.grading[this.currentStudentPage - 1]['open_ended_submission']['user_id']
-
         const { data } = await this.gradingForm.post('/api/grading')
         if (justShowErrorMessage) {
           if (data.type === 'error') {
@@ -1888,6 +1963,9 @@ export default {
         this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
       }
       this.retrievedFromS3 = true
+      this.totalScore =
+        (1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0) +
+        (1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
     },
     retryUntilEventNotNull (callback, interval = 100, maxAttempts = 50) {
       let attempts = 0
@@ -1988,7 +2066,7 @@ export default {
           this.processing = false
           return false
         }
-        await this.getRubricsByQuestionId(this.questionView)
+        this.rubric = data.rubric
         this.showNoAutoGradedOrOpenSubmissionsExistAlert = !(data.grading.length > 0)
         if (this.showNoAutoGradedOrOpenSubmissionsExistAlert) {
           this.isLoading = false
@@ -2010,7 +2088,7 @@ export default {
         this.isDiscussIt = data.discuss_it
 
         if (this.isDiscussIt) {
-          this.getDiscussItRequirementInfo()
+          await this.getDiscussItRequirementInfo()
           switch (this.gradeView) {
             case ('ungradedDiscussions'):
               const studentsWhoSubmittedComments = []

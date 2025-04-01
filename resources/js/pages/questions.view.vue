@@ -1917,6 +1917,27 @@
                   </b-form-radio>
                 </b-form-radio-group>
               </b-row>
+              <RubricProperties :key="`rubric-properties-modal-${+showRubricProperties}`"
+                                :rubric-info="{'rubric': questions[currentPage-1].rubric}"
+                                :is-edit="questions[currentPage-1].rubric !== null"
+                                :show-rubric-properties="showRubricProperties"
+                                :question-points="1 * (questions[currentPage - 1].points)"
+                                :assignment-id="+assignmentId"
+                                :question-id="questions[currentPage-1].id"
+                                @setRubric="setCustomRubric"
+                                @hideRubricProperties="showRubricProperties = false"
+              />
+              <b-row
+                v-if="user.id === 5"
+                class="pl-3"
+              >
+                <b-button size="sm"
+                          variant="outline-info"
+                          @click="showRubricProperties = true"
+                >
+                  {{ questions[currentPage - 1].rubric ? 'View' : 'Add' }} Rubric
+                </b-button>
+              </b-row>
               <b-row align-h="center">
                 <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage"/>
                 <a href="" @click.prevent="openUpdateCompletionScoringModeModal()">
@@ -3388,6 +3409,8 @@ import SubmissionArray from '../components/SubmissionArray.vue'
 import SketcherSubmission from '../components/SketcherSubmission.vue'
 import CanSubmitWorkTooltip from '../components/CanSubmitWorkTooltip.vue'
 import SubmitWork from '~/components/SubmitWork.vue'
+import RubricProperties from '../components/RubricProperties.vue'
+import Rubric from '../components/questions/Rubric.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3398,6 +3421,8 @@ export default {
   middleware: 'auth',
   layout: window.config.clickerApp ? 'blank' : 'default',
   components: {
+    Rubric,
+    RubricProperties,
     SubmitWork,
     CanSubmitWorkTooltip,
     SketcherSubmission,
@@ -3430,6 +3455,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    showRubricProperties: false,
     emailToGraderSubject: '',
     testingH5p: false,
     canContactInstructorAutoGraded: false,
@@ -3958,6 +3984,21 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    async setCustomRubric (customRubric) {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/update-custom-rubric`,
+          { custom_rubric: customRubric, question_points: this.questions[this.currentPage - 1].points })
+        if (data.type !== 'info') {
+          this.$noty[data.type](data.message)
+        }
+        if (data.type !== 'error') {
+          this.questions[this.currentPage - 1].rubric = customRubric
+          this.showRubricProperties = false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async createLtiLaunchIfNeeded () {
       if (this.user.role === 3 && !this.user.fake_student) {
         try {

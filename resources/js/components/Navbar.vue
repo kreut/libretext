@@ -115,8 +115,8 @@
                         text="Dashboard" variant="primary" class="m-2" size="sm"
             >
               <b-dropdown-item v-for="location in dashboards" :key="location.text" href="#" :class="{
-                'border-bottom': location.text === 'My Assignment Templates',
-                'pb-2': location.text === 'My Assignment Templates',
+                'border-bottom': location.text === 'My Rubric Templates',
+                'pb-2': location.text === 'My Rubric Templates',
                 'pt-2': location.text === 'Search Questions'
               }" @click="loadRoutePath(location.routePath)"
               >
@@ -298,11 +298,18 @@ export default {
         let instructorDashboards = [
           { routePath: '/instructors/learning-trees', text: 'My Learning Trees' },
           { routePath: '/instructors/assignment-templates', text: 'My Assignment Templates' },
+          { routePath: '/instructors/rubric-templates', text: 'My Rubric Templates' },
           { routePath: '/all-questions/get', text: 'Search Questions' },
           { routePath: '/all-learning-trees/get', text: 'Browse Learning Trees' },
           { routePath: '/open-courses/public', text: 'Public Courses' },
           { routePath: '/open-courses/commons', text: 'Commons' },
           { routePath: '/instructors/frameworks', text: 'Frameworks' }]
+        if (this.user.id !== 5) {
+          instructorDashboards = instructorDashboards.filter(
+            item => item.routePath !== '/instructors/rubric-templates'
+          )
+        }
+
         dashboards = [...dashboards, ...instructorDashboards]
       }
       if (!this.isAdmin) {
