@@ -102,12 +102,7 @@ export default {
         },
         {
           icon: '',
-          name: 'Assignment Group Weights',
-          route: 'course_properties.assignment_group_weights'
-        },
-        {
-          icon: '',
-          name: 'Letter Grades',
+          name: 'Grades',
           route: 'course_properties.letter_grades'
         },
         {

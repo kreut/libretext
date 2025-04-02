@@ -22,7 +22,7 @@
                 straight average of all assignments within an assignment group. The averages by assignment
                 group are weighted by the
                 <span><router-link
-                  :to="{name: 'course_properties.assignment_group_weights', params: { courseId: courseId }}"
+                  :to="{name: 'course_properties.letter_grades', params: { courseId: courseId }}"
                 >
                   assignment group weights</router-link></span> which determine the
                 <router-link :to="{name: 'course_properties.letter_grades', params: { courseId: courseId }}">

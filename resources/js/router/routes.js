@@ -445,11 +445,6 @@ let general_paths = [
         component: page('instructors/course_properties/edit_assignment_dates.vue')
       },
       {
-        path: 'assignment-group-weights',
-        name: 'course_properties.assignment_group_weights',
-        component: page('instructors/course_properties/assignment_group_weights.vue')
-      },
-      {
         path: 'graders',
         name: 'course_properties.graders',
         component: page('instructors/course_properties/graders.vue')

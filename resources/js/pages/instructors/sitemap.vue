@@ -143,14 +143,7 @@
                     </li>
                     <li>
                       <router-link :to="{name: 'course_properties.letter_grades', params: {courseId: course.value}}">
-                        Letter Grades
-                      </router-link>
-                    </li>
-                    <li>
-                      <router-link
-                        :to="{name: 'course_properties.assignment_group_weights', params: {courseId: course.value}}"
-                      >
-                        Assignment Group Weights
+                        Grades
                       </router-link>
                     </li>
                     <li>
