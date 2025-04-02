@@ -150,7 +150,8 @@
       <div v-if="hasAssignments && !loading">
         <div v-if="lmsOnlyEntry && !user.is_instructor_logged_in_as_student">
           <b-alert show variant="info">
-            All assignments are served through your LMS such as Canvas, Blackboard, or Brightspace. Please log in to your LMS
+            All assignments are served through your LMS such as Canvas, Blackboard, or Brightspace. Please log in to
+            your LMS
             to access your assignments.
           </b-alert>
         </div>
@@ -543,6 +544,10 @@ export default {
           this.letterGrade = data.letter_grade
         }
         this.zScore = data.z_score
+        if (!this.zScore) {
+          this.assignmentFields = this.assignmentFields.filter(item => item.key !== 'z_score')
+          this.scoreInfoByAssignmentGroupFields = this.scoreInfoByAssignmentGroupFields.filter(item => item.key !== 'z_score')
+        }
         const clickerAssignments = this.assignments.filter(assignment => assignment.assessment_type === 'clicker')
         if (clickerAssignments.length) {
           this.centrifuge = await initCentrifuge()
