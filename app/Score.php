@@ -734,12 +734,14 @@ class Score extends Model
                 'sortable' => true,
                 'tdClass' => 'text-center',
                 'thClass' => 'text-center'];
-            $fields[] = ['key' => "$z_score_assignment_id",
-                'label' => 'Z-Score',
-                'name_only' => 'Z-Score',
-                'sortable' => true,
-                'tdClass' => 'text-center',
-                'thClass' => 'text-center'];
+          if ($course->show_z_scores) {
+              $fields[] = ['key' => "$z_score_assignment_id",
+                  'label' => 'Z-Score',
+                  'name_only' => 'Z-Score',
+                  'sortable' => true,
+                  'tdClass' => 'text-center',
+                  'thClass' => 'text-center'];
+          }
             $fields[] = ['key' => "$letter_grade_assignment_id",
                 'label' => 'Letter Grade',
                 'name_only' => 'Letter Grade',
