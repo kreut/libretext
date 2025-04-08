@@ -2204,7 +2204,7 @@ class CourseController extends Controller
      */
     private function _adaptEnrollmentNotificationDate($request, $data): ?string
     {
-        return $request->lms && +$request->lms_only_entry === 0
+        return $request->lms && +$request->lms_only_entry === 0 && isset($data['adapt_enrollment_notification_date'])
             ? $this->convertLocalMysqlFormattedDateToUTC($data['adapt_enrollment_notification_date'], auth()->user()->time_zone)
             :
             null;

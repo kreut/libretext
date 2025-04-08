@@ -670,7 +670,9 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
+    // CHANGE THIS in the rules as well for storing a course
     this.lmsEntryTester = ['local', 'staging', 'dev'].includes(window.config.environment) || [1, 5, 173].includes(this.user.id)
+    // End comment
     fixRequired(this)
     fixDatePicker('start_date', 'start date')
     fixDatePicker('end_date', 'end date')
