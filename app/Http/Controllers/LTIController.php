@@ -142,9 +142,15 @@ class LTIController extends Controller
             $launch->update(['assignment_id' => $assignment->id]);
             $launch_data = json_decode($launch->jwt_body, true);
             $assignments_and_grades_url = $launch_data["https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"]["lineitem"];
-            LtiAssignmentsAndGradesUrl::updateOrCreate(['assignment_id' => $assignment->id], ['url' => $assignments_and_grades_url]);
+            LtiAssignmentsAndGradesUrl::updateOrCreate(
+                ['assignment_id' => $assignment->id],
+                ['url' => $assignments_and_grades_url]
+            );
             $names_and_roles_url = $launch_data["https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice"]["context_memberships_url"];
-            LtiNamesAndRolesUrl::firstOrCreate(['course_id' => $assignment->course->id, 'url' => $names_and_roles_url]);
+            LtiNamesAndRolesUrl::updateOrCreate(
+                ['course_id' => $assignment->course->id],
+                ['url' => $names_and_roles_url]
+            );
             session()->forget('lms_launch_id');
             DB::commit();
             $response['assignment_id'] = $assignment->id;
