@@ -20,6 +20,20 @@ class AssignmentSyncQuestion extends Model
     protected $table = 'assignment_question';
 
     /**
+     * @param int $assignment_id
+     * @param $question_id
+     * @return mixed|null
+     */
+    public function customRubric(int $assignment_id, $question_id)
+    {
+        $assignment_question_info = DB::table('assignment_question')
+            ->where('assignment_question.assignment_id', $assignment_id)
+            ->where('assignment_question.question_id', $question_id)
+            ->first();
+        return $assignment_question_info ? $assignment_question_info->custom_rubric : null;
+    }
+
+    /**
      * @param $assignment
      * @param $Submission
      * @param $submission
@@ -298,6 +312,7 @@ class AssignmentSyncQuestion extends Model
      * @param $open_ended_submission_type
      * @param $open_ended_text_editor
      * @param BetaCourseApproval $betaCourseApproval
+     * @param $custom_rubric
      * @return void
      * @throws Exception
      */
@@ -306,7 +321,8 @@ class AssignmentSyncQuestion extends Model
                                                         AssignmentSyncQuestion $assignmentSyncQuestion,
                                                                                $open_ended_submission_type,
                                                                                $open_ended_text_editor,
-                                                        BetaCourseApproval     $betaCourseApproval)
+                                                        BetaCourseApproval     $betaCourseApproval,
+                                                                               $custom_rubric)
     {
 
         switch ($assignment->points_per_question) {
@@ -332,6 +348,7 @@ class AssignmentSyncQuestion extends Model
                 'points' => $points,
                 'weight' => $weight,
                 'question_revision_id' => $question_revision_id,
+                'custom_rubric'=> $custom_rubric,
                 'open_ended_submission_type' => $question->isDiscussIt() ? 0 : $open_ended_submission_type,
                 'discuss_it_settings' => Helper::defaultDiscussItSettings(),
                 'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,

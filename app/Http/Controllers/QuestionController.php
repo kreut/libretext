@@ -426,12 +426,14 @@ class QuestionController extends Controller
                 }
             }
             if ($assignment_id) {
+                $custom_rubric = $assignmentSyncQuestion->customRubric($assignment->id, $question_id);
                 $assignmentSyncQuestion->addQuestiontoAssignmentByQuestionId($assignment,
                     $cloned_question->id,
                     $assignmentSyncQuestion,
                     $assignment->default_open_ended_submission_type,
                     $assignment->default_open_ended_text_editor,
-                    $betaCourseApproval);
+                    $betaCourseApproval,
+                    $custom_rubric);
 
             }
             $learning_outcomes = DB::table('question_learning_outcome')
@@ -2130,11 +2132,13 @@ class QuestionController extends Controller
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
             $open_ended_submission_type = $assignment->default_open_ended_submission_type;
             $open_ended_text_editor = $assignment->default_open_ended_text_editor;
+            $custom_rubric = null;
             if ($type === 'adapt id') {
                 $assignment_question = $question_to_add_info['assignment_question'];
                 if ($assignment_question) {
                     $open_ended_submission_type = $assignment_question->open_ended_submission_type;
                     $open_ended_text_editor = $assignment_question->open_ended_text_editor;
+                    $custom_rubric = $assignment_question->custom_rubric;
                 }
             }
             if (!in_array($question_id, $assignment_questions)) {
@@ -2143,7 +2147,8 @@ class QuestionController extends Controller
                     $assignmentSyncQuestion,
                     $open_ended_submission_type,
                     $open_ended_text_editor,
-                    $betaCourseApproval);
+                    $betaCourseApproval,
+                    $custom_rubric);
                 $response['direct_import_id_added_to_assignment'] = $direct_import_id;
             } else {
                 $response['direct_import_id_not_added_to_assignment'] = $direct_import_id;
