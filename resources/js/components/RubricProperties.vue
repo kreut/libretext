@@ -5,7 +5,9 @@
              size="lg"
     >
       <p>Please confirm that you would like to delete the rubric criterion:</p>
-      <p class="font-weight-bold">{{ rubricItemToDelete.criterion }}</p>
+      <p class="font-weight-bold">
+        {{ rubricItemToDelete.criterion }}
+      </p>
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm" @click="$bvModal.hide('modal-confirm-delete-rubric-criterion')">
           Cancel
@@ -25,15 +27,16 @@
              @hidden="$emit('hideRubricProperties')"
     >
       <b-alert type="info" :show="rubricPointsBreakdownExists">
-        You have already saved the point breakdowns for at least one student.  If you update this rubric, all breakdowns will be reset and you will
+        You have already saved the point breakdowns for at least one student. If you update this rubric, all breakdowns
+        will be reset and you will
         have to enter in new scores for your students.
       </b-alert>
       <b-form-group
         v-if="rubricTemplateOptions.length"
         label-for="rubric_template"
-        label-cols-sm="2"
-        label-cols-lg="1"
-        label="Template"
+        :label-cols-sm="isTemplate ? 2 : 3"
+        :label-cols-lg="isTemplate ? 1 : 2"
+        :label="isTemplate ? 'Template' : 'Load Rubric Template'"
         label-size="sm"
       >
         <b-form-row>
@@ -48,8 +51,8 @@
       </b-form-group>
       <b-form-group
         v-show="!isTemplate"
-        label-cols-sm="2"
-        label-cols-lg="1"
+        label-cols-sm="3"
+        label-cols-lg="2"
         label="On save"
         label-size="sm"
         label-for="save_options"
@@ -67,6 +70,37 @@
           </b-form-radio>
           <b-form-radio v-if="rubricTemplate" value="update existing template">
             Update existing template
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        label-cols-sm="3"
+        label-cols-lg="2"
+        label-size="sm"
+        label-for="rubric_shown"
+      >
+        <template #label>
+          Rubric Shown
+          <QuestionCircleTooltip
+            id="rubric-shown-tooltip"
+          />
+          <b-tooltip target="rubric-shown-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            If you choose `No` then your students will not see the breakdown of the score.
+          </b-tooltip>
+        </template>
+        <b-form-radio-group
+          id="rubric_shown"
+          v-model="rubricShown"
+          class="mt-2"
+        >
+          <b-form-radio :value="true">
+            Yes
+          </b-form-radio>
+          <b-form-radio :value="false">
+            No
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
@@ -109,30 +143,64 @@
         </b-form-row>
       </b-form-group>
       <div v-if="rubricItems.length">
+        <RequiredText/>
+
         <table class="table table-striped small" aria-label="Rubric Criteria">
           <thead>
           <tr>
             <th scope="col" style="width:15px"/>
             <th scope="col">
-              Criteria
+              Title*
+            </th>
+            <th scope="col">
+              Criteria*
+            </th>
+            <th scope="col">
+              Description (Optional)
             </th>
             <th scope="col" style="width:100px">
-              Points <span v-show="questionPoints"><br>({{ questionPoints }} Total)</span>
+              <b-form-radio
+                v-model="scoreInputType"
+                name="score_input_type"
+                value="points"
+                @change="resetScoreInputType('percentage')"
+              >
+                Points
+              </b-form-radio>
+              <b-form-radio
+                v-model="scoreInputType"
+                name="score_input_type"
+                value="percentage"
+                @change="resetScoreInputType('points')"
+              >
+                Percentage
+              </b-form-radio>
             </th>
           </tr>
           </thead>
-          <tbody is="draggable" :key="rubricItems.length"
-                 v-model="rubricItems"
-                 tag="tbody"
-                 :draggable="false"
-                 @end="saveNewOrder"
-          >
+          <tbody>
           <tr
             v-for="( rubricItem,rubricItemIndex) in rubricItems"
             :key="`rubric-criterion-${rubricItemIndex}`"
           >
             <td>
               <b-icon icon="trash" @click="confirmDeleteCriterion(rubricItem)"/>
+            </td>
+            <td>
+              <b-form-input
+                v-model="rubricItem.title"
+                type="text"
+                placeholder=""
+                required
+                style="width:100%"
+                size="sm"
+                :class="{ 'is-invalid': errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].title !== 'passes'}"
+                @keydown="errors.rubric_items && errors.rubric_items[rubricItemIndex] ? errors.rubric_items[rubricItemIndex].title = 'passes': ''"
+              />
+              <ErrorMessage
+                v-if="errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].title !== 'passes'"
+                :message="errors.rubric_items[rubricItemIndex].title"
+              />
             </td>
             <td>
               <b-form-textarea
@@ -142,28 +210,71 @@
                 rows="2"
                 required
                 style="width:100%"
+                size="sm"
                 :class="{ 'is-invalid': errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].criterion !== 'passes'}"
                 @keydown="errors.rubric_items && errors.rubric_items[rubricItemIndex] ? errors.rubric_items[rubricItemIndex].criterion = 'passes': ''"
               />
-              <ErrorMessage v-if="errors.rubric_items && errors.rubric_items[rubricItemIndex].criterion !== 'passes'"
-                            :message="errors.rubric_items[rubricItemIndex].criterion"
+              <ErrorMessage
+                v-if="errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].criterion !== 'passes'"
+                :message="errors.rubric_items[rubricItemIndex].criterion"
               />
             </td>
             <td>
-              <b-form-input
-                v-model="rubricItem.points"
+              <b-form-textarea
+                v-model="rubricItem.description"
                 type="text"
-                size="sm"
-                style="width:80px"
                 placeholder=""
+                rows="2"
                 required
-                :class="{ 'is-invalid': errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].points !== 'passes'}"
-                @keydown="errors.rubric_items && errors.rubric_items[rubricItemIndex].points ? errors.rubric_items[rubricItemIndex].points = 'passes' : ''"
-              />
-              <ErrorMessage v-if="errors.rubric_items && errors.rubric_items[rubricItemIndex].points !== 'passes'"
-                            :message="errors.rubric_items[rubricItemIndex].points"
+                size="sm"
+                style="width:100%"
               />
             </td>
+            <td>
+              <div v-show="scoreInputType === 'points'">
+                <b-form-input
+                  v-model="rubricItem.points"
+                  type="text"
+                  size="sm"
+                  style="width:60px"
+                  placeholder=""
+                  required
+                  :class="{ 'is-invalid': errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].points !== 'passes'}"
+                  @keydown="errors.rubric_items && errors.rubric_items[rubricItemIndex].points ?  'passes' : ''"
+                />
+                <ErrorMessage
+                  v-if="errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].points !== 'passes'"
+                  :message="errors.rubric_items[rubricItemIndex].points"
+                />
+              </div>
+              <div v-show="scoreInputType === 'percentage'">
+                <div class="d-inline-flex">
+                  <b-form-input
+                    v-model="rubricItem.percentage"
+                    type="text"
+                    size="sm"
+                    style="width:60px"
+                    placeholder=""
+                    required
+                    :class="{ 'is-invalid': errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].percentage !== 'passes'}"
+                    @keydown="errors.rubric_items && errors.rubric_items[rubricItemIndex].percentage ? 'passes' : ''"
+                  />
+                  <span class="pl-1 pt-1">%</span></div>
+                <ErrorMessage
+                  v-if="errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].percentage !== 'passes'"
+                  :message="errors.rubric_items[rubricItemIndex].percentage"
+                />
+              </div>
+            </td>
+          </tr>
+          <tr v-if="rubricItems.length && isTemplate">
+            <td/>
+            <td/>
+            <td/>
+            <td/>
+            <td class="font-weight-bold">Total: <span
+              :class="scoreInputType === 'percentage' ? (getRunningTotal() === 100 ? 'text-success' : 'text-danger') : ''"
+            >{{ getRunningTotal() }}<span v-show="scoreInputType === 'percentage'">%</span></span></td>
           </tr>
           </tbody>
         </table>
@@ -193,14 +304,12 @@
 
 <script>
 import axios from 'axios'
-import draggable from 'vuedraggable'
 import ErrorMessage from './ErrorMessage.vue'
 
 export default {
   name: 'RubricProperties',
   components: {
-    ErrorMessage,
-    draggable
+    ErrorMessage
   },
   props: {
     assignmentId: {
@@ -234,6 +343,9 @@ export default {
     }
   },
   data: () => ({
+    rubricShown: true,
+    initialScoreInputType: '',
+    scoreInputType: 'points',
     rubricPointsBreakdownExists: false,
     rubricItemToDelete: {},
     rubricTemplateId: 0,
@@ -249,13 +361,13 @@ export default {
     currentOrderedRubricItems: []
   }),
   async mounted () {
+    console.error(this.rubricInfo)
     if (this.isTemplate) {
       const action = this.isEdit ? 'Edit' : 'Create'
       this.modalTitle = `${action} Rubric Template`
     } else {
       await this.getRubricTemplates()
-      const action = this.isEdit ? 'Edit' : 'Add'
-      this.modalTitle = `${action} Rubric`
+      this.modalTitle = 'Question Rubric'
     }
     if (this.isEdit) {
       if (!this.isTemplate && this.assignmentId && this.questionId) {
@@ -263,13 +375,36 @@ export default {
       }
       this.name = this.rubricInfo.name
       this.description = this.rubricInfo.description
-      this.rubricItems = JSON.parse(this.rubricInfo.rubric)
+      const rubricInfo = JSON.parse(this.rubricInfo.rubric)
+      const rubricItems = rubricInfo.rubric_items
+      this.initialScoreInputType = rubricInfo.score_input_type
+      this.scoreInputType = rubricInfo.score_input_type
+      for (let i = 0; i < rubricItems.length; i++) {
+        if (!rubricItems[i].hasOwnProperty('points')) {
+          rubricItems[i].points = ''
+        }
+        if (!rubricItems[i].hasOwnProperty('percentage')) {
+          rubricItems[i].percentage = ''
+        }
+      }
+      this.rubricItems = rubricItems
       this.scalePoints()
     }
     const modal = this.$bvModal
     this.showRubricProperties ? modal.show('modal-rubric-properties') : modal.hide('modal-rubric-properties')
   },
   methods: {
+    resetScoreInputType (typeToReset) {
+      if (!this.isEdit || typeToReset !== this.initialScoreInputType) {
+        for (let i = 0; i < this.rubricItems.length; i++) {
+          this.rubricItems[i][typeToReset] = ''
+        }
+      }
+    },
+    getRunningTotal () {
+      console.error(this.rubricItems)
+      return this.rubricItems.reduce((sum, item) => sum + +item[this.scoreInputType], 0)
+    },
     async getRubricPointsBreakdowns () {
       try {
         const { data } = await axios.get(`/api/rubric-points-breakdown/assignment/${this.assignmentId}/question/${this.questionId}/exists`)
@@ -278,11 +413,9 @@ export default {
           return false
         }
         this.rubricPointsBreakdownExists = data.rubric_points_breakdown_exists
-
       } catch (error) {
         this.$noty.error(error.message)
       }
-
     },
     deleteRubricCriterion () {
       this.rubricItems = this.rubricItems.filter(item => item.criterion !== this.rubricItemToDelete.criterion)
@@ -293,7 +426,6 @@ export default {
     confirmDeleteCriterion (rubricItem) {
       this.rubricItemToDelete = rubricItem
       this.$bvModal.show('modal-confirm-delete-rubric-criterion')
-
     },
     scalePoints () {
       if (this.questionPoints) {
@@ -308,8 +440,18 @@ export default {
       }
     },
     getRubricTemplate (rubricTemplateId) {
+      if (!rubricTemplateId) {
+        this.rubricItems = []
+        this.name = ''
+        this.description = ''
+      }
       const template = this.rubricTemplateOptions.find(item => item.value === rubricTemplateId)
-      this.rubricItems = JSON.parse(template.rubric) || []
+
+      const rubricInfo = JSON.parse(template.rubric) || {}
+      if (rubricInfo.hasOwnProperty('rubric_items')) {
+        this.scoreInputType = rubricInfo.score_input_type
+        this.rubricItems = rubricInfo.rubric_items
+      }
       this.name = template.name
       this.description = template.description
       this.rubricTemplateId = rubricTemplateId
@@ -337,6 +479,11 @@ export default {
       }
     },
     async handleSubmitRubricInfo () {
+      const runningTotal = this.getRunningTotal()
+      if (this.scoreInputType === 'percentage' && runningTotal !== 100) {
+        this.$noty.error(`The total of your percentages should sum to 100%; they currently only sum to ${runningTotal}%.`)
+        return
+      }
       try {
         const saveAsTemplate = ['save as new template', 'update existing template'].includes(this.rubricTemplateSaveOption)
         if (this.isTemplate || saveAsTemplate) {
@@ -346,9 +493,11 @@ export default {
             rubric_items: this.rubricItems,
             save_as_template: true,
             assignment_id: this.assignmentId,
-            question_id: this.questionId
+            question_id: this.questionId,
+            score_input_type: this.scoreInputType,
+            rubric_shown: this.rubricShown
           }
-          const action = this.isEdit ? 'patch' : 'post'
+          const action = this.rubricTemplateSaveOption === 'update existing template' ? 'patch' : 'post'
           let rubricTemplateId
           if (this.isEdit) {
             rubricTemplateId = saveAsTemplate ? this.rubricTemplateId : this.rubricInfo.id
@@ -359,17 +508,31 @@ export default {
           if (data.type === 'success') {
             this.$bvModal.hide('modal-rubric-properties')
             saveAsTemplate
-              ? this.$emit('setRubric', JSON.stringify(this.rubricItems))
+              ? this.$emit('setRubric', JSON.stringify({
+                rubric_items: this.rubricItems,
+                score_input_type: this.scoreInputType
+              }))
               : this.$emit('reloadRubricTemplates')
+            if (this.assignmentId) {
+              this.$emit('reloadRubricAndRubricPointsBreakdown')
+            }
           }
         } else {
           const { data } = await axios.post(`/api/rubric-templates/validate-rubric-items`,
             {
               save_as_template: false,
-              rubric_items: this.rubricItems
+              rubric_items: this.rubricItems,
+              score_input_type: this.scoreInputType,
+              rubric_shown: this.rubricShown
             })
           if (data.type === 'success') {
-            this.$emit('setRubric', JSON.stringify(this.rubricItems))
+            this.$emit('setRubric', JSON.stringify({
+              rubric_items: this.rubricItems,
+              score_input_type: this.scoreInputType
+            }))
+          }
+          if (this.assignmentId) {
+            this.$emit('reloadRubricAndRubricPointsBreakdown')
           }
         }
       } catch (error) {
@@ -384,35 +547,7 @@ export default {
       }
     },
     addRubricItemRow () {
-      this.rubricItems.push({ criterion: '', points: '' })
-    },
-    async saveNewOrder () {
-      let orderedRubricItems = []
-      for (let i = 0; i < this.rubricItems.length; i++) {
-        orderedRubricItems.push(this.rubricItems[i].id)
-      }
-
-      let noChange = true
-      for (let i = 0; i < this.currentOrderedRubricItems.length; i++) {
-        if (this.currentOrderedRubricItems[i] !== this.rubricItems[i]) {
-          noChange = false
-        }
-      }
-      if (noChange) {
-        return false
-      }
-      try {
-        const { data } = await axios.patch(`/api/rubric-criteria/order`, { ordered_rubric_criteria: orderedRubricItems })
-        this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          for (let i = 0; i < this.rubricItems.length; i++) {
-            this.rubricItems[i].order = i + 1
-          }
-          this.currentOrderedRubricItems = this.rubricItems
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
+      this.rubricItems.push({ title: '', criterion: '', description: '', points: '', percentage: '' })
     }
   }
 }

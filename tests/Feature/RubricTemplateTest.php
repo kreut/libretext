@@ -15,10 +15,11 @@ class RubricTemplateTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
-        $this->rubric_items = [['criterion' => 'blah', 'points' => 6]];
+        $this->rubric_items = [['title'=> 'some title','criterion' => 'blah', 'points' => 6]];
         $this->rubricTemplate = new RubricTemplate();
         $this->rubricTemplate->user_id = $this->user->id;
         $this->rubricTemplate->name = 'blah';
+        $this->rubricTemplate->description = 'blah';
         $this->rubricTemplate->description = 'blah';
         $this->rubricTemplate->rubric = json_encode($this->rubric_items);
         $this->rubricTemplate->save();
@@ -31,7 +32,8 @@ class RubricTemplateTest extends TestCase
             'name' => 'some name',
             'description' => 'some description',
             'save_as_template' => true,
-            'rubric_items' => $this->rubric_items
+            'rubric_items' => $this->rubric_items,
+            'score_input_type' => 'points'
         ];
         $student_user = factory(User::class)->create(['role' => 3]);
 
@@ -47,7 +49,8 @@ class RubricTemplateTest extends TestCase
         $template_info = [
             'name' => 'some names',
             'description' => 'some description',
-            'rubric_items' => $this->rubric_items
+            'rubric_items' => $this->rubric_items,
+            'score_input_type' => 'points'
         ];
 
         $this->actingAs($this->user_2)

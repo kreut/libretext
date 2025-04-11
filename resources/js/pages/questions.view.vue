@@ -2074,6 +2074,7 @@
               :total-rows="questions.length"
               :per-page="perPage"
               limit="22"
+              align="center"
               first-number
               last-number
               @change="changePage($event)"
@@ -3410,7 +3411,6 @@ import SketcherSubmission from '../components/SketcherSubmission.vue'
 import CanSubmitWorkTooltip from '../components/CanSubmitWorkTooltip.vue'
 import SubmitWork from '~/components/SubmitWork.vue'
 import RubricProperties from '../components/RubricProperties.vue'
-import Rubric from '../components/questions/Rubric.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3421,7 +3421,6 @@ export default {
   middleware: 'auth',
   layout: window.config.clickerApp ? 'blank' : 'default',
   components: {
-    Rubric,
     RubricProperties,
     SubmitWork,
     CanSubmitWorkTooltip,
@@ -3993,6 +3992,7 @@ export default {
         }
         if (data.type !== 'error') {
           this.questions[this.currentPage - 1].rubric = customRubric
+          console.error(customRubric)
           this.showRubricProperties = false
         }
       } catch (error) {

@@ -2270,17 +2270,31 @@
         />
       </template>
       <b-table
+        v-if="questionForm.rubric"
         aria-label="Rubric"
         striped
         hover
         :no-border-collapse="true"
         :fields="rubricFields"
-        :items="JSON.parse(questionForm.rubric)"
-      />
+        :items="JSON.parse(questionForm.rubric).rubric_items"
+      >
+        <template v-slot:cell(criterion)="data">
+          {{ data.item.criterion}}
+          <QuestionCircleTooltip v-show="data.item.description"
+                                 :id="`rubric-item-tooltip-${data.item.criterion}`"
+          />
+          <b-tooltip :target="`rubric-item-tooltip-${data.item.criterion}`"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            {{ data.item.description }}
+          </b-tooltip>
+        </template>
+      </b-table>
     </b-card>
     <RubricProperties :key="`show-rubric-properties-${+showRubricProperties}`"
                       :show-rubric-properties="showRubricProperties"
-                      :rubric-info="{'rubric' : questionForm.rubric}"
+                      :rubric-info="{'rubric' : this.questionForm.rubric}"
                       :is-edit="isEditRubric"
                       :is-template="false"
                       @hideRubricProperties="showRubricProperties = false"
@@ -2373,7 +2387,6 @@ import MultipleAnswers from './MultipleAnswers'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import FrameworkAligner from '../FrameworkAligner'
 import DropDownRationaleTriad from './nursing/DropDownRationaleTriad.vue'
-import Rubric from './Rubric.vue'
 import QuestionRevisionDifferences from '../QuestionRevisionDifferences.vue'
 import Sketcher from './Sketcher.vue'
 import { updateModalToggleIndex } from '../../helpers/accessibility/fixCKEditor'
@@ -2534,7 +2547,6 @@ export default {
     Sketcher,
     QuestionMediaUpload,
     QuestionRevisionDifferences,
-    Rubric,
     DropDownRationaleTriad,
     ErrorMessage,
     FrameworkAligner,
@@ -2594,7 +2606,7 @@ export default {
     }
   },
   data: () => ({
-    rubricFields: ['criterion', 'points'],
+    rubricFields: ['criterion', 'points', 'percentage'],
     showRubricProperties: false,
     isEditRubric: false,
     rubric: {},
@@ -2901,6 +2913,8 @@ export default {
     },
     setRubric (rubric) {
       this.questionForm.rubric = rubric
+      const scoreInputType = JSON.parse(this.questionForm.rubric).score_input_type
+      this.rubricFields = ['criterion', scoreInputType]
       this.showRubricProperties = false
     },
     async checkForStudentSubmissions (automaticallyUpdateRevision) {
@@ -3618,6 +3632,9 @@ export default {
       this.updateLicenseVersions(this.questionForm.license)
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
+      }
+      if (this.questionToEdit.rubric){
+        this.setRubric(this.questionToEdit.rubric)
       }
     },
     async getRevisions (questionToEdit) {

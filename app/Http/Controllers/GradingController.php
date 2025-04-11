@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentFile;
+use App\AssignmentSyncQuestion;
+use App\Console\Commands\Analytics\insertReviewHistories;
 use App\Discussion;
 use App\Enrollment;
 use App\Exceptions\Handler;
@@ -104,15 +106,33 @@ class GradingController extends Controller
                     $submissionFile->save();
                 }
             }
-            DB::table('submission_files')
-                ->where('user_id', $student_user_id)
-                ->where('assignment_id', $assignment_id)
+
+            $assignment_question = AssignmentSyncQuestion::where('assignment_id', $assignment_id)
                 ->where('question_id', $question_id)
-                ->update(['text_feedback' => $text_feedback,
-                    'text_feedback_editor' => $data['text_feedback_editor'],
-                    'date_graded' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'grader_id' => $request->user()->id]);
+                ->first();
+            $submission_file_data = [
+                'text_feedback' => $text_feedback,
+                'text_feedback_editor' => $data['text_feedback_editor'],
+                'date_graded' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'grader_id' => $request->user()->id,
+            ];
+            if ($assignment_question->open_ended_submission_type === "0") {
+                $submission_file_data['type'] = 'no upload';
+                $submission_file_data['original_filename'] = '';
+                $submission_file_data['submission'] = '';
+                $submission_file_data['date_submitted'] = now();
+            }
+            SubmissionFile::updateOrCreate(
+                [
+                    'user_id' => $student_user_id,
+                    'assignment_id' => $assignment_id,
+                    'question_id' => $question_id,
+                ],
+                $submission_file_data
+            );
+
+
             if ($request->file_submission_score !== null) {
                 DB::table('submission_files')
                     ->where('user_id', $student_user_id)
@@ -125,22 +145,54 @@ class GradingController extends Controller
                         'grader_id' => $request->user()->id]);
             }
             if ($request->rubric_points_breakdown) {
-                $rubric_points_breakdown = $request->rubric_points_breakdown;
-                if (!is_array($rubric_points_breakdown)) {
-                    $rubric_points_breakdown = json_decode($rubric_points_breakdown, 1);
+                $rubric_items = $request->rubric_points_breakdown;
+                $score_input_type = $request->score_input_type;
+                $score_input_type_to_reset = '';
+                switch ($score_input_type) {
+                    case('points'):
+                        $score_input_type_to_reset = 'percentage';
+                        break;
+                    case('percentage'):
+                        $score_input_type_to_reset = 'points';
+                        break;
+                    default:
+                        throw new Exception("$score_input_type is not a valid score input type.");
                 }
-                foreach ($rubric_points_breakdown as $key => $value) {
+                if ($request->special_score) {
+                    $original_rubric_with_maxes = $request->original_rubric_with_maxes;
+                    $rubric_points_breakdown = json_decode($request->rubric_points_breakdown, 1);
+                    $score_input_type_to_unset = $score_input_type === 'points' ? 'percentage' : 'points';
+                    $rubric_items = $rubric_points_breakdown['rubric_items'];
+                    foreach ($rubric_items as $key => $value) {
+                        switch ($request->special_score) {
+                            case('full score'):
+                                $rubric_items[$key][$score_input_type] = $original_rubric_with_maxes[$key][$score_input_type];
+                                break;
+                            case('zero score'):
+                                $rubric_items[$key][$score_input_type] = 0;
+                                break;
+                        }
+                        unset($rubric_items[$key][$score_input_type_to_unset]);
+                    }
+
+                } else {
+                    foreach ($rubric_items as $key => $rubric_item) {
+                        $rubric_items[$key][$score_input_type_to_reset] = '';
+                    }
                     if (+$request->file_submission_score === 0) {
-                        $rubric_points_breakdown[$key]['points'] = 0;
+                        foreach ($rubric_items as $key => $value) {
+                            $rubric_items[$key][$score_input_type] = 0;
+                        }
                     }
                 }
 
                 $rubricPointsBreakdown = new RubricPointsBreakdown();
+                $points_breakdown = json_encode(['rubric_items' => $rubric_items, 'score_input_type' => $score_input_type]);
                 $rubricPointsBreakdown->updateOrCreate([
                     'assignment_id' => $assignment_id,
                     'question_id' => $question_id,
                     'user_id' => $student_user_id],
-                    ['points_breakdown' => json_encode($rubric_points_breakdown)]);
+                    ['points_breakdown' => $points_breakdown]);
             }
             if ($request->question_submission_score !== null) {
                 DB::table('submissions')
@@ -528,10 +580,9 @@ class GradingController extends Controller
 
             $is_auto_graded = $question->technology !== 'text';
             $is_open_ended = DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
-                    ->where('question_id', $question->id)
-                    ->first()
-                    ->open_ended_submission_type !== '0';
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
 
             $response['is_auto_graded'] = $is_auto_graded;
             $response['show_auto_graded_submission'] = $is_auto_graded && $question->technology === 'h5p';

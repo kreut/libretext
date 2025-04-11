@@ -52,7 +52,11 @@ class RubricTemplateController extends Controller
                 return $response;
             }
             $data = $request->validated();
-            $data['rubric'] = json_encode($data['rubric_items']);
+            $data['rubric'] = json_encode([
+                'score_input_type' => $request->score_input_type,
+                'rubric_items' => $data['rubric_items']
+            ]);
+
             $data['user_id'] = $request->user()->id;
             unset($data['rubric_items']);
             $rubricTemplate->create($data);
@@ -84,7 +88,17 @@ class RubricTemplateController extends Controller
                 return $response;
             }
             $data = $request->validated();
-            $data['rubric'] = json_encode($data['rubric_items']);
+
+            $old_score_input_type = json_decode($rubricTemplate->rubric, 1)['score_input_type'];
+            if ($old_score_input_type !== $request->score_input_type) {
+                foreach ($data['rubric_items'] as $key => $rubric_item) {
+                    $data['rubric_items'][$key][$old_score_input_type] = '';
+                }
+            }
+            $data['rubric'] = json_encode([
+                'score_input_type' => $request->score_input_type,
+                'rubric_items' => $data['rubric_items']
+            ]);
             unset($data['rubric_items']);
             $rubricTemplate->update($data);
             $response['type'] = 'success';
@@ -158,11 +172,11 @@ class RubricTemplateController extends Controller
     }
 
     /**
-     * @param StoreRubricRequest $request
+     * @param StoreRubricTemplateRequest $request
      * @return array
      * @throws Exception
      */
-    public function validateRubricItems(StoreRubricRequest $request)
+    public function validateRubricItems(StoreRubricTemplateRequest $request): array
     {
 
         try {
@@ -179,4 +193,6 @@ class RubricTemplateController extends Controller
 
 
     }
+
+
 }

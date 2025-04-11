@@ -53,7 +53,7 @@ class RubricPointsBreakdownController extends Controller
      * @param Question $question
      * @param User $user
      * @param RubricPointsBreakdown $rubricPointsBreakdown
-     * @return void
+     * @return array
      * @throws Exception
      */
     public function getByAssignmentQuestionUser(Assignment            $assignment,
@@ -86,8 +86,9 @@ class RubricPointsBreakdownController extends Controller
                 if (!$rubric_points_breakdown) {
                     $rubric_points_breakdown_exists = false;
                     $rubric_points_breakdown = json_decode($rubric, 1);
-                    foreach ($rubric_points_breakdown as &$value) {
+                    foreach ($rubric_points_breakdown['rubric_items'] as &$value) {
                         $value['points'] = '';
+                        $value['percentage'] = '';
                     }
                     $rubric_points_breakdown = json_encode($rubric_points_breakdown);
                 } else {

@@ -25,7 +25,7 @@ class StoreRubricTemplateRequest extends FormRequest
      */
     public function rules()
     {
-        $rules['rubric_items'] = ['required', new IsValidRubricItems()];
+        $rules['rubric_items'] = ['required', new IsValidRubricItems($this->score_input_type)];
         if ($this->save_as_template) {
             $unique = Rule::unique('rubric_templates')
                 ->where('user_id', $this->user()->id);
@@ -35,7 +35,6 @@ class StoreRubricTemplateRequest extends FormRequest
             if ($this->update_existing_template) {
                 $unique = $unique->ignore($this->id);
             }
-
             $rules['name'] = ['required', $unique];
             $rules['description'] = 'required';
         }

@@ -378,6 +378,7 @@
                                   :question-id="+grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
                                   @setRubric="setCustomRubric"
                                   @hideRubricProperties="showRubricProperties = false"
+                                  @reloadRubricAndRubricPointsBreakdown="reloadRubricAndRubricPointsBreakdown"
                 />
                 <b-button variant="outline-primary"
                           size="sm"
@@ -385,7 +386,7 @@
                 >
                   Visit Question
                 </b-button>
-                <b-button v-show="isOpenEnded"
+                <b-button v-show="isOpenEnded && user.id === 5"
                           size="sm"
                           variant="outline-primary"
                           @click="showRubricProperties = true"
@@ -670,21 +671,6 @@
                               {{ questionSubmissionScoreErrorMessage }}
                             </div>
                           </b-form-group>
-                          <div
-                            v-if="rubric && (isOpenEnded || isDiscussIt) && grading[currentStudentPage - 1]['open_ended_submission']['submission']"
-                          >
-
-                            <RubricPointsBreakdown
-                              :key="`rubric-points-breakdown-${rubricPointsBreakdownIndex}-${grading[currentStudentPage - 1]['open_ended_submission']['user_id']}-${grading[currentStudentPage - 1]['open_ended_submission']['question_id']}`"
-                              :user-id="grading[currentStudentPage - 1]['open_ended_submission']['user_id']"
-                              :assignment-id="+assignmentId"
-                              :original-rubric="rubric"
-                              :question-id="grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
-                              :question-points="grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 -gradingForm.question_submission_score* 1"
-                              @updateOpenEndedSubmissionScore="updateOpenEndedSubmissionScore"
-                              @setRubricPointsBreakdown="setRubricPointsBreakdown"
-                            />
-                          </div>
                           <b-form-group
                             v-show="isOpenEnded || isDiscussIt"
                             label-cols-sm="5"
@@ -698,7 +684,7 @@
                             <div v-show="isOpenEnded || isDiscussIt" class="pt-1">
                               <div class="d-flex">
                                 <b-form-input
-                                  v-show="grading[currentStudentPage - 1]['open_ended_submission']['submission']
+                                  v-show="isOpenEnded
                                     || discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments"
                                   id="open_ended_score"
                                   v-model="gradingForm.file_submission_score"
@@ -710,7 +696,7 @@
                                   @keydown="fileSubmissionScoreErrorMessage=''"
                                 />
                                 <span
-                                  v-if="(isOpenEnded && !isAutoGraded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
+                                  v-if="(isOpenEnded && !isAutoGraded)
                                     || (isDiscussIt && discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
                                 >
                                   <b-button size="sm"
@@ -718,6 +704,7 @@
                                             variant="outline-success"
                                             @click="submitGradingForm(true,
                                                                       {
+                                                                        specialScore: 'full score',
                                                                         scoreType: 'file_submission_score',
                                                                         score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
                                                                       })"
@@ -727,18 +714,13 @@
                                             variant="outline-danger"
                                             @click="submitGradingForm(true,
                                                                       {
+                                                                        specialScore: 'zero score',
                                                                         scoreType: 'file_submission_score',
                                                                         score: 0
                                                                       })"
                                   >
                                     Zero Score</b-button>
                                 </span>
-                              </div>
-                              <div
-                                v-show="(isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission'])"
-                                class="pt-1"
-                              >
-                                <span>No submission</span>
                               </div>
                               <div
                                 v-show="(isDiscussIt && !discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
@@ -787,14 +769,30 @@
                               </b-button>
                             </div>
                           </b-form-group>
-                          <span style="margin-left:108px">
+                          <br>
+                          <div
+                            v-if="rubric && (isOpenEnded || isDiscussIt)"
+                          >
+                            <RubricPointsBreakdown
+                              :key="`rubric-points-breakdown-${rubricPointsBreakdownIndex}-${grading[currentStudentPage - 1]['open_ended_submission']['user_id']}-${grading[currentStudentPage - 1]['open_ended_submission']['question_id']}`"
+                              :user-id="grading[currentStudentPage - 1]['open_ended_submission']['user_id']"
+                              :assignment-id="+assignmentId"
+                              :original-rubric="rubric"
+                              :question-id="grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
+                              :question-points="grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 -gradingForm.question_submission_score* 1"
+                              @updateOpenEndedSubmissionScore="updateOpenEndedSubmissionScore"
+                              @setRubricPointsBreakdown="setRubricPointsBreakdown"
+                              @setOriginalRubricWithMaxes="setOriginalRubricWithMaxes"
+                              @setScoreInputType="setScoreInputType"
+                            />
+                          </div>
+                          <div :class="rubric ? 'float-right' : ''" class="mt-1">
                             <strong>Total:</strong>
                             <span style="margin-left:7px">{{
                                 totalScore
                               }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                             </span>
-                          </span>
-                          <br>
+                          </div>
                           <hr>
                           <b-container>
                             <b-row>
@@ -926,20 +924,20 @@
                   </div>
                   <div class="text-center pt-3 pb-3">
                     <b-button variant="primary"
-                              :class="{ 'disabled': noSubmission}"
-                              :aria-disabled="noSubmission"
+                              :class="{ 'disabled': noSubmission && !gradingForm.file_submission_score}"
+                              :aria-disabled="noSubmission && !gradingForm.file_submission_score"
                               size="sm"
                               class="ml-1 mr-1"
-                              @click="noSubmission ? '' :submitGradingForm(false)"
+                              @click="noSubmission && !gradingForm.file_submission_score ? '' :submitGradingForm(false)"
                     >
                       Submit
                     </b-button>
                     <b-button
-                      :class="{ 'disabled': currentStudentPage === numStudents || noSubmission}"
-                      :aria-disabled="currentStudentPage === numStudents || noSubmission"
+                      :class="{ 'disabled': currentStudentPage === numStudents || (noSubmission && !gradingForm.file_submission_score)}"
+                      :aria-disabled="currentStudentPage === numStudents || (noSubmission && !gradingForm.file_submission_score)"
                       size="sm"
                       variant="success"
-                      @click="currentStudentPage === numStudents || noSubmission ? '' : submitGradingForm(true)"
+                      @click="currentStudentPage === numStudents || (noSubmission && !gradingForm.file_submission_score)? '' : submitGradingForm(true)"
                     >
                       Submit And Next
                     </b-button>
@@ -1148,6 +1146,7 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    originalRubricWithMaxes: [],
     rubricPointsBreakdownIndex: 0,
     totalScore: 0,
     rubric: null,
@@ -1311,13 +1310,31 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
-    updateOpenEndedSubmissionScore (rubricPointsBreakdown, points) {
-      this.gradingForm.file_submission_score = points
-      this.setRubricPointsBreakdown(rubricPointsBreakdown)
+    setOriginalRubricWithMaxes(originalRubricWithMaxes){
+      this.originalRubricWithMaxes = originalRubricWithMaxes
     },
-    setRubricPointsBreakdown (rubricPointsBreakdown) {
+    updateOpenEndedSubmissionScore (rubricPointsBreakdown, scoreInputType, points) {
+      this.gradingForm.file_submission_score = points
+      this.setRubricPointsBreakdown(rubricPointsBreakdown, scoreInputType)
+    },
+    setScoreInputType(scoreInputType){
+      this.gradingForm.score_input_type = scoreInputType
+    },
+    setRubricPointsBreakdown (rubricPointsBreakdown, scoreInputType) {
       this.gradingForm.rubric_points_breakdown = rubricPointsBreakdown
-      console.error('rubric points breakdown set')
+      this.gradingForm.score_input_type = scoreInputType
+      //console.error('rubric points breakdown set')
+    },
+    async reloadRubricAndRubricPointsBreakdown () {
+      try {
+        const { data } = await axios.get(`/api/grading/${this.assignmentId}/${this.questionView}/${parseInt(this.sectionId)}/allStudents`)
+        this.rubric = data.rubric
+        this.$nextTick(() => {
+          this.rubricPointsBreakdownIndex++
+        })
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async setCustomRubric (customRubric) {
       const questionId = this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_id']
@@ -1739,8 +1756,11 @@ export default {
       this.viewSubmission = !this.viewSubmission
     },
     async submitGradingForm (next, prepopulatedScore = {}, justShowErrorMessage = false) {
+      this.gradingForm.special_score = null
       if (prepopulatedScore.scoreType) {
         this.gradingForm.rubric_points_breakdown = prepopulatedScore.scoreType === 'file_submission_score' && this.rubric
+        this.gradingForm.original_rubric_with_maxes = this.originalRubricWithMaxes
+        this.gradingForm.special_score = prepopulatedScore.specialScore
         this.gradingForm[prepopulatedScore.scoreType] = prepopulatedScore.score
       }
       try {

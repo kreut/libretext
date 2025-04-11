@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-rubric-templates'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-rubric-templates'" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -10,7 +10,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <PageTitle v-if="!isLoading" title="Rubric Templates"/>
+      <PageTitle v-if="!isLoading" title="Rubric Templates" />
       <b-container>
         <b-row>
           <p>
@@ -65,68 +65,68 @@
         <div v-if="rubricTemplates.length">
           <table class="table table-striped" aria-label="Rubric List">
             <thead>
-            <tr>
-              <th scope="col">
-                Name
-              </th>
-              <th scope="col">
-                Description
-              </th>
-              <th scope="col">
-                Actions
-              </th>
-            </tr>
+              <tr>
+                <th scope="col">
+                  Name
+                </th>
+                <th scope="col">
+                  Description
+                </th>
+                <th scope="col">
+                  Actions
+                </th>
+              </tr>
             </thead>
             <tbody is="draggable" :key="rubricTemplates.length" v-model="rubricTemplates" tag="tbody"
                    @end="saveNewOrder"
             >
-            <tr
-              v-for="rubricTemplate in rubricTemplates"
-              :key="`rubric-${rubricTemplate.id}`"
-            >
-              <th scope="row" style="width:300px">
-                <b-icon icon="list"/>
-                <span :id="`rubric-${rubricTemplate.id}`">
+              <tr
+                v-for="rubricTemplate in rubricTemplates"
+                :key="`rubric-${rubricTemplate.id}`"
+              >
+                <th scope="row" style="width:300px">
+                  <b-icon icon="list" />
+                  <span :id="`rubric-${rubricTemplate.id}`">
                     {{ rubricTemplate.name }}
                   </span>
-              </th>
-              <td>
-                {{ rubricTemplate.description }}
-              </td>
-              <td>
-                <b-tooltip :target="`edit-rubric-template-${rubricTemplate.id}`" triggers="hover focus" delay="500">
-                  Edit {{ rubricTemplate.name }}
-                </b-tooltip>
-                <b-icon class="text-muted"
-                        :id="`edit-rubric-template-${rubricTemplate.id}`"
-                        icon="pencil"
-                        style="cursor:pointer;"
-                        :aria-label="`Edit ${rubricTemplate.name}`"
-                        @click="initEditRubricTemplateProperties(rubricTemplate)"
-                />
-                <b-tooltip :target="`copy-rubric-template-${rubricTemplate.id}`" triggers="hover focus" delay="500">
-                  Copy {{ rubricTemplate.name }}
-                </b-tooltip>
-                <font-awesome-icon
-                  :id="`copy-rubric-template-${rubricTemplate.id}`"
-                  class="text-muted"
-                  style="cursor:pointer;"
-                  :icon="copyIcon"
-                  :aria-label="`Copy ${rubricTemplate.description}`"
-                  @click="copyRubricTemplate(rubricTemplate)"
-                />
-                <b-tooltip :target="`delete-rubric-template-${rubricTemplate.id}`" triggers="hover focus" delay="500">
-                  Delete {{ rubricTemplate.name }}
-                </b-tooltip>
-                <b-icon :id="`delete-rubric-template-${rubricTemplate.id}`"
-                        class="text-muted"
-                        icon="trash"
-                        style="cursor:pointer;"
-                        :aria-label="`Delete ${rubricTemplate.description}`"
-                        @click="confirmDeleteRubricTemplate(rubricTemplate)"
-                />
-              </td>
-            </tr>
+                </th>
+                <td>
+                  {{ rubricTemplate.description }}
+                </td>
+                <td>
+                  <b-tooltip :target="`edit-rubric-template-${rubricTemplate.id}`" triggers="hover focus" delay="500">
+                    Edit {{ rubricTemplate.name }}
+                  </b-tooltip>
+                  <b-icon :id="`edit-rubric-template-${rubricTemplate.id}`"
+                          class="text-muted"
+                          icon="pencil"
+                          style="cursor:pointer;"
+                          :aria-label="`Edit ${rubricTemplate.name}`"
+                          @click="initEditRubricTemplateProperties(rubricTemplate)"
+                  />
+                  <b-tooltip :target="`copy-rubric-template-${rubricTemplate.id}`" triggers="hover focus" delay="500">
+                    Copy {{ rubricTemplate.name }}
+                  </b-tooltip>
+                  <font-awesome-icon
+                    :id="`copy-rubric-template-${rubricTemplate.id}`"
+                    class="text-muted"
+                    style="cursor:pointer;"
+                    :icon="copyIcon"
+                    :aria-label="`Copy ${rubricTemplate.description}`"
+                    @click="copyRubricTemplate(rubricTemplate)"
+                  />
+                  <b-tooltip :target="`delete-rubric-template-${rubricTemplate.id}`" triggers="hover focus" delay="500">
+                    Delete {{ rubricTemplate.name }}
+                  </b-tooltip>
+                  <b-icon :id="`delete-rubric-template-${rubricTemplate.id}`"
+                          class="text-muted"
+                          icon="trash"
+                          style="cursor:pointer;"
+                          :aria-label="`Delete ${rubricTemplate.description}`"
+                          @click="confirmDeleteRubricTemplate(rubricTemplate)"
+                  />
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -160,17 +160,17 @@ export default {
     draggable
   },
   data: () => ({
-      activeRubricTemplate: {},
-      isEditRubricTemplate: false,
-      showRubricProperties: false,
-      copyIcon: faCopy,
-      isLoading: true,
-      allFormErrors: [],
-      rubricTemplates: [],
-      rubricTemplate: {},
-      rubricId: 0,
-      currentOrderedRubricTemplates: []
-    }
+    activeRubricTemplate: {},
+    isEditRubricTemplate: false,
+    showRubricProperties: false,
+    copyIcon: faCopy,
+    isLoading: true,
+    allFormErrors: [],
+    rubricTemplates: [],
+    rubricTemplate: {},
+    rubricId: 0,
+    currentOrderedRubricTemplates: []
+  }
   ),
   mounted () {
     this.getRubricTemplates()
