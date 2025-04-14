@@ -80,6 +80,7 @@ class Course extends Model
         $response['message'] = "All students from <strong>$this->name</strong> have been unenrolled and their data removed.";
         return $response;
     }
+
     /**
      * @return array
      */
@@ -126,7 +127,6 @@ class Course extends Model
                 $final_assignment_ids[] = $questions_with_discussion_submission;
             }
         }
-
 
 
         return array_unique($final_assignment_ids);
@@ -312,7 +312,8 @@ class Course extends Model
                 }
 
                 $assignment->saveAssignmentTimingAndGroup($imported_assignment, $default_timing);
-                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $request->reset_discuss_it_settings_to_default);
+                $reset_discuss_it_settings_to_default = property_exists($request, 'reset_discuss_it_settings_to_default') ? $request->reset_discuss_it_settings_to_default : true;
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $reset_discuss_it_settings_to_default);
             }
 
             $this->prepareNewCourse($user, $section, $imported_course, $this, $enrollment, $finalGrade);
