@@ -6,7 +6,7 @@
         <tr><span class="text-muted">Rubric {{ scoreInputType }} breakdown</span></tr>
         <tr>
           <th scope="col">
-            <span style="font-size:12px">Criteria</span>
+            <span style="font-size:12px">Title</span>
           </th>
           <th scope="col" style="width:110px;font-size:12px">
             Max<br>Possible
@@ -37,7 +37,7 @@
           :key="`rubric-criterion-${rubricItemIndex}`"
         >
           <td>
-            {{ rubricItem.criterion }}
+            {{ rubricItem.title }}
             <QuestionCircleTooltip v-show="rubricItem.description"
                                    :id="`rubric-item-tooltip-${rubricItemIndex}`"
             />

@@ -32,23 +32,19 @@ class IsValidRubricItems implements Rule
         $this->message = [];
         $passes = true;
         foreach ($value as $key => $item) {
-            $this->message[$key] = ['title' => 'passes', 'criterion' => 'passes', 'points' => 'passes', 'percentage' => 'passes'];
+            $this->message[$key] = ['title' => 'passes', 'points' => 'passes', 'percentage' => 'passes'];
         }
         $criteria = [];
         foreach ($value as $key => $item) {
             if (!$item['title']) {
                 $this->message[$key]['title'] = 'A title is required.';
                 $passes = false;
-            }
-            if (!$item['criterion']) {
-                $this->message[$key]['criterion'] = 'A criterion is required.';
-                $passes = false;
             } else {
-                if (in_array(strtolower($item['criterion']), $criteria)) {
-                    $this->message[$key]['criterion'] = 'This criterion already exists';
+                if (in_array(strtolower($item['title']), $criteria)) {
+                    $this->message[$key]['title'] = 'This title already exists.';
                     $passes = false;
                 }
-                $criteria[] = strtolower($item['criterion']);
+                $criteria[] = strtolower($item['title']);
             }
             switch ($this->score_input_type) {
                 case('points'):

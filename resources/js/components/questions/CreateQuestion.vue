@@ -2279,11 +2279,11 @@
         :items="JSON.parse(questionForm.rubric).rubric_items"
       >
         <template v-slot:cell(criterion)="data">
-          {{ data.item.criterion}}
+          {{ data.item.title}}
           <QuestionCircleTooltip v-show="data.item.description"
-                                 :id="`rubric-item-tooltip-${data.item.criterion}`"
+                                 :id="`rubric-item-tooltip-${data.item.title}`"
           />
-          <b-tooltip :target="`rubric-item-tooltip-${data.item.criterion}`"
+          <b-tooltip :target="`rubric-item-tooltip-${data.item.title}`"
                      delay="250"
                      triggers="hover focus"
           >

@@ -6,7 +6,7 @@
     >
       <p>Please confirm that you would like to delete the rubric criterion:</p>
       <p class="font-weight-bold">
-        {{ rubricItemToDelete.criterion }}
+        {{ rubricItemToDelete.title }}
       </p>
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm" @click="$bvModal.hide('modal-confirm-delete-rubric-criterion')">
@@ -153,9 +153,6 @@
               Title*
             </th>
             <th scope="col">
-              Criteria*
-            </th>
-            <th scope="col">
               Description (Optional)
             </th>
             <th scope="col" style="width:100px">
@@ -200,23 +197,6 @@
               <ErrorMessage
                 v-if="errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].title !== 'passes'"
                 :message="errors.rubric_items[rubricItemIndex].title"
-              />
-            </td>
-            <td>
-              <b-form-textarea
-                v-model="rubricItem.criterion"
-                type="text"
-                placeholder=""
-                rows="2"
-                required
-                style="width:100%"
-                size="sm"
-                :class="{ 'is-invalid': errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].criterion !== 'passes'}"
-                @keydown="errors.rubric_items && errors.rubric_items[rubricItemIndex] ? errors.rubric_items[rubricItemIndex].criterion = 'passes': ''"
-              />
-              <ErrorMessage
-                v-if="errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].criterion !== 'passes'"
-                :message="errors.rubric_items[rubricItemIndex].criterion"
               />
             </td>
             <td>
@@ -268,7 +248,6 @@
             </td>
           </tr>
           <tr v-if="rubricItems.length && isTemplate">
-            <td/>
             <td/>
             <td/>
             <td/>
