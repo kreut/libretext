@@ -147,7 +147,6 @@ class GradingController extends Controller
             if ($request->rubric_points_breakdown) {
                 $rubric_items = $request->rubric_points_breakdown;
                 $score_input_type = $request->score_input_type;
-                $score_input_type_to_reset = '';
                 switch ($score_input_type) {
                     case('points'):
                         $score_input_type_to_reset = 'percentage';

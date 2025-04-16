@@ -147,11 +147,21 @@ class SubmissionFile extends Model
         foreach ($assignment->submissions as $submission) {
             $question_submission_scores[$submission->question_id][$submission->user_id] = $submission->score;
         }
-
-        foreach ($assignment->questionFileSubmissions() as $key => $question_file) {
+        $questionFilesByUser = [];
+        foreach ($assignment->questionFileSubmissions() as $question_file) {
             $question_file->needs_grading = !$question_file->date_graded || Carbon::parse($question_file->date_submitted) > Carbon::parse($question_file->date_graded);
             $questionFilesByUser[$question_file->question_id][$question_file->user_id] = $question_file;
         }
+        $no_uploads_question_ids = [];
+        foreach ($questionFilesByUser as $question_file_by_user) {
+            foreach ($question_file_by_user as $value) {
+                if ($value->type === 'no upload') {
+                    $no_uploads_question_ids[] = $value->question_id;
+                }
+
+            }
+        }
+        $no_uploads_question_id = array_unique($no_uploads_question_ids);
         $user_and_submission_file_info = [];
 
         $assignment_questions_where_student_can_upload_file = $question_id
@@ -161,9 +171,13 @@ class SubmissionFile extends Model
                 ->get()
             : DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
-                ->whereIn('open_ended_submission_type', ['file', 'text', 'audio'])
+                ->where(function ($query) use ($no_uploads_question_id) {
+                    $query->whereIn('question_id', $no_uploads_question_id)
+                        ->orWhereIn('open_ended_submission_type', ['file', 'text', 'audio']);
+                })
                 ->orderBy('order')
                 ->get();
+
 
         $question_ids = [];
 
@@ -196,7 +210,7 @@ class SubmissionFile extends Model
                 $points[$question->question_id][$user->id] = $question->points;
                 //get the assignment info, getting the temporary url of the first submission for viewing
                 $submission = $questionFilesByUser[$question->question_id][$user->id]->submission ?? null;
-                $applied_late_penalty =  $questionFilesByUser[$question->question_id][$user->id]->applied_late_penalty ?? null;
+                $applied_late_penalty = $questionFilesByUser[$question->question_id][$user->id]->applied_late_penalty ?? null;
                 $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
                 $page = $questionFilesByUser[$question->question_id][$user->id]->page ?? null;
                 $open_ended_submission_type = $question->open_ended_submission_type;
