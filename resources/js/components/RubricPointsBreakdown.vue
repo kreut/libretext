@@ -16,7 +16,7 @@
               v-model="scoreInputType"
               name="score_input_type"
               value="points"
-              @change="$emit('setRubricPointsBreakdown', rubricPointsBreakdown, scoreInputType)"
+              @change="setRubricPointsBreakdown($event)"
             >
               Points
             </b-form-radio>
@@ -24,7 +24,7 @@
               v-model="scoreInputType"
               name="score_input_type"
               value="percentage"
-              @change="$emit('setRubricPointsBreakdown', rubricPointsBreakdown, scoreInputType)"
+              @change="setRubricPointsBreakdown($event)"
             >
               Percentage
             </b-form-radio>
@@ -49,8 +49,8 @@
             </b-tooltip>
           </td>
           <td>{{
-              scoreInputType === 'percentage' ? originalRubricPercentages[rubricItemIndex]
-                : originalRubricPoints[rubricItemIndex]
+              roundToDecimalSigFig(scoreInputType === 'percentage' ? originalRubricPercentages[rubricItemIndex]
+                : originalRubricPoints[rubricItemIndex])
             }}<span v-if="scoreInputType === 'percentage'">%</span></td>
           <td>
             <div v-if="scoreInputType === 'points'">
@@ -65,8 +65,8 @@
                 @input="recomputeOpenEndedPoints"
               />
               <ErrorMessage
-                v-if="rubricItem.points !== '' && +rubricItem.points > originalRubricPoints[rubricItemIndex]"
-                :message="`Max of ${originalRubricPoints[rubricItemIndex] }`"
+                v-if="rubricItem.points !== '' && roundToDecimalSigFig(+rubricItem.points) > roundToDecimalSigFig(originalRubricPoints[rubricItemIndex])"
+                :message="`Max of ${roundToDecimalSigFig(originalRubricPoints[rubricItemIndex]) }`"
               />
             </div>
             <div v-if="scoreInputType === 'percentage'">
@@ -83,8 +83,8 @@
                 />
                 <span class="pl-1 pt-1">%</span></div>
               <ErrorMessage
-                v-if="rubricItem.percentage !== '' && +rubricItem.percentage >  originalRubricPercentages[rubricItemIndex]"
-                :message="`Max of ${originalRubricPercentages[rubricItemIndex]}`"
+                v-if="rubricItem.percentage !== '' && roundToDecimalSigFig(+rubricItem.percentage) >  roundToDecimalSigFig(originalRubricPercentages[rubricItemIndex])"
+                :message="`Max of ${roundToDecimalSigFig(originalRubricPercentages[rubricItemIndex])}`"
               />
             </div>
           </td>
@@ -98,6 +98,7 @@
 <script>
 import axios from 'axios'
 import ErrorMessage from './ErrorMessage.vue'
+import { roundToDecimalSigFig } from '../helpers/Math'
 
 export default {
   name: 'RubricPointsBreakdown',
@@ -141,6 +142,7 @@ export default {
     const rubricItems = originalRubric.rubric_items
     this.originalInputType = originalRubric.score_input_type
     this.scoreInputType = originalRubric.score_input_type
+    this.$emit('setScoreInputType', this.scoreInputType)
     this.originalMaxPoints = 0
 
     for (let i = 0; i < rubricItems.length; i++) {
@@ -197,6 +199,10 @@ export default {
     this.$emit('setScoreInputType', this.scoreInputType)
   },
   methods: {
+    roundToDecimalSigFig,
+    setRubricPointsBreakdown (scoreInputType) {
+      this.$emit('setRubricPointsBreakdown', this.rubricPointsBreakdown, scoreInputType)
+    },
     getClass (rubricItem, rubricItemIndex) {
       switch (this.scoreInputType) {
         case ('points'):
@@ -204,7 +210,7 @@ export default {
             if (+rubricItem.points < 0) {
               return 'is-invalid'
             }
-            return +rubricItem.points <= this.getMax(rubricItemIndex) ? 'is-valid' : 'is-invalid'
+            return this.roundToDecimalSigFig(+rubricItem.points) <= this.roundToDecimalSigFig(this.getMax(rubricItemIndex)) ? 'is-valid' : 'is-invalid'
           }
           break
         case ('percentage'):
@@ -212,7 +218,7 @@ export default {
             if (+rubricItem.percentage < 0) {
               return 'is-invalid'
             }
-            return +rubricItem.percentage <= this.getMax(rubricItemIndex) ? 'is-valid' : 'is-invalid'
+            return this.roundToDecimalSigFig(+rubricItem.percentage) <= this.roundToDecimalSigFig(this.getMax(rubricItemIndex)) ? 'is-valid' : 'is-invalid'
           }
       }
     },

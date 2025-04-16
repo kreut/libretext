@@ -678,7 +678,7 @@
                             label-for="open_ended_score"
                           >
                             <template v-slot:label>
-                              <span class="font-weight-bold" :style="isDiscussIt ? 'margin-left:20px' : ''"
+                              <span class="font-weight-bold"
                               >{{ isOpenEnded ? 'Open-ended' : 'Discuss-it' }} score:</span>
                             </template>
                             <div v-show="isOpenEnded || isDiscussIt" class="pt-1">
@@ -787,10 +787,18 @@
                             />
                           </div>
                           <div :class="rubric ? 'float-right' : ''" class="mt-1">
-                            <strong>Total:</strong>
-                            <span style="margin-left:7px">{{
-                                totalScore
+                            <strong><span v-if="rubric">Total{{(scoreInputType === 'points' ? ' points:' : ' percentage:')}}</span>
+                              <span v-if="!rubric">Total:</span></strong>
+                            <span style="margin-left:7px" v-if="!rubric || scoreInputType === 'points'">{{
+                                roundToDecimalSigFig(totalScore)
                               }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
+                            </span>
+                            <span style="margin-left:7px"
+                                  v-if="rubric && scoreInputType === 'percentage'"
+                            >
+                                {{
+                                roundToDecimalSigFig(totalPercentage)
+                              }} out of 100%
                             </span>
                           </div>
                           <hr>
@@ -1123,6 +1131,7 @@ import SubmissionArray from '../../components/SubmissionArray.vue'
 import CompletedIcon from '../../components/CompletedIcon.vue'
 import RubricProperties from '../../components/RubricProperties.vue'
 import RubricPointsBreakdown from '../../components/RubricPointsBreakdown.vue'
+import { roundToDecimalSigFig } from '../../helpers/Math'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
@@ -1146,6 +1155,8 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    scoreInputType: '',
+    totalPercentage: 0,
     originalRubricWithMaxes: [],
     rubricPointsBreakdownIndex: 0,
     totalScore: 0,
@@ -1305,25 +1316,33 @@ export default {
     this.$forceUpdate()
   },
   methods: {
+    roundToDecimalSigFig,
     addGlow,
     downloadSubmissionFile,
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
-    setOriginalRubricWithMaxes(originalRubricWithMaxes){
+    setOriginalRubricWithMaxes (originalRubricWithMaxes) {
       this.originalRubricWithMaxes = originalRubricWithMaxes
     },
     updateOpenEndedSubmissionScore (rubricPointsBreakdown, scoreInputType, points) {
       this.gradingForm.file_submission_score = points
       this.setRubricPointsBreakdown(rubricPointsBreakdown, scoreInputType)
     },
-    setScoreInputType(scoreInputType){
+    setScoreInputType (scoreInputType) {
       this.gradingForm.score_input_type = scoreInputType
+      this.scoreInputType = scoreInputType
     },
     setRubricPointsBreakdown (rubricPointsBreakdown, scoreInputType) {
       this.gradingForm.rubric_points_breakdown = rubricPointsBreakdown
       this.gradingForm.score_input_type = scoreInputType
-      //console.error('rubric points breakdown set')
+      this.scoreInputType = scoreInputType
+      if (scoreInputType === 'percentage') {
+        this.totalPercentage = rubricPointsBreakdown.reduce(
+          (sum, item) => sum + +item.percentage,
+          0
+        )
+      }
     },
     async reloadRubricAndRubricPointsBreakdown () {
       try {
