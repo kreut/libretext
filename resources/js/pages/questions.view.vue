@@ -3093,9 +3093,9 @@
                   </b-card-text>
                 </b-card>
               </b-row>
-              <b-row v-if="isOpenEnded
+              <b-row v-if="(isOpenEnded || questions[currentPage -1].rubric)
                        && (user.role === 3)
-                       && (showSubmissionInformation || openEndedSubmissionType === 'file')
+                       && (showSubmissionInformation || openEndedSubmissionType === 'file' || questions[currentPage -1].rubric)
                        && !isAnonymousUser"
                      :class="{ 'mt-3': (questions[currentPage-1].technology_iframe && showSubmissionInformation) || zoomedOut, 'mb-3': true }"
               >
@@ -3166,6 +3166,7 @@
                       <li v-if="showScores">
                         <strong>Z-Score: {{ questions[currentPage - 1].submission_file_z_score }}</strong>
                       </li>
+                      <li v-if="showRubricPointsBreakdown && false">aaaaa</li>
                     </ul>
                     <div v-if="isOpenEndedFileSubmission">
                       <hr>
@@ -3411,6 +3412,7 @@ import SketcherSubmission from '../components/SketcherSubmission.vue'
 import CanSubmitWorkTooltip from '../components/CanSubmitWorkTooltip.vue'
 import SubmitWork from '~/components/SubmitWork.vue'
 import RubricProperties from '../components/RubricProperties.vue'
+import RubricPointsBreakdown from '../components/RubricPointsBreakdown.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3422,6 +3424,7 @@ export default {
   layout: window.config.clickerApp ? 'blank' : 'default',
   components: {
     RubricProperties,
+    RubricPointsBreakdown,
     SubmitWork,
     CanSubmitWorkTooltip,
     SketcherSubmission,
@@ -3454,6 +3457,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    showRubricPointsBreakdown: false,
     showRubricProperties: false,
     emailToGraderSubject: '',
     testingH5p: false,
@@ -3891,6 +3895,15 @@ export default {
             })
           }
         })
+      }
+      if (this.questions[this.currentPage - 1].rubric) {
+        try {
+          const rubric = JSON.parse(this.questions[this.currentPage - 1].rubric)
+          this.showRubricPointsBreakdown = JSON.parse(this.questions[this.currentPage - 1].rubric)
+        } catch (error) {
+          console.log('Rubric breakdown error')
+          console.log(error)
+        }
       }
       this.testingH5p = this.isLocalMe && true
       if (this.testingH5p) {
@@ -5414,8 +5427,11 @@ export default {
       return word ? word.charAt(0).toUpperCase() + word.slice(1) : ''
     },
     getOpenEndedTitle () {
-      let openEndedSubmissionType = this.openEndedSubmissionType.includes('text') ? 'text' : this.openEndedSubmissionType
-      let capitalizedTitle = this.capitalize(openEndedSubmissionType)
+      let capitalizedTitle = ''
+      if (+this.openEndedSubmissionType !== 0) {
+        let openEndedSubmissionType = this.openEndedSubmissionType.includes('text') ? 'text' : this.openEndedSubmissionType
+        capitalizedTitle = this.capitalize(openEndedSubmissionType)
+      }
       return `<h2 class="h7">${capitalizedTitle} Submission Information</h2>`
     },
     async submitText () {
