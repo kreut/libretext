@@ -497,7 +497,7 @@ export default {
             score_input_type: this.scoreInputType,
             rubric_shown: this.rubricShown
           }
-          const action = this.rubricTemplateSaveOption === 'update existing template' ? 'patch' : 'post'
+          const action = this.rubricTemplateSaveOption === 'update existing template' || this.isEdit ? 'patch' : 'post'
           let rubricTemplateId
           if (this.isEdit) {
             rubricTemplateId = saveAsTemplate ? this.rubricTemplateId : this.rubricInfo.id
