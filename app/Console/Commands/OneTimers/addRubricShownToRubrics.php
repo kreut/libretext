@@ -57,7 +57,7 @@ class addRubricShownToRubrics extends Command
             foreach ($question_revision_rubrics as $question_revision_rubric) {
                 $rubric = $this->_fixRubric($question_revision_rubric->rubric);
                 $question_revision_rubric->rubric = $rubric;
-                $question_revision_rubric>save();
+                $question_revision_rubric->save();
             }
             $question_rubrics = Question::whereNotNull('rubric')->get();
             foreach ($question_rubrics as $question_rubric) {
