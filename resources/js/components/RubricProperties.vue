@@ -26,11 +26,6 @@
              size="xl"
              @hidden="$emit('hideRubricProperties')"
     >
-      <b-alert type="info" :show="rubricPointsBreakdownExists">
-        You have already saved the point breakdowns for at least one student. If you update this rubric, all breakdowns
-        will be reset and you will
-        have to enter in new scores for your students.
-      </b-alert>
       <b-form-group
         v-if="rubricTemplateOptions.length"
         label-for="rubric_template"
@@ -265,6 +260,11 @@
           Add Criterion
         </b-button>
       </p>
+      <b-alert variant="danger" :show="rubricPointsBreakdownExists">
+        You have already saved the point breakdowns for at least one student. If you update this rubric, all rubric point breakdowns
+        will be reset and you will
+        have to enter new scores for your students.
+      </b-alert>
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm" @click="$bvModal.hide('modal-rubric-properties')">
           Cancel
@@ -356,6 +356,7 @@ export default {
       this.description = this.rubricInfo.description
       const rubricInfo = JSON.parse(this.rubricInfo.rubric)
       const rubricItems = rubricInfo.rubric_items
+      this.rubricShown = rubricInfo.rubric_shown
       this.initialScoreInputType = rubricInfo.score_input_type
       this.scoreInputType = rubricInfo.score_input_type
       for (let i = 0; i < rubricItems.length; i++) {
@@ -489,7 +490,8 @@ export default {
             saveAsTemplate
               ? this.$emit('setRubric', JSON.stringify({
                 rubric_items: this.rubricItems,
-                score_input_type: this.scoreInputType
+                score_input_type: this.scoreInputType,
+                rubric_shown: this.rubricShown
               }))
               : this.$emit('reloadRubricTemplates')
             if (this.assignmentId) {
@@ -507,7 +509,8 @@ export default {
           if (data.type === 'success') {
             this.$emit('setRubric', JSON.stringify({
               rubric_items: this.rubricItems,
-              score_input_type: this.scoreInputType
+              score_input_type: this.scoreInputType,
+              rubric_shown: this.rubricShown
             }))
           }
           if (this.assignmentId) {

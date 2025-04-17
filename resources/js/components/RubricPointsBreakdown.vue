@@ -1,33 +1,42 @@
 <template>
   <div>
     <b-card-text>
-      <table v-show="showTable" class="table table-striped small" aria-label="Rubric Points Breakdown">
+      <table v-show="showTable" class="table table-striped" :class="user.role === 2 ? 'small' : ''"
+             aria-label="Rubric Points Breakdown"
+      >
         <thead>
-        <tr><span class="text-muted">Rubric {{ scoreInputType }} breakdown</span></tr>
+        <tr v-show="user.role === 'instructor'"><span class="text-muted">Rubric {{ scoreInputType }} breakdown</span>
+        </tr>
         <tr>
-          <th scope="col">
-            <span style="font-size:12px">Title</span>
+          <th scope="col" :style="+user.role === 2 ? '' : 'width:70%'">
+            <span :style="+user.role === 2? 'font-size:12px;' : ''">Title</span>
           </th>
-          <th scope="col" style="width:110px;font-size:12px">
-            Max<br>Possible
+          <th scope="col" :style="user.role === 2 ? 'width:110px;font-size:12px' : ''">
+            Max <span v-if="user.role === 3">{{ capitalizeFirst(scoreInputType) }}</span><br v-if="user.role === 2">
+            Possible
           </th>
-          <th scope="col" style="width:100px;'font-size:12px">
-            <b-form-radio
-              v-model="scoreInputType"
-              name="score_input_type"
-              value="points"
-              @change="setRubricPointsBreakdown($event)"
-            >
-              Points
-            </b-form-radio>
-            <b-form-radio
-              v-model="scoreInputType"
-              name="score_input_type"
-              value="percentage"
-              @change="setRubricPointsBreakdown($event)"
-            >
-              Percentage
-            </b-form-radio>
+          <th scope="col" :style="+user.role === 2 ? 'width:100px;font-size:12px' : ''">
+            <div v-if="user.role === 3">
+              {{ capitalizeFirst(scoreInputType) }} Awarded
+            </div>
+            <div v-else>
+              <b-form-radio
+                v-model="scoreInputType"
+                name="score_input_type"
+                value="points"
+                @change="setRubricPointsBreakdown($event)"
+              >
+                Points
+              </b-form-radio>
+              <b-form-radio
+                v-model="scoreInputType"
+                name="score_input_type"
+                value="percentage"
+                @change="setRubricPointsBreakdown($event)"
+              >
+                Percentage
+              </b-form-radio>
+            </div>
           </th>
         </tr>
         </thead>
@@ -49,30 +58,17 @@
             </b-tooltip>
           </td>
           <td>{{
-              roundToDecimalSigFig(scoreInputType === 'percentage' ? originalRubricPercentages[rubricItemIndex]
-                : originalRubricPoints[rubricItemIndex])
+              roundToDecimalSigFig(scoreInputType === 'percentage' ? +originalRubricPercentages[rubricItemIndex]
+                : +originalRubricPoints[rubricItemIndex])
             }}<span v-if="scoreInputType === 'percentage'">%</span></td>
           <td>
-            <div v-if="scoreInputType === 'points'">
-              <b-form-input
-                v-model="rubricItem.points"
-                type="text"
-                size="sm"
-                style="width:80px"
-                placeholder=""
-                required
-                :class="getClass(rubricItem, rubricItemIndex)"
-                @input="recomputeOpenEndedPoints"
-              />
-              <ErrorMessage
-                v-if="rubricItem.points !== '' && roundToDecimalSigFig(+rubricItem.points) > roundToDecimalSigFig(originalRubricPoints[rubricItemIndex])"
-                :message="`Max of ${roundToDecimalSigFig(originalRubricPoints[rubricItemIndex]) }`"
-              />
+            <div v-if="user.role === 3">
+              {{ rubricItem[scoreInputType] }}<span v-if="scoreInputType === 'percentage'">%</span>
             </div>
-            <div v-if="scoreInputType === 'percentage'">
-              <div class="d-inline-flex">
+            <div v-if="user.role !== 3">
+              <div v-if="scoreInputType === 'points'">
                 <b-form-input
-                  v-model="rubricItem.percentage"
+                  v-model="rubricItem.points"
                   type="text"
                   size="sm"
                   style="width:80px"
@@ -81,11 +77,29 @@
                   :class="getClass(rubricItem, rubricItemIndex)"
                   @input="recomputeOpenEndedPoints"
                 />
-                <span class="pl-1 pt-1">%</span></div>
-              <ErrorMessage
-                v-if="rubricItem.percentage !== '' && roundToDecimalSigFig(+rubricItem.percentage) >  roundToDecimalSigFig(originalRubricPercentages[rubricItemIndex])"
-                :message="`Max of ${roundToDecimalSigFig(originalRubricPercentages[rubricItemIndex])}`"
-              />
+                <ErrorMessage
+                  v-if="rubricItem.points !== '' && roundToDecimalSigFig(+rubricItem.points) > roundToDecimalSigFig(originalRubricPoints[rubricItemIndex])"
+                  :message="`Max of ${roundToDecimalSigFig(originalRubricPoints[rubricItemIndex]) }`"
+                />
+              </div>
+              <div v-if="scoreInputType === 'percentage'">
+                <div class="d-inline-flex">
+                  <b-form-input
+                    v-model="rubricItem.percentage"
+                    type="text"
+                    size="sm"
+                    style="width:80px"
+                    placeholder=""
+                    required
+                    :class="getClass(rubricItem, rubricItemIndex)"
+                    @input="recomputeOpenEndedPoints"
+                  />
+                  <span class="pl-1 pt-1">%</span></div>
+                <ErrorMessage
+                  v-if="rubricItem.percentage !== '' && roundToDecimalSigFig(+rubricItem.percentage) >  roundToDecimalSigFig(originalRubricPercentages[rubricItemIndex])"
+                  :message="`Max of ${roundToDecimalSigFig(originalRubricPercentages[rubricItemIndex])}`"
+                />
+              </div>
             </div>
           </td>
         </tr>
@@ -99,6 +113,7 @@
 import axios from 'axios'
 import ErrorMessage from './ErrorMessage.vue'
 import { roundToDecimalSigFig } from '../helpers/Math'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'RubricPointsBreakdown',
@@ -125,6 +140,9 @@ export default {
       default: ''
     }
   },
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   data: () => ({
     rubricPointsBreakdownScoreInputType: false,
     originalInputType: '',
@@ -138,13 +156,14 @@ export default {
   }),
   async mounted () {
     await this.getRubricPointsBreakdown()
+    console.error('setting original rubric')
+    console.error(this.originalRubric)
     const originalRubric = JSON.parse(this.originalRubric)
     const rubricItems = originalRubric.rubric_items
     this.originalInputType = originalRubric.score_input_type
     this.scoreInputType = originalRubric.score_input_type
     this.$emit('setScoreInputType', this.scoreInputType)
     this.originalMaxPoints = 0
-
     for (let i = 0; i < rubricItems.length; i++) {
       const points = +rubricItems[i].points
       this.originalMaxPoints += points
@@ -188,19 +207,21 @@ export default {
     setTimeout(() => {
       this.showTable = true
     }, 750)
-    if (this.rubricPointsBreakdownScoreInputType) {
-      this.scoreInputType = this.rubricPointsBreakdownScoreInputType
-      localStorage.scoreInputType = this.scoreInputType
-    } else {
-      if (localStorage.getItem('scoreInputType')) {
-        this.scoreInputType = localStorage.getItem('scoreInputType')
-      }
+    if (localStorage.getItem('scoreInputType')) {
+      this.scoreInputType = localStorage.getItem('scoreInputType')
+      this.$emit('setRubricPointsBreakdown', this.rubricPointsBreakdown,this.scoreInputType)
     }
-    this.$emit('setScoreInputType', this.scoreInputType)
   },
   methods: {
     roundToDecimalSigFig,
+    capitalizeFirst (string) {
+      if (!string) {
+        return string
+      }
+      return string.charAt(0).toUpperCase() + string.slice(1)
+    },
     setRubricPointsBreakdown (scoreInputType) {
+      localStorage.scoreInputType = scoreInputType
       this.$emit('setRubricPointsBreakdown', this.rubricPointsBreakdown, scoreInputType)
     },
     getClass (rubricItem, rubricItemIndex) {
@@ -275,7 +296,9 @@ export default {
       try {
         const { data } = await axios.get(`/api/rubric-points-breakdown/assignment/${this.assignmentId}/question/${this.questionId}/user/${this.userId}`)
         if (data.type === 'success') {
+          console.error('setting rubric points breakdown')
           this.rubricPointsBreakdown = JSON.parse(data.rubric_points_breakdown).rubric_items
+          console.error('setting score input type')
           this.rubricPointsBreakdownScoreInputType = JSON.parse(data.rubric_points_breakdown).score_input_type
           if (data.rubric_points_breakdown_exists) {
             this.$emit('setRubricPointsBreakdown', this.rubricPointsBreakdown, this.scoreInputType)

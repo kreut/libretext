@@ -70,11 +70,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateCustomRubric(Assignment            $assignment,
-                                       Question              $question,
-                                       RubricPointsBreakdown $rubricPointsBreakdown,
+    public function updateCustomRubric(Assignment             $assignment,
+                                       Question               $question,
+                                       RubricPointsBreakdown  $rubricPointsBreakdown,
                                        AssignmentSyncQuestion $assignmentSyncQuestion,
-                                       Request               $request): array
+                                       Request                $request): array
     {
         try {
 
@@ -88,22 +88,17 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
-            $rubric_points = 0;
             $custom_rubric = json_decode($request->custom_rubric);
-            /*
-             * I don't think I need to check this....
-            foreach ($custom_rubric as $item){
-                $rubric_points += $item->points;
-            }
-            if ((float) $rubric_points !== (float) $request->question_points){
-                $response['message'] = "The points should sum to $request->question_points.";
-                return $response;
-            }  */
-            if (json_encode(json_decode($assignment_question->custom_rubric)) !== json_encode($custom_rubric)) {
-                DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
-                    ->where('question_id', $question->id)
-                    ->update(['custom_rubric' => $request->custom_rubric]);
+            $current_custom_rubric = json_decode($assignment_question->custom_rubric, 1);
+            $current_custom_rubric_items = $current_custom_rubric['rubric_items'] ?: [];
+            $new_custom_rubric = json_decode(json_encode($custom_rubric), 1);
+            $new_custom_rubric_items = $new_custom_rubric['rubric_items'] ?: [];
+            DB::beginTransaction();
+            DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['custom_rubric' => $request->custom_rubric]);
+            if (!$this->_rubricsAreTheSame($current_custom_rubric_items, $new_custom_rubric_items)) {
                 $rubric_points_breakdown_exists = $rubricPointsBreakdown->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
                     ->exists();
@@ -119,8 +114,11 @@ class AssignmentSyncQuestionController extends Controller
                 $response['type'] = 'info';
                 $response['message'] = 'No updating of rubric.';
             }
-
+            DB::commit();
         } catch (Exception $e) {
+            if (DB::transactionLevel()) {
+                DB::rollback();
+            }
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to save your custom rubric to this assignment question.  Please try again or contact us for assistance.";
@@ -2988,5 +2986,38 @@ class AssignmentSyncQuestionController extends Controller
 
 
     }
+
+    private function _rubricsAreTheSame(array $array1, array $array2): bool
+    {
+        if (count($array1) !== count($array2)) {
+            return false;
+        }
+
+        foreach ($array1 as $key => $item1) {
+            if (!isset($array2[$key])) {
+                return false;
+            }
+
+            $item2 = $array2[$key];
+
+            $title1 = $item1['title'] ?? null;
+            $title2 = $item2['title'] ?? null;
+
+
+            if (
+                $this->_normalize($title1) !== $this->_normalize($title2)
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function _normalize($value): string
+    {
+        return $value === null ? '' : (string)$value;
+    }
+
 
 }

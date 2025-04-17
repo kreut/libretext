@@ -26,7 +26,12 @@ class RubricPointsBreakdownPolicy
                                                 User                  $student_user): Response
     {
         $enrolled_in_course = $assignment->course->enrollments->contains('user_id', $student_user->id);
-        return (int)$assignment->course->user_id === (int)$user->id && $enrolled_in_course
+        if ($user->role === 3) {
+            $has_access = $user->id === $student_user->id;
+        } else {
+            $has_access = (int)$assignment->course->user_id === (int)$user->id && $enrolled_in_course;
+        }
+        return $has_access
             ? Response::allow()
             : Response::deny("You are not allowed to get the rubric points breakdown for that assignment-question-user.");
 

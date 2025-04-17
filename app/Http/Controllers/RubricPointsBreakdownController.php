@@ -76,8 +76,13 @@ class RubricPointsBreakdownController extends Controller
             if (!$rubric) {
                 $rubric_points_breakdown = [];
                 $rubric_points_breakdown_exists = false;
-
+                $rubric_shown = false;
             } else {
+                try {
+                    $rubric_shown = json_decode($rubric, 1)['rubric_shown'] ?: false;
+                } catch (Exception $e){
+                    $rubric_shown = false;
+                }
                 $rubric_points_breakdown = $rubricPointsBreakdown->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
                     ->where('user_id', $user->id)
@@ -94,9 +99,11 @@ class RubricPointsBreakdownController extends Controller
                 } else {
                     $rubric_points_breakdown = $rubric_points_breakdown->points_breakdown;
                 }
+
             }
             $response['rubric_points_breakdown'] = $rubric_points_breakdown;
             $response['rubric_points_breakdown_exists'] = $rubric_points_breakdown_exists;
+            $response['rubric_shown'] = $rubric_shown;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
