@@ -55,7 +55,7 @@ class RubricPointsBreakdownTest extends TestCase
     public function non_owner_cannot_get_rubric_points_breakdown_by_assignment_user_question()
     {
         $student_user = factory(User::class)->create();
-        $this->actingAs($this->user)
+        $this->actingAs($this->user_2)
             ->getJson("/api/rubric-points-breakdown/assignment/{$this->assignment->id}/question/{$this->question->id}/user/$student_user->id")
             ->assertJson(['message' => 'You are not allowed to get the rubric points breakdown for that assignment-question-user.']);
 

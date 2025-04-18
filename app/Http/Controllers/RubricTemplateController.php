@@ -53,6 +53,7 @@ class RubricTemplateController extends Controller
             }
             $data = $request->validated();
             $data['rubric'] = json_encode([
+                'rubric_shown' => $request->rubric_shown,
                 'score_input_type' => $request->score_input_type,
                 'rubric_items' => $data['rubric_items']
             ]);
@@ -96,6 +97,7 @@ class RubricTemplateController extends Controller
                 }
             }
             $data['rubric'] = json_encode([
+                'rubric_shown' => $request->rubric_shown,
                 'score_input_type' => $request->score_input_type,
                 'rubric_items' => $data['rubric_items']
             ]);
