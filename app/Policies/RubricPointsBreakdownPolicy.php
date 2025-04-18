@@ -26,11 +26,21 @@ class RubricPointsBreakdownPolicy
                                                 User                  $student_user): Response
     {
         $enrolled_in_course = $assignment->course->enrollments->contains('user_id', $student_user->id);
-        if ($user->role === 3) {
-            $has_access = $user->id === $student_user->id;
-        } else {
-            $has_access = (int)$assignment->course->user_id === (int)$user->id && $enrolled_in_course;
+        $has_access = false;
+
+        switch ($user->role) {
+            case(2):
+                $has_access = (int)$assignment->course->user_id === (int)$user->id;
+                break;
+            case(3):
+                $has_access = $user->id === $student_user->id && $enrolled_in_course;
+                break;
+            case(4):
+                $has_access = $assignment->course->isGrader() && $enrolled_in_course;
+                break;
         }
+
+
         return $has_access
             ? Response::allow()
             : Response::deny("You are not allowed to get the rubric points breakdown for that assignment-question-user.");
@@ -48,7 +58,15 @@ class RubricPointsBreakdownPolicy
                                                Assignment            $assignment): Response
     {
 
-        return (int)$assignment->course->user_id === (int)$user->id
+        $has_access = false;
+        if ($user->role === 4) {
+            $has_access = $assignment->course->isGrader();
+        }
+        if ($user->role === 2) {
+            $has_access = (int)$assignment->course->user_id === (int)$user->id;
+        }
+
+        return $has_access
             ? Response::allow()
             : Response::deny("You are not allowed to check if a rubric points breakdown exists for that assignment.");
 
