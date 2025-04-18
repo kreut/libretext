@@ -33,7 +33,7 @@
           No questions that currently use this template will be affected.
         </p>
         <template #modal-footer="{ cancel, ok }">
-          <b-button size="sm" @click="$bvModal.hide('modal-confirm-delete-rubric')">
+          <b-button size="sm" @click="$bvModal.hide('modal-confirm-delete-rubric-template')">
             Cancel
           </b-button>
           <b-button size="sm"
@@ -44,7 +44,7 @@
           </b-button>
         </template>
       </b-modal>
-      <RubricProperties :key="`show-rubric-properties-${+showRubricProperties}`"
+      <RubricPropertiesModal :key="`show-rubric-properties-${+showRubricProperties}`"
                         :show-rubric-properties="showRubricProperties"
                         :is-edit="isEditRubricTemplate"
                         :rubric-info="activeRubricTemplate"
@@ -52,7 +52,6 @@
                         @hideRubricProperties="showRubricProperties = false"
                         @reloadRubricTemplates="getRubricTemplates"
       />
-
       <b-row align-h="end" class="mb-4">
         <b-button variant="primary" class="mr-1"
                   size="sm"
@@ -77,15 +76,12 @@
                 </th>
               </tr>
             </thead>
-            <tbody is="draggable" :key="rubricTemplates.length" v-model="rubricTemplates" tag="tbody"
-                   @end="saveNewOrder"
-            >
+            <tbody>
               <tr
                 v-for="rubricTemplate in rubricTemplates"
                 :key="`rubric-${rubricTemplate.id}`"
               >
                 <th scope="row" style="width:300px">
-                  <b-icon icon="list" />
                   <span :id="`rubric-${rubricTemplate.id}`">
                     {{ rubricTemplate.name }}
                   </span>
@@ -142,22 +138,20 @@
 
 <script>
 import AllFormErrors from '~/components/AllFormErrors.vue'
-import RubricProperties from '~/components/RubricProperties.vue'
 import { doCopy } from '~/helpers/Copy'
 import axios from 'axios'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import draggable from 'vuedraggable'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import RubricPropertiesModal from '../../components/RubricPropertiesModal.vue'
 
 export default {
   components: {
+    RubricPropertiesModal,
     FontAwesomeIcon,
-    RubricProperties,
     AllFormErrors,
-    Loading,
-    draggable
+    Loading
   },
   data: () => ({
     activeRubricTemplate: {},
@@ -257,6 +251,3 @@ export default {
 }
 </script>
 
-<style scoped>
-
-</style>

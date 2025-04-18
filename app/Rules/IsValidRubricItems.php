@@ -2,7 +2,6 @@
 
 namespace App\Rules;
 
-use Cassandra\Numeric;
 use Exception;
 use Illuminate\Contracts\Validation\Rule;
 
@@ -12,12 +11,7 @@ class IsValidRubricItems implements Rule
      * @var array
      */
     private $message;
-    private $score_input_type;
 
-    public function __construct($score_input_type)
-    {
-        $this->score_input_type = $score_input_type;
-    }
 
     /**
      * Determine if the validation rule passes.
@@ -32,7 +26,7 @@ class IsValidRubricItems implements Rule
         $this->message = [];
         $passes = true;
         foreach ($value as $key => $item) {
-            $this->message[$key] = ['title' => 'passes', 'points' => 'passes', 'percentage' => 'passes'];
+            $this->message[$key] = ['title' => 'passes', 'points' => 'passes'];
         }
         $criteria = [];
         foreach ($value as $key => $item) {
@@ -46,28 +40,13 @@ class IsValidRubricItems implements Rule
                 }
                 $criteria[] = strtolower($item['title']);
             }
-            switch ($this->score_input_type) {
-                case('points'):
-                    if (!$item['points']
-                        || $item['points'] < 0
-                        || filter_var($item['points'], FILTER_VALIDATE_FLOAT) === false) {
-                        $passes = false;
-                        $this->message[$key]['points'] = "The points should be a number that is at least 0.";
-                    }
-                    break;
-                case('percentage'):
-                    if (!$item['percentage']
-                        || $item['percentage'] < 0
-                        || $item['percentage'] > 100
-                        || filter_var($item['percentage'], FILTER_VALIDATE_FLOAT) === false) {
-                        $passes = false;
-                        $this->message[$key]['percentage'] = "The percentages should be between 0 and 100.";
-                    }
-                    break;
-                default:
-                    throw new Exception ("The score input type '$this->score_input_type' is not valid.");
-            }
 
+            if (!$item['points']
+                || $item['points'] < 0
+                || filter_var($item['points'], FILTER_VALIDATE_FLOAT) === false) {
+                $passes = false;
+                $this->message[$key]['points'] = "The points should be a number that is at least 0.";
+            }
 
         }
         return $passes;

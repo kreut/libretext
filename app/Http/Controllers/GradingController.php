@@ -146,47 +146,31 @@ class GradingController extends Controller
             }
             if ($request->rubric_points_breakdown) {
                 $rubric_items = $request->rubric_points_breakdown;
-                $score_input_type = $request->score_input_type;
-                switch ($score_input_type) {
-                    case('points'):
-                        $score_input_type_to_reset = 'percentage';
-                        break;
-                    case('percentage'):
-                        $score_input_type_to_reset = 'points';
-                        break;
-                    default:
-                        throw new Exception("$score_input_type is not a valid score input type.");
-                }
                 if ($request->special_score) {
                     $original_rubric_with_maxes = $request->original_rubric_with_maxes;
                     $rubric_points_breakdown = json_decode($request->rubric_points_breakdown, 1);
-                    $score_input_type_to_unset = $score_input_type === 'points' ? 'percentage' : 'points';
                     $rubric_items = $rubric_points_breakdown['rubric_items'];
                     foreach ($rubric_items as $key => $value) {
                         switch ($request->special_score) {
                             case('full score'):
-                                $rubric_items[$key][$score_input_type] = $original_rubric_with_maxes[$key][$score_input_type];
+                                $rubric_items[$key]['points'] = $original_rubric_with_maxes[$key];
                                 break;
                             case('zero score'):
-                                $rubric_items[$key][$score_input_type] = 0;
+                                $rubric_items[$key]['points'] = 0;
                                 break;
                         }
-                        unset($rubric_items[$key][$score_input_type_to_unset]);
                     }
 
                 } else {
-                    foreach ($rubric_items as $key => $rubric_item) {
-                        $rubric_items[$key][$score_input_type_to_reset] = '';
-                    }
                     if (+$request->file_submission_score === 0) {
                         foreach ($rubric_items as $key => $value) {
-                            $rubric_items[$key][$score_input_type] = 0;
+                            $rubric_items[$key]['points'] = 0;
                         }
                     }
                 }
 
                 $rubricPointsBreakdown = new RubricPointsBreakdown();
-                $points_breakdown = json_encode(['rubric_items' => $rubric_items, 'score_input_type' => $score_input_type]);
+                $points_breakdown = json_encode(['rubric_items' => $rubric_items]);
                 $rubricPointsBreakdown->updateOrCreate([
                     'assignment_id' => $assignment_id,
                     'question_id' => $question_id,

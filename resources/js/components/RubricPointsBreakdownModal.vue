@@ -2,7 +2,7 @@
   <span>
   <b-modal id="modal-rubric-points-breakdown"
            size="lg"
-           title="Rubric"
+           :title="rubricPointsBreakdownExists ? 'Rubric Points Breakdown' : 'Rubric'"
            hide-footer
   >
     <RubricPointsBreakdown
@@ -11,12 +11,13 @@
       :original-rubric="rubric"
       :question-id="questionId"
       :question-points="questionPoints"
+      :rubric-points-breakdown-exists="rubricPointsBreakdownExists"
       @setScoreInputType="setScoreInputType"
     />
   </b-modal>
   <b-button size="sm"
             variant="info"
-            v-show="rubricPointsBreakdownExists && rubricShown"
+            v-show="rubricShown"
             @click="$bvModal.show('modal-rubric-points-breakdown')"
   >View Rubric</b-button>
     </span>

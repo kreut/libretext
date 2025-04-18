@@ -26,6 +26,8 @@ use App\Rules\IsValidLearningOutcomes;
 use App\Rules\IsValidMatchingPrompt;
 use App\Rules\IsValidNumericalPrompt;
 use App\Rules\IsValidQtiPrompt;
+use App\Rules\IsValidRubricItems;
+use App\Rules\IsValidRubricTemplate;
 use App\Rules\IsValidSelectChoice;
 use App\Rules\MatrixMultipleResponseColumns;
 use App\Rules\MatrixMultipleResponseRows;
@@ -95,6 +97,19 @@ class StoreQuestionRequest extends FormRequest
         }
         if ($this->learning_outcomes) {
             $rules['learning_outcomes'] = new IsValidLearningOutcomes($this->learning_outcomes);
+        }
+        if ($this->rubric_items) {
+            $rules['rubric_items'] = ['required', new IsValidRubricItems()];
+            $rules['rubric_shown'] = ['required', Rule::in(true, false)];
+        }
+        if ($this->rubric_template_save_option && $this->rubric_template_save_option !== 'do not save as template') {
+            $is_edit = $this->rubric_template_save_option === 'update existing template';
+            $rules['rubric_name'] = ['required', new IsValidRubricTemplate($is_edit, $this->rubric_template_id, $this->rubric_name, $this->user()->id)];
+            $rules['rubric_description'] = 'required';
+            if ($this->rubric_template_save_option === 'update existing template') {
+                $rules['rubric_template_id'] = ['required', new IsValidRubricTemplate($is_edit, $this->rubric_template_id, $this->rubric_name, $this->user()->id)];
+
+            }
         }
         switch ($this->question_type) {
             case('report'):

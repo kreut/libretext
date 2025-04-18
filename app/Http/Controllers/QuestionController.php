@@ -22,6 +22,7 @@ use App\Question;
 use App\QuestionMediaUpload;
 use App\QuestionRevision;
 use App\RubricCategory;
+use App\RubricTemplate;
 use App\SavedQuestionsFolder;
 use App\Section;
 use App\Tag;
@@ -1464,6 +1465,27 @@ class QuestionController extends Controller
 
             $data['cached'] = false;
             unset($data['non_technology_text']);
+
+
+            if (isset($data['rubric_items']) && $data['rubric_items']) {
+                $rubric = json_encode(['rubric_items' => $data['rubric_items'], 'rubric_shown' => $data['rubric_shown']]);
+                $data['rubric'] = $rubric;
+                if ($request->rubric_template_save_option !== 'do not save as template') {
+                    $request->rubric_template_id ? RubricTemplate::where('id', $request->rubric_template_id)
+                        ->update(['name' => $data['rubric_name'],
+                            'description' => $data['rubric_description'],
+                            'rubric' => $rubric])
+                        : RubricTemplate::create(['name' => $data['rubric_name'],
+                        'description' => $data['rubric_description'],
+                        'rubric' => $rubric,
+                        'user_id' => $request->user()->id]);
+                }
+                foreach (['rubric_name', 'rubric_description', 'rubric_template_id','rubric_shown','rubric_items'] as $rubric_key) {
+                    unset($data[$rubric_key]);
+                }
+            }
+
+
             DB::beginTransaction();
             $new_question_revision_id = 0;
             $currentQuestionRevision = null;
@@ -1812,6 +1834,7 @@ class QuestionController extends Controller
                 }
             }
             DB::table('empty_learning_tree_nodes')->where('question_id', $question->id)->delete();
+
             DB::commit();
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";

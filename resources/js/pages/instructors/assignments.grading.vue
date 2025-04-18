@@ -368,30 +368,11 @@
                   </b-alert>
                 </b-row>
               </b-container>
-              <div class="mb-2">
-                <RubricProperties :key="`rubric-properties-modal-${+showRubricProperties}`"
-                                  :rubric-info="{'rubric': rubric}"
-                                  :is-edit="rubric !== null"
-                                  :show-rubric-properties="showRubricProperties"
-                                  :question-points="+grading[currentStudentPage - 1]['open_ended_submission']['points']"
-                                  :assignment-id="+assignmentId"
-                                  :question-id="+grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
-                                  @setRubric="setCustomRubric"
-                                  @hideRubricProperties="showRubricProperties = false"
-                                  @reloadRubricAndRubricPointsBreakdown="reloadRubricAndRubricPointsBreakdown"
-                />
                 <b-button variant="outline-primary"
                           size="sm"
                           @click="visitQuestion"
                 >
                   Visit Question
-                </b-button>
-                <b-button v-show="isOpenEnded && user.id === 5"
-                          size="sm"
-                          variant="outline-primary"
-                          @click="showRubricProperties = true"
-                >
-                  {{ rubric ? 'View' : 'Add' }} Rubric
                 </b-button>
                 <SolutionFileHtml :key="`solution-file-html-${questionView}`"
                                   :questions="solutions"
@@ -783,23 +764,7 @@
                               @updateOpenEndedSubmissionScore="updateOpenEndedSubmissionScore"
                               @setRubricPointsBreakdown="setRubricPointsBreakdown"
                               @setOriginalRubricWithMaxes="setOriginalRubricWithMaxes"
-                              @setScoreInputType="setScoreInputType"
                             />
-                          </div>
-                          <div :class="rubric ? 'float-right' : ''" class="mt-1">
-                            <strong><span v-if="rubric">Total{{(scoreInputType === 'points' ? ' points:' : ' percentage:')}}</span>
-                              <span v-if="!rubric">Total:</span></strong>
-                            <span style="margin-left:7px" v-if="!rubric || scoreInputType === 'points'">{{
-                                roundToDecimalSigFig(totalScore)
-                              }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
-                            </span>
-                            <span style="margin-left:7px"
-                                  v-if="rubric && scoreInputType === 'percentage'"
-                            >
-                                {{
-                                roundToDecimalSigFig(totalPercentage)
-                              }} out of 100%
-                            </span>
                           </div>
                           <hr>
                           <b-container>
@@ -1325,24 +1290,12 @@ export default {
     setOriginalRubricWithMaxes (originalRubricWithMaxes) {
       this.originalRubricWithMaxes = originalRubricWithMaxes
     },
-    updateOpenEndedSubmissionScore (rubricPointsBreakdown, scoreInputType, points) {
+    updateOpenEndedSubmissionScore (rubricPointsBreakdown, points) {
       this.gradingForm.file_submission_score = points
-      this.setRubricPointsBreakdown(rubricPointsBreakdown, scoreInputType)
+      this.setRubricPointsBreakdown(rubricPointsBreakdown)
     },
-    setScoreInputType (scoreInputType) {
-      this.gradingForm.score_input_type = scoreInputType
-      this.scoreInputType = scoreInputType
-    },
-    setRubricPointsBreakdown (rubricPointsBreakdown, scoreInputType) {
+    setRubricPointsBreakdown (rubricPointsBreakdown) {
       this.gradingForm.rubric_points_breakdown = rubricPointsBreakdown
-      this.gradingForm.score_input_type = scoreInputType
-      this.scoreInputType = scoreInputType
-      if (scoreInputType === 'percentage') {
-        this.totalPercentage = rubricPointsBreakdown.reduce(
-          (sum, item) => sum + +item.percentage,
-          0
-        )
-      }
     },
     async reloadRubricAndRubricPointsBreakdown () {
       try {

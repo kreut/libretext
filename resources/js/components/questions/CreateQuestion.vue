@@ -544,31 +544,6 @@
         </b-button>
       </template>
     </b-modal>
-
-    <b-modal
-      id="modal-confirm-delete-rubric"
-      title="Confirm Delete Rubric"
-    >
-      Deleting this rubric will remove it from the question. However, any associated rubric template will be unaffected.
-      <template #modal-footer>
-        <b-button
-          size="sm"
-          class="float-right"
-          @click="$bvModal.hide('modal-confirm-delete-rubric')"
-        >
-          Cancel
-        </b-button>
-        <b-button
-          variant="danger"
-          size="sm"
-          class="float-right"
-          @click="deleteRubric"
-        >
-          Delete
-        </b-button>
-      </template>
-    </b-modal>
-
     <b-modal
       :id="modalId"
       title="Preview Question"
@@ -2241,65 +2216,39 @@
     </b-card>
 
     <b-card
-      v-if="questionForm.rubric"
+      v-show="user.id === 5"
       border-variant="primary"
       header-bg-variant="primary"
       header-text-variant="white"
+      header="Rubric"
       class="mb-3"
     >
-      <template #header>
-        Rubric
-        <QuestionCircleTooltip id="rubric-tooltip" :icon-style="'color:#fff'"/>
-        <b-tooltip target="rubric-tooltip"
+      <b-alert show>
+        This rubric may be edited within an assignment context.
+      </b-alert>
+      <RubricProperties
+        :key="`rubric-properties-${isEditRubric}`"
+        :errors="questionForm.errors.errors"
+        :rubric-info="{'rubric' :  questionForm.rubric}"
+        :rubric-properties-question-form-errors="rubricPropertiesQuestionFormErrors"
+        :is-edit="isEditRubric"
+        :is-template="false"
+        @setKeyValue="setKeyValue"
+      />
+      <template v-slot:cell(criterion)="data">
+        {{ data.item.title }}
+        <QuestionCircleTooltip v-show="data.item.description"
+                               :id="`rubric-item-tooltip-${data.item.title}`"
+        />
+        <b-tooltip :target="`rubric-item-tooltip-${data.item.title}`"
                    delay="250"
                    triggers="hover focus"
         >
-          This rubric may be overwritten at the assignment level.
+          {{ data.item.description }}
         </b-tooltip>
-        <b-icon icon="pencil"
-                target="edit-rubric-tooltip"
-                style="cursor:pointer;color:#fff;"
-                :aria-label="`Edit Rubric`"
-                @click="initEditRubric"
-        />
-        <b-icon icon="trash"
-                target="delete-rubric-tooltip"
-                style="cursor:pointer;color:#fff;"
-                :aria-label="`Delete Rubric`"
-                @click="$bvModal.show('modal-confirm-delete-rubric')"
-        />
       </template>
-      <b-table
-        v-if="questionForm.rubric"
-        aria-label="Rubric"
-        striped
-        hover
-        :no-border-collapse="true"
-        :fields="rubricFields"
-        :items="JSON.parse(questionForm.rubric).rubric_items"
-      >
-        <template v-slot:cell(criterion)="data">
-          {{ data.item.title}}
-          <QuestionCircleTooltip v-show="data.item.description"
-                                 :id="`rubric-item-tooltip-${data.item.title}`"
-          />
-          <b-tooltip :target="`rubric-item-tooltip-${data.item.title}`"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            {{ data.item.description }}
-          </b-tooltip>
-        </template>
       </b-table>
     </b-card>
-    <RubricProperties :key="`show-rubric-properties-${+showRubricProperties}`"
-                      :show-rubric-properties="showRubricProperties"
-                      :rubric-info="{'rubric' : this.questionForm.rubric}"
-                      :is-edit="isEditRubric"
-                      :is-template="false"
-                      @hideRubricProperties="showRubricProperties = false"
-                      @setRubric="setRubric"
-    />
     <span class="float-right">
       <b-button v-if="isEdit"
                 size="sm"
@@ -2316,11 +2265,6 @@
       >
         Show json
       </b-button>
-      <b-button v-if="!questionForm.rubric && user.id === 5"
-                size="sm"
-                variant="outline-info"
-                @click="showRubricProperties = true"
-      >Add Rubric</b-button>
       <b-button size="sm"
                 variant="info"
                 @click="previewQuestion"
@@ -2409,6 +2353,10 @@ const defaultQuestionForm = {
   purpose: '',
   grading_style_id: null,
   rubric_categories: [],
+  rubric_name: '',
+  rubric_description: '',
+  rubric_shown: true,
+  rubric_template_save_option: 'do not save as template',
   text_question: null,
   a11y_auto_graded_question_id: null,
   answer_html: null,
@@ -2606,8 +2554,8 @@ export default {
     }
   },
   data: () => ({
-    rubricFields: ['criterion', 'points', 'percentage'],
-    showRubricProperties: false,
+    rubricPropertiesKey: 0,
+    rubricPropertiesQuestionFormErrors: {},
     isEditRubric: false,
     rubric: {},
     activeQuestionMediaUpload: {},
@@ -2902,20 +2850,17 @@ export default {
   },
   methods: {
     updateModalToggleIndex,
-    deleteRubric () {
-      this.questionForm.rubric = null
-      this.$bvModal.hide('modal-confirm-delete-rubric')
-      this.$noty.info('The rubric has been removed.  Please remember to save your question to put the change into effect.')
-    },
-    initEditRubric () {
-      this.isEditRubric = true
-      this.showRubricProperties = true
-    },
-    setRubric (rubric) {
-      this.questionForm.rubric = rubric
-      const scoreInputType = JSON.parse(this.questionForm.rubric).score_input_type
-      this.rubricFields = ['criterion', scoreInputType]
-      this.showRubricProperties = false
+    setKeyValue (key, value) {
+      let camelCase
+      camelCase = key.replace(/([A-Z])/g, '_$1').toLowerCase()
+      if (['name', 'description'].includes(camelCase)) {
+        camelCase = 'rubric_' + camelCase
+      }
+      if (camelCase === 'rubric_template'){
+        camelCase = 'rubric_template_id'
+      }
+      this.questionForm[camelCase] = value
+      console.error(this.questionForm[camelCase])
     },
     async checkForStudentSubmissions (automaticallyUpdateRevision) {
       let checkSubmissions
@@ -3468,6 +3413,9 @@ export default {
       this.showFolderOptions = this.user.id === this.questionToEdit.question_editor_user_id
       this.initiallyWebworkQuestion = this.questionToEdit.technology === 'webwork'
       await this.getFrameworkItemSyncQuestion()
+      if (this.questionToEdit.rubric){
+        this.isEditRubric = true
+      }
       if (this.questionToEdit.learning_outcomes) {
         this.subject = this.questionToEdit.subject
         await this.getLearningOutcomes(this.subject)
@@ -3632,9 +3580,6 @@ export default {
       this.updateLicenseVersions(this.questionForm.license)
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
-      }
-      if (this.questionToEdit.rubric){
-        this.setRubric(this.questionToEdit.rubric)
       }
     },
     async getRevisions (questionToEdit) {
@@ -4679,15 +4624,20 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+          this.savingQuestion = false
         } else {
           console.log(this.questionForm.errors)
           this.$nextTick(() => fixInvalid())
           let errors = JSON.parse(JSON.stringify(this.questionForm.errors)).errors
           let formattedErrors = []
           for (const property in errors) {
-            console.log(errors[property])
-            console.log(property)
+            console.error(errors[property])
+            console.error(property)
             switch (property) {
+              case ('rubric_items'):
+                formattedErrors.push('Not all of your rubric criterion are valid.')
+                this.questionForm.errors.errors.rubric_items = JSON.parse(this.questionForm.errors.errors.rubric_items)
+                break
               case ('qti_randomize_order'):
                 formattedErrors.push('Please specify whether you would like to randomize the order of the responses.')
                 break
@@ -4728,7 +4678,7 @@ export default {
                 formattedErrors.push(errors[property][0])
             }
           }
-          this.allFormErrors = formattedErrors
+          this.allFormErrors = [...new Set(formattedErrors)]
           this.savingQuestion = false
           this.questionsFormKey++
           this.$nextTick(() => this.$bvModal.show(`modal-form-errors-questions-form-${this.questionsFormKey}`))

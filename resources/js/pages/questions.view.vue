@@ -1914,15 +1914,16 @@
                   </b-form-radio>
                 </b-form-radio-group>
               </b-row>
-              <RubricProperties :key="`rubric-properties-modal-${+showRubricProperties}`"
-                                :rubric-info="{'rubric': questions[currentPage-1].rubric}"
-                                :is-edit="questions[currentPage-1].rubric !== null"
-                                :show-rubric-properties="showRubricProperties"
-                                :question-points="1 * (questions[currentPage - 1].points)"
-                                :assignment-id="+assignmentId"
-                                :question-id="questions[currentPage-1].id"
-                                @setRubric="setCustomRubric"
-                                @hideRubricProperties="showRubricProperties = false"
+              <RubricPropertiesModal :key="`rubric-properties-modal-${+showRubricProperties}`"
+                                     :show-rubric-properties="showRubricProperties"
+                                     :is-edit="questions[currentPage-1].rubric !== null"
+                                     :rubric-info="{'rubric': questions[currentPage-1].rubric}"
+                                     :is-template="false"
+                                     :question-points="1 * (questions[currentPage - 1].points)"
+                                     :assignment-id="+assignmentId"
+                                     :question-id="questions[currentPage-1].id"
+                                     @setCustomRubric="setCustomRubric"
+                                     @hideRubricProperties="showRubricProperties = false"
               />
               <b-row
                 v-if="user.id === 5"
@@ -1932,7 +1933,7 @@
                           variant="outline-info"
                           @click="showRubricProperties = true"
                 >
-                  {{ questions[currentPage - 1].rubric ? 'View' : 'Add' }} Rubric
+                  {{ questions[currentPage - 1].rubric ? 'View' : 'Add' }} Applied Rubric
                 </b-button>
               </b-row>
               <b-row align-h="center">
@@ -3142,6 +3143,17 @@
                           </a>
                         </strong>
                       </li>
+                      <li v-if="!showScores">
+                        <RubricPointsBreakdownModal
+                          :key="`rubric-points-modal-${questions[currentPage - 1].id}`"
+                          v-if="questions[currentPage-1].rubric"
+                          :user-id="user.id"
+                          :assignment-id="+assignmentId"
+                          :rubric="questions[currentPage-1].rubric"
+                          :question-id="questions[currentPage-1].id"
+                          :question-points="10000"
+                        />
+                      </li>
                       <li v-if="showScores">
                         <strong>Comments:
                           <span v-if="questions[currentPage - 1].text_feedback"
@@ -3172,9 +3184,6 @@
                       </li>
                       <li v-if="showScores">
                         <strong>Z-Score: {{ questions[currentPage - 1].submission_file_z_score }}</strong>
-                      </li>
-                      <li v-if="showRubricPointsBreakdown && false">
-                        aaaaa
                       </li>
                     </ul>
                     <div v-if="isOpenEndedFileSubmission">
@@ -3420,9 +3429,8 @@ import SubmissionArray from '../components/SubmissionArray.vue'
 import SketcherSubmission from '../components/SketcherSubmission.vue'
 import CanSubmitWorkTooltip from '../components/CanSubmitWorkTooltip.vue'
 import SubmitWork from '~/components/SubmitWork.vue'
-import RubricProperties from '../components/RubricProperties.vue'
-import RubricPointsBreakdown from '../components/RubricPointsBreakdown.vue'
 import RubricPointsBreakdownModal from '../components/RubricPointsBreakdownModal.vue'
+import RubricPropertiesModal from '../components/RubricPropertiesModal.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3433,9 +3441,8 @@ export default {
   middleware: 'auth',
   layout: window.config.clickerApp ? 'blank' : 'default',
   components: {
+    RubricPropertiesModal,
     RubricPointsBreakdownModal,
-    RubricProperties,
-    RubricPointsBreakdown,
     SubmitWork,
     CanSubmitWorkTooltip,
     SketcherSubmission,
