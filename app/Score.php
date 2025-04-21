@@ -143,7 +143,7 @@ class Score extends Model
         }
         $submission_files = DB::table('submission_files')
             ->where('assignment_id', $assignment_id)
-            ->whereIn('type', ['q', 'text', 'audio','discuss_it', 'no upload']) //'q', 'a', or 0
+            ->whereIn('type', ['q', 'text', 'audio', 'discuss_it', 'no upload']) //'q', 'a', or 0
             ->whereIn('question_id', $question_ids)
             ->where('user_id', $student_user_id)
             ->get();
@@ -403,7 +403,6 @@ class Score extends Model
             }
         }
 
-
         [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($enrolled_user_ids, $course->id, $include_in_weighted_average_by_assignment_id_and_user_id);
         [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group, $sum_of_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($course, $scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id, $include_in_weighted_average_by_assignment_id_and_user_id);
         $final_weighted_scores_and_letter_grades = $this->getFinalWeightedScoresAndLetterGrades($course, $enrolled_users, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
@@ -475,10 +474,10 @@ class Score extends Model
      * @return array[]
      */
     public function getScoresByUserIdAndAssignment(Course $course,
-                                                   $scores,
-                                                   array $assignment_groups_by_assignment_id,
-                                                   array $total_points_by_assignment_id,
-                                                   array $include_in_weighted_average_by_assignment_id_and_user_id): array
+                                                          $scores,
+                                                   array  $assignment_groups_by_assignment_id,
+                                                   array  $total_points_by_assignment_id,
+                                                   array  $include_in_weighted_average_by_assignment_id_and_user_id): array
 
     {
         //organize the scores by user_id and assignment
@@ -504,15 +503,16 @@ class Score extends Model
             }
             $score_as_proportion = (($total_points_by_assignment_id[$assignment_id]) <= 0)//total_points_by_assignment can be 0.00
                 ? 0
-                : $score->score/$total_points_by_assignment_id[$assignment_id];
+                : $score->score / $total_points_by_assignment_id[$assignment_id];
 
-            $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] += $include_in_weighted_average_by_assignment_id_and_user_id[$assignment_id][$user_id]
+            $include_in_weighted_average = $include_in_weighted_average_by_assignment_id_and_user_id[$assignment_id][$user_id] ?? false;
+            $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] += $include_in_weighted_average
                 ? $score_as_proportion
                 : 0;
 
             $sum_of_scores_by_user_and_assignment_group[$user_id][$group_id] += (($total_points_by_assignment_id[$assignment_id]) <= 0)//total_points_by_assignment can be 0.00
                 ? 0
-                : $score->score * $include_in_weighted_average_by_assignment_id_and_user_id[$assignment_id][$user_id];
+                : $score->score * $include_in_weighted_average;
             $sum_of_scores_by_user_and_assignment_group[$user_id][$group_id] = Helper::removeZerosAfterDecimal(Round($sum_of_scores_by_user_and_assignment_group[$user_id][$group_id], 2));
         }
         return [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group, $sum_of_scores_by_user_and_assignment_group];
@@ -526,7 +526,7 @@ class Score extends Model
         $letter_grades = explode(',', $course->finalGrades->letter_grades);
         $letter_grades_array = [];
 
-        for ($i = 0; $i < count($letter_grades)/2; $i++) {
+        for ($i = 0; $i < count($letter_grades) / 2; $i++) {
             $letter_grades_array[] = ['min_score' => $letter_grades[2 * $i], 'letter_grade' => $letter_grades[2 * $i + 1]];
         }
 
@@ -550,11 +550,11 @@ class Score extends Model
 
                 foreach ($proportion_scores_by_user_and_assignment_group[$user->id] as $group_id => $group_score) {
                     $final_weighted_scores[$user->id] += $assignment_group_weights_info[$group_id][$user->id]['count']
-                        ? $assignment_group_weights_info[$group_id][$user->id]['weight'] * $group_score/$assignment_group_weights_info[$group_id][$user->id]['count']
+                        ? $assignment_group_weights_info[$group_id][$user->id]['weight'] * $group_score / $assignment_group_weights_info[$group_id][$user->id]['count']
                         : 0;
 
                     $final_weighted_scores_without_extra_credit[$user->id] += $assignment_group_weights_info[$group_id][$user->id]['count'] && ($group_id !== $extra_credit_group_id)
-                        ? $assignment_group_weights_info[$group_id][$user->id]['weight'] * $group_score/$assignment_group_weights_info[$group_id][$user->id]['count']
+                        ? $assignment_group_weights_info[$group_id][$user->id]['weight'] * $group_score / $assignment_group_weights_info[$group_id][$user->id]['count']
                         : 0;
 
                 }
@@ -570,7 +570,7 @@ class Score extends Model
         foreach ($enrolled_users as $key => $user) {
             $score = Round($final_weighted_scores[$user->id], 2);
             $final_weighted_scores_without_extra_credit[$user->id] = Round($final_weighted_scores_without_extra_credit[$user->id], 2);
-            $final_weighted_scores[$user->id] = $score.'%';
+            $final_weighted_scores[$user->id] = $score . '%';
             $letter_grades[$user->id] = $this->getLetterGradeBasedOnScore($score, $letter_grades_array, $course->finalGrades->round_scores);
         }
 
@@ -623,7 +623,7 @@ class Score extends Model
             $z_score_assignment_id = $weighted_score_assignment_id + 1;
             $letter_grade_assignment_id = $z_score_assignment_id++;
 
-            $course_average = count($final_weighted_scores_without_extra_credit) ? array_sum($final_weighted_scores_without_extra_credit)/count($final_weighted_scores_without_extra_credit) : 0;
+            $course_average = count($final_weighted_scores_without_extra_credit) ? array_sum($final_weighted_scores_without_extra_credit) / count($final_weighted_scores_without_extra_credit) : 0;
             $course_std_dev = $this->stats_standard_deviation($final_weighted_scores_without_extra_credit);
             $mean_and_std_dev_info = ['average' => $course_average, 'std_dev' => $course_std_dev];
 
@@ -705,7 +705,7 @@ class Score extends Model
                 'Extra Credit', 'Weighted Score', 'Z-Score', 'Letter Grade'];
 
             foreach ($assignments as $assignment) {
-                $mean = count($assignment_scores[$assignment->id]) ? Round(array_sum($assignment_scores[$assignment->id])/count($assignment_scores[$assignment->id]), 2) : 'N/A';
+                $mean = count($assignment_scores[$assignment->id]) ? Round(array_sum($assignment_scores[$assignment->id]) / count($assignment_scores[$assignment->id]), 2) : 'N/A';
                 $points = Helper::removeZerosAfterDecimal(Round(0 + ($total_points_by_assignment_id[$assignment->id] ?? 0), 2));
                 $field = ['key' => "$assignment->id",
                     'name_only' => $assignment->name,
@@ -734,14 +734,14 @@ class Score extends Model
                 'sortable' => true,
                 'tdClass' => 'text-center',
                 'thClass' => 'text-center'];
-          if ($course->show_z_scores) {
-              $fields[] = ['key' => "$z_score_assignment_id",
-                  'label' => 'Z-Score',
-                  'name_only' => 'Z-Score',
-                  'sortable' => true,
-                  'tdClass' => 'text-center',
-                  'thClass' => 'text-center'];
-          }
+            if ($course->show_z_scores) {
+                $fields[] = ['key' => "$z_score_assignment_id",
+                    'label' => 'Z-Score',
+                    'name_only' => 'Z-Score',
+                    'sortable' => true,
+                    'tdClass' => 'text-center',
+                    'thClass' => 'text-center'];
+            }
             $fields[] = ['key' => "$letter_grade_assignment_id",
                 'label' => 'Letter Grade',
                 'name_only' => 'Letter Grade',
