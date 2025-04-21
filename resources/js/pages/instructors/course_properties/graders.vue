@@ -200,8 +200,7 @@
             </div>
           </b-card-text>
         </b-card>
-        <b-card v-if="graders.length"
-                header="default"
+        <b-card header="default"
                 class="mt-3"
                 header-html="<h2 class=&quot;h7&quot;>Override Grader Contact</h2>"
         >
@@ -211,8 +210,9 @@
               submissions page. For open-ended submissions,
               the person who graded the question will be sent the email. For auto-graded questions, either the section
               grader will be sent the email, or if they
-              don't exist, the instructor will be sent the email. You may override this email contact below. Or, you may remove
-              this option for you students by choosing "Do no provide a contact".
+              don't exist, the instructor will be sent the email. You may override this email contact below. Or, you may
+              remove
+              this option for your students by choosing "Do no provide a contact".
             </p>
             <b-form-group
               id="head_grader"
@@ -234,7 +234,9 @@
             </b-form-group>
           </b-card-text>
         </b-card>
-        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Assignment Grader Notifications</h2>" class="mt-3">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Assignment Grader Notifications</h2>"
+                class="mt-3"
+        >
           <b-card-text>
             <b-container>
               <p>With Grader Notifications, you can optionally let your graders know when assignments are closed and
@@ -518,18 +520,28 @@ export default {
         }
         this.graders = this.course.graders
         this.graderOptions = [{ text: 'Please choose a head grader', value: null }]
-        this.contactGraderOverrideOptions = [{ text: 'The section grader', value: null }, {
-          text: 'Me',
-          value: this.user.id
-        }]
+
+        this.contactGraderOverrideOptions = this.graders.length ?
+          [{ text: 'The section grader', value: null }, {
+            text: 'Me',
+            value: this.user.id
+          }]
+          : [{
+            text: 'Me',
+            value: this.user.id
+          }]
+
         this.contactGraderOverride = data.course.contact_grader_override
+        if (this.contactGraderOverride === null && !this.graders.length) {
+          this.contactGraderOverride = this.user.id
+        }
         for (let i = 0; i < this.graders.length; i++) {
           let grader = this.graders[i]
           let graderInfo = { text: grader.name, value: grader.user_id }
           this.graderOptions.push(graderInfo)
           this.contactGraderOverrideOptions.push(graderInfo)
         }
-        this.contactGraderOverrideOptions.push( {
+        this.contactGraderOverrideOptions.push({
           text: 'Do not provide a contact',
           value: -1
         })

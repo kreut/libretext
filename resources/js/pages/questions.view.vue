@@ -4520,7 +4520,8 @@ export default {
       return canContactInstructorAutoGraded
     },
     showContactGrader () {
-      return (this.questions && this.questions[this.currentPage - 1].grader_id && (this.showScores ||
+      return this.canContactGrader
+      return ((this.showScores ||
         this.solutionsReleased ||
         this.questions[this.currentPage - 1].solution ||
         this.questions[this.currentPage - 1].solution_html ||
