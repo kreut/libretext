@@ -2771,7 +2771,7 @@
                         Attribution
                       </b-button>
                     </span>
-                    <span v-if="!inIFrame && !isFormative && assessmentType !== 'clicker' && !isPhone">
+                    <span v-if="!inIFrame && !isFormative && assessmentType !== 'clicker' && !isPhone && !clickerApp">
                       <b-button v-if="showRightColumn"
                                 id="expand-question-tooltip"
                                 size="sm"
@@ -3565,7 +3565,7 @@ export default {
     clickerAnswerShown: false,
     viewingClickerSubmissions: false,
     openingClicker: false,
-    clickerApp: window.config.clickerApp,
+    clickerApp: false,
     pendingQuestionRevision: {},
     updateRevisionKey: 0,
     canContactGrader: false,
@@ -3922,6 +3922,7 @@ export default {
     window.removeEventListener('visibilitychange', this.visibilityChange)
   },
   async mounted () {
+    this.clickerApp = window.config.clickerApp
     this.isPhone = window.innerWidth < 768
     if (localStorage.ltiTokenId) {
       await this.refreshToken()
@@ -3929,7 +3930,6 @@ export default {
     window.addEventListener('resize', this.resizeHandler)
     this.isAnonymousUser = this.user.email === 'anonymous'
     this.isLoading = true
-    this.showRightColumn = !this.clickerApp
 
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' // students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
@@ -4045,7 +4045,7 @@ export default {
       $('.row').removeClass('row')
       $('.col-12').removeClass('col-12')
       $('.container').removeClass('container')
-    } else if (this.isPhone) {
+    } else if (this.isPhone || this.clickerApp) {
       $('.page-title').addClass('ml-2')
       $('#main-content').removeClass('container')
       $('#questionContainer').removeClass('container')
@@ -4377,7 +4377,6 @@ export default {
     },
     processReceiveMessage,
     receiveMessage (event) {
-      console.log(event)
       if (event.data === 'Close learning tree modal') {
         this.$bvModal.hide('modal-learning-tree')
         $('button.close').click()
@@ -4966,9 +4965,9 @@ export default {
       if (this.isFormative && this.user.role === 3) {
         this.questionCol = 12
       }
-      // override for clicker app
       if (this.clickerApp) {
         this.questionCol = 12
+        this.bCardCols = 12
       }
     },
     async getMyFavoriteQuestions () {

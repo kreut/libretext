@@ -8,12 +8,12 @@
       'isAdmin' =>\App\Helpers\Helper::isAdmin(),
       'showEnvironment' => $_COOKIE['show_environment'] ?? false,
       'environment' => config('app.env'),
-      'clickerApp' => isset($_COOKIE['clicker_app']) &&  $_COOKIE['clicker_app'] === '1',
+      'clickerApp' => isset($_COOKIE['clicker_app']) && +$_COOKIE['clicker_app'] === 1,
       'toggleColors' => [  'checked' => '#008600', 'unchecked' => '#6c757d' ]
   ];
 
 if (config('app.env') === 'dev' && (!isset($_COOKIE['IS_ME']) || $_COOKIE['IS_ME'] !== '1')) {
-   dd("This is the DEV site.  Please contact support.");
+   //dd("This is the DEV site.  Please contact support.");
 }
   if (!\Auth::user() && !session()->has('landing_page')){
       session(['landing_page' =>$_SERVER['REQUEST_URI']]);

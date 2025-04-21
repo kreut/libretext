@@ -364,12 +364,14 @@ class OIDCController extends Controller
             $response['message'] = $e->getMessage();
         }
 
+
         $expiredCookie1 = cookie('oidc_state', '', -1, null, null, true, true, false, 'None');
         $expiredCookie2 = cookie('oidc_nonce', '', -1, null, null, true, true, false, 'None');
 
         return response()->json($response)
             ->withCookie($expiredCookie1)
             ->withCookie($expiredCookie2);
+
 
     }
 
@@ -525,8 +527,6 @@ class OIDCController extends Controller
             $cookie = $clicker_app
                 ? Cookie::make('clicker_app', 1)
                 : Cookie::forget('clicker_app');
-
-
             LoggedInUserToken::firstOrCreate(['email' => $user->email,
                 'sid' => $payload->sid]);
             session()->put('sid', $payload->sid);
