@@ -581,7 +581,9 @@ class GradingController extends Controller
             $is_open_ended = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->first();
+                ->first()
+                ->open_ended_submission_type !== '0'
+                || $question->technology === 'text';
 
             $response['is_auto_graded'] = $is_auto_graded;
             $response['show_auto_graded_submission'] = $is_auto_graded && $question->technology === 'h5p';
