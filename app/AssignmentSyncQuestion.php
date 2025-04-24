@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 class AssignmentSyncQuestion extends Model
 {
     protected $table = 'assignment_question';
+    protected $guarded = [];
 
     /**
      * @param int $assignment_id

@@ -156,7 +156,7 @@
           <th scope="col">
             Description (Optional)
           </th>
-          <th scope="col" style="width:100px">
+          <th scope="col" style="width:110px">
             Points
           </th>
         </tr>
@@ -201,7 +201,7 @@
               v-model="rubricItem.points"
               type="text"
               size="sm"
-              style="width:60px"
+              style="width:70px"
               placeholder=""
               required
               :class="{ 'is-invalid': errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].points !== 'passes'}"
@@ -308,6 +308,8 @@ export default {
     },
     rubricItems: function (newVal) {
       this.$emit('setKeyValue', 'rubricItems', newVal)
+      this.$emit('setKeyValue', 'rubricShown', this.rubricShown)
+      this.$emit('setKeyValue', 'rubricTemplateSaveOption', this.rubricTemplateSaveOption)
     },
     runningTotal: function (newVal) {
       this.$emit('setKeyValue', 'runningTotal', newVal)
@@ -350,7 +352,6 @@ export default {
       let rubricInfo
       try {
         rubricInfo = JSON.parse(this.rubricInfo.rubric)
-        console.error('a')
         console.error(rubricInfo)
       } catch (error) {
         console.error('Error creating rubricInfo')
@@ -359,9 +360,9 @@ export default {
       }
       const rubricItems = rubricInfo.rubric_items
       this.rubricShown = rubricInfo.rubric_shown
+      this.rubricItems = rubricItems
       this.$emit('setKeyValue', 'rubricShown', this.rubricShown)
       this.$emit('setKeyValue', 'rubricTemplateSaveOption', this.rubricTemplateSaveOption)
-      this.rubricItems = rubricItems
       this.scalePoints()
     }
   },

@@ -597,7 +597,10 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/assignment-sync-question/check-for-discuss-it-questions-over-multiple-assignment-questions', 'AssignmentSyncQuestionController@checkForDiscussItQuestionsOverMultipleAssignmentQuestions');
     Route::get('/assignment-sync-question/check-for-discuss-it-questions-by-course-or-assignment/{level}/{id}', 'AssignmentSyncQuestionController@checkForDiscussItQuestionsByCourseOrAssignment');
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
+    Route::delete('/assignments/{assignment}/questions/{question}/delete-custom-rubric', 'AssignmentSyncQuestionController@deleteCustomRubric');
     Route::patch('/assignments/{assignment}/questions/{question}/update-custom-rubric', 'AssignmentSyncQuestionController@updateCustomRubric');
+    Route::patch('/assignments/{assignment}/questions/{question}/use-existing-rubric', 'AssignmentSyncQuestionController@updateUseExistingRubric');
+
     Route::get('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@getDiscussItSettings');
     Route::patch('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@updateDiscussItSettings');
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');

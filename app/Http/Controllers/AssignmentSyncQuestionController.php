@@ -66,6 +66,94 @@ class AssignmentSyncQuestionController extends Controller
      * @param Assignment $assignment
      * @param Question $question
      * @param RubricPointsBreakdown $rubricPointsBreakdown
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function deleteCustomRubric(Assignment             $assignment,
+                                       Question               $question,
+                                       RubricPointsBreakdown  $rubricPointsBreakdown,
+                                       AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('deleteCustomRubric', [$assignmentSyncQuestion, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            DB::beginTransaction();
+            $rubricPointsBreakdown->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->delete();
+            $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['custom_rubric' => null]);
+            DB::commit();
+            $response['type'] = 'info';
+            $response['message'] = "The overriding rubric has been deleted.";
+        } catch (Exception $e) {
+
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to delete the custom rubric for this assignment question.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param RubricPointsBreakdown $rubricPointsBreakdown
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function updateUseExistingRubric(Assignment             $assignment,
+                                            Question               $question,
+                                            RubricPointsBreakdown  $rubricPointsBreakdown,
+                                            AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateUseExistingRubric', [$assignmentSyncQuestion, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            DB::beginTransaction();
+            $rubricPointsBreakdown->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->delete();
+            $assignment_question = $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            $use_existing_rubric = +$assignment_question->use_existing_rubric;
+            $assignment_question->update(['use_existing_rubric' => 1 - $use_existing_rubric]);
+            DB::commit();
+            $response['type'] = 'info';
+            $response['message'] = $use_existing_rubric ? "This question will use the override rubric." : "This question will use the existing rubric.";
+        } catch (Exception $e) {
+
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to delete the custom rubric for this assignment question.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param RubricPointsBreakdown $rubricPointsBreakdown
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Request $request
      * @return array
      * @throws Exception
@@ -90,6 +178,9 @@ class AssignmentSyncQuestionController extends Controller
                 ->first();
             $custom_rubric = json_decode($request->custom_rubric);
             $current_custom_rubric = json_decode($assignment_question->custom_rubric, 1);
+            if (!$current_custom_rubric) {
+                $current_custom_rubric = ['rubric_items' => []];
+            }
             $current_custom_rubric_items = $current_custom_rubric['rubric_items'] ?: [];
             $new_custom_rubric = json_decode(json_encode($custom_rubric), 1);
             $new_custom_rubric_items = $new_custom_rubric['rubric_items'] ?: [];
@@ -97,7 +188,7 @@ class AssignmentSyncQuestionController extends Controller
             DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->update(['custom_rubric' => $request->custom_rubric]);
+                ->update(['custom_rubric' => $request->custom_rubric, 'use_existing_rubric' => 0]);
             if (!$this->_rubricsAreTheSame($current_custom_rubric_items, $new_custom_rubric_items)) {
                 $rubric_points_breakdown_exists = $rubricPointsBreakdown->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
@@ -2492,9 +2583,18 @@ class AssignmentSyncQuestionController extends Controller
                 $submission_count = $response_info['submission_count'];
                 $late_question_submission = $response_info['late_question_submission'];
 
-                $assignment->questions[$key]['rubric'] = isset($assignment_questions_by_question_id[$question->id]) && $assignment_questions_by_question_id[$question->id]->custom_rubric
-                    ? $assignment_questions_by_question_id[$question->id]->custom_rubric
-                    : $question->rubric;
+                $assignment->questions[$key]['question_rubric_exists'] = isset($assignment_questions_by_question_id[$question->id]) && $question->rubric !== null;
+                $custom_rubric = $assignment_questions_by_question_id[$question->id]->custom_rubric ?? null;
+                $assignment->questions[$key]['rubric'] =
+                    isset($assignment_questions_by_question_id[$question->id])
+                    && ($assignment_questions_by_question_id[$question->id]->use_existing_rubric || $assignment_questions_by_question_id[$question->id]->use_existing_rubric === null)
+                        ? $question->rubric
+                        : $custom_rubric;
+
+
+                $assignment->questions[$key]['use_existing_rubric'] = isset($assignment_questions_by_question_id[$question->id]) && ($assignment_questions_by_question_id[$question->id]->use_existing_rubric || $assignment_questions_by_question_id[$question->id]->use_existing_rubric === null);
+
+                $assignment->questions[$key]['overriding_rubric'] = isset($assignment_questions_by_question_id[$question->id]) && $assignment_questions_by_question_id[$question->id]->custom_rubric;
                 $assignment->questions[$key]['student_response'] = $student_response;
                 $assignment->questions[$key]['submitted_work'] = $submitted_work;
                 $assignment->questions[$key]['submitted_work_at'] = $submitted_work_at;

@@ -2856,7 +2856,7 @@ export default {
       if (['name', 'description'].includes(camelCase)) {
         camelCase = 'rubric_' + camelCase
       }
-      if (camelCase === 'rubric_template'){
+      if (camelCase === 'rubric_template') {
         camelCase = 'rubric_template_id'
       }
       this.questionForm[camelCase] = value
@@ -3413,8 +3413,9 @@ export default {
       this.showFolderOptions = this.user.id === this.questionToEdit.question_editor_user_id
       this.initiallyWebworkQuestion = this.questionToEdit.technology === 'webwork'
       await this.getFrameworkItemSyncQuestion()
-      if (this.questionToEdit.rubric){
+      if (this.questionToEdit.rubric) {
         this.isEditRubric = true
+        this.questionToEdit.rubric_shown = JSON.parse(this.questionToEdit.rubric).rubric_shown
       }
       if (this.questionToEdit.learning_outcomes) {
         this.subject = this.questionToEdit.subject

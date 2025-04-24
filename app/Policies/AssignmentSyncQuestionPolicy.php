@@ -81,6 +81,38 @@ class AssignmentSyncQuestionPolicy
 
 
     }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function updateUseExistingRubric(User $user,
+                                       AssignmentSyncQuestion $assignmentSyncQuestion,
+                                       Assignment             $assignment): Response
+    {
+
+        return (int)$user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to update whether to use an overriding or existing rubric for that question.');
+    }
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function deleteCustomRubric(User $user,
+                                       AssignmentSyncQuestion $assignmentSyncQuestion,
+                                       Assignment             $assignment): Response
+    {
+
+        return (int)$user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to delete the custom rubric for that question.');
+    }
+
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion

@@ -1466,8 +1466,8 @@ class QuestionController extends Controller
             $data['cached'] = false;
             unset($data['non_technology_text']);
 
-
-            if (isset($data['rubric_items']) && $data['rubric_items']) {
+            $rubric_items_exist = isset($data['rubric_items']) && $data['rubric_items'];
+            if ($rubric_items_exist) {
                 $rubric = json_encode(['rubric_items' => $data['rubric_items'], 'rubric_shown' => $data['rubric_shown']]);
                 $data['rubric'] = $rubric;
                 if ($request->rubric_template_save_option !== 'do not save as template') {
@@ -1480,7 +1480,7 @@ class QuestionController extends Controller
                         'rubric' => $rubric,
                         'user_id' => $request->user()->id]);
                 }
-                foreach (['rubric_name', 'rubric_description', 'rubric_template_id','rubric_shown','rubric_items'] as $rubric_key) {
+                foreach (['rubric_name', 'rubric_description', 'rubric_template_id', 'rubric_shown', 'rubric_items'] as $rubric_key) {
                     unset($data[$rubric_key]);
                 }
             }
@@ -1527,9 +1527,14 @@ class QuestionController extends Controller
 
                 switch ($revision_action) {
                     case('propagate'):
-                        DB::table('assignment_question')
-                            ->where('question_id', $question->id)
-                            ->update(['question_revision_id' => $new_question_revision_id]);
+                        $assignment_questions = AssignmentSyncQuestion::where('question_id', $question->id)->get();
+                        foreach ($assignment_questions as $assignment_question) {
+                            $assignment_question->question_revision_id = $new_question_revision_id;
+                            if ($rubric_items_exist && !$assignment_question->custom_rubric) {
+                                $assignment_question->use_existing_rubric = 1;
+                            }
+                            $assignment_question->save();
+                        }
                         DB::table('pending_question_revisions')
                             ->where('question_id', $question->id)
                             ->delete();

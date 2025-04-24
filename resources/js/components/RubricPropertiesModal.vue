@@ -93,7 +93,7 @@ export default {
       const action = this.isEdit ? 'Edit' : 'Create'
       this.updatedModalTitle = `${action} Rubric Template`
     } else {
-      this.updatedModalTitle = this.assignmentId ? 'Applied Rubric' : 'Question Rubric'
+      this.updatedModalTitle = this.assignmentId ? 'Overriding Rubric' : 'Question Rubric'
     }
     this.showRubricProperties ? this.$bvModal.show('modal-rubric-properties') : this.$bvModal.hide('modal-rubric-properties')
   },

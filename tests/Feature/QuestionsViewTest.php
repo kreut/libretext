@@ -186,9 +186,33 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function non_owner_cannot_delete_custom_rubric()
+    {
+
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/use-existing-rubric")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to update whether to use an overriding or existing rubric for that question.']);
+
+    }
+
+    /** @test */
+    public function non_owner_cannot_update_use_custom_rubric()
+    {
+
+        $this->actingAs($this->user_2)
+            ->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/delete-custom-rubric")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to delete the custom rubric for that question.']);
+
+    }
+
+
+    /** @test */
     public function cannot_ask_instructor_to_release_asignment_if_not_student()
     {
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/contact-instructor-to-release-assignment")
+        $this->actingAs($this->user)
+            ->postJson("/api/assignments/{$this->assignment->id}/contact-instructor-to-release-assignment")
             ->assertJson(['type' => 'error',
                 'message' => 'You are not allowed to contact this instructor.']);
     }

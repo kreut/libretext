@@ -40,6 +40,12 @@
           Cancel
         </b-button>
         <b-button
+          size="sm"
+          variant="info"
+          class="float-right"
+          @click="viewInOpenGrader()"
+          >View in Open Grader</b-button>
+        <b-button
           variant="primary"
           size="sm"
           class="float-right"
@@ -47,6 +53,7 @@
         >
           Save
         </b-button>
+
       </template>
     </b-modal>
   </div>
@@ -96,6 +103,10 @@ export default {
   }),
   methods:
     {
+      viewInOpenGrader() {
+        const url= `/assignments/${this.overrideSubmissionScoreForm.assignment_id}/grading/${this.overrideSubmissionScoreForm.question_id}/${this.overrideSubmissionScoreForm.student_user_id}`
+        window.open(url, '_blank')
+      },
       async updateOverrideSubmissionScore () {
         try {
           const { data } = await this.overrideSubmissionScoreForm.patch('/api/submission-score-overrides')

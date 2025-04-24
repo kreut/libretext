@@ -25,7 +25,7 @@ class UpdateOpenEndedSubmissionType extends FormRequest
     public function rules()
     {
         return [
-            'open_ended_submission_type' => Rule::in(['rich text','plain text', 'file', 'audio',0])
+            'open_ended_submission_type' => Rule::in(['rich text','plain text', 'file', 'audio',0, 'no submission, manual grading'])
         ];
     }
 }
