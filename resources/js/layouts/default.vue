@@ -85,10 +85,7 @@
                 >
                   accessibility</a> and our <a href="https://chem.libretexts.org/Sandboxes/admin/FERPA_Statement"
                                                target="_blank"
-              >FERPA statement</a>. And you can also
-                view our <a href="https://libretexts.org/legal/index.html" target="_blank">Terms And Conditions</a>
-                should you
-                use the site.
+              >FERPA statement</a>.
               </p>
             </b-col>
             <!-- <b-col cols="5" class="text-right">
