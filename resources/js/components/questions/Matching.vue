@@ -26,11 +26,11 @@
                     :config="matchingRichEditorConfig"
                     @namespaceloaded="onCKEditorNamespaceLoaded"
                     @ready="handleFixCKEditor()"
+                    @focus="questionForm.errors.clear(`qti_matching_term_to_match_${index}`)"
                   />
-                  <input type="hidden" class="form-control is-invalid">
-                  <div class="help-block invalid-feedback">
-                    {{ questionForm.errors.get(`qti_matching_term_to_match_${index}`) }}
-                  </div>
+                  <ErrorMessage v-if="questionForm.errors.get(`qti_matching_term_to_match_${index}`)"
+                                :message="questionForm.errors.get(`qti_matching_term_to_match_${index}`)"
+                  />
                 </b-form-group>
               </b-col>
               <b-col>
@@ -48,11 +48,11 @@
                     :config="matchingRichEditorConfig"
                     @namespaceloaded="onCKEditorNamespaceLoaded"
                     @ready="handleFixCKEditor()"
+                    @focus="questionForm.errors.clear(`qti_matching_matching_term_${index}`)"
                   />
-                  <input type="hidden" class="form-control is-invalid">
-                  <div class="help-block invalid-feedback">
-                    {{ questionForm.errors.get(`qti_matching_matching_term_${index}`) }}
-                  </div>
+                  <ErrorMessage v-if="questionForm.errors.get(`qti_matching_matching_term_${index}`)"
+                                :message="questionForm.errors.get(`qti_matching_matching_term_${index}`)"
+                  />
                 </b-form-group>
               </b-col>
             </b-row>
@@ -94,11 +94,11 @@
               :config="matchingRichEditorConfig"
               @namespaceloaded="onCKEditorNamespaceLoaded"
               @ready="handleFixCKEditor()"
+              @focus="questionForm.errors.clear(`qti_matching_distractor_${index}`)"
             />
-            <input type="hidden" class="form-control is-invalid">
-            <div class="help-block invalid-feedback">
-              {{ questionForm.errors.get(`qti_matching_distractor_${index}`) }}
-            </div>
+            <ErrorMessage v-if="questionForm.errors.get(`qti_matching_distractor_${index}`)"
+                          :message="questionForm.errors.get(`qti_matching_distractor_${index}`)"
+            />
           </b-form-group>
         </li>
       </ul>
@@ -126,10 +126,12 @@
 import { v4 as uuidv4 } from 'uuid'
 import CKEditor from 'ckeditor4-vue'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
+import ErrorMessage from '../ErrorMessage.vue'
 
 export default {
   name: 'Matching',
   components: {
+    ErrorMessage,
     ckeditor: CKEditor.component
   },
   props: {

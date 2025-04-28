@@ -4,10 +4,20 @@
   color: #2F76B7;
 }
 
+a.nav-link.question-editor-tab-title.active.bg-primary[role="tab"] {
+  color: white !important;
+}
+a.nav-link.invalid-question-editor-tab-title[role="tab"] {
+  color: white !important;
+  background: #dc3545 !important;
+}
 
-a:not(.vbst-item,.alert-link,.text-muted,#skip-link, .active-node, .link-outline-primary-btn), .homepage-subtitle, .register-with-adapt { //exclude the links from the typeahead, alerts, icons
+
+
+a:not(.vbst-item,.alert-link,.text-muted,#skip-link, .active-node, .link-outline-primary-btn, .question-editor-tab-title,.invalid-question-editor-tab-title), .homepage-subtitle, .register-with-adapt { //exclude the links from the typeahead, alerts, icons
   color: #0058E6 !important;
 }
+
 
 #site-footer {
   font-size: 0.8em;
@@ -439,5 +449,4 @@ div#discuss-it-recorder .ar-records__record {
   background-color: #333333 !important;
   border-color: #333333 !important;
 }
-
 

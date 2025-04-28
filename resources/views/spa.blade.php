@@ -32,7 +32,7 @@ if (config('app.env') === 'dev' && (!isset($_COOKIE['IS_ME']) || $_COOKIE['IS_ME
           integrity="sha512-RMBWitJB1ymY4l6xeYsFwoEgVCAnOWX/zL1gNwXjlUj78nZ8SVbJsZxbH/w0p2jDNraHkOW8rzQgcJ0LNSXWBA=="
           crossorigin="anonymous"
   ></script>
-  <script src="https://unpkg.com/centrifuge@5.0.1/dist/centrifuge.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/centrifuge/5.0.1/centrifuge.min.js"></script>
 </head>
 <body>
 <div id="app"></div>

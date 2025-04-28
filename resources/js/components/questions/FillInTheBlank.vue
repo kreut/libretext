@@ -10,7 +10,7 @@
       class="pb-3"
       @namespaceloaded="onCKEditorNamespaceLoaded"
       @ready="handleFixCKEditor()"
-      @focus="setCKEditorKeydownAsTrue"
+      @focus="setCKEditorKeydownAsTrue();questionForm.errors.clear('qti_item_body')"
       @keydown="questionForm.errors.clear('qti_item_body')"
     />
     <has-error :form="questionForm" field="qti_item_body"/>

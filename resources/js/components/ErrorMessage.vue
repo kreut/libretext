@@ -2,7 +2,7 @@
   <div>
     <input type="hidden" class="form-control is-invalid">
     <div class="help-block invalid-feedback" style="font-weight:400">
-      {{ message }}
+      <span v-html="message"/>
     </div>
   </div>
 </template>

@@ -9,7 +9,7 @@
       frameborder="0"
       @load="loadStructure"
     />
-    <ErrorMessage :message="errorMessage"/>
+    <ErrorMessage v-if="errorMessage" :message="errorMessage"/>
   </div>
 </template>
 <script>

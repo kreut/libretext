@@ -27,6 +27,7 @@
                             :placeholder="actionToTake.correctResponse ? `Correct Action To Take ${actionToTakeIndex + 1}`
                               : `Distractor ${actionToTakeIndex -1}`"
                             :class="actionToTake.correctResponse ? 'form-control text-success' : 'form-control text-danger'"
+                            @input="clearErrors('actions_to_take', actionToTake.identifier)"
               />
               <b-input-group-append v-if="!actionToTake.correctResponse">
                 <b-input-group-text>
@@ -41,6 +42,7 @@
                           :message="JSON.parse(questionForm.errors.get('actions_to_take'))['specific'][actionToTake.identifier]"
             />
           </div>
+          {{ questionForm.errors.get('actions_to_take') }}
           <ErrorMessage v-if="questionForm.errors.get('actions_to_take')
                           && JSON.parse(questionForm.errors.get('actions_to_take'))['general']"
                         class="pb-2"
@@ -89,6 +91,7 @@
                             :placeholder="potentialCondition.correctResponse ? `Correct Potential Condition ${ potentialConditionIndex + 1}`
                               : `Distractor ${potentialConditionIndex}`"
                             :class="potentialCondition.correctResponse ? 'form-control text-success' : 'form-control text-danger'"
+                            @input="clearErrors('potential_conditions', potentialCondition.identifier)"
               />
               <b-input-group-append v-if="!potentialCondition.correctResponse">
                 <b-input-group-text>
@@ -152,6 +155,7 @@
                             :placeholder="parameterToMonitor.correctResponse ? `Correct Parameter to Monitor ${ parameterToMonitorIndex + 1}`
                               : `Distractor ${ parameterToMonitorIndex - 1}`"
                             :class="parameterToMonitor.correctResponse ? 'form-control text-success' : 'form-control text-danger'"
+                            @input="clearErrors('parameters_to_monitor', parameterToMonitor.identifier)"
               />
               <b-input-group-append v-if="!parameterToMonitor.correctResponse">
                 <b-input-group-text>
@@ -165,6 +169,7 @@
                             && JSON.parse(questionForm.errors.get('parameters_to_monitor'))['specific']"
                           :message="JSON.parse(questionForm.errors.get('parameters_to_monitor'))['specific'][parameterToMonitor.identifier]"
             />
+            {{ questionForm.errors.get('parameters_to_monitor') }}
           </div>
           <ErrorMessage v-if="questionForm.errors.get('parameters_to_monitor')
                           && JSON.parse(questionForm.errors.get('parameters_to_monitor'))['general']"
@@ -209,6 +214,31 @@ export default {
     }
   },
   methods: {
+    clearErrors (key, identifier) {
+      try {
+        if (JSON.parse(this.questionForm.errors.get(key))['specific'][identifier]) {
+          let errors = this.questionForm.errors.get(key)
+          errors = JSON.parse(errors)
+          delete errors['specific'][identifier]
+          if (errors['specific'] !== null &&
+            Object.keys(errors['specific']).length === 0) {
+            delete errors.specific
+          }
+          this.questionForm.errors.set(key, JSON.stringify(errors))
+          console.error(this.questionForm.errors)
+        }
+        if (JSON.parse(this.questionForm.errors.get(key))['general']) {
+          let errors = this.questionForm.errors.get(key)
+          errors = JSON.parse(errors)
+          delete errors.general
+          this.questionForm.errors.set(key, JSON.stringify(errors))
+          console.error(this.questionForm.errors)
+        }
+      } catch (error) {
+        console.error(error)
+        console.error('could not fix errors')
+      }
+    },
     removeBowTieItem (name, bowTieItems, identifier) {
       if (this.qtiJson[bowTieItems].filter(response => !response.correctResponse).length === 1) {
         this.$noty.info(`You need at least one Distractor for ${name}.`)

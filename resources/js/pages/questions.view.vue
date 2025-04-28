@@ -1978,7 +1978,7 @@
               </span>
               <b-form-select v-model="openEndedSubmissionType"
                              :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
-                             :style="openEndedSubmissionType === 'no submission, manual grading' ? 'width:250px' : 'width:100px'"
+                             :style="['0',0,'no submission, manual grading'].includes(openEndedSubmissionType) ? 'width:250px' : 'width:100px'"
                              size="sm"
                              @change="initUpdateOpenEndedSubmissionType(questions[currentPage - 1].id)"
               />
@@ -1999,7 +1999,7 @@
               v-show="+openEndedSubmissionType !== 0"
               class="pl-3 pb-2 pt-2"
             >
-              <span class="mr-2 mt-1"    v-if="questions[currentPage - 1].question_rubric_exists">
+              <span class="mr-2 mt-1" v-if="questions[currentPage - 1].question_rubric_exists">
               <toggle-button
                 tabindex="0"
                 :width="questions[currentPage - 1].use_existing_rubric ? 230 : 185"
@@ -3778,7 +3778,7 @@ export default {
       { value: 'rich text', text: 'Rich Text' },
       { value: 'file', text: 'File' },
       { value: 'audio', text: 'Audio' },
-      { value: 0, text: 'None' },
+      { value: 0, text: 'No submission, auto grading' },
       { value: 'no submission, manual grading', text: 'No submission, manual grading' }
     ],
     openEndedSubmissionCompiledPDFTypeOptions: [

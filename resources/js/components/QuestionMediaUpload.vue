@@ -218,7 +218,7 @@
     <b-progress v-if="preSignedURL && !isVttUpload" max="100" class="mt-2 mb-3">
       <b-progress-bar :value="progress" :label="`${Number(progress).toFixed(0)}%`" show-progress animated />
     </b-progress>
-    <b-row v-show="uploadFileErrorMessage" class="mb-3">
+    <b-row v-if="uploadFileErrorMessage" class="mb-3">
       <ErrorMessage :message="uploadFileErrorMessage" />
     </b-row>
     <div v-show="mediaUploads.length>0">

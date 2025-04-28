@@ -50,10 +50,8 @@
           :options="randomizeOrderOptions"
           @change="setRandomizeOrder($event)"
         />
-        <input type="hidden" class="form-control is-invalid">
-        <div v-show="questionForm.errors.has('qti_randomize_order')" class="help-block invalid-feedback">
-          Please select one of the options.
-        </div>
+        <ErrorMessage v-if="questionForm.errors.has('qti_randomize_order')"
+                      :message="'Please select one of the options.'"/>
       </b-form-row>
     </b-form-group>
 
@@ -87,10 +85,9 @@
                 <span style="font-size:1.25em;">
                   {{ simpleChoice.value }}</span>
               </template>
-              <input type="hidden" class="form-control is-invalid">
-              <div class="help-block invalid-feedback">
-                {{ questionForm.errors.get(`qti_simple_choice_${index}`) }}
-              </div>
+              <ErrorMessage v-if="questionForm.errors.get(`qti_simple_choice_${index}`)"
+                            :message="questionForm.errors.get(`qti_simple_choice_${index}`)"
+             />
             </b-form-group>
           </b-col>
         </b-row>
@@ -133,10 +130,8 @@
                     @ready="handleFixCKEditor()"
                     @input="questionForm.errors.clear(`qti_simple_choice_${index}`)"
                   />
-                  <input type="hidden" class="form-control is-invalid">
-                  <div class="help-block invalid-feedback">
-                    {{ questionForm.errors.get(`qti_simple_choice_${index}`) }}
-                  </div>
+                  <ErrorMessage v-if="questionForm.errors.get(`qti_simple_choice_${index}`)"
+                                :message="questionForm.errors.get(`qti_simple_choice_${index}`)"/>
                   <div class="mt-2">
                     <b-button
                       size="sm"
@@ -221,10 +216,12 @@
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import CKEditor from 'ckeditor4-vue'
 import { v4 as uuidv4 } from 'uuid'
+import ErrorMessage from '../ErrorMessage.vue'
 
 export default {
   name: 'MultipleChoiceTrueFalse',
   components: {
+    ErrorMessage,
     ckeditor: CKEditor.component
   },
   props: {

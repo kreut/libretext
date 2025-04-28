@@ -30,10 +30,9 @@
       <tr v-for="(selectChoice,index) in selectChoices" :key="`selectChoices-${index}`">
         <td>
           <span v-html="selectChoice"/>
-          <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">
-            <span v-html="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"/>
-          </div>
+          <ErrorMessage v-if="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"
+                        :message="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"
+          />
         </td>
         <td>
           <ul v-for="(choice, choiceIndex) in qtiJson.inline_choice_interactions[selectChoice]"
@@ -58,13 +57,14 @@
                   </b-button>
                 </b-input-group-prepend>
                 <b-form-input
-                  id="title"
+                  :id="`select-choice-${choiceIndex}`"
                   v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
                   type="text"
                   :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
                   class="form-control"
                   :class="choiceIndex === 0 ? 'text-success' : 'text-danger'"
                   required
+                  @focus="questionForm.errors.clear(`qti_select_choice_${selectChoice}`)"
                 />
                 <b-input-group-append v-if="choiceIndex > 0">
                   <b-input-group-text>
@@ -74,7 +74,6 @@
                   </b-input-group-text>
                 </b-input-group-append>
               </b-input-group>
-              <has-error :form="questionForm" field="title"/>
             </li>
           </ul>
           <b-button size="sm" variant="outline-primary" @click="addChoiceToSelectChoice(selectChoice)">
@@ -89,9 +88,11 @@
 
 <script>
 import { v4 as uuidv4 } from 'uuid'
+import ErrorMessage from '../../ErrorMessage.vue'
 
 export default {
   name: 'SelectChoiceDropDownRationale',
+  components: { ErrorMessage },
   props: {
     qtiJson: {
       type: Object,
@@ -198,10 +199,12 @@ export default {
       return txt.value
     },
     deleteChoiceFromSelectChoice (selectChoice, choice) {
+      this.questionForm.errors.clear(`qti_select_choice_${selectChoice}`)
       this.qtiJson.inline_choice_interactions[selectChoice] = this.qtiJson.inline_choice_interactions[selectChoice].filter(item => item !== choice)
       this.$forceUpdate()
     },
     addChoiceToSelectChoice (selectChoice) {
+      this.questionForm.errors.clear(`qti_select_choice_${selectChoice}`)
       this.qtiJson.inline_choice_interactions[selectChoice].push({
         value: uuidv4(),
         text: '',

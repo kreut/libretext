@@ -205,7 +205,7 @@
               placeholder=""
               required
               :class="{ 'is-invalid': errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].points !== 'passes'}"
-              @keydown="errors.rubric_items && errors.rubric_items[rubricItemIndex].points ? 'passes' : ''"
+              @keydown="errors.rubric_items && errors.rubric_items[rubricItemIndex] ? errors.rubric_items[rubricItemIndex].points = 'passes' : ''"
             />
             <ErrorMessage
               v-if="errors.rubric_items && errors.rubric_items[rubricItemIndex] && errors.rubric_items[rubricItemIndex].points !== 'passes'"

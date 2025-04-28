@@ -594,1579 +594,1578 @@
         </b-button>
       </template>
     </b-modal>
-    <div ref="top-of-form" class="mb-3">
-      <RequiredText/>
-      Fields marked with the
-      <font-awesome-icon v-if="!sourceExpanded" :icon="caretRightIcon" size="lg"/>
-      icon contain expandable text areas.
+    <span ref="top-of-form"/>
+    <div id="from-sketcher-component" v-if="fullyMounted" v-show="false">
+      <Sketcher :error-message="questionForm.errors.get(`solution_structure`)"
+                :solution-structure="solutionStructure"
+      />
     </div>
-    <b-card border-variant="primary"
-            header-bg-variant="primary"
-            header-text-variant="white"
-            class="mb-3"
+    <b-tabs id="question-editor-tabs"
+            content-class="mt-3"
+            filled
+            active-nav-item-class="font-weight-bold bg-primary"
+            v-model="activeTabIndex"
     >
-      <template #header>
-        Meta-Information
-        <QuestionCircleTooltip id="meta-information-tooltip" :icon-style="'color:#fff'"/>
-        <b-tooltip target="meta-information-tooltip"
-                   delay="250"
-                   triggers="hover focus"
+      <b-tab id="properties"
+             ref="properties"
+             title="Properties"
+             :title-link-class="getTabClass('properties')"
+             active
+      >
+        <b-card border-variant="primary"
+                class="mb-3"
         >
-          The meta-information provides information about the question. This information helps us to organize the
-          questions within ADAPT for searchability and also helps
-          us to provide accurate authorship and license information.
-        </b-tooltip>
-      </template>
-      <b-form-group
-        v-if="questionForm.clone_history && questionForm.clone_history.length"
-        label-cols-sm="3"
-        label-cols-lg="2"
-      >
-        <template v-slot:label>
-          Clone History
-          <QuestionCircleTooltip :id="'clone-history-tooltip'"/>
-          <b-tooltip target="clone-history-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            You can view the complete clone history of this question if it was created as a clone of another question
-            or series of questions.
-          </b-tooltip>
-        </template>
-        <b-form-row class="pt-2">
-          <span v-for="(questionId, index) in questionForm.clone_history"
-                :key="`view-clone-history-${index}`"
-          >
-            <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-clone-history')">{{
-                questionId
-              }}</a>
-            <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1"
-            >-></span>
-          </span>
-        </b-form-row>
-      </b-form-group>
-      <b-modal id="modal-framework-aligner"
-               title="Framework Alignment"
-               size="lg"
-               no-close-on-backdrop
-      >
-        <FrameworkAligner :key="`framework-aligner-key-${isEdit ? +questionToEdit.id : 0}`"
-                          :question-id="isEdit ? +questionToEdit.id : 0"
-                          :framework-item-sync-question="frameworkItemSyncQuestion"
-                          :is-create-question="true"
-                          @setFrameworkItemSyncQuestion="setFrameworkItemSyncQuestion"
-        />
 
-        <template #modal-footer>
-          <b-button
-            variant="primary"
-            size="sm"
-            class="float-right"
-            @click="$bvModal.hide('modal-framework-aligner')"
-          >
-            OK
-          </b-button>
-        </template>
-      </b-modal>
-      <b-form-group
-        v-if="revisionOptions.length"
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="revision"
-        label="Revision*"
-      >
-        <b-form-row>
-          <b-form-select v-model="revision"
-                         style="width:500px"
-                         size="sm"
-                         :options="revisionOptions"
-                         class="mt-2 mr-2"
-                         @change="setNewQuestionToEdit"
-          />
-          <b-button size="sm"
-                    variant="outline-primary"
-                    style="height:30px;margin-top:8px"
-                    @click="initCompareRevisions"
-          >
-            Compare Revisions
-          </b-button>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="title"
-        label="Title*"
-      >
-        <b-form-row>
-          <b-form-input
-            id="title"
-            v-model="questionForm.title"
-            size="sm"
-            type="text"
-            required
-            :class="{ 'is-invalid': questionForm.errors.has('title') }"
-            class="mt-2"
-            @keydown="questionForm.errors.clear('title')"
-          />
-          <has-error :form="questionForm" field="title"/>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="description"
-      >
-        <template v-slot:label>
-          Description
-          <QuestionCircleTooltip :id="'description-tooltip'"/>
-          <b-tooltip target="description-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            An optional short description of the question. This description is not viewable by students but is viewable
-            in
-            search
-            results.
-          </b-tooltip>
-        </template>
-        <b-form-row>
-          <b-form-textarea
-            id="title"
-            v-model="questionForm.description"
-            :min-rows="2"
-            required
-            class="mt-2"
-          />
-        </b-form-row>
-      </b-form-group>
-      <div>
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label-for="question_type"
-          :label="isEdit ? 'Question Type' : 'Question Type*'"
-        >
-          <b-form-row>
-            <b-form-radio-group
-              id="question_type"
-              v-model="questionForm.question_type"
-              stacked
-              :aria-required="!isEdit"
-              @change="switchingType = true;resetQuestionForm($event)"
-            >
-              <b-form-radio name="question_type" value="assessment">
-                Question
-                <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
-                <b-tooltip target="assessment-question-type-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Questions can be used within assignments. In addition, if they are purely auto-graded,
-                  they can be used as root nodes in Learning Trees. Regardless of whether they have an auto-graded
-                  technology, questions can be used in non-root nodes of
-                  Learning Trees.
-                </b-tooltip>
-              </b-form-radio>
-              <b-form-radio name="question_type" value="exposition">
-                Exposition (use in Learning Trees only)
-                <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
-                <b-tooltip target="exposition-question-type-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  An Exposition consists of source (text, video, simulation, any other HTML) without an auto-graded
-                  component. They can be used in any of the non-root
-                  nodes within Learning Trees.
-                </b-tooltip>
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-row>
-        </b-form-group>
-      </div>
-
-      <div>
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label-for="public"
-        >
-          <template v-slot:label>
-            Public*
-            <QuestionCircleTooltip :id="'public-question-tooltip'"/>
-            <b-tooltip target="public-question-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Questions that are public can be used by any instructor. Questions that are not public are only
-              accessible
-              by you.
-            </b-tooltip>
-          </template>
-          <b-form-row class="mt-2">
-            <b-form-radio-group
-              id="public"
-              v-model="questionForm.public"
-            >
-              <b-form-radio name="public" value="1">
-                Yes
-              </b-form-radio>
-              <b-form-radio name="public" value="0">
-                No
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-row>
-        </b-form-group>
-      </div>
-
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="folder"
-        label="Folder*"
-      >
-        <b-form-row>
-          <span v-show="!showFolderOptions" class="mt-2">
-            The folder is set by the question owner ({{ questionForm.question_editor_name }}).
-          </span>
-          <span v-show="showFolderOptions">
-            <SavedQuestionsFolders
-              ref="savedQuestionsFolders1"
-              :key="`saved-questions-folders-key-${savedQuestionsFolderKey}`"
-              class="mt-2"
-              :type="'my_questions'"
-              :init-saved-questions-folder="questionForm.folder_id"
-              :create-modal-add-saved-questions-folder="true"
-              :folder-to-choose-from="'My Questions'"
-              :question-source-is-my-favorites="false"
-              @reloadSavedQuestionsFolders="reloadCreateQuestionSavedQuestionsFolders"
-              @savedQuestionsFolderSet="setMyCoursesFolder"
-            />
-          </span>
-        </b-form-row>
-        <input type="hidden" class="form-control is-invalid">
-        <div class="help-block invalid-feedback">
-          {{ questionForm.errors.get('folder_id') }}
-        </div>
-      </b-form-group>
-      <div>
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label-for="author"
-          label="Author(s)*"
-        >
-          <b-form-row>
-            <b-form-input
-              id="author"
-              v-model="questionForm.author"
-              size="sm"
-              type="text"
-              :class="{ 'is-invalid': questionForm.errors.has('author') }"
-              class="mt-2"
-              @keydown="questionForm.errors.clear('author')"
-            />
-            <has-error :form="questionForm" field="author"/>
-          </b-form-row>
-        </b-form-group>
-      </div>
-
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="license"
-        label="License*"
-      >
-        <b-form-row>
-          <b-form-select v-model="questionForm.license"
-                         style="width:365px"
-                         title="license"
-                         size="sm"
-                         class="mt-2 mr-2"
-                         :class="{ 'is-invalid': questionForm.errors.has('license') }"
-                         :options="licenseOptions"
-                         @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
-          />
-          <has-error :form="questionForm" field="license"/>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        v-if="licenseVersionOptions.length"
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="license_version"
-        label="License Version*"
-      >
-        <b-form-row>
-          <b-form-select v-model="questionForm.license_version"
-                         style="width:100px"
-                         title="license version"
-                         required
-                         size="sm"
-                         class="mt-2"
-                         :options="licenseVersionOptions"
-          />
-        </b-form-row>
-      </b-form-group>
-
-      <div>
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label-for="source_url"
-        >
-          <template v-slot:label>
-            Source URL*
-            <QuestionCircleTooltip id="source_url-tooltip"/>
-            <b-tooltip target="source_url-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              URL where the question was created
-            </b-tooltip>
-          </template>
-          <b-form-row>
-            <b-form-input
-              id="source_url"
-              v-model="questionForm.source_url"
-              size="sm"
-              type="text"
-              :class="{ 'is-invalid': questionForm.errors.has('source_url') }"
-              class="mt-2"
-              @keydown="questionForm.errors.clear('source_url')"
-            />
-            <has-error :form="questionForm" field="source_url"/>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label-for="tags"
-          label="Tags"
-        >
-          <b-form-row class="mt-2">
-            <b-form-input
-              id="tags"
-              v-model="tag"
-              style="width:200px"
-              type="text"
-              class="mr-2"
-              size="sm"
-            />
-            <b-button variant="outline-primary" size="sm" @click="addTag()">
-              Add Tag
-            </b-button>
-          </b-form-row>
-          <div class="d-flex flex-row">
-            <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
-              <b-button size="sm"
-                        variant="secondary"
-                        class="mr-2"
-                        style="line-height:.8"
-                        @click="removeTag(chosenTag)"
-              ><span v-html="chosenTag"/> x</b-button>
-            </span>
-          </div>
-        </b-form-group>
-        <b-form-group
-          label-for="framework_alignment"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Framework Alignment"
-        >
-          <div class="mt-1">
-            <b-button size="sm" variant="outline-primary" @click="$bvModal.show('modal-framework-aligner');">
-              Update
-            </b-button>
-          </div>
-        </b-form-group>
-        <span v-if="frameworkItemSyncQuestion.descriptors.length">
-          <span v-for="(descriptor, descriptorsIndex) in frameworkItemSyncQuestion.descriptors"
-                :key="`framework-item-sync-questions-descriptors-${descriptorsIndex}`"
-                class="mr-2"
-          >
-            <b-button size="sm"
-                      variant="secondary"
-                      style="line-height:.8"
-                      @click="removeFrameworkItemSyncQuestion('descriptors',descriptor.id)"
-            >{{
-                descriptor.text
-              }} x
-            </b-button>
-          </span>
-        </span>
-        <span v-if="frameworkItemSyncQuestion.levels.length">
-          <span v-for="(level, levelsIndex) in frameworkItemSyncQuestion.levels"
-                :key="`framework-item-sync-questions-levels-${levelsIndex}`"
-                class="mr-2"
-          >
-            <b-button size="sm"
-                      variant="secondary"
-                      style="line-height:.8"
-                      @click="removeFrameworkItemSyncQuestion('levels',level.id)"
-            >{{
-                level.text
-              }} x
-            </b-button>
-          </span>
-        </span>
-        <b-form-group
-          v-show="false"
-          key="learning_outcome"
-          label-for="learning_outcome"
-          label-cols-sm="3"
-          label-cols-lg="2"
-        >
-          <template v-slot:label>
-            Learning Outcome
-            <QuestionCircleTooltip :id="'learning-outcome-tooltip'"/>
-            <b-tooltip target="learning-outcome-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Over time, we will be adding new learning outcome frameworks for different subjects. If you are
-              aware
-              of a learning outcome framework and your subject is not shown here, please contact us with the source of
-              the framework.
-            </b-tooltip>
-          </template>
-          <b-form-row class="mt-2">
-            <b-form-select id="learning_outcome"
-                           v-model="subject"
-                           style="width:150px"
-                           size="sm"
-                           class="mr-2"
-                           :options="subjectOptions"
-                           @change="updateLearningOutcomes($event)"
-            />
-            <v-select :key="`subject-${subject}`"
-                      v-model="learningOutcome"
-                      style="width:520px"
-                      placeholder="Choose a learning outcome"
-                      :options="learningOutcomeOptions.filter(learningOutcomeOption => !questionForm.learning_outcomes.includes(learningOutcomeOption.id))"
-                      class="mb-2"
-                      @input="addLearningOutcome(learningOutcome)"
-            />
-          </b-form-row>
-          <div v-for="(chosenLearningOutcome, index) in questionForm.learning_outcomes"
-               :key="`chosen-learning-outcome-${index}`"
-               class="mt-2"
-          >
-            <b-button size="sm" variant="secondary" class="mr-2"
-                      @click="removeLearningOutcome(chosenLearningOutcome)"
-            >
-              {{
-                //labels are brought in if it's an edited question otherwise it's done on the fly
-                chosenLearningOutcome.label ? chosenLearningOutcome.label :
-                  getLearningOutcomeLabel(chosenLearningOutcome)
-              }} x
-            </b-button>
-          </div>
-        </b-form-group>
-      </div>
-    </b-card>
-    <b-card border-variant="primary"
-            header-bg-variant="primary"
-            header-text-variant="white"
-            class="mb-3"
-    >
-      <template #header>
-        Content
-        <QuestionCircleTooltip id="content-tooltip" :icon-style="'color:#fff'"/>
-        <b-tooltip target="content-tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          Questions can consist of either pure HTML (text-based question), an auto-graded technology for automatic
-          scoring, or
-          may also consist of both types. Though the combined type is less common, it provides a way to incorporate
-          additional resources
-          such as video or other embedded media to complement the auto-graded portion of the question.
-        </b-tooltip>
-      </template>
-      <p>Both blocks are rendered in problem to students.</p>
-      <div class="thick-black-border pt-2 mb-2">
-        <div class="thick-black-border-content">
+          <p>
+            The question properties help us to organize the
+            questions within ADAPT for searchability and also help
+            us to provide accurate authorship and license information.
+          </p>
+          <p>
+            <RequiredText/>
+          </p>
           <b-form-group
-            key="source"
-            label-for="non_technology_text"
-          >
-            <template v-if="questionForm.question_type === 'assessment'" v-slot:label>
-              <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
-                HTML Block   <QuestionCircleTooltip id="open-ended-content-tooltip"/>
-                <b-tooltip target="open-ended-content-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Questions may be created with or without an HTML block.  This block can be used by itself (typically for students who upload submissions) or can be used to enhance
-                  questions that use one of the non-native auto-graded technologies.  For native questions, you can use the question's Prompt in lieu of the HTML block.
-                </b-tooltip>
-                <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
-                                   :icon="caretRightIcon" size="lg"
-                />
-                <font-awesome-icon v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded"
-                                   :icon="caretDownIcon" size="lg"
-                />
-              </span>
-            </template>
-          </b-form-group>
-          <div
-            v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || ('exposition' === questionForm.question_type)"
-          >
-            <b-container class="mt-2">
-              <b-row>
-                <QuestionMediaUpload
-                  v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded || ('exposition' === questionForm.question_type)"
-                  :key="`question-media-upload-key-${questionMediaUploadKey}`"
-                  :media-uploads="questionForm.media_uploads"
-                  :question-media-upload-id="questionMediaUploadId"
-                  :qti-json="questionForm.non_technology_text"
-                  @updateQuestionMediaUploads="updateQuestionMediaUploads"
-                  @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
-                  @updateQuestionTranscript="updateQuestionTranscript"
-                />
-              </b-row>
-            </b-container>
-            <ckeditor
-              id="non_technology_text"
-              ref="non_technology_text"
-              v-model="questionForm.non_technology_text"
-              tabindex="0"
-              required
-              :config="richEditorConfig"
-              :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
-              class="mb-2"
-              @namespaceloaded="onCKEditorNamespaceLoaded"
-              @ready="handleFixCKEditor()"
-              @focus="ckeditorKeyDown=true"
-              @keydown="questionForm.errors.clear('non_technology_text')"
-            />
-            <has-error :form="questionForm" field="non_technology_text"/>
-          </div>
-        </div>
-      </div>
-      <div class="thick-black-border">
-        <div class="thick-black-border-content mt-1 mb-1">
-          <b-form-group
-            v-if="questionForm.question_type === 'assessment'"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="technology"
+            v-if="questionForm.clone_history && questionForm.clone_history.length"
+            label-cols-sm="3"
+            label-cols-lg="2"
           >
             <template v-slot:label>
-              <span style="cursor: pointer;" @click="toggleExpanded ('technology')">
-                Auto-Grade Tech Block
-                <font-awesome-icon v-if="!editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded"
-                                   :icon="caretRightIcon" size="lg"
-                />
-                <font-awesome-icon v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded"
-                                   :icon="caretDownIcon" size="lg"
-                />
-              </span>
-            </template>
-            <b-form-group v-if="editorGroups.find(editorGroup => editorGroup.id === 'technology').expanded">
-              <b-form-row class="pb-2 pt-2">
-                <span class="mr-2">Existing
-                  <QuestionCircleTooltip id="existing-question-tooltip"/>
-                  <b-tooltip target="existing-question-tooltip"
-                             delay="250"
-                             triggers="hover focus"
-                  >
-                    If you've created a WebWork, H5P, or IMathAS question outside of ADAPT, then you can use the existing path (WebWork)
-                    or ID (H5P or IMathAS) to import that question into ADAPT so that it can be used within an ADAPT assignment.
-                  </b-tooltip>
-                </span>
-                <b-form-select
-                  v-model="existingQuestionFormTechnology"
-                  style="width:110px"
-                  title="technologies"
-                  size="sm"
-                  :options="existingAutoGradedTechnologyOptions"
-                  :aria-required="!isEdit"
-                  @change="initChangeExistingAutoGradedTechnology($event)"
-                />
-                <b-col>
-                  <ConsultInsight v-if="newAutoGradedTechnology === 'webwork'"
-                                  :url="'https://commons.libretexts.org/insight/webwork-techniques'"
-                  />
-                </b-col>
-              </b-form-row>
-
-              <b-form-row>
-                <span style="margin-left:24px" class="mr-2">New  <QuestionCircleTooltip id="new-question-tooltip"/>
-                  <b-tooltip target="new-question-tooltip"
-                             delay="250"
-                             triggers="hover focus"
-                  >
-                    Create a question using one of ADAPT's native question types (multplie choice, true/false, numerical, etc.), use ADAPT's
-                    editor to create a new WebWork question, or ADAPT can re-direct you to H5P/IMathAS so that you can create new questions and
-                    then import them back into ADAPT.
-                  </b-tooltip></span>
-                <b-form-select
-                  v-model="newAutoGradedTechnology"
-                  style="width:110px"
-                  title="auto-graded technologies"
-                  size="sm"
-                  :options="newAutoGradedTechnologyOptions"
-                  @change="openCreateAutoGradedTechnologyCode($event)"
-                />
-                <b-form-select
-                  v-if="webworkEditorShown"
-                  v-model="webworkTemplate"
-                  style="width:250px"
-                  title="webwork templates"
-                  size="sm"
-                  class="ml-3"
-                  :options="webworkTemplateOptions"
-                  @change="setWebworkTemplate($event)"
-                />
-              </b-form-row>
-            </b-form-group>
-          </b-form-group>
-          <div v-if="questionForm.technology === 'qti'">
-            <b-form-group label="Native Question Type"
-                          label-cols-sm="3"
-                          label-cols-lg="2"
-                          label-for="native-question-type"
-            >
-              <b-form-radio-group
-                id="native-question-type"
-                v-model="nativeType"
-                inline
-                name="native-question-type"
-                class="pt-2"
-                @input="initNativeType()"
-              >
-                <b-form-radio value="basic">
-                  Basic (QTI)
-                  <QuestionCircleTooltip id="basic-questions-tooltip"/>
-                  <b-tooltip target="basic-questions-tooltip"
-                             delay="250"
-                             triggers="hover focus"
-                  >
-                    You can export questions in QTI format from your LMS and import them through the Bulk Import tab and
-                    then
-                    edit them in ADAPT.
-                    <br><br>Alternatively, you can create new questions directly using the editor below.
-                  </b-tooltip>
-                </b-form-radio>
-                <b-form-radio value="nursing">
-                  Nursing
-                  <QuestionCircleTooltip id="nursing-questions-tooltip"/>
-                  <b-tooltip target="nursing-questions-tooltip"
-                             delay="250"
-                             triggers="hover focus"
-                  >
-                    Nursing questions are question types specifically written to prepare nursing students for the NCLEX
-                    exam.
-                  </b-tooltip>
-                </b-form-radio>
-                <b-form-radio value="sketcher">
-                  Sketcher
-                </b-form-radio>
-                <b-modal id="modal-discuss-it"
-                         title="Explanation of Discuss-it Questions"
-                         size="xl"
-                         no-close-on-backdrop
-                >
-                  <div style="position: relative; padding-top: 65.26898734177216%;">
-                    <iframe
-                      src="https://customer-9mlff0qha6p39qdq.cloudflarestream.com/1db93b924be23b3ca4809cd889830fc6/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F1db93b924be23b3ca4809cd889830fc6%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600"
-                      loading="lazy"
-                      style="border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;"
-                      allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-                      allowfullscreen="true"
-                    />
-                  </div>
-                  <template #modal-footer>
-                    <b-button
-                      variant="primary"
-                      size="sm"
-                      class="float-right"
-                      @click="$bvModal.hide('modal-discuss-it')"
-                    >
-                      OK
-                    </b-button>
-                  </template>
-                </b-modal>
-                <b-form-radio value="discuss_it">
-                  Discuss-it
-                  <QuestionCircleTooltipModal :aria-label="'Explanation of Discuss-it'"
-                                              :modal-id="'modal-discuss-it'"
-                                              :color-class="'font-bold'"
-                  />
-                </b-form-radio>
-                <b-form-radio v-show="false" value="3D visualization">
-                  3D Visualization
-                </b-form-radio>
-                <b-form-radio value="all">
-                  All
-                </b-form-radio>
-              </b-form-radio-group>
-            </b-form-group>
-            <b-form-group>
-              <div v-if="['all','basic'].includes(nativeType)">
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Multiple Choice
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="true_false"
-                              @change="initQTIQuestionType($event)"
-                >
-                  True/False
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="numerical"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Numerical
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_answers"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Multiple Answer
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="fill_in_the_blank"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Fill-in-the-blank
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Select Choice
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType"
-                              name="qti-question-type"
-                              value="matching"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Matching
-                </b-form-radio>
-              </div>
-              <div v-if="['all','nursing'].includes(nativeType)">
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="bow_tie"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Bow Tie
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Multiple Choice
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_choice"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Matrix Multiple Choice
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Multiple Response Select N
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
-                              value="multiple_response_select_all_that_apply"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Multiple Response Select All That Apply
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Highlight Table
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Highlight Text
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Multiple Response Grouping
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Drop-Down Table
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_dyad"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Drop-Down Dyad
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_triad"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Drop-Down Triad
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Drop-Down Cloze
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Matrix Multiple Response
-                </b-form-radio>
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
-                              @change="initQTIQuestionType($event)"
-                >
-                  Drag and Drop Cloze
-                </b-form-radio>
-              </div>
-              <div v-if="['all'].includes(nativeType)">
-                <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="sketcher"
-                              @change="initQTIQuestionType('submit_molecule')"
-                >
-                  Sketcher
-                </b-form-radio>
-              </div>
-            </b-form-group>
-            <div v-if="qtiQuestionType === 'highlight_table'">
-              <b-alert show variant="info">
-                Optionally add a prompt for this question. Then, in each row, add a description in the first column.
-                Then in
-                the second column, write text, where text within
-                brackets will automatically become your highlighted text. Once the text is added, determine whether it
-                is a
-                correct answer or a distractor.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'drop_down_table'">
-              <b-alert show variant="info">
-                Write out a prompt, then add a series of drop-downs to your table. Each drop-down should have at least
-                two
-                selections.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'highlight_text'">
-              <b-alert show variant="info">
-                Write out a prompt, where text within brackets will automatically become your highlighted text. Once the
-                text is added, determine whether it is a correct answer or a distractor.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'select_choice'">
-              <b-alert show variant="info">
-                Using brackets, place the correct answer in the location that you want the select choice to appear.
-                Then, add the choices below. <br>
-                <br>
-                Example. [Star Wars] took place in a [galaxy] far, far away.
-                <br><br>
-                Note that bracketed words should only appear once. If you need to use the same correct answer multiple
-                times,
-                you can use a dummy identifier such as [Star Wars-1] where the "1" should be increased each time you
-                need to use the same correct answer.
-                Then, below, you can update the correct answer manually.<br>
-                <br>Each student will receive a randomized ordering of the choices.<br>
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'drop_down_rationale_dyad'">
-              <b-alert show variant="info">
-                The structure of a “dyad rationale” question is, “The client is at risk for developing X as evidenced by
-                Y.”
-                X and Y are pulled from different pools of choices.
-                Using brackets, place a non-space-containing identifier to show where you want “X” and “Y” placed.
-                Example: The client is at risk for [disease] as evidenced by [type-of-assessment]. Then, under the
-                choices
-                column that appears, add the correct choice for that selection, then add the distractors for each
-                indicator.
-                Each student will receive a randomized ordering of the choices.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'drop_down_rationale_triad'">
-              <b-alert show variant="info">
-                <p>
-                  The structure of a “triad rationale” question is, “The client is at risk for developing X as evidenced
-                  by
-                  Y
-                  and Z.”
-                  X is pulled from a pool of choices (the condition) and Y and Z are pulled from the same pool of
-                  choices
-                  (the
-                  rationales).
-                  Using [condition] and [rationale], indicate where you want the condition and the two rationales
-                  placed.
-                </p>
-                <p>Example: The client is at risk for [condition] as evidenced by [rationale] and [rationale].</p>
-                <p>
-                  Next, under the Condition column, add the correct choice and distractors. Under the Rationale column,
-                  add
-                  the two correct rationales and distractors.
-                </p>
-                Each student will receive a randomized ordering of the choices.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'matching'">
-              <b-alert show variant="info">
-                Create a list of terms to match along with their matching terms. Matching terms can include media such
-                as images.
-                Optionally, add distractors which do not satisfy any of the matches.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'true_false'">
-              <b-alert show variant="info">
-                Write a question prompt and then select either True or False for the correct answer.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'multiple_choice'">
-              <b-alert show variant="info">
-                Write a question prompt and then create a selection of answers, choosing the correct answer from the
-                list. Students will receive a shuffled ordering of the selection.
-                Optionally provide feedback at the individual question level or general feedback for a correct
-                response, an incorrect response, or any response.
-              </b-alert>
-            </div>
-
-            <div v-if="qtiQuestionType === 'numerical'">
-              <b-alert show variant="info">
-                Write a question prompt which requires a numerical response, specifying the margin of error accepted in
-                the response.
-                Optionally provide general feedback for a correct response, an incorrect response, or any response.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'drag_and_drop_cloze'">
-              <b-alert show variant="info">
-                Bracket off the portions of the text where you would like the Drag and Drop Cloze to occur, using a
-                bracketed response
-                to
-                denote the correct answer. Then, add distractors below. Example: The client is at risk for developing
-                [high blood pressure]
-                and [a heart attack]. Students will then see a drop-down for each item and will only be able to choose
-                each
-                item once.
-                This question mimics the Drag and Drop Cloze functionality in a way that is accessible. Because of this,
-                there will be a single pool of choices.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'bow_tie'">
-              <b-alert show variant="info">
-                Write a question prompt and then add two correct Actions to Take, one correct Potential Condition, and
-                two
-                Parameters to Monitor. Each of these groups should have at least one Distractor.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'multiple_response_select_n'">
-              <b-alert show variant="info">
-                Using brackets and associated text, indicate the number of correct responses.
-                Example. The [3] most likely reasons the patient has high blood pressure are:
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'multiple_response_select_all_that_apply'">
-              <b-alert show variant="info">
-                Write a question prompt where students have to select all responses that apply. Example. Select the
-                following activities which contribute to heart disease:
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'multiple_response_grouping'">
-              <b-alert show variant="info">
-                Write a question prompt and then create groupings with sets of checkboxes, checking off the correct
-                responses for each grouping.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'matrix_multiple_choice'">
-              <b-alert show variant="info">
-                Write a question prompt and then construct a table with one correct choice per row, selecting that
-                choice
-                by
-                clicking
-                on the corresponding radio button.
-              </b-alert>
-            </div>
-            <div v-if="qtiQuestionType === 'fill_in_the_blank' && qtiJson">
-              <b-alert show variant="info">
-                Create a question with fill in the blanks by underlining
-                the correct responses. Example. A <u>stitch</u> in time saves <u>nine</u>. If you would like to
-                accept multiple answers, separate them with a vertical bar: "|". Example.
-                <u>January|February</u> is a month that comes before March.
-              </b-alert>
-              <b-container v-if="questionForm.technology === 'qti'" class="mt-2">
-                <b-row>
-                  <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
-                                       :media-uploads="questionForm.media_uploads"
-                                       :question-media-upload-id="questionMediaUploadId"
-                                       :qti-json="JSON.stringify(qtiJson)"
-                                       @updateQuestionMediaUploads="updateQuestionMediaUploads"
-                                       @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
-                                       @updateQuestionTranscript="updateQuestionTranscript"
-                  />
-                </b-row>
-              </b-container>
-            </div>
-            <div
-              v-if="['matching',
-                     'multiple_answers',
-                     'true_false',
-                     'multiple_choice',
-                     'numerical',
-                     'multiple_response_select_all_that_apply',
-                     'multiple_response_select_n',
-                     'matrix_multiple_response',
-                     'multiple_response_grouping',
-                     'drop_down_table',
-                     'drag_and_drop_cloze',
-                     'matrix_multiple_choice',
-                     'bow_tie',
-                     'highlight_text',
-                     'highlight_table',
-                     'submit_molecule',
-                     'discuss_it'].includes(qtiQuestionType) && qtiJson"
-              class="mb-2"
-            >
-              <b-container v-if="questionForm.technology === 'qti' && !['submit_molecule'].includes(qtiQuestionType)"
-                           class="mt-2"
-              >
-                <b-row>
-                  <QuestionMediaUpload v-if="qtiQuestionType !== 'discuss_it'"
-                                       :key="`question-media-upload-key-${questionMediaUploadKey}`"
-                                       :media-uploads="questionForm.media_uploads"
-                                       :question-media-upload-id="questionMediaUploadId"
-                                       :qti-json="JSON.stringify(qtiJson)"
-                                       @updateQuestionMediaUploads="updateQuestionMediaUploads"
-                                       @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
-                                       @updateQuestionTranscript="updateQuestionTranscript"
-                  />
-                </b-row>
-              </b-container>
-              <b-card header="default" :header-html="getPromptHeader()">
-                <ckeditor
-                  id="qtiItemPrompt"
-                  :key="`question-type-${qtiQuestionType}`"
-                  v-model="qtiJson['prompt']"
-                  tabindex="0"
-                  required
-                  :config="shorterRichEditorConfig"
-                  class="pb-3"
-                  @namespaceloaded="onCKEditorNamespaceLoaded"
-                  @ready="handleFixCKEditor()"
-                  @focus="ckeditorKeyDown=true"
-                  @input="questionForm.errors.clear('qti_prompt')"
-                />
-
-                <input type="hidden" class="form-control is-invalid">
-                <div class="help-block invalid-feedback">
-                  {{ questionForm.errors.get(`qti_prompt`) }}
-                </div>
-              </b-card>
-              <div v-if="qtiQuestionType === 'discuss_it'">
-                <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
-                                     :media-uploads="questionForm.media_uploads"
-                                     :qti-json="JSON.stringify(qtiJson)"
-                                     :question-media-upload-id="questionMediaUploadId"
-                                     :is-discuss-it="true"
-                                     @updateQuestionMediaUploadsOrder="updateQuestionMediaUploadsOrder"
-                                     @updateQuestionMediaUploads="updateQuestionMediaUploads"
-                                     @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
-                                     @updateQuestionTranscript="updateQuestionTranscript"
-                                     @editDiscussItText="editDiscussItText"
-                                     @initDiscussItText="initDiscussItText"
-                />
-              </div>
-            </div>
-            <div v-if="isLocalMe || user.id === 36892">
-              Debugging: {{ qtiJson }}
-              {{ qtiJson.matchStereo }}
-            </div>
-            <div v-if="qtiQuestionType === 'submit_molecule'">
-              <div class="border border-dark p-2" style="width:320px;margin:auto">
-                <b-form-checkbox
-                  id="match_stereo"
-                  v-model="qtiJson.matchStereo"
-                  name="match_stereo"
-                  value="1"
-                  unchecked-value="0"
-                >
-                  Only approve identical stereoisomers
-                </b-form-checkbox>
-              </div>
-              <Sketcher :error-message="questionForm.errors.get(`solution_structure`)"
-                        :solution-structure="solutionStructure"
-              />
-            </div>
-            <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
-                              ref="dragAndDropCloze"
-                              :qti-json="qtiJson"
-                              :question-form="questionForm"
-            />
-
-            <MatrixMultipleChoice v-if="qtiQuestionType === 'matrix_multiple_choice'"
-                                  ref="dropDownTable"
-                                  :qti-json="qtiJson"
-                                  :question-form="questionForm"
-            />
-            <DropDownTable v-if="qtiQuestionType === 'drop_down_table'"
-                           ref="dropDownTable"
-                           :qti-json="qtiJson"
-                           :question-form="questionForm"
-            />
-
-            <MatrixMultipleResponse v-if="qtiQuestionType === 'matrix_multiple_response'"
-                                    ref="matrixMultipleResponse"
-                                    :qti-json="qtiJson"
-                                    :question-form="questionForm"
-            />
-            <MultipleResponseGrouping v-if="qtiQuestionType === 'multiple_response_grouping'"
-                                      ref="multipleResponseGrouping"
-                                      :qti-json="qtiJson"
-                                      :question-form="questionForm"
-            />
-
-            <MultipleResponseSelectAllThatApplyOrSelectN
-              v-if="['multiple_response_select_all_that_apply','multiple_response_select_n'].includes(qtiQuestionType)"
-              ref="MultipleResponseSelectAllThatApplyOrSelectN"
-              :qti-json="qtiJson"
-              :question-form="questionForm"
-            />
-            <BowTie v-if="qtiQuestionType === 'bow_tie'"
-                    ref="bowTie"
-                    :qti-json="qtiJson"
-                    :question-form="questionForm"
-                    class="p-0"
-            />
-            <FillInTheBlank v-if="qtiQuestionType === 'fill_in_the_blank'"
-                            ref="fillInTheBlank"
-                            :qti-json="qtiJson"
-                            :rich-editor-config="richEditorConfig"
-                            :question-form="questionForm"
-                            class="p-0"
-                            @setCKEditorKeydownAsTrue="setCKEditorKeydownAsTrue"
-            />
-            <HighlightTable v-if="qtiQuestionType === 'highlight_table'"
-                            ref="HighlightTable"
-                            :qti-json="qtiJson"
-                            :question-form="questionForm"
-            />
-            <Numerical v-if="qtiQuestionType === 'numerical'"
-                       ref="Nuemrical"
-                       :qti-json="qtiJson"
-                       :question-form="questionForm"
-            />
-
-            <div
-              v-if="['drop_down_rationale_dyad','drop_down_rationale_triad','select_choice'].includes(qtiQuestionType)"
-            >
-              <div v-if="qtiQuestionType === 'select_choice'">
-                <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
-                                     :media-uploads="questionForm.media_uploads"
-                                     :qti-json="JSON.stringify(qtiJson)"
-                                     :question-media-upload-id="questionMediaUploadId"
-                                     @updateQuestionMediaUploads="updateQuestionMediaUploads"
-                                     @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
-                                     @updateQuestionTranscript="updateQuestionTranscript"
-                />
-              </div>
-              <ckeditor
-                id="qtiItemBody"
-                :key="`question-type-${qtiQuestionType}`"
-                v-model="qtiJson.itemBody"
-                tabindex="0"
-                required
-                :config="richEditorConfig"
-                :class="{ 'is-invalid': questionForm.errors.has('qti_item_body')}"
-                class="pb-3"
-                @namespaceloaded="onCKEditorNamespaceLoaded"
-                @ready="handleFixCKEditor()"
-                @focus="ckeditorKeyDown=true"
-                @keydown="questionForm.errors.clear('qti_item_body')"
-              />
-              <has-error :form="questionForm" field="qti_item_body"/>
-            </div>
-            <SelectChoiceDropDownRationale
-              v-if="['select_choice','drop_down_rationale_dyad'].includes(qtiQuestionType)"
-              ref="selectChoiceDropDownRationale"
-              :qti-json="qtiJson"
-              :question-form="questionForm"
-            />
-            <DropDownRationaleTriad
-              v-if="qtiQuestionType === 'drop_down_rationale_triad'"
-              ref="dropDownTriad"
-              :qti-json="qtiJson"
-              :question-form="questionForm"
-            />
-
-            <Matching v-if="qtiQuestionType === 'matching'"
-                      ref="matching"
-                      :qti-json="qtiJson"
-                      :question-form="questionForm"
-                      :matching-rich-editor-config="matchingRichEditorConfig"
-            />
-
-            <MultipleAnswers v-if="qtiQuestionType === 'multiple_answers'"
-                             ref="multipleAnswers"
-                             :qti-json="qtiJson"
-                             :question-form="questionForm"
-                             :matching-rich-editor-config="matchingRichEditorConfig"
-                             :multiple-response-rich-editor-config="multipleResponseRichEditorConfig"
-                             class="p-0"
-            />
-
-            <MultipleChoiceTrueFalse v-if="['true_false','multiple_choice'].includes(qtiQuestionType)"
-                                     ref="multipleChoiceTrueFalse"
-                                     :key="qtiQuestionType"
-                                     :qti-json="qtiJson"
-                                     :question-form="questionForm"
-                                     :simple-choice-config="simpleChoiceConfig"
-            />
-            <HighlightText v-if="qtiQuestionType === 'highlight_text'"
-                           ref="HighlightText"
-                           :qti-json="qtiJson"
-                           :question-form="questionForm"
-            />
-            <div class="pb-2">
-              <b-card
-                v-if="['multiple_choice','numerical'].includes(qtiQuestionType)
-                  || nursingQuestions.includes(qtiQuestionType)
-                  ||qtiQuestionType.includes('drop_down_rationale')
-                  || (qtiQuestionType === 'select_choice' && nativeType === 'nursing')"
-                header="default"
-              >
-                <template #header>
-                  <span class="ml-2 h7">General Feedback</span>
-                </template>
-                <div v-for="(generalFeedback,index) in generalFeedbacks"
-                     :key="`feedback-${generalFeedback.label}`"
-                >
-                  <div
-                    v-if="generalFeedback.label !== 'Any Response'
-                      || !((nursingQuestions.includes(qtiQuestionType)||(qtiQuestionType === 'select_choice' && nativeType === 'nursing'))
-                        || qtiQuestionType.includes('drop_down_rationale'))"
-                  >
-                    <b-form-group
-                      :label-for="generalFeedback.id"
-                      class="mb-0"
-                    >
-                      <template v-slot:label>
-                        <span class="font-weight-bold">{{ generalFeedback.label }}</span>
-                        <b-icon icon="pencil"
-                                :variant="generalFeedback.editorShown ? 'secondary' : 'primary'"
-                                :aria-label="`Edit ${generalFeedback.label} feedback`"
-                                @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,true)"
-                        />
-                      </template>
-                      <div v-if="generalFeedback.editorShown">
-                        <ckeditor
-                          :id="generalFeedback.id"
-                          v-model="qtiJson.feedback[generalFeedback.key]"
-                          tabindex="0"
-                          :config="simpleChoiceFeedbackConfig"
-                          @namespaceloaded="onCKEditorNamespaceLoaded"
-                          @ready="handleFixCKEditor()"
-                        />
-                        <div class="mt-2">
-                          <b-button
-                            size="sm"
-                            variant="primary"
-                            @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,false)"
-                          >
-                            Close
-                          </b-button>
-                        </div>
-                      </div>
-                      <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
-                        <span v-html="qtiJson.feedback[generalFeedback.key]"/>
-                      </div>
-                    </b-form-group>
-                    <hr
-                      v-if="(index !==2 && !nursingQuestions.includes(qtiQuestionType)) || (index === 0 && nursingQuestions.includes(qtiQuestionType))"
-                    >
-                  </div>
-                </div>
-              </b-card>
-            </div>
-          </div>
-          <b-form-group v-if="showPreexistingWebworkFilePath"
-                        label-cols-sm="4"
-                        label-cols-lg="3"
-                        label="ADAPT ID or WeBWork File Path"
-                        label-for="pre_existing_webwork_problem"
-          >
-            <b-form-row>
-              <b-form-input
-                id="pre_existing_webwork_problem"
-                v-model="preExistingWebworkFilePath"
-                type="text"
-                size="sm"
-                style="width:500px"
-                class="mr-2"
-              />
-              <b-button size="sm" @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)">
-                <span v-if="!updatingTempalteWithPreexistingWebworkFilePath">Update template</span>
-                <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow"/>
-                  Updating...
-                </span>
-              </b-button>
-            </b-form-row>
-          </b-form-group>
-          <b-form-group
-            v-if="existingQuestionFormTechnology !== 'text'
-              && !webworkEditorShown
-              && questionForm.question_type === 'assessment'"
-            :label-cols-sm="existingQuestionFormTechnology === 'h5p' ? 2 : 3"
-            :label-cols-lg="existingQuestionFormTechnology === 'h5p' ? 1 : 2"
-            label-for="technology_id"
-            :label="existingQuestionFormTechnology === 'webwork' ? 'WeBWork Path' : `${getTextFromTechnology(questionForm.technology)} ID`"
-          >
-            <b-form-row>
-              <div>
-                <b-form-input
-                  id="technology_id"
-                  v-model="questionForm.technology_id"
-                  type="text"
-                  :style="existingQuestionFormTechnology === 'webwork' ? 'width:700px' : ''"
-                  :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
-                  @keydown="questionForm.errors.clear('technology_id')"
-                />
-                <has-error :form="questionForm" field="technology_id"/>
-              </div>
-              <div class="mt-1 ml-3">
-                <b-button v-if="existingQuestionFormTechnology === 'h5p' && questionForm.technology_id" size="sm"
-                          variant="outline-primary"
-                          @click="viewInLibreStudio(questionForm.technology_id)"
-                >
-                  View in LibreStudio
-                </b-button>
-              </div>
-            </b-form-row>
-          </b-form-group>
-          <div v-show="webworkEditorShown">
-            <div class="mb-2">
-              If you need help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
-                                                                target="_blank"
-            >https://webwork.maa.org/wiki/Authors</a>.
-            </div>
-            <b-row>
-              <b-col cols="6">
-                <b-form-file
-                  v-model="webworkAttachmentsForm.attachment"
-                  class="mb-2"
-                  size="sm"
-                  placeholder="Choose an image or drop it here..."
-                  drop-placeholder="Drop Image here..."
-                />
-                <div v-if="uploading">
-                  <b-spinner small type="grow"/>
-                  Uploading file...
-                </div>
-                <div v-for="(errorMessage, errorMessageIndex) in errorMessages"
-                     :key="`error-message-${errorMessageIndex}`"
-                >
-                  <ErrorMessage :message="errorMessage"/>
-                </div>
-              </b-col>
-              <b-col>
-                <b-button variant="info"
-                          size="sm"
-                          :disabled="!webworkAttachmentsForm.attachment || (webworkAttachmentsForm.attachment && webworkAttachmentsForm.attachment.length === 0)"
-                          @click="uploadWebworkAttachment"
-                >
-                  Upload Image
-                </b-button>
-                <a v-if="questionForm.id && initiallyWebworkQuestion"
-                   class="btn btn-sm btn-outline-primary link-outline-primary-btn ml-2"
-                   :href="`/api/questions/export-webwork-code/${questionForm.id}`"
-                >
-                  <div style="margin-top:3px">Export webWork code</div>
-                </a>
-              </b-col>
-            </b-row>
-            <b-row v-if="webworkAttachments">
-              <ul>
-                <li v-for="(webworkAttachment, webworkAttachmentIndex) in webworkAttachments"
-                    :key="`webwork-attachment-${webworkAttachmentIndex}`"
-                >
-                  {{ webworkAttachment.filename }}
-                  <span class="text-primary"
-                        @click="setWebworkAttachmentOptions(webworkAttachment);$bvModal.show('modal-webwork-image-options')"
-                  ><font-awesome-icon
-                    :icon="copyIcon"
-                  /></span>
-                  <b-icon-trash @click="confirmDeleteWebworkAttachment(webworkAttachment)"/>
-                </li>
-              </ul>
-            </b-row>
-            <b-textarea v-model="questionForm.webwork_code"
-                        style="width:100%"
-                        :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"
-                        rows="10"
-                        @keydown="questionForm.errors.clear('webwork_code')"
-            />
-            <has-error :form="questionForm" field="webwork_code"/>
-          </div>
-        </div>
-      </div>
-    </b-card>
-    <b-card v-if="questionForm.question_type === 'assessment'"
-            border-variant="primary"
-            header-bg-variant="primary"
-            header-text-variant="white"
-            class="mb-3"
-    >
-      <template #header>
-        Accessibility Alternatives
-        <QuestionCircleTooltip id="accessibility-tooltip" :icon-style="'color:#fff'"/>
-        <b-tooltip target="accessibility-tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          An accessible HTML block alternative or an accessible auto-graded version of the question.
-        </b-tooltip>
-      </template>
-      <b-form-group
-        label-for="HTML Block Alternative"
-      >
-        <template v-slot:label>
-          <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
-            HTML Block Alternative
-
-            <QuestionCircleTooltip id="text-question-tooltip"/>
-            <b-tooltip target="text-question-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              You can optionally create an open-ended text version of your question which may be useful if you are using one of the
-              non-native auto-graded technologies.
-            </b-tooltip>
-
-            <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'text_question').expanded"
-                               :icon="caretRightIcon" size="lg"
-            />
-            <font-awesome-icon v-if="editorGroups.find(group => group.id === 'text_question').expanded"
-                               :icon="caretDownIcon" size="lg"
-            />
-          </span>
-        </template>
-        <ckeditor
-          v-show="editorGroups.find(group => group.id === 'text_question').expanded"
-          id="Open-Ended Alternative"
-          v-model="questionForm.text_question"
-          tabindex="0"
-          :config="richEditorConfig"
-          @namespaceloaded="onCKEditorNamespaceLoaded"
-          @ready="handleFixCKEditor()"
-        />
-      </b-form-group>
-      <div v-if="questionForm.question_type === 'assessment'">
-        <b-form-group
-          label-cols-sm="5"
-          label-cols-lg="4"
-          label-for="a11y_auto_graded_question_id"
-        >
-          <template v-slot:label>
-            <span style="cursor: pointer;" @click="toggleExpanded ('a11y_auto_graded_question_id')">
-              Auto-Graded Alternative   <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
-              <b-tooltip target="a11y-auto-graded-tooltip"
+              Clone History
+              <QuestionCircleTooltip :id="'clone-history-tooltip'"/>
+              <b-tooltip target="clone-history-tooltip"
                          delay="250"
                          triggers="hover focus"
               >
-                You can optionally provide a secondary accessible auto-graded question which can be shown on a per-student basis.
-                Please provide an ADAPT ID of the form {assignment ID}-{question ID} or {question ID}
+                You can view the complete clone history of this question if it was created as a clone of another
+                question
+                or series of questions.
               </b-tooltip>
-              <font-awesome-icon
-                v-if="!editorGroups.find(editorGroup => editorGroup.id === 'a11y_auto_graded_question_id').expanded"
-                :icon="caretRightIcon" size="lg"
-              />
-              <font-awesome-icon
-                v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_auto_graded_question_id').expanded"
-                :icon="caretDownIcon" size="lg"
-              />
-            </span>
-          </template>
-        </b-form-group>
-        <b-form-group
-          v-if="editorGroups.find(editorGroup => editorGroup.id === 'a11y_auto_graded_question_id').expanded"
-        >
-          <b-modal id="modal-view-a11y-auto-graded-question"
-                   title="Auto-Graded Alternative"
-                   no-close-on-backdrop
+            </template>
+            <b-form-row class="pt-2">
+              <span v-for="(questionId, index) in questionForm.clone_history"
+                    :key="`view-clone-history-${index}`"
+              >
+                <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-clone-history')">{{
+                    questionId
+                  }}</a>
+                <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1"
+                >-></span>
+              </span>
+            </b-form-row>
+          </b-form-group>
+          <b-modal id="modal-framework-aligner"
+                   title="Framework Alignment"
                    size="lg"
+                   no-close-on-backdrop
           >
-            <ViewQuestions :key="`question-to-view-${a11yAutoGradedAlternativeQuestionId}`"
-                           :question-ids-to-view="[a11yAutoGradedAlternativeQuestionId]"
+            <FrameworkAligner :key="`framework-aligner-key-${isEdit ? +questionToEdit.id : 0}`"
+                              :question-id="isEdit ? +questionToEdit.id : 0"
+                              :framework-item-sync-question="frameworkItemSyncQuestion"
+                              :is-create-question="true"
+                              @setFrameworkItemSyncQuestion="setFrameworkItemSyncQuestion"
             />
+
             <template #modal-footer>
               <b-button
                 variant="primary"
                 size="sm"
                 class="float-right"
-                @click="$bvModal.hide('modal-view-a11y-auto-graded-question')"
+                @click="$bvModal.hide('modal-framework-aligner')"
               >
                 OK
               </b-button>
             </template>
           </b-modal>
-          <b-form-row>
-            <b-form-input
-              id="a11y_auto_graded_question_id"
-              v-model="questionForm.a11y_auto_graded_question_id"
-              style="width: 200px"
-              size="sm"
-              type="text"
-              :class="{ 'is-invalid': questionForm.errors.has('a11y_auto_graded_question_id')}"
-              @keydown="questionForm.errors.clear('a11y_auto_graded_question_id')"
-            />
-            <has-error :form="questionForm" field="a11y_auto_graded_question_id"/>
-            <b-button size="sm"
-                      class="ml-2"
-                      variant="primary"
-                      @click="showA11yAutoGradedQuestion"
+          <b-form-group
+            v-if="revisionOptions.length"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="revision"
+            label="Revision*"
+          >
+            <b-form-row>
+              <b-form-select v-model="revision"
+                             style="width:500px"
+                             size="sm"
+                             :options="revisionOptions"
+                             class="mt-2 mr-2"
+                             @change="setNewQuestionToEdit"
+              />
+              <b-button size="sm"
+                        variant="outline-primary"
+                        style="height:30px;margin-top:8px"
+                        @click="initCompareRevisions"
+              >
+                Compare Revisions
+              </b-button>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="title"
+            label="Title*"
+          >
+            <b-form-row>
+              <b-form-input
+                id="title"
+                v-model="questionForm.title"
+                size="sm"
+                type="text"
+                required
+                :class="{ 'is-invalid': questionForm.errors.has('title') }"
+                class="mt-2"
+                @keydown="questionForm.errors.clear('title')"
+              />
+              <has-error :form="questionForm" field="title"/>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="description"
+          >
+            <template v-slot:label>
+              Description
+              <QuestionCircleTooltip :id="'description-tooltip'"/>
+              <b-tooltip target="description-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                An optional short description of the question. This description is not viewable by students but is
+                viewable
+                in
+                search
+                results.
+              </b-tooltip>
+            </template>
+            <b-form-row>
+              <b-form-textarea
+                id="title"
+                v-model="questionForm.description"
+                :min-rows="2"
+                required
+                class="mt-2"
+              />
+            </b-form-row>
+          </b-form-group>
+          <div>
+            <b-form-group
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label-for="question_type"
+              :label="isEdit ? 'Question Type' : 'Question Type*'"
             >
-              View
-            </b-button>
-          </b-form-row>
-        </b-form-group>
-      </div>
-    </b-card>
-    <b-card
-      border-variant="primary"
-      header-bg-variant="primary"
-      header-text-variant="white"
-      class="mb-3"
-    >
-      <template #header>
-        Supplemental Content
-        <QuestionCircleTooltip id="supplemental-content-tooltip" :icon-style="'color:#fff'"/>
-        <b-tooltip target="supplemental-content-tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          An answer/solution to the question, a hint for students, and
-          personal notes may
-          be optionally associated with the question.
-        </b-tooltip>
-      </template>
-      <div
-        v-for="editorGroup in editorGroups.filter(group => !['technology','a11y_auto_graded_question_id','non_technology_text','text_question'].includes(group.id))"
-        :key="editorGroup.id"
+              <b-form-row>
+                <b-form-radio-group
+                  id="question_type"
+                  v-model="questionForm.question_type"
+                  stacked
+                  :aria-required="!isEdit"
+                  @change="switchingType = true;resetQuestionForm($event)"
+                >
+                  <b-form-radio name="question_type" value="assessment">
+                    Question
+                    <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
+                    <b-tooltip target="assessment-question-type-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Questions can be used within assignments. In addition, if they are purely auto-graded,
+                      they can be used as root nodes in Learning Trees. Regardless of whether they have an auto-graded
+                      technology, questions can be used in non-root nodes of
+                      Learning Trees.
+                    </b-tooltip>
+                  </b-form-radio>
+                  <b-form-radio name="question_type" value="exposition">
+                    Exposition (use in Learning Trees only)
+                    <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
+                    <b-tooltip target="exposition-question-type-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      An Exposition consists of source (text, video, simulation, any other HTML) without an auto-graded
+                      component. They can be used in any of the non-root
+                      nodes within Learning Trees.
+                    </b-tooltip>
+                  </b-form-radio>
+                </b-form-radio-group>
+              </b-form-row>
+            </b-form-group>
+          </div>
+
+          <div>
+            <b-form-group
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label-for="public"
+            >
+              <template v-slot:label>
+                Public*
+                <QuestionCircleTooltip :id="'public-question-tooltip'"/>
+                <b-tooltip target="public-question-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Questions that are public can be used by any instructor. Questions that are not public are only
+                  accessible
+                  by you.
+                </b-tooltip>
+              </template>
+              <b-form-row class="mt-2">
+                <b-form-radio-group
+                  id="public"
+                  v-model="questionForm.public"
+                >
+                  <b-form-radio name="public" value="1">
+                    Yes
+                  </b-form-radio>
+                  <b-form-radio name="public" value="0">
+                    No
+                  </b-form-radio>
+                </b-form-radio-group>
+              </b-form-row>
+            </b-form-group>
+          </div>
+
+          <b-form-group
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="folder"
+            label="Folder*"
+          >
+            <b-form-row>
+              <span v-show="!showFolderOptions" class="mt-2">
+                The folder is set by the question owner ({{ questionForm.question_editor_name }}).
+              </span>
+              <span v-show="showFolderOptions">
+                <SavedQuestionsFolders
+                  ref="savedQuestionsFolders1"
+                  :key="`saved-questions-folders-key-${savedQuestionsFolderKey}`"
+                  class="mt-2"
+                  :type="'my_questions'"
+                  :init-saved-questions-folder="questionForm.folder_id"
+                  :create-modal-add-saved-questions-folder="true"
+                  :folder-to-choose-from="'My Questions'"
+                  :question-source-is-my-favorites="false"
+                  @reloadSavedQuestionsFolders="reloadCreateQuestionSavedQuestionsFolders"
+                  @savedQuestionsFolderSet="setMyCoursesFolder"
+                />
+              </span>
+            </b-form-row>
+            <ErrorMessage :message="questionForm.errors.get('folder_id')" v-if="questionForm.errors.get('folder_id')"/>
+          </b-form-group>
+          <div>
+            <b-form-group
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label-for="author"
+              label="Author(s)*"
+            >
+              <b-form-row>
+                <b-form-input
+                  id="author"
+                  v-model="questionForm.author"
+                  size="sm"
+                  type="text"
+                  :class="{ 'is-invalid': questionForm.errors.has('author') }"
+                  class="mt-2"
+                  @keydown="questionForm.errors.clear('author')"
+                />
+                <has-error :form="questionForm" field="author"/>
+              </b-form-row>
+            </b-form-group>
+          </div>
+
+          <b-form-group
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="license"
+            label="License*"
+          >
+            <b-form-row>
+              <b-form-select v-model="questionForm.license"
+                             style="width:365px"
+                             title="license"
+                             size="sm"
+                             class="mt-2 mr-2"
+                             :class="{ 'is-invalid': questionForm.errors.has('license') }"
+                             :options="licenseOptions"
+                             @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
+              />
+              <has-error :form="questionForm" field="license"/>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            v-if="licenseVersionOptions.length"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="license_version"
+            label="License Version*"
+          >
+            <b-form-row>
+              <b-form-select v-model="questionForm.license_version"
+                             style="width:100px"
+                             title="license version"
+                             required
+                             size="sm"
+                             class="mt-2"
+                             :options="licenseVersionOptions"
+              />
+            </b-form-row>
+          </b-form-group>
+
+          <div>
+            <b-form-group
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label-for="source_url"
+            >
+              <template v-slot:label>
+                Source URL*
+                <QuestionCircleTooltip id="source_url-tooltip"/>
+                <b-tooltip target="source_url-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  URL where the question was created
+                </b-tooltip>
+              </template>
+              <b-form-row>
+                <b-form-input
+                  id="source_url"
+                  v-model="questionForm.source_url"
+                  size="sm"
+                  type="text"
+                  :class="{ 'is-invalid': questionForm.errors.has('source_url') }"
+                  class="mt-2"
+                  @keydown="questionForm.errors.clear('source_url')"
+                />
+                <has-error :form="questionForm" field="source_url"/>
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label-for="tags"
+              label="Tags"
+            >
+              <b-form-row class="mt-2">
+                <b-form-input
+                  id="tags"
+                  v-model="tag"
+                  style="width:200px"
+                  type="text"
+                  class="mr-2"
+                  size="sm"
+                />
+                <b-button variant="outline-primary" size="sm" @click="addTag()">
+                  Add Tag
+                </b-button>
+              </b-form-row>
+              <div class="d-flex flex-row">
+                <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
+                  <b-button size="sm"
+                            variant="secondary"
+                            class="mr-2"
+                            style="line-height:.8"
+                            @click="removeTag(chosenTag)"
+                  ><span v-html="chosenTag"/> x</b-button>
+                </span>
+              </div>
+            </b-form-group>
+            <b-form-group
+              label-for="framework_alignment"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label="Framework Alignment"
+            >
+              <div class="mt-1">
+                <b-button size="sm" variant="outline-primary" @click="$bvModal.show('modal-framework-aligner');">
+                  Update
+                </b-button>
+              </div>
+            </b-form-group>
+            <span v-if="frameworkItemSyncQuestion.descriptors.length">
+              <span v-for="(descriptor, descriptorsIndex) in frameworkItemSyncQuestion.descriptors"
+                    :key="`framework-item-sync-questions-descriptors-${descriptorsIndex}`"
+                    class="mr-2"
+              >
+                <b-button size="sm"
+                          variant="secondary"
+                          style="line-height:.8"
+                          @click="removeFrameworkItemSyncQuestion('descriptors',descriptor.id)"
+                >{{
+                    descriptor.text
+                  }} x
+                </b-button>
+              </span>
+            </span>
+            <span v-if="frameworkItemSyncQuestion.levels.length">
+              <span v-for="(level, levelsIndex) in frameworkItemSyncQuestion.levels"
+                    :key="`framework-item-sync-questions-levels-${levelsIndex}`"
+                    class="mr-2"
+              >
+                <b-button size="sm"
+                          variant="secondary"
+                          style="line-height:.8"
+                          @click="removeFrameworkItemSyncQuestion('levels',level.id)"
+                >{{
+                    level.text
+                  }} x
+                </b-button>
+              </span>
+            </span>
+            <b-form-group
+              v-show="false"
+              key="learning_outcome"
+              label-for="learning_outcome"
+              label-cols-sm="3"
+              label-cols-lg="2"
+            >
+              <template v-slot:label>
+                Learning Outcome
+                <QuestionCircleTooltip :id="'learning-outcome-tooltip'"/>
+                <b-tooltip target="learning-outcome-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Over time, we will be adding new learning outcome frameworks for different subjects. If you are
+                  aware
+                  of a learning outcome framework and your subject is not shown here, please contact us with the source
+                  of
+                  the framework.
+                </b-tooltip>
+              </template>
+              <b-form-row class="mt-2">
+                <b-form-select id="learning_outcome"
+                               v-model="subject"
+                               style="width:150px"
+                               size="sm"
+                               class="mr-2"
+                               :options="subjectOptions"
+                               @change="updateLearningOutcomes($event)"
+                />
+                <v-select :key="`subject-${subject}`"
+                          v-model="learningOutcome"
+                          style="width:520px"
+                          placeholder="Choose a learning outcome"
+                          :options="learningOutcomeOptions.filter(learningOutcomeOption => !questionForm.learning_outcomes.includes(learningOutcomeOption.id))"
+                          class="mb-2"
+                          @input="addLearningOutcome(learningOutcome)"
+                />
+              </b-form-row>
+              <div v-for="(chosenLearningOutcome, index) in questionForm.learning_outcomes"
+                   :key="`chosen-learning-outcome-${index}`"
+                   class="mt-2"
+              >
+                <b-button size="sm" variant="secondary" class="mr-2"
+                          @click="removeLearningOutcome(chosenLearningOutcome)"
+                >
+                  {{
+                    //labels are brought in if it's an edited question otherwise it's done on the fly
+                    chosenLearningOutcome.label ? chosenLearningOutcome.label :
+                      getLearningOutcomeLabel(chosenLearningOutcome)
+                  }} x
+                </b-button>
+              </div>
+            </b-form-group>
+          </div>
+        </b-card>
+      </b-tab>
+
+      <b-tab id="primary-content"
+             ref="primary-content"
+             title="Primary Content"
+             :title-link-class="getTabClass('primary-content')"
       >
-        <div v-if="editorGroup.id === 'solution_html' &&
-          questionForm.solution_html &&
-          questionForm.webwork_code &&
-          questionForm.webwork_code.includes('BEGIN_PGML_SOLUTION') &&
-          !/#\s*BEGIN_PGML_SOLUTION/.test(questionForm.webwork_code)"
+        <b-card border-variant="primary"
+                header-bg-variant="primary"
+                header-text-variant="white"
+                header="Primary Content"
+                class="mb-3"
         >
-          <b-alert show variant="info">
-            Since you have a solution embedded in your weBWork code, the solution below will be ignored.
-          </b-alert>
-        </div>
-        <b-form-group
-          v-if="questionForm.question_type === 'assessment' ||editorGroup.id==='notes'"
-          :label-for=" editorGroup.label "
+          <p>
+            Questions can consist of either pure HTML (text-based question), an auto-graded technology for automatic
+            scoring, or
+            may also consist of both types. Though the combined type is less common, it provides a way to incorporate
+            additional resources
+            such as video or other embedded media to complement the auto-graded portion of the question.
+          </p>
+
+          <p>Both blocks are rendered in problem to students.</p>
+          <b-card border-variant="primary"
+                  class="mb-3"
+          >
+            <div>
+              <b-form-group
+                key="source"
+                label-for="non_technology_text"
+              >
+                <template v-if="questionForm.question_type === 'assessment'" v-slot:label>
+                  <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
+                    HTML Block   <QuestionCircleTooltip id="open-ended-content-tooltip"/>
+                    <b-tooltip target="open-ended-content-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Questions may be created with or without an HTML block.  This block can be used by itself (typically for students who upload submissions) or can be used to enhance
+                      questions that use one of the non-native auto-graded technologies.  For native questions, you can use the question's Prompt in lieu of the HTML block.
+                    </b-tooltip>
+                    <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'non_technology_text').expanded"
+                                       :icon="caretRightIcon" size="lg"
+                    />
+                    <font-awesome-icon v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded"
+                                       :icon="caretDownIcon" size="lg"
+                    />
+                  </span>
+                </template>
+              </b-form-group>
+              <div
+                v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || ('exposition' === questionForm.question_type)"
+              >
+                <b-container class="mt-2">
+                  <b-row>
+                    <QuestionMediaUpload
+                      v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded || ('exposition' === questionForm.question_type)"
+                      :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                      :media-uploads="questionForm.media_uploads"
+                      :question-media-upload-id="questionMediaUploadId"
+                      :qti-json="questionForm.non_technology_text"
+                      @updateQuestionMediaUploads="updateQuestionMediaUploads"
+                      @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
+                      @updateQuestionTranscript="updateQuestionTranscript"
+                    />
+                  </b-row>
+                </b-container>
+                <ckeditor
+                  id="non_technology_text"
+                  ref="non_technology_text"
+                  v-model="questionForm.non_technology_text"
+                  tabindex="0"
+                  required
+                  :config="richEditorConfig"
+                  :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
+                  class="mb-2"
+                  @namespaceloaded="onCKEditorNamespaceLoaded"
+                  @ready="handleFixCKEditor()"
+                  @focus="ckeditorKeyDown=true;questionForm.errors.clear('non_technology_text');"
+                />
+                <has-error :form="questionForm" field="non_technology_text"/>
+              </div>
+            </div>
+          </b-card>
+          <b-card border-variant="primary"
+                  class="mb-3"
+          >
+            <div>
+              <b-form-group
+                v-if="questionForm.question_type === 'assessment'"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="technology"
+                label="Auto-Grade Tech Block"
+              >
+                <b-form-group>
+                  <b-form-row class="pb-2 pt-2">
+                    <span class="mr-2">Existing
+                      <QuestionCircleTooltip id="existing-question-tooltip"/>
+                      <b-tooltip target="existing-question-tooltip"
+                                 delay="250"
+                                 triggers="hover focus"
+                      >
+                        If you've created a WebWork, H5P, or IMathAS question outside of ADAPT, then you can use the existing path (WebWork)
+                        or ID (H5P or IMathAS) to import that question into ADAPT so that it can be used within an ADAPT assignment.
+                      </b-tooltip>
+                    </span>
+                    <b-form-select
+                      v-model="existingQuestionFormTechnology"
+                      style="width:110px"
+                      title="technologies"
+                      size="sm"
+                      :options="existingAutoGradedTechnologyOptions"
+                      :aria-required="!isEdit"
+                      @change="initChangeExistingAutoGradedTechnology($event)"
+                    />
+                    <b-col>
+                      <ConsultInsight v-if="newAutoGradedTechnology === 'webwork'"
+                                      :url="'https://commons.libretexts.org/insight/webwork-techniques'"
+                      />
+                    </b-col>
+                  </b-form-row>
+
+                  <b-form-row>
+                    <span style="margin-left:24px" class="mr-2">New  <QuestionCircleTooltip id="new-question-tooltip"/>
+                      <b-tooltip target="new-question-tooltip"
+                                 delay="250"
+                                 triggers="hover focus"
+                      >
+                        Create a question using one of ADAPT's native question types (multplie choice, true/false, numerical, etc.), use ADAPT's
+                        editor to create a new WebWork question, or ADAPT can re-direct you to H5P/IMathAS so that you can create new questions and
+                        then import them back into ADAPT.
+                      </b-tooltip></span>
+                    <b-form-select
+                      v-model="newAutoGradedTechnology"
+                      style="width:110px"
+                      title="auto-graded technologies"
+                      size="sm"
+                      :options="newAutoGradedTechnologyOptions"
+                      @change="openCreateAutoGradedTechnologyCode($event)"
+                    />
+                    <b-form-select
+                      v-if="webworkEditorShown"
+                      v-model="webworkTemplate"
+                      style="width:250px"
+                      title="webwork templates"
+                      size="sm"
+                      class="ml-3"
+                      :options="webworkTemplateOptions"
+                      @change="setWebworkTemplate($event)"
+                    />
+                  </b-form-row>
+                </b-form-group>
+              </b-form-group>
+              <div v-if="questionForm.technology === 'qti'">
+                <b-form-group label="Native Question Type"
+                              label-cols-sm="3"
+                              label-cols-lg="2"
+                              label-for="native-question-type"
+                >
+                  <b-form-radio-group
+                    id="native-question-type"
+                    v-model="nativeType"
+                    inline
+                    name="native-question-type"
+                    class="pt-2"
+                    @input="initNativeType()"
+                  >
+                    <b-form-radio value="basic">
+                      Basic (QTI)
+                      <QuestionCircleTooltip id="basic-questions-tooltip"/>
+                      <b-tooltip target="basic-questions-tooltip"
+                                 delay="250"
+                                 triggers="hover focus"
+                      >
+                        You can export questions in QTI format from your LMS and import them through the Bulk Import tab
+                        and
+                        then
+                        edit them in ADAPT.
+                        <br><br>Alternatively, you can create new questions directly using the editor below.
+                      </b-tooltip>
+                    </b-form-radio>
+                    <b-form-radio value="nursing">
+                      Nursing
+                      <QuestionCircleTooltip id="nursing-questions-tooltip"/>
+                      <b-tooltip target="nursing-questions-tooltip"
+                                 delay="250"
+                                 triggers="hover focus"
+                      >
+                        Nursing questions are question types specifically written to prepare nursing students for the
+                        NCLEX
+                        exam.
+                      </b-tooltip>
+                    </b-form-radio>
+                    <b-form-radio value="sketcher">
+                      Sketcher
+                    </b-form-radio>
+                    <b-modal id="modal-discuss-it"
+                             title="Explanation of Discuss-it Questions"
+                             size="xl"
+                             no-close-on-backdrop
+                    >
+                      <div style="position: relative; padding-top: 65.26898734177216%;">
+                        <iframe
+                          src="https://customer-9mlff0qha6p39qdq.cloudflarestream.com/1db93b924be23b3ca4809cd889830fc6/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F1db93b924be23b3ca4809cd889830fc6%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600"
+                          loading="lazy"
+                          style="border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;"
+                          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                          allowfullscreen="true"
+                        />
+                      </div>
+                      <template #modal-footer>
+                        <b-button
+                          variant="primary"
+                          size="sm"
+                          class="float-right"
+                          @click="$bvModal.hide('modal-discuss-it')"
+                        >
+                          OK
+                        </b-button>
+                      </template>
+                    </b-modal>
+                    <b-form-radio value="discuss_it">
+                      Discuss-it
+                      <QuestionCircleTooltipModal :aria-label="'Explanation of Discuss-it'"
+                                                  :modal-id="'modal-discuss-it'"
+                                                  :color-class="'font-bold'"
+                      />
+                    </b-form-radio>
+                    <b-form-radio v-show="false" value="3D visualization">
+                      3D Visualization
+                    </b-form-radio>
+                    <b-form-radio value="all">
+                      All
+                    </b-form-radio>
+                  </b-form-radio-group>
+                </b-form-group>
+                <b-form-group>
+                  <div v-if="['all','basic'].includes(nativeType)">
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multiple Choice
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="true_false"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      True/False
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="numerical"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Numerical
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_answers"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multiple Answer
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="fill_in_the_blank"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Fill-in-the-blank
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Select Choice
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType"
+                                  name="qti-question-type"
+                                  value="matching"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Matching
+                    </b-form-radio>
+                  </div>
+                  <div v-if="['all','nursing'].includes(nativeType)">
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="bow_tie"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Bow Tie
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multiple Choice
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_choice"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Matrix Multiple Choice
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multiple Response Select N
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                                  value="multiple_response_select_all_that_apply"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multiple Response Select All That Apply
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_table"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Highlight Table
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="highlight_text"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Highlight Text
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multiple Response Grouping
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_table"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Drop-Down Table
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_dyad"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Drop-Down Dyad
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drop_down_rationale_triad"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Drop-Down Triad
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="select_choice"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Drop-Down Cloze
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="matrix_multiple_response"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Matrix Multiple Response
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="drag_and_drop_cloze"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Drag and Drop Cloze
+                    </b-form-radio>
+                  </div>
+                  <div v-if="['all'].includes(nativeType)">
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="sketcher"
+                                  @change="initQTIQuestionType('submit_molecule')"
+                    >
+                      Sketcher
+                    </b-form-radio>
+                  </div>
+                </b-form-group>
+                <div v-if="qtiQuestionType === 'highlight_table'">
+                  <b-alert show variant="info">
+                    Optionally add a prompt for this question. Then, in each row, add a description in the first column.
+                    Then in
+                    the second column, write text, where text within
+                    brackets will automatically become your highlighted text. Once the text is added, determine whether
+                    it
+                    is a
+                    correct answer or a distractor.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'drop_down_table'">
+                  <b-alert show variant="info">
+                    Write out a prompt, then add a series of drop-downs to your table. Each drop-down should have at
+                    least
+                    two
+                    selections.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'highlight_text'">
+                  <b-alert show variant="info">
+                    Write out a prompt, where text within brackets will automatically become your highlighted text. Once
+                    the
+                    text is added, determine whether it is a correct answer or a distractor.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'select_choice'">
+                  <b-alert show variant="info">
+                    Using brackets, place the correct answer in the location that you want the select choice to appear.
+                    Then, add the choices below. <br>
+                    <br>
+                    Example. [Star Wars] took place in a [galaxy] far, far away.
+                    <br><br>
+                    Note that bracketed words should only appear once. If you need to use the same correct answer
+                    multiple
+                    times,
+                    you can use a dummy identifier such as [Star Wars-1] where the "1" should be increased each time you
+                    need to use the same correct answer.
+                    Then, below, you can update the correct answer manually.<br>
+                    <br>Each student will receive a randomized ordering of the choices.<br>
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'drop_down_rationale_dyad'">
+                  <b-alert show variant="info">
+                    The structure of a “dyad rationale” question is, “The client is at risk for developing X as
+                    evidenced by
+                    Y.”
+                    X and Y are pulled from different pools of choices.
+                    Using brackets, place a non-space-containing identifier to show where you want “X” and “Y” placed.
+                    Example: The client is at risk for [disease] as evidenced by [type-of-assessment]. Then, under the
+                    choices
+                    column that appears, add the correct choice for that selection, then add the distractors for each
+                    indicator.
+                    Each student will receive a randomized ordering of the choices.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'drop_down_rationale_triad'">
+                  <b-alert show variant="info">
+                    <p>
+                      The structure of a “triad rationale” question is, “The client is at risk for developing X as
+                      evidenced
+                      by
+                      Y
+                      and Z.”
+                      X is pulled from a pool of choices (the condition) and Y and Z are pulled from the same pool of
+                      choices
+                      (the
+                      rationales).
+                      Using [condition] and [rationale], indicate where you want the condition and the two rationales
+                      placed.
+                    </p>
+                    <p>Example: The client is at risk for [condition] as evidenced by [rationale] and [rationale].</p>
+                    <p>
+                      Next, under the Condition column, add the correct choice and distractors. Under the Rationale
+                      column,
+                      add
+                      the two correct rationales and distractors.
+                    </p>
+                    Each student will receive a randomized ordering of the choices.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'matching'">
+                  <b-alert show variant="info">
+                    Create a list of terms to match along with their matching terms. Matching terms can include media
+                    such
+                    as images.
+                    Optionally, add distractors which do not satisfy any of the matches.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'true_false'">
+                  <b-alert show variant="info">
+                    Write a question prompt and then select either True or False for the correct answer.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'multiple_choice'">
+                  <b-alert show variant="info">
+                    Write a question prompt and then create a selection of answers, choosing the correct answer from the
+                    list. Students will receive a shuffled ordering of the selection.
+                    Optionally provide feedback at the individual question level or general feedback for a correct
+                    response, an incorrect response, or any response.
+                  </b-alert>
+                </div>
+
+                <div v-if="qtiQuestionType === 'numerical'">
+                  <b-alert show variant="info">
+                    Write a question prompt which requires a numerical response, specifying the margin of error accepted
+                    in
+                    the response.
+                    Optionally provide general feedback for a correct response, an incorrect response, or any response.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'drag_and_drop_cloze'">
+                  <b-alert show variant="info">
+                    Bracket off the portions of the text where you would like the Drag and Drop Cloze to occur, using a
+                    bracketed response
+                    to
+                    denote the correct answer. Then, add distractors below. Example: The client is at risk for
+                    developing
+                    [high blood pressure]
+                    and [a heart attack]. Students will then see a drop-down for each item and will only be able to
+                    choose
+                    each
+                    item once.
+                    This question mimics the Drag and Drop Cloze functionality in a way that is accessible. Because of
+                    this,
+                    there will be a single pool of choices.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'bow_tie'">
+                  <b-alert show variant="info">
+                    Write a question prompt and then add two correct Actions to Take, one correct Potential Condition,
+                    and
+                    two
+                    Parameters to Monitor. Each of these groups should have at least one Distractor.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'multiple_response_select_n'">
+                  <b-alert show variant="info">
+                    Using brackets and associated text, indicate the number of correct responses.
+                    Example. The [3] most likely reasons the patient has high blood pressure are:
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'multiple_response_select_all_that_apply'">
+                  <b-alert show variant="info">
+                    Write a question prompt where students have to select all responses that apply. Example. Select the
+                    following activities which contribute to heart disease:
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'multiple_response_grouping'">
+                  <b-alert show variant="info">
+                    Write a question prompt and then create groupings with sets of checkboxes, checking off the correct
+                    responses for each grouping.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'matrix_multiple_choice'">
+                  <b-alert show variant="info">
+                    Write a question prompt and then construct a table with one correct choice per row, selecting that
+                    choice
+                    by
+                    clicking
+                    on the corresponding radio button.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'fill_in_the_blank' && qtiJson">
+                  <b-alert show variant="info">
+                    Create a question with fill in the blanks by underlining
+                    the correct responses. Example. A <u>stitch</u> in time saves <u>nine</u>. If you would like to
+                    accept multiple answers, separate them with a vertical bar: "|". Example.
+                    <u>January|February</u> is a month that comes before March.
+                  </b-alert>
+                  <b-container v-if="questionForm.technology === 'qti'" class="mt-2">
+                    <b-row>
+                      <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                                           :media-uploads="questionForm.media_uploads"
+                                           :question-media-upload-id="questionMediaUploadId"
+                                           :qti-json="JSON.stringify(qtiJson)"
+                                           @updateQuestionMediaUploads="updateQuestionMediaUploads"
+                                           @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
+                                           @updateQuestionTranscript="updateQuestionTranscript"
+                      />
+                    </b-row>
+                  </b-container>
+                </div>
+                <div
+                  v-if="['matching',
+                         'multiple_answers',
+                         'true_false',
+                         'multiple_choice',
+                         'numerical',
+                         'multiple_response_select_all_that_apply',
+                         'multiple_response_select_n',
+                         'matrix_multiple_response',
+                         'multiple_response_grouping',
+                         'drop_down_table',
+                         'drag_and_drop_cloze',
+                         'matrix_multiple_choice',
+                         'bow_tie',
+                         'highlight_text',
+                         'highlight_table',
+                         'submit_molecule',
+                         'discuss_it'].includes(qtiQuestionType) && qtiJson"
+                  class="mb-2"
+                >
+                  <b-container
+                    v-if="questionForm.technology === 'qti' && !['submit_molecule'].includes(qtiQuestionType)"
+                    class="mt-2"
+                  >
+                    <b-row>
+                      <QuestionMediaUpload v-if="qtiQuestionType !== 'discuss_it'"
+                                           :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                                           :media-uploads="questionForm.media_uploads"
+                                           :question-media-upload-id="questionMediaUploadId"
+                                           :qti-json="JSON.stringify(qtiJson)"
+                                           @updateQuestionMediaUploads="updateQuestionMediaUploads"
+                                           @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
+                                           @updateQuestionTranscript="updateQuestionTranscript"
+                      />
+                    </b-row>
+                  </b-container>
+                  <b-card header="default" :header-html="getPromptHeader()">
+                    <ckeditor
+                      id="qtiItemPrompt"
+                      :key="`question-type-${qtiQuestionType}`"
+                      v-model="qtiJson['prompt']"
+                      tabindex="0"
+                      required
+                      :config="shorterRichEditorConfig"
+                      class="pb-3"
+                      @namespaceloaded="onCKEditorNamespaceLoaded"
+                      @ready="handleFixCKEditor()"
+                      @focus="ckeditorKeyDown=true;questionForm.errors.clear('qti_prompt')"
+                    />
+                    <ErrorMessage :message="questionForm.errors.get(`qti_prompt`)"
+                                  v-if="questionForm.errors.get(`qti_prompt`)"
+                    />
+                  </b-card>
+                  <div v-if="qtiQuestionType === 'discuss_it'">
+                    <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                                         :media-uploads="questionForm.media_uploads"
+                                         :qti-json="JSON.stringify(qtiJson)"
+                                         :question-media-upload-id="questionMediaUploadId"
+                                         :is-discuss-it="true"
+                                         @updateQuestionMediaUploadsOrder="updateQuestionMediaUploadsOrder"
+                                         @updateQuestionMediaUploads="updateQuestionMediaUploads"
+                                         @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
+                                         @updateQuestionTranscript="updateQuestionTranscript"
+                                         @editDiscussItText="editDiscussItText"
+                                         @initDiscussItText="initDiscussItText"
+                    />
+                  </div>
+                </div>
+                <div v-if="isLocalMe || user.id === 36892">
+                  Debugging: {{ qtiJson }}
+                  {{ qtiJson.matchStereo }}
+                </div>
+                <div v-if="qtiQuestionType === 'submit_molecule'">
+                  <div class="border border-dark p-2" style="width:320px;margin:auto">
+                    <b-form-checkbox
+                      id="match_stereo"
+                      v-model="qtiJson.matchStereo"
+                      name="match_stereo"
+                      value="1"
+                      unchecked-value="0"
+                    >
+                      Only approve identical stereoisomers
+                    </b-form-checkbox>
+                  </div>
+                  <div id="to-sketcher-component">
+
+                  </div>
+                </div>
+                <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
+                                  ref="dragAndDropCloze"
+                                  :qti-json="qtiJson"
+                                  :question-form="questionForm"
+                />
+
+                <MatrixMultipleChoice v-if="qtiQuestionType === 'matrix_multiple_choice'"
+                                      ref="dropDownTable"
+                                      :qti-json="qtiJson"
+                                      :question-form="questionForm"
+                />
+                <DropDownTable v-if="qtiQuestionType === 'drop_down_table'"
+                               ref="dropDownTable"
+                               :qti-json="qtiJson"
+                               :question-form="questionForm"
+                />
+
+                <MatrixMultipleResponse v-if="qtiQuestionType === 'matrix_multiple_response'"
+                                        ref="matrixMultipleResponse"
+                                        :qti-json="qtiJson"
+                                        :question-form="questionForm"
+                />
+                <MultipleResponseGrouping v-if="qtiQuestionType === 'multiple_response_grouping'"
+                                          ref="multipleResponseGrouping"
+                                          :qti-json="qtiJson"
+                                          :question-form="questionForm"
+                />
+
+                <MultipleResponseSelectAllThatApplyOrSelectN
+                  v-if="['multiple_response_select_all_that_apply','multiple_response_select_n'].includes(qtiQuestionType)"
+                  ref="MultipleResponseSelectAllThatApplyOrSelectN"
+                  :qti-json="qtiJson"
+                  :question-form="questionForm"
+                />
+                <BowTie v-if="qtiQuestionType === 'bow_tie'"
+                        ref="bowTie"
+                        :qti-json="qtiJson"
+                        :question-form="questionForm"
+                        class="p-0"
+                />
+                <FillInTheBlank v-if="qtiQuestionType === 'fill_in_the_blank'"
+                                ref="fillInTheBlank"
+                                :qti-json="qtiJson"
+                                :rich-editor-config="richEditorConfig"
+                                :question-form="questionForm"
+                                class="p-0"
+                                @setCKEditorKeydownAsTrue="setCKEditorKeydownAsTrue"
+                />
+                <HighlightTable v-if="qtiQuestionType === 'highlight_table'"
+                                ref="HighlightTable"
+                                :qti-json="qtiJson"
+                                :question-form="questionForm"
+                />
+                <Numerical v-if="qtiQuestionType === 'numerical'"
+                           ref="Nuemrical"
+                           :qti-json="qtiJson"
+                           :question-form="questionForm"
+                />
+
+                <div
+                  v-if="['drop_down_rationale_dyad','drop_down_rationale_triad','select_choice'].includes(qtiQuestionType)"
+                >
+                  <div v-if="qtiQuestionType === 'select_choice'">
+                    <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                                         :media-uploads="questionForm.media_uploads"
+                                         :qti-json="JSON.stringify(qtiJson)"
+                                         :question-media-upload-id="questionMediaUploadId"
+                                         @updateQuestionMediaUploads="updateQuestionMediaUploads"
+                                         @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
+                                         @updateQuestionTranscript="updateQuestionTranscript"
+                    />
+                  </div>
+                  <ckeditor
+                    id="qtiItemBody"
+                    :key="`question-type-${qtiQuestionType}`"
+                    v-model="qtiJson.itemBody"
+                    tabindex="0"
+                    required
+                    :config="richEditorConfig"
+                    :class="{ 'is-invalid': questionForm.errors.has('qti_item_body')}"
+                    class="pb-3"
+                    @namespaceloaded="onCKEditorNamespaceLoaded"
+                    @ready="handleFixCKEditor()"
+                    @focus="ckeditorKeyDown=true;questionForm.errors.clear('qti_item_body')"
+                    @keydown="questionForm.errors.clear('qti_item_body')"
+                  />
+                  <has-error :form="questionForm" field="qti_item_body"/>
+                </div>
+                <SelectChoiceDropDownRationale
+                  v-if="['select_choice','drop_down_rationale_dyad'].includes(qtiQuestionType)"
+                  ref="selectChoiceDropDownRationale"
+                  :qti-json="qtiJson"
+                  :question-form="questionForm"
+                />
+                <DropDownRationaleTriad
+                  v-if="qtiQuestionType === 'drop_down_rationale_triad'"
+                  ref="dropDownTriad"
+                  :qti-json="qtiJson"
+                  :question-form="questionForm"
+                />
+
+                <Matching v-if="qtiQuestionType === 'matching'"
+                          ref="matching"
+                          :qti-json="qtiJson"
+                          :question-form="questionForm"
+                          :matching-rich-editor-config="matchingRichEditorConfig"
+                />
+
+                <MultipleAnswers v-if="qtiQuestionType === 'multiple_answers'"
+                                 ref="multipleAnswers"
+                                 :qti-json="qtiJson"
+                                 :question-form="questionForm"
+                                 :matching-rich-editor-config="matchingRichEditorConfig"
+                                 :multiple-response-rich-editor-config="multipleResponseRichEditorConfig"
+                                 class="p-0"
+                />
+
+                <MultipleChoiceTrueFalse v-if="['true_false','multiple_choice'].includes(qtiQuestionType)"
+                                         ref="multipleChoiceTrueFalse"
+                                         :key="qtiQuestionType"
+                                         :qti-json="qtiJson"
+                                         :question-form="questionForm"
+                                         :simple-choice-config="simpleChoiceConfig"
+                />
+                <HighlightText v-if="qtiQuestionType === 'highlight_text'"
+                               ref="HighlightText"
+                               :qti-json="qtiJson"
+                               :question-form="questionForm"
+                />
+                <div class="pb-2">
+                  <b-card
+                    v-if="['multiple_choice','numerical'].includes(qtiQuestionType)
+                      || nursingQuestions.includes(qtiQuestionType)
+                      ||qtiQuestionType.includes('drop_down_rationale')
+                      || (qtiQuestionType === 'select_choice' && nativeType === 'nursing')"
+                    header="default"
+                  >
+                    <template #header>
+                      <span class="ml-2 h7">General Feedback</span>
+                    </template>
+                    <div v-for="(generalFeedback,index) in generalFeedbacks"
+                         :key="`feedback-${generalFeedback.label}`"
+                    >
+                      <div
+                        v-if="generalFeedback.label !== 'Any Response'
+                          || !((nursingQuestions.includes(qtiQuestionType)||(qtiQuestionType === 'select_choice' && nativeType === 'nursing'))
+                            || qtiQuestionType.includes('drop_down_rationale'))"
+                      >
+                        <b-form-group
+                          :label-for="generalFeedback.id"
+                          class="mb-0"
+                        >
+                          <template v-slot:label>
+                            <span class="font-weight-bold">{{ generalFeedback.label }}</span>
+                            <b-icon icon="pencil"
+                                    :variant="generalFeedback.editorShown ? 'secondary' : 'primary'"
+                                    :aria-label="`Edit ${generalFeedback.label} feedback`"
+                                    @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,true)"
+                            />
+                          </template>
+                          <div v-if="generalFeedback.editorShown">
+                            <ckeditor
+                              :id="generalFeedback.id"
+                              v-model="qtiJson.feedback[generalFeedback.key]"
+                              tabindex="0"
+                              :config="simpleChoiceFeedbackConfig"
+                              @namespaceloaded="onCKEditorNamespaceLoaded"
+                              @ready="handleFixCKEditor()"
+                            />
+                            <div class="mt-2">
+                              <b-button
+                                size="sm"
+                                variant="primary"
+                                @click="toggleGeneralFeedbackEditorShown(generalFeedback.key,false)"
+                              >
+                                Close
+                              </b-button>
+                            </div>
+                          </div>
+                          <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
+                            <span v-html="qtiJson.feedback[generalFeedback.key]"/>
+                          </div>
+                        </b-form-group>
+                        <hr
+                          v-if="(index !==2 && !nursingQuestions.includes(qtiQuestionType)) || (index === 0 && nursingQuestions.includes(qtiQuestionType))"
+                        >
+                      </div>
+                    </div>
+                  </b-card>
+                </div>
+              </div>
+              <b-form-group v-if="showPreexistingWebworkFilePath"
+                            label-cols-sm="4"
+                            label-cols-lg="3"
+                            label="ADAPT ID or WeBWork File Path"
+                            label-for="pre_existing_webwork_problem"
+              >
+                <b-form-row>
+                  <b-form-input
+                    id="pre_existing_webwork_problem"
+                    v-model="preExistingWebworkFilePath"
+                    type="text"
+                    size="sm"
+                    style="width:500px"
+                    class="mr-2"
+                  />
+                  <b-button size="sm" @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)">
+                    <span v-if="!updatingTempalteWithPreexistingWebworkFilePath">Update template</span>
+                    <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow"/>
+                      Updating...
+                    </span>
+                  </b-button>
+                </b-form-row>
+              </b-form-group>
+              <b-form-group
+                v-if="existingQuestionFormTechnology !== 'text'
+                  && !webworkEditorShown
+                  && questionForm.question_type === 'assessment'"
+                :label-cols-sm="existingQuestionFormTechnology === 'h5p' ? 2 : 3"
+                :label-cols-lg="existingQuestionFormTechnology === 'h5p' ? 1 : 2"
+                label-for="technology_id"
+                :label="existingQuestionFormTechnology === 'webwork' ? 'WeBWork Path' : `${getTextFromTechnology(questionForm.technology)} ID`"
+              >
+                <b-form-row>
+                  <div>
+                    <b-form-input
+                      id="technology_id"
+                      v-model="questionForm.technology_id"
+                      type="text"
+                      :style="existingQuestionFormTechnology === 'webwork' ? 'width:700px' : ''"
+                      :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
+                      @keydown="questionForm.errors.clear('technology_id')"
+                    />
+                    <has-error :form="questionForm" field="technology_id"/>
+                  </div>
+                  <div class="mt-1 ml-3">
+                    <b-button v-if="existingQuestionFormTechnology === 'h5p' && questionForm.technology_id" size="sm"
+                              variant="outline-primary"
+                              @click="viewInLibreStudio(questionForm.technology_id)"
+                    >
+                      View in LibreStudio
+                    </b-button>
+                  </div>
+                </b-form-row>
+              </b-form-group>
+              <div v-show="webworkEditorShown">
+                <div class="mb-2">
+                  If you need help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
+                                                                    target="_blank"
+                >https://webwork.maa.org/wiki/Authors</a>.
+                </div>
+                <b-row>
+                  <b-col cols="6">
+                    <b-form-file
+                      v-model="webworkAttachmentsForm.attachment"
+                      class="mb-2"
+                      size="sm"
+                      placeholder="Choose an image or drop it here..."
+                      drop-placeholder="Drop Image here..."
+                    />
+                    <div v-if="uploading">
+                      <b-spinner small type="grow"/>
+                      Uploading file...
+                    </div>
+                    <div v-for="(errorMessage, errorMessageIndex) in errorMessages"
+                         :key="`error-message-${errorMessageIndex}`"
+                    >
+                      <ErrorMessage :message="errorMessage"/>
+                    </div>
+                  </b-col>
+                  <b-col>
+                    <b-button variant="info"
+                              size="sm"
+                              :disabled="!webworkAttachmentsForm.attachment || (webworkAttachmentsForm.attachment && webworkAttachmentsForm.attachment.length === 0)"
+                              @click="uploadWebworkAttachment"
+                    >
+                      Upload Image
+                    </b-button>
+                    <a v-if="questionForm.id && initiallyWebworkQuestion"
+                       class="btn btn-sm btn-outline-primary link-outline-primary-btn ml-2"
+                       :href="`/api/questions/export-webwork-code/${questionForm.id}`"
+                    >
+                      <div style="margin-top:3px">Export webWork code</div>
+                    </a>
+                  </b-col>
+                </b-row>
+                <b-row v-if="webworkAttachments">
+                  <ul>
+                    <li v-for="(webworkAttachment, webworkAttachmentIndex) in webworkAttachments"
+                        :key="`webwork-attachment-${webworkAttachmentIndex}`"
+                    >
+                      {{ webworkAttachment.filename }}
+                      <span class="text-primary"
+                            @click="setWebworkAttachmentOptions(webworkAttachment);$bvModal.show('modal-webwork-image-options')"
+                      ><font-awesome-icon
+                        :icon="copyIcon"
+                      /></span>
+                      <b-icon-trash @click="confirmDeleteWebworkAttachment(webworkAttachment)"/>
+                    </li>
+                  </ul>
+                </b-row>
+                <b-textarea v-model="questionForm.webwork_code"
+                            style="width:100%"
+                            :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"
+                            rows="10"
+                            @keydown="questionForm.errors.clear('webwork_code')"
+                />
+                <has-error :form="questionForm" field="webwork_code"/>
+              </div>
+            </div>
+          </b-card>
+        </b-card>
+      </b-tab>
+      <b-tab id="accessibility-alternatives"
+             title="Accessibility Alternatives"
+             :title-link-class="getTabClass('accessibility-alternatives')"
+      >
+        <b-card border-variant="primary"
+                header-bg-variant="primary"
+                header-text-variant="white"
+                header="Accessibility Alternatives"
+                class="mb-3"
         >
-          <template v-slot:label>
-            <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
+          <p>An accessible HTML block alternative or an accessible auto-graded version of the question.</p>
+          <div v-if="questionForm.question_type !== 'assessment'">
+            <b-alert variant="info" show>
+              Accessibility alternatives are appropriate for questions which are
+              assessments.
+            </b-alert>
+          </div>
+          <div v-else>
+            <b-card border-variant="primary"
+                    class="mb-3">
+            <b-form-group
+              label-for="HTML Block Alternative"
+            >
+              <template v-slot:label>
+                HTML Block Alternative
+
+                <QuestionCircleTooltip id="text-question-tooltip"/>
+                <b-tooltip target="text-question-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  You can optionally create an open-ended text version of your question which may be useful if you are
+                  using one of the
+                  non-native auto-graded technologies.
+                </b-tooltip>
+              </template>
+              <ckeditor
+                id="Open-Ended Alternative"
+                v-model="questionForm.text_question"
+                tabindex="0"
+                :config="richEditorConfig"
+                @namespaceloaded="onCKEditorNamespaceLoaded"
+                @ready="handleFixCKEditor()"
+              />
+            </b-form-group>
+        </b-card>
+            <b-card border-variant="primary"
+                    class="mb-3">
+            <b-form-group
+              label-cols-sm="5"
+              label-cols-lg="4"
+              label-for="a11y_auto_graded_question_id"
+            >
+              <template v-slot:label>
+                Auto-Graded Alternative
+                <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
+                <b-tooltip target="a11y-auto-graded-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  You can optionally provide a secondary accessible auto-graded question which can be shown on a
+                  per-student basis.
+                  Please provide an ADAPT ID of the form {assignment ID}-{question ID} or {question ID}
+                </b-tooltip>
+              </template>
+            </b-form-group>
+            <b-form-group>
+              <b-modal id="modal-view-a11y-auto-graded-question"
+                       title="Auto-Graded Alternative"
+                       no-close-on-backdrop
+                       size="lg"
+              >
+                <ViewQuestions :key="`question-to-view-${a11yAutoGradedAlternativeQuestionId}`"
+                               :question-ids-to-view="[a11yAutoGradedAlternativeQuestionId]"
+                />
+                <template #modal-footer>
+                  <b-button
+                    variant="primary"
+                    size="sm"
+                    class="float-right"
+                    @click="$bvModal.hide('modal-view-a11y-auto-graded-question')"
+                  >
+                    OK
+                  </b-button>
+                </template>
+              </b-modal>
+              <b-form-row>
+                <b-form-input
+                  id="a11y_auto_graded_question_id"
+                  v-model="questionForm.a11y_auto_graded_question_id"
+                  style="width: 200px"
+                  size="sm"
+                  type="text"
+                  :class="{ 'is-invalid': questionForm.errors.has('a11y_auto_graded_question_id')}"
+                  @keydown="questionForm.errors.clear('a11y_auto_graded_question_id')"
+                />
+                <has-error :form="questionForm" field="a11y_auto_graded_question_id"/>
+                <b-button size="sm"
+                          class="ml-2"
+                          variant="primary"
+                          @click="showA11yAutoGradedQuestion"
+                >
+                  View
+                </b-button>
+              </b-form-row>
+            </b-form-group>
+            </b-card>
+          </div>
+        </b-card>
+      </b-tab>
+      <b-tab id="secondary-content"
+             title="Secondary Content"
+             :title-link-class="getTabClass('secondary-content')"
+      >
+        <b-card
+          border-variant="primary"
+          header-bg-variant="primary"
+          header-text-variant="white"
+          header-html="Secondary Content"
+          class="mb-3"
+        >
+          <p>
+            An answer/solution to the question, and a hint for students may
+            be optionally associated with the question.
+          </p>
+          <div
+            v-for="editorGroup in editorGroups.filter(group => !['technology','a11y_auto_graded_question_id','non_technology_text','text_question','notes'].includes(group.id))"
+            :key="editorGroup.id"
+          >
+            <div v-if="editorGroup.id === 'solution_html' &&
+              questionForm.solution_html &&
+              questionForm.webwork_code &&
+              questionForm.webwork_code.includes('BEGIN_PGML_SOLUTION') &&
+              !/#\s*BEGIN_PGML_SOLUTION/.test(questionForm.webwork_code)"
+            >
+              <b-alert show variant="info">
+                Since you have a solution embedded in your weBWork code, the solution below will be ignored.
+              </b-alert>
+            </div>
+            <b-form-group
+              v-if="questionForm.question_type === 'assessment' ||editorGroup.id==='notes'"
+              :label-for="editorGroup.label"
+            >
               {{ editorGroup.label }}
-              <span v-if="editorGroup.label === 'Answer'"><QuestionCircleTooltip id="answer-tooltip"/>
+              <span v-if="editorGroup.label === 'Answer'">
+                <span v-if="questionForm.technology !== 'qti'"> <QuestionCircleTooltip id="answer-tooltip"/>
                 <b-tooltip target="answer-tooltip"
                            delay="250"
                            triggers="hover focus"
                 >
-                  <span v-if="questionForm.technology === 'qti'">
-                    Native question types already have the answer built into the question creation process.</span>
-                  <span v-if="questionForm.technology !== 'qti'"
-                  > The answer to the question.  Answers are optional.</span>
+                  The answer to the question.  Answers are optional.
                 </b-tooltip>
+                  </span>
               </span>
               <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
                 <b-tooltip target="solution-tooltip"
@@ -2184,71 +2183,91 @@
                   Hints can be provided to students within assignments. Hints are optional.
                 </b-tooltip>
               </span>
-              <span v-if="editorGroup.label === 'Notes'"><QuestionCircleTooltip id="notes-tooltip"/>
-                <b-tooltip target="notes-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Notes are for a way for the creator of the question to associate additional information with the question.  Students
-                  will never see this information.  Notes are optional.
-                </b-tooltip>
-              </span>
-              <font-awesome-icon v-if="!editorGroup.expanded" :icon="caretRightIcon" size="lg"/>
-              <font-awesome-icon v-if="editorGroup.expanded" :icon="caretDownIcon" size="lg"/>
-            </span>
-          </template>
-          <div v-if="editorGroup.expanded && questionForm.technology === 'qti' && editorGroup.id === 'answer_html'">
-            <b-alert show variant="info">
-              Native question types already have the answer built into the question creation process.
-            </b-alert>
+              <div v-if="questionForm.technology === 'qti' && editorGroup.id === 'answer_html'">
+                <b-alert show variant="info">
+                  Native question types already have the answer built into the question creation process.
+                </b-alert>
+              </div>
+              <ckeditor
+                v-show="!(questionForm.technology === 'qti' && editorGroup.id === 'answer_html')"
+                :id="editorGroup.label"
+                v-model="questionForm[editorGroup.id]"
+                tabindex="0"
+                :config="richEditorConfig"
+                @namespaceloaded="onCKEditorNamespaceLoaded"
+                @ready="handleFixCKEditor()"
+              />
+            </b-form-group>
           </div>
-          <ckeditor
-            v-show="editorGroup.expanded && !(questionForm.technology === 'qti' && editorGroup.id === 'answer_html')"
-            :id="editorGroup.label"
-            v-model="questionForm[editorGroup.id]"
-            tabindex="0"
-            :config="richEditorConfig"
-            @namespaceloaded="onCKEditorNamespaceLoaded"
-            @ready="handleFixCKEditor()"
-          />
-        </b-form-group>
-      </div>
-    </b-card>
-
-    <b-card
-      v-show="user.id === 5"
-      border-variant="primary"
-      header-bg-variant="primary"
-      header-text-variant="white"
-      header="Rubric"
-      class="mb-3"
-    >
-      <b-alert show>
-        This rubric may be edited within an assignment context.
-      </b-alert>
-      <RubricProperties
-        :key="`rubric-properties-${isEditRubric}`"
-        :errors="questionForm.errors.errors"
-        :rubric-info="{'rubric' :  questionForm.rubric}"
-        :rubric-properties-question-form-errors="rubricPropertiesQuestionFormErrors"
-        :is-edit="isEditRubric"
-        :is-template="false"
-        @setKeyValue="setKeyValue"
-      />
-      <template v-slot:cell(criterion)="data">
-        {{ data.item.title }}
-        <QuestionCircleTooltip v-show="data.item.description"
-                               :id="`rubric-item-tooltip-${data.item.title}`"
-        />
-        <b-tooltip :target="`rubric-item-tooltip-${data.item.title}`"
-                   delay="250"
-                   triggers="hover focus"
+        </b-card>
+      </b-tab>
+      <b-tab id="private-notes"
+             title="Private Notes"
+             :title-link-class="getTabClass('private-notes')"
+      >
+        <b-card border-variant="primary"
+                header-bg-variant="primary"
+                header-text-variant="white"
+                header="Private Notes"
+                class="mb-3"
         >
-          {{ data.item.description }}
-        </b-tooltip>
-      </template>
-      </b-table>
-    </b-card>
+          <b-form-group>
+            <p>
+              Notes are a way for the creator of the question to associate additional information with the
+              question. Notes are optional and students
+              will never see this information.
+            </p>
+
+            <ckeditor
+              id="notes"
+              v-model="questionForm.notes"
+              tabindex="0"
+              :config="richEditorConfig"
+              @namespaceloaded="onCKEditorNamespaceLoaded"
+              @ready="handleFixCKEditor()"
+            />
+          </b-form-group>
+        </b-card>
+      </b-tab>
+      <b-tab v-if="user.id === 5"
+             id="rubric"
+             title="Rubric"
+             :title-link-class="getTabClass('rubric')"
+      >
+        <b-card
+          v-show="user.id === 5"
+          border-variant="primary"
+          header-bg-variant="primary"
+          header-text-variant="white"
+          header="Rubric"
+          class="mb-3"
+        >
+
+          <p>Rubrics are associated with each question but may be edited within an assignment context.</p>
+          <RubricProperties
+            :key="`rubric-properties-${isEditRubric}`"
+            :errors="questionForm.errors.errors"
+            :rubric-info="{'rubric' : questionForm.rubric}"
+            :rubric-properties-question-form-errors="rubricPropertiesQuestionFormErrors"
+            :is-edit="isEditRubric"
+            :is-template="false"
+            @setKeyValue="setKeyValue"
+          />
+          <template v-slot:cell(criterion)="data">
+            {{ data.item.title }}
+            <QuestionCircleTooltip v-show="data.item.description"
+                                   :id="`rubric-item-tooltip-${data.item.title}`"
+            />
+            <b-tooltip :target="`rubric-item-tooltip-${data.item.title}`"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              {{ data.item.description }}
+            </b-tooltip>
+          </template>
+        </b-card>
+      </b-tab>
+    </b-tabs>
     <span class="float-right">
       <b-button v-if="isEdit"
                 size="sm"
@@ -2299,7 +2318,6 @@ import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import Form from 'vform/src'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import CKEditor from 'ckeditor4-vue'
 import { mapGetters } from 'vuex'
 import { defaultLicenseVersionOptions, licenseOptions, updateLicenseVersions } from '~/helpers/Licenses'
@@ -2337,6 +2355,7 @@ import { updateModalToggleIndex } from '../../helpers/accessibility/fixCKEditor'
 import QuestionCircleTooltipModal from '../QuestionCircleTooltipModal.vue'
 import ConsultInsight from '../ConsultInsight.vue'
 import RubricProperties from '../RubricProperties.vue'
+import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2553,7 +2572,34 @@ export default {
       default: false
     }
   },
+  watch: {
+    activeTabIndex: async function (value) {
+      if (value === 1) {
+        this.moveSketcherToTab()
+      } else {
+        await this.moveSketcherFromTab(true)
+      }
+    },
+    nativeType: async function (value) {
+      if (value === 'sketcher') {
+        this.moveSketcherToTab()
+      } else {
+        await this.moveSketcherFromTab(false)
+      }
+    }
+  },
   data: () => ({
+    activeTabIndex: 0,
+    sketcherTabClicked: false,
+    loaded: false,
+    tabErrors: {
+      'properties': false,
+      'primary-content': false,
+      'accessibility-alternatives': false,
+      'secondary-content': false,
+      'rubric': false,
+      'private-notes': false
+    },
     rubricPropertiesKey: 0,
     rubricPropertiesQuestionFormErrors: {},
     isEditRubric: false,
@@ -2752,11 +2798,16 @@ export default {
   created () {
     this.getLearningOutcomes = getLearningOutcomes
     window.addEventListener('message', this.receiveMessage, false)
+    //window.addEventListener('keyup', this.updateTabInvalids)
   },
   beforeDestroy () {
     window.removeEventListener('keydown', this.hotKeys)
+    //window.removeEventListener('keyup', this.updateTabInvalids)
   },
   updated: function () {
+    this.$nextTick(function () {
+      this.updateTabInvalids()
+    })
     if (this.ckeditorKeyDown) {
       console.log('no update needed')
       return
@@ -2816,6 +2867,7 @@ export default {
     if (![2, 5].includes(this.user.role)) {
       return false
     }
+    this.updateTabInvalids()
     // this.questionType = 'native'
     // this.nativeType = 'sketcher'
     // this.qtiQuestionType = 'submit_molecule'
@@ -2826,6 +2878,8 @@ export default {
     this.$nextTick(() => {
       // want to add more text to this
       $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))
+      $('#question-editor-tabs__BV_tab_container_').removeClass('mt-3').css('marginTop','-1px')
+
     })
     this.updateLicenseVersions = updateLicenseVersions
     console.log(this.questionToEdit)
@@ -2840,7 +2894,9 @@ export default {
       this.initNativeType()
     }
     this.questionForm.source_url = this.questionForm.source_url ? this.questionForm.source_url : window.location.origin
-    this.fullyMounted = true
+    this.$nextTick(() => {
+      this.fullyMounted = true
+    })
   },
   destroyed () {
     if (this.questionToEdit) {
@@ -2850,6 +2906,46 @@ export default {
   },
   methods: {
     updateModalToggleIndex,
+    async moveSketcherFromTab (loadStructure) {
+      if (loadStructure) {
+        this.receivedStructure = false
+        const iframe = document.getElementById('sketcher')
+        iframe.contentWindow.postMessage('save', '*')
+        await this.handleGetStructure()
+      }
+      const to = document.getElementById('from-sketcher-component')
+      const from = document.getElementById('to-sketcher-component')
+      this.$nextTick(() => {
+        if (from && to) {
+          while (from.firstChild) {
+            to.appendChild(from.firstChild)
+          }
+        }
+      })
+    },
+    moveSketcherToTab () {
+      this.$nextTick(() => {
+        const from = document.getElementById('from-sketcher-component')
+        const to = document.getElementById('to-sketcher-component')
+        if (from && to) {
+          while (from.firstChild) {
+            to.appendChild(from.firstChild)
+          }
+        }
+      })
+    },
+    getTabClass (tab) {
+      return this.tabErrors[tab] ? 'invalid-question-editor-tab-title' : 'question-editor-tab-title'
+    },
+    updateTabInvalids () {
+      const tabs = ['properties', 'primary-content', 'secondary-content', 'accessibility-alternatives', 'private-notes', 'rubric']
+      for (let i = 0; i < tabs.length; i++) {
+        const tab = document.getElementById(tabs[i])
+        if (tab) {
+          this.tabErrors[tabs[i]] = tab.querySelector('.invalid-feedback') !== null
+        }
+      }
+    },
     setKeyValue (key, value) {
       let camelCase
       camelCase = key.replace(/([A-Z])/g, '_$1').toLowerCase()
@@ -2859,6 +2955,7 @@ export default {
       if (camelCase === 'rubric_template') {
         camelCase = 'rubric_template_id'
       }
+      this.getTabClass('rubric')
       this.questionForm[camelCase] = value
       console.error(this.questionForm[camelCase])
     },
@@ -2873,7 +2970,7 @@ export default {
           const oldMediaUploads = JSON.parse(this.questionToEdit.qti_json).media_uploads
           console.log(oldMediaUploads)
           const hasDifferentS3Key = newMediaUploads.some(newItem => !oldMediaUploads.some(oldItem => newItem.s3_key === oldItem.s3_key)) || oldMediaUploads.some(oldItem => !newMediaUploads.some(newItem => newItem.s3_key === oldItem.s3_key))
-          //will have to revisit this because I'll have to update the question_revisions
+          // will have to revisit this because I'll have to update the question_revisions
           if (!hasDifferentS3Key) {
             // checkSubmissions = false
           }
@@ -2967,6 +3064,7 @@ export default {
       if (event.data.structure) {
         this.receivedStructure = true
         this.qtiJson.solutionStructure = event.data.structure
+        this.solutionStructure = event.data.structure
         this.questionForm.solution_structure = JSON.stringify(this.qtiJson.solutionStructure)
         this.questionForm.qti_prompt = this.qtiJson.prompt
         this.questionForm.qti_json = JSON.stringify(this.qtiJson)
@@ -3581,6 +3679,9 @@ export default {
       this.updateLicenseVersions(this.questionForm.license)
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
+      }
+      for (let i = 0; i < this.editorGroups.length; i++) {
+        this.editorGroups[i].expanded = true
       }
     },
     async getRevisions (questionToEdit) {
@@ -4428,7 +4529,7 @@ export default {
           this.newAutoGradedTechnology = null
           this.existingQuestionFormTechnology = 'text'
           for (let i = 0; i < this.editorGroups.length; i++) {
-            this.editorGroups[i].expanded = this.editorGroups[i].id !== 'non_technology_text' ? false : nonTechnologyText
+            this.editorGroups[i].expanded = true
           }
         }
       }
@@ -4682,7 +4783,10 @@ export default {
           this.allFormErrors = [...new Set(formattedErrors)]
           this.savingQuestion = false
           this.questionsFormKey++
-          this.$nextTick(() => this.$bvModal.show(`modal-form-errors-questions-form-${this.questionsFormKey}`))
+          this.$nextTick(() => {
+            this.$bvModal.show(`modal-form-errors-questions-form-${this.questionsFormKey}`)
+            this.updateTabInvalids()
+          })
         }
       }
     },
@@ -4781,5 +4885,6 @@ export default {
   margin-left: 7px;
   margin-right: 7px;
 }
+
 
 </style>

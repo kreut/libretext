@@ -41,10 +41,9 @@
               @ready="handleFixCKEditor()"
               @input="questionForm.errors.clear(`qti_simple_choice_${index}`)"
             />
-            <input type="hidden" class="form-control is-invalid">
-            <div class="help-block invalid-feedback">
-              {{ questionForm.errors.get(`qti_simple_choice_${index}`) }}
-            </div>
+            <ErrorMessage v-if="questionForm.errors.get(`qti_simple_choice_${index}`)"
+                          :message="questionForm.errors.get(`qti_simple_choice_${index}`)"
+                          />
           </b-form-group>
           <b-form-group
             :label-for="`qti_feedback_${index}`"
@@ -84,10 +83,12 @@
 import CKEditor from 'ckeditor4-vue'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import { v4 as uuidv4 } from 'uuid'
+import ErrorMessage from '../ErrorMessage.vue'
 
 export default {
   name: 'MultipleAnswers',
   components: {
+    ErrorMessage,
     ckeditor: CKEditor.component
   },
   props: {
