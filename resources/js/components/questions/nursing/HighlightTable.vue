@@ -10,6 +10,7 @@
               v-model="qtiJson.colHeaders[colIndex]"
               type="text"
               :placeholder="`Column Header ${colIndex+1}`"
+              @input="clearErrors('colHeaders', colIndex)"
             />
             <ErrorMessage v-if="questionForm.errors.get('colHeaders')
                             && JSON.parse(questionForm.errors.get('colHeaders'))[colIndex]"
@@ -27,6 +28,7 @@
                   v-model="qtiJson.rows[rowIndex].header"
                   type="text"
                   :placeholder="`Row ${rowIndex+1}`"
+                  @input="clearErrors('rows', rowIndex, 'header')"
                 />
                 <b-input-group-append>
                   <b-input-group-text>
@@ -37,7 +39,8 @@
                 </b-input-group-append>
               </b-input-group>
               <ErrorMessage v-if="questionForm.errors.get('rows')
-                              && JSON.parse(questionForm.errors.get('rows'))[rowIndex]"
+                              && JSON.parse(questionForm.errors.get('rows'))[rowIndex]
+                              && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['header']"
                             :message="JSON.parse(questionForm.errors.get('rows'))[rowIndex]['header']"
               />
             </td>
@@ -48,10 +51,12 @@
                 placeholder="Enter something..."
                 rows="3"
                 max-rows="6"
+                @input="clearErrors('rows', rowIndex, 'responses','text')"
               />
               <ErrorMessage v-if="questionForm.errors.get('rows')
                               && JSON.parse(questionForm.errors.get('rows'))[rowIndex]
-                              && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses']"
+                              && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses']
+                              && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses']['text']"
                             :message="JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses']['text']"
               />
             </td>
@@ -64,7 +69,9 @@
                       :key="`correct-response-${rowIndex}-${responseIndex}`"
                   >
                     <b-form-group>
-                      <b-form-radio-group v-model="response.correctResponse" @input="updateResponse()">
+                      <b-form-radio-group v-model="response.correctResponse"
+                                          @input="updateResponse();clearErrors('rows', rowIndex, 'responses','correctResponse')"
+                      >
                         {{ response.text }}
                         <b-form-radio :value="true">
                           Correct Response
@@ -76,13 +83,15 @@
                       <ErrorMessage v-if="questionForm.errors.get('rows')
                                       && JSON.parse(questionForm.errors.get('rows'))[rowIndex]
                                       && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses']
-                                      && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses'][responseIndex]"
+                                      && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses'][responseIndex]
+                                      && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses'][responseIndex]['text']"
                                     :message="JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses'][responseIndex]['text']"
                       />
                       <ErrorMessage v-if="questionForm.errors.get('rows')
                                       && JSON.parse(questionForm.errors.get('rows'))[rowIndex]
                                       && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses']
-                                      && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses'][responseIndex]"
+                                      && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses'][responseIndex]
+                                      && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses'][responseIndex]['correctResponse']"
                                     :message="JSON.parse(questionForm.errors.get('rows'))[rowIndex]['responses'][responseIndex]['correctResponse']"
                       />
                     </b-form-group>
@@ -186,6 +195,30 @@ export default {
     }
   },
   methods: {
+    clearErrors (key, index, type1, type2) {
+      let errors = this.questionForm.errors.get(key)
+      errors = JSON.parse(errors)
+      switch (key) {
+        case ('colHeaders'):
+          delete errors[index]
+          break
+        case ('rows'):
+          switch (type1) {
+            case ('header'):
+              delete errors[index]['header']
+              break
+            case ('responses'):
+              delete errors[index]['responses'][type2]
+
+              break
+          }
+          console.error(errors)
+          break
+        default:
+          alert(`The error key ${key} does not exist.`)
+      }
+      this.questionForm.errors.set(key, JSON.stringify(errors))
+    },
     deleteRow (rowIndex) {
       if (this.qtiJson.rows.length === 1) {
         this.$noty.info('You need at least one row.')

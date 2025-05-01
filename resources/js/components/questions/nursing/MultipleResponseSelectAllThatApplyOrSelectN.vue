@@ -8,9 +8,10 @@
     <div class="pb-3">
       <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Correct Responses</h2>">
         <b-card-text>
-          <ErrorMessage v-if="questionForm.errors.get('responses')"
-                        :message="JSON.parse(questionForm.errors.get('responses'))['general']"
-                        class="pb-2"
+          <ErrorMessage
+            v-if="questionForm.errors.get('responses') && JSON.parse(questionForm.errors.get('responses'))['general']"
+            :message="JSON.parse(questionForm.errors.get('responses'))['general']"
+            class="pb-2"
           />
           <div v-for="(correctResponse, index) in qtiJson.responses.filter(response => response.correctResponse)"
                :key="`correct-response-${index}`"
@@ -25,7 +26,10 @@
                   <b-icon-check scale="1.5" />
                 </b-button>
               </b-input-group-prepend>
-              <b-form-input v-model="correctResponse.value" class="text-success" />
+              <b-form-input v-model="correctResponse.value"
+                            class="text-success"
+                            @input="clearErrors(correctResponse.identifier)"
+              />
               <b-input-group-append>
                 <b-input-group-text>
                   <b-icon-trash
@@ -35,7 +39,8 @@
               </b-input-group-append>
             </b-input-group>
             <ErrorMessage v-if="questionForm.errors.get('responses')
-                            && JSON.parse(questionForm.errors.get('responses'))['specific']"
+                            && JSON.parse(questionForm.errors.get('responses'))['specific']
+                            && JSON.parse(questionForm.errors.get('responses'))['specific'][correctResponse.identifier]"
                           :message="JSON.parse(questionForm.errors.get('responses'))['specific'][correctResponse.identifier]"
             />
           </div>
@@ -65,7 +70,10 @@
                   X
                 </b-button>
               </b-input-group-prepend>
-              <b-form-input v-model="distractor.value" class="text-danger" />
+              <b-form-input v-model="distractor.value"
+                            class="text-danger"
+                            @input="clearErrors(distractor.identifier)"
+              />
               <b-input-group-append>
                 <b-input-group-text>
                   <b-icon-trash
@@ -76,14 +84,16 @@
             </b-input-group>
 
             <ErrorMessage v-if="questionForm.errors.get('responses')
-                            && JSON.parse(questionForm.errors.get('responses'))['specific']"
+                            && JSON.parse(questionForm.errors.get('responses'))['specific']
+                            && JSON.parse(questionForm.errors.get('responses'))['specific'][distractor.identifier]"
                           :message="JSON.parse(questionForm.errors.get('responses'))['specific'][distractor.identifier]"
             />
           </div>
 
           <b-button class="primary" size="sm" @click="addSelectAllThatApply(false)">
             Add Distractor
-          </b-button>  <QuestionCircleTooltip
+          </b-button>
+          <QuestionCircleTooltip
             id="distractor"
           />
           <b-tooltip target="distractor"
@@ -118,6 +128,13 @@ export default {
     }
   },
   methods: {
+    clearErrors (identifier) {
+      let errors = this.questionForm.errors.get('responses')
+      errors = JSON.parse(errors)
+      delete errors['specific'][identifier]
+      delete errors.general
+      this.questionForm.errors.set('responses', JSON.stringify(errors))
+    },
     numberDoesNotExistInPrompt () {
       let correctResponses = this.qtiJson.responses.filter(response => response.correctResponse)
       return this.qtiJson.questionType === 'multiple_response_select_n' &&

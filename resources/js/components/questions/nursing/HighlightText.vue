@@ -7,7 +7,8 @@
           <ol>
             <li v-for="(response,index) in responses" :key="`correct-response-${index}`">
               <b-form-group>
-                <b-form-radio-group v-model="response.correctResponse" @input="updateResponse($event)">
+                <b-form-radio-group v-model="response.correctResponse"
+                                    @input="updateResponse($event)">
                   <span v-html="response.text"/>
                   <b-form-radio :value="true">
                     Correct Response
@@ -126,6 +127,7 @@ export default {
   methods: {
     updateResponse () {
       this.currentResponses = this.responses
+      this.questionForm.errors.clear('responses')
       this.$forceUpdate()
       console.log(this.responses)
     }

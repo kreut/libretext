@@ -31,6 +31,7 @@
             <b-form-input v-model="distractor.value"
                           class="text-danger"
                           :placeholder="`Distractor ${distractorIndex + 1}`"
+                          @input="clearErrors(distractor.identifier)"
             />
             <b-input-group-append>
               <b-input-group-text>
@@ -118,6 +119,15 @@ export default {
     }
   },
   methods: {
+    clearErrors (identifier) {
+      let errors = this.questionForm.errors.get('distractors')
+      errors = JSON.parse(errors)
+      delete errors['specific'][identifier]
+      this.questionForm.errors.set('distractors', JSON.stringify(errors))
+      if (errors.specific !== null && Object.keys(errors.specific).length === 0) {
+        this.questionForm.errors.clear('distractors')
+      }
+    },
     addDistractor () {
       this.qtiJson.distractors.push({ identifier: uuidv4(), value: '' })
     },

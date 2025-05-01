@@ -6,7 +6,8 @@
         <th v-for="(header,colIndex) in qtiJson.headers" :key="`matrix-multiple-choice-header-${colIndex}`"
             scope="col"
         >
-          <ErrorMessage v-if="questionForm.errors.get('headers') && colIndex === 0"
+          <ErrorMessage v-if="questionForm.errors.get('headers') &&
+          JSON.parse(questionForm.errors.get('headers'))['general'] && colIndex === 0"
                         :message="JSON.parse(questionForm.errors.get('headers'))['general']"
           />
           <b-form-input
@@ -14,12 +15,14 @@
             v-model="qtiJson.headers[colIndex]"
             type="text"
             placeholder="Column 1"
+            @input="clearErrors('headers', colIndex)"
           />
           <b-input-group v-if="colIndex !== 0">
             <b-form-input
               v-model="qtiJson.headers[colIndex]"
               type="text"
               :placeholder="`Column ${colIndex+1}`"
+              @input="clearErrors('headers', colIndex)"
             />
             <b-input-group-append>
               <b-input-group-text>
@@ -29,7 +32,8 @@
               </b-input-group-text>
             </b-input-group-append>
           </b-input-group>
-          <ErrorMessage v-if="questionForm.errors.get('headers')"
+          <ErrorMessage v-if="questionForm.errors.get('headers')
+&& JSON.parse(questionForm.errors.get('headers'))['specific'][colIndex]"
                         :message="JSON.parse(questionForm.errors.get('headers'))['specific'][colIndex]"
           />
         </th>
@@ -43,6 +47,7 @@
               v-model="row.label"
               type="text"
               :placeholder="`Row ${rowIndex+1}`"
+              @input="clearErrors('rows', rowIndex, 'label')"
             />
             <b-input-group-append>
               <b-input-group-text>
@@ -52,15 +57,19 @@
               </b-input-group-text>
             </b-input-group-append>
           </b-input-group>
-          <ErrorMessage v-if="questionForm.errors.get('rows') && rowIndex === 0"
+          <ErrorMessage v-if="questionForm.errors.get('rows')
+          && JSON.parse(questionForm.errors.get('rows'))['general']
+          && rowIndex === 0"
                         :message="JSON.parse(questionForm.errors.get('rows'))['general']"
           />
           <ErrorMessage v-if="questionForm.errors.get('rows')
-            && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
+            && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]
+&& JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['label']"
                         :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['label']"
           />
           <ErrorMessage v-if="questionForm.errors.get('rows')
-            && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
+            && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]
+&& JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['correctResponse']"
                         :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['correctResponse']"
           />
         </td>
@@ -70,6 +79,7 @@
           <b-form-radio v-model="row.correctResponse"
                         :name="`Row ${rowIndex}`"
                         :value="colIndex"
+                        @input="clearErrors('rows', rowIndex, 'correctResponse')"
           />
         </td>
       </tr>
@@ -111,6 +121,23 @@ export default {
     }
   },
   methods: {
+    clearErrors (key, index, type) {
+      let errors = this.questionForm.errors.get(key)
+      errors = JSON.parse(errors)
+      switch (key) {
+        case ('headers'):
+          delete errors['specific'][index]
+          break
+        case ('rows'):
+          console.error(errors)
+          delete errors['specific'][index][type]
+          break
+        default:
+          alert(`The error key ${key} does not exist.`)
+      }
+      delete errors.general
+      this.questionForm.errors.set(key, JSON.stringify(errors))
+    },
     deleteColumn (colIndex) {
       if (this.qtiJson.headers.length === 2) {
         this.$noty.info('You need at least one column in the matrix.')

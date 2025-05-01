@@ -11,12 +11,14 @@
             v-model="qtiJson.colHeaders[colIndex]"
             type="text"
             placeholder="Column 1"
+            @input="clearErrors('colHeaders',colIndex)"
           />
           <b-input-group v-if="colIndex !== 0">
             <b-form-input
               v-model="qtiJson.colHeaders[colIndex]"
               type="text"
               :placeholder="`Column ${colIndex+1}`"
+              @input="clearErrors('colHeaders',colIndex)"
             />
             <b-input-group-append>
               <b-input-group-text>
@@ -26,7 +28,9 @@
               </b-input-group-text>
             </b-input-group-append>
           </b-input-group>
-          <ErrorMessage v-if="questionForm.errors.get('colHeaders')"
+          <ErrorMessage v-if="questionForm.errors.get('colHeaders')
+                            && JSON.parse(questionForm.errors.get('colHeaders'))['specific']
+                            && JSON.parse(questionForm.errors.get('colHeaders'))['specific'][colIndex]"
                         :message="JSON.parse(questionForm.errors.get('colHeaders'))['specific'][colIndex]"
           />
         </th>
@@ -40,6 +44,7 @@
               v-model="qtiJson.rows[rowIndex].header"
               type="text"
               :placeholder="`Row ${rowIndex+1}`"
+              @input="clearErrors('rows',rowIndex)"
             />
             <b-input-group-append>
               <b-input-group-text>
@@ -50,11 +55,13 @@
             </b-input-group-append>
           </b-input-group>
           <ErrorMessage v-if="questionForm.errors.get('rows')
-                            && JSON.parse(questionForm.errors.get('rows'))[rowIndex]"
+                            && JSON.parse(questionForm.errors.get('rows'))[rowIndex]
+                            && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['header']"
                         :message="JSON.parse(questionForm.errors.get('rows'))[rowIndex]['header']"
           />
           <ErrorMessage v-if="questionForm.errors.get('rows')
-                            && JSON.parse(questionForm.errors.get('rows'))[rowIndex]"
+                            && JSON.parse(questionForm.errors.get('rows'))[rowIndex]
+                            && JSON.parse(questionForm.errors.get('rows'))[rowIndex]['at_least_one_marked_correct']"
                         :message="JSON.parse(questionForm.errors.get('rows'))[rowIndex]['at_least_one_marked_correct']"
           />
         </td>
@@ -99,6 +106,20 @@ export default {
     }
   },
   methods: {
+    clearErrors (type, index) {
+      let errors = this.questionForm.errors.get(type)
+      errors = JSON.parse(errors)
+      switch (type) {
+        case ('colHeaders'):
+          delete errors['specific'][index]
+          break
+        case ('rows'):
+          delete errors[index]['header']
+          delete errors[index]['at_least_one_marked_correct']
+          break
+      }
+      this.questionForm.errors.set(type, JSON.stringify(errors))
+    },
     deleteColumn (colIndex) {
       if (this.qtiJson.colHeaders.length === 2) {
         this.$noty.info('You need at least one column in the matrix.')

@@ -10,9 +10,12 @@
               v-model="qtiJson.colHeaders[colIndex]"
               type="text"
               :placeholder="`Column Header ${colIndex+1}`"
+              @input="clearErrors('colHeaders', false,colIndex)"
             />
 
-            <ErrorMessage v-if="questionForm.errors.get('colHeaders')"
+            <ErrorMessage v-if="questionForm.errors.get('colHeaders')
+                            && JSON.parse(questionForm.errors.get('colHeaders'))['specific']
+                            && JSON.parse(questionForm.errors.get('colHeaders'))['specific'][colIndex]"
                           :message="JSON.parse(questionForm.errors.get('colHeaders'))['specific'][colIndex]"
             />
           </th>
@@ -26,6 +29,7 @@
                 v-model="qtiJson.rows[rowIndex].header"
                 type="text"
                 :placeholder="`Row ${rowIndex+1}`"
+                @input="clearErrors('rows', false,rowIndex, 'header')"
               />
               <b-input-group-append>
                 <b-input-group-text>
@@ -37,7 +41,8 @@
             </b-input-group>
             <ErrorMessage v-if="questionForm.errors.get('rows')
                             && JSON.parse(questionForm.errors.get('rows'))['specific']
-                            && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
+                            && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]
+                            && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['header']"
                           :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]['header']"
             />
           </td>
@@ -59,6 +64,7 @@
                     v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"
                     placeholder="Correct Response"
                     class="text-success"
+                    @input="clearErrors('rows', false,rowIndex,response.identifier);clearErrors('rows', true)"
                   />
                 </b-input-group>
               </b-form-row>
@@ -66,11 +72,14 @@
               <ErrorMessage
                 v-if="questionForm.errors.get('rows')
                   && JSON.parse(questionForm.errors.get('rows'))['specific']
-                  && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]"
+                  && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]
+                  && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex][response.identifier]"
                 :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex][response.identifier]"
               />
 
-              <ErrorMessage v-if="questionForm.errors.get('rows') && responseIndex === 0"
+              <ErrorMessage v-if="questionForm.errors.get('rows')
+                              && JSON.parse(questionForm.errors.get('rows'))['general']
+                              && responseIndex === 0"
                             :message="JSON.parse(questionForm.errors.get('rows'))['general']"
               />
 
@@ -88,6 +97,7 @@
                   <b-form-input v-model="qtiJson.rows[rowIndex]['responses'][responseIndex].value"
                                 :placeholder="`Distractor ${responseIndex}`"
                                 class="text-danger"
+                                @input="clearErrors('rows', false,rowIndex,response.identifier);"
                   />
                   <b-input-group-append>
                     <b-input-group-text>
@@ -97,7 +107,10 @@
                     </b-input-group-text>
                   </b-input-group-append>
                 </b-input-group>
-                <ErrorMessage v-if="questionForm.errors.get('rows')"
+                <ErrorMessage v-if="questionForm.errors.get('rows')
+                                && JSON.parse(questionForm.errors.get('rows'))['specific']
+                                && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex]
+                                && JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex][response.identifier]"
                               :message="JSON.parse(questionForm.errors.get('rows'))['specific'][rowIndex][response.identifier]"
                 />
               </b-form-row>
@@ -148,6 +161,31 @@ export default {
     }
   },
   methods: {
+    clearErrors (key, general, index, identifier) {
+      let errors = this.questionForm.errors.get(key)
+      errors = JSON.parse(errors)
+      switch (key) {
+        case ('colHeaders'):
+          delete errors['specific'][index]
+          break
+        case ('rows'):
+          switch (general) {
+            case (true):
+              delete errors['general']
+              break
+            case (false):
+              delete errors['specific'][index]['at_least_one_correct']
+              delete errors['specific'][index]['at_least_two_responses']
+              if (identifier) {
+                delete errors['specific'][index][identifier]
+              }
+          }
+          break
+        default:
+          alert(`The error key ${key} does not exist.`)
+      }
+      this.questionForm.errors.set(key, JSON.stringify(errors))
+    },
     addRow () {
       this.qtiJson.rows.push({ header: '', responses: [{ identifier: uuidv4(), value: '', correctResponse: true }] })
     },
