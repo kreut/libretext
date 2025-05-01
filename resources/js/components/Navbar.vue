@@ -304,11 +304,6 @@ export default {
           { routePath: '/open-courses/public', text: 'Public Courses' },
           { routePath: '/open-courses/commons', text: 'Commons' },
           { routePath: '/instructors/frameworks', text: 'Frameworks' }]
-        if (this.user.id !== 5) {
-          instructorDashboards = instructorDashboards.filter(
-            item => item.routePath !== '/instructors/rubric-templates'
-          )
-        }
 
         dashboards = [...dashboards, ...instructorDashboards]
       }

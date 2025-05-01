@@ -1995,7 +1995,6 @@
                                    @hideRubricProperties="showRubricProperties = false"
             />
             <b-row
-              v-if="user.id === 5"
               v-show="+openEndedSubmissionType !== 0"
               class="pl-3 pb-2 pt-2"
             >

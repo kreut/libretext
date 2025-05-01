@@ -2229,13 +2229,11 @@
           </b-form-group>
         </b-card>
       </b-tab>
-      <b-tab v-if="user.id === 5"
-             id="rubric"
+      <b-tab id="rubric"
              title="Rubric"
              :title-link-class="getTabClass('rubric')"
       >
         <b-card
-          v-show="user.id === 5"
           border-variant="primary"
           header-bg-variant="primary"
           header-text-variant="white"
