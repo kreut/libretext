@@ -2013,7 +2013,7 @@
               />
                 </span>
               <span
-                v-show="!questions[currentPage - 1].use_existing_rubric || (questions[currentPage - 1].use_existing_rubric && !questions[currentPage - 1].rubric)"
+                v-show="user.role === 2 && (!questions[currentPage - 1].use_existing_rubric || (questions[currentPage - 1].use_existing_rubric && !questions[currentPage - 1].rubric))"
               >
                   <b-button size="sm"
                             variant="outline-info"

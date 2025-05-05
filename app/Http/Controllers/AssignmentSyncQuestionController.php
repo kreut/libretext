@@ -165,13 +165,12 @@ class AssignmentSyncQuestionController extends Controller
                                        Request                $request): array
     {
         try {
-
+            $response['type'] = 'error';
             $authorized = Gate::inspect('updateCustomRubric', [$assignmentSyncQuestion, $assignment]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
             }
-            $response['type'] = 'error';
             $assignment_question = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
