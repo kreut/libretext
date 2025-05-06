@@ -272,7 +272,7 @@
     </b-modal>
     <PageTitle v-if="canViewCourses" title="My Courses" />
     <b-container v-if="canViewCourses && user && [2,5].includes(user.role)">
-      <b-row align-h="end" class="mb-4">
+      <b-row class="float-right mb-4 d-inline-flex">
         <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
                   size="sm"
         >
@@ -286,6 +286,7 @@
         >
           Import Course
         </b-button>
+        <ConsultInsight :url="'https://commons.libretexts.org/insight/course-properties-overview'"/>
       </b-row>
     </b-container>
 
@@ -661,9 +662,11 @@ import VueTimepicker from 'vue2-timepicker'
 import 'vue2-timepicker/dist/VueTimepicker.css'
 import ErrorMessage from '~/components/ErrorMessage.vue'
 import { initCentrifuge } from '~/helpers/Centrifuge'
+import ConsultInsight from '../../components/ConsultInsight.vue'
 
 export default {
   components: {
+    ConsultInsight,
     ErrorMessage,
     VueTimepicker,
     ImportingCourseModal,

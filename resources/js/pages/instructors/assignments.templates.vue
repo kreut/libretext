@@ -84,6 +84,8 @@
         >
           New Template
         </b-button>
+        <ConsultInsight :url="'https://commons.libretexts.org/insight/creating-and-using-assignment-templates'"
+        />
       </b-row>
       <div v-if="!isLoading">
         <div v-if="assignmentTemplates.length">
@@ -171,9 +173,11 @@ import { doCopy } from '~/helpers/Copy'
 import axios from 'axios'
 import { resetAssignmentForm } from '../../helpers/AssignmentProperties'
 import { updateModalToggleIndex } from '../../helpers/accessibility/fixCKEditor'
+import ConsultInsight from '../../components/ConsultInsight.vue'
 
 export default {
   components: {
+    ConsultInsight,
     Loading,
     AssignmentProperties,
     AllFormErrors,

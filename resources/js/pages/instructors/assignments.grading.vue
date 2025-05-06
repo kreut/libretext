@@ -205,10 +205,15 @@
         <PageTitle :title="title"/>
         <div v-if="grading.length>0">
           <b-container class="pb-3">
-            <b-row>
+            <b-row class="d-inline-flex">
               <b-button size="sm" variant="primary" @click="$bvModal.show('modal-instructions')">
                 Instructions
               </b-button>
+              <span class="ml-2">
+              <ConsultInsight
+                :url="'https://commons.libretexts.org/insight/open-grader'"
+              />
+                </span>
             </b-row>
           </b-container>
           <b-form-group
@@ -1097,11 +1102,13 @@ import CompletedIcon from '../../components/CompletedIcon.vue'
 import RubricProperties from '../../components/RubricProperties.vue'
 import RubricPointsBreakdown from '../../components/RubricPointsBreakdown.vue'
 import { roundToDecimalSigFig } from '../../helpers/Math'
+import ConsultInsight from '../../components/ConsultInsight.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    ConsultInsight,
     RubricPointsBreakdown,
     RubricProperties,
     CompletedIcon,

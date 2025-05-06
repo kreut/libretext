@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'" />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-h5p-collection-import'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-h5p-collection-import'"/>
     <b-modal id="modal-bulk-upload-instructions"
              title="Upload Instructions"
              size="lg"
@@ -22,9 +22,6 @@
           Please enter 1 for yes and 0 for no in the Public* column.
         </li>
         <li v-if="importTemplate === 'advanced'">
-          Accepted technologies are webwork, imathas, h5p. This field may be left blank for text-only questions.
-        </li>
-        <li v-if="importTemplate === 'advanced'">
           The source column may be left blank for assessment question types assuming that you are using one of the
           auto-graded technologies.
         </li>
@@ -38,16 +35,16 @@
         <li>
           Folders can be chosen from your list of <a href=""
                                                      @click.prevent="$bvModal.show('modal-my-questions-folders')"
-          >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
+        >My Questions folders</a> or you can create a new My Questions Folder while you import your questions.
         </li>
         <li>
           To upload your questions directly into an assignment, the assignment will need to first be created in
           the
           course or you will need to create an <a href="/instructors/assignment-templates" target="_blank">assignment
-            template</a> and specify which template. Within these assignments
+          template</a> and specify which template. Within these assignments
           you can further <a href=""
                              @click.prevent="$bvModal.show('modal-my-assignments-and-topics')"
-          > categorize by topic</a> or create new topics as you import your questions.
+        > categorize by topic</a> or create new topics as you import your questions.
         </li>
       </ol>
     </b-modal>
@@ -64,27 +61,27 @@
       <ol class="mt-2">
         <li v-for="assignment in assignments" :key="`assignment-${assignment.id}`">
           <span :id="`copy-assignment-${assignment.id}`">{{ assignment.name }}</span> <a
-            href="#"
-            class="pr-1"
-            aria-label="Copy Assignment"
-            @click.prevent="doCopy(`copy-assignment-${assignment.id}`)"
-          >
-            <font-awesome-icon
-              :icon="copyIcon"
-            />
-          </a>
+          href="#"
+          class="pr-1"
+          aria-label="Copy Assignment"
+          @click.prevent="doCopy(`copy-assignment-${assignment.id}`)"
+        >
+          <font-awesome-icon
+            :icon="copyIcon"
+          />
+        </a>
           <ul v-if="assignment.topics.length">
             <li v-for="topic in assignment.topics" :key="`topic-${topic.id}`">
               <span :id="`copy-topic-${topic.id}`">{{ topic.name }}</span> <a
-                href="#"
-                class="pr-1"
-                aria-label="Copy Topic"
-                @click.prevent="doCopy(`copy-topic-${topic.id}`)"
-              >
-                <font-awesome-icon
-                  :icon="copyIcon"
-                />
-              </a>
+              href="#"
+              class="pr-1"
+              aria-label="Copy Topic"
+              @click.prevent="doCopy(`copy-topic-${topic.id}`)"
+            >
+              <font-awesome-icon
+                :icon="copyIcon"
+              />
+            </a>
             </li>
           </ul>
         </li>
@@ -120,8 +117,7 @@
         can import a comma separated
         list of H5P questions directly into My Questions. Using the WebWork importer, you can import questions into My
         Questions as well as directly
-        into a course. And, the Advanced Template provides the most comprehensive set of options, mirroring the New
-        Question interface.
+        into a course. And, the advanced provides a way to import questions from advanced.
       </p>
       <b-form-group
         label-cols-sm="3"
@@ -140,7 +136,7 @@
               WeBWorK
             </b-form-radio>
             <b-form-radio name="import_template" value="advanced">
-              Advanced Template
+              MyOpenMath
             </b-form-radio>
             <b-form-radio name="import_template" value="qti">
               Canvas QTI
@@ -158,7 +154,7 @@
         header-html="<h2 class=&quot;h7&quot;>H5P Importer</h2>"
         class="mb-4"
       >
-        <RequiredText />
+        <RequiredText/>
         <b-form-group
           label-cols-sm="2"
           label-cols-lg="1"
@@ -166,7 +162,7 @@
         >
           <template v-slot:label>
             Public*
-            <QuestionCircleTooltip id="public-question-tooltip-h5p" />
+            <QuestionCircleTooltip id="public-question-tooltip-h5p"/>
             <b-tooltip target="public-question-tooltip-h5p"
                        delay="250"
                        triggers="hover focus"
@@ -230,7 +226,7 @@
                 :class="{ 'is-invalid': h5pImportCollectionForm.errors.has('import_to_course') }"
                 @change="h5pImportCollectionForm.errors.clear('assignment_template');h5pImportCollectionForm.errors.clear('import_to_course')"
               />
-              <has-error :form="h5pImportCollectionForm" field="import_to_course" />
+              <has-error :form="h5pImportCollectionForm" field="import_to_course"/>
             </b-col>
 
             <b-col v-if="importTemplate === 'h5p' && h5pImportCollectionForm.import_to_course !== 0">
@@ -253,7 +249,7 @@
                   :class="{ 'is-invalid': h5pImportCollectionForm.errors.has('assignment_template') }"
                   @change="h5pImportCollectionForm.errors.clear('assignment_template')"
                 />
-                <has-error :form="h5pImportCollectionForm" field="assignment_template" />
+                <has-error :form="h5pImportCollectionForm" field="assignment_template"/>
               </div>
             </b-col>
           </b-form-row>
@@ -317,7 +313,7 @@
                   :class="{ 'is-invalid': h5pImportCollectionForm.errors.has('collection') }"
                   @change="h5pImportCollectionForm.errors.clear('collection')"
                 />
-                <has-error :form="h5pImportCollectionForm" field="collection" />
+                <has-error :form="h5pImportCollectionForm" field="collection"/>
                 <b-alert v-if="!h5pCollectionOptions.length" show variant="info">
                   There are no available H5P collections.
                 </b-alert>
@@ -339,6 +335,7 @@
         :header-html="getBulkImportHtml()"
         class="mb-4"
       >
+        <div>
         <b-button v-if="['advanced','webwork'].includes(importTemplate)"
                   variant="secondary"
                   size="sm"
@@ -346,6 +343,10 @@
         >
           Instructions
         </b-button>
+        <ConsultInsight v-show="importTemplate === 'advanced'"
+                        :url="'https://commons.libretexts.org/insight/mom-to-adapt'"
+        />
+        </div>
         <div v-if="importTemplate === 'qti' && qtiSource === 'canvas'">
           <p>Using the QTI importer, you can import questions directly from Canvas. We currently support:</p>
           <ul>
@@ -360,7 +361,7 @@
             <li>Text only</li>
           </ul>
         </div>
-        <RequiredText v-if="importTemplate === 'qti'" class="pt-2" />
+        <RequiredText v-if="importTemplate === 'qti'" class="pt-2"/>
 
         <div v-if="importTemplate === 'qti'">
           <b-form-group
@@ -380,7 +381,7 @@
             >
               <b-form-radio name="qti_source" value="canvas">
                 Canvas
-                <QuestionCircleTooltip id="canvas_tooltip" />
+                <QuestionCircleTooltip id="canvas_tooltip"/>
                 <b-tooltip target="canvas_tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -392,7 +393,7 @@
               </b-form-radio>
               <b-form-radio name="qti_source" value="v2.2">
                 QTI v2.2
-                <QuestionCircleTooltip id="v2.2_tooltip" />
+                <QuestionCircleTooltip id="v2.2_tooltip"/>
                 <b-tooltip target="v2.2_tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -410,7 +411,7 @@
           >
             <template v-slot:label>
               Public*
-              <QuestionCircleTooltip id="public-question-tooltip-qti" />
+              <QuestionCircleTooltip id="public-question-tooltip-qti"/>
               <b-tooltip target="public-question-tooltip-qti"
                          delay="250"
                          triggers="hover focus"
@@ -580,7 +581,7 @@
         <SavedQuestionsFolders
           v-if="['advanced','h5p'].includes(importTemplate)"
           v-show="false"
-          ref="bulkImportSavedQuestionsFoldersAdvanced"
+          ref="bulkImportSavedQuestionsFoldersmyopenmath"
           class="mt-2"
           :type="'my_questions'"
           :folder-to-choose-from="'My Questions'"
@@ -598,12 +599,14 @@
               id="import_questions_to"
               v-model="importToCourse"
               style="width:400px"
+              class="mt-1"
+              size="sm"
               :options="importToCourseOptions"
             />
           </b-form-group>
           <div v-show="importTemplate === 'case_study_notes'">
             <b-alert show variant="info">
-              Importing Case Study Notes will overwrite the current notes.  All notes will be set to the first question.
+              Importing Case Study Notes will overwrite the current notes. All notes will be set to the first question.
             </b-alert>
           </div>
           <b-button
@@ -637,8 +640,8 @@
             <div v-if="files.length && (preSignedURL !== '')">
               <span v-for="file in files" :key="file.id">File to upload:
                 <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                  file.name
-                }}</span> -
+                    file.name
+                  }}</span> -
                 <span>{{ formatFileSize(file.size) }} </span>
                 <span v-if="file.size > 10000000">Note: large files may take a minute to upload.</span>
                 <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
@@ -652,7 +655,7 @@
                   Import
                 </b-button>
                 <span v-else-if="file.active" class="ml-2 text-info">
-                  <b-spinner small type="grow" />
+                  <b-spinner small type="grow"/>
                   Uploading File...
                 </span>
                 <span v-if="processingFile && !file.active" :class="qtiQueuedError ? 'text-danger' : 'text-info'">
@@ -674,7 +677,7 @@
                 drop-placeholder="Drop file here..."
               />
               <div v-if="uploading">
-                <b-spinner small type="grow" />
+                <b-spinner small type="grow"/>
                 Uploading file...
               </div>
               <input type="hidden" class="form-control is-invalid">
@@ -709,27 +712,27 @@
         </h2>
         <table class="table table-striped pb-3" style="width:auto">
           <thead>
-            <tr>
-              <th scope="col" style="width:200px">
-                Import Status
-              </th>
-              <th scope="col" style="width:200px">
-                Count
-              </th>
-            </tr>
+          <tr>
+            <th scope="col" style="width:200px">
+              Import Status
+            </th>
+            <th scope="col" style="width:200px">
+              Count
+            </th>
+          </tr>
           </thead>
           <tbody>
-            <tr v-for="item in questionsToImportSummary" :key="item.key">
-              <td style="width:200px">
+          <tr v-for="item in questionsToImportSummary" :key="item.key">
+            <td style="width:200px">
                 <span v-if="parseInt(item.total) >0">
                   <a href="" @click.prevent="filter = item.key">{{
-                    item.key
-                  }}</a>
+                      item.key
+                    }}</a>
                 </span>
-                <span v-if="parseInt(item.total) === 0">{{ item.key }}</span>
-              </td>
-              <td> {{ item.total }}</td>
-            </tr>
+              <span v-if="parseInt(item.total) === 0">{{ item.key }}</span>
+            </td>
+            <td> {{ item.total }}</td>
+          </tr>
           </tbody>
         </table>
 
@@ -746,7 +749,7 @@
                  :items="questionsToImport"
         >
           <template v-slot:cell(import_status)="data">
-            <span v-html="data.item.import_status" />
+            <span v-html="data.item.import_status"/>
           </template>
         </b-table>
         <b-table
@@ -761,7 +764,7 @@
           :items="questionsToImport"
         >
           <template v-slot:cell(import_status)="data">
-            <span v-html="data.item.import_status" />
+            <span v-html="data.item.import_status"/>
           </template>
           <template v-slot:cell(title)="data">
             <span v-if="data.item.url">
@@ -798,6 +801,7 @@ import { defaultLicenseVersionOptions, licenseOptions, updateLicenseVersions } f
 import { getAssignmentTemplateOptions } from '~/helpers/AssignmentProperties'
 import { mapGetters } from 'vuex'
 import { v4 as uuidv4 } from 'uuid'
+import ConsultInsight from '../ConsultInsight.vue'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
@@ -825,6 +829,7 @@ let h5pFields = [
 export default {
   name: 'BulkImporter',
   components: {
+    ConsultInsight,
     SavedQuestionsFolders,
     FontAwesomeIcon,
     AllFormErrors,
@@ -946,7 +951,7 @@ export default {
         case ('webwork'):
           return 'WebWork'
         case ('advanced'):
-          return 'Advanced'
+          return 'MyOpenMath'
         case ('bow_tie'):
           return 'Bowtie'
         case ('case_study_notes'):
@@ -1319,14 +1324,14 @@ export default {
             key: 'file',
             isRowHeader: true
           },
-          'import_status']
+            'import_status']
           break
         case ('bow_tie'):
           this.fields = [{
             key: 'Title*',
             isRowHeader: true
           },
-          'import_status']
+            'import_status']
           break
         default:
           alert('not valid type')

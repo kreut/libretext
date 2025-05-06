@@ -875,6 +875,9 @@
                   </div>
                 </div>
               </div>
+              <ConsultInsight v-if="user && user.role === 2 && course.lms && consultInsightUrl"
+                              :url="consultInsightUrl"
+              />
             </b-alert>
             <div v-show="false && lms &&
                    course.lms_has_api_key
@@ -1000,9 +1003,9 @@
               >
                 Course Properties
               </b-button>
-              <ConsultInsight v-if="user && user.role === 2 && course.lms && consultInsightUrl"
-                              :url="consultInsightUrl"
-              />
+               <ConsultInsight v-if="user && user.role === 2"
+                               :url="'https://commons.libretexts.org/insight/creating-a-new-adapt-assignment'"
+               />
             </span>
           </b-col>
         </b-row>

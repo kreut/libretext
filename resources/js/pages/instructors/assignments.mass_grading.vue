@@ -148,6 +148,7 @@
               This can be particularly useful if you would like to give everyone full credit or no credit on a
               particular question.
             </p>
+            <ConsultInsight :url="'https://commons.libretexts.org/insight/assignment-regrader'"/>
             <hr>
             <b-row>
               <span class="font-weight-bold mr-2">Title: </span>
@@ -370,9 +371,11 @@ import AllFormErrors from '~/components/AllFormErrors'
 
 import { ToggleButton } from 'vue-js-toggle-button'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
+import ConsultInsight from '../../components/ConsultInsight.vue'
 
 export default {
   components: {
+    ConsultInsight,
     Loading,
     FontAwesomeIcon,
     ToggleButton,
