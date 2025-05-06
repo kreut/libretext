@@ -4966,7 +4966,7 @@ export default {
       if (this.isFormative && this.user.role === 3) {
         this.questionCol = 12
       }
-      if (this.clickerApp) {
+      if (this.clickerApp || this.isPhone) {
         this.questionCol = 12
         this.bCardCols = 12
       }
