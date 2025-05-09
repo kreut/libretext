@@ -179,7 +179,7 @@
       </b-tooltip>
     </span>
     <span
-      v-if="user.is_developer || isAdmin || questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)"
+      v-if="assignmentQuestion.technology === 'webwork' || user.is_developer || isAdmin || questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)"
     >
       <b-tooltip :target="getTooltipTarget(`edit${componentId}`,assignmentQuestion.question_id)"
                  delay="500"

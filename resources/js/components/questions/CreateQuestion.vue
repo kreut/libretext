@@ -610,12 +610,16 @@
              ref="properties"
              title="Properties"
              :title-link-class="getTabClass('properties')"
+
              active
       >
         <b-card border-variant="primary"
                 class="mb-3"
         >
-
+<b-alert :show="isWebworkDownloadOnly">
+  You do not have editing rights to this question. However, you may view any aspect of the question.  In addition, you may export
+  the webWork code, which can be found under the <a style="cursor: pointer;" @click.prevent="activeTabIndex=1">Primary Content</a> tab.
+</b-alert>
           <p>
             The question properties help us to organize the
             questions within ADAPT for searchability and also help
@@ -1125,7 +1129,7 @@
                 v-show="editorGroups.find(group => group.id === 'non_technology_text').expanded || ('exposition' === questionForm.question_type)"
               >
                 <b-container class="mt-2">
-                  <b-row>
+                  <b-row id="question-media-upload-html-block">
                     <QuestionMediaUpload
                       v-if="editorGroups.find(group => group.id === 'non_technology_text').expanded || ('exposition' === questionForm.question_type)"
                       :key="`question-media-upload-key-${questionMediaUploadKey}`"
@@ -1188,7 +1192,8 @@
                       @change="initChangeExistingAutoGradedTechnology($event)"
                     />
                     <b-col>
-                      <ConsultInsight v-if="newAutoGradedTechnology === 'webwork'"
+                      <ConsultInsight id="consult-insight-webwork"
+                                      v-if="newAutoGradedTechnology === 'webwork'"
                                       :url="'https://commons.libretexts.org/insight/webwork-techniques'"
                       />
                     </b-col>
@@ -2032,93 +2037,95 @@
           </div>
           <div v-else>
             <b-card border-variant="primary"
-                    class="mb-3">
-            <b-form-group
-              label-for="HTML Block Alternative"
+                    class="mb-3"
             >
-              <template v-slot:label>
-                HTML Block Alternative
-
-                <QuestionCircleTooltip id="text-question-tooltip"/>
-                <b-tooltip target="text-question-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  You can optionally create an open-ended text version of your question which may be useful if you are
-                  using one of the
-                  non-native auto-graded technologies.
-                </b-tooltip>
-              </template>
-              <ckeditor
-                id="Open-Ended Alternative"
-                v-model="questionForm.text_question"
-                tabindex="0"
-                :config="richEditorConfig"
-                @namespaceloaded="onCKEditorNamespaceLoaded"
-                @ready="handleFixCKEditor()"
-              />
-            </b-form-group>
-        </b-card>
-            <b-card border-variant="primary"
-                    class="mb-3">
-            <b-form-group
-              label-cols-sm="5"
-              label-cols-lg="4"
-              label-for="a11y_auto_graded_question_id"
-            >
-              <template v-slot:label>
-                Auto-Graded Alternative
-                <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
-                <b-tooltip target="a11y-auto-graded-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  You can optionally provide a secondary accessible auto-graded question which can be shown on a
-                  per-student basis.
-                  Please provide an ADAPT ID of the form {assignment ID}-{question ID} or {question ID}
-                </b-tooltip>
-              </template>
-            </b-form-group>
-            <b-form-group>
-              <b-modal id="modal-view-a11y-auto-graded-question"
-                       title="Auto-Graded Alternative"
-                       no-close-on-backdrop
-                       size="lg"
+              <b-form-group
+                label-for="HTML Block Alternative"
               >
-                <ViewQuestions :key="`question-to-view-${a11yAutoGradedAlternativeQuestionId}`"
-                               :question-ids-to-view="[a11yAutoGradedAlternativeQuestionId]"
-                />
-                <template #modal-footer>
-                  <b-button
-                    variant="primary"
-                    size="sm"
-                    class="float-right"
-                    @click="$bvModal.hide('modal-view-a11y-auto-graded-question')"
+                <template v-slot:label>
+                  HTML Block Alternative
+
+                  <QuestionCircleTooltip id="text-question-tooltip"/>
+                  <b-tooltip target="text-question-tooltip"
+                             delay="250"
+                             triggers="hover focus"
                   >
-                    OK
-                  </b-button>
+                    You can optionally create an open-ended text version of your question which may be useful if you are
+                    using one of the
+                    non-native auto-graded technologies.
+                  </b-tooltip>
                 </template>
-              </b-modal>
-              <b-form-row>
-                <b-form-input
-                  id="a11y_auto_graded_question_id"
-                  v-model="questionForm.a11y_auto_graded_question_id"
-                  style="width: 200px"
-                  size="sm"
-                  type="text"
-                  :class="{ 'is-invalid': questionForm.errors.has('a11y_auto_graded_question_id')}"
-                  @keydown="questionForm.errors.clear('a11y_auto_graded_question_id')"
+                <ckeditor
+                  id="Open-Ended Alternative"
+                  v-model="questionForm.text_question"
+                  tabindex="0"
+                  :config="richEditorConfig"
+                  @namespaceloaded="onCKEditorNamespaceLoaded"
+                  @ready="handleFixCKEditor()"
                 />
-                <has-error :form="questionForm" field="a11y_auto_graded_question_id"/>
-                <b-button size="sm"
-                          class="ml-2"
-                          variant="primary"
-                          @click="showA11yAutoGradedQuestion"
+              </b-form-group>
+            </b-card>
+            <b-card border-variant="primary"
+                    class="mb-3"
+            >
+              <b-form-group
+                label-cols-sm="5"
+                label-cols-lg="4"
+                label-for="a11y_auto_graded_question_id"
+              >
+                <template v-slot:label>
+                  Auto-Graded Alternative
+                  <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
+                  <b-tooltip target="a11y-auto-graded-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    You can optionally provide a secondary accessible auto-graded question which can be shown on a
+                    per-student basis.
+                    Please provide an ADAPT ID of the form {assignment ID}-{question ID} or {question ID}
+                  </b-tooltip>
+                </template>
+              </b-form-group>
+              <b-form-group>
+                <b-modal id="modal-view-a11y-auto-graded-question"
+                         title="Auto-Graded Alternative"
+                         no-close-on-backdrop
+                         size="lg"
                 >
-                  View
-                </b-button>
-              </b-form-row>
-            </b-form-group>
+                  <ViewQuestions :key="`question-to-view-${a11yAutoGradedAlternativeQuestionId}`"
+                                 :question-ids-to-view="[a11yAutoGradedAlternativeQuestionId]"
+                  />
+                  <template #modal-footer>
+                    <b-button
+                      variant="primary"
+                      size="sm"
+                      class="float-right"
+                      @click="$bvModal.hide('modal-view-a11y-auto-graded-question')"
+                    >
+                      OK
+                    </b-button>
+                  </template>
+                </b-modal>
+                <b-form-row>
+                  <b-form-input
+                    id="a11y_auto_graded_question_id"
+                    v-model="questionForm.a11y_auto_graded_question_id"
+                    style="width: 200px"
+                    size="sm"
+                    type="text"
+                    :class="{ 'is-invalid': questionForm.errors.has('a11y_auto_graded_question_id')}"
+                    @keydown="questionForm.errors.clear('a11y_auto_graded_question_id')"
+                  />
+                  <has-error :form="questionForm" field="a11y_auto_graded_question_id"/>
+                  <b-button size="sm"
+                            class="ml-2"
+                            variant="primary"
+                            @click="showA11yAutoGradedQuestion"
+                  >
+                    View
+                  </b-button>
+                </b-form-row>
+              </b-form-group>
             </b-card>
           </div>
         </b-card>
@@ -2143,7 +2150,6 @@
             :key="editorGroup.id"
           >
             <div v-if="editorGroup.id === 'solution_html' &&
-              questionForm.solution_html &&
               questionForm.webwork_code &&
               questionForm.webwork_code.includes('BEGIN_PGML_SOLUTION') &&
               !/#\s*BEGIN_PGML_SOLUTION/.test(questionForm.webwork_code)"
@@ -2283,6 +2289,7 @@
         Show json
       </b-button>
       <b-button size="sm"
+                id="preview-question"
                 variant="info"
                 @click="previewQuestion"
       >
@@ -2291,6 +2298,7 @@
       </b-button>
 
       <b-button
+        id="save-question"
         v-if="!savingQuestion"
         size="sm"
         variant="primary"
@@ -2354,6 +2362,7 @@ import QuestionCircleTooltipModal from '../QuestionCircleTooltipModal.vue'
 import ConsultInsight from '../ConsultInsight.vue'
 import RubricProperties from '../RubricProperties.vue'
 import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
+import { canEdit } from '../../helpers/Questions'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2587,6 +2596,7 @@ export default {
     }
   },
   data: () => ({
+    isWebworkDownloadOnly: false,
     activeTabIndex: 0,
     sketcherTabClicked: false,
     loaded: false,
@@ -2876,7 +2886,7 @@ export default {
     this.$nextTick(() => {
       // want to add more text to this
       $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))
-      $('#question-editor-tabs__BV_tab_container_').removeClass('mt-3').css('marginTop','-1px')
+      $('#question-editor-tabs__BV_tab_container_').removeClass('mt-3').css('marginTop', '-1px')
 
     })
     this.updateLicenseVersions = updateLicenseVersions
@@ -2903,6 +2913,7 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    canEdit,
     updateModalToggleIndex,
     async moveSketcherFromTab (loadStructure) {
       if (loadStructure) {
@@ -3501,9 +3512,13 @@ export default {
       this.isEdit = true
       this.powerUser = this.isAdmin
       console.log(this.questionToEdit)
-      await this.getRevisions(this.questionToEdit)
-      if (this.questionToEdit.technology === 'webwork' && this.questionToEdit.webwork_code) {
-        await this.getWebworkAttachments()
+      this.isWebworkDownloadOnly = !this.canEdit(this.isAdmin, this.user, this.questionToEdit) && this.questionToEdit.technology === 'webwork'
+      if (!this.isWebworkDownloadOnly) {
+
+        await this.getRevisions(this.questionToEdit)
+        if (this.questionToEdit.technology === 'webwork' && this.questionToEdit.webwork_code) {
+          await this.getWebworkAttachments()
+        }
       }
       this.questionForm.folder_id = this.questionToEdit.folder_id
       this.showFolderOptions = this.user.id === this.questionToEdit.question_editor_user_id
@@ -3681,6 +3696,30 @@ export default {
       for (let i = 0; i < this.editorGroups.length; i++) {
         this.editorGroups[i].expanded = true
       }
+      if (this.isWebworkDownloadOnly) {
+        this.disableTabs()
+      }
+    },
+    disableTabs () {
+      this.$nextTick(() => {
+        document.querySelectorAll(
+          '#question-editor-tabs__BV_tab_container_ button,#question-editor-tabs__BV_tab_container_ select,#question-editor-tabs__BV_tab_container_ textarea,#question-editor-tabs__BV_tab_container_ input,#question-editor-tabs__BV_tab_container_ radio').forEach(el => {
+          el.disabled = true
+        })
+        document.querySelectorAll(' #primary-content button').forEach(el => {
+          if (el.textContent.trim() !== 'Consult Insight') {
+            el.disabled = true
+          }
+        })
+        document.querySelector('input[type="file"].custom-file-input').disabled = true
+        document.getElementById('question-media-upload-html-block').style.display = 'none'
+        document.getElementById('preview-question').style.display = 'none'
+        document.getElementById('save-question').style.display = 'none'
+        for (const i in CKEDITOR.instances) {
+          /* this returns the names of the textareas/id of the instances. */
+          CKEDITOR.instances[i].setReadOnly(true)
+        }
+      })
     },
     async getRevisions (questionToEdit) {
       try {
@@ -3805,7 +3844,7 @@ export default {
       try {
         const { data } = await axios.get(`/api/webwork-attachments/question/${this.questionToEdit.id}/${this.revision}`)
         if (data.type === 'error') {
-          this.$noty.error(data.error.message)
+          this.$noty.error(data.message)
           return false
         }
         this.webworkAttachments = data.webwork_attachments

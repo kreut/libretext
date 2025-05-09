@@ -48,15 +48,22 @@ export function doCopy (adaptId) {
   })
 }
 
+export function canEdit (isAdmin, user, question) {
+  if (isAdmin || user.is_developer || user.role === 5) {
+    return true
+  } else {
+    return question.library === 'adapt' && question.question_editor_user_id === user.id
+  }
+}
+
 export async function editQuestionSource (question) {
   if (this.isBetaAssignment) {
     this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
     return false
   }
-  if (!this.isAdmin && !this.user.is_developer) {
-    if (question.library === 'adapt' &&
-      this.user.role !== 5 &&
-      question.question_editor_user_id !== this.user.id) {
+
+  if (!canEdit(this.isAdmin, this.user, question)) {
+    if (question.technology !== 'webwork') {
       this.$noty.info('You cannot edit this question since you did not create it.')
       return false
     }
