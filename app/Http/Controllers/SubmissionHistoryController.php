@@ -6,6 +6,7 @@ use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
 use App\Question;
+use App\QuestionRevision;
 use App\Submission;
 use App\SubmissionHistory;
 use App\User;
@@ -43,6 +44,17 @@ class SubmissionHistoryController extends Controller
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
+            }
+            $question_revision_id = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first()
+                ->question_revision_id;
+            $latest_qti_json_question_info =
+                $question_revision_id
+                    ? QuestionRevision::find($question_revision_id)->qti_json
+                    : Question::find($question->id)->qti_json;
+            if ($latest_qti_json_question_info) {
+                return [];
             }
             $submission_history = DB::table('submission_histories')
                 ->where('assignment_id', $assignment->id)

@@ -5,7 +5,7 @@
       ref="sketcher"
       v-resize="{ log: false }"
       width="100%"
-      src="/api/sketcher"
+      :src="`/api/sketcher/${type}`"
       frameborder="0"
       @load="loadStructure"
     />
@@ -19,7 +19,18 @@ import ErrorMessage from '../ErrorMessage.vue'
 export default {
   name: 'Sketcher',
   components: { ErrorMessage },
+  watch: {
+    initReload (newValue) {
+      if (newValue) {
+        this.loadStructure()
+      }
+    }
+  },
   props: {
+    initReload: {
+      type: Boolean,
+      default: false
+    },
     errorMessage: {
       type: String,
       default: ''
@@ -28,6 +39,10 @@ export default {
       type: Object,
       default: () => {
       }
+    },
+    type: {
+      type: String,
+      default: 'empty_sketcher'
     }
   },
   methods: {

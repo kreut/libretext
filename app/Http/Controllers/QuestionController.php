@@ -1326,6 +1326,32 @@ class QuestionController extends Controller
                     case('submit_molecule'):
                         $unsets = ['solution_structure'];
                         break;
+                    case('marker'):
+                        $unsets =['solution_structure','atoms_and_bonds'];
+                        $qti_json = json_decode($request->qti_json, 1);
+
+                        $atoms = array_filter($request->atoms_and_bonds, function ($c) {
+                            return isset($c['structuralComponent']) && $c['structuralComponent'] === 'atom';
+                        });
+                        $bonds = array_filter($request->atoms_and_bonds, function ($c) {
+                            return isset($c['structuralComponent']) && $c['structuralComponent'] === 'bond';
+                        });
+
+                        usort($atoms, function ($a, $b) {
+                            return $a['index'] - $b['index'];
+                        });
+                        usort($bonds, function ($a, $b) {
+                            return $a['index'] - $b['index'];
+                        });
+
+                        $qti_json['solutionStructure'] = [
+                            'atoms' => array_values($atoms),
+                            'bonds' => array_values($bonds),
+                        ];
+
+                        $request->qti_json = json_encode($qti_json);
+
+                        break;
                     case ('multiple_response_select_all_that_apply'):
                     case ('multiple_response_select_n'):
                         $unsets = ['colHeaders', 'rows', 'responses'];

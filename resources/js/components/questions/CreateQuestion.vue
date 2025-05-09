@@ -2,6 +2,28 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-discuss-it-text-form"/>
+    <b-modal id="modal-confirm-update-structure"
+             title="Confirm Update Structure"
+             no-close-on-backdrop
+    >
+      <p>Please confirm that you would like to update the structure. By doing so, the Sketcher will be reset: your
+        structure, any associated point values, and any feedback will also be deleted as well.</p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          @click="$bvModal.hide('modal-confirm-update-structure')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          size="sm"
+          variant="danger"
+          @click="updateStructure"
+        >
+          Update Structure
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-submissions-exist-warning"
              title="Submissions Exist"
              size="lg"
@@ -20,7 +42,6 @@
         <b-button
           variant="primary"
           size="sm"
-          class="Cancel"
           @click="$bvModal.hide('modal-submissions-exist-warning')"
         >
           I understand
@@ -595,16 +616,18 @@
       </template>
     </b-modal>
     <span ref="top-of-form"/>
-    <div id="from-sketcher-component" v-if="fullyMounted" v-show="false">
+    <div v-if="fullyMounted" v-show="false" id="from-sketcher-component">
       <Sketcher :error-message="questionForm.errors.get(`solution_structure`)"
                 :solution-structure="solutionStructure"
+                :init-reload="initSketcherReload"
+                :type="sketcherType"
       />
     </div>
     <b-tabs id="question-editor-tabs"
+            v-model="activeTabIndex"
             content-class="mt-3"
             filled
             active-nav-item-class="font-weight-bold bg-primary"
-            v-model="activeTabIndex"
     >
       <b-tab id="properties"
              ref="properties"
@@ -860,7 +883,7 @@
                 />
               </span>
             </b-form-row>
-            <ErrorMessage :message="questionForm.errors.get('folder_id')" v-if="questionForm.errors.get('folder_id')"/>
+            <ErrorMessage v-if="questionForm.errors.get('folder_id')" :message="questionForm.errors.get('folder_id')"/>
           </b-form-group>
           <div>
             <b-form-group
@@ -1192,8 +1215,8 @@
                       @change="initChangeExistingAutoGradedTechnology($event)"
                     />
                     <b-col>
-                      <ConsultInsight id="consult-insight-webwork"
-                                      v-if="newAutoGradedTechnology === 'webwork'"
+                      <ConsultInsight v-if="newAutoGradedTechnology === 'webwork'"
+                                      id="consult-insight-webwork"
                                       :url="'https://commons.libretexts.org/insight/webwork-techniques'"
                       />
                     </b-col>
@@ -1314,6 +1337,20 @@
                   </b-form-radio-group>
                 </b-form-group>
                 <b-form-group>
+                  <div v-if="nativeType === 'sketcher'">
+                    <span v-show="user.id === 5">
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="submit_molecule"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Submit Molecule
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="marker"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Marker
+                    </b-form-radio>
+                      </span>
+                  </div>
                   <div v-if="['all','basic'].includes(nativeType)">
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"
                                   @change="initQTIQuestionType($event)"
@@ -1634,11 +1671,12 @@
                          'highlight_text',
                          'highlight_table',
                          'submit_molecule',
+                         'marker',
                          'discuss_it'].includes(qtiQuestionType) && qtiJson"
                   class="mb-2"
                 >
                   <b-container
-                    v-if="questionForm.technology === 'qti' && !['submit_molecule'].includes(qtiQuestionType)"
+                    v-if="questionForm.technology === 'qti' && !['submit_molecule','marker'].includes(qtiQuestionType)"
                     class="mt-2"
                   >
                     <b-row>
@@ -1666,8 +1704,8 @@
                       @ready="handleFixCKEditor()"
                       @focus="ckeditorKeyDown=true;questionForm.errors.clear('qti_prompt')"
                     />
-                    <ErrorMessage :message="questionForm.errors.get(`qti_prompt`)"
-                                  v-if="questionForm.errors.get(`qti_prompt`)"
+                    <ErrorMessage v-if="questionForm.errors.get(`qti_prompt`)"
+                                  :message="questionForm.errors.get(`qti_prompt`)"
                     />
                   </b-card>
                   <div v-if="qtiQuestionType === 'discuss_it'">
@@ -1685,12 +1723,14 @@
                     />
                   </div>
                 </div>
-                <div v-if="isLocalMe || user.id === 36892">
+                <div v-if="(isLocalMe || user.id === 36892)">
                   Debugging: {{ qtiJson }}
                   {{ qtiJson.matchStereo }}
                 </div>
-                <div v-if="qtiQuestionType === 'submit_molecule'">
-                  <div class="border border-dark p-2" style="width:320px;margin:auto">
+                <div v-if="['submit_molecule','marker'].includes(qtiQuestionType)">
+                  <div v-if="qtiQuestionType === 'submit_molecule'" class="border border-dark p-2"
+                       style="width:320px;margin:auto"
+                  >
                     <b-form-checkbox
                       id="match_stereo"
                       v-model="qtiJson.matchStereo"
@@ -1701,9 +1741,82 @@
                       Only approve identical stereoisomers
                     </b-form-checkbox>
                   </div>
-                  <div id="to-sketcher-component">
+                  <div v-if="qtiQuestionType === 'marker'" class="d-inline-flex">
+                    <label class="mr-2">
+                      Scoring
+                      <QuestionCircleTooltip id="marker-scoring-tooltip"/>
+                    </label>
+                    <b-tooltip target="marker-scoring-tooltip" delay="250" triggers="hover focus">
+                      With exclusive scoring, the student will receive no partial credit; they will receive partial
+                      credit with inclusive score.
+                    </b-tooltip>
+                    <b-form-radio-group
+                      v-model="qtiJson.partialCredit"
+                    >
+                      <b-form-radio value="exclusive">
+                        Exclusive
+                      </b-form-radio>
 
+                      <b-form-radio value="inclusive">
+                        Inclusive
+                      </b-form-radio>
+                    </b-form-radio-group>
+                    <b-form-checkbox
+                      v-show="qtiJson.partialCredit === 'inclusive'"
+                      v-model="qtiJson.oneHundredPercentOverride"
+                      value="1"
+                      unchecked-value="0"
+                      class="custom-checkbox"
+                    >
+                      100% override
+                      <QuestionCircleTooltip id="100-percent-override-tooltip"/>
+                      <b-tooltip target="100-percent-override-tooltip"
+                                 delay="250"
+                                 triggers="hover focus"
+                      >
+                        If checked, students will not be able to guess by simply marking all atoms/bonds.
+                      </b-tooltip>
+                    </b-form-checkbox>
+                    <div/>
                   </div>
+                  <div id="to-sketcher-component" @click="handleSketcherClick">
+                    <!-- Sketcher will be appended here -->
+                  </div>
+                  <div class="mb-2" v-show="qtiQuestionType ==='marker'">
+                    <div v-if="!qtiJson.solutionStructure">
+                      <b-button
+                        variant="primary"
+                        size="sm"
+                        @click="setMolecule"
+                      >
+                        Set Molecule
+                      </b-button>
+                    </div>
+                    <div v-else>
+                      <b-button
+                        variant="info"
+                        size="sm"
+                        @click="updateMarks"
+                      >
+                        Update Marks
+                      </b-button>
+                      <b-button
+                        variant="danger"
+                        size="sm"
+                        @click="initUpdateStructure"
+                      >
+                        Update Structure
+                      </b-button>
+                    </div>
+                  </div>
+                  <MultipleAnswersAdvanced
+                    v-if="qtiQuestionType === 'marker' && qtiJson.solutionStructure.atoms && qtiJson.solutionStructure.bonds"
+                    ref="multipleAnswersAdvanced"
+                    :key="`multiple-answers-advanced-${multipleAnswersAdvancedKey}`"
+                    :qti-json="qtiJson"
+                    :question-form="questionForm"
+                    @setAtomsAndBonds="setAtomsAndBonds"
+                  />
                 </div>
                 <DragAndDropCloze v-if="qtiQuestionType === 'drag_and_drop_cloze'"
                                   ref="dragAndDropCloze"
@@ -2040,24 +2153,24 @@
                 label-for="HTML Block Alternative"
               >
                 <template v-slot:label>
-                      <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
-                  HTML Block Alternative
+                  <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
+                    HTML Block Alternative
 
-                  <QuestionCircleTooltip id="text-question-tooltip"/>
-                  <b-tooltip target="text-question-tooltip"
-                             delay="250"
-                             triggers="hover focus"
-                  >
-                    You can optionally create an open-ended text version of your question which may be useful if you are
-                    using one of the
-                    non-native auto-graded technologies.
-                  </b-tooltip>
-                  <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'text_question').expanded"
-                                     :icon="caretRightIcon" size="lg"
-                  />
-                  <font-awesome-icon v-if="editorGroups.find(group => group.id === 'text_question').expanded"
-                                     :icon="caretDownIcon" size="lg"
-                  /></span>
+                    <QuestionCircleTooltip id="text-question-tooltip"/>
+                    <b-tooltip target="text-question-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      You can optionally create an open-ended text version of your question which may be useful if you are
+                      using one of the
+                      non-native auto-graded technologies.
+                    </b-tooltip>
+                    <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'text_question').expanded"
+                                       :icon="caretRightIcon" size="lg"
+                    />
+                    <font-awesome-icon v-if="editorGroups.find(group => group.id === 'text_question').expanded"
+                                       :icon="caretDownIcon" size="lg"
+                    /></span>
                 </template>
                 <ckeditor
                   v-show="editorGroups.find(group => group.id === 'text_question').expanded"
@@ -2164,42 +2277,42 @@
               v-if="questionForm.question_type === 'assessment' || editorGroup.id==='notes'"
               :label-for="editorGroup.label"
             >
-                    <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
-              {{ editorGroup.label }}
-              <span v-if="editorGroup.label === 'Answer'">
-                <span v-if="questionForm.technology !== 'qti'"> <QuestionCircleTooltip id="answer-tooltip"/>
-                <b-tooltip target="answer-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  The answer to the question.  Answers are optional.
-                </b-tooltip>
+              <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
+                {{ editorGroup.label }}
+                <span v-if="editorGroup.label === 'Answer'">
+                  <span v-if="questionForm.technology !== 'qti'"> <QuestionCircleTooltip id="answer-tooltip"/>
+                    <b-tooltip target="answer-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      The answer to the question.  Answers are optional.
+                    </b-tooltip>
                   </span>
+                </span>
+                <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
+                  <b-tooltip target="solution-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    A more detailed solution to the question. Solutions are optional.
+                  </b-tooltip>
+                </span>
+                <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"/>
+                  <b-tooltip target="hint-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Hints can be provided to students within assignments. Hints are optional.
+                  </b-tooltip>
+                </span>
+                <span v-show="!(questionForm.technology === 'qti' && editorGroup.id === 'answer_html')"
+                      v-if="!editorGroups.find(group => group.id === editorGroup.id).expanded" <font-awesome-icon
+                :icon="caretRightIcon" size="lg"
+              />
+                <font-awesome-icon v-if="editorGroups.find(group => group.id === editorGroup.id).expanded"
+                                   :icon="caretDownIcon" size="lg"
+                />
               </span>
-              <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
-                <b-tooltip target="solution-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  A more detailed solution to the question. Solutions are optional.
-                </b-tooltip>
-              </span>
-              <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"/>
-                <b-tooltip target="hint-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Hints can be provided to students within assignments. Hints are optional.
-                </b-tooltip>
-              </span>
-                      <span v-show="!(questionForm.technology === 'qti' && editorGroup.id === 'answer_html')"
-                         <font-awesome-icon v-if="!editorGroups.find(group => group.id === editorGroup.id).expanded"
-                                            :icon="caretRightIcon" size="lg"
-                         />
-                  <font-awesome-icon v-if="editorGroups.find(group => group.id === editorGroup.id).expanded"
-                                     :icon="caretDownIcon" size="lg"
-                  />
-                    </span>
               </span>
               <div v-if="questionForm.technology === 'qti' && editorGroup.id === 'answer_html'">
                 <b-alert show variant="info">
@@ -2251,7 +2364,6 @@
           border-variant="primary"
           class="mb-3"
         >
-
           <p>Rubrics are associated with each question but may be edited within an assignment context.</p>
           <RubricProperties
             :key="`rubric-properties-${isEditRubric}`"
@@ -2293,8 +2405,8 @@
       >
         Show json
       </b-button>
-      <b-button size="sm"
-                id="preview-question"
+      <b-button id="preview-question"
+                size="sm"
                 variant="info"
                 @click="previewQuestion"
       >
@@ -2303,8 +2415,8 @@
       </b-button>
 
       <b-button
-        id="save-question"
         v-if="!savingQuestion"
+        id="save-question"
         size="sm"
         variant="primary"
         @click="initSaveQuestion()"
@@ -2342,6 +2454,7 @@ import SolutionFileHtml from '~/components/SolutionFileHtml'
 import $ from 'jquery'
 
 import axios from 'axios'
+import MultipleAnswersAdvanced from './MultipleAnswersAdvanced.vue'
 import FillInTheBlank from './FillInTheBlank'
 import MatrixMultipleResponse from './nursing/MatrixMultipleResponse'
 import MultipleResponseGrouping from './nursing/MultipleResponseGrouping'
@@ -2520,6 +2633,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    MultipleAnswersAdvanced,
     RubricProperties,
     ConsultInsight,
     QuestionCircleTooltipModal,
@@ -2584,23 +2698,11 @@ export default {
       default: false
     }
   },
-  watch: {
-    activeTabIndex: async function (value) {
-      if (value === 1) {
-        this.moveSketcherToTab()
-      } else {
-        await this.moveSketcherFromTab(true)
-      }
-    },
-    nativeType: async function (value) {
-      if (value === 'sketcher') {
-        this.moveSketcherToTab()
-      } else {
-        await this.moveSketcherFromTab(false)
-      }
-    }
-  },
   data: () => ({
+    initSketcherReload: false,
+    multipleAnswersAdvancedKey: 0,
+    sketcherType: 'default',
+    updatingStructure: false,
     isWebworkDownloadOnly: false,
     activeTabIndex: 0,
     sketcherTabClicked: false,
@@ -2801,6 +2903,22 @@ export default {
     simpleChoiceConfig: simpleChoiceConfig,
     matchingRichEditorConfig: matchingRichEditorConfig
   }),
+  watch: {
+    activeTabIndex: async function (value) {
+      if (value === 1) {
+        this.moveSketcherToTab()
+      } else {
+        await this.moveSketcherFromTab(true)
+      }
+    },
+    nativeType: async function (value) {
+      if (value === 'sketcher') {
+        this.moveSketcherToTab()
+      } else {
+        await this.moveSketcherFromTab(false)
+      }
+    }
+  },
   computed: {
     ...mapGetters({
       user: 'auth/user'
@@ -2811,11 +2929,11 @@ export default {
   created () {
     this.getLearningOutcomes = getLearningOutcomes
     window.addEventListener('message', this.receiveMessage, false)
-    //window.addEventListener('keyup', this.updateTabInvalids)
+    // window.addEventListener('keyup', this.updateTabInvalids)
   },
   beforeDestroy () {
     window.removeEventListener('keydown', this.hotKeys)
-    //window.removeEventListener('keyup', this.updateTabInvalids)
+    // window.removeEventListener('keyup', this.updateTabInvalids)
   },
   updated: function () {
     this.$nextTick(function () {
@@ -2892,7 +3010,6 @@ export default {
       // want to add more text to this
       $('#required_text').replaceWith($('<span>' + document.getElementById('required_text').innerText + '</span>'))
       $('#question-editor-tabs__BV_tab_container_').removeClass('mt-3').css('marginTop', '-1px')
-
     })
     this.updateLicenseVersions = updateLicenseVersions
     console.log(this.questionToEdit)
@@ -2910,6 +3027,9 @@ export default {
     this.$nextTick(() => {
       this.fullyMounted = true
     })
+    this.$nextTick(() => {
+      //this.setToQuestionType('marker')
+    })
   },
   destroyed () {
     if (this.questionToEdit) {
@@ -2920,6 +3040,75 @@ export default {
   methods: {
     canEdit,
     updateModalToggleIndex,
+    setAtomsAndBonds (atomsAndBonds) {
+      this.questionForm.atoms_and_bonds = atomsAndBonds
+    },
+    handleSketcherClick () {
+      console.error('clicked')
+    },
+    setMarks () {
+      alert('marks set')
+    },
+    updateStructure () {
+      this.initSketcherReload = false
+      this.qtiJson.solutionStructure = ''
+      this.solutionStructure = {}
+      this.questionForm.atoms_and_bonds = []
+      this.sketcherType = 'default'
+      this.initSketcherReload = true
+      this.$bvModal.hide('modal-confirm-update-structure')
+      this.$noty.info('The Sketcher has been reset.')
+    },
+    initUpdateStructure () {
+      this.$bvModal.show('modal-confirm-update-structure')
+    },
+    async updateMarks () {
+      await this.setMolecule()
+      console.error('Molecule has been set')
+      console.error('starting solutions structure')
+      console.error(this.qtiJson.solutionStructure)
+      console.error(this.questionForm.atoms_and_bonds)
+      for (let i = 0; i < this.questionForm.atoms_and_bonds.length; i++) {
+        const item = this.questionForm.atoms_and_bonds[i]
+        console.error(item)
+        for (const keyToUpdate of ['correct', 'incorrect', 'feedback']) {
+          console.error('updating: ' + keyToUpdate + ' in ' + item.structuralComponent + 's')
+          this.qtiJson.solutionStructure[item.structuralComponent + 's'][item.structuralIndex][keyToUpdate] = item[keyToUpdate]
+        }
+      }
+      console.error('final solutions structure')
+      console.error(this.qtiJson.solutionStructure)
+      this.multipleAnswersAdvancedKey++
+      this.$noty.success('The marks have been updated.')
+    },
+    async setMolecule () {
+      this.receivedStructure = false
+      const iframe = document.getElementById('sketcher')
+      iframe.contentWindow.postMessage('save', '*')
+      await this.handleGetStructure()
+      this.sketcherType = 'marker-only'
+      console.error('Molecule has been set')
+    },
+    setToQuestionType (questionType) {
+      document.getElementById('primary-content___BV_tab_button__').click()
+      switch (questionType) {
+        case ('marker'):
+          const select = document.querySelector('select[title="auto-graded technologies"]')
+          select.value = 'qti'
+          select.dispatchEvent(new Event('change'))
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="native-question-type"][value="sketcher"]').click()
+            }
+            , 250
+          )
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="marker"]').click()
+            }
+            , 250
+          )
+          break
+      }
+    },
     async moveSketcherFromTab (loadStructure) {
       if (loadStructure) {
         this.receivedStructure = false
@@ -3244,6 +3433,7 @@ export default {
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
           case ('submit_molecule'):
+          case ('marker'):
             this.receivedStructure = false
             const iframe = document.getElementById('sketcher')
             iframe.contentWindow.postMessage('save', '*')
@@ -3519,7 +3709,6 @@ export default {
       console.log(this.questionToEdit)
       this.isWebworkDownloadOnly = !this.canEdit(this.isAdmin, this.user, this.questionToEdit) && this.questionToEdit.technology === 'webwork'
       if (!this.isWebworkDownloadOnly) {
-
         await this.getRevisions(this.questionToEdit)
         if (this.questionToEdit.technology === 'webwork' && this.questionToEdit.webwork_code) {
           await this.getWebworkAttachments()
@@ -3555,10 +3744,12 @@ export default {
             this.qtiQuestionType = this.qtiJson.questionType
             break
           case ('submit_molecule'):
+          case ('marker'):
             this.qtiQuestionType = this.qtiJson.questionType
             this.qtiPrompt = this.qtiJson['prompt']
             this.solutionStructure = this.qtiJson.solutionStructure
             this.nativeType = 'sketcher'
+            this.sketcherType = 'marker-only'
             break
           case ('drag_and_drop_cloze'):
             this.qtiQuestionType = this.qtiJson.questionType
@@ -4150,6 +4341,23 @@ export default {
             matchStereo: '0'
           }
           this.qtiQuestionType = 'submit_molecule'
+          this.$nextTick(() => {
+            this.qtiQuestionType = 'submit_molecule'
+          })
+          break
+        case ('marker'):
+          this.qtiJson = {
+            questionType: 'marker',
+            prompt: '',
+            solutionStructure: '',
+            solution: '',
+            partialCredit: 'exclusive',
+            oneHundredPercentOverride: null
+          }
+          this.$nextTick(() => {
+            this.qtiQuestionType = 'marker'
+          })
+
           break
         case ('highlight_table'):
           this.qtiJson = {
@@ -4614,7 +4822,7 @@ export default {
       return true
     },
     async previewQuestion () {
-      if (this.qtiQuestionType === 'submit_molecule') {
+      if (['marker', 'submit-molecule'].includes(this.qtiQuestionType)) {
         this.previewingQuestion = true
         this.receivedStructure = false
         const iframe = document.getElementById('sketcher')
@@ -4813,6 +5021,9 @@ export default {
               case ('responses'):
                 formattedErrors.push('Please fix the errors with the responses.')
                 break
+              case ('atoms_and_bonds'):
+                formattedErrors.push('Please fix the Score Adjustment Percent errors associated with your Marker question.')
+                break
               default:
                 formattedErrors.push(errors[property][0])
             }
@@ -4922,6 +5133,5 @@ export default {
   margin-left: 7px;
   margin-right: 7px;
 }
-
 
 </style>

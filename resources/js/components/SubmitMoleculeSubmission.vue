@@ -21,7 +21,7 @@
           :qti-json="JSON.parse(question.qti_json)"
           :student-response="responseStructure"
           :read-only="true"
-          :sketcher-viewer-id="'sketcherSubmission'"
+          :sketcher-viewer-id="'SubmitMoleculeSubmission'"
         />
       </div>
     </div>
@@ -32,7 +32,7 @@
 import SketcherViewer from './viewers/SketcherViewer.vue'
 
 export default {
-  name: 'SketcherSubmission',
+  name: 'SubmitMoleculeSubmission',
   components: { SketcherViewer },
   props: {
     question: {

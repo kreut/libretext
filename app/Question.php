@@ -553,6 +553,17 @@ class Question extends Model
                  * $qti_array['media_uploads'][$key]['text'] = $question_media_upload->getText($this, $domDocument);
                  * }**/
                 break;
+            case('marker'):
+                if (!$show_solution) {
+                    if (request()->user()->role === 3) {
+                        $qti_array['solutionStructure'] = $this->_removeMarkers($qti_array['solutionStructure']);
+                    }
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
+                        $qti_array['solutionStructure'] = $this->_removeMarkers($qti_array['solutionStructure']);
+                    }
+                }
+                break;
             case('submit_molecule'):
                 if (!$show_solution) {
                     if (request()->user()->role === 3) {
@@ -3589,5 +3600,18 @@ class Question extends Model
         return $is_discuss_it;
     }
 
+    /**
+     * @param array $solution_structure
+     * @return array
+     */
+    private function _removeMarkers(array $solution_structure): array
+    {
+        foreach (['atoms', 'bonds'] as $item) {
+            foreach ($solution_structure[$item] as $key => $value) {
+                unset($solution_structure[$item][$key]['mark']);
+            }
+        }
+        return $solution_structure;
+    }
 }
 

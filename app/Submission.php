@@ -131,6 +131,10 @@ class Submission extends Model
             case('qti'):
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
+                    case('marker'):
+                        $compare_marks_info = $this->_compareMarks($submission->question->partialCredit, $submission->question->solutionStructure, json_decode($submission->student_response)->structure);
+                        $proportion_correct = Round($compare_marks_info['proportion_correct'], 2);
+                        break;
                     case('submit_molecule'):
                         $proportion_correct_response = $this->computeScoreFromSubmitMolecule($submission->question, $submission->student_response);
                         if ($proportion_correct_response['type'] === 'error') {
@@ -636,6 +640,15 @@ class Submission extends Model
                 $submission = new stdClass();
                 $submission->question = json_decode($question->qti_json);
                 $submission->student_response = $data['submission'];
+                if (property_exists($submission->question, 'questionType')
+                    && $submission->question->questionType === 'marker'
+                    && $submission->question->oneHundredPercentOverride) {
+                    if ($this->_markedAll($submission)) {
+                        $response['message'] = "We are unable to score the question since it looks like you just marked every item in the structure.";
+                        return $response;
+                    }
+                }
+
                 $proportion_correct = $this->getProportionCorrect('qti', $submission);
                 $submission->proportion_correct = $proportion_correct;
                 $data['score'] = $assignment->scoring_type === 'p'
@@ -1659,7 +1672,9 @@ class Submission extends Model
     function getSubmissionArray(Assignment $assignment, Question $question, $submission, $is_learning_tree_node, $assignment_question = null): array
     {
         $submission_array = [];
-
+        if ($question->technology === 'qti') {
+            return [];
+        }
         if ($submission &&
             in_array($question->technology, ['webwork', 'imathas'])
             && (in_array(request()->user()->role, [2, 5]) || (in_array($assignment->assessment_type, ['learning tree', 'real time']) || ($assignment->assessment_type === 'delayed' && $assignment->solutions_released)))) {
@@ -1811,6 +1826,93 @@ class Submission extends Model
         header('appversion: ignore');
         echo json_encode($result);
         exit;
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function _compareMarks(string $partial_credit, $solution, $student): array
+    {
+        $result = [
+            'atoms' => [],
+            'bonds' => [],
+            'all_correct' => true,
+        ];
+
+        foreach (['atoms', 'bonds'] as $key) {
+            $solution_items = $solution->$key;
+            $student_items = $student->$key;
+
+            foreach ($solution_items as $index => $solution_item) {
+                $student_item = $student_items[$index] ?? null;
+
+                $solution_mark = $this->_getMark($solution_item);
+                $student_mark = $this->_getMark($student_item);
+
+                $correct = ($solution_mark === $student_mark);
+
+                $result[$key][] = [
+                    'index' => $index,
+                    'expected' => $solution_mark,
+                    'actual' => $student_mark,
+                    'correct' => $correct,
+                    'score_adjustment_percent' => $correct ? +$solution_item->correct : -$solution_item->incorrect
+                ];
+
+                if (!$correct) {
+                    $result['all_correct'] = false;
+                }
+            }
+        }
+        switch ($partial_credit) {
+            case('inclusive'):
+                $percent_correct = 0;
+                foreach (['atoms', 'bonds'] as $key) {
+                    foreach ($result[$key] as $student_result) {
+                        $percent_correct += $student_result['score_adjustment_percent'];
+                    }
+                }
+                break;
+            case('exclusive'):
+                $percent_correct = $result['all_correct'] ? 100 : 0;
+                break;
+            default:
+                throw new Exception("$partial_credit is not a valid partial credit option.");
+        }
+        $result['proportion_correct'] = max($percent_correct / 100, 0);
+        return $result;
+    }
+
+    /**
+     * @param $item
+     * @return bool
+     */
+    private function _getMark($item): ?bool
+    {
+        if (is_object($item)) {
+            return property_exists($item, 'mark') ? $item->mark : null;
+        } elseif (is_array($item)) {
+            return $item['mark'] ?? null;
+        }
+        return null;
+    }
+
+    /**
+     * @param $submission
+     * @return bool
+     */
+    private function _markedAll($submission): bool
+    {
+        $num_things_to_mark = count($submission->question->solutionStructure->atoms) + count($submission->question->solutionStructure->bonds);
+        $student_submission = json_decode($submission->student_response, 1)['structure'];
+        $num_marks_submitted = 0;
+        foreach (['atoms', 'bonds'] as $item) {
+            if (isset($item['mark'])) {
+                $num_marks_submitted++;
+            }
+        }
+        return $num_things_to_mark === $num_marks_submitted;
+
     }
 }
 

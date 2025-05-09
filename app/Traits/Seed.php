@@ -29,6 +29,7 @@ trait Seed
                 if (in_array($question_type, [
                     'discuss_it',
                     'submit_molecule',
+                    'marker',
                     'true_false',
                     'fill_in_the_blank',
                     'numerical',

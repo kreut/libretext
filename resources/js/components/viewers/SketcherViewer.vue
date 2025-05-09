@@ -14,10 +14,15 @@
 
 <script>
 import { v4 as uuidv4 } from 'uuid'
+
 export default {
   name: 'SketcherViewer',
   props: {
-    sketcherViewerId:{
+    configuration: {
+      type: String,
+      default: ''
+    },
+    sketcherViewerId: {
       type: String,
       default: 'sketcherViewer'
     },
@@ -46,7 +51,13 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   mounted () {
-    this.src = this.readOnly ? '/api/sketcher/readonly' : '/api/sketcher'
+    this.src = '/api/sketcher'
+    if (this.readOnly) {
+      this.src = '/api/sketcher/readonly'
+    } else if (this.configuration) {
+      this.src = `/api/sketcher/${this.configuration}`
+    }
+
     this.loadStructure()
     this.uuid = this.uuidv4
   },

@@ -1,6 +1,6 @@
 <template>
   <b-container>
-    <b-row v-if="submissionHistory.length > 1" class="mb-2">
+    <b-row v-if="submissionHistory && submissionHistory.length > 1" class="mb-2">
       <label class="col-form-label col-form-label-sm text-right pr-2" for="submission-history">Current View:</label>
       <b-form-select
         id="submission-history"
@@ -26,7 +26,7 @@
           :technology="technology"
           :show-correct-answer="showCorrectAnswer"
         />
-        <hr v-if="submissionHistoryIndex !== submissionHistory.length -1">
+        <hr v-if="submissionHistory && submissionHistoryIndex !== submissionHistory.length -1">
       </div>
     </div>
     <div v-if="!showFullHistory">
@@ -149,7 +149,7 @@ export default {
         }
         this.submissionHistory = data.submission_history
         this.submissionHistoryOptions = []
-        if (this.submissionHistory.length) {
+        if (this.submissionHistory && this.submissionHistory.length) {
           this.questionSubmissionHistoryId = this.submissionHistory[0].id
           for (let i = 0; i < this.submissionHistory.length; i++) {
             const submissionHistory = this.submissionHistory[i]
@@ -160,7 +160,7 @@ export default {
           this.submissionHistoryOptions.push({ text: 'Full History', value: -1 })
         }
       } catch (error) {
-        this.error(error.message)
+        this.$noty.error(error.message)
       }
     }
   }

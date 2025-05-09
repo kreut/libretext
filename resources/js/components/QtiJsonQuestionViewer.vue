@@ -43,6 +43,7 @@
       />
       <div
         v-if="['submit_molecule',
+        'marker',
                'matching',
                'true_false',
                'multiple_choice',
@@ -58,11 +59,11 @@
                'bow_tie'].includes(questionType)"
       >
         <div style="font-family: Sans-Serif,serif;" :style="presentationMode ? 'font-size:20px' : 'font-size:16px'">
-          <span v-html="prompt" />
+          <span v-html="prompt"/>
         </div>
         <b-form-group>
           <div>
-            <div v-if="questionType === 'submit_molecule'
+            <div v-if="['submit_molecule', 'marker'].includes(questionType)
               && user.role === 2
               && +JSON.parse(qtiJson).matchStereo === 1"
             >
@@ -79,12 +80,14 @@
               frameborder="0"
             />
           </div>
-          <SketcherViewer v-if="questionType === 'submit_molecule' & !previewingQuestion"
-                          ref="sketcherViewer"
-                          :key="`sketcher-${qtiJsonCacheKey}`"
-                          :qti-json="JSON.parse(qtiJson)"
-                          :student-response="studentResponse ? JSON.stringify(JSON.parse(studentResponse).structure) : JSON.stringify(JSON.parse(qtiJson).solutionStructure)"
-                          :read-only="previewOrSolution"
+          <SketcherViewer
+            v-if="['submit_molecule', 'marker'].includes(questionType) && !previewingQuestion || 'marker' === questionType && previewingQuestion"
+            ref="sketcherViewer"
+            :key="`sketcher-${qtiJsonCacheKey}-${previewingQuestion}`"
+            :qti-json="JSON.parse(qtiJson)"
+            :student-response="studentResponse ? JSON.stringify(JSON.parse(studentResponse).structure) : solutionStructure"
+            :read-only="previewOrSolution || !submitButtonActive"
+            :configuration="questionType === 'marker' ? 'marker-only' : 'default'"
           />
           <DropDownTableViewer v-if="questionType === 'drop_down_table'"
                                ref="dropDownTableViewer"
@@ -305,21 +308,22 @@ export default {
 
   },
   data: () => ({
-    response: '',
-    receivedStructure: false,
-    clickerApp: window.config.clickerApp,
-    qtiJsonCacheKey: 0,
-    matchingFeedback: '',
-    termsToMatch: [],
-    possibleMatches: [],
-    jsonShown: false,
-    submissionErrorMessage: '',
-    questionType: '',
-    selectChoices: [],
-    question: {},
-    prompt: '',
-    simpleChoice: []
-  }
+      solutionStructure: '',
+      response: '',
+      receivedStructure: false,
+      clickerApp: window.config.clickerApp,
+      qtiJsonCacheKey: 0,
+      matchingFeedback: '',
+      termsToMatch: [],
+      possibleMatches: [],
+      jsonShown: false,
+      submissionErrorMessage: '',
+      questionType: '',
+      selectChoices: [],
+      question: {},
+      prompt: '',
+      simpleChoice: []
+    }
   ),
   computed: {
     isLocalMe: () => window.config.isAdmin && window.location.hostname === 'local.adapt',
@@ -345,10 +349,23 @@ export default {
       return false
     }
     this.questionType = this.question.questionType
+    if (this.questionType === 'marker') {
+      this.solutionStructure = JSON.stringify(JSON.parse(this.qtiJson).solutionStructure)
+      if (this.previewingQuestion) {
+        let solutionStructure = JSON.parse(this.qtiJson).solutionStructure
+        for (const item of ['atoms', 'bonds']) {
+          for (let i = 0; i < solutionStructure[item].length; i++) {
+            delete solutionStructure[item][i].mark
+          }
+        }
+        this.solutionStructure = JSON.stringify(solutionStructure)
+      }
+    }
     switch (this.questionType) {
       case ('discuss_it'):
         break
       case ('submit_molecule'):
+      case ('marker'):
       case ('numerical'):
       case ('matching') :
       case ('multiple_answers'):
@@ -456,6 +473,7 @@ export default {
       let submissionErrorMessage
       switch (this.questionType) {
         case ('submit_molecule'):
+        case ('marker'):
           const iframe = document.getElementById('sketcherViewer')
           iframe.contentWindow.postMessage('save', '*')
           await this.handleGetStructure()

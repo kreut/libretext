@@ -7,6 +7,7 @@ use App\Rules\atLeastOneFillInTheBlank;
 use App\Rules\atLeastOneSelectChoice;
 use App\Rules\atLeastTwoMatches;
 use App\Rules\atLeastTwoResponses;
+use App\Rules\AtomsAndBonds;
 use App\Rules\AutoGradedDoesNotExist;
 use App\Rules\BowTieItems;
 use App\Rules\correctResponseRequired;
@@ -150,8 +151,12 @@ class StoreQuestionRequest extends FormRequest
                                     $rules['media_uploads'] = ['required', "array", "min:1"];
                                     break;
                                 case('submit_molecule'):
+                                case('marker'):
                                     $rules['qti_prompt'] = ['required'];
                                     $rules['solution_structure'] = ['required'];
+                                    if ($qti_array['questionType'] === 'marker' && $qti_array['partialCredit'] === 'inclusive'){
+                                        $rules['atoms_and_bonds'] =['required', new AtomsAndBonds()];
+                                    }
                                     break;
                                 case('highlight_table'):
                                     $rules['colHeaders'] = ['required', new HighlightTableHeaders()];
