@@ -1096,7 +1096,8 @@ class AssignmentSyncQuestionController extends Controller
                         "time_left" => $time_left]);
 
             }
-            $message = ['notification' => ['title' => 'Clicker Launch', 'body' => 'You have been invited to participate in an ADAPT poll.'], 'data' => ['path' => "Assignment/$assignment->id/Question/$question->id"]];
+            //$message = ['title' => 'Clicker Launch', 'body' => 'You have been invited to participate in an ADAPT poll.', 'data' => ['path' => "Assignment/$assignment->id/Question/$question->id"]];
+            $message = ['title' => 'Clicker Launch', 'body' => 'You have been invited to participate in an ADAPT poll.'];
             $FCMNotification->sendNotificationsByAssignment($assignment, $message);
             $response['type'] = 'success';
             $response['message'] = 'Your students can begin submitting responses.';

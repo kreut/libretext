@@ -118,7 +118,7 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         $request->session()->flush();
-        FCMToken::where('user_id', $request->user()->id)->delete();
+        FCMToken::where('fcm_token', $request->fcm_token)->delete();
         $this->guard()->logout();
         $cookie[0] = Cookie::forget('user_jwt');
         $cookie[1] = Cookie::forget('clicker_app');

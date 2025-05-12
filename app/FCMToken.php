@@ -10,6 +10,7 @@ use Kreait\Firebase\Messaging;
 class FCMToken extends Model
 {
     protected $table = 'fcm_tokens';
+    protected $guarded = [];
 
 
     /**
