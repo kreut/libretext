@@ -64,11 +64,11 @@
            Edit Question "{{ questionToEdit.title }}"
           </h2>
           <div>
-            <small>ADAPT ID: <span id="adapt-id">{{ questionToEdit.id }}</span></small>
+            <small>ADAPT ID: <span :id="`adapt-id-to-copy-${questionToEdit.id}`">{{ questionToEdit.id }}</span></small>
             <span class="text-info">
               <a href=""
                  aria-label="Copy ADAPT ID"
-                 @click.prevent="doCopy('adapt-id')"
+                 @click.prevent="doCopy(`adapt-id-to-copy-${questionToEdit.id}`)"
               >
                 <font-awesome-icon :icon="copyIcon"/>
               </a>
