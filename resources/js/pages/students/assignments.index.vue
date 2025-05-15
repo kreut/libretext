@@ -1,5 +1,9 @@
 <template>
   <div>
+    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}`"
+                            :assignment-id="clickerAssignmentId"
+                            :question-id="clickerQuestionId"
+    />
     <b-modal
       id="modal-progress-report"
       title="Progress Report"
@@ -317,9 +321,11 @@ import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
 import { mapGetters } from 'vuex'
 import { initCentrifuge } from '~/helpers/Centrifuge'
 import { getStatusTextClass } from '~/helpers/AssignTosStatus'
+import RedirectToClickerModal from '../../components/RedirectToClickerModal.vue'
 
 export default {
   components: {
+    RedirectToClickerModal,
     Loading,
     QuestionCircleTooltipModal
   },
@@ -327,6 +333,8 @@ export default {
     return { title: 'My Assignments' }
   },
   data: () => ({
+    clickerAssignmentId: 0,
+    clickerQuestionId: 0,
     showNoMatchingMessage: false,
     chosenAssignmentStatus: null,
     assignmentStatuses: [],
@@ -554,10 +562,11 @@ export default {
           for (let i = 0; i < clickerAssignments.length; i++) {
             let assignment = clickerAssignments[i]
             let sub = this.centrifuge.newSubscription(`set-current-page-${assignment.id}`)
-            sub.on('publication', async function (ctx) {
-              console.log(ctx)
+            sub.on('publication', async (ctx) => {
+              console.error(ctx)
               const data = ctx.data
-              window.location.href = `/assignments/${assignment.id}/questions/view/${data.question_id}`
+              this.clickerAssignmentId = +assignment.id
+              this.clickerQuestionId = +data.question_id
             }).subscribe()
           }
         }

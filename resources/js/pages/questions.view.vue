@@ -1,6 +1,10 @@
 <template>
   <div :style="!inIFrame ? '' : 'margin-bottom:10px;'">
     <div v-if="questions[currentPage-1]" id="questions-loaded"/>
+    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}`"
+                            :assignment-id="clickerAssignmentId"
+                            :question-id="clickerQuestionId"
+    />
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
@@ -1352,6 +1356,7 @@
             <file-upload
               v-if="!isOpenEndedAudioSubmission"
               ref="upload"
+              accept=".pdf,.txt,.png,.jpg,.jpeg"
               v-model="files"
               put-action="/put.method"
               @input-file="inputFile"
@@ -3504,6 +3509,7 @@ import CanSubmitWorkTooltip from '../components/CanSubmitWorkTooltip.vue'
 import SubmitWork from '~/components/SubmitWork.vue'
 import RubricPointsBreakdownModal from '../components/RubricPointsBreakdownModal.vue'
 import RubricPropertiesModal from '../components/RubricPropertiesModal.vue'
+import RedirectToClickerModal from '../components/RedirectToClickerModal.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3514,6 +3520,7 @@ export default {
   middleware: 'auth',
   layout: window.config.clickerApp ? 'blank' : 'default',
   components: {
+    RedirectToClickerModal,
     RubricPropertiesModal,
     RubricPointsBreakdownModal,
     SubmitWork,
@@ -3548,6 +3555,8 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    clickerQuestionId: 0,
+    clickerAssignmentId: 0,
     useExistingRubric: false,
     rubricPointsBreakDownExists: false,
     showRubricPointsBreakdown: false,
@@ -4028,9 +4037,10 @@ export default {
       if (this.user.role === 3) {
         this.centrifuge2 = await initCentrifuge()
         const sub2 = this.centrifuge2.newSubscription(`set-current-page-${this.assignmentId}`)
-        const setCurrentPage = this.setCurrentPage
-        sub2.on('publication', async function (ctx) {
-          await setCurrentPage(ctx)
+        sub2.on('publication', async (ctx) => {
+          const data = ctx.data
+          this.clickerAssignmentId = +this.assignmentId
+          this.clickerQuestionId = +data.question_id
         }).subscribe()
       }
       if (this.user.role === 2) {

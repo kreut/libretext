@@ -1,6 +1,10 @@
 <template>
   <div v-if="showPage">
     <PageTitle title="My Courses"/>
+    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}`"
+                            :assignment-id="clickerAssignmentId"
+                            :question-id="clickerQuestionId"
+    />
     <div class="row mb-4 float-right">
       <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses"/>
       <b-button v-if="!isAnonymousUser" v-b-modal.modal-enroll-in-course variant="primary" size="sm">
@@ -55,11 +59,14 @@ import Form from 'vform'
 import EnrollInCourse from '~/components/EnrollInCourse'
 import { mapGetters } from 'vuex'
 import { initCentrifuge } from '~/helpers/Centrifuge'
+import RedirectToClickerModal from '../../components/RedirectToClickerModal.vue'
 
 export default {
-  components: { EnrollInCourse },
+  components: { RedirectToClickerModal, EnrollInCourse },
   middleware: 'auth',
   data: () => ({
+    clickerAssignmentId: 0,
+    clickerQuestionId: 0,
     isAnonymousUser: false,
     showNoAnonymousUserCoursesAlert: false,
     fields: [],
@@ -132,10 +139,11 @@ export default {
           for (let i = 0; i < clickerAssignments.length; i++) {
             let assignment = clickerAssignments[i]
             let sub = this.centrifuge.newSubscription(`set-current-page-${assignment.id}`)
-            sub.on('publication', async function (ctx) {
-              console.log(ctx)
+            sub.on('publication', async (ctx) => {
+              console.error(ctx)
               const data = ctx.data
-              window.location.href = `/assignments/${assignment.id}/questions/view/${data.question_id}`
+              this.clickerAssignmentId = +assignment.id
+              this.clickerQuestionId = +data.question_id
             }).subscribe()
           }
         }

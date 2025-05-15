@@ -10,7 +10,6 @@ use App\FCMToken;
 use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Question;
-use App\User;
 use Exception;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Foundation\Application;
@@ -18,16 +17,11 @@ use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
-use Tymon\JWTAuth\Facades\JWTAuth;
+
 
 class LoginController extends Controller
 {

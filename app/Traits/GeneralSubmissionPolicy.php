@@ -75,6 +75,10 @@ trait GeneralSubmissionPolicy
                 $response['message'] = "This question is currently not open for submission.";
                 return $response;
             }
+            if ($assignment_question->clicker_start && (time() >= strtotime($assignment_question->clicker_start) && time() <= strtotime($assignment_question->clicker_end))) {
+                $response['type'] = "success";
+                return $response;
+            }
 
         }
         $question_in_assignment = $assignment->questions->contains($question_id);

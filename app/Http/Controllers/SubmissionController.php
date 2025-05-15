@@ -9,7 +9,9 @@ use App\DataShop;
 use App\Discussion;
 use App\DiscussionComment;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Http\Requests\UpdateScoresRequest;
+use App\JWE;
 use App\LearningTree;
 use App\LearningTreeNodeSubmission;
 use App\QuestionLevelOverride;
@@ -22,6 +24,7 @@ use App\Assignment;
 use App\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -394,13 +397,13 @@ class SubmissionController extends Controller
 
                             case('multiple_choice'):
                                 if (!$choices_by_identifier) {
-                                    foreach ($submission['question']['simpleChoice'] as $key => $choice) {
+                                    foreach ($submission['question']['simpleChoice'] as $choice) {
                                         $choices_by_identifier[$choice['identifier']] = $choice['value'];
                                         $counts_by_identifier[$choice['identifier']] = 0;
                                     }
                                 }
                                 if (!isset($response['correct_answer'])) {
-                                    foreach ($submission['question']['simpleChoice'] as $key => $choice) {
+                                    foreach ($submission['question']['simpleChoice'] as $choice) {
                                         if ($choice['correctResponse']) {
                                             $response['correct_answer'] = $choice['value'];
                                         }
@@ -454,7 +457,35 @@ class SubmissionController extends Controller
 
                         break;
                     case('webwork'):
-                        Log::info(print_r($submission, true));
+                        $student_ans = null;
+                        if ($submission
+                            && isset($submission['score'])
+                            && isset($submission['score']['answers'])) {
+
+//dd($submission);
+
+                            /* if (isset($value['preview_latex_string'])) {
+                                 $formatted_submission = isset($value['preview_latex_string']) ? '\(' . $value['preview_latex_string'] . '\)';
+                             } else {
+                                 $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
+                             }*/
+                            $first_answer = reset($submission['score']['answers']);
+                            $student_ans = $first_answer['original_student_ans'];
+                            if (!isset($response['correct_answer'])) {
+                                $response['correct_answer'] = $first_answer['correct_ans'];
+                            }
+                            $counts_by_identifier[$student_ans] = 0;
+                            if (!in_array($student_ans, $choices_by_identifier)) {
+                                $choices_by_identifier[] = $student_ans;
+                            }
+                        }
+                        foreach ($counts_by_identifier as $identifier => $count_by_identifier) {
+                            if ($student_ans === $identifier) {
+                                $counts_by_identifier[$identifier]++;
+                            }
+                        }
+                        $choices = array_values($choices_by_identifier);
+                        $counts = array_values($counts_by_identifier);
                         break;
                     default:
                         $response['message'] = 'Only True/False or Multiple Choice Native/H5P questions are supported at this time.';

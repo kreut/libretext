@@ -2268,6 +2268,12 @@ class AssignmentController extends Controller
                     ->where('assignment_id', $assignment->id)
                     ->where('user_id', auth()->user()->id)
                     ->first('extension');
+                if ($assignment->assessment_type === 'clicker'){
+                $formatted_items['course_name'] = $assignment->course->name;
+                $instructor_user_id = $assignment->course->user_id;
+                $instructor = User::find($instructor_user_id);
+                $formatted_items['instructor_name'] = "$instructor->first_name $instructor->last_name";
+                }
                 $formatted_items['is_instructor_logged_in_as_student'] = auth()->user()->instructor_user_id;
                 $formatted_items['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
                 $formatted_items['full_pdf_url'] = $submissionFile->getFullPdfUrl($assignment);
