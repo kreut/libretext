@@ -6073,6 +6073,7 @@ export default {
       this.technologySrcDoc = ''
 
       await this.$nextTick(() => {
+        this.submitWorkKey++
         this.showSolutionFileHTML = this.questions[this.currentPage - 1].solution ||
           this.questions[this.currentPage - 1].solution_html ||
           this.questions[this.currentPage - 1].imathas_solution

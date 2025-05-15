@@ -43,7 +43,7 @@
               size="sm"
               :variant="submittedWorkUrl ? 'success' : 'primary'"
               @click="initShowSubmitWorkModal()"
-    >Submit Work
+    >Submit<span v-show="submittedWorkUrl">ted</span> Work
     </b-button>
     <b-modal id="modal-submit-work"
              title="Submit Work"
