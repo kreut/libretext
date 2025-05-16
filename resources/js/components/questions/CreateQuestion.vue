@@ -616,10 +616,13 @@
         <b-card border-variant="primary"
                 class="mb-3"
         >
-<b-alert :show="isWebworkDownloadOnly">
-  You do not have editing rights to this question. However, you may view any aspect of the question.  In addition, you may export
-  the webWork code, which can be found under the <a style="cursor: pointer;" @click.prevent="activeTabIndex=1">Primary Content</a> tab.
-</b-alert>
+          <b-alert :show="isWebworkDownloadOnly">
+            You do not have editing rights to this question. However, you may view any aspect of the question. In
+            addition, you may export
+            the webWork code, which can be found under the <a style="cursor: pointer;"
+                                                              @click.prevent="activeTabIndex=1"
+          >Primary Content</a> tab.
+          </b-alert>
           <p>
             The question properties help us to organize the
             questions within ADAPT for searchability and also help
@@ -2043,6 +2046,7 @@
                 label-for="HTML Block Alternative"
               >
                 <template v-slot:label>
+                      <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
                   HTML Block Alternative
 
                   <QuestionCircleTooltip id="text-question-tooltip"/>
@@ -2054,8 +2058,15 @@
                     using one of the
                     non-native auto-graded technologies.
                   </b-tooltip>
+                  <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'text_question').expanded"
+                                     :icon="caretRightIcon" size="lg"
+                  />
+                  <font-awesome-icon v-if="editorGroups.find(group => group.id === 'text_question').expanded"
+                                     :icon="caretDownIcon" size="lg"
+                  /></span>
                 </template>
                 <ckeditor
+                  v-show="editorGroups.find(group => group.id === 'text_question').expanded"
                   id="Open-Ended Alternative"
                   v-model="questionForm.text_question"
                   tabindex="0"
@@ -2159,9 +2170,10 @@
               </b-alert>
             </div>
             <b-form-group
-              v-if="questionForm.question_type === 'assessment' ||editorGroup.id==='notes'"
+              v-if="questionForm.question_type === 'assessment' || editorGroup.id==='notes'"
               :label-for="editorGroup.label"
             >
+                    <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
               {{ editorGroup.label }}
               <span v-if="editorGroup.label === 'Answer'">
                 <span v-if="questionForm.technology !== 'qti'"> <QuestionCircleTooltip id="answer-tooltip"/>
@@ -2189,13 +2201,22 @@
                   Hints can be provided to students within assignments. Hints are optional.
                 </b-tooltip>
               </span>
+                      <span v-show="!(questionForm.technology === 'qti' && editorGroup.id === 'answer_html')"
+                         <font-awesome-icon v-if="!editorGroups.find(group => group.id === editorGroup.id).expanded"
+                                            :icon="caretRightIcon" size="lg"
+                         />
+                  <font-awesome-icon v-if="editorGroups.find(group => group.id === editorGroup.id).expanded"
+                                     :icon="caretDownIcon" size="lg"
+                  />
+                    </span>
+              </span>
               <div v-if="questionForm.technology === 'qti' && editorGroup.id === 'answer_html'">
                 <b-alert show variant="info">
                   Native question types already have the answer built into the question creation process.
                 </b-alert>
               </div>
               <ckeditor
-                v-show="!(questionForm.technology === 'qti' && editorGroup.id === 'answer_html')"
+                v-show="editorGroups.find(group => group.id === editorGroup.id).expanded && !(questionForm.technology === 'qti' && editorGroup.id === 'answer_html')"
                 :id="editorGroup.label"
                 v-model="questionForm[editorGroup.id]"
                 tabindex="0"
@@ -2223,8 +2244,16 @@
               question. Notes are optional and students
               will never see this information.
             </p>
-
+            <p>      <span style="cursor: pointer;" @click="toggleExpanded ('notes')">Notes
+              <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'notes').expanded"
+                                 :icon="caretRightIcon" size="lg"
+              />
+              <font-awesome-icon v-if="editorGroups.find(group => group.id === 'notes').expanded"
+                                 :icon="caretDownIcon" size="lg"
+              /></span>
+            </p>
             <ckeditor
+              v-show="editorGroups.find(group => group.id === 'notes').expanded"
               id="notes"
               v-model="questionForm.notes"
               tabindex="0"
@@ -3693,9 +3722,7 @@ export default {
       if (this.questionToEdit.tags.length === 1 && this.questionToEdit.tags[0] === 'none') {
         this.questionForm.tags = []
       }
-      for (let i = 0; i < this.editorGroups.length; i++) {
-        this.editorGroups[i].expanded = true
-      }
+
       if (this.isWebworkDownloadOnly) {
         this.disableTabs()
       }
@@ -4565,9 +4592,6 @@ export default {
           this.questionForm.author = this.user.first_name + ' ' + this.user.last_name
           this.newAutoGradedTechnology = null
           this.existingQuestionFormTechnology = 'text'
-          for (let i = 0; i < this.editorGroups.length; i++) {
-            this.editorGroups[i].expanded = true
-          }
         }
       }
       if (this.nursing) {
