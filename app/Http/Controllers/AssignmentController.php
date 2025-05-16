@@ -580,8 +580,8 @@ class AssignmentController extends Controller
                 return $response;
             }
             $url = "$lti_registration->auth_server/api/lti/courses/$course->lms_course_id/line_items/$assignment->lms_assignment_id";
-            LtiAssignmentsAndGradesUrl::updateOrCreate(['assignment_id' => $assignment->id,
-                'url' => $url]);
+          //  LtiAssignmentsAndGradesUrl::updateOrCreate(['assignment_id' => $assignment->id],
+          //      ['url' => $url]);
 
             $assignment->lms_assignment_id = $lms_result['message']->id;
             $assignment->save();
