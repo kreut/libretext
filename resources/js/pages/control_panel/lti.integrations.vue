@@ -119,7 +119,7 @@ export default {
       label: 'URL'
     },
     'campus_id',
-    'admin_email',
+    'name',
     {
       key: 'api',
       label: 'API'
@@ -179,7 +179,8 @@ export default {
         for (let i = 0; i < blackboard.length; i++) {
           const value = {
             auth_server: 'https://blackboard.com',
-            campus_id: blackboard[i].name,
+            campus_id: 'N/A',
+            name: blackboard[i].name,
             api: 'no'
           }
           this.ltiRegistrations.push(value)

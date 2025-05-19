@@ -107,12 +107,16 @@ class LtiRegistrationController extends Controller
         }
         try {
             $response['type'] = 'success';
-            $lti_registrations = $ltiRegistration->where('id','<>',6)->get();
+            $lti_registrations = DB::table('lti_schools')
+                ->join('lti_registrations','lti_schools.lti_registration_id','=','lti_registrations.id')
+                ->join('schools','lti_schools.school_id','=','schools.id')
+                ->where('lti_registrations.id','<>',6)
+                ->get();
+
             $blackboard = DB::table('lti_schools')
                 ->join('lti_registrations','lti_schools.lti_registration_id','=','lti_registrations.id')
                 ->join('schools','lti_schools.school_id','=','schools.id')
                 ->where('lti_registrations.id',6)
-                ->select('name')
                 ->get();
             foreach ($lti_registrations as $lti_registration) {
                 $lti_registration->api = $lti_registration->api_key !== null ? 'Yes' : 'No';
