@@ -2012,7 +2012,7 @@
                 <b-textarea v-model="questionForm.webwork_code"
                             style="width:100%"
                             :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"
-                            rows="10"
+                            rows="20"
                             @keydown="questionForm.errors.clear('webwork_code')"
                 />
                 <has-error :form="questionForm" field="webwork_code"/>
