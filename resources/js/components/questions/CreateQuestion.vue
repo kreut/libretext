@@ -1087,9 +1087,6 @@
              :title-link-class="getTabClass('primary-content')"
       >
         <b-card border-variant="primary"
-                header-bg-variant="primary"
-                header-text-variant="white"
-                header="Primary Content"
                 class="mb-3"
         >
           <p>
@@ -2026,9 +2023,6 @@
              :title-link-class="getTabClass('accessibility-alternatives')"
       >
         <b-card border-variant="primary"
-                header-bg-variant="primary"
-                header-text-variant="white"
-                header="Accessibility Alternatives"
                 class="mb-3"
         >
           <p>An accessible HTML block alternative or an accessible auto-graded version of the question.</p>
@@ -2147,9 +2141,6 @@
       >
         <b-card
           border-variant="primary"
-          header-bg-variant="primary"
-          header-text-variant="white"
-          header-html="Secondary Content"
           class="mb-3"
         >
           <p>
@@ -2233,9 +2224,6 @@
              :title-link-class="getTabClass('private-notes')"
       >
         <b-card border-variant="primary"
-                header-bg-variant="primary"
-                header-text-variant="white"
-                header="Private Notes"
                 class="mb-3"
         >
           <b-form-group>
@@ -2270,9 +2258,6 @@
       >
         <b-card
           border-variant="primary"
-          header-bg-variant="primary"
-          header-text-variant="white"
-          header="Rubric"
           class="mb-3"
         >
 
