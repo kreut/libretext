@@ -686,7 +686,7 @@
       title="Preview"
       @shown="renderMathJax()"
     >
-      <div class="d-flex justify-content-center">
+      <div class="table-responsive">
         <table class="table table-striped pb-3" style="width:100%">
           <thead>
           <tr>
