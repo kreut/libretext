@@ -2232,16 +2232,7 @@
               question. Notes are optional and students
               will never see this information.
             </p>
-            <p>      <span style="cursor: pointer;" @click="toggleExpanded ('notes')">Notes
-              <font-awesome-icon v-if="!editorGroups.find(group => group.id === 'notes').expanded"
-                                 :icon="caretRightIcon" size="lg"
-              />
-              <font-awesome-icon v-if="editorGroups.find(group => group.id === 'notes').expanded"
-                                 :icon="caretDownIcon" size="lg"
-              /></span>
-            </p>
             <ckeditor
-              v-show="editorGroups.find(group => group.id === 'notes').expanded"
               id="notes"
               v-model="questionForm.notes"
               tabindex="0"
