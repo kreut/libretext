@@ -147,10 +147,12 @@ class LTIController extends Controller
                 ['url' => $assignments_and_grades_url]
             );*/
             $names_and_roles_url = $launch_data["https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice"]["context_memberships_url"];
-            LtiNamesAndRolesUrl::updateOrCreate(
+            /*LtiNamesAndRolesUrl::updateOrCreate(
                 ['course_id' => $assignment->course->id],
                 ['url' => $names_and_roles_url]
             );
+            Look at the key length?
+            SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'https://some-school.instructure.com/api/lti/courses/79511/names_and_' for key 'lti_names_and_roles_urls.lti_names_and_roles_urls_url_unique' (SQL: insert into `lti_names_and_roles_urls` (`course_id`, `url`, `updated_at`, `created_at`) values (6992, https://peralta.instructure.com/api/lti/courses/79511/names_and_roles, 2025-05-22 23:20:15, 2025-05-22 23:20:15))'*/
             session()->forget('lms_launch_id');
             DB::commit();
             $response['assignment_id'] = $assignment->id;

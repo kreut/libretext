@@ -580,8 +580,9 @@ class AssignmentController extends Controller
                 return $response;
             }
             $url = "$lti_registration->auth_server/api/lti/courses/$course->lms_course_id/line_items/$assignment->lms_assignment_id";
-            LtiAssignmentsAndGradesUrl::updateOrCreate(['assignment_id' => $assignment->id], ['url' => $url]);
-
+            //LtiAssignmentsAndGradesUrl::updateOrCreate(['assignment_id' => $assignment->id], ['url' => $url]);
+//	Message: 'SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'https://some-lms.instructure.com/api/lti/courses/25345/line_items/' for key 'lti_assignments_and_grades_urls.lti_assignments_and_grades_urls_url_unique' (SQL: insert into `lti_assignments_and_grades_urls` (`assignment_id`, `url`, `updated_at`, `created_at`) values (128999, https://scccd.instructure.com/api/lti/courses/25345/line_items/, 2025-05-22 16:18:36, 2025-05-22 16:18:36))'
+//	File: /var/task/vendor/laravel/framework/src/Illuminate/Database/Connection.php:631 When is it not passed pack is the question? scccd
             $assignment->lms_assignment_id = $lms_result['message']->id;
             $assignment->save();
             $response['type'] = 'success';
