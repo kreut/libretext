@@ -450,3 +450,14 @@ div#discuss-it-recorder .ar-records__record {
   border-color: #333333 !important;
 }
 
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* full viewport height */
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+

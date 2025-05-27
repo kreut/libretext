@@ -16,7 +16,7 @@
       <navbar :linked-accounts="linkedAccounts"/>
     </div>
     <div v-else id="default-padding-top" style="padding-top:30px"/>
-    <div id="main-content" role="main" :class="{ 'container': true, 'mt-4': true }" tabindex="-1">
+    <div id="main-content" class="page-container" role="main" :class="{ 'container': true, 'mt-4': true }" tabindex="-1">
       <child/>
     </div>
     <div v-if="!inIFrame && !isLearningTreesEditor" id="footer-div" class="d-flex flex-column"
@@ -131,7 +131,6 @@ import Navbar from '~/components/Navbar'
 import { mapGetters } from 'vuex'
 import Email from '~/components/Email'
 import Child from '../components/Child.vue'
-import linked_accounts from '../pages/settings/linked_accounts.vue'
 
 export default {
   name: 'MainLayout',
@@ -163,7 +162,6 @@ export default {
         this.intervalId = setInterval(this.checkQuestionViewDisplay, 50)
 
         document.getElementById('footer-div').style.marginTop = '0px'
-        document.getElementById('main-content').style.minHeight = '0px'
       }
       if (to.name === 'welcome' && this.user){
         if ([3, 4].includes(this.user.role)) {
