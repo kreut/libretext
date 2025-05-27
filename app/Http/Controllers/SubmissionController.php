@@ -410,8 +410,7 @@ class SubmissionController extends Controller
                                     }
                                 }
                                 foreach ($counts_by_identifier as $identifier => $count_by_identifier) {
-                                    //Log::info($identifier . ' ' . $submission['student_response']);
-                                    if (+$submission['student_response'] === +$identifier) {
+                                    if ((string) $submission['student_response'] === (string) $identifier) {
                                         $counts_by_identifier[$identifier]++;
                                     }
                                 }
