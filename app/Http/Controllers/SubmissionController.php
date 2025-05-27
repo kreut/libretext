@@ -15,7 +15,9 @@ use App\JWE;
 use App\LearningTree;
 use App\LearningTreeNodeSubmission;
 use App\QuestionLevelOverride;
+use App\QuestionRevision;
 use App\SubmissionHistory;
+use App\Webwork;
 use Carbon\Carbon;
 use Exception;
 use App\Submission;
@@ -410,7 +412,7 @@ class SubmissionController extends Controller
                                     }
                                 }
                                 foreach ($counts_by_identifier as $identifier => $count_by_identifier) {
-                                    if ((string) $submission['student_response'] === (string) $identifier) {
+                                    if ((string)$submission['student_response'] === (string)$identifier) {
                                         $counts_by_identifier[$identifier]++;
                                     }
                                 }
@@ -457,34 +459,44 @@ class SubmissionController extends Controller
                         break;
                     case('webwork'):
                         $student_ans = null;
+                        $webwork = new Webwork();
                         if ($submission
                             && isset($submission['score'])
                             && isset($submission['score']['answers'])) {
-
-//dd($submission);
-
-                            /* if (isset($value['preview_latex_string'])) {
-                                 $formatted_submission = isset($value['preview_latex_string']) ? '\(' . $value['preview_latex_string'] . '\)';
-                             } else {
-                                 $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
-                             }*/
-                            $first_answer = reset($submission['score']['answers']);
-                            $student_ans = $first_answer['original_student_ans'];
-                            if (!isset($response['correct_answer'])) {
-                                $response['correct_answer'] = $first_answer['correct_ans'];
+                            $cache_key = "webwork_code_assignment_question_{$assignment->id}_$question->id";
+                            $webwork_code = Cache::remember($cache_key, now()->addMinutes(10), function () use ($assignment, $question) {
+                                $assignment_question = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
+                                    ->where('question_id', $question->id)
+                                    ->first();
+                                return $assignment_question->question_revision_id
+                                    ? QuestionRevision::find($assignment_question->question_revision_id)->webwork_code
+                                    : Question::find($assignment_question->question_id)->webwork_code;
+                            });
+                            $radio_buttons = $webwork->getRadioButtonLabels($webwork_code, false);
+                            if ($radio_buttons) {
+                                /* if (isset($value['preview_latex_string'])) {
+                                     $formatted_submission = isset($value['preview_latex_string']) ? '\(' . $value['preview_latex_string'] . '\)';
+                                 } else {
+                                     $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
+                                 }*/
+                                $first_answer = reset($submission['score']['answers']);
+                                $student_ans = $first_answer['original_student_ans'];
+                                if (!isset($response['correct_answer'])) {
+                                    $response['correct_answer'] = $first_answer['correct_ans'];
+                                }
+                                foreach ($radio_buttons as $radio_button) {
+                                    $counts_by_identifier[$radio_button] = 0;
+                                }
                             }
-                            $counts_by_identifier[$student_ans] = 0;
-                            if (!in_array($student_ans, $choices_by_identifier)) {
-                                $choices_by_identifier[] = $student_ans;
+                            foreach ($counts_by_identifier as $identifier => $count_by_identifier) {
+                                if ($student_ans === $identifier) {
+                                    $counts_by_identifier[$identifier]++;
+                                }
                             }
+                            $choices = array_values($choices_by_identifier);
+                            $choices = array_values($radio_buttons);
+                            $counts = array_values($counts_by_identifier);
                         }
-                        foreach ($counts_by_identifier as $identifier => $count_by_identifier) {
-                            if ($student_ans === $identifier) {
-                                $counts_by_identifier[$identifier]++;
-                            }
-                        }
-                        $choices = array_values($choices_by_identifier);
-                        $counts = array_values($counts_by_identifier);
                         break;
                     default:
                         $response['message'] = 'Only True/False or Multiple Choice Native/H5P questions are supported at this time.';
@@ -649,5 +661,6 @@ class SubmissionController extends Controller
         }
         return $response;
     }
+
 
 }

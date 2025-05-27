@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\OneTimers\webwork;
 
+use App\Webwork;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,7 @@ class getRadioButtonQuestionsWithLongRadioResponses extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(Webwork $webwork)
     {
         try {
             DB::beginTransaction();
@@ -55,7 +56,7 @@ class getRadioButtonQuestionsWithLongRadioResponses extends Command
                 ->pluck('question_id')
                 ->toArray();
             foreach ($questions as $question) {
-                $result = $this->hasLongRadioButtonLabel($question->webwork_code, 200);
+                $result = $webwork->getRadioButtonLabels($question->webwork_code, 200);
                 if ($result) {
                     if (!in_array($question->id, $used_question_ids)) {
                         echo $question->id . "\r\n";
@@ -86,64 +87,6 @@ class getRadioButtonQuestionsWithLongRadioResponses extends Command
             echo $e->getMessage();
         }
         return 0;
-    }
-
-    function hasLongRadioButtonLabel($code, $lengthThreshold = 200)
-    {
-        // Step 1: Extract full RadioButtons(...) call
-        $pos = strpos($code, 'RadioButtons(');
-        if ($pos === false) return false;
-
-        $start = $pos + strlen('RadioButtons(');
-        $depth = 1;
-        $len = strlen($code);
-        $end = $start;
-
-        while ($end < $len && $depth > 0) {
-            $char = $code[$end];
-            if ($char === '(') {
-                $depth++;
-            } elseif ($char === ')') {
-                $depth--;
-            }
-            $end++;
-        }
-
-        if ($depth !== 0) return false;
-
-        $inner = substr($code, $start, $end - $start - 1);
-
-        // Step 2: Find first array (assumed to be in square brackets)
-        $arrayStart = strpos($inner, '[');
-        if ($arrayStart === false) return false;
-
-        $depth = 1;
-        $i = $arrayStart + 1;
-        $arrayLen = strlen($inner);
-        while ($i < $arrayLen && $depth > 0) {
-            $char = $inner[$i];
-            if ($char === '[') {
-                $depth++;
-            } elseif ($char === ']') {
-                $depth--;
-            }
-            $i++;
-        }
-
-        if ($depth !== 0) return false;
-
-        $arrayString = substr($inner, $arrayStart, $i - $arrayStart); // includes []
-
-        // Step 3: Extract quoted string elements using regex
-        preg_match_all('/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/', $arrayString, $matches);
-
-        if (!isset($matches[1])) return false;
-
-        $longElements = array_filter($matches[1], function ($el) use ($lengthThreshold) {
-            return mb_strlen($el) > $lengthThreshold;
-        });
-
-        return !empty($longElements) ? $longElements : false;
     }
 
     function extractRadioButtonsArgs($code)

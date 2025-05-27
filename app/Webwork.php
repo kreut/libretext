@@ -27,6 +27,70 @@ class Webwork extends Model
     }
 
     /**
+     * @param $code
+     * @param $lengthThreshold
+     * @return array|false|string[]
+     */
+    public function getRadioButtonLabels($code, $lengthThreshold)
+    {
+        // Step 1: Extract full RadioButtons(...) call
+        $pos = strpos($code, 'RadioButtons(');
+        if ($pos === false) return false;
+
+        $start = $pos + strlen('RadioButtons(');
+        $depth = 1;
+        $len = strlen($code);
+        $end = $start;
+
+        while ($end < $len && $depth > 0) {
+            $char = $code[$end];
+            if ($char === '(') {
+                $depth++;
+            } elseif ($char === ')') {
+                $depth--;
+            }
+            $end++;
+        }
+
+        if ($depth !== 0) return false;
+
+        $inner = substr($code, $start, $end - $start - 1);
+
+        // Step 2: Find first array (assumed to be in square brackets)
+        $arrayStart = strpos($inner, '[');
+        if ($arrayStart === false) return false;
+
+        $depth = 1;
+        $i = $arrayStart + 1;
+        $arrayLen = strlen($inner);
+        while ($i < $arrayLen && $depth > 0) {
+            $char = $inner[$i];
+            if ($char === '[') {
+                $depth++;
+            } elseif ($char === ']') {
+                $depth--;
+            }
+            $i++;
+        }
+
+        if ($depth !== 0) return false;
+
+        $arrayString = substr($inner, $arrayStart, $i - $arrayStart); // includes []
+
+        // Step 3: Extract quoted string elements using regex
+        preg_match_all('/"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"/', $arrayString, $matches);
+
+        if (!isset($matches[1])) return false;
+        if ($lengthThreshold) {
+            $longElements = array_filter($matches[1], function ($el) use ($lengthThreshold) {
+                return mb_strlen($el) > $lengthThreshold;
+            });
+
+            return !empty($longElements) ? $longElements : false;
+        } else return $matches[1];
+    }
+
+    /**
      * @throws Exception
      */
     public function deletePath($removeFilePath)
