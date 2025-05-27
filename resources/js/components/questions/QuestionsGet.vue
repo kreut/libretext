@@ -1017,69 +1017,60 @@
                           All
                         </b-form-radio>
                       </b-form-radio-group>
-                      <label v-if="['h5p','imathas','webwork'].includes(allQuestionsTechnology)" class="ml-4"
+                      <label v-if="['h5p','imathas'].includes(allQuestionsTechnology)" class="ml-4"
                              style="font-size:14px;margin-right:11px"
-                      >{{ allQuestionsTechnology === 'webwork' ? 'File Path' : 'Technology ID' }}</label>
-                      <b-form-input v-if="['h5p','imathas','webwork'].includes(allQuestionsTechnology)"
+                      >Technology ID</label>
+                      <b-form-input v-if="['h5p','imathas'].includes(allQuestionsTechnology)"
                                     id="all-questions-technology-id"
                                     v-model="allQuestionsTechnologyId"
-                                    style="height:31px"
-                                    :style="[allQuestionsTechnology === 'webwork' ? {'width': '400px'} : {'width': '75px'}]"
+                                    style="height:31px;width: 75px"
                       />
+                    <span v-if="allQuestionsTechnology === 'webwork'">
+                      <b-form-radio-group
+                        id="webwork-content-type"
+                        v-model="webworkContentType"
+                        inline
+                        name="webwork-file-type"
+                        class="pl-2 mt-1"
+                      >
+                          <span
+                                  style="font-size:14px;margin-right:11px;"
+                                  class="mt-2"
+                          >Technology ID</span>
+                        <b-form-radio value="pgml">
+                          pgml
+                        </b-form-radio>
+                        <b-form-radio value="pl">
+                          pl
+                        </b-form-radio>
+                        <b-form-radio value="either">
+                          Either
+                        </b-form-radio>
+                      </b-form-radio-group>
+                      <b-form-radio-group
+                        id="wwebwork-algorithmic"
+                        v-model="webworkAlgorithmic"
+                        inline
+                        name="webwork-algorithmic"
+                        class="pl-2 mt-1"
+                      >
+                         <span
+                           style="font-size:14px;margin-right:29px;"
+                           class="mt-2"
+                         >Algorithmic</span>
+                        <b-form-radio value="algorithmic only">
+                          Algorithmic Only
+                        </b-form-radio>
+                        <b-form-radio value="non-algorithmic only">
+                          Non-algorithmic only
+                        </b-form-radio>
+                        <b-form-radio value="either">
+                          Either
+                        </b-form-radio>
+                      </b-form-radio-group>
+                      </span>
                     </b-form>
                   </div>
-                  <b-form-group v-if="allQuestionsTechnology === 'webwork'"
-                                style="margin-left:208px"
-                                label-for="webwork-content-type"
-                                label-cols-sm="2"
-                                label-align-sm="right"
-                                label="Content Type"
-                                label-size="sm"
-                  >
-                    <b-form-radio-group
-                      id="webwork-content-type"
-                      v-model="webworkContentType"
-                      inline
-                      name="webwork-file-type"
-                      class="pl-2 mt-1"
-                    >
-                      <b-form-radio value="pgml">
-                        pgml
-                      </b-form-radio>
-                      <b-form-radio value="pl">
-                        pl
-                      </b-form-radio>
-                      <b-form-radio value="either">
-                        Either
-                      </b-form-radio>
-                    </b-form-radio-group>
-                  </b-form-group>
-                  <b-form-group v-if="allQuestionsTechnology === 'webwork'"
-                                style="margin-left:208px"
-                                label-for="webwork-algorithmic"
-                                label-cols-sm="2"
-                                label-align-sm="right"
-                                label="Algorithmic"
-                                label-size="sm"
-                  >
-                    <b-form-radio-group
-                      id="wwebwork-algorithmic"
-                      v-model="webworkAlgorithmic"
-                      inline
-                      name="webwork-algorithmic"
-                      class="pl-2 mt-1"
-                    >
-                      <b-form-radio value="algorithmic only">
-                        Algorithmic Only
-                      </b-form-radio>
-                      <b-form-radio value="non-algorithmic only">
-                        Non-algorithmic only
-                      </b-form-radio>
-                      <b-form-radio value="either">
-                        Either
-                      </b-form-radio>
-                    </b-form-radio-group>
-                  </b-form-group>
                   <b-form-group
                     v-show="['basic','nursing','all'].includes(qtiContentType)"
                     label-for="adapt-id"
