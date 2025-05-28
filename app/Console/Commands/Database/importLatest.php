@@ -41,11 +41,11 @@ class importLatest extends Command
             $backup_path = '/Users/franciscaparedes/adapt_backups/db_backups/';
 
             $date = Carbon::now()->format('Y-m-d');
-            $local_db_backup_filename = $backup_path . $date . '.sql';
-            exec("gunzip -f $local_db_backup_filename.gz", $output, $return_value);
-            if ($return_value) {
-                throw new Exception ("not unzipped");
-            }
+            //$local_db_backup_filename = $backup_path . $date . '.sql';
+            //exec("gunzip -f $local_db_backup_filename.gz", $output, $return_value);
+            //if ($return_value) {
+             //   throw new Exception ("not unzipped");
+            //}
             $conf_file = '/Users/franciscaparedes/itsmorethanatextbook/website/local_config_stuff/config.conf';
             exec("/Applications/MAMP/Library/bin/mysql --defaults-file=$conf_file --execute='DROP DATABASE libretext';", $output, $return_value);
             if ($return_value) {
@@ -55,7 +55,9 @@ class importLatest extends Command
             if ($return_value) {
                 throw new Exception ("not created");
             }
-            exec("/Applications/MAMP/Library/bin/mysql --defaults-file=$conf_file 'libretext' < $local_db_backup_filename", $output, $return_value);
+
+            exec(" myloader -d /Users/franciscaparedes/adapt_backups/db_backups/$date -u root -p root -B libretext -v 3 --purge-mode=DROP -o --rows=2000",$output, $return_value);
+            //exec("/Applications/MAMP/Library/bin/mysql --defaults-file=$conf_file 'libretext' < $local_db_backup_filename", $output, $return_value);
             if ($return_value) {
                 throw new Exception ("not imported");
             }
