@@ -173,20 +173,18 @@
         <div
           v-if="questions[currentPage-1] && questions[currentPage-1].technology_iframe.length"
         >
-          <div
-            v-if="(technologySrcDoc === '' && questions[currentPage-1].technology !== 'webwork')"
-          >
-            <iframe
-              :key="`technology-iframe-${currentPage}-${cacheIndex}`"
-              v-resize="{ log: false }"
-              aria-label="auto_graded_submission_text"
-              width="100%"
-              allowtransparency="true"
-              :src="questions[currentPage-1].technology_iframe"
-              frameborder="0"
-              :title="getIframeTitle()"
-            />
-          </div>
+          <iframe
+            :id="`clicker-technology-iframe-${currentPage}-${cacheIndex}`"
+            :key="`clicker-technology-iframe-${currentPage}-${cacheIndex}`"
+            v-resize="{ log: false }"
+            aria-label="auto_graded_submission_text"
+            width="100%"
+            allowtransparency="true"
+            :src="questions[currentPage-1].technology_iframe"
+            frameborder="0"
+            @load="removeSubmitButton()"
+            :title="getIframeTitle()"
+          />
         </div>
       </div>
       <template #modal-footer>
@@ -787,9 +785,7 @@
       </template>
     </b-modal>
     <div v-show="user.role === 3 && clickerStatus === 'neither_view_nor_submit'">
-      <p class="pl-3 pt-2">
-        {{ clickerMessage }}
-      </p>
+      <b-alert variant="info" show>{{ clickerMessage }}</b-alert>
     </div>
     <b-alert :show="showInvalidAssignmentMessage" variant="info">
       <div class="font-weight-bold">
@@ -3510,6 +3506,7 @@ import SubmitWork from '~/components/SubmitWork.vue'
 import RubricPointsBreakdownModal from '../components/RubricPointsBreakdownModal.vue'
 import RubricPropertiesModal from '../components/RubricPropertiesModal.vue'
 import RedirectToClickerModal from '../components/RedirectToClickerModal.vue'
+import { webworkOnLoadCssUpdates } from '../helpers/CSSUpdates'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -4090,6 +4087,18 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    removeSubmitButton () {
+      this.$nextTick(() => {
+        const webworkIframe = document.getElementById(`clicker-technology-iframe-${this.currentPage}-${this.cacheIndex}`)
+        console.error(webworkIframe)
+        webworkIframe.contentWindow.postMessage(JSON.stringify({
+          elements: [{
+            selector: 'input[name="submitAnswers"]',
+            style: 'display:none'
+          }]
+        }), '*')
+      })
+    },
     isLocked () {
       return this.hasAtLeastOneSubmission &&
         !this.presentationMode &&
