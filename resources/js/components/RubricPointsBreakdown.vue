@@ -75,7 +75,7 @@
           <td role="rowheader">
             Total:
           </td>
-          <td>{{ totalMaxPoints }}</td>
+          <td>{{ roundToDecimalSigFig(totalMaxPoints) }}</td>
           <td v-show="showPointsAwardedInfo">{{ totalPointsGiven }}</td>
           <td v-show="showPointsAwardedInfo">{{ roundToDecimalSigFig(totalPercentage) }}%</td>
         </tr>
