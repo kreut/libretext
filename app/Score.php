@@ -400,6 +400,9 @@ class Score extends Model
         foreach ($assignments as $assignment) {
             foreach ($enrolled_user_ids as $user_id) {
                 $include_in_weighted_average_by_assignment_id_and_user_id[$assignment->id][$user_id] = $assignment->include_in_weighted_average * isset($assign_tos[$assignment->id]) && in_array($user_id, $assign_tos[$assignment->id]);
+                if (auth()->user()->role === 3) {
+                    $include_in_weighted_average_by_assignment_id_and_user_id[$assignment->id][$user_id] = $include_in_weighted_average_by_assignment_id_and_user_id[$assignment->id][$user_id] * $assignment->show_scores;
+                }
             }
         }
 

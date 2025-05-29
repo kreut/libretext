@@ -528,6 +528,7 @@ export default {
           return false
         }
         this.scoreInfoByAssignmentGroup = data.score_info_by_assignment_group
+        const zScoresByAssignmentGroup = data.z_scores_by_assignment_group
         this.canViewAssignments = true
         this.hasAssignments = data.assignments.length > 0
         this.lmsOnlyEntry = this.hasAssignments && data.assignments[0].lms && data.assignments[0].lms_only_entry
@@ -540,6 +541,36 @@ export default {
           const assignmentStatus = this.assignmentStatuses.find(item => item.assignment_id === this.assignments[i].id)
           this.assignments[i].status = assignmentStatus ? assignmentStatus.status : 'N/A'
         }
+
+        const groupTotals = {}
+        for (let i = 0; i < this.assignments.length; i++) {
+          const assignment = this.assignments[i]
+          if (assignment.include_in_weighted_average && assignment.show_scores) {
+            if (!groupTotals[assignment.assignment_group]) {
+              groupTotals[assignment.assignment_group] = {
+                assignment_group: assignment.assignment_group,
+                sum_of_scores: 0,
+                total_points: 0,
+                percent: '0%'
+              }
+            }
+            groupTotals[assignment.assignment_group].sum_of_scores += +assignment.score
+            groupTotals[assignment.assignment_group].total_points += +assignment.total_points
+            if (groupTotals[assignment.assignment_group].total_points > 0) {
+              groupTotals[assignment.assignment_group].percent = Number(100 * groupTotals[assignment.assignment_group].sum_of_scores / groupTotals[assignment.assignment_group].total_points).toFixed(0) + '%'
+            }
+            if (zScoresByAssignmentGroup[assignment.assignment_group]) {
+              groupTotals[assignment.assignment_group].z_score = zScoresByAssignmentGroup[assignment.assignment_group]
+            }
+          }
+        }
+
+        this.scoreInfoByAssignmentGroup = Object.values(groupTotals)
+        for (let i = 0; i < this.scoreInfoByAssignmentGroup.length; i++) {
+          this.scoreInfoByAssignmentGroup[i].sum_of_scores = +Number(this.scoreInfoByAssignmentGroup[i].sum_of_scores).toFixed(4)
+        }
+        console.error(this.scoreInfoByAssignmentGroup)
+
         this.originalAssignments = this.assignments
         this.initAssignmentGroupOptions(this.assignments)
 

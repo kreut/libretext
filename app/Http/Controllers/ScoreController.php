@@ -750,13 +750,7 @@ class ScoreController extends Controller
                     }
 
 
-                    $score_info_by_assignment_group[] = ['assignment_group' => $assignment_group['assignment_group'],
-                        'sum_of_scores' => $sum_of_scores_by_user_and_assignment_group[Auth::user()->id][$assignment_group_id] ?? '-',
-                        'total_points' => $assignment_group['total_points'],
-                        'percent' => $percent,
-                        'average' => $average,
-                        'std_dev' => $std_dev,
-                        'z_score' => $z_score];
+                    $z_score_info_by_assignment_group[$assignment_group['assignment_group']] = $z_score;
 
 
                 }
@@ -789,7 +783,7 @@ class ScoreController extends Controller
         $response['letter_grade'] = $course->finalGrades->letter_grades_released ? $letter_grade : false;
         $response['z_score'] = $course->show_z_scores ? $z_score : false;
         $response['show_progress_report'] = $course->show_progress_report;
-        $response['score_info_by_assignment_group'] = $score_info_by_assignment_group;
+        $response['z_scores_by_assignment_group'] = $z_score_info_by_assignment_group ?? [];
         $response['type'] = 'success';
 
         return $response;
