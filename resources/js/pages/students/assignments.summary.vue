@@ -1,6 +1,11 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
+    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
+                            :assignment-id="clickerAssignmentId"
+                            :question-id="clickerQuestionId"
+                            @resetClickerAssignmentIdClickerQuestionId="resetClickerAssignmentIdClickerQuestionId()"
+    />
     <b-modal id="modal-last-open-ended-submission"
              title="Last Open-Ended Submission"
              hide-footer
@@ -378,12 +383,18 @@ import SolutionFileHtml from '~/components/SolutionFileHtml'
 import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import { initCentrifuge } from '~/helpers/Centrifuge'
+import RedirectToClickerModal from '../../components/RedirectToClickerModal.vue'
+import {
+  initClickerAssignmentsForEnrolledAndOpenCourses,
+  resetClickerAssignmentIdClickerQuestionId
+} from '../../helpers/clicker'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
 
 export default {
   components: {
+    RedirectToClickerModal,
     AssignmentStatistics,
     Loading,
     FontAwesomeIcon,
@@ -397,6 +408,9 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    redirectToClickerModalKey: 0,
+    clickerAssignmentId: 0,
+    clickerQuestionId: 0,
     showNoAccessMessage: '',
     solutionsReleased: false,
     assignmentId: 0,
@@ -469,24 +483,12 @@ export default {
     })
 
     this.isLoading = false
-    if (this.assessmentType === 'clicker' && !this.solutionsReleased) {
-      this.centrifuge = await initCentrifuge()
-      const sub = this.centrifuge.newSubscription(`clicker-status-${this.assignmentId}`)
-      const clickerStatusUpdated = (ctx) => {
-        const data = ctx.data
-        if (data.status === 'view_and_submit') {
-          window.location = `/assignments/${data.assignment_id}/questions/view/${data.question_id}`
-        }
-      }
-      sub.on('publication', function (ctx) {
-        clickerStatusUpdated(ctx)
-      }).subscribe()
-    }
     this.$nextTick(function () {
       this.resizeHandler()
       makeFileUploaderAccessible()
     })
     window.addEventListener('resize', this.resizeHandler)
+    await this.initClickerAssignmentsForEnrolledAndOpenCourses()
   },
   beforeDestroy () {
     window.removeEventListener('resize', this.resizeHandler)
@@ -499,6 +501,8 @@ export default {
     }
   },
   methods: {
+    resetClickerAssignmentIdClickerQuestionId,
+    initClickerAssignmentsForEnrolledAndOpenCourses,
     async getDiscussItQuestions (assignmentId) {
       try {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/questions/discuss-it`)

@@ -8,6 +8,7 @@ use App\DiscussionGroup;
 use App\Enrollment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
+use App\Http\Requests\CustomTimeToSubmitRequest;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
 use App\Http\Requests\UpdateCompletionScoringModeRequest;
@@ -27,6 +28,7 @@ use App\Traits\Statistics;
 use App\User;
 use App\Webwork;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterval;
 use DOMDocument;
 use Exception;
 
@@ -951,12 +953,52 @@ class AssignmentSyncQuestionController extends Controller
     /**
      * @param Assignment $assignment
      * @param Question $question
+     * @param int $show_answer
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
     public
-    function endClickerAssessment(Assignment             $assignment,
+    function viewClickerSubmissions(Assignment             $assignment,
+                                    Question               $question,
+                                    int                    $show_answer,
+                                    AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('viewClickerSubmissions', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $client = Helper::centrifuge();
+            $client->publish("view-clicker-submissions-$assignment->id",
+                ["view_clicker_submissions" => true,
+                    "show_answer" => $show_answer,
+                    'assignment_id' => $assignment->id,
+                    'question_id' => $question->id]);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error viewing the submissions for this clicker assessment.  Please contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public
+    function endClickerAssessment(Request                $request,
+                                  Assignment             $assignment,
                                   Question               $question,
                                   AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
@@ -970,21 +1012,105 @@ class AssignmentSyncQuestionController extends Controller
         try {
             $assignmentSyncQuestion->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->update(['clicker_end' => now()]);
+                ->update(['clicker_end' => Carbon::yesterday()]);
 
             $client = Helper::centrifuge();
             $client->publish("clicker-status-$assignment->id",
                 ["assignment_id" => $assignment->id,
                     "question_id" => $question->id,
                     "status" => 'view_and_not_submit',
+                    "message" => $request->message,
                     "time_left" => 0]);
 
             $response['type'] = 'success';
+
 
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error ending this clicker assessment.  Please contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param CustomTimeToSubmitRequest $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public
+    function updateCustomClickerTimeToSubmit(CustomTimeToSubmitRequest $request,
+                                             Assignment                $assignment,
+                                             Question                  $question,
+                                             AssignmentSyncQuestion    $assignmentSyncQuestion): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateCustomClickerTimeToSubmit', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $data = $request->validated();
+            $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['custom_clicker_time_to_submit' => $data['time_to_submit']]);
+            $response['type'] = 'success';
+            $response['message'] = 'The time to submit has been updated.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the time to submit for this clicker assessment.  Please contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public
+    function resumeClickerAssessment(Request                $request,
+                                     Assignment             $assignment,
+                                     Question               $question,
+                                     AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('resumeClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $client = Helper::centrifuge();
+            $client->publish("clicker-status-$assignment->id",
+                ["assignment_id" => $assignment->id,
+                    "question_id" => $question->id,
+                    "status" => 'resumed',
+                    'current_time_left' => $request->current_time_left]);
+            $clicker_start = CarbonImmutable::now();
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update([
+                    'clicker_start' => $clicker_start,
+                    'clicker_end' => $clicker_start->addMilliseconds($request->current_time_left)
+                ]);
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error resuming this clicker assessment.  Please contact us for assistance.";
         }
         return $response;
     }
@@ -997,40 +1123,212 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function resetClickerTimer(Assignment             $assignment,
-                               Question               $question,
-                               AssignmentSyncQuestion $assignmentSyncQuestion): array
+    function pauseClickerAssessment(Assignment             $assignment,
+                                    Question               $question,
+                                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('resetClickerTimer', [$assignmentSyncQuestion, $assignment, $question]);
+        $authorized = Gate::inspect('pauseClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
         try {
-            DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)->update([
-                    'clicker_start' => null,
-                    'clicker_end' => null
-                ]);
+
             $client = Helper::centrifuge();
             $client->publish("clicker-status-$assignment->id",
                 ["assignment_id" => $assignment->id,
                     "question_id" => $question->id,
-                    "status" => 'neither_view_nor_submit',
-                    "time_left" => 0]);
+                    "status" => 'paused']);
+            $clicker_start = CarbonImmutable::now();
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update([
+                    'clicker_start' => $clicker_start,
+                    'clicker_end' => $clicker_start->addDay()
+                ]);
             $response['type'] = 'success';
 
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error resetting the clicker timer.  Please contact us for assistance.";
+            $response['message'] = "There was an error pausing this clicker assessment.  Please contact us for assistance.";
         }
         return $response;
     }
 
+    /**
+     * @param StartClickerAssessment $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public
+    function restartTimerInClickerAssessment(StartClickerAssessment $request,
+                                             Assignment             $assignment,
+                                             Question               $question,
+                                             AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('restartTimerInClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $clicker_start = CarbonImmutable::now();
+            $seconds_padding = 1;
+            $interval = CarbonInterval::make($request->time_to_submit);
+            $total_seconds = $interval->totalSeconds;
+            $clicker_end = $clicker_start->addSeconds($seconds_padding + $total_seconds);
+            DB::beginTransaction();
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update([
+                    'clicker_start' => $clicker_start,
+                    'clicker_end' => $clicker_end
+                ]);
+            DB::commit();
+            $time_left = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
+
+            if (app()->environment() !== 'testing') {
+                $client = Helper::centrifuge();
+                $client->publish("clicker-status-$assignment->id",
+                    ["assignment_id" => $assignment->id,
+                        "question_id" => $question->id,
+                        "status" => 'view_and_submit',
+                        "time_left" => $time_left]);
+
+            }
+
+            $response['type'] = 'success';
+            $response['time_left'] = $time_left;
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error restarting the timer for this clicker assessment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param StartClickerAssessment $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public
+    function addTimeToClickerAssessment(StartClickerAssessment $request,
+                                        Assignment             $assignment,
+                                        Question               $question,
+                                        AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('addTimeToClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $clicker_start = CarbonImmutable::now();
+            $seconds_padding = 1;
+            $clicker_end = $clicker_start->addSeconds($seconds_padding + $request->time_to_add + $request->time_left);
+            DB::beginTransaction();
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update([
+                    'clicker_start' => $clicker_start,
+                    'clicker_end' => $clicker_end
+                ]);
+            DB::commit();
+            $time_left = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
+
+            if (app()->environment() !== 'testing') {
+                $client = Helper::centrifuge();
+                $client->publish("clicker-status-$assignment->id",
+                    ["assignment_id" => $assignment->id,
+                        "question_id" => $question->id,
+                        "status" => 'view_and_submit',
+                        "time_left" => $time_left]);
+
+            }
+
+            $response['type'] = 'success';
+            $response['time_left'] = $time_left;
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error adding time to this clicker assessment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+
+    /**
+     * @param StartClickerAssessment $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param FCMNotification $FCMNotification
+     * @return array
+     * @throws Exception
+     */
+    public
+    function restartClickerAssessment(StartClickerAssessment $request,
+                                      Assignment             $assignment,
+                                      Question               $question,
+                                      AssignmentSyncQuestion $assignmentSyncQuestion,
+                                      FCMNotification        $FCMNotification): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('restartClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            DB::beginTransaction();
+            $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+            Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
+            DB::commit();
+            $client = Helper::centrifuge();
+            $client->publish("set-current-page-$assignment->id", [
+                "assignment_id" => $assignment->id,
+                "question_id" => $question->id]);
+            $time_to_submit = $request->time_to_submit;
+            $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 4, true);
+            $response['type'] = 'success';
+            $response['message'] = 'Your students can begin submitting responses.';
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error starting this clicker assessment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     /**
      * @param StartClickerAssessment $request
@@ -1059,54 +1357,10 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         try {
-
             $data = $request->validated();
-            $clicker_start = CarbonImmutable::now();
-            $seconds_padding = 1;
-            $clicker_end = $clicker_start->add($data['time_to_submit'])->addSeconds($seconds_padding);
-            DB::beginTransaction();
-            DB::table('assignment_question')->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)->update([
-                    'clicker_start' => null,
-                    'clicker_end' => null
-                ]);
-
-            //update individual due dates
-            /*TODO: do this for individuals?
-            if (strtotime($clicker_end) > strtotime($assignment->due)) {
-                DB::table('assign_to_timings')->where('id', $assignment->id)
-                    ->update(['due' => $clicker_end]);
-            }*/
-
-            DB::table('assignment_question')->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->update([
-                    'clicker_start' => $clicker_start,
-                    'clicker_end' => $clicker_end
-                ]);
-            DB::commit();
-            $time_left = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
-
-            if (app()->environment() !== 'testing') {
-                $client = Helper::centrifuge();
-                $client->publish("clicker-status-$assignment->id",
-                    ["assignment_id" => $assignment->id,
-                        "question_id" => $question->id,
-                        "status" => 'view_and_submit',
-                        "time_left" => $time_left]);
-
-            }
-
-            $message['message'] = [
-                'notification' => ['title' => 'Clicker Launch', 'body' => 'You have been invited to participate in an ADAPT poll.'],
-                'data' => [
-                    'path' => "Assignment/$assignment->id/Question/$question->id",
-                    'assignment_id' => (string)$assignment->id,
-                    'question_id' => (string)$question->id,
-                ]
-            ];
-
-            $FCMNotification->sendNotificationsByAssignment($assignment, $message);
+            $time_to_submit = $data['time_to_submit'];
+            $reload_student_view = $request->reload_student_view ? $request->reload_student_view : false;
+            $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 2, $reload_student_view);
             $response['type'] = 'success';
             $response['message'] = 'Your students can begin submitting responses.';
 
@@ -1890,6 +2144,7 @@ class AssignmentSyncQuestionController extends Controller
      * @param Extension $Extension
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param IMathAS $IMathAS
+     * @param Webwork $webwork
      * @return array
      * @throws Exception
      */
@@ -2502,7 +2757,6 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             foreach ($assignment->questions as $key => $question) {
-
                 if ($assignment->number_of_randomized_assessments
                     && $request->user()->role == 3
                     && !$request->user()->fake_student
@@ -2519,7 +2773,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['question_revision_id'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->id : null;
                 $assignment->questions[$key]['question_revision_number'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->revision_number : null;
                 $assignment->questions[$key]['question_revision_id_latest'] = $latest_question_revisions_by_question_id[$question->id] ?? null;
-
+                $assignment->questions[$key]['time_to_submit'] = isset($assignment_questions_by_question_id[$question->id])?  $assignment_questions_by_question_id[$question->id]->custom_clicker_time_to_submit : null;
                 $assignment->questions[$key]['question_reason_for_edit'] = null;
                 $assignment->questions[$key]['question_revision_number'] = 0;
 

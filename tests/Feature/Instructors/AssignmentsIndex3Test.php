@@ -175,6 +175,7 @@ class AssignmentsIndex3Test extends TestCase
         $this->question->save();
 
         $this->assignment_info['assessment_type'] = 'clicker';
+        $this->assignment_info['number_of_allowed_attempts']= '1';
         $new_assessment_type = ucfirst($this->assignment_info['assessment_type']);
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
@@ -462,16 +463,22 @@ class AssignmentsIndex3Test extends TestCase
     /** @test */
     public function delayed_assignment_cannot_switch_to_clicker_if_there_are_open_ended_questions()
     {
-
-
         $this->assignment_info['assessment_type'] = 'clicker';
         $this->assignment_info['number_of_successful_paths_for_a_reset'] = 1;
-        $this->assignment_info['min_number_of_minutes_in_exposition_node'] = 1;;
+        $this->assignment_info['min_number_of_minutes_in_exposition_node'] = 1;
+        $this->assignment_info['number_of_allowed_attempts']= '1';
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
             ->assertJson(['message' => "If you would like to change this assignment to Clicker, please first remove any assessments that require an open-ended submission."]);
+    }
 
-
+    /** @test */
+    public function clicker_needs_number_of_allowed_attempts()
+    {
+        $this->assignment_info['assessment_type'] = 'clicker';
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('number_of_allowed_attempts');
     }
 
 

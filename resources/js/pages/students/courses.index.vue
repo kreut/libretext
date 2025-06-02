@@ -1,12 +1,13 @@
 <template>
   <div v-if="showPage">
-    <PageTitle title="My Courses"/>
-    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}`"
+    <PageTitle title="My Courses" />
+    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
                             :assignment-id="clickerAssignmentId"
                             :question-id="clickerQuestionId"
+                            @resetClickerAssignmentIdClickerQuestionId="resetClickerAssignmentIdClickerQuestionId()"
     />
     <div class="row mb-4 float-right">
-      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses"/>
+      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses" />
       <b-button v-if="!isAnonymousUser" v-b-modal.modal-enroll-in-course variant="primary" size="sm">
         Enroll In Course
       </b-button>
@@ -60,11 +61,16 @@ import EnrollInCourse from '~/components/EnrollInCourse'
 import { mapGetters } from 'vuex'
 import { initCentrifuge } from '~/helpers/Centrifuge'
 import RedirectToClickerModal from '../../components/RedirectToClickerModal.vue'
+import {
+  initClickerAssignmentsForEnrolledAndOpenCourses,
+  resetClickerAssignmentIdClickerQuestionId
+} from '../../helpers/clicker'
 
 export default {
   components: { RedirectToClickerModal, EnrollInCourse },
   middleware: 'auth',
   data: () => ({
+    redirectToClickerModalKey: 0,
     clickerAssignmentId: 0,
     clickerQuestionId: 0,
     isAnonymousUser: false,
@@ -101,10 +107,10 @@ export default {
         label: 'Course',
         isRowHeader: true
       },
-        {
-          key: 'public_description',
-          label: 'Course Description'
-        }
+      {
+        key: 'public_description',
+        label: 'Course Description'
+      }
       ]
       this.getAnonymousUserCourses()
     } else {
@@ -113,44 +119,21 @@ export default {
         label: 'Course - Section',
         isRowHeader: true
       },
-        {
-          key: 'public_description',
-          label: 'Course Description'
-        },
-        'instructor',
-        'start_date',
-        'end_date'
+      {
+        key: 'public_description',
+        label: 'Course Description'
+      },
+      'instructor',
+      'start_date',
+      'end_date'
       ]
       this.getEnrolledInCourses()
       this.initClickerAssignmentsForEnrolledAndOpenCourses()
     }
   },
   methods: {
-    async initClickerAssignmentsForEnrolledAndOpenCourses () {
-      try {
-        const { data } = await axios.get('/api/assignments/clicker/enrolled-open-courses')
-        if (data.type !== 'success') {
-          this.$noty.error(data.message)
-          return
-        }
-        const clickerAssignments = data.clicker_assignments
-        if (clickerAssignments.length) {
-          this.centrifuge = await initCentrifuge()
-          for (let i = 0; i < clickerAssignments.length; i++) {
-            let assignment = clickerAssignments[i]
-            let sub = this.centrifuge.newSubscription(`set-current-page-${assignment.id}`)
-            sub.on('publication', async (ctx) => {
-              console.error(ctx)
-              const data = ctx.data
-              this.clickerAssignmentId = +assignment.id
-              this.clickerQuestionId = +data.question_id
-            }).subscribe()
-          }
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
+    resetClickerAssignmentIdClickerQuestionId,
+    initClickerAssignmentsForEnrolledAndOpenCourses,
     getAssignments (courseId) {
       const course = this.enrolledInCourses.find(item => item.id === courseId)
       if (course.lms && course.lms_only_entry && !this.user.is_instructor_logged_in_as_student) {

@@ -1,8 +1,9 @@
 <template>
   <div>
-    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}`"
+    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
                             :assignment-id="clickerAssignmentId"
                             :question-id="clickerQuestionId"
+                            @resetClickerAssignmentIdClickerQuestionId="resetClickerAssignmentIdClickerQuestionId()"
     />
     <b-modal
       id="modal-progress-report"
@@ -322,6 +323,10 @@ import { mapGetters } from 'vuex'
 import { initCentrifuge } from '~/helpers/Centrifuge'
 import { getStatusTextClass } from '~/helpers/AssignTosStatus'
 import RedirectToClickerModal from '../../components/RedirectToClickerModal.vue'
+import {
+  initClickerAssignmentsForEnrolledAndOpenCourses,
+  resetClickerAssignmentIdClickerQuestionId
+} from '../../helpers/clicker'
 
 export default {
   components: {
@@ -333,6 +338,7 @@ export default {
     return { title: 'My Assignments' }
   },
   data: () => ({
+    redirectToClickerModalKey: 0,
     clickerAssignmentId: 0,
     clickerQuestionId: 0,
     showNoMatchingMessage: false,
@@ -456,6 +462,7 @@ export default {
     this.courseId = this.$route.params.courseId
     await this.getAssignmentStatusesByCourseAndUser()
     await this.getScoresByUser()
+    await this.initClickerAssignmentsForEnrolledAndOpenCourses()
   },
   methods: {
     downloadSolutionFile,
@@ -465,6 +472,8 @@ export default {
     initAssignmentGroupOptions,
     updateAssignmentGroupFilter,
     getStatusTextClass,
+    resetClickerAssignmentIdClickerQuestionId,
+    initClickerAssignmentsForEnrolledAndOpenCourses,
     async getAssignmentStatusesByCourseAndUser () {
       try {
         const { data } = await axios.get(`/api/courses/${this.courseId}/assignment-statuses`)
@@ -586,20 +595,6 @@ export default {
         if (!this.zScore) {
           this.assignmentFields = this.assignmentFields.filter(item => item.key !== 'z_score')
           this.scoreInfoByAssignmentGroupFields = this.scoreInfoByAssignmentGroupFields.filter(item => item.key !== 'z_score')
-        }
-        const clickerAssignments = this.assignments.filter(assignment => assignment.assessment_type === 'clicker')
-        if (clickerAssignments.length) {
-          this.centrifuge = await initCentrifuge()
-          for (let i = 0; i < clickerAssignments.length; i++) {
-            let assignment = clickerAssignments[i]
-            let sub = this.centrifuge.newSubscription(`set-current-page-${assignment.id}`)
-            sub.on('publication', async (ctx) => {
-              console.error(ctx)
-              const data = ctx.data
-              this.clickerAssignmentId = +assignment.id
-              this.clickerQuestionId = +data.question_id
-            }).subscribe()
-          }
         }
       } catch (error) {
         this.$noty.error(error.message)

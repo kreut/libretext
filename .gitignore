@@ -19,6 +19,7 @@ npm-debug.log
 yarn-error.log
 phpunit.dusk.xml
 *.code-workspace
+.todo
 
 # Created by https://www.toptal.com/developers/gitignore/api/phpstorm
 # Edit at https://www.toptal.com/developers/gitignore?templates=phpstorm

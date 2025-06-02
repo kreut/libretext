@@ -16,6 +16,24 @@ class SubmissionPolicy
     use HandlesAuthorization;
     use GeneralSubmissionPolicy;
 
+
+    /**
+     * @param User $user
+     * @param Submission $submission
+     * @param Assignment $assignment
+     * @param int $question_id
+     * @return Response
+     */
+    public function deleteByAssignmentAndQuestion(User $user, Submission $submission, Assignment $assignment, int $question_id)
+    {
+
+        $question_ids = $assignment->questions->pluck('id')->toArray();
+        return $assignment->course->user_id === $user->id && in_array($question_id, $question_ids)
+            ? Response::allow()
+            : Response::deny("You are not allowed to delete the submissions for this question.");
+
+    }
+
     /**
      * @param User $user
      * @param Submission $submission

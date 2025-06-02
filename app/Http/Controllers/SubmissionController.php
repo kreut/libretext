@@ -11,7 +11,6 @@ use App\DiscussionComment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\UpdateScoresRequest;
-use App\JWE;
 use App\LearningTree;
 use App\LearningTreeNodeSubmission;
 use App\QuestionLevelOverride;
@@ -25,10 +24,8 @@ use App\Score;
 use App\Assignment;
 use App\Question;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 use App\Http\Requests\StoreSubmission;
@@ -39,6 +36,49 @@ use Throwable;
 class SubmissionController extends Controller
 {
     use GeneralSubmissionPolicy;
+
+
+    public function deleteByAssignmentAndQuestion(Assignment             $assignment,
+                                                  Question               $question,
+                                                  Submission             $submission,
+                                                  AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+
+        /**
+         * @param Request $request
+         * @param Assignment $assignment
+         * @param Question $question
+         * @param Submission $submission
+         * @return array
+         * @throws Exception
+         */
+        try {
+
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('deleteByAssignmentAndQuestion', [$submission, $assignment, $question->id]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            if ($assignment->cannotAddOrRemoveQuestionsForQuestionWeightAssignment()) {
+                $response['message'] = "You cannot remove this question since there are already submissions and this assignment computes points using question weights.";
+                return $response;
+            }
+            DB::beginTransaction();
+            $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+            Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = "All submissions to this question have been removed.";
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to delete the submissions to this question.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     /**
      * @param Request $request
@@ -51,7 +91,7 @@ class SubmissionController extends Controller
     public function submitWork(Request    $request,
                                Assignment $assignment,
                                Question   $question,
-                               Submission $submission)
+                               Submission $submission): array
     {
 
         try {
@@ -216,7 +256,8 @@ class SubmissionController extends Controller
                 ->where('question_id', $question->id)
                 ->first();
             if (!$submission) {
-                $response['message'] = "There is no submission associated with this question.";
+                $response['type'] = 'success';
+                $response['submission_array'] = [];
                 return $response;
             }
 
@@ -348,193 +389,7 @@ class SubmissionController extends Controller
 
         try {
 
-            $number_enrolled = $assignment->course->enrolledUsers()->count();
-
-
-            $submission_results = DB::table('submissions')
-                ->join('questions', 'submissions.question_id', '=', 'questions.id')
-                ->where('submissions.assignment_id', $assignment->id)
-                ->where('submissions.question_id', $question->id)
-                //->where('submissions.user_id','<>', $fake_student_user_id)
-                ->select('submission', 'technology')
-                ->get();
-
-            $choices = [];
-            $counts = [];
-            $choices_by_identifier = [];
-            $counts_by_identifier = [];
-            foreach ($submission_results as $value) {
-                $submission = json_decode($value->submission, true);
-                //Log::info(print_r($submission, true));
-
-                $technology = $value->technology;
-                switch ($technology) {
-                    case('qti'):
-                        $question_type = $submission['question']['questionType'] ?? null;
-                        if (!in_array($question_type, ['true_false', 'multiple_choice'])) {
-                            $response['message'] = 'Native questions only support True/False and Multiple Choice.';
-                            return $response;
-
-                        }
-                        switch ($question_type) {
-                            case('true_false'):
-                                if (!$choices_by_identifier) {
-                                    $choices = ['True', 'False'];
-                                    $counts = [0, 0];
-                                    foreach ($submission['question']['simpleChoice'] as $key => $choice) {
-                                        $choices_by_identifier[$choice['identifier']] = $choice['value'];
-                                    }
-                                }
-                                if (!isset($response['correct_answer'])) {
-                                    foreach ($submission['question']['simpleChoice'] as $key => $choice) {
-                                        if ($choice['correctResponse']) {
-                                            $response['correct_answer'] = $choice['value'];
-                                        }
-                                    }
-                                }
-                                $choices_by_identifier[$submission['student_response']] === 'True'
-                                    ? $counts[0]++
-                                    : $counts[1]++;
-                                break;
-
-                            case('multiple_choice'):
-                                if (!$choices_by_identifier) {
-                                    foreach ($submission['question']['simpleChoice'] as $choice) {
-                                        $choices_by_identifier[$choice['identifier']] = $choice['value'];
-                                        $counts_by_identifier[$choice['identifier']] = 0;
-                                    }
-                                }
-                                if (!isset($response['correct_answer'])) {
-                                    foreach ($submission['question']['simpleChoice'] as $choice) {
-                                        if ($choice['correctResponse']) {
-                                            $response['correct_answer'] = $choice['value'];
-                                        }
-                                    }
-                                }
-                                foreach ($counts_by_identifier as $identifier => $count_by_identifier) {
-                                    if ((string)$submission['student_response'] === (string)$identifier) {
-                                        $counts_by_identifier[$identifier]++;
-                                    }
-                                }
-                                break;
-                        }
-
-                        break;
-                    case('h5p'):
-                        $object = $submission['object'];
-                        //Log::info(print_r($submission, true));
-                        // Log::info($object['definition']['interactionType']);
-                        switch ($object['definition']['interactionType']) {
-                            case('choice'):
-                                if (!$choices) {
-                                    $choices = $this->getChoices($technology, $object['definition']);
-                                    foreach ($choices as $choice) {
-                                        $counts[] = 0;
-                                    }
-
-                                    $correct_answer_index = $object['definition']['correctResponsesPattern'][0];
-                                    $response['correct_answer'] = $this->getCorrectAnswer($technology, $object['definition'], $correct_answer_index);
-                                }
-                                if (isset($submission['result']['response'])) {
-                                    $h5p_response = $submission['result']['response'];
-                                    $counts[$h5p_response]++;
-                                    $response['counts'] = $counts;
-                                }
-                                break;
-                            case('true-false'):
-                                if (!$choices) {
-                                    $choices = ['True', 'False'];
-                                    $counts = [0, 0];
-                                    $correct_answer_index = $object['definition']['correctResponsesPattern'][0] === 'true' ? 0 : 1;
-                                    $response['correct_answer'] = $choices[$correct_answer_index];
-                                }
-                                if (isset($submission['result']['response'])) {
-                                    $submission['result']['response'] === "true" ? $counts[0]++ : $counts[1]++;
-                                    $response['counts'] = $counts;
-                                }
-                                break;
-                        }
-                        //Log::info(print_r($submission['result'], true));
-
-                        break;
-                    case('webwork'):
-                        $student_ans = null;
-                        $webwork = new Webwork();
-                        if ($submission
-                            && isset($submission['score'])
-                            && isset($submission['score']['answers'])) {
-                            $cache_key = "webwork_code_assignment_question_{$assignment->id}_$question->id";
-                            $webwork_code = Cache::remember($cache_key, now()->addMinutes(10), function () use ($assignment, $question) {
-                                $assignment_question = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
-                                    ->where('question_id', $question->id)
-                                    ->first();
-                                return $assignment_question->question_revision_id
-                                    ? QuestionRevision::find($assignment_question->question_revision_id)->webwork_code
-                                    : Question::find($assignment_question->question_id)->webwork_code;
-                            });
-                            $radio_buttons = $webwork->getRadioButtonLabels($webwork_code, false);
-                            if ($radio_buttons) {
-                                /* if (isset($value['preview_latex_string'])) {
-                                     $formatted_submission = isset($value['preview_latex_string']) ? '\(' . $value['preview_latex_string'] . '\)';
-                                 } else {
-                                     $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
-                                 }*/
-                                $first_answer = reset($submission['score']['answers']);
-                                $student_ans = $first_answer['original_student_ans'];
-                                if (!isset($response['correct_answer'])) {
-                                    $response['correct_answer'] = $first_answer['correct_ans'];
-                                }
-                                foreach ($radio_buttons as $radio_button) {
-                                    $counts_by_identifier[$radio_button] = 0;
-                                }
-                            }
-                            foreach ($counts_by_identifier as $identifier => $count_by_identifier) {
-                                if ($student_ans === $identifier) {
-                                    $counts_by_identifier[$identifier]++;
-                                }
-                            }
-                            $choices = array_values($choices_by_identifier);
-                            $choices = array_values($radio_buttons);
-                            $counts = array_values($counts_by_identifier);
-                        }
-                        break;
-                    default:
-                        $response['message'] = 'Only True/False or Multiple Choice Native/H5P questions are supported at this time.';
-                        return $response;
-                }
-            }
-
-            if (isset($technology) && isset($question_type) && $technology === 'qti' && $question_type === 'multiple_choice') {
-                $choices = array_values($choices_by_identifier);
-                $counts = array_values($counts_by_identifier);
-            }
-            $response['pie_chart_data']['labels'] = array_values($choices);
-            $response['pie_chart_data']['datasets']['borderWidth'] = 1;
-            $response['correct_answer_index'] = null;
-            foreach ($choices as $key => $choice) {
-                $percent = 90 - 10 * $key;
-                $first = 60 - 20 * $key;
-                $response['pie_chart_data']['datasets']['backgroundColor'][$key] = "hsla($first, 85%, $percent%, 0.9)";
-                if ($choice === $response['correct_answer']) {
-                    $response['correct_answer_index'] = $key;
-                }
-            }
-
-            $total = array_sum($counts);
-            ksort($counts);
-            if ($total) {
-                foreach ($counts as $key => $count) {
-                    $counts[$key] = Round(100 * $count / $total);
-                }
-            }
-            foreach ($response['pie_chart_data']['labels'] as $key => $label) {
-                $response['pie_chart_data']['labels'][$key] .= "  &mdash; $counts[$key]%";
-            }
-            $response['pie_chart_data']['datasets']['data'] = $counts;
-            $number_submission_results = count($submission_results); //don't include Fake
-            $response['response_percent'] = $number_enrolled ? Round(100 * $number_submission_results / $number_enrolled, 1) : 0;
-            $response['type'] = 'success';
-
+          $response = $submission->submissionChartData($assignment,$question);
 
         } catch (Exception $e) {
             $h = new Handler(app());

@@ -126,7 +126,7 @@ class StoreAssignmentProperties extends FormRequest
             }
 
             $rules['can_view_hint'] = ['required', Rule::in([0, 1])];
-            if ((int)$this->can_view_hint === 1 && !$formative) {
+            if ((int)$this->can_view_hint === 1 && !$formative && $this->assessment_type !== 'clicker') {
                 $rules['hint_penalty'] = [new IsValidHintPenalty()];
             }
 
@@ -203,6 +203,7 @@ class StoreAssignmentProperties extends FormRequest
             }
             if ($this->assessment_type === 'clicker') {
                 $rules['default_clicker_time_to_submit'] = new IsValidPeriodOfTime();
+                $rules['number_of_allowed_attempts'] = ['required', Rule::in('1','unlimited')];
             }
             if ($this->late_policy === 'deduction') {
                 //has to be at least one or division by 0 issue in setScoreBasedOnLatePolicy

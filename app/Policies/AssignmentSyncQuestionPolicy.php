@@ -289,6 +289,22 @@ class AssignmentSyncQuestionPolicy
      * @param Question $question
      * @return Response
      */
+    public function addTimeToClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to add time to this clicker assessment.');
+    }
+
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
     public function startClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
     {
         $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
@@ -296,6 +312,77 @@ class AssignmentSyncQuestionPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to start this clicker assessment.');
     }
+
+    public function updateCustomClickerTimeToSubmit(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the time to submit for this clicker assessment.');
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function viewClickerSubmissions(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to start this clicker assessment.');
+    }
+
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function restartClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to restart this clicker assessment.');
+    }
+
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function pauseClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to pause this clicker assessment.');
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function resumeClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to resume this clicker assessment.');
+    }
+
 
     /**
      * @param User $user
@@ -312,6 +399,7 @@ class AssignmentSyncQuestionPolicy
             : Response::deny('You are not allowed to end this clicker assessment.');
     }
 
+
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
@@ -319,12 +407,12 @@ class AssignmentSyncQuestionPolicy
      * @param Question $question
      * @return Response
      */
-    public function resetClickerTimer(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    public function restartTimerInClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
     {
         $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
         return $authorized
             ? Response::allow()
-            : Response::deny('You are not allowed to reset the clicker timer.');
+            : Response::deny('You are not allowed to restart the clicker timer.');
     }
 
     /**

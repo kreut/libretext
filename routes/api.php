@@ -725,9 +725,15 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/assignments/{assignment}/questions/{question}/get-clicker-status', 'AssignmentSyncQuestionController@getClickerStatus');
     Route::post('/assignments/{assignment}/questions/{question}/start-clicker-assessment', 'AssignmentSyncQuestionController@startClickerAssessment');
     Route::post('/assignments/{assignment}/questions/{question}/end-clicker-assessment', 'AssignmentSyncQuestionController@endClickerAssessment');
-    Route::patch('/assignments/{assignment}/questions/{question}/reset-clicker-timer', 'AssignmentSyncQuestionController@resetClickerTimer');
+    Route::patch('/assignments/{assignment}/questions/{question}/custom-clicker-time-to-submit', 'AssignmentSyncQuestionController@updateCustomClickerTimeToSubmit');
     Route::patch('/assignments/{assignment}/questions/{question}/set-current-page', 'AssignmentSyncQuestionController@setCurrentPage');
-
+    Route::post('/assignments/{assignment}/questions/{question}/add-time', 'AssignmentSyncQuestionController@addTimeToClickerAssessment');
+    Route::post('/assignments/{assignment}/questions/{question}/restart-timer', 'AssignmentSyncQuestionController@restartTimerInClickerAssessment');
+    Route::post('/assignments/{assignment}/questions/{question}/view-clicker-submissions/{show_answer}', 'AssignmentSyncQuestionController@viewClickerSubmissions');
+    Route::post('/assignments/{assignment}/questions/{question}/restart-question', 'AssignmentSyncQuestionController@restartClickerAssessment');
+    Route::patch('/assignments/{assignment}/questions/{question}/pause-clicker', 'AssignmentSyncQuestionController@pauseClickerAssessment');
+    Route::patch('/assignments/{assignment}/questions/{question}/resume-clicker', 'AssignmentSyncQuestionController@resumeClickerAssessment');
+    Route::patch('/assignments/{assignment}/questions/{question}/unpause-clicker', 'AssignmentSyncQuestionController@unpauseClickerAssessment');
 
     Route::patch('/assignments/{assignment}/questions/{question}/open-ended-default-text', 'AssignmentSyncQuestionController@storeOpenEndedDefaultText');
 
@@ -799,6 +805,9 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/submissions/assignments/{assignment}/question/{question}/reset-submission', 'SubmissionController@resetSubmission');
     Route::patch('/submissions/assignments/{assignment}/questions/{question}/submit-work', 'SubmissionController@submitWork');
     Route::delete('/submissions/assignments/{assignment}/questions/{question}/submitted-work', 'SubmissionController@deleteSubmittedtWork');
+    Route::delete('/submissions/assignments/{assignment}/questions/{question}/delete-by-assignment-and-question', 'SubmissionController@deleteByAssignmentAndQuestion');
+
+
     Route::patch('/submissions/time-spent/assignment/{assignment}/question/{question}', 'AssignmentQuestionTimeOnTaskController@update');
     Route::patch('/assignment-question-time-spents/assignment/{assignment}/question/{question}', 'AssignmentQuestionTimeOnTaskController@update');
     Route::get('/assignment-question-time-spents/assignment/{assignment}', 'AssignmentQuestionTimeOnTaskController@getTimeOnTasksByAssignment');

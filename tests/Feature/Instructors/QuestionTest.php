@@ -21,7 +21,7 @@ class QuestionTest extends TestCase
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-        $this->question = factory(Question::class)->create(['page_id'=>17652]);
+        $this->question = factory(Question::class)->create(['page_id' => 17652]);
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->assignment_question_id = DB::table('assignment_question')->insertGetId([
@@ -33,6 +33,57 @@ class QuestionTest extends TestCase
         ]);
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
     }
+
+    /** @test */
+    public function non_instructor_cannot_add_time_to_a_clicker()
+    {
+        $this->actingAs($this->student_user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/add-time")
+            ->assertJson(['message' => 'You are not allowed to add time to this clicker assessment.']);
+
+    }
+
+    /** @test */
+    public function non_instructor_cannot_customize_the_clicker_timing()
+    {
+        $this->actingAs($this->student_user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/custom-clicker-time-to-submit",
+        ['time_to_submit' => '30 seconds'])
+            ->assertJson(['message' => 'You are not allowed to update the time to submit for this clicker assessment.']);
+
+    }
+
+    /** @test */
+    public function customized_clicker_timing_must_be_valid()
+    {
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/custom-clicker-time-to-submit",
+            ['time_to_submit' => '30 pizzas'])
+            ->assertJsonValidationErrors('time_to_submit');
+
+
+    }
+
+    /** @test */
+    public function non_instructor_cannot_restart_a_clicker_assessment()
+    {
+        $this->actingAs($this->student_user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/restart-question")
+            ->assertJson(['message' => 'You are not allowed to restart this clicker assessment.']);
+
+    }
+
+    /** @test */
+    public function non_instructor_cannot_pause_a_clicker_assessment()
+    {
+        $this->actingAs($this->student_user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/pause-clicker")
+            ->assertJson(['message' => 'You are not allowed to pause this clicker assessment.']);
+    }
+
+    /** @test */
+    public function non_instructor_cannot_resume_a_clicker_assessment()
+    {
+        $this->actingAs($this->student_user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/resume-clicker")
+            ->assertJson(['message' => 'You are not allowed to resume this clicker assessment.']);
+
+    }
+
 
     /** @test */
     public function an_assignment_with_a_learning_tree_assessment_will_return_this_info()

@@ -449,3 +449,19 @@ div#discuss-it-recorder .ar-records__record {
   background-color: #333333 !important;
   border-color: #333333 !important;
 }
+
+.custom-upload-btn {
+  display: inline-block;
+  background-color: #0058E6;
+  color: white;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: sans-serif;
+  margin-top: 10px;
+}
+#open-ended-submission-file-upload #file {
+  display:none;
+}
+

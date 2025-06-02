@@ -1,49 +1,81 @@
+<template>
+  <div>
+    <canvas ref="canvas"></canvas>
+  </div>
+</template>
+
 <script>
-import { Pie } from 'vue-chartjs'
+import Chart from 'chart.js'
 
 export default {
-  extends: Pie,
+  name: 'PieChart',
   props: {
     chartdata: {
-      default: null
+      type: Object,
+      required: true
     },
     options: {
       type: Object,
-      default: null
-    }
-  },
-  computed: {
-    chartData: function () {
-      return this.chartdata
-    }
-  },
-  watch: {
-    chartdata: function () {
-      this.$emit('pieChartLoaded')
-      console.log(this.chartData)
-      if (typeof this.chartData.datasets === 'undefined') {
-        // only way I could get it to disappear!
-        this.renderChart({})
-        return false
-      }
-      this.renderChart({
-        labels: this.chartData.labels,
-        datasets: [
-          {
-            backgroundColor: this.chartData.datasets.backgroundColor,
-            data: this.chartData.datasets.data
-          }
-        ]
-      }, {
-        legend: {
-          display: false
-        },
+      default: () => ({
+        legend: { display: false },
         animation: false,
         responsive: true,
         maintainAspectRatio: false,
         tooltips: false
       })
     }
+  },
+  data () {
+    return {
+      chart: null
+    }
+  },
+  mounted () {
+    this.renderChart()
+    this.$emit('pieChartLoaded')
+  },
+  watch: {
+    chartdata: {
+      handler () {
+        this.renderChart()
+        this.$emit('pieChartLoaded')
+      },
+      deep: true
+    }
+  },
+  methods: {
+    renderChart () {
+      if (this.chart) {
+        this.chart.destroy()
+      }
+
+      const ctx = this.$refs.canvas.getContext('2d')
+      this.chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: this.chartdata.labels,
+          datasets: [
+            {
+              backgroundColor: this.chartdata.datasets.backgroundColor,
+              data: this.chartdata.datasets.data
+            }
+          ]
+        },
+        options: this.options
+      })
+    }
+  },
+  beforeDestroy () {
+    if (this.chart) {
+      this.chart.destroy()
+    }
   }
 }
 </script>
+
+<style scoped>
+canvas {
+  width: 100% !important;
+  height: auto !important;
+}
+</style>

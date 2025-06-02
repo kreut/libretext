@@ -685,6 +685,7 @@
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
+            v-show="form.assessment_type !== 'clicker'"
             label-cols-sm="4"
             label-cols-lg="3"
             label-for="can_submit_work"
@@ -710,6 +711,7 @@
             label-cols-sm="4"
             label-cols-lg="3"
             label-for="can_contact_instructor_auto_graded"
+            v-show="form.assessment_type !== 'clicker'"
           >
             <template v-slot:label>
               Can Contact Instructor (auto-graded)
@@ -939,6 +941,7 @@
             label-cols-sm="4"
             label-cols-lg="3"
             label-for="hint"
+            v-show="form.assessment_type !== 'clicker'"
           >
             <template v-slot:label>
               Can View Hint*
@@ -971,6 +974,7 @@
             label-cols-sm="4"
             label-cols-lg="3"
             label-for="hint_penalty"
+            v-show="form.assessment_type !== 'clicker'"
           >
             <template v-slot:label>
               Hint Penalty*
@@ -1042,15 +1046,14 @@
               label-for="default_clicker_time_to_submit"
             >
               <template v-slot:label>
-                Default Clicker Time To Submit*
+                Default Time To Submit*
                 <QuestionCircleTooltip :id="'default_clicker_time_to_submit_tooltip'" />
                 <b-tooltip target="default_clicker_time_to_submit_tooltip"
                            delay="250"
                            triggers="hover focus"
                 >
-                  The default amount of time (30 seconds, 2 minutes) your students will have to answer clicker
-                  questions.
-                  This can be changed at the individual question level.
+                  The amount of time (30 seconds, 2 minutes) your students will have to answer clicker
+                  questions. This can be changed at the question level within a given assignment.
                 </b-tooltip>
               </template>
               <b-form-row>
@@ -1068,6 +1071,38 @@
                   <has-error :form="form" field="default_clicker_time_to_submit" />
                 </b-col>
               </b-form-row>
+            </b-form-group>
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3">
+              <template v-slot:label>
+                Limit to 1 Submission*
+                <QuestionCircleTooltip :id="'limit_to_1_submission_tooltip'"/>
+                <b-tooltip target="limit_to_1_submission_tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Either allow students to submit only one time or allow them to submit as many times as they would like
+                  while the clicker
+                  assignment is open.
+                </b-tooltip>
+              </template>
+              <b-form-row>
+            <b-form-radio-group id="limit_to_one_submission"
+                                v-model="form.number_of_allowed_attempts"
+                                required
+                                stacked
+                                @change="form.errors.clear('number_of_allowed_attempts')"
+            >
+              <b-form-radio value="1">
+                Yes
+              </b-form-radio>
+              <b-form-radio value="unlimited">
+                No
+              </b-form-radio>
+            </b-form-radio-group>
+              </b-form-row>
+              <ErrorMessage :message="form.errors.get('number_of_allowed_attempts')" />
             </b-form-group>
           </div>
           <b-form-group
@@ -1227,7 +1262,7 @@
       </div>
       <div v-if="!isFormativeCourse && form.formative !== '1'">
         <b-form-group
-          v-show="form.source === 'a'"
+          v-show="form.source === 'a' && form.assessment_type !== 'clicker'"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="late_policy"
@@ -1415,7 +1450,7 @@
           </b-form-row>
         </b-form-group>
         <b-form-group
-          v-show="form.source === 'a'"
+          v-show="form.source === 'a' && form.assessment_type !== 'clicker'"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="randomizations"
@@ -2295,6 +2330,8 @@ export default {
           this.form.randomizations = 0
           this.checkSourceAndLatePolicy()
           this.form.notifications = 0
+          this.form.can_view_hint = 0
+          this.form.number_of_allowed_attempts = '1'
       }
     },
     async initInternalExternalSwitch () {

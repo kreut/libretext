@@ -2,10 +2,12 @@
 
 namespace App;
 
+use App\Custom\FCMNotification;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
@@ -19,6 +21,60 @@ class AssignmentSyncQuestion extends Model
 {
     protected $table = 'assignment_question';
     protected $guarded = [];
+
+    /**
+     * @param FCMNotification $FCMNotification
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param $time_to_submit
+     * @param int $seconds_padding
+     * @param bool $reload_student_view
+     * @return void
+     * @throws Exception
+     */
+    public function startClickerAssessment(FCMNotification $FCMNotification,
+                                           Assignment      $assignment,
+                                           Question        $question,
+                                                           $time_to_submit,
+                                           int             $seconds_padding,
+                                           bool            $reload_student_view = false)
+
+    {
+
+        $clicker_start = CarbonImmutable::now();
+        $clicker_end = $clicker_start->add($time_to_submit)->addSeconds($seconds_padding);
+        DB::beginTransaction();
+        DB::table('assignment_question')->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->update([
+                'clicker_start' => $clicker_start,
+                'clicker_end' => $clicker_end
+            ]);
+        DB::commit();
+        $time_left = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
+
+        if (app()->environment() !== 'testing') {
+            $client = Helper::centrifuge();
+            $client->publish("clicker-status-$assignment->id",
+                ["assignment_id" => $assignment->id,
+                    "question_id" => $question->id,
+                    "status" => 'view_and_submit',
+                    'reload_student_view' => $reload_student_view,
+                    "time_left" => $time_left]);
+
+        }
+
+        $message['message'] = [
+            'notification' => ['title' => 'Clicker Launch', 'body' => 'You have been invited to participate in an ADAPT poll.'],
+            'data' => [
+                'path' => "Assignment/$assignment->id/Question/$question->id",
+                'assignment_id' => (string)$assignment->id,
+                'question_id' => (string)$question->id,
+            ]
+        ];
+
+        $FCMNotification->sendNotificationsByAssignment($assignment, $message);
+    }
 
     /**
      * @param int $assignment_id
@@ -349,7 +405,7 @@ class AssignmentSyncQuestion extends Model
                 'points' => $points,
                 'weight' => $weight,
                 'question_revision_id' => $question_revision_id,
-                'custom_rubric'=> $custom_rubric,
+                'custom_rubric' => $custom_rubric,
                 'open_ended_submission_type' => $question->isDiscussIt() ? 0 : $open_ended_submission_type,
                 'discuss_it_settings' => Helper::defaultDiscussItSettings(),
                 'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,

@@ -32,6 +32,18 @@ import axios from 'axios'
 export default {
   name: 'RedirectToClickerModal',
   props: {
+    showModal: {
+      type: Boolean,
+      default: true
+    },
+    currentAssignmentId: {
+      type: Number,
+      default: 0
+    },
+    currentQuestionId: {
+      type: Number,
+      default: 0
+    },
     assignmentId: {
       type: Number,
       default: 0
@@ -46,7 +58,7 @@ export default {
     instructorName: ''
   }),
   async mounted () {
-    if (this.assignmentId && this.questionId) {
+    if (this.showModal && this.assignmentId && this.questionId) {
       await this.getCourseInstructor()
       this.$bvModal.show('modal-redirect-to-clicker')
     }

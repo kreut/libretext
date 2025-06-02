@@ -1,17 +1,14 @@
 <template>
   <div :style="!inIFrame ? '' : 'margin-bottom:10px;'">
-    <div v-if="questions[currentPage-1]" id="questions-loaded"/>
-    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}`"
-                            :assignment-id="clickerAssignmentId"
-                            :question-id="clickerQuestionId"
-    />
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'"/>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'"/>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
+    <div v-if="questions[currentPage-1]" id="questions-loaded" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-clicker-time-to-submit-error-for'" />
     <AllFormErrors :all-form-errors="allFormErrors"
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
-    <b-modal id="modal-confirm-update-use-existing-rubric"
+    <b-modal id="modal-confirm-update-use-existing-cubric"
              title="Confirm Switching Rubric"
     >
       <b-alert :show="rubricPointsBreakDownExists" variant="danger">
@@ -121,39 +118,81 @@
     </b-modal>
     <b-modal id="modal-instructor-clicker-question"
              no-close-on-backdrop
-             hide-header
              size="huge"
              footer-class="d-block"
              @hidden="modalInstructorClickerQuestionShown = false"
     >
-      <div v-show="viewingClickerSubmissions">
-        <div class="d-inline-flex d-inline">
-          <div style="margin-right:200px">
-            <div style="font-size:20px;margin-bottom:75px">
+      <template #modal-header-close>
+        <b-button
+          variant="outline-default"
+          class="p-0 text-dark big-close"
+          aria-label="Close"
+          @click="closeInstructorClickerQuestionModal()"
+        >
+          &times;
+        </b-button>
+      </template>
+      <b-form-group
+        v-if="canViewClickerSubmissions"
+        label-cols-sm="1"
+        label-cols-lg="1"
+        label="Clicker View"
+        label-size="sm"
+        label-for="view"
+      >
+        <b-form-row>
+          <b-form-radio-group
+            v-model="clickerView"
+            class="mt-1"
+          >
+            <b-form-radio name="clicker_view" value="submissions">
+              Submissions
+            </b-form-radio>
+
+            <b-form-radio name="clicker_view" value="question">
+              Question
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-row>
+      </b-form-group>
+      <div v-if="canViewClickerSubmissions && clickerView === 'submissions'">
+        <div v-if="canViewClickerSubmissions" class="d-flex align-items-start">
+          <div style="flex: 1; max-width: 300px; padding-right: 40px;">
+            <div style="font-size: 20px; margin-bottom: 30px;white-space: nowrap;">
               {{ responsePercent }}% of students have responded
             </div>
-            <div v-for="(label,piechartdataIndex) in piechartdata.labels"
-                 :key="`pie-chart-data-${piechartdataIndex}`"
-                 style="font-size:x-large"
+            <div
+              v-for="(label, piechartdataIndex) in piechartdata.labels"
+              :key="`pie-chart-data-${piechartdataIndex}`"
+              style="display: flex; align-items: center; margin-bottom: 10px; font-size: large;"
             >
               <b-icon-square-fill
-                :style="`color:${piechartdata.datasets.backgroundColor[piechartdataIndex]}`"
+                :style="`color:${piechartdata.datasets.backgroundColor[piechartdataIndex]}; margin-right: 8px;`"
               />
-              <span v-html="label" /> <span v-show="clickerAnswerShown && (piechartdataIndex === correctAnswerIndex)"><img alt="Checkmark for correct answer"
-                                                                                                                           style="height:30px;margin-bottom:10px"
-                                                                                                                           :src="asset('assets/img/check-mark.png')"
-              ></span>
+              <span style="margin-right: 4px;" v-html="label" />
+              <span
+                v-show="clickerAnswerShown && piechartdataIndex === correctAnswerIndex"
+              >
+                <img
+                  alt="Checkmark for correct answer"
+                  :src="asset('assets/img/check-mark.png')"
+                  style="height: 20px; margin-left: 4px;"
+                >
+              </span>
             </div>
           </div>
-          <div v-if="piechartdata.labels && piechartdata.labels.length">
-            <pie-chart :key="currentPage"
-                       :chartdata="piechartdata"
-                       @pieChartLoaded="updateIsLoadingPieChart"
+
+          <!-- Chart area -->
+          <div style="flex: 2;">
+            <pie-chart
+              :key="`pie-chart-${currentPage}-${chartUpdateKey}`"
+              :chartdata="piechartdata"
+              @pieChartLoaded="updateIsLoadingPieChart"
             />
           </div>
         </div>
       </div>
-      <div v-show="!viewingClickerSubmissions">
+      <div v-show="!canViewClickerSubmissions || clickerView === 'question'">
         <div
           v-if="questions[currentPage-1] && questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson'] && showQtiJsonQuestionViewer"
         >
@@ -181,54 +220,103 @@
             allowtransparency="true"
             :src="questions[currentPage-1].technology_iframe"
             frameborder="0"
-            @load="removeSubmitButton()"
             :title="getIframeTitle()"
+            @load="cleanUpInstructorClickerView()"
           />
         </div>
       </div>
       <template #modal-footer>
-        <div>
-          <countdown
-            :time="timeLeft"
-            class="float-left"
-            @end="endClickerAssessment"
-          >
-            <template slot-scope="props">
-              <span style="font-size: x-large" class="pt-5"
-                    v-html="getTimeLeftMessage(props, assessmentType)"
-              />
-            </template>
-          </countdown>
-          <span class="float-right">
-            <b-button v-show="clickerModalButtons.submissions"
-                      variant="primary"
-                      @click="initViewClickerSubmissions"
-            >View Submissions
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+          <!-- Left Side: Timer + Timer Buttons -->
+          <div class="d-flex align-items-center flex-wrap">
+            <span v-if="!clickerPaused" class="timer-wrapper">
+              <countdown
+                ref="instructorCountdown"
+                :key="`countdown-key-${countDownKey}`"
+                :time="timeLeft"
+                @end="endClickerAssessment"
+              >
+                <template v-slot="props">
+                  <span style="font-size: x-large" class="pt-2"
+                        v-html="getTimeLeftMessage(props, assessmentType)"
+                  />
+                </template>
+              </countdown>
+            </span>
+            <span v-if="clickerPaused" class="mr-3">
+              {{ timerIsCurrentlyPaused() }}
+            </span>
+
+            <!-- Pause/Resume Buttons -->
+            <b-button v-show="!clickerPaused"
+                      variant="outline-info"
+                      class="mr-2"
+                      :disabled="canViewClickerSubmissions"
+                      @click="pauseClicker"
+            >
+              <b-icon-pause-fill />
+              Pause
             </b-button>
-            <b-button v-show="clickerModalButtons.answer"
+            <b-button v-show="clickerPaused"
+                      variant="outline-info"
+                      class="mr-2"
+                      @click="resumeClicker"
+            >
+              <b-icon-play-fill />
+              Resume
+            </b-button>
+
+            <!-- Add Time, Restart Timer/Question -->
+            <b-tooltip target="add-clicker-time-tooltip" delay="750" triggers="hover">
+              Add 15 seconds to the current time
+            </b-tooltip>
+            <b-button id="add-clicker-time-tooltip"
+                      variant="outline-primary"
+                      class="mr-2"
+                      :disabled="canViewClickerSubmissions"
+                      @click="addTimeToClicker"
+            >
+              Add Time
+            </b-button>
+            <b-button variant="outline-primary"
+                      class="mr-2"
+                      :disabled="canViewClickerSubmissions"
+                      @click="restartTimer()"
+            >
+              Restart Timer
+            </b-button>
+            <b-button variant="outline-primary"
+                      class="mr-2"
+                      @click="restartQuestion()"
+            >
+              Restart Question
+            </b-button>
+          </div>
+
+          <!-- Right Side: Final Action Buttons -->
+          <div class="d-flex align-items-center mt-2 mt-md-0">
+            <b-button variant="primary"
+                      class="mr-2"
+                      :disabled="canViewClickerSubmissions"
+                      @click="viewClickerSubmissions(false)"
+            >
+              View Submissions
+            </b-button>
+            <b-button v-show="canViewClickerSubmissions && clickerView === 'submissions' && +responsePercent > 0"
                       variant="success"
-                      @click="initShowClickerAnswer"
-            >Show Answer
+                      class="mr-2"
+                      @click="showClickerAnswer"
+            >
+              Show Answer
             </b-button>
-            <b-button v-show="clickerModalButtons.close"
-                      @click="$bvModal.hide('modal-instructor-clicker-question')"
-            >Close
+            <b-button variant="danger"
+                      :disabled="pollClosed"
+                      @click="closePoll(instructorClosedPollMessage)"
+            >
+              Close Poll
             </b-button>
-          </span>
+          </div>
         </div>
-      </template>
-    </b-modal>
-    <b-modal id="modal-confirm-close-poll"
-             title="Close Poll Confirmation"
-    >
-      <p>The poll is still open. Please confirm that you would like to close the poll.</p>
-      <template #modal-footer>
-        <b-button size="sm" @click="$bvModal.hide('modal-confirm-close-poll')">
-          Cancel
-        </b-button>
-        <b-button size="sm" variant="danger" @click="closePoll()">
-          Close Poll
-        </b-button>
       </template>
     </b-modal>
     <b-modal v-if="questions[currentPage-1] && questions[currentPage-1].number_resets_available > 0"
@@ -770,7 +858,8 @@
           />
         </div>
         <div v-if="questions[currentPage - 1].qti_answer_json
-          && JSON.parse(questions[currentPage-1].qti_json).questionType === 'marker'">
+          && JSON.parse(questions[currentPage-1].qti_json).questionType === 'marker'"
+        >
           <MarkerSubmission
             :key="questions[currentPage - 1].student_response"
             :question="questions[currentPage-1]"
@@ -790,8 +879,33 @@
         </b-button>
       </template>
     </b-modal>
-    <div v-show="user.role === 3 && clickerStatus === 'neither_view_nor_submit'">
-      <b-alert variant="info" show>{{ clickerMessage }}</b-alert>
+    <div v-show="user.role === 3 && assessmentType === 'clicker'">
+      <b-alert variant="info" :show="clickerMessage !== ''">
+        <div v-html="clickerMessage" />
+      </b-alert>
+      <b-form-group
+        v-if="canViewClickerSubmissions"
+        label-cols-sm="1"
+        label-cols-lg="1"
+        label="Clicker View"
+        label-size="sm"
+        label-for="view"
+      >
+        <b-form-row>
+          <b-form-radio-group
+            v-model="clickerView"
+            class="mt-1"
+          >
+            <b-form-radio name="clicker_view" value="submissions">
+              Submissions
+            </b-form-radio>
+
+            <b-form-radio name="clicker_view" value="question">
+              Question
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-row>
+      </b-form-group>
     </div>
     <b-alert :show="showInvalidAssignmentMessage" variant="info">
       <div class="font-weight-bold">
@@ -1139,6 +1253,7 @@
       size="lg"
       hide-footer
       @hidden="showAudioUploadComponent = true;handleCancel()"
+      @shown="uploadChooseFileText()"
     >
       <span v-if="user.role === 2">
         <toggle-button
@@ -1345,6 +1460,7 @@
           </b-container>
           <b-container>
             <hr v-show="user.role !== 3">
+
             <file-upload
               v-if="isOpenEndedAudioSubmission"
               ref="upload"
@@ -1354,15 +1470,26 @@
               @input-file="inputFile"
               @input-filter="inputFilter"
             />
-            <file-upload
+            <b-button
               v-if="!isOpenEndedAudioSubmission"
-              ref="upload"
-              accept=".pdf,.txt,.png,.jpg,.jpeg"
-              v-model="files"
-              put-action="/put.method"
-              @input-file="inputFile"
-              @input-filter="inputFilter"
-            />
+              variant="primary"
+              size="sm"
+              @click="triggerFileSelect"
+            >
+              <span v-show="clickerApp">Take Photo or Upload New File</span>
+              <span v-show="!clickerApp"> Upload New File</span>
+            </b-button>
+            <div id="open-ended-submission-file-upload">
+              <file-upload
+                v-if="!isOpenEndedAudioSubmission"
+                ref="upload"
+                v-model="files"
+                accept=".pdf,.txt,.png,.jpg,.jpeg"
+                put-action="/put.method"
+                @input-file="inputFile"
+                @input-filter="inputFilter"
+              />
+            </div>
           </b-container>
           <div v-show="uploadLevel === 'question' || !showCurrentFullPDF">
             <div class="example-drag">
@@ -1940,6 +2067,25 @@
                   </div>
                 </b-col>
               </b-form-row>
+              <b-form-group
+                v-if="assessmentType === 'clicker'"
+                id="submission_time"
+              >
+                <div class="d-inline-flex">
+                  <label class="mr-2 mt-1">Time to Submit:</label>
+                  <b-form-input
+                    id="time_to_submit"
+                    v-model="clickerTimeForm.time_to_submit"
+                    type="text"
+                    style="width: 200px"
+                    :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
+                    @keydown="clickerTimeForm.errors.clear('time_to_submit')"
+                  />
+                  <span class="ml-2"><b-button variant="primary" size="sm" @click="updateClickerTimeToSubmit()">Update Time to Submit
+                  </b-button></span>
+                </div>
+                <ErrorMessage :message="clickerTimeForm.errors.get('time_to_submit')" />
+              </b-form-group>
               <b-row
                 v-if="questions
                   && questions[currentPage-1]
@@ -2629,7 +2775,7 @@
                           id="reset-clicker-question-tooltip"
                           style="padding:20px"
                           variant="danger"
-                          @click="resetClickerTimer"
+                          @click="restartQuestion"
                 >
                   <span style="font-size:30px">Reset</span>
                 </b-button>
@@ -2647,8 +2793,10 @@
                     :style="clickerApp || assessmentType === 'clicker' ? 'border:0' : ''"
                   >
                     <div>
-                      <div v-if="!caseStudyNotesByQuestion.length && showQuestion"
-                           id="question-to-view"
+                      <div
+                        v-if="assessmentType !== 'clicker' && !caseStudyNotesByQuestion.length && showQuestion
+                          || (assessmentType === 'clicker' && showQuestion && !canViewClickerSubmissions || (canViewClickerSubmissions && clickerView === 'question'))"
+                        id="question-to-view"
                       >
                         <div v-if="questions[currentPage-1].a11y_question_html && user.role === 3"
                              class="m-2"
@@ -2737,18 +2885,73 @@
                       </div>
                     </div>
                   </b-card>
-                  <div v-show="assessmentType === 'clicker' && user.role=== 3 && clickerStatus === 'view_and_submit'">
-                    <countdown
-                      :time="timeLeft"
-                      class="float-left"
-                      @end="endClickerAssessment"
+                  <div v-if="assessmentType === 'clicker'
+                         && user.role=== 3"
+                       class="mt-4"
+                  >
+                    <RedirectToClickerModal
+                      :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
+                      :assignment-id="+clickerAssignmentId"
+                      :question-id="clickerQuestionId"
+                      :show-modal="+clickerAssignmentId !== +assignmentId || questions[currentPage-1].id !==clickerQuestionId"
+                      @resetClickerAssignmentIdClickerQuestionId="resetClickerAssignmentIdClickerQuestionId()"
+                    />
+                    <div v-if="['resumed','view_and_submit'].includes(clickerStatus) && !clickerPaused"
+                         class="timer-wrapper"
                     >
-                      <template slot-scope="props">
-                        <span style="font-size: x-large" class="pt-5"
-                              v-html="getTimeLeftMessage(props, assessmentType)"
-                        />
-                      </template>
-                    </countdown>
+                      <countdown
+                        :key="`countdown-key-${countDownKey}`"
+                        :time="timeLeft"
+                        class="float-left"
+                        @end="endClickerAssessment"
+                      >
+                        <template v-slot="props">
+                          <span style="font-size: x-large" class="pt-5"
+                                v-html="getTimeLeftMessage(props, assessmentType)"
+                          />
+                        </template>
+                      </countdown>
+                    </div>
+                    <div v-if="clickerPaused">
+                      {{ timerIsCurrentlyPaused() }}
+                    </div>
+                    <div v-show="canViewClickerSubmissions && clickerView === 'submissions'">
+                      <div v-if="canViewClickerSubmissions" class="d-flex align-items-start">
+                        <div style="flex: 1; max-width: 300px; padding-right: 40px;">
+                          <div style="font-size: 20px; margin-bottom: 30px;white-space: nowrap;">
+                            {{ responsePercent }}% of students have responded
+                          </div>
+                          <div
+                            v-for="(label, piechartdataIndex) in piechartdata.labels"
+                            :key="`pie-chart-data-${piechartdataIndex}`"
+                            style="display: flex; align-items: center; margin-bottom: 10px; font-size: large;"
+                          >
+                            <b-icon-square-fill
+                              :style="`color:${piechartdata.datasets.backgroundColor[piechartdataIndex]}; margin-right: 8px;`"
+                            />
+                            <span style="margin-right: 4px;" v-html="label" />
+                            <span
+                              v-show="clickerAnswerShown && piechartdataIndex === correctAnswerIndex"
+                            >
+                <img
+                  alt="Checkmark for correct answer"
+                  :src="asset('assets/img/check-mark.png')"
+                  style="height: 20px; margin-left: 4px;"
+                >
+              </span>
+                          </div>
+                        </div>
+
+                        <!-- Chart area -->
+                        <div style="flex: 2;">
+                          <pie-chart
+                            :key="`pie-chart-${currentPage}-${chartUpdateKey}`"
+                            :chartdata="piechartdata"
+                            @pieChartLoaded="updateIsLoadingPieChart"
+                          />
+                        </div>
+                      </div>
+                     </div>
                   </div>
                   <b-card v-if="!isLoading && questions[currentPage-1]
                     && user.role === 2
@@ -2919,28 +3122,6 @@
                     color="#007BFF"
                     background="#FFFFFF"
                   />
-
-                  <div v-if="!isLoadingPieChart">
-                    <b-form-row v-if="!presentationMode && false">
-                      <b-form-group
-                        id="submission_time"
-                        label-cols-sm="4"
-                        label-cols-lg="5"
-                        label="Time To Submit:"
-                        label-for="Time To Submit"
-                      >
-                        <b-form-input
-                          id="time_to_submit"
-                          v-model="clickerTimeForm.time_to_submit"
-                          type="text"
-                          placeholder=""
-                          :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
-                          @keydown="clickerTimeForm.errors.clear('time_to_submit')"
-                        />
-                        <has-error :form="clickerTimeForm" field="time_to_submit" />
-                      </b-form-group>
-                    </b-form-row>
-                  </div>
                 </div>
               </div>
             </b-col>
@@ -3508,8 +3689,13 @@ import SubmitWork from '~/components/SubmitWork.vue'
 import RubricPointsBreakdownModal from '../components/RubricPointsBreakdownModal.vue'
 import RubricPropertiesModal from '../components/RubricPropertiesModal.vue'
 import RedirectToClickerModal from '../components/RedirectToClickerModal.vue'
-import { webworkOnLoadCssUpdates } from '../helpers/CSSUpdates'
 import MarkerSubmission from '../components/MarkerSubmission.vue'
+import {
+  initClickerAssignmentsForEnrolledAndOpenCourses,
+  resetClickerAssignmentIdClickerQuestionId
+} from '../helpers/clicker'
+import ErrorMessage from '../components/ErrorMessage.vue'
+import { h5pOnLoadCssUpdates } from '../helpers/CSSUpdates'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3520,6 +3706,7 @@ export default {
   middleware: 'auth',
   layout: window.config.clickerApp ? 'blank' : 'default',
   components: {
+    ErrorMessage,
     MarkerSubmission,
     RedirectToClickerModal,
     RubricPropertiesModal,
@@ -3556,6 +3743,14 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    chartUpdateKey: 0,
+    clickerView: 'submissions',
+    pollClosed: false,
+    instructorClosedPollMessage: 'Your instructor has closed this poll.',
+    currentTimeLeft: 0,
+    clickerPaused: false,
+    countdownKey: 0,
+    redirectToClickerModalKey: 0,
     clickerQuestionId: 0,
     clickerAssignmentId: 0,
     useExistingRubric: false,
@@ -3571,9 +3766,8 @@ export default {
     showSubmitMoleculeSubmission: false,
     showSolutionFileHTML: false,
     modalInstructorClickerQuestionShown: false,
-    clickerModalButtons: {},
     clickerAnswerShown: false,
-    viewingClickerSubmissions: false,
+    canViewClickerSubmissions: false,
     openingClicker: false,
     clickerApp: false,
     pendingQuestionRevision: {},
@@ -3722,8 +3916,7 @@ export default {
     responsePercent: '',
     isLoadingPieChart: true,
     correctAnswerIndex: null,
-    piechartdata: [],
-    clickerPollingSetInterval: null,
+    piechartdata: {},
     clickerMessage: '',
     clickerMessageType: '',
     cannotViewAssessmentMessage: false,
@@ -3932,6 +4125,7 @@ export default {
     window.removeEventListener('visibilitychange', this.visibilityChange)
   },
   async mounted () {
+    // this.$bvModal.show('modal-instructor-clicker-question')
     this.clickerApp = window.config.clickerApp
     this.isPhone = window.innerWidth < 768
     if (localStorage.ltiTokenId) {
@@ -4035,18 +4229,11 @@ export default {
         await clickerStatusUpdated(ctx)
       }).subscribe()
 
-      if (this.user.role === 3) {
-        this.centrifuge2 = await initCentrifuge()
-        const sub2 = this.centrifuge2.newSubscription(`set-current-page-${this.assignmentId}`)
-        sub2.on('publication', async (ctx) => {
-          const data = ctx.data
-          this.clickerAssignmentId = +this.assignmentId
-          this.clickerQuestionId = +data.question_id
-        }).subscribe()
-      }
-      if (this.user.role === 2) {
-        await this.setStudentQuestionPage()
-      }
+      const sub2 = this.centrifuge.newSubscription(`view-clicker-submissions-${this.assignmentId}`)
+      const viewClickerSubmissionsUpdated = this.viewClickerSubmissionsUpdated
+      sub2.on('publication', async function (ctx) {
+        await viewClickerSubmissionsUpdated(ctx)
+      }).subscribe()
     }
     if (this.isInstructorWithAnonymousView && this.questions.length && !this.isLoading) {
       this.$bvModal.show('modal-save-questions-from-open-course')
@@ -4065,14 +4252,13 @@ export default {
       $('.sidebar-card').removeClass('sidebar-card')
       $('.row').removeClass('row')
     }
+    if (this.user.role === 3) {
+      await this.initClickerAssignmentsForEnrolledAndOpenCourses()
+    }
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
     window.removeEventListener('resize', this.resizeHandler)
-    if (this.clickerPollingSetInterval) {
-      clearInterval(this.clickerPollingSetInterval)
-      this.clickerPollingSetInterval = null
-    }
     if (this.reviewQuestionPollingSetInterval) {
       clearInterval(this.reviewQuestionPollingSetInterval)
       this.reviewQuestionPollingSetInterval = null
@@ -4091,17 +4277,106 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
-    removeSubmitButton () {
-      this.$nextTick(() => {
-        const webworkIframe = document.getElementById(`clicker-technology-iframe-${this.currentPage}-${this.cacheIndex}`)
-        console.error(webworkIframe)
-        webworkIframe.contentWindow.postMessage(JSON.stringify({
-          elements: [{
-            selector: 'input[name="submitAnswers"]',
-            style: 'display:none'
-          }]
-        }), '*')
-      })
+    async updateClickerTimeToSubmit () {
+      try {
+        const { data } = await this.clickerTimeForm.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/custom-clicker-time-to-submit`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.questions[this.currentPage - 1].time_to_submit = this.clickerTimeForm.time_to_submit
+        }
+      } catch (error) {
+        if (error.message.includes('status code 422')) {
+          this.$nextTick(() => fixInvalid())
+          this.allFormErrors = this.clickerTimeForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-clicker-time-to-submit-error-form')
+        }
+      }
+    },
+    async restartQuestion () {
+      try {
+        const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/restart-question`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        } else {
+          this.canViewClickerSubmissions = false
+          this.clickerView = 'submissions'
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async closeInstructorClickerQuestionModal () {
+      this.$bvModal.hide('modal-instructor-clicker-question')
+      await this.closePoll(this.instructorClosedPollMessage)
+    },
+    timerIsCurrentlyPaused () {
+      return 'The timer is currently paused...'
+    },
+    triggerFileSelect () {
+      document.querySelector('#file').click()
+    },
+    async pauseClicker () {
+      this.clickerPaused = true
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/pause-clicker`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async resumeClicker () {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/resume-clicker`,
+          { current_time_left: this.currentTimeLeft })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    resetClickerAssignmentIdClickerQuestionId,
+    initClickerAssignmentsForEnrolledAndOpenCourses,
+    async addTimeToClicker () {
+      try {
+        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/add-time`,
+          {
+            time_to_add: 15,
+            time_left: parseInt(this.currentTimeLeft) / 1000
+          })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    cleanUpInstructorClickerView () {
+      if (this.user.role === 2) {
+        this.$nextTick(() => {
+          const iframe = document.getElementById(`clicker-technology-iframe-${this.currentPage}-${this.cacheIndex}`)
+          switch (this.questions[this.currentPage - 1].technology) {
+            case ('h5p'):
+              let cssUpdates = h5pOnLoadCssUpdates
+              cssUpdates.elements.push({
+                selector: '.h5p-actions',
+                style: 'display:none;'
+              })
+              iframe.contentWindow.postMessage(JSON.stringify(cssUpdates), '*')
+              break
+            case ('webwork'):
+              iframe.contentWindow.postMessage(JSON.stringify({
+                elements: [{
+                  selector: 'input[name="submitAnswers"]',
+                  style: 'display:none'
+                }]
+              }), '*')
+              break
+          }
+        })
+      }
     },
     isLocked () {
       return this.hasAtLeastOneSubmission &&
@@ -4260,31 +4535,14 @@ export default {
       this.presentationMode = !this.presentationMode
       this.renderMathJax()
     },
-    async setStudentQuestionPage () {
-      try {
-        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/set-current-page`)
-        console.log(data)
-      } catch (error) {
-        console.error(error.message)
-      }
-    },
-    initShowClickerAnswer () {
+    async showClickerAnswer () {
+      await this.viewClickerSubmissions(true)
       this.clickerAnswerShown = true
-      this.clickerModalButtons.close = true
-      this.clickerModalButtons.answer = false
     },
-    async closePoll () {
-      await this.endClickerAssessment()
-      this.clickerModalButtons = {
-        'submissions': false,
-        'answer': true,
-        'close': false
-      }
+    async closePoll (message = '') {
+      await this.endClickerAssessment(message)
       this.clickerAnswerShown = false
-      this.viewingClickerSubmissions = true
-    },
-    async initViewClickerSubmissions () {
-      this.clickerStatus === 'view_and_submit' ? this.$bvModal.show('modal-confirm-close-poll') : await this.closePoll()
+      this.pollClosed = true
     },
     movePageByArrow (newPage) {
       window.location = `/assignments/${this.assignmentId}/questions/view/${this.questions[newPage - 1].id}`
@@ -4310,18 +4568,6 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async resetClickerTimer () {
-      try {
-        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/reset-clicker-timer`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        window.location = `/assignments/${this.assignmentId}/questions/view/${this.questions[this.currentPage - 1].id}`
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     async setCurrentPage (ctx) {
       console.log('set-current-page')
       console.log(ctx)
@@ -4330,19 +4576,41 @@ export default {
         window.location.href = `/assignments/${this.assignmentId}/questions/view/${data.question_id}`
       }
     },
+    async viewClickerSubmissionsUpdated (ctx) {
+      const data = ctx.data
+      if (data.question_id === +this.questions[this.currentPage - 1].id && data.assignment_id === +this.assignmentId) {
+        console.error('Clicker submissions shown')
+        if (data.view_clicker_submissions) {
+          await this.closePoll(this.instructorClosedPollMessage)
+          await this.getClickerSubmissions(data.question_id)
+          if (data.show_answer) {
+            this.clickerAnswerShown = true
+          }
+        }
+      }
+    },
     async clickerStatusUpdated (ctx) {
       const data = ctx.data
-      console.log('clicker status updated')
-      console.log(data)
-      if (data.assignment_id === +this.assignmentId) {
-        if (data.question_id === +this.questions[this.currentPage - 1].id) {
-          console.log('updating clicker status')
-          this.timeLeft = data.time_left
-          await this.canSubmit()
-          this.updateClickerMessage(data.status)
-        } else {
-          window.location.href = `/assignments/${this.assignmentId}/questions/view/${data.question_id}`
+      console.error('clicker status updated')
+      console.error(data)
+      if (data.assignment_id === +this.assignmentId && data.question_id === +this.questions[this.currentPage - 1].id) {
+        if (data.reload_student_view && this.user.role === 3) {
+          location.reload()
         }
+        console.error('updating clicker status')
+        if (data.status !== 'paused' && data.status !== 'resumed') {
+          this.timeLeft = data.time_left
+        }
+        if (data.current_time_left) {
+          this.currentTimeLeft = data.current_time_left
+          this.timeLeft = data.current_time_left
+        }
+        this.countDownKey++
+        await this.canSubmit()
+        this.updateClickerMessage(data.status, data.message)
+      } else {
+        this.clickerAssignmentId = this.assignmentId
+        this.clickerQuestionId = this.questions[this.currentPage - 1].id
       }
     },
     reloadAndRemoveQuestionEditorUpdatedAt () {
@@ -5419,14 +5687,27 @@ export default {
         }
       }
     },
-    async endClickerAssessment () {
+    async viewClickerSubmissions (showAnswer) {
+      try {
+        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/view-clicker-submissions/${+showAnswer}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async endClickerAssessment (message = '') {
+      // START:  I think that if it's a student I'll need to do some other logic.  Why would it end it anyway?
+
       if (this.clickerStatus !== 'view_and_submit') {
         return
       }
       this.timeLeft = 0
       if (this.user.role === 2) {
         try {
-          const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/end-clicker-assessment`)
+          const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/end-clicker-assessment`,
+            { message: message })
           if (data.type === 'error') {
             this.$noty.error(data.message)
           } else {
@@ -5448,39 +5729,70 @@ export default {
         message = '<span class="font-weight-bold">Time Until Due:</span> '
       }
 
-      let timeLeft = parseInt(this.timeLeft) / 1000
+      this.currentTimeLeft = props.totalMilliseconds
+      const minutesPlural = props.minutes > 1 ? 's' : ''
+      const timeLeft = parseInt(this.timeLeft) / 1000
       if (timeLeft >= 60 * 60 * 24) {
         message += `${props.days} days, ${props.hours} hours,
           ${props.minutes} minutes, ${props.seconds} seconds`
       } else if (timeLeft >= 60 * 60) {
         message += `${props.hours}  hours,
-          ${props.minutes}   minutes, ${props.seconds} seconds`
+          ${props.minutes}  minute${minutesPlural}, ${props.seconds} seconds`
       } else if (timeLeft > 60) {
-        message += `${props.minutes} minutes, ${props.seconds} seconds`
+        message += assessmentType !== 'clicker' ? `${props.minutes} minute${minutesPlural}, ${props.seconds} seconds`
+          : `${props.minutes} min, ${props.seconds} sec`
       } else {
         message += `${props.seconds} seconds`
       }
       message += assessmentType === 'clicker' ? ` left` : '.'
       return message
     },
-    async startClickerAssessment () {
-      this.clickerModalButtons = {
-        'submissions': true,
-        'answer': false,
-        'close': false
-      }
-      this.openingClicker = true
+    async restartTimer () {
       try {
-        const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/start-clicker-assessment`)
+        const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/restart-timer`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async resetClickerAssessment (reloadStudentView) {
+      try {
+        const { data } = await axios.delete(`/api/submissions/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/delete-by-assignment-and-question`)
         if (data.type === 'error') {
           this.$noty[data.type](data.message)
           return false
+        } else {
+          this.clickerTimeForm.reload_student_view = reloadStudentView
+          const clickerAssessmentStarted = await this.startClickerAssessment(true)
+          if (clickerAssessmentStarted) {
+            this.$noty.info('')
+          }
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         }
+        this.clickerTimeForm.reload_student_view = false
       }
+    },
+    async startClickerAssessment (restart = false) {
+      try {
+        const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/start-clicker-assessment`)
+        this.clickerTimeForm.restart = false
+        if (data.type === 'error') {
+          this.$noty[data.type](data.message)
+          return false
+        }
+      } catch (error) {
+        this.clickerTimeForm.restart = false
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+          return false
+        }
+      }
+      return true
     },
     openShowAudioSolutionModal (event) {
       event.preventDefault()
@@ -5630,22 +5942,37 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    updateClickerMessage (clickerStatus) {
+    updateClickerMessage (clickerStatus, message = '') {
       switch (clickerStatus) {
+        case ('paused'):
+          this.clickerPaused = true
+          break
+        case ('resumed'):
+          this.timeLeft = this.currentTimeLeft
+          this.$nextTick(() => {
+            this.clickerPaused = false
+          })
+          break
         case ('show_go'):
           this.clickerMessage = 'This question is ready to be opened.'
           this.clickerMessageType = 'info'
           break
         case ('view_and_submit'):
-          this.clickerMessage = 'This question is open and submissions are being recorded.'
+          this.clickerPaused = false
+          const numberOfAttemptsMessage = +this.numberOfAllowedAttempts === 1 ? '1 attempt' : 'an unlimited number of attempts'
+          this.clickerMessage = `This question is open and submissions are being recorded.<br>You are allowed ${numberOfAttemptsMessage} for this question.`
           this.clickerMessageType = 'success'
           if (this.user.role === 2) {
             this.openingClicker = false
             this.modalInstructorClickerQuestionShown = true
+            this.pollClosed = false
             this.$bvModal.show('modal-instructor-clicker-question')
           }
           break
         case ('view_and_not_submit'):
+          if (this.user.role === 3) {
+            this.clickerMessage = message || ''
+          }
           break
         case ('neither_view_nor_submit'):
           this.clickerMessage = this.user.role === 2
@@ -5656,21 +5983,7 @@ export default {
       this.clickerStatus = clickerStatus
       console.log('New clicker status: ' + this.clickerStatus)
     },
-    initClickerPolling () {
-      this.isLoadingPieChart = true
-      this.submitClickerPolling(this.questions[this.currentPage - 1].id)
-      if (this.clickerPollingSetInterval) {
-        clearInterval(this.clickerPollingSetInterval)
-        this.clickerPollingSetInterval = null
-      }
-      const self = this
-      if (this.user.role === 2) {
-        this.clickerPollingSetInterval = setInterval(function () {
-          self.submitClickerPolling(self.questions[self.currentPage - 1].id)
-        }, 3000)
-      }
-    },
-    async submitClickerPolling (questionId) {
+    async getClickerSubmissions (questionId) {
       try {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
 
@@ -5680,10 +5993,12 @@ export default {
           this.piechartdata = data.pie_chart_data
           this.responsePercent = data.response_percent
           this.correctAnswerIndex = data.correct_answer_index
+          this.canViewClickerSubmissions = true
+          this.$nextTick(() => {
+            this.chartUpdateKey++
+          })
         } else {
           this.$noty.error(data.message)
-          clearInterval(this.clickerPollingSetInterval)
-          this.clickerPollingSetInterval = null
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -5835,7 +6150,7 @@ export default {
 
         // show initially if you made no attempts OR you've already visited the learning tree
         // if you made an attempt, hide the question until you visit the learning tree
-        // only get additional points and with a penalty IF they get it all correctaaaaaaaa
+        // only get additional points and with a penalty IF they get it all correct
         if (this.user.role === 3) {
           await this.canSubmit()
         }
@@ -6100,8 +6415,8 @@ export default {
       await this.$nextTick(() => {
         this.submitWorkKey++
         this.showSolutionFileHTML = this.questions[this.currentPage - 1].solution ||
-          this.questions[this.currentPage - 1].solution_html ||
-          this.questions[this.currentPage - 1].imathas_solution
+            this.questions[this.currentPage - 1].solution_html ||
+            this.questions[this.currentPage - 1].imathas_solution
         switch (this.questions[this.currentPage - 1].technology) {
           case ('webwork'):
             let href = new URL(this.questions[this.currentPage - 1].technology_iframe)
@@ -6117,7 +6432,8 @@ export default {
             break
         }
         this.submissionArray = this.questions[this.currentPage - 1]['submission_array']
-      })
+      }
+      )
       if (this.user.role === 3) {
         if (this.pastDue) {
           await this.initReviewQuestionTimeSpent()
@@ -6143,9 +6459,11 @@ export default {
       if (this.assessmentType === 'clicker') {
         this.clickerStatus = this.questions[currentPage - 1].clicker_status
         this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit
-        this.initClickerPolling()
         this.timeLeft = this.questions[this.currentPage - 1].clicker_time_left
         this.updateClickerMessage(this.clickerStatus)
+        if (this.user.role === 2 && this.questions[this.currentPage - 1].time_to_submit) {
+          this.clickerTimeForm.time_to_submit = this.questions[this.currentPage - 1].time_to_submit
+        }
       }
       if (this.assessmentType === 'learning tree') {
         const xCenter = window.innerWidth / 2
@@ -6434,6 +6752,16 @@ export default {
 }
 </script>
 <style scoped>
+.timer-wrapper {
+  display: inline-block;
+  width: 185px; /* Set a fixed width wide enough for the max-length value */
+}
+
+.big-close {
+  font-size: 3rem;
+  line-height: 1;
+}
+
 .v-enter-active,
 .v-leave-active {
   transition: opacity .75s ease;
@@ -6499,4 +6827,12 @@ div.ar-icon svg {
   width: 90%;
 }
 
+#modal-instructor-clicker-question___BV_modal_body_ {
+  padding-top: 0px;
+}
+
+#modal-instructor-clicker-question___BV_modal_header_.modal-header {
+  padding-bottom: 0px;
+  border: 0px;
+}
 </style>
