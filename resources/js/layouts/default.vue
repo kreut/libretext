@@ -16,7 +16,9 @@
       <navbar :linked-accounts="linkedAccounts"/>
     </div>
     <div v-else id="default-padding-top" style="padding-top:30px"/>
-    <div id="main-content" class="page-container" role="main" :class="{ 'container': true, 'mt-4': true }" tabindex="-1">
+    <div id="main-content" class="page-container" role="main" :class="{ 'container': true, 'mt-4': true }"
+         tabindex="-1"
+    >
       <child/>
     </div>
     <div v-if="!inIFrame && !isLearningTreesEditor" id="footer-div" class="d-flex flex-column"
@@ -161,9 +163,12 @@ export default {
         this.showFooter = false
         this.intervalId = setInterval(this.checkQuestionViewDisplay, 50)
 
-        document.getElementById('footer-div').style.marginTop = '0px'
+        const footerDiv = document.getElementById('footer-div')
+        if (footerDiv) {
+          footerDiv.style.marginTop = '0px'
+        }
       }
-      if (to.name === 'welcome' && this.user){
+      if (to.name === 'welcome' && this.user) {
         if ([3, 4].includes(this.user.role)) {
           window.location = '/students/courses'
         }
