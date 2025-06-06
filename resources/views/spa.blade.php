@@ -63,6 +63,7 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
 
 
 
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
 <script>
@@ -109,8 +110,26 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
   MathJax.Hub.Config(MathJaxConfig)
 
 </script>
-<script>   document.addEventListener('DOMContentLoaded', function (event) {
-  console.log('dom loaded')
+<script>
+  if (window.top === window.self) {
+    // Not in an iframe --- fix the padding issue
+    const style = document.createElement('style')
+    style.textContent = `
+      .page-container {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+    `
+    document.head.appendChild(style)
+  }
+  document.addEventListener('DOMContentLoaded', function (event) {
+    console.log('dom loaded')
     if (window.self !== window.top) {
       console.log('fixing body')
       console.log(document.getElementsByTagName('body')[0])
