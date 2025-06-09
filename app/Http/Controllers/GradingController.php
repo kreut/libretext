@@ -117,7 +117,7 @@ class GradingController extends Controller
                 'updated_at' => Carbon::now(),
                 'grader_id' => $request->user()->id,
             ];
-            if ($assignment_question->open_ended_submission_type === "0") {
+            if (in_array($assignment_question->open_ended_submission_type, ["0","no submission, manual grading"])) {
                 $submission_file_data['type'] = 'no upload';
                 $submission_file_data['original_filename'] = '';
                 $submission_file_data['submission'] = '';
