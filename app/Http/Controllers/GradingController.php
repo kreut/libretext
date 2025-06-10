@@ -117,11 +117,20 @@ class GradingController extends Controller
                 'updated_at' => Carbon::now(),
                 'grader_id' => $request->user()->id,
             ];
-            if (in_array($assignment_question->open_ended_submission_type, ["0","no submission, manual grading"])) {
+            if (in_array($assignment_question->open_ended_submission_type, ["0", "no submission, manual grading"])) {
                 $submission_file_data['type'] = 'no upload';
                 $submission_file_data['original_filename'] = '';
                 $submission_file_data['submission'] = '';
                 $submission_file_data['date_submitted'] = now();
+            }
+
+            if (!SubmissionFile::where('user_id', $student_user_id)
+                    ->where('assignment_id', $assignment_id)
+                    ->where('question_id', $question_id)
+                    ->first()
+                && !in_array($assignment_question->open_ended_submission_type, ["0", "no submission, manual grading"])) {
+                $response['manual_grading_error'] = true;
+                return $response;
             }
             SubmissionFile::updateOrCreate(
                 [
@@ -563,10 +572,10 @@ class GradingController extends Controller
 
             $is_auto_graded = $question->technology !== 'text';
             $is_open_ended = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->first()
-                ->open_ended_submission_type !== '0'
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->first()
+                    ->open_ended_submission_type !== '0'
                 || $question->technology === 'text';
 
             $response['is_auto_graded'] = $is_auto_graded;
