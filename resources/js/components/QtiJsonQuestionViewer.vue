@@ -220,7 +220,7 @@ import NumericalViewer from './viewers/NumericalViewer'
 import BowTieViewer from './viewers/BowTieViewer'
 import MatrixMultipleChoiceViewer from './viewers/MatrixMultipleChoiceViewer'
 import MultipleResponseSelectAllThatApplyOrSelectNViewer
-from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
+  from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
 import MultipleResponseGroupingViewer from './viewers/MultipleResponseGroupingViewer'
 import DropDownTableViewer from './viewers/DropDownTableViewer'
 import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'
@@ -343,8 +343,19 @@ export default {
     window.removeEventListener('message', this.hotKeys)
   },
   mounted () {
+    this.$nextTick(() => {
+      const iframes = document.querySelectorAll('iframe[title="3D Renderer"]')
+      iframes.forEach((iframe) => {
+        iframe.style.height = '600px'
+        iframe.style.width = '100%'
+      })
+
+    })
+
     this.question = JSON.parse(this.qtiJson)
-    if (!this.question) {
+    if (
+      !this.question
+    ) {
       console.log('no question here')
       return false
     }
@@ -419,7 +430,8 @@ export default {
     formatQuestionMediaPlayer,
     openContactGraderModal (type) {
       this.$emit('openContactGraderModal', type)
-    },
+    }
+    ,
     receiveMessage (event) {
       if (event.data.structure) {
         this.response = {
@@ -428,7 +440,8 @@ export default {
         this.receivedStructure = true
         this.$forceUpdate()
       }
-    },
+    }
+    ,
     showRandomizedMessage () {
       if (this.presentationMode) {
         return false
@@ -444,13 +457,15 @@ export default {
         return JSON.parse(this.qtiJson).randomizeOrder !== 'no'
       }
       return false
-    },
+    }
+    ,
     shuffleArray (array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]]
       }
-    },
+    }
+    ,
     waitForStructure () {
       return new Promise((resolve) => {
         const intervalId = setInterval(() => {
@@ -462,11 +477,13 @@ export default {
           }
         }, 50)
       })
-    },
+    }
+    ,
     async handleGetStructure () {
       await this.waitForStructure()
       this.message = 'Structure received!'
-    },
+    }
+    ,
     async submitResponse () {
       let response
       let invalidResponse = false
