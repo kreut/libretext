@@ -2,8 +2,13 @@
 import { Bar } from 'vue-chartjs'
 
 export default {
+  name: 'HistogramView',
   extends: Bar,
   props: {
+    xLabel: {
+      type: String,
+      default: 'Score'
+    },
     chartdata: {
       type: Object,
       default: null
@@ -38,13 +43,15 @@ export default {
     }
   },
   mounted () {
-    this.renderChart(this.chartdata, this.options)
+    let options = JSON.parse(JSON.stringify(this.options))
+    options.scales.xAxes[0].scaleLabel.labelString = this.xLabel
+    this.renderChart(this.chartdata, options)
   },
   watch: {
     chartdata: {
       handler (newData) {
         // Re-render the chart with updated data
-        this.renderChart(newData, this.options)
+        this.renderChart(newData, options)
       },
       deep: true
     }

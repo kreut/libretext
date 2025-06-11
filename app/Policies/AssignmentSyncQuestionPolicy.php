@@ -313,6 +313,28 @@ class AssignmentSyncQuestionPolicy
             : Response::deny('You are not allowed to start this clicker assessment.');
     }
 
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function updateCustomResponseFormat(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the response format for this question.');
+    }
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
     public function updateCustomClickerTimeToSubmit(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
     {
         $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));

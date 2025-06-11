@@ -726,6 +726,8 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/assignments/{assignment}/questions/{question}/start-clicker-assessment', 'AssignmentSyncQuestionController@startClickerAssessment');
     Route::post('/assignments/{assignment}/questions/{question}/end-clicker-assessment', 'AssignmentSyncQuestionController@endClickerAssessment');
     Route::patch('/assignments/{assignment}/questions/{question}/custom-clicker-time-to-submit', 'AssignmentSyncQuestionController@updateCustomClickerTimeToSubmit');
+
+
     Route::patch('/assignments/{assignment}/questions/{question}/set-current-page', 'AssignmentSyncQuestionController@setCurrentPage');
     Route::post('/assignments/{assignment}/questions/{question}/add-time', 'AssignmentSyncQuestionController@addTimeToClickerAssessment');
     Route::post('/assignments/{assignment}/questions/{question}/restart-timer', 'AssignmentSyncQuestionController@restartTimerInClickerAssessment');
@@ -825,7 +827,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
 
     Route::post('/submissions', 'SubmissionController@store');
-    Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');
+    Route::patch('/submissions/{assignment}/questions/{question}/submission-chart-data', 'SubmissionController@submissionChartData');
 
     Route::post('/shown-hints/assignments/{assignment}/question/{question}', 'ShownHintController@store');
 

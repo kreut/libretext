@@ -14,10 +14,11 @@
       @change="showHistogramView = !showHistogramView"
     />
     <div v-if="showHistogramView">
-      <scores
-              class="border-1 border-info"
-              :chartdata="chartdata"
-              :height="height"
+      <HistogramView
+        class="border-1 border-info"
+        :chartdata="chartdata"
+        :height="height"
+        :x-label="xLabel"
       />
     </div>
     <div v-else>
@@ -27,18 +28,40 @@
         :no-border-collapse="true"
         :items="chartdata.labelsWithCounts"
         :fields="labelsWithCountsFields"
+        responsive
       />
+    </div>
+    <div v-show="clickerAnswerShown
+        && correctAns"
+    >
+      <p><span class="text-success font-weight-bold">Answer:</span> {{ correctAns }}</p>
     </div>
   </div>
 </template>
 
 <script>
-import Scores from '~/components/Scores'
 import { ToggleButton } from 'vue-js-toggle-button'
+import HistogramView from './HistogramView.vue'
 
 export default {
-  components: { Scores, ToggleButton },
+  components: { HistogramView, ToggleButton },
   props: {
+    xLabel: {
+      type: String,
+      default: 'Score'
+    },
+    xKey: {
+      type: String,
+      default: 'score'
+    },
+    clickerAnswerShown: {
+      type: Boolean,
+      default: false
+    },
+    correctAns: {
+      type: String,
+      default: ''
+    },
     chartdata: {
       type: Object,
       default: function () {
@@ -57,25 +80,23 @@ export default {
   data: () => ({
     showHistogramView: true,
     toggleColors: window.config.toggleColors,
-    labelsWithCountsFields: [
+    labelsWithCountsFields: []
+  }),
+  mounted () {
+    this.labelsWithCountsFields = [
       {
-        key: 'number_of_students',
+        key: this.xKey,
         thClass: 'text-center',
         tdClass: 'text-center'
       },
       {
-        key: 'score',
+        key: 'number_of_students',
+        label: 'Number of Students',
         thClass: 'text-center',
         tdClass: 'text-center'
       }
     ]
-  }),
-  mounted () {
     this.$forceUpdate()
   }
 }
 </script>
-
-<style scoped>
-
-</style>

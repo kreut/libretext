@@ -2480,7 +2480,7 @@ import QuestionCircleTooltipModal from '../QuestionCircleTooltipModal.vue'
 import ConsultInsight from '../ConsultInsight.vue'
 import RubricProperties from '../RubricProperties.vue'
 import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
-import { canEdit } from '../../helpers/Questions'
+import { canEdit, responseFormatOptions } from '~/helpers/Questions'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2884,6 +2884,7 @@ export default {
     ],
     questionForm: new Form(defaultQuestionForm),
     allFormErrors: [],
+    responseFormatOptions: responseFormatOptions,
     existingAutoGradedTechnologyOptions: [
       { value: 'text', text: 'None' },
       { value: 'webwork', text: 'WeBWorK' },
@@ -4682,6 +4683,7 @@ export default {
           this.questionFormTechnology = 'webwork'
           this.questionForm.technology = 'webwork'
           this.questionForm.new_auto_graded_code = 'webwork'
+          this.questionForm.response_format = null
           break
         case ('qti'):
           if (this.questionForm.non_technology_text) {

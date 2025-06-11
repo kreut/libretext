@@ -18,6 +18,7 @@ use App\IMathAS;
 use App\JWE;
 use App\LearningTree;
 use App\PendingQuestionRevision;
+use App\QuestionRevision;
 use App\RandomizedAssignmentQuestion;
 use App\ReportToggle;
 use App\RubricPointsBreakdown;
@@ -64,6 +65,8 @@ use Psr\Container\NotFoundExceptionInterface;
 
 class AssignmentSyncQuestionController extends Controller
 {
+
+
     /**
      * @param Assignment $assignment
      * @param Question $question
@@ -974,11 +977,20 @@ class AssignmentSyncQuestionController extends Controller
         try {
 
             $client = Helper::centrifuge();
+            $published_response = ["view_clicker_submissions" => true,
+                "show_answer" => $show_answer,
+                'assignment_id' => $assignment->id,
+                'question_id' => $question->id,
+                'qti_answer_json' => ''];
+
+
+            if ($show_answer
+                && $question->qti_json
+                && !in_array($question->qti_json_type, ['true_false', 'multiple_choice'])) {
+                $published_response['qti_answer_json'] = $question->formatQtiJson('answer_json', $question->qti_json, [], true);
+            }
             $client->publish("view-clicker-submissions-$assignment->id",
-                ["view_clicker_submissions" => true,
-                    "show_answer" => $show_answer,
-                    'assignment_id' => $assignment->id,
-                    'question_id' => $question->id]);
+                $published_response);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -1307,10 +1319,12 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-            $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
-            Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
-            DB::commit();
+            if (app()->environment('production')) {
+                DB::beginTransaction();
+                $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+                Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
+                DB::commit();
+            }
             $time_to_submit = $request->time_to_submit;
             $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 4, true);
             $response['type'] = 'success';
@@ -2769,7 +2783,8 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['question_revision_id'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->id : null;
                 $assignment->questions[$key]['question_revision_number'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->revision_number : null;
                 $assignment->questions[$key]['question_revision_id_latest'] = $latest_question_revisions_by_question_id[$question->id] ?? null;
-                $assignment->questions[$key]['time_to_submit'] = isset($assignment_questions_by_question_id[$question->id])?  $assignment_questions_by_question_id[$question->id]->custom_clicker_time_to_submit : null;
+                $assignment->questions[$key]['time_to_submit'] = isset($assignment_questions_by_question_id[$question->id]) ? $assignment_questions_by_question_id[$question->id]->custom_clicker_time_to_submit : null;
+
                 $assignment->questions[$key]['question_reason_for_edit'] = null;
                 $assignment->questions[$key]['question_revision_number'] = 0;
 

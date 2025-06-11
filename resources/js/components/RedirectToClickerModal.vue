@@ -2,6 +2,7 @@
   <b-modal id="modal-redirect-to-clicker"
            title="Poll Starting"
            no-close-on-backdrop
+           no-auto-focus
   ><p>You have been invited to a poll by your instructor, {{ instructorName }} in your course "{{ courseName }}". You
     may either ignore this invitation or we can take you to the poll.
   </p>

@@ -145,4 +145,10 @@ export async function getQuestions () {
   this.currentQuestionPage = 1
 }
 
+export const responseFormatOptions = [
+  { text: 'Please choose the response format.', value: null },
+  { text: 'Single Multiple Choice', value: 'multiple choice' },
+  { text: 'Single Numeric Answer', value: 'numeric' },
+  { text: 'Other', value: 'other' }
+]
 

@@ -61,6 +61,26 @@ class QuestionRevisionsTest extends TestCase
         $question_info['reason_for_edit'] = 'blah blah blah';
         return $question_info;
     }
+    /** @test */
+    public function correct_webwork_dir_is_created()
+    {
+        $question_info = $this->_getQuestionInfo($this->user->id);
+        $question_info['question_type'] = 'assessment';
+        $question_info['revision_action'] = 'propagate';
+        $question_info['changes_are_topical'] = true;
+        $question_info['technology'] = 'webwork';
+        $question_info['webwork_code'] = 'some code';
+        $question_info['new_auto_graded_code'] = 'webwork';
+        $question_info['check_webwork_dir'] = true;
+        $question_info['automatically_update_revision'] = "0";
+        $webwork_dir = json_decode($this->actingAs($this->user)
+            ->patch("/api/questions/{$this->question->id}",
+                $question_info)
+            ->getContent(), 1)['webwork_dir'];
+        $question_revision_id = QuestionRevision::where('question_id', $this->question->id)->orderBy('revision_number', 'DESC')->first()->id;
+        $this->assertEquals("{$this->question->id}-$question_revision_id", $webwork_dir);
+    }
+
 
 
     /** @test */
@@ -185,26 +205,6 @@ class QuestionRevisionsTest extends TestCase
 
     }
 
-
-    /** @test */
-    public function correct_webwork_dir_is_created()
-    {
-        $question_info = $this->_getQuestionInfo($this->user->id);
-        $question_info['question_type'] = 'assessment';
-        $question_info['revision_action'] = 'propagate';
-        $question_info['changes_are_topical'] = true;
-        $question_info['technology'] = 'webwork';
-        $question_info['webwork_code'] = 'some code';
-        $question_info['new_auto_graded_code'] = 'webwork';
-        $question_info['check_webwork_dir'] = true;
-        $question_info['automatically_update_revision'] = "0";
-        $webwork_dir = json_decode($this->actingAs($this->user)
-            ->patch("/api/questions/{$this->question->id}",
-                $question_info)
-            ->getContent(), 1)['webwork_dir'];
-        $question_revision_id = QuestionRevision::where('question_id', $this->question->id)->orderBy('revision_number', 'DESC')->first()->id;
-        $this->assertEquals("{$this->question->id}-$question_revision_id", $webwork_dir);
-    }
 
 
     public function webwork_attachment_is_removed_from_the_correct_folder()

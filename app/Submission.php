@@ -1662,28 +1662,97 @@ class Submission extends Model
     /**
      * @param Assignment $assignment
      * @param Question $question
+     * @param string $response_format
+     * @return array
+     * @throws Exception
+     */
+    public function submissionChartData(Assignment $assignment, Question $question, string $response_format): array
+    {
+        try {
+            $response['type'] = 'error';
+            $number_enrolled = $assignment->course->enrolledUsers()->count();
+            $submission_results = DB::table('submissions')
+                ->join('questions', 'submissions.question_id', '=', 'questions.id')
+                ->where('submissions.assignment_id', $assignment->id)
+                ->where('submissions.question_id', $question->id)
+                //->where('submissions.user_id','<>', $fake_student_user_id)
+                ->select('submission', 'technology', 'score')
+                ->get();
+
+            if ($submission_results->isNotEmpty()) {
+                $pretty_presentation_exists = $this->prettyPresentationExists($submission_results[0], $response_format);
+                if ($pretty_presentation_exists) {
+                    $response = $this->getPieChartResults($assignment, $question, $submission_results);
+                } else {
+                    $response['default_submission_results'] = $this->getDefaultSubmissionResults($submission_results);
+                }
+            }
+
+
+            $number_submission_results = count($submission_results); //don't include Fake
+            $response['response_percent'] = $number_enrolled ? Round(100 * $number_submission_results / $number_enrolled, 1) : 0;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $response['message'] = $e->getMessage();
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return $response;
+    }
+
+    /**
+     * @param object $submission_result
+     * @param string $response_format
+     * @return bool
+     */
+    public function prettyPresentationExists(object $submission_result,
+                                             string $response_format): bool
+    {
+        $technology = $submission_result->technology;
+        $submission = json_decode($submission_result->submission, true);
+        $pretty_presentation_exists = false;
+        switch ($technology) {
+            case('qti'):
+                $question_type = $submission['question']['questionType'] ?? null;
+                $pretty_presentation_exists = $question_type && in_array($question_type, ['true_false', 'multiple_choice']);
+                break;
+            case('h5p'):
+                $object = $submission['object'];
+                $pretty_presentation_exists = $object
+                    && $object['definition']
+                    && $object['definition']['interactionType']
+                    && in_array($object['definition']['interactionType'], ['choice', 'true-false']);
+                break;
+            case('webwork'):
+                $pretty_presentation_exists = in_array($response_format, ['multiple choice', 'numeric']);
+                break;
+            default:
+                break;
+        }
+        return $pretty_presentation_exists;
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param $submission_results
      * @return array
      */
-    public function submissionChartData(Assignment $assignment, Question $question): array
+    public
+    function getPieChartResults(Assignment $assignment, Question $question, $submission_results): array
     {
-        $number_enrolled = $assignment->course->enrolledUsers()->count();
-        $submission_results = DB::table('submissions')
-            ->join('questions', 'submissions.question_id', '=', 'questions.id')
-            ->where('submissions.assignment_id', $assignment->id)
-            ->where('submissions.question_id', $question->id)
-            //->where('submissions.user_id','<>', $fake_student_user_id)
-            ->select('submission', 'technology')
-            ->get();
 
         $choices = [];
         $counts = [];
         $choices_by_identifier = [];
         $counts_by_identifier = [];
+        $correct_answer = '';
+        $correct_answer_index = -1;
         foreach ($submission_results as $value) {
-            $submission = json_decode($value->submission, true);
-            //Log::info(print_r($submission, true));
 
+            $submission = json_decode($value->submission, true);
             $technology = $value->technology;
+
             switch ($technology) {
                 case('qti'):
                     $question_type = $submission['question']['questionType'] ?? null;
@@ -1701,10 +1770,11 @@ class Submission extends Model
                                     $choices_by_identifier[$choice['identifier']] = $choice['value'];
                                 }
                             }
-                            if (!isset($response['correct_answer'])) {
+                            if ($correct_answer_index === -1) {
                                 foreach ($submission['question']['simpleChoice'] as $key => $choice) {
                                     if ($choice['correctResponse']) {
-                                        $response['correct_answer'] = $choice['value'];
+                                        $correct_answer = $choice['value'];
+                                        $correct_answer_index = $key;
                                     }
                                 }
                             }
@@ -1720,10 +1790,12 @@ class Submission extends Model
                                     $counts_by_identifier[$choice['identifier']] = 0;
                                 }
                             }
-                            if (!isset($response['correct_answer'])) {
-                                foreach ($submission['question']['simpleChoice'] as $choice) {
+
+                            if ($correct_answer_index === -1) {
+                                foreach ($submission['question']['simpleChoice'] as $key => $choice) {
                                     if ($choice['correctResponse']) {
-                                        $response['correct_answer'] = $choice['value'];
+                                        $correct_answer = $choice['value'];
+                                        $correct_answer_index = $key;
                                     }
                                 }
                             }
@@ -1748,8 +1820,8 @@ class Submission extends Model
                                     $counts[] = 0;
                                 }
 
-                                $correct_answer_index = $object['definition']['correctResponsesPattern'][0];
-                                $response['correct_answer'] = $this->getCorrectAnswer($technology, $object['definition'], $correct_answer_index);
+                                $correct_answer_index = +$object['definition']['correctResponsesPattern'][0];
+                                $correct_answer = $this->getCorrectAnswer($technology, $object['definition'], $correct_answer_index);
                             }
                             if (isset($submission['result']['response'])) {
                                 $h5p_response = $submission['result']['response'];
@@ -1762,7 +1834,7 @@ class Submission extends Model
                                 $choices = ['True', 'False'];
                                 $counts = [0, 0];
                                 $correct_answer_index = $object['definition']['correctResponsesPattern'][0] === 'true' ? 0 : 1;
-                                $response['correct_answer'] = $choices[$correct_answer_index];
+                                $correct_answer = $choices[$correct_answer_index];
                             }
                             if (isset($submission['result']['response'])) {
                                 $submission['result']['response'] === "true" ? $counts[0]++ : $counts[1]++;
@@ -1770,7 +1842,6 @@ class Submission extends Model
                             }
                             break;
                     }
-                    //Log::info(print_r($submission['result'], true));
 
                     break;
                 case('webwork'):
@@ -1809,7 +1880,6 @@ class Submission extends Model
                                 $counts_by_identifier[$identifier]++;
                             }
                         }
-                        $choices = array_values($choices_by_identifier);
                         $choices = array_values($radio_buttons);
                         $counts = array_values($counts_by_identifier);
                     }
@@ -1824,16 +1894,19 @@ class Submission extends Model
             $choices = array_values($choices_by_identifier);
             $counts = array_values($counts_by_identifier);
         }
-        $response['pie_chart_data']['labels'] = array_values($choices);
-        $response['pie_chart_data']['datasets']['borderWidth'] = 1;
-        $response['correct_answer_index'] = null;
+        $submissions = [];
+        foreach ($choices as $key => $choice) {
+            $submissions[] = ['submission' => $choice, 'number_of_students' => $counts[$key]];
+        }
+        $scores = $this->formatSubmissionResultScores($submission_results);
+        $pie_chart_data['labels'] = array_values($choices);
+        $pie_chart_data['datasets']['borderWidth'] = 1;
+
         foreach ($choices as $key => $choice) {
             $percent = 90 - 10 * $key;
             $first = 60 - 20 * $key;
-            $response['pie_chart_data']['datasets']['backgroundColor'][$key] = "hsla($first, 85%, $percent%, 0.9)";
-            if ($choice === $response['correct_answer']) {
-                $response['correct_answer_index'] = $key;
-            }
+            $pie_chart_data['datasets']['backgroundColor'][$key] = "hsla($first, 85%, $percent%, 0.9)";
+
         }
 
         $total = array_sum($counts);
@@ -1843,17 +1916,20 @@ class Submission extends Model
                 $counts[$key] = Round(100 * $count / $total);
             }
         }
-        foreach ($response['pie_chart_data']['labels'] as $key => $label) {
-            $response['pie_chart_data']['labels'][$key] .= "  &mdash; $counts[$key]%";
+        foreach ($pie_chart_data['labels'] as $key => $label) {
+            $pie_chart_data['labels'][$key] .= "  &mdash; $counts[$key]%";
         }
-        $response['pie_chart_data']['datasets']['data'] = $counts;
-        $number_submission_results = count($submission_results); //don't include Fake
-        $response['response_percent'] = $number_enrolled ? Round(100 * $number_submission_results / $number_enrolled, 1) : 0;
-        $response['type'] = 'success';
-        return $response;
 
+        $pie_chart_data['datasets']['data'] = $counts;
+        $pie_chart_data['correct_answer_index'] = $correct_answer_index;
+        $default_submission_results['default_submission_results'][0] = [];
+        $default_submission_results['default_submission_results'][0]['display'] = "pie-chart";
+        $default_submission_results['default_submission_results'][0]['submissions'] = $submissions;
+        $default_submission_results['default_submission_results'][0]['scores'] = $scores;
+        $default_submission_results['default_submission_results'][0]['pie_chart_data'] = $pie_chart_data;
+        $default_submission_results['default_submission_results'][0]['correct_ans'] = $correct_answer;
+        return $default_submission_results;
     }
-
 
     /**
      * @param Assignment $assignment
@@ -1887,7 +1963,7 @@ class Submission extends Model
                             if (isset($value['preview_latex_string'])) {
                                 $formatted_submission = '\(' . $value['preview_latex_string'] . '\)';
                             } else {
-                                $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
+                                $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted . ';
                             }
                             $value['score'] = $value['score'] ?? 0;
                             $is_correct = $value['score'] === 1;
@@ -1915,10 +1991,10 @@ class Submission extends Model
                     break;
                 case('imathas'):
                     if ($submission_info) {
-                        $tks = explode('.', $submission_info['state']);
+                        $tks = explode(' . ', $submission_info['state']);
                         list($headb64, $bodyb64, $cryptob64) = $tks;
                         $state = json_decode(base64_decode($bodyb64), 1);
-                        $state = json_decode(base64_decode(strtr($bodyb64, '-_,', '+/=')), 1);
+                        $state = json_decode(base64_decode(strtr($bodyb64, '-_,', ' +/=')), 1);
                         $raw_scores = array_values($state['rawscores']);
                         /**
                          * If
@@ -1948,7 +2024,7 @@ class Submission extends Model
                                 }
                                 $formatted_submission = implode(', ', $state['stuanswers'][$qsid + 1]);
                                 $submission_array_value = [
-                                    'submission' => $at_least_one_submission ? $formatted_submission : 'Nothing submitted.',
+                                    'submission' => $at_least_one_submission ? $formatted_submission : 'Nothing submitted . ',
                                     'correct' => $raw === 1,
                                     'points' => $points,
                                     'percent' => $percent];
@@ -1963,7 +2039,7 @@ class Submission extends Model
                                                 $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
 
                                                 $submission_array_value = [
-                                                    'submission' => $part !== '' ? '\(' . $part . '\)' : 'Nothing submitted.',
+                                                    'submission' => $part !== '' ? '\(' . $part . '\)' : 'Nothing submitted . ',
                                                     'correct' => $raw === 1,
                                                     'points' => $points,
                                                     'percent' => $percent];
@@ -1973,7 +2049,7 @@ class Submission extends Model
                                     } else {
                                         $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $submission_info['raw'][0], [$submission]) : 0;
                                         $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
-                                        $submission_array[] = ['submission' => $submission !== '' ? '\(' . $submission . '\)' : 'Nothing submitted.',
+                                        $submission_array[] = ['submission' => $submission !== '' ? '\(' . $submission . '\)' : 'Nothing submitted . ',
                                             'points' => $points,
                                             'percent' => $percent,
                                             'correct' => $submission_info['raw'][0] === 1];
@@ -2113,6 +2189,200 @@ class Submission extends Model
         }
         return $num_things_to_mark === $num_marks_submitted;
 
+    }
+
+    /**
+     * @param $submission_results
+     * @return array
+     */
+    public
+    function getDefaultSubmissionResults($submission_results): array
+    {
+
+        if (!$submission_results) {
+            return [];
+        }
+
+        $technology = $submission_results[0]->technology;
+        $summary_of_results = [];
+        switch ($technology) {
+            case 'qti':
+            case 'imathas':
+            case 'h5p':
+                //make an array to allow for parts in webwork
+                $summary_of_results[0]['scores'] = $this->formatSubmissionResultScores($submission_results);
+                $summary_of_results[0]['display'] = 'histogram';
+                break;
+            case 'webwork':
+                $summary_of_results = $this->defaultSummaryOfResultsForWebwork($submission_results);
+                break;
+
+        }
+        return $summary_of_results;
+
+    }
+
+    /**
+     * @param $submission_results
+     * @return array
+     */
+    public function defaultSummaryOfResultsForWebwork($submission_results): array
+    {
+        $results_by_part = [];
+        foreach ($submission_results as $submission_result) {
+            $submission = json_decode($submission_result->submission, true);
+            if ($submission
+                && isset($submission['score'])
+                && isset($submission['score']['answers'])) {
+                foreach ($submission['score']['answers'] as $key => $part) {
+                    // Initialize structure for this part
+                    if (!isset($results_by_part[$key])) {
+                        $results_by_part[$key] = [
+                            'display' => 'histogram',
+                            'correct_ans' => $part['correct_ans'],
+                            'correct_ans_latex_string' => $part['correct_ans_latex_string'],
+                            'counts' => [
+                                'original_student_ans' => [],
+                                'preview_latex_string' => [],
+                                'score' => [],
+                            ],
+                            'submissions' => [],
+                        ];
+                    }
+
+                    // Capture student submission
+                    if (!is_numeric($part['original_student_ans'])) {
+                        $results_by_part[$key]['display'] = 'pie-chart';
+                    }
+                    $student_result = [
+                        'original_student_ans' => $part['original_student_ans'],
+                        'preview_latex_string' => $part['preview_latex_string'],
+                        'score' => $part['score'],
+                    ];
+                    $results_by_part[$key]['submissions'][] = $student_result;
+
+                    // Update counts
+                    foreach (['original_student_ans', 'preview_latex_string', 'score'] as $field) {
+                        $value = $part[$field];
+                        if (!isset($results_by_part[$key]['counts'][$field][$value])) {
+                            $results_by_part[$key]['counts'][$field][$value] = 0;
+                        }
+                        $results_by_part[$key]['counts'][$field][$value]++;
+                    }
+                }
+
+            }
+        }
+        $summary_of_results = [];
+        foreach ($results_by_part as $key => $value) {
+            $summary_of_results[$key] = $value;
+            $submissions = [];
+            $scores = [];
+            foreach ($value['counts']['original_student_ans'] as $submission => $count) {
+                $submissions[] = ['submission' => $submission, 'number_of_students' => $count];
+            }
+            foreach ($value['counts']['score'] as $score => $count) {
+                $scores[] = ['score' => $score, 'number_of_students' => $count];
+            }
+            $summary_of_results[$key]['submissions'] = $submissions;
+            $summary_of_results[$key]['scores'] = $scores;
+            unset($summary_of_results[$key]['counts']);
+
+        }
+        foreach ($summary_of_results as $key => $value) {
+            $summary_of_results[$key] = $value;
+        }
+        foreach ($summary_of_results as &$summary) {
+            if ($summary['display'] === 'pie-chart') {
+                $submissions = $summary['submissions'];
+                $summary['pie_chart_data'] = [];
+                $summary['pie_chart_data']['labels'] = [];
+                $counts = [];
+                foreach ($submissions as $value) {
+                    $summary['pie_chart_data']['labels'][] = $value['submission'];
+                    $counts[] = $value['number_of_students'];
+                }
+                $summary['pie_chart_data']['datasets']['borderWidth'] = 1;
+
+                $summary['pie_chart_data']['correct_answer_index'] = -1;
+                foreach ($summary['pie_chart_data']['labels'] as $key => $choice) {
+                    $percent = 90 - 10 * $key;
+                    $first = 60 - 20 * $key;
+                    $summary['pie_chart_data']['datasets']['backgroundColor'][$key] = "hsla($first, 85%, $percent%, 0.9)";
+                    if ($choice === $summary['correct_ans']) {
+                        $summary['pie_chart_data']['correct_answer_index'] = $key;
+                    }
+                }
+                $total = array_sum($counts);
+                ksort($counts);
+                if ($total) {
+                    foreach ($counts as $key => $count) {
+                        $counts[$key] = Round(100 * $count / $total);
+                    }
+                }
+                foreach ($summary['pie_chart_data']['labels'] as $key => $label) {
+                    $summary['pie_chart_data']['labels'][$key] .= "  &mdash; $counts[$key]%";
+                }
+                $summary['pie_chart_data']['datasets']['data'] = $counts;
+            }
+        }
+        return array_values($summary_of_results);
+    }
+
+    /**
+     * @param $technology
+     * @param $object
+     * @param $correct_answer_index
+     * @return string
+     */
+    public
+    function getCorrectAnswer($technology, $object, $correct_answer_index): string
+    {
+        $correct_answer = 'Could not determine . ';
+        switch ($technology) {
+            case('h5p'):
+                foreach ($object['choices'] as $choice) {
+                    if ($choice['id'] === $correct_answer_index)
+                        $correct_answer = trim(array_values($choice['description'])[0]);
+                }
+                break;
+        }
+        return $correct_answer;
+
+
+    }
+
+    /**
+     * @param $technology
+     * @param $object
+     * @return array
+     */
+    public
+    function getChoices($technology, $object): array
+    {
+        $choices = [];
+        switch ($technology) {
+            case('h5p'):
+                foreach ($object['choices'] as $choice) {
+                    $choices[$choice['id']] = array_values($choice['description'])[0];
+                }
+                break;
+
+        }
+        ksort($choices);
+        return $choices;
+    }
+
+    public function formatSubmissionResultScores($submission_results)
+    {
+        return $submission_results->groupBy('score')->map(function ($group, $score) {
+            $normalized_score = rtrim(rtrim(number_format((float)$score, 3, '.', ''), '0'), '.');
+
+            return [
+                'score' => $normalized_score,
+                'number_of_students' => $group->count(),
+            ];
+        })->values()->toArray();
     }
 }
 

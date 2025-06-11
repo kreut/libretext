@@ -364,23 +364,23 @@ class SubmissionController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
      * @param Submission $submission
-     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
     public
-    function submissionPieChartData(Assignment             $assignment,
-                                    Question               $question,
-                                    Submission             $submission,
-                                    AssignmentSyncQuestion $assignmentSyncQuestion): array
+    function submissionChartData(Request    $request,
+                                 Assignment $assignment,
+                                 Question   $question,
+                                 Submission $submission): array
     {
         $response['type'] = 'error';
         $response['redirect_question'] = false;
         $response['pie_chart_data'] = [];
-        $authorized = Gate::inspect('submissionPieChartData', [$submission, $assignment, $question]);
+        $authorized = Gate::inspect('submissionChartData', [$submission, $assignment, $question]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -388,8 +388,8 @@ class SubmissionController extends Controller
         }
 
         try {
-
-          $response = $submission->submissionChartData($assignment,$question);
+            $response_format = $request->response_format ? $request->response_format : '';
+            $response = $submission->submissionChartData($assignment, $question, $response_format);
 
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -398,39 +398,6 @@ class SubmissionController extends Controller
         }
 
         return $response;
-    }
-
-    public
-    function getCorrectAnswer($technology, $object, $correct_answer_index)
-    {
-        $correct_answer = 'Could not determine.';
-        switch ($technology) {
-            case('h5p'):
-                foreach ($object['choices'] as $choice) {
-                    if ($choice['id'] === $correct_answer_index)
-                        $correct_answer = trim(array_values($choice['description'])[0]);
-                }
-                break;
-        }
-        return $correct_answer;
-
-
-    }
-
-    public
-    function getChoices($technology, $object)
-    {
-        $choices = [];
-        switch ($technology) {
-            case('h5p'):
-                foreach ($object['choices'] as $choice) {
-                    $choices[$choice['id']] = array_values($choice['description'])[0];
-                }
-                break;
-
-        }
-        ksort($choices);
-        return $choices;
     }
 
 

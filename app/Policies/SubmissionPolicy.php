@@ -240,7 +240,7 @@ class SubmissionPolicy
             : Response::deny("You are not allowed to reset this text submission. {$response['message']}");
     }
 
-    public function submissionPieChartData(User $user, Submission $submission, Assignment $assignment, Question $question)
+    public function submissionChartData(User $user, Submission $submission, Assignment $assignment, Question $question)
     {
 
         $question_in_assignment = DB::table('assignment_question')
