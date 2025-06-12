@@ -876,7 +876,7 @@
                   <span v-if="form.assessment_type === 'real time'">Optionally, you can let your students attempt real time assessments multiple times.</span>
                   <span v-if="form.assessment_type === 'learning tree'">Students will always be allowed to re-attempt Learning Tree assessments.  However, you can dictate the number of attempts possible.</span>
 
-                  Please note that due to
+                  Please note that if you have any H5P questions in your assignment, then due to
                   the nature of H5P, your students will see the answer
                   after the first attempt regardless of how many attempts you allow.
                 </b-tooltip>
