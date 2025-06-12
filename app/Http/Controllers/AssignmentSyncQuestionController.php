@@ -1311,10 +1311,6 @@ class AssignmentSyncQuestionController extends Controller
             $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
             Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
             DB::commit();
-            $client = Helper::centrifuge();
-            $client->publish("set-current-page-$assignment->id", [
-                "assignment_id" => $assignment->id,
-                "question_id" => $question->id]);
             $time_to_submit = $request->time_to_submit;
             $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 4, true);
             $response['type'] = 'success';

@@ -67,7 +67,7 @@ class StoreAssignmentProperties extends FormRequest
                 'can_contact_instructor_auto_graded' => Rule::in(['always', 'before submission', 'before due date', 'after due date', 'never'])
             ];
             if (!$formative) {
-                $rules['can_contact_instructor_auto_graded'] = ['required', Rule::in(['always','before submission', 'before due date', 'after due date', 'never'])];
+                $rules['can_contact_instructor_auto_graded'] = ['required', Rule::in(['always', 'before submission', 'before due date', 'after due date', 'never'])];
                 $rules['assignment_group_id'] = 'required|exists:assignment_groups,id';
                 $rules['can_submit_work'] = ['required', Rule::in([0, 1])];
                 $auto_releases = ['auto_release_shown',
@@ -203,7 +203,7 @@ class StoreAssignmentProperties extends FormRequest
             }
             if ($this->assessment_type === 'clicker') {
                 $rules['default_clicker_time_to_submit'] = new IsValidPeriodOfTime();
-                $rules['number_of_allowed_attempts'] = ['required', Rule::in('1','unlimited')];
+                $rules['number_of_allowed_attempts'] = $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
             }
             if ($this->late_policy === 'deduction') {
                 //has to be at least one or division by 0 issue in setScoreBasedOnLatePolicy

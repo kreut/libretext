@@ -55,6 +55,9 @@ class AssignmentSyncQuestion extends Model
 
         if (app()->environment() !== 'testing') {
             $client = Helper::centrifuge();
+            $client->publish("set-current-page-$assignment->id", [
+                "assignment_id" => $assignment->id,
+                "question_id" => $question->id]);
             $client->publish("clicker-status-$assignment->id",
                 ["assignment_id" => $assignment->id,
                     "question_id" => $question->id,

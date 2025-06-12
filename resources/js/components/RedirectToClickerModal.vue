@@ -57,17 +57,16 @@ export default {
     courseName: '',
     instructorName: ''
   }),
-  async mounted () {
+  mounted () {
     if (this.showModal && this.assignmentId && this.questionId) {
-      await this.getCourseInstructor()
-      this.$bvModal.show('modal-redirect-to-clicker')
+      this.showRedirectToClickerModal()
     }
   },
   methods: {
     redirectToClickerQuestion () {
       window.location.href = `/assignments/${this.assignmentId}/questions/view/${this.questionId}`
     },
-    async getCourseInstructor () {
+    async showRedirectToClickerModal () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
         if (data.type === 'error') {
@@ -76,6 +75,9 @@ export default {
         }
         this.courseName = data.assignment.course_name
         this.instructorName = data.assignment.instructor_name
+        this.$nextTick(() => {
+          this.$bvModal.show('modal-redirect-to-clicker')
+        })
       } catch (error) {
         this.$noty.error(error.message)
       }

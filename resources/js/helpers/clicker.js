@@ -23,7 +23,7 @@ export async function initClickerAssignmentsForEnrolledAndOpenCourses () {
           this.clickerAssignmentId = +assignment.id
           this.clickerQuestionId = +data.question_id
           this.canViewClickerSubmissions = false
-          this.clickerView = 'submissions'
+          this.clickerViewIsSubmissions = true
           this.redirectToClickerModalKey++
         }).subscribe()
       }

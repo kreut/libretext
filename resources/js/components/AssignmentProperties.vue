@@ -859,7 +859,8 @@
             </b-form-group>
           </div>
 
-          <div v-if="['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p'">
+          <div v-if="form.assessment_type === 'clicker' ||
+          (['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p')">
             <b-form-group
               label-cols-sm="4"
               label-cols-lg="3"
@@ -885,7 +886,7 @@
                              v-model="form.number_of_allowed_attempts"
                              required
                              class="mt-2"
-                             :options="form.assessment_type === 'real time'
+                             :options="['real time','clicker'].includes(form.assessment_type)
                                ? numberOfAllowedAttemptsOptions
                                : numberOfAllowedAttemptsOptions.filter(numberOfAttempts => parseInt(numberOfAttempts.value) !== 1)"
                              :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
@@ -896,7 +897,7 @@
               <has-error :form="form" field="number_of_allowed_attempts" />
             </b-form-group>
             <b-form-group
-              v-if="form.number_of_allowed_attempts !== '1'"
+              v-if="form.number_of_allowed_attempts !== '1' && form.assessment_type !== 'clicker'"
               label-cols-sm="4"
               label-cols-lg="3"
               label-for="attempts_penalty"
@@ -1071,38 +1072,6 @@
                   <has-error :form="form" field="default_clicker_time_to_submit" />
                 </b-col>
               </b-form-row>
-            </b-form-group>
-            <b-form-group
-              label-cols-sm="4"
-              label-cols-lg="3">
-              <template v-slot:label>
-                Limit to 1 Submission*
-                <QuestionCircleTooltip :id="'limit_to_1_submission_tooltip'"/>
-                <b-tooltip target="limit_to_1_submission_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Either allow students to submit only one time or allow them to submit as many times as they would like
-                  while the clicker
-                  assignment is open.
-                </b-tooltip>
-              </template>
-              <b-form-row>
-            <b-form-radio-group id="limit_to_one_submission"
-                                v-model="form.number_of_allowed_attempts"
-                                required
-                                stacked
-                                @change="form.errors.clear('number_of_allowed_attempts')"
-            >
-              <b-form-radio value="1">
-                Yes
-              </b-form-radio>
-              <b-form-radio value="unlimited">
-                No
-              </b-form-radio>
-            </b-form-radio-group>
-              </b-form-row>
-              <ErrorMessage :message="form.errors.get('number_of_allowed_attempts')" />
             </b-form-group>
           </div>
           <b-form-group
