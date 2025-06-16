@@ -2806,6 +2806,9 @@
                               @load="fixLinks('open_ended_question_text')"
                             />
                           </div>
+                          <div v-if="questions[currentPage-1].id === 287740">
+                            <HandsontableChart/>
+                          </div>
                           <div
                             v-if="questions[currentPage-1]['qti_json'] && getQtiJson()['qtiJson'] && showQtiJsonQuestionViewer"
                           >
@@ -3692,6 +3695,7 @@ import {
 } from '../helpers/clicker'
 import ErrorMessage from '../components/ErrorMessage.vue'
 import { h5pOnLoadCssUpdates } from '../helpers/CSSUpdates'
+import HandsontableChart from '../components/HandsonTable.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3702,6 +3706,7 @@ export default {
   middleware: 'auth',
   layout: window.config.clickerApp ? 'blank' : 'default',
   components: {
+    HandsontableChart,
     ErrorMessage,
     MarkerSubmission,
     RedirectToClickerModal,
