@@ -624,12 +624,11 @@
                                             style="width:75px"
                                             :class="{ 'is-invalid': questionSubmissionScoreErrorMessage.length }"
                                             @keydown="questionSubmissionScoreErrorMessage = ''"
-                              />
+                              /><span style="color: gray; font-size: 0.9em;padding-top:5px;padding-left:2px;padding-right:2px">(Max: {{grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1}})</span>
                               <span
                                 v-if="isAutoGraded && !isOpenEnded && grading[currentStudentPage - 1]['auto_graded_submission']"
                               >
                                   <b-button size="sm"
-                                            class="ml-2"
                                             variant="outline-success"
                                             @click="submitGradingForm(true,
                                                                       {
@@ -638,7 +637,6 @@
                                                                       })"
                                   >Full Score</b-button>
                                   <b-button size="sm"
-                                            class="ml-2"
                                             variant="outline-danger"
                                             @click="submitGradingForm(true,
                                                                       {
