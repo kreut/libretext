@@ -3749,7 +3749,9 @@ export default {
             this.qtiPrompt = this.qtiJson['prompt']
             this.solutionStructure = this.qtiJson.solutionStructure
             this.nativeType = 'sketcher'
-            this.sketcherType = 'marker-only'
+            if (this.qtiJson.questionType === 'marker') {
+              this.sketcherType = 'marker-only'
+            }
             break
           case ('drag_and_drop_cloze'):
             this.qtiQuestionType = this.qtiJson.questionType
