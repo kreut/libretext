@@ -84,6 +84,8 @@ class LmsApiController extends Controller
                     ['access_token' => $lms_result['access_token'],
                         'refresh_token' => $lms_result['refresh_token']]);
                 $result['type'] = 'success';
+            } else {
+                $result['message'] = $lms_result['message'];
             }
         } else {
             $result['message'] = "We don't yet support $lti_registration->iss for getting access tokens.";
