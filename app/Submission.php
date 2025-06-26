@@ -1963,7 +1963,7 @@ class Submission extends Model
                             if (isset($value['preview_latex_string'])) {
                                 $formatted_submission = '\(' . $value['preview_latex_string'] . '\)';
                             } else {
-                                $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted . ';
+                                $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
                             }
                             $value['score'] = $value['score'] ?? 0;
                             $is_correct = $value['score'] === 1;
@@ -1991,10 +1991,10 @@ class Submission extends Model
                     break;
                 case('imathas'):
                     if ($submission_info) {
-                        $tks = explode(' . ', $submission_info['state']);
+                        $tks = explode('.', $submission_info['state']);
                         list($headb64, $bodyb64, $cryptob64) = $tks;
                         $state = json_decode(base64_decode($bodyb64), 1);
-                        $state = json_decode(base64_decode(strtr($bodyb64, '-_,', ' +/=')), 1);
+                        $state = json_decode(base64_decode(strtr($bodyb64, '-_,', '+/=')), 1);
                         $raw_scores = array_values($state['rawscores']);
                         /**
                          * If
@@ -2024,7 +2024,7 @@ class Submission extends Model
                                 }
                                 $formatted_submission = implode(', ', $state['stuanswers'][$qsid + 1]);
                                 $submission_array_value = [
-                                    'submission' => $at_least_one_submission ? $formatted_submission : 'Nothing submitted . ',
+                                    'submission' => $at_least_one_submission ? $formatted_submission : 'Nothing submitted.',
                                     'correct' => $raw === 1,
                                     'points' => $points,
                                     'percent' => $percent];
@@ -2039,7 +2039,7 @@ class Submission extends Model
                                                 $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
 
                                                 $submission_array_value = [
-                                                    'submission' => $part !== '' ? '\(' . $part . '\)' : 'Nothing submitted . ',
+                                                    'submission' => $part !== '' ? '\(' . $part . '\)' : 'Nothing submitted.',
                                                     'correct' => $raw === 1,
                                                     'points' => $points,
                                                     'percent' => $percent];
@@ -2049,7 +2049,7 @@ class Submission extends Model
                                     } else {
                                         $points = !$is_learning_tree_node ? $this->getPoints($assignment_question, $submission_info['raw'][0], [$submission]) : 0;
                                         $percent = !$is_learning_tree_node ? $this->getPercent($assignment_question, $points) : 0;
-                                        $submission_array[] = ['submission' => $submission !== '' ? '\(' . $submission . '\)' : 'Nothing submitted . ',
+                                        $submission_array[] = ['submission' => $submission !== '' ? '\(' . $submission . '\)' : 'Nothing submitted.',
                                             'points' => $points,
                                             'percent' => $percent,
                                             'correct' => $submission_info['raw'][0] === 1];
@@ -2338,7 +2338,7 @@ class Submission extends Model
     public
     function getCorrectAnswer($technology, $object, $correct_answer_index): string
     {
-        $correct_answer = 'Could not determine . ';
+        $correct_answer = 'Could not determine.';
         switch ($technology) {
             case('h5p'):
                 foreach ($object['choices'] as $choice) {
