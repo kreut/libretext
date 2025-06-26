@@ -2239,8 +2239,8 @@ class Submission extends Model
                     if (!isset($results_by_part[$key])) {
                         $results_by_part[$key] = [
                             'display' => 'histogram',
-                            'use_mathjax' => $this->isLikelyLatex($part['correct_ans']),
-                            'correct_ans' => $this->isLikelyLatex($part['correct_ans']) ? '\(' . $part['correct_ans'] . '\)' : $part['correct_ans'],
+                            'use_mathjax' =>   $this->isLikelyLatex($part['correct_ans_latex_string']),
+                            'correct_ans' => $this->isLikelyLatex($part['correct_ans']) ? '\(' . $part['correct_ans_latex_string'] . '\)' : $part['correct_ans'],
                             'correct_ans_latex_string' => $part['correct_ans_latex_string'],
                             'counts' => [
                                 'original_student_ans' => [],
@@ -2280,7 +2280,7 @@ class Submission extends Model
             $submissions = [];
             $scores = [];
             foreach ($value['counts']['original_student_ans'] as $submission => $count) {
-                $submissions[] = ['submission' => $submission, 'number_of_students' => $count];
+                $submissions[] = ['submission' => $this->isLikelyLatex($submission) ? '\(' . $submission . '\)' : $submission, 'number_of_students' => $count];
             }
             foreach ($value['counts']['score'] as $score => $count) {
                 $scores[] = ['score' => $score, 'number_of_students' => $count];
@@ -2300,7 +2300,7 @@ class Submission extends Model
                 $summary['pie_chart_data']['labels'] = [];
                 $counts = [];
                 foreach ($submissions as $value) {
-                    $summary['pie_chart_data']['labels'][] = $this->isLikelyLatex($value['submission']) ? '\(' . $value['submission'] . '\)' : $value['submission'];
+                    $summary['pie_chart_data']['labels'][] = $value['submission'];
                     $counts[] = $value['number_of_students'];
                 }
                 $summary['pie_chart_data']['datasets']['borderWidth'] = 1;

@@ -29,6 +29,7 @@
                                 :clicker-answer-shown="clickerAnswerShown"
                                 :correct-ans="correctAns"
                                 :technology="technology"
+                                :use-mathjax="Boolean(useMathJax)"
         />
       </b-col>
     </b-row>
@@ -94,6 +95,7 @@ export default {
     }
   },
   data: () => ({
+    useMathJax: false,
     correctAns: '',
     showSecondColumn: false,
     pieChartData: {},
@@ -122,6 +124,7 @@ export default {
         case ('pie-chart'):
           this.pieChartData = this.defaultSubmissionResults[this.defaultSubmissionResultsIndex].pie_chart_data
           this.submissionsInfo = this.defaultSubmissionResults[this.defaultSubmissionResultsIndex].submissions
+          this.useMathJax = this.defaultSubmissionResults[this.defaultSubmissionResultsIndex].use_mathjax
           break
         case ('histogram'):
           this.submissionsChartData = this.getChartDataForHistogram('submissions', '#26A69A')

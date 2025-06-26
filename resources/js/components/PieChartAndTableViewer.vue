@@ -1,5 +1,6 @@
 <template>
   <div v-if="pieChartData.datasets">
+    {{ useMathJax }}
     <toggle-button
       :width="105"
       class="mt-2"
@@ -78,10 +79,10 @@
       </table>
     </div>
     <div v-show="clickerAnswerShown
-         && pieChartData.correct_answer_index === -1
-        && correctAns"
+      && pieChartData.correct_answer_index === -1
+      && correctAns"
     >
-      <p><span class="text-success font-weight-bold">Answer:</span> {{ correctAns }}</p>
+      <p><span class="text-success font-weight-bold">Answer: </span>{{ correctAns }}</p>
     </div>
   </div>
 </template>
@@ -98,6 +99,10 @@ export default {
     ToggleButton
   },
   props: {
+    useMathJax: {
+      type: Boolean,
+      default: false
+    },
     technology: {
       type: String,
       default: ''
@@ -125,20 +130,35 @@ export default {
     showPieChartView: true,
     toggleColors: window.config.toggleColors
   }),
+  watch: {
+    clickerAnswerShown (newVal) {
+      if (newVal && this.pieChartData.correct_answer_index === -1 &&
+        this.correctAns) {
+        this.rerenderMathaJax()
+      }
+    }
+  },
+  mounted () {
+    this.rerenderMathaJax()
+  },
   methods: {
+    rerenderMathaJax () {
+      if (this.useMathJax) {
+        this.$nextTick(() => {
+          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+        })
+      }
+    },
     updatePieChartView () {
       this.showPieChartView = !this.showPieChartView
-      this.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
+      this.rerenderMathaJax()
     },
     cleanLabel (label) {
       if (this.technology === 'qti') {
         label = label.replace('<p>', '').replace('</p>', '')
       }
       return label
-    }
-    ,
+    },
     getPercent (label) {
       const parts = label.split('&mdash;')
       return parts[1]?.trim() || ''
