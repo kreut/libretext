@@ -166,12 +166,14 @@
           >
             <template v-slot="props">
               <span
+                v-if="props.seconds"
                 style="font-size: x-large; font-weight: bold"
                 class="pt-2 d-block mx-auto"
-                :class="currentTimeLeft < 11000 ? 'text-danger' : ''"
+                :class="props.seconds < 11 ? 'text-danger' : ''"
                 v-html="getTimeLeftMessage(props, assessmentType)"
               />
             </template>
+            {{ timeLeft }}
           </countdown>
         </div>
 
@@ -183,9 +185,10 @@
         </span>
       </div>
       <div v-if="canViewClickerSubmissions && clickerViewIsSubmissions">
-        <div style="font-size: 20px; white-space: nowrap;"
+        <div v-show="selectedClickerViewOption !== 'question'"
+             style="font-size: 20px; white-space: nowrap;"
              class="text-center"
-        v-show="selectedClickerViewOption !== 'question'">
+        >
           {{ responsePercent }}% of students have responded
         </div>
         <div v-if="canViewClickerSubmissions" class="d-flex align-items-start">
@@ -351,7 +354,7 @@
             </b-button>
             <span
               v-show="(selectedClickerViewOption === 'submissions'
-              || (selectedClickerViewOption === 'scores' && ('qti' === questions[currentPage-1].technology && !['multiple_choice','true_false'].includes(questions[currentPage-1].technology))))
+                || (selectedClickerViewOption === 'scores' && ('qti' === questions[currentPage-1].technology && !['multiple_choice','true_false'].includes(questions[currentPage-1].technology))))
                 && canViewClickerSubmissions
                 && clickerViewIsSubmissions
                 && +responsePercent > 0
@@ -961,7 +964,7 @@
         <div v-html="clickerMessage"/>
       </b-alert>
       <b-form-row v-if="canViewClickerSubmissions" class="justify-content-center">
-       <b-form-radio-group
+        <b-form-radio-group
           v-show="canViewClickerSubmissions"
           v-model="selectedClickerViewOption"
           name="clicker-view-options"
@@ -2882,27 +2885,27 @@
                         id="question-to-view"
                       >
                         <div v-if="['resumed','view_and_submit'].includes(clickerStatus)
-                         && !clickerPaused"
+                               && !clickerPaused"
                              class="text-center"
                         >
-                        <span class="timer-wrapper">
-                         <countdown
-                           ref="studentCountdown"
-                           :key="`countdown-key-${countDownKey}`"
-                           :time="timeLeft"
-                           @end="endClickerAssessment"
-                         >
-            <template v-slot="props">
-              <span
-                style="font-weight: bold"
-                class="pt-2 d-block mx-auto"
-                :style="isPhone ? 'font-size:large' : 'font-size:x-large'"
-                :class="currentTimeLeft < 11000 ? 'text-danger' : ''"
-                v-html="getTimeLeftMessage(props, assessmentType)"
-              />
-            </template>
-          </countdown>
-                        </span>
+                          <span class="timer-wrapper">
+                            <countdown
+                              ref="studentCountdown"
+                              :key="`countdown-key-${countDownKey}`"
+                              :time="timeLeft"
+                              @end="endClickerAssessment"
+                            >
+                              <template v-slot="props">
+                                <span
+                                  style="font-weight: bold"
+                                  class="pt-2 d-block mx-auto"
+                                  :style="isPhone ? 'font-size:large' : 'font-size:x-large'"
+                                  :class="currentTimeLeft < 11000 ? 'text-danger' : ''"
+                                  v-html="getTimeLeftMessage(props, assessmentType)"
+                                />
+                              </template>
+                            </countdown>
+                          </span>
                           <div :style="isPhone ? 'font-size:large' : 'font-size:x-large'" style="font-weight: bold">
                             Attempts left: {{
                               numberOfAllowedAttempts === 'unlimited' ? 'Infinity' : parseInt(numberOfAllowedAttempts) - parseInt(questions[currentPage - 1].submission_count)
@@ -3027,9 +3030,10 @@
                             :preview-or-solution="true"
                           />
                         </span>
-                        <div style="font-size: 20px; margin-bottom: 30px;white-space: nowrap;"
+                        <div v-show="selectedClickerViewOption !== 'question'"
+                             style="font-size: 20px; margin-bottom: 30px;white-space: nowrap;"
                              class="text-center"
-                        v-show="selectedClickerViewOption !== 'question'">
+                        >
                           {{ responsePercent }}% of students have responded
                         </div>
                         <div style="flex: 1; max-width: 300px; padding-right: 40px;">
@@ -4431,17 +4435,6 @@ export default {
     },
     showClickerViewOption (canViewClickerSubmissions, question, value) {
       return canViewClickerSubmissions && (value !== 'submissions' || this.clickerHasSubmissionsToShow(question))
-    },
-    async updateResponseFormat () {
-      try {
-        const { data } = await this.responseFormatForm.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/custom-response-format`)
-        this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          this.questions[this.currentPage - 1].response_format = this.responseFormatForm.response_format
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
     },
     async updateClickerTimeToSubmit () {
       try {
@@ -5914,6 +5907,7 @@ export default {
 
       this.currentTimeLeft = props.totalMilliseconds
       const minutesPlural = props.minutes > 1 ? 's' : ''
+      const secondsPlural = props.seconds > 1 || props.seconds === 0 ? 's' : ''
       const timeLeft = parseInt(this.timeLeft) / 1000
       if (timeLeft >= 60 * 60 * 24) {
         message += `${props.days} days, ${props.hours} hours,
@@ -5925,7 +5919,7 @@ export default {
         message += assessmentType !== 'clicker' ? `${props.minutes} minute${minutesPlural}, ${props.seconds} seconds`
           : `${props.minutes} min, ${props.seconds} sec`
       } else {
-        message += `${props.seconds} seconds`
+        message += `${props.seconds} second${secondsPlural}`
       }
       message += assessmentType === 'clicker' ? ` left` : '.'
       return message
