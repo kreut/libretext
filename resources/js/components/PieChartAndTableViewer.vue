@@ -11,7 +11,7 @@
       :color="toggleColors"
       :labels="{checked: 'Pie Chart', unchecked: 'Table View'}"
       :aria-label="showPieChartView ? 'Pie Chart' : 'Table View'"
-      @change="showPieChartView = !showPieChartView"
+      @change="updatePieChartView()"
     />
     <div v-if="showPieChartView">
       <pie-chart
@@ -65,7 +65,8 @@
         </thead>
         <tbody>
         <tr v-for="(submissionInfo,index) in submissionsInfo" :key="`submission-${index}`"
-            :class="clickerAnswerShown && pieChartData.correct_answer_index === index ? 'text-success' : ''">
+            :class="clickerAnswerShown && pieChartData.correct_answer_index === index ? 'text-success' : ''"
+        >
           <td>
             <div v-show="technology === 'qti'" v-html="cleanLabel(submissionInfo.submission)"/>
             <span v-show="technology !== 'qti'">{{ submissionInfo.submission }}</span>
@@ -125,12 +126,19 @@ export default {
     toggleColors: window.config.toggleColors
   }),
   methods: {
+    updatePieChartView () {
+      this.showPieChartView = !this.showPieChartView
+      this.$nextTick(() => {
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+      })
+    },
     cleanLabel (label) {
       if (this.technology === 'qti') {
         label = label.replace('<p>', '').replace('</p>', '')
       }
       return label
-    },
+    }
+    ,
     getPercent (label) {
       const parts = label.split('&mdash;')
       return parts[1]?.trim() || ''

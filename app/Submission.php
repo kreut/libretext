@@ -2239,7 +2239,8 @@ class Submission extends Model
                     if (!isset($results_by_part[$key])) {
                         $results_by_part[$key] = [
                             'display' => 'histogram',
-                            'correct_ans' => $part['correct_ans'],
+                            'use_mathjax' => $this->isLikelyLatex($part['correct_ans']),
+                            'correct_ans' => $this->isLikelyLatex($part['correct_ans']) ? '\(' . $part['correct_ans'] . '\)' : $part['correct_ans'],
                             'correct_ans_latex_string' => $part['correct_ans_latex_string'],
                             'counts' => [
                                 'original_student_ans' => [],
@@ -2299,11 +2300,10 @@ class Submission extends Model
                 $summary['pie_chart_data']['labels'] = [];
                 $counts = [];
                 foreach ($submissions as $value) {
-                    $summary['pie_chart_data']['labels'][] = $value['submission'];
+                    $summary['pie_chart_data']['labels'][] = $this->isLikelyLatex($value['submission']) ? '\(' . $value['submission'] . '\)' : $value['submission'];
                     $counts[] = $value['number_of_students'];
                 }
                 $summary['pie_chart_data']['datasets']['borderWidth'] = 1;
-
                 $summary['pie_chart_data']['correct_answer_index'] = -1;
                 foreach ($summary['pie_chart_data']['labels'] as $key => $choice) {
                     $percent = 90 - 10 * $key;
@@ -2383,6 +2383,15 @@ class Submission extends Model
                 'number_of_students' => $group->count(),
             ];
         })->values()->toArray();
+    }
+
+    /**
+     * @param $string
+     * @return false|int
+     */
+    function isLikelyLatex($string)
+    {
+        return preg_match('/(\\\\[a-zA-Z]+|[a-zA-Z0-9]+_[a-zA-Z0-9]+|[a-zA-Z0-9]+\^[a-zA-Z0-9]+|[\^_]\{.*?\})/', $string);
     }
 }
 
