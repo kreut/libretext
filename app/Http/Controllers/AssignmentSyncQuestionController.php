@@ -66,6 +66,44 @@ use Psr\Container\NotFoundExceptionInterface;
 class AssignmentSyncQuestionController extends Controller
 {
 
+    /**
+     * @param Assignment $assignment
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function allSolutionsReleasedWhenClosed(Assignment $assignment,
+                                                   AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('allSolutionsReleasedWhenClosed', [$assignmentSyncQuestion, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $all_solutions_released_when_closed = true;
+            if ($assignment->assessment_type === 'clicker') {
+                $assignment_questions = $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                    ->where('release_solution_when_question_is_closed', 0)
+                    ->get();
+                foreach ($assignment_questions as $assignment_question) {
+                    //check for view and submit
+                    if ($assignment_question && time() > strtotime($assignment_question->clicker_end)) {
+                        $all_solutions_released_when_closed = false;
+                    }
+                }
+            }
+            $response['type'] = 'success';
+            $response['all_solutions_released_when_closed'] = $all_solutions_released_when_closed;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to check whether whether all solutions are released when closed for this assignment.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
 
     /**
      * @param Assignment $assignment
@@ -962,7 +1000,8 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function viewClickerSubmissions(Assignment             $assignment,
+    function viewClickerSubmissions(Request                $request,
+                                    Assignment             $assignment,
                                     Question               $question,
                                     int                    $show_answer,
                                     AssignmentSyncQuestion $assignmentSyncQuestion): array
@@ -982,7 +1021,6 @@ class AssignmentSyncQuestionController extends Controller
                 'assignment_id' => $assignment->id,
                 'question_id' => $question->id,
                 'qti_answer_json' => ''];
-
 
             if ($show_answer
                 && $question->qti_json
@@ -1012,7 +1050,8 @@ class AssignmentSyncQuestionController extends Controller
     function endClickerAssessment(Request                $request,
                                   Assignment             $assignment,
                                   Question               $question,
-                                  AssignmentSyncQuestion $assignmentSyncQuestion): array
+                                  AssignmentSyncQuestion $assignmentSyncQuestion,
+                                  Webwork                $webwork): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('endClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
@@ -1022,18 +1061,25 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
-            $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+            $assignment_question = $assignmentSyncQuestion->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->update(['clicker_end' => Carbon::yesterday()]);
+                ->first();
 
+            $assignment_question->update(['clicker_end' => Carbon::yesterday()]);
+            $published_response = ["assignment_id" => $assignment->id,
+                "question_id" => $question->id,
+                "status" => 'view_and_not_submit',
+                "message" => $request->message,
+                "time_left" => 0];
+            $published_response['show_solution_radio_button'] = $assignment_question->release_solution_when_question_is_closed;
+            if ($published_response['show_solution_radio_button']) {
+                $published_response['solution_html'] = $request->solution_html ? str_replace('<h2 class="editable">Solution</h2>', '', $request->solution_html) : '';
+                if ($question->qti_json) {
+                    $published_response['qti_answer_json'] = $question->formatQtiJson('answer_json', $question->qti_json, [], true);
+                }
+            }
             $client = Helper::centrifuge();
-            $client->publish("clicker-status-$assignment->id",
-                ["assignment_id" => $assignment->id,
-                    "question_id" => $question->id,
-                    "status" => 'view_and_not_submit',
-                    "message" => $request->message,
-                    "time_left" => 0]);
-
+            $client->publish("clicker-status-$assignment->id", $published_response);
             $response['type'] = 'success';
 
 
@@ -1073,6 +1119,44 @@ class AssignmentSyncQuestionController extends Controller
                 ->update(['custom_clicker_time_to_submit' => $data['time_to_submit']]);
             $response['type'] = 'success';
             $response['message'] = 'The time to submit has been updated.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the time to submit for this clicker assessment.  Please contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public
+    function updateReleaseSolutionWhenQuestionIsClosed(Assignment             $assignment,
+                                                       Question               $question,
+                                                       AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateReleaseSolutionWhenQuestionIsClosed', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $new_release_solution_when_question_is_closed = !$assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first()
+                ->release_solution_when_question_is_closed;
+            $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['release_solution_when_question_is_closed' => $new_release_solution_when_question_is_closed]);
+            $response['type'] = $new_release_solution_when_question_is_closed ? 'success' : 'info';
+            $can_or_not = $new_release_solution_when_question_is_closed ? 'can' : 'cannot';
+            $response['message'] = "Your students $can_or_not view the solution once this question is closed.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -2784,7 +2868,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['question_revision_number'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->revision_number : null;
                 $assignment->questions[$key]['question_revision_id_latest'] = $latest_question_revisions_by_question_id[$question->id] ?? null;
                 $assignment->questions[$key]['time_to_submit'] = isset($assignment_questions_by_question_id[$question->id]) ? $assignment_questions_by_question_id[$question->id]->custom_clicker_time_to_submit : null;
-
+                $assignment->questions[$key]['release_solution_when_question_is_closed'] = $assignment_questions_by_question_id[$question->id]->release_solution_when_question_is_closed;
                 $assignment->questions[$key]['question_reason_for_edit'] = null;
                 $assignment->questions[$key]['question_revision_number'] = 0;
 
@@ -2881,7 +2965,10 @@ class AssignmentSyncQuestionController extends Controller
                 $gave_up = in_array($question->id, $gave_ups);
                 $show_solution = (!Helper::isAnonymousUser() || !Helper::hasAnonymousUserSession())
                     &&
-                    ($assignment->solutions_released || $real_time_show_solution || $gave_up);
+                    ($assignment->solutions_released
+                        || $real_time_show_solution
+                        || $gave_up
+                        || (isset($clicker_status[$question->id]) && $clicker_status[$question->id] === 'view_and_not_submit'));
 //don't show the solution if they have an override
                 if ($assignment_level_override || $compiled_pdf_override || in_array($question->id, $question_level_overrides)) {
                     $show_solution = false;

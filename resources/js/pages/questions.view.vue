@@ -124,6 +124,34 @@
     >
       <template #modal-header>
         <div class="d-flex justify-content-center w-100">
+          <div v-show="!canViewClickerSubmissions" class="text-center">
+            <div v-if="!clickerPaused" class="timer-wrapper">
+              <countdown
+                ref="instructorCountdown"
+                :key="`countdown-key-${countDownKey}`"
+                :time="timeLeft"
+                @end="endClickerAssessment"
+              >
+                <template v-slot="props">
+                  <span
+                    v-if="props.seconds"
+                    style="font-size: x-large; font-weight: bold"
+                    class="d-block mx-auto"
+                    :class="props.seconds < 11 ? 'text-danger' : ''"
+                    v-html="getTimeLeftMessage(props, assessmentType)"
+                  />
+                </template>
+                {{ timeLeft }}
+              </countdown>
+            </div>
+
+            <span v-if="clickerPaused" class="d-block mx-auto font-weight-bold"
+                  :style="isPhone ? 'font-size:large' : 'font-size:x-large'"
+            >
+              {{ timerIsCurrentlyPaused() }}
+
+            </span>
+          </div>
           <b-form-radio-group
             v-model="selectedClickerViewOption"
             name="clicker-view-options"
@@ -139,13 +167,13 @@
                 type="radio"
                 :value="option.value"
                 class="big-radio"
-                @input="$forceUpdate()"
+                @input="updateSelectedClickerViewOption"
               >
               {{ option.text }}
             </label>
           </b-form-radio-group>
         </div>
-        <span style="margin-top:-15px">
+        <span style="margin-top:-10px">
           <b-button
             variant="outline-default"
             class="pb-1 p-0  big-close float-right"
@@ -156,36 +184,15 @@
           </b-button>
         </span>
       </template>
-      <div v-show="!canViewClickerSubmissions" class="text-center">
-        <div v-if="!clickerPaused" class="timer-wrapper">
-          <countdown
-            ref="instructorCountdown"
-            :key="`countdown-key-${countDownKey}`"
-            :time="timeLeft"
-            @end="endClickerAssessment"
-          >
-            <template v-slot="props">
-              <span
-                v-if="props.seconds"
-                style="font-size: x-large; font-weight: bold"
-                class="pt-2 d-block mx-auto"
-                :class="props.seconds < 11 ? 'text-danger' : ''"
-                v-html="getTimeLeftMessage(props, assessmentType)"
-              />
-            </template>
-            {{ timeLeft }}
-          </countdown>
-        </div>
-
-        <span v-if="clickerPaused" class="d-block mx-auto font-weight-bold"
-              :style="isPhone ? 'font-size:large' : 'font-size:x-large'"
-        >
-          {{ timerIsCurrentlyPaused() }}
-
-        </span>
+      <div v-show="selectedClickerViewOption === 'solution'"
+           v-if="questions[currentPage - 1] && questions[currentPage - 1].solution_html"
+      >
+        <div
+          v-html="questions[currentPage - 1].solution_html !== null ? questions[currentPage - 1].solution_html.replace(solutionHtmlHeader, '') : ''"
+        />
       </div>
       <div v-if="canViewClickerSubmissions && clickerViewIsSubmissions">
-        <div v-show="selectedClickerViewOption !== 'question'"
+        <div v-show="!['solution','question'].includes(selectedClickerViewOption)"
              style="font-size: 20px; white-space: nowrap;"
              class="text-center"
         >
@@ -270,73 +277,71 @@
         <div class="d-flex justify-content-between align-items-start flex-wrap">
           <!-- Left Side: Timer + Timer Buttons -->
           <div class="d-flex align-items-center flex-wrap">
-            <b-tooltip target="pause-timer" delay="750"
-                       triggers="hover"
-            >
-              Pause the timer.
-            </b-tooltip>
-            <b-button v-show="!clickerPaused"
-                      id="pause-timer"
-                      variant="outline-info"
-                      class="mr-2"
-                      :disabled="canViewClickerSubmissions"
-                      @click="pauseClicker"
-            >
-              <b-icon-pause-fill/>
-              Pause
-            </b-button>
-            <b-tooltip target="resume-timer" delay="750"
-                       triggers="hover"
-            >
-              Resume the timer.
-            </b-tooltip>
-            <b-button v-show="clickerPaused"
-                      id="resume-timer"
-                      variant="outline-info"
-                      class="mr-2"
-                      @click="resumeClicker"
-            >
-              <b-icon-play-fill/>
-              Resume
-            </b-button>
-            <b-tooltip target="add-clicker-time" delay="750"
-                       triggers="hover"
-            >
-              Add 15 seconds to the timer.
-            </b-tooltip>
-            <b-button id="add-clicker-time"
-                      variant="outline-primary"
-                      class="mr-2"
-                      :disabled="canViewClickerSubmissions"
-                      @click="addTimeToClicker"
-            >
-              +15 sec
-            </b-button>
-            <b-tooltip target="restart-timer-tooltip" delay="750"
-                       triggers="hover"
-            >
-              Reset the timer to {{ clickerTimeForm.time_to_submit }}.
-            </b-tooltip>
-            <b-button id="restart-timer-tooltip"
-                      variant="outline-primary"
-                      class="mr-2"
-                      :disabled="canViewClickerSubmissions"
-                      @click="restartTimer()"
-            >
-              Restart Timer
-            </b-button>
-            <b-tooltip target="zero-timer-tooltip" delay="750"
-                       triggers="hover"
-            >
-              Set the timer to zero, effectively closing the poll.
-            </b-tooltip>
-            <b-button id="zero-timer-tooltip"
-                      variant="danger"
-                      :disabled="pollClosed"
-                      @click="closePoll(instructorClosedPollMessage)"
-            >
-              Zero Timer
-            </b-button>
+            <span v-show="!canViewClickerSubmissions">
+              <b-tooltip target="pause-timer" delay="750"
+                         triggers="hover"
+              >
+                Pause the timer.
+              </b-tooltip>
+              <b-button v-show="!clickerPaused"
+                        id="pause-timer"
+                        variant="outline-info"
+                        class="mr-2"
+                        @click="pauseClicker"
+              >
+                <b-icon-pause-fill/>
+                Pause
+              </b-button>
+              <b-tooltip target="resume-timer" delay="750"
+                         triggers="hover"
+              >
+                Resume the timer.
+              </b-tooltip>
+              <b-button v-show="clickerPaused"
+                        id="resume-timer"
+                        variant="outline-info"
+                        class="mr-2"
+                        @click="resumeClicker"
+              >
+                <b-icon-play-fill/>
+                Resume
+              </b-button>
+              <b-tooltip target="add-clicker-time" delay="750"
+                         triggers="hover"
+              >
+                Add 15 seconds to the timer.
+              </b-tooltip>
+              <b-button id="add-clicker-time"
+                        variant="outline-primary"
+                        class="mr-2"
+                        @click="addTimeToClicker"
+              >
+                +15 sec
+              </b-button>
+              <b-tooltip target="restart-timer-tooltip" delay="750"
+                         triggers="hover"
+              >
+                Reset the timer to {{ clickerTimeForm.time_to_submit }}.
+              </b-tooltip>
+              <b-button id="restart-timer-tooltip"
+                        variant="outline-primary"
+                        class="mr-2"
+                        @click="restartTimer()"
+              >
+                Restart Timer
+              </b-button>
+              <b-tooltip target="zero-timer-tooltip" delay="750"
+                         triggers="hover"
+              >
+                Set the timer to zero, effectively closing the poll.
+              </b-tooltip>
+              <b-button id="zero-timer-tooltip"
+                        variant="danger"
+                        @click="closePoll(instructorClosedPollMessage)"
+              >
+                Zero Timer
+              </b-button>
+            </span>
           </div>
           <div class="d-flex align-items-center mt-2 mt-md-0">
             <b-tooltip target="clicker-results" delay="750"
@@ -960,6 +965,17 @@
       </template>
     </b-modal>
     <div v-show="user.role === 3 && assessmentType === 'clicker'">
+      <b-pagination
+        v-if="user.role === 3 && solutionsReleased && !clickerApp"
+        v-model="currentPage"
+        :total-rows="questions.length"
+        :per-page="perPage"
+        limit="22"
+        align="center"
+        first-number
+        last-number
+        @change="changePage($event)"
+      />
       <b-alert variant="info" :show="clickerMessage !== ''">
         <div v-html="clickerMessage"/>
       </b-alert>
@@ -980,12 +996,27 @@
               type="radio"
               :value="option.value"
               :class="!isPhone ? 'big-radio' : ''"
-              @input="$forceUpdate()"
+              @input="updateSelectedClickerViewOption()"
             >
             <span class="pr-1">{{ option.text }}</span>
           </label>
         </b-form-radio-group>
       </b-form-row>
+    </div>
+    <div v-show="selectedClickerViewOption === 'solution'">
+      <div v-if="questions[currentPage-1]">
+        <div v-show="questions[currentPage-1].solution_html"
+             v-html="questions[currentPage - 1].solution_html !== null ? questions[currentPage-1].solution_html.replace(solutionHtmlHeader, '') : ''"
+        />
+        <div v-if="questions[currentPage - 1].qti_answer_json">
+          <QtiJsonQuestionViewer :qti-json="questions[currentPage - 1].qti_answer_json"
+                                 :show-qti-answer="true"
+                                 :show-submit="false"
+                                 :show-response-feedback="false"
+                                 :preview-or-solution="true"
+          />
+        </div>
+      </div>
     </div>
     <b-alert :show="showInvalidAssignmentMessage" variant="info">
       <div class="font-weight-bold">
@@ -1905,14 +1936,15 @@
                     }}</span>
                 </li>
               </ul>
-              <span v-show="false">Student SolutionFileHtml</span>
+              <span v-if="false">Student SolutionFileHtml</span>
               <SolutionFileHtml v-if="showSolutionFileHTML"
                                 :key="`solution-file-html-key-${questions[currentPage-1].solution || questions[currentPage-1].solution_html}`"
                                 :questions="questions"
                                 :current-page="currentPage"
-                                class="pr-2"
+                                class="m-0"
                                 :assignment-name="name"
                                 :use-view-solution-as-text="true"
+                                :show-button="assessmentType !== 'clicker'"
               />
               <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt()">
                 <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
@@ -1922,6 +1954,7 @@
                                      :preview-or-solution="true"
                 />
                 <b-button
+                  v-show="assessmentType !== 'clicker'"
                   size="sm"
                   variant="outline-info"
                   @click="$bvModal.show(`qti-answer-${questions[currentPage-1].id}`)"
@@ -2160,14 +2193,41 @@
                       v-model="clickerTimeForm.time_to_submit"
                       type="text"
                       style="width: 200px"
-                      :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
-                      @keydown="clickerTimeForm.errors.clear('time_to_submit')"
+                      aa @keydown="clickerTimeForm.errors.clear('time_to_submit')"
                     />
                     <span class="ml-2"><b-button variant="primary" size="sm" @click="updateClickerTimeToSubmit()">Update Time to Submit
                     </b-button></span>
                   </div>
                   <ErrorMessage :message="clickerTimeForm.errors.get('time_to_submit')"/>
                 </b-form-group>
+                <b-row
+                  v-if="questions[currentPage - 1] && questions[currentPage - 1].solution_html || questions[currentPage-1].qti_answer_json"
+                >
+                  <label for="release_solution_when_question_is_closed" class="pl-3 mr-2">
+                    Release solution when question is closed:
+                    <QuestionCircleTooltip id="release-solution-when-question-is-closed-tooltip"/>
+                  </label>
+                  <b-tooltip target="release-solution-when-question-is-closed-tooltip" delay="250"
+                             triggers="hover focus"
+                  >
+                    Once a clicker question is closed, you can let your students see the solution for reviewing
+                    purposes. <span v-show="solutionsReleased"><br><br>Since you have released the solutions to this assignment at the assignment level,
+                      this feature at the question level has been disabled.</span>
+                  </b-tooltip>
+                  <b-form-radio-group
+                    id="release_solution_when_question_is_closed"
+                    v-model="questions[currentPage-1].release_solution_when_question_is_closed"
+                    :disabled="solutionsReleased"
+                    @change="updateShowSolutionForClosedQuestion"
+                  >
+                    <b-form-radio name="release_solution_when_question_is_closed" value="1">
+                      Yes
+                    </b-form-radio>
+                    <b-form-radio name="release_solution_when_question_is_closed" value="0">
+                      No
+                    </b-form-radio>
+                  </b-form-radio-group>
+                </b-row>
               </div>
               <b-row
                 v-if="questions
@@ -2249,7 +2309,7 @@
                 />
               </span>
               <span
-                v-show="user.role === 2 && (!questions[currentPage - 1].use_existing_rubric || (questions[currentPage - 1].use_existing_rubric && !questions[currentPage - 1].rubric))"
+                v-show="user.role === 2 && assessmentType !== 'clicker' && (!questions[currentPage - 1].use_existing_rubric || (questions[currentPage - 1].use_existing_rubric && !questions[currentPage - 1].rubric))"
               >
                 <b-button size="sm"
                           variant="outline-info"
@@ -2307,13 +2367,14 @@
               >
                 Remove Local Solution
               </b-button>
-              <span v-if="showSolutionFileHTML">
+              <span v-if="showSolutionFileHTML || true">
                 <span v-if="!showUploadedAudioSolutionMessage">
                   <SolutionFileHtml :key="`solution-file-html-key-${questions[currentPage-1].id}`"
                                     :questions="questions"
                                     :current-page="currentPage"
                                     :assignment-name="name"
                                     :modal-id="uniqueId().toString()"
+                                    :show-na="false"
                   />
                   <span v-if="showUploadedAudioSolutionMessage"
                         :class="uploadedAudioSolutionDataType"
@@ -2372,8 +2433,7 @@
                class="overflow-auto mt-2"
           >
             <b-pagination
-              v-if="((assessmentType === 'clicker' && (user.role === 3 && solutionsReleased && !clickerApp)) ||
-                (user.role === 2 && !presentationMode)) || (assessmentType !== 'clicker' && ((inIFrame && questionNumbersShownInIframe)
+              v-if="((assessmentType === 'clicker' && user.role === 2 && !presentationMode)) || (assessmentType !== 'clicker' && ((inIFrame && questionNumbersShownInIframe)
                 || (!inIFrame && questionNumbersShownOutOfIframe && (assessmentType !== 'clicker' || isInstructor() || pastDue))))"
               v-model="currentPage"
               :total-rows="questions.length"
@@ -2659,7 +2719,6 @@
               Remove question from My Favorites
             </b-tooltip>
           </span>
-
           <SolutionFileHtml v-if="showSolutionFileHTML"
                             :questions="questions"
                             :current-page="currentPage"
@@ -2908,7 +2967,7 @@
                           </span>
                           <div :style="isPhone ? 'font-size:large' : 'font-size:x-large'" style="font-weight: bold">
                             Attempts left: {{
-                              numberOfAllowedAttempts === 'unlimited' ? 'Infinity' : parseInt(numberOfAllowedAttempts) - parseInt(questions[currentPage - 1].submission_count)
+                              numberOfAllowedAttempts === 'unlimited' ? 'unlimited' : parseInt(numberOfAllowedAttempts) - parseInt(questions[currentPage - 1].submission_count)
                             }}
                           </div>
                         </div>
@@ -3030,7 +3089,7 @@
                             :preview-or-solution="true"
                           />
                         </span>
-                        <div v-show="selectedClickerViewOption !== 'question'"
+                        <div v-show="!['question','solution'].includes(selectedClickerViewOption)"
                              style="font-size: 20px; margin-bottom: 30px;white-space: nowrap;"
                              class="text-center"
                         >
@@ -3057,7 +3116,6 @@
                                 >
                               </span>
                             </div>
-
                             <div style="flex: 2;">
                               <pie-chart
                                 :key="`pie-chart-${currentPage}-${chartUpdateKey}`"
@@ -3070,10 +3128,12 @@
                       </div>
                       <div v-if="canViewClickerSubmissions && defaultSubmissionResults.length">
                         <DefaultSubmissionResultsViewer
+                          :key="`default-submission-results-viewer-${defaultSubmissionResultsKey}`"
                           :default-submission-results="defaultSubmissionResults"
                           :clicker-answer-shown="Boolean(clickerAnswerShown)"
                           :technology="questions[currentPage-1].technology"
                           :is-phone="isPhone"
+                          :question-id="questions[currentPage-1].id"
                           :selected-clicker-view-option="selectedClickerViewOption"
                         />
                       </div>
@@ -3880,19 +3940,18 @@ export default {
     CloneQuestion
   },
   data: () => ({
-    selectedClickerViewOption: 'submissions',
-    clickerViewOptions: [
-      { text: 'Submissions', value: 'submissions' },
-      { text: 'Scores', value: 'scores' },
-      { text: 'Question', value: 'question' }
-    ],
+    solutionHtmlHeader: '<h2 class="editable">Solution</h2>',
+    defaultSubmissionResultsKey: 0,
+    justLoadedPage: true,
+    selectedClickerViewOption: 'question',
+    clickerViewOptions: [],
     clickerAnswerShownText: 'Show',
     responseFormatOptions: responseFormatOptions,
     defaultSubmissionResults: [],
     chartUpdateKey: 0,
     clickerViewIsSubmissions: true,
     pollClosed: false,
-    instructorClosedPollMessage: 'Your instructor has closed this poll.',
+    instructorClosedPollMessage: '',
     currentTimeLeft: 0,
     clickerPaused: false,
     countdownKey: 0,
@@ -4428,6 +4487,21 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    updateSelectedClickerViewOption () {
+      this.defaultSubmissionResultsKey++
+      this.$forceUpdate()
+      this.$nextTick(() => {
+        this.renderMathJax()
+      })
+    },
+    async updateShowSolutionForClosedQuestion () {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/release-solution-when-question-is-closed`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     clickerHasSubmissionsToShow (question) {
       return question.technology === 'webwork' ||
         ['True/False Question', 'Multiple Choice'].includes(question.h5p_type) ||
@@ -4452,6 +4526,10 @@ export default {
       }
     },
     async restartQuestion () {
+      if (this.solutionsReleased) {
+        this.$noty.info('Please unrelease the solutions to this assignment so that you can open this question.')
+        return false
+      }
       try {
         const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/restart-question`)
         if (data.type === 'error') {
@@ -4747,7 +4825,10 @@ export default {
       if (data.question_id === +this.questions[this.currentPage - 1].id && data.assignment_id === +this.assignmentId) {
         console.error('Clicker submissions shown')
         if (data.view_clicker_submissions) {
-          this.selectedClickerViewOption = this.clickerHasSubmissionsToShow(this.questions[this.currentPage - 1]) ? 'submissions' : 'scores'
+          if (!this.justLoadedPage) {
+            this.selectedClickerViewOption = this.clickerHasSubmissionsToShow(this.questions[this.currentPage - 1]) ? 'submissions' : 'scores'
+          }
+          this.justLoadedPage = false
           this.clickerAnswerShown = data.show_answer
           await this.closePoll(this.instructorClosedPollMessage)
           await this.getClickerSubmissions(data.question_id)
@@ -4774,6 +4855,27 @@ export default {
           location.reload()
         }
         console.error('updating clicker status')
+        if (data.status === 'view_and_not_submit') {
+          this.clickerViewOptions = [
+            { text: 'Question', value: 'question' },
+            { text: 'Submissions', value: 'submissions' },
+            { text: 'Scores', value: 'scores' },
+          ]
+        }
+        if (data.status === 'view_and_not_submit' &&
+          (data.show_solution_radio_button || this.user.role === 2) &&
+          !this.clickerViewOptions.find(item => item.value === 'solution')) {
+          if (this.user.role === 3) {
+            this.questions[this.currentPage - 1].solution_html = data.solution_html
+            this.questions[this.currentPage - 1].qti_answer_json = data.qti_answer_json
+            this.$nextTick(() => {
+              this.renderMathJax()
+            })
+          }
+          if (this.questions[this.currentPage - 1].solution_html || this.questions[this.currentPage - 1].qti_answer_json) {
+            this.clickerViewOptions.push({ text: 'Solution', value: 'solution' })
+          }
+        }
         if (data.status !== 'paused' && data.status !== 'resumed') {
           this.timeLeft = data.time_left
         }
@@ -5883,7 +5985,7 @@ export default {
       if (this.user.role === 2) {
         try {
           const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/end-clicker-assessment`,
-            { message: message })
+            { message: message, solution_html: this.questions[this.currentPage - 1].solution_html })
           if (data.type === 'error') {
             this.$noty.error(data.message)
           } else {
@@ -6644,12 +6746,38 @@ export default {
       await this.getCaseStudyNotesByQuestion()
 
       if (this.assessmentType === 'clicker') {
+        this.justLoadedPage = true
+        this.selectedClickerViewOption = 'question'
         this.clickerStatus = this.questions[currentPage - 1].clicker_status
         this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit
         this.timeLeft = this.questions[this.currentPage - 1].clicker_time_left
-        this.updateClickerMessage(this.clickerStatus)
-        if (this.user.role === 2 && this.questions[this.currentPage - 1].time_to_submit) {
-          this.clickerTimeForm.time_to_submit = this.questions[this.currentPage - 1].time_to_submit
+
+        await this.getClickerSubmissions(this.questions[this.currentPage - 1].id)
+        this.canViewClickerSubmissions = true
+        this.clickerViewIsSubmissions = true
+        if (this.user.role === 3) {
+          if (this.questions[this.currentPage - 1].clicker_status === 'view_and_not_submit') {
+            this.clickerViewOptions = [
+              { text: 'Question', value: 'question' },
+              { text: 'Submissions', value: 'submissions' },
+              { text: 'Scores', value: 'scores' },
+            ]
+            const showSolutionRadioButtonSolution = this.questions[this.currentPage - 1].solution_html || this.questions[this.currentPage - 1].qti_answer_json
+            if (!showSolutionRadioButtonSolution) {
+              this.clickerViewOptions = this.clickerViewOptions.filter(item => item.value !== 'solution')
+            } else {
+              if (!this.clickerViewOptions.find(item => item.value === 'solution')) {
+                this.clickerViewOptions.push({ text: 'Solution', value: 'solution' })
+              }
+            }
+          } else {
+            this.clickerViewOptions = []
+          }
+        }
+        if (this.user.role === 2) {
+          if (this.questions[this.currentPage - 1].time_to_submit) {
+            this.clickerTimeForm.time_to_submit = this.questions[this.currentPage - 1].time_to_submit
+          }
         }
       }
       if (this.assessmentType === 'learning tree') {

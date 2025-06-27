@@ -1,6 +1,5 @@
 <template>
   <div v-if="pieChartData.datasets">
-    {{ useMathJax }}
     <toggle-button
       :width="105"
       class="mt-2"
@@ -143,7 +142,7 @@ export default {
   },
   methods: {
     rerenderMathaJax () {
-      if (this.useMathJax) {
+      if (this.pieChartData.use_mathjax) {
         this.$nextTick(() => {
           MathJax.Hub.Queue(['Typeset', MathJax.Hub])
         })

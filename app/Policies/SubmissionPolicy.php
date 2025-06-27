@@ -230,8 +230,15 @@ class SubmissionPolicy
             ? Response::allow()
             : Response::deny("You are not allowed to submit work for this question.");
     }
-
-    public function delete(User $user, $submission, $assignment, int $assignment_id, int $question_id)
+    /**
+     * @param User $user
+     * @param $submission
+     * @param $assignment
+     * @param int $assignment_id
+     * @param int $question_id
+     * @return Response
+     */
+    public function delete(User $user, $submission, $assignment, int $assignment_id, int $question_id): Response
     {
         $response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id);
         $has_access = $response['type'] === 'success';
@@ -240,7 +247,17 @@ class SubmissionPolicy
             : Response::deny("You are not allowed to reset this text submission. {$response['message']}");
     }
 
-    public function submissionChartData(User $user, Submission $submission, Assignment $assignment, Question $question)
+    /**
+     * @param User $user
+     * @param Submission $submission
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function submissionChartData(User $user,
+                                        Submission $submission,
+                                        Assignment $assignment,
+                                        Question $question): Response
     {
 
         $question_in_assignment = DB::table('assignment_question')

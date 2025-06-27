@@ -98,7 +98,7 @@ class processAutoRelease extends Command
                              Log::info("last due plus auto-release: " . $last_due_as_time[$value]->add($auto_release[$value]));
                              Log::info("After: " . $now->isAfter($last_due_as_time[$value]->add($auto_release[$value])));
                              Log::info($now->isAfter($last_due_as_time[$value]->add($auto_release[$value])));*/
-                            if ($now->isAfter($last_due_as_time[$value]->add($auto_release[$value]))) {
+                            if ($assignment->assessment_type !== 'clicker' && $now->isAfter($last_due_as_time[$value]->add($auto_release[$value]))) {
                                 $data[$value] = 1;
                                 //Log::info("$value: " . $auto_release[$value]);
                             }
