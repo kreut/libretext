@@ -88,22 +88,39 @@ class AssignmentSyncQuestionPolicy
      * @param Assignment $assignment
      * @return Response
      */
-    public function updateUseExistingRubric(User $user,
-                                       AssignmentSyncQuestion $assignmentSyncQuestion,
-                                       Assignment             $assignment): Response
+    public function updateUseExistingRubric(User                   $user,
+                                            AssignmentSyncQuestion $assignmentSyncQuestion,
+                                            Assignment             $assignment): Response
     {
 
         return (int)$user->id === $assignment->course->user_id
             ? Response::allow()
             : Response::deny('You are not allowed to update whether to use an overriding or existing rubric for that question.');
     }
+
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Assignment $assignment
      * @return Response
      */
-    public function deleteCustomRubric(User $user,
+    public function allSolutionsReleasedWhenClosed(User                   $user,
+                                                       AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                       Assignment             $assignment): Response
+    {
+
+        return (int)$user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to check whether all solutions are released when the questions are closed.');
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function deleteCustomRubric(User                   $user,
                                        AssignmentSyncQuestion $assignmentSyncQuestion,
                                        Assignment             $assignment): Response
     {
@@ -119,7 +136,7 @@ class AssignmentSyncQuestionPolicy
      * @param Assignment $assignment
      * @return Response
      */
-    public function updateCustomRubric(User $user,
+    public function updateCustomRubric(User                   $user,
                                        AssignmentSyncQuestion $assignmentSyncQuestion,
                                        Assignment             $assignment): Response
     {
@@ -128,6 +145,7 @@ class AssignmentSyncQuestionPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to update the custom rubric for that question.');
     }
+
     public function getDiscussItSettings(User                   $user,
                                          AssignmentSyncQuestion $assignmentSyncQuestion,
                                          Assignment             $assignment,
@@ -328,6 +346,7 @@ class AssignmentSyncQuestionPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to update the response format for this question.');
     }
+
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
@@ -403,6 +422,14 @@ class AssignmentSyncQuestionPolicy
         return $authorized
             ? Response::allow()
             : Response::deny('You are not allowed to resume this clicker assessment.');
+    }
+
+    public function updateReleaseSolutionWhenQuestionIsClosed(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to show or not show the solution for this clicker assessment.');
     }
 
 

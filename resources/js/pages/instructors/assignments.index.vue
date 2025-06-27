@@ -1291,10 +1291,10 @@
                 />
               </td>
               <td v-if="view === 'control panel'">
-                <div v-if="isFormative (assignment)">
+                <div v-if="isFormative (assignment) || assignment.assessment_type === 'clicker'">
                   N/A
                 </div>
-                <div v-if="!isFormative (assignment)">
+                <div v-if="!isFormative (assignment) && assignment.assessment_type !== 'clicker'">
                   <ShowHideAssignmentProperties
                     :key="`students-can-view-assignment-statistics-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                     :assignment="assignment"

@@ -1346,15 +1346,15 @@ class AssignmentController extends Controller
     /**
      * @param Request $request
      * @param Assignment $assignment
-     * @param int $solutionsReleased
      * @param AutoRelease $autoRelease
      * @return array
      * @throws Exception
      */
     public
-    function solutionsReleased(Request     $request,
-                               Assignment  $assignment,
-                               AutoRelease $autoRelease): array
+    function solutionsReleased(Request                $request,
+                               Assignment             $assignment,
+                               AutoRelease            $autoRelease,
+                               AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
@@ -1376,6 +1376,8 @@ class AssignmentController extends Controller
             $response['message'] = "The solutions have been <strong>{$solutions_released}</strong>.  ";
             if (!$solutionsReleased) {
                 $response['message'] .= $this->getActiveExtensionMessage($assignment, 'solution');
+                $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                    ->update(['release_solution_when_question_is_closed' => 1]);
             }
             $response['message'] .= $assignment->addAutoReleaseMessage($auto_release_deactivated);
             DB::commit();
@@ -2268,11 +2270,11 @@ class AssignmentController extends Controller
                     ->where('assignment_id', $assignment->id)
                     ->where('user_id', auth()->user()->id)
                     ->first('extension');
-                if ($assignment->assessment_type === 'clicker'){
-                $formatted_items['course_name'] = $assignment->course->name;
-                $instructor_user_id = $assignment->course->user_id;
-                $instructor = User::find($instructor_user_id);
-                $formatted_items['instructor_name'] = "$instructor->first_name $instructor->last_name";
+                if ($assignment->assessment_type === 'clicker') {
+                    $formatted_items['course_name'] = $assignment->course->name;
+                    $instructor_user_id = $assignment->course->user_id;
+                    $instructor = User::find($instructor_user_id);
+                    $formatted_items['instructor_name'] = "$instructor->first_name $instructor->last_name";
                 }
                 $formatted_items['is_instructor_logged_in_as_student'] = auth()->user()->instructor_user_id;
                 $formatted_items['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);

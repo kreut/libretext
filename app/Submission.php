@@ -2239,7 +2239,7 @@ class Submission extends Model
                     if (!isset($results_by_part[$key])) {
                         $results_by_part[$key] = [
                             'display' => 'histogram',
-                            'use_mathjax' =>   $this->isLikelyLatex($part['correct_ans_latex_string']),
+                            'use_mathjax' => $this->isLikelyLatex($part['correct_ans_latex_string']),
                             'correct_ans' => $this->isLikelyLatex($part['correct_ans']) ? '\(' . $part['correct_ans_latex_string'] . '\)' : $part['correct_ans'],
                             'correct_ans_latex_string' => $part['correct_ans_latex_string'],
                             'counts' => [
@@ -2391,7 +2391,7 @@ class Submission extends Model
      */
     function isLikelyLatex($string)
     {
-        return preg_match('/(\\\\[a-zA-Z]+|[a-zA-Z0-9]+_[a-zA-Z0-9]+|[a-zA-Z0-9]+\^[a-zA-Z0-9]+|[\^_]\{.*?\})/', $string);
+        return preg_match('/(\\\\(?!text)[a-zA-Z]+|[a-zA-Z0-9]+_[a-zA-Z0-9]+|[a-zA-Z0-9]+\^[a-zA-Z0-9]+|[\^_]\{.*?\})/', $string);
     }
 }
 

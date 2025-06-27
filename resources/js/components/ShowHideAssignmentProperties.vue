@@ -1,5 +1,38 @@
 <template>
   <div>
+    <div v-if="property ==='solutions_released'">
+    <b-modal :id="`modal-confirm-release-assignment-solutions-with-non-released-questions-${assignment.id}`"
+             title="Override non-released question solutions"
+             no-close-on-esc
+    >
+      <p>
+        You are about to release the solutions. In this assignment, some of your clicker questions can be viewed by your
+        students but
+        you are currently not sharing the solution with them.
+      </p>
+      <p>
+        By releasing the solutions at the assignment level, the individual solutions
+        will be released as well.
+      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide(`modal-confirm-release-assignment-solutions-with-non-released-questions-${assignment.id}`);assignment['solutions_released'] = false"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="handleSubmitShowHideAssignmentProperty()"
+        >
+          Release All Solutions
+        </b-button>
+      </template>
+    </b-modal>
+    </div>
     <div v-if="thingToHide">
       <b-modal :id="`modal-deactivate-auto-release-${assignment.id}-${property}`"
                :title="`Deactivate Auto-Release for ${assignment.name}`"
@@ -39,7 +72,7 @@
             class="float-right"
             @click="handleSubmitShowHideAssignmentProperty()"
           >
-            Submit
+      Submit
           </b-button>
         </template>
       </b-modal>
@@ -155,7 +188,6 @@
 
 <script>
 import 'vue-loading-overlay/dist/vue-loading.css'
-import { ToggleButton } from 'vue-js-toggle-button'
 import axios from 'axios'
 
 export default {
@@ -204,7 +236,31 @@ export default {
     },
     async initShowHideAssignmentProperty () {
       this.deactivateAutoRelease = 0
+      if (this.property === 'solutions_released' && !this.assignment[this.property]) {
+        const allSolutionsReleasedWhenClosed = await this.allSolutionsReleasedWhenClosed()
+        if (allSolutionsReleasedWhenClosed === 'error') {
+          return
+        }
+        if (!allSolutionsReleasedWhenClosed) {
+          this.$bvModal.show(`modal-confirm-release-assignment-solutions-with-non-released-questions-${this.assignment.id}`)
+          return
+        }
+      }
       await this.handleSubmitShowHideAssignmentProperty()
+    },
+    async allSolutionsReleasedWhenClosed () {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignment.id}/all-solutions-released-when-closed`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return 'error'
+        } else {
+          return data.all_solutions_released_when_closed
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+        return 'error'
+      }
     },
     async handleSubmitShowHideAssignmentProperty () {
       switch (this.property) {

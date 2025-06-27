@@ -2,7 +2,7 @@
   <div v-show="selectedClickerViewOption !== 'question'">
     <b-row class="justify-content-center">
       <b-col :cols="isPhone ? 12 : 6" class="text-center" v-if="selectedClickerViewOption === 'scores'">
-        <HistogramAndTableView :key="`scores-${defaultSubmissionResultsIndex}`"
+        <HistogramAndTableView :key="`scores-${defaultSubmissionResultsIndex}-${defaultSubmissionResultsKey}`"
                                ref="ScoresHistogramAndTableView"
                                :chartdata="scoresChartData"
                                :height="300"
@@ -13,7 +13,7 @@
       </b-col>
       <b-col :cols="isPhone ? 12 : 6" class="text-center" v-if="selectedClickerViewOption === 'submissions'">
         <HistogramAndTableView v-if="submissionsChartData.labelsWithCounts"
-                               :key="`histogram-and-table-view-${defaultSubmissionResultsIndex}`"
+                               :key="`histogram-and-table-view-${defaultSubmissionResultsIndex}-${defaultSubmissionResultsKey}`"
                                ref="SubmissionsHistogramAndTableView"
                                :chartdata="submissionsChartData"
                                :height="300"
@@ -23,13 +23,12 @@
                                :clicker-answer-shown="clickerAnswerShown"
                                :correct-ans="correctAns"
         />
-        <PieChartAndTableViewer :key="`pie-chart-and-table-view-${defaultSubmissionResultsIndex}`"
+        <PieChartAndTableViewer :key="`pie-chart-and-table-view-${defaultSubmissionResultsIndex}-${defaultSubmissionResultsKey}`"
                                 :pie-chart-data="pieChartData"
                                 :submissions-info="submissionsInfo"
                                 :clicker-answer-shown="clickerAnswerShown"
                                 :correct-ans="correctAns"
                                 :technology="technology"
-                                :use-mathjax="Boolean(useMathJax)"
         />
       </b-col>
     </b-row>
@@ -72,6 +71,10 @@ export default {
     FontAwesomeIcon
   },
   props: {
+    defaultSubmissionResultsKey: {
+      type: Number,
+      default: 0
+    },
     selectedClickerViewOption: {
       type: String,
       default: 'scores'
@@ -124,7 +127,7 @@ export default {
         case ('pie-chart'):
           this.pieChartData = this.defaultSubmissionResults[this.defaultSubmissionResultsIndex].pie_chart_data
           this.submissionsInfo = this.defaultSubmissionResults[this.defaultSubmissionResultsIndex].submissions
-          this.useMathJax = this.defaultSubmissionResults[this.defaultSubmissionResultsIndex].use_mathjax
+          this.pieChartData.use_mathjax = this.defaultSubmissionResults[this.defaultSubmissionResultsIndex].use_mathjax
           break
         case ('histogram'):
           this.submissionsChartData = this.getChartDataForHistogram('submissions', '#26A69A')

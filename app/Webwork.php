@@ -294,6 +294,9 @@ class Webwork extends Model
                 return $matches[1]; // The solution text is in the first capturing group
             }
         }
+        if (preg_match("/&SOLUTION\(EV3\(<<'EOT'\)\);\n(.*?)\nEOT/s", $value->webwork_code, $matches)) {
+            return $matches[1];
+        }
         return '';
     }
 
