@@ -1403,12 +1403,12 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         try {
-            if (app()->environment('production')) {
+            //if (app()->environment('production')) {
                 DB::beginTransaction();
                 $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
                 Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
                 DB::commit();
-            }
+           // }
             $time_to_submit = $request->time_to_submit;
             $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 4, true);
             $response['type'] = 'success';
