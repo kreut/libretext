@@ -734,7 +734,8 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/assignments/{assignment}/questions/{question}/add-time', 'AssignmentSyncQuestionController@addTimeToClickerAssessment');
     Route::post('/assignments/{assignment}/questions/{question}/restart-timer', 'AssignmentSyncQuestionController@restartTimerInClickerAssessment');
     Route::post('/assignments/{assignment}/questions/{question}/view-clicker-submissions/{show_answer}', 'AssignmentSyncQuestionController@viewClickerSubmissions');
-    Route::post('/assignments/{assignment}/questions/{question}/restart-question', 'AssignmentSyncQuestionController@restartClickerAssessment');
+    Route::post('/assignments/{assignment}/questions/{question}/open-clicker', 'AssignmentSyncQuestionController@openClickerAssessment');
+    Route::post('/assignments/{assignment}/questions/{question}/reset-clicker', 'AssignmentSyncQuestionController@resetClickerAssessment');
     Route::patch('/assignments/{assignment}/questions/{question}/pause-clicker', 'AssignmentSyncQuestionController@pauseClickerAssessment');
     Route::patch('/assignments/{assignment}/questions/{question}/resume-clicker', 'AssignmentSyncQuestionController@resumeClickerAssessment');
     Route::patch('/assignments/{assignment}/questions/{question}/unpause-clicker', 'AssignmentSyncQuestionController@unpauseClickerAssessment');

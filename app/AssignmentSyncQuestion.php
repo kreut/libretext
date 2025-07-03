@@ -719,7 +719,7 @@ class AssignmentSyncQuestion extends Model
         $formatted_clicker_status = 'Error with formatted clicker status logic';
         if (auth()->user()->role === 2) {
             if (!$question_info->clicker_start && !$question_info->clicker_end) {
-                $formatted_clicker_status = 'show_go';
+                $formatted_clicker_status = 'show_open';
             } else if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)) {
                 $formatted_clicker_status = 'view_and_submit';
             } else if (time() > strtotime($question_info->clicker_end)) {

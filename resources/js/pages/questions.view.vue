@@ -388,15 +388,16 @@
                                    :preview-or-solution="true"
               />
             </span>
-            <b-tooltip target="restart-question" delay="750"
+            <b-tooltip target="open-clicker" delay="750"
                        triggers="hover"
             >
               Remove all student submissions and restart the question.
             </b-tooltip>
-            <b-button id="restart-question"
+            <b-button id="open-clicker"
+                      v-show="!submissionsView"
                       variant="outline-primary"
                       class="mr-2"
-                      @click="restartQuestion()"
+                      @click="openQuestion()"
             >
               Restart Question
             </b-button>
@@ -2431,19 +2432,31 @@
           >
           <div v-show="(!user.formative_student || (user.formative_student && !$route.params.questionId))"
                class="overflow-auto mt-2"
+               :class="{ 'clicker-pagination': assessmentType === 'clicker' }"
           >
             <b-pagination
-              v-if="((assessmentType === 'clicker' && user.role === 2 && !presentationMode)) || (assessmentType !== 'clicker' && ((inIFrame && questionNumbersShownInIframe)
+              v-if="(assessmentType === 'clicker' && user.role === 2) || (assessmentType !== 'clicker' && ((inIFrame && questionNumbersShownInIframe)
                 || (!inIFrame && questionNumbersShownOutOfIframe && (assessmentType !== 'clicker' || isInstructor() || pastDue))))"
               v-model="currentPage"
               :total-rows="questions.length"
               :per-page="perPage"
               limit="22"
               align="center"
+              :size="presentationMode ? 'lg' : ''"
               first-number
               last-number
-              @change="changePage($event)"
-            />
+              @change="assessmentType === 'clicker' ? reloadByQuestionNumber($event) : changePage($event)"
+            >
+              <template #page="{ page, active, disabled }">
+    <span
+      style="cursor: pointer;"
+      :style="getPageStyle(page, active,questions[page-1].clicker_status)"
+      @click="currentPage = page"
+    >
+      {{ page }}
+    </span>
+              </template>
+            </b-pagination>
           </div>
           <div v-if="user.role === 5" class="mt-2 mb-2">
             <b-button
@@ -2900,7 +2913,7 @@
                 style="border-width: 1px;border-color:black;padding:10px"
                 class="text-center"
               >
-                <b-button v-show="clickerStatus === 'show_go' && !openingClicker"
+                <b-button v-show="clickerStatus === 'show_open' && !openingClicker"
                           style="padding:20px"
                           variant="success"
                           @click="startClickerAssessment"
@@ -2910,19 +2923,40 @@
                 <span v-show="openingClicker" style="font-size:30px"><b-spinner v-show="openingClicker"
                 /> Loading... </span>
 
-                <b-tooltip target="reset-clicker-question-tooltip" delay="250"
+                <b-tooltip target="open-clicker-question-tooltip" delay="500"
                            triggers="hover focus"
                 >
-                  This question has already been opened. You'll need to reset the timer before
-                  opening it again.
+                  This question has already been opened. Opening the question will remove all submissions
+                  and reset the timer.
                 </b-tooltip>
-                <b-button v-show="clickerStatus !== 'show_go'"
+                <b-button v-show="clickerStatus !== 'show_open'"
+                          id="open-clicker-question-tooltip"
+                          style="padding:20px"
+                          variant="info"
+                          @click="openQuestion"
+                >
+                  <span style="font-size:30px">Open</span>
+                </b-button>
+                <b-tooltip target="reset-clicker-question-tooltip" delay="500"
+                           triggers="hover focus"
+                >
+                  Resetting this question will remove all student submissions and reset the timer without actually
+                  opening the question.
+                </b-tooltip>
+                <b-button v-show="clickerStatus !== 'show_open'"
                           id="reset-clicker-question-tooltip"
                           style="padding:20px"
                           variant="danger"
-                          @click="restartQuestion"
+                          @click="resetQuestion"
                 >
                   <span style="font-size:30px">Reset</span>
+                </b-button>
+                <b-button v-show="responsePercent >0"
+                          style="padding:20px"
+                          variant="outline-info"
+                          @click="viewSubmissions"
+                >
+                  <span style="font-size:30px">Submissions</span>
                 </b-button>
               </b-card>
             </b-col>
@@ -3944,6 +3978,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    submissionsView: false,
     extraWaitForRenderComplete: false,
     solutionHtmlHeader: '<h2 class="editable">Solution</h2>',
     defaultSubmissionResultsKey: 0,
@@ -4492,6 +4527,23 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    viewSubmissions () {
+      this.$bvModal.show('modal-instructor-clicker-question')
+      this.selectedClickerViewOption = 'submissions'
+      this.submissionsView = true
+    },
+    getPageStyle (page, active, clickerStatus) {
+      if (this.assessmentType !== 'clicker') {
+        return {} // default
+      }
+
+      let color = clickerStatus === 'show_open' ? 'green' : 'red'
+      return {
+        color,
+        backgroundColor: active ? 'transparent' : '',
+        boxShadow: 'none'
+      }
+    },
     updateSelectedClickerViewOption () {
       this.defaultSubmissionResultsKey++
       this.$forceUpdate()
@@ -4530,16 +4582,30 @@ export default {
         }
       }
     },
-    async restartQuestion () {
+    async openQuestion () {
       if (this.solutionsReleased) {
         this.$noty.info('Please unrelease the solutions to this assignment so that you can open this question.')
         return false
       }
       try {
-        const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/restart-question`)
+        const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/open-clicker`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
         } else {
+          this.canViewClickerSubmissions = false
+          this.clickerViewIsSubmissions = true
+          this.clickerAnswerShown = false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async resetQuestion () {
+      try {
+        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/reset-clicker`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.questions[this.currentPage - 1].clicker_status = this.clickerStatus = 'show_open'
           this.canViewClickerSubmissions = false
           this.clickerViewIsSubmissions = true
           this.clickerAnswerShown = false
@@ -6239,7 +6305,7 @@ export default {
             this.clickerPaused = false
           })
           break
-        case ('show_go'):
+        case ('show_open'):
           this.clickerMessage = 'This question is ready to be opened.'
           this.clickerMessageType = 'info'
           break
@@ -6682,8 +6748,11 @@ export default {
         'submitButtonActive': this.submitButtonActive
       }
     },
+    reloadByQuestionNumber (newPageNumber) {
+      window.location = `/assignments/${this.assignmentId}/questions/view/${this.questions[newPageNumber - 1].id}`
+    },
     async changePage (currentPage) {
-      this.extraWaitForRenderComplete = this.isPhone ? false : true
+      this.extraWaitForRenderComplete = !this.isPhone
       this.enteredPoints = false
       this.showQtiJsonQuestionViewer = false
       this.submitButtonActive = true
@@ -7173,5 +7242,17 @@ div.ar-icon svg {
 #modal-instructor-clicker-question___BV_modal_header_.modal-header {
   padding-bottom: 0px;
   border: 0px;
+}
+
+.clicker-pagination .page-item.active .page-link {
+  background-color: transparent !important;
+  border-color: #dee2e6;
+  box-shadow: none;
+  color: inherit;
+}
+
+
+.clicker-pagination .page-link {
+  color: inherit;
 }
 </style>

@@ -385,13 +385,29 @@ class AssignmentSyncQuestionPolicy
      * @param Question $question
      * @return Response
      */
-    public function restartClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    public function openClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
     {
         $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
         return $authorized
             ? Response::allow()
-            : Response::deny('You are not allowed to restart this clicker assessment.');
+            : Response::deny('You are not allowed to opem this clicker assessment.');
     }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function resetClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question): Response
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to reset this clicker assessment.');
+    }
+
 
 
     /**

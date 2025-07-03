@@ -1387,15 +1387,15 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function restartClickerAssessment(StartClickerAssessment $request,
-                                      Assignment             $assignment,
-                                      Question               $question,
-                                      AssignmentSyncQuestion $assignmentSyncQuestion,
-                                      FCMNotification        $FCMNotification): array
+    function openClickerAssessment(StartClickerAssessment $request,
+                                   Assignment             $assignment,
+                                   Question               $question,
+                                   AssignmentSyncQuestion $assignmentSyncQuestion,
+                                   FCMNotification        $FCMNotification): array
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('restartClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+        $authorized = Gate::inspect('openClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -1404,11 +1404,11 @@ class AssignmentSyncQuestionController extends Controller
 
         try {
             //if (app()->environment('production')) {
-                DB::beginTransaction();
-                $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
-                Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
-                DB::commit();
-           // }
+            DB::beginTransaction();
+            $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+            Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
+            DB::commit();
+            // }
             $time_to_submit = $request->time_to_submit;
             $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 4, true);
             $response['type'] = 'success';
@@ -1423,6 +1423,52 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
 
     }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public
+    function resetClickerAssessment(Assignment             $assignment,
+                                    Question               $question,
+                                    AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('resetClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            DB::beginTransaction();
+            $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+            Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update([
+                    'clicker_start' => null,
+                    'clicker_end' => null
+                ]);
+            DB::commit();
+            $response['type'] = 'info';
+            $response['message'] = 'All student submissions have been removed and the clicker timings have been reset.';
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error restting this clicker assessment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
 
     /**
      * @param StartClickerAssessment $request

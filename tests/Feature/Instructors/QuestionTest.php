@@ -64,7 +64,7 @@ class QuestionTest extends TestCase
     /** @test */
     public function non_instructor_cannot_restart_a_clicker_assessment()
     {
-        $this->actingAs($this->student_user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/restart-question")
+        $this->actingAs($this->student_user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/open-clicker")
             ->assertJson(['message' => 'You are not allowed to restart this clicker assessment.']);
 
     }

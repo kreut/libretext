@@ -28,10 +28,6 @@
       changes
       if they would like to be reflected in their assignments.
     </b-alert>
-    <b-alert :show="assessmentType === 'clicker'">
-      Important: clicker assignments can only be used in conjunction with H5P or Native true-false and multiple choice
-      assessments.
-    </b-alert>
     <b-alert :show="openEndedQuestionsInRealTime !== ''">
       It looks like the following assessments have an open-ended component: {{ openEndedQuestionsInRealTime }}. These
       types of assessments are appropriate for
