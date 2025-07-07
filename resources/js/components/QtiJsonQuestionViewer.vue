@@ -153,7 +153,7 @@
           />
         </b-form-group>
       </div>
-      <DiscussItViewer v-if="questionType === 'discuss_it'"
+      <DiscussItViewer v-if="questionType === 'discuss_it' && assignmentId"
                        ref="discussItViewer"
                        :key="`discussIt-${assignmentId}-${questionId}`"
                        :qti-json="JSON.parse(qtiJson)"
