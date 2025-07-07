@@ -14,8 +14,7 @@
                placement="rightbottom"
                triggers="hover focus"
     >
-      This question is used in a formative assignment which means that the assignment is not locked down and students
-      have access to solutions immediately after submission.
+     This question is used in a separate formative assignment, where students have access to solutions immediately after submission.
     </b-tooltip>
   </span>
 </template>
