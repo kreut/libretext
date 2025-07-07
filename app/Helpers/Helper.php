@@ -386,7 +386,7 @@ class Helper
 
     public static function defaultDiscussItSettings(): string
     {
-        return '{"number_of_groups":"1","auto_grade":"0","response_modes":[],"completion_criteria":"1","students_can_edit_comments":"1","students_can_delete_comments":"1","min_number_of_initiated_discussion_threads":"1","min_number_of_replies":"1","min_number_of_initiate_or_reply_in_threads":"1","min_number_of_words":"","min_length_of_audio_video":""}';
+        return '{"number_of_groups":"1","auto_grade":"0","response_modes":[],"completion_criteria":"1","students_can_edit_comments":"1","students_can_delete_comments":"0","min_number_of_initiated_discussion_threads":"1","min_number_of_replies":"1","min_number_of_initiate_or_reply_in_threads":"1","min_number_of_words":"","min_length_of_audio_video":""}';
     }
 
     /**
