@@ -390,7 +390,7 @@ class AssignmentSyncQuestionPolicy
         $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
         return $authorized
             ? Response::allow()
-            : Response::deny('You are not allowed to opem this clicker assessment.');
+            : Response::deny('You are not allowed to open this clicker assessment.');
     }
 
     /**

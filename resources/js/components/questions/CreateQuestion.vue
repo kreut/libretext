@@ -1709,6 +1709,12 @@
                     />
                   </b-card>
                   <div v-if="qtiQuestionType === 'discuss_it'">
+                    <div v-if="isEdit" class="pt-3">
+                    <b-alert variant="info" show>
+                      If there are student comments and you edit any of the associated media
+                      the comments will be deleted.
+                    </b-alert>
+                    </div>
                     <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
                                          :media-uploads="questionForm.media_uploads"
                                          :qti-json="JSON.stringify(qtiJson)"
