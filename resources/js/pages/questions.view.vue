@@ -4853,7 +4853,7 @@ export default {
         this.viewClickerSubmissions(this.clickerAnswerShown)
       }
       )
-      if (!this.questions[this.currentPage - 1].qti_json || ['multiple_choice', 'true_false'].includes(this.questions[this.currentPage - 1].qti_json)) {
+      if (!this.questions[this.currentPage - 1].qti_json || ['multiple_choice', 'true_false'].includes(this.questions[this.currentPage - 1].qti_json_type)) {
         this.clickerAnswerShownText = this.clickerAnswerShown ? 'Hide' : 'Show'
       }
     },
@@ -6344,6 +6344,9 @@ export default {
           this.responsePercent = data.response_percent
           if (data.default_submission_results) {
             this.defaultSubmissionResults = data.default_submission_results
+            if (data.answer_shown) {
+              this.clickerAnswerShown = true
+            }
           } else {
             this.piechartdata = data.pie_chart_data
             this.correctAnswerIndex = data.correct_answer_index

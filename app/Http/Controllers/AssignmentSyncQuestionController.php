@@ -1000,8 +1000,7 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function viewClickerSubmissions(Request                $request,
-                                    Assignment             $assignment,
+    function viewClickerSubmissions(Assignment             $assignment,
                                     Question               $question,
                                     int                    $show_answer,
                                     AssignmentSyncQuestion $assignmentSyncQuestion): array
@@ -1014,7 +1013,9 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
-
+            $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['answer_shown'=> $show_answer]);
             $client = Helper::centrifuge();
             $published_response = ["view_clicker_submissions" => true,
                 "show_answer" => $show_answer,

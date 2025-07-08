@@ -372,10 +372,11 @@ class SubmissionController extends Controller
      * @throws Exception
      */
     public
-    function submissionChartData(Request    $request,
-                                 Assignment $assignment,
-                                 Question   $question,
-                                 Submission $submission): array
+    function submissionChartData(Request                $request,
+                                 Assignment             $assignment,
+                                 Question               $question,
+                                 Submission             $submission,
+                                 AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
         $response['redirect_question'] = false;
@@ -390,7 +391,8 @@ class SubmissionController extends Controller
         try {
             $response_format = $request->response_format ? $request->response_format : '';
             $response = $submission->submissionChartData($assignment, $question, $response_format);
-
+            $response['answer_shown'] = $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)->first()->answer_shown;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

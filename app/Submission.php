@@ -1688,7 +1688,6 @@ class Submission extends Model
                 }
             }
 
-
             $number_submission_results = count($submission_results); //don't include Fake
             $response['response_percent'] = $number_enrolled ? Round(100 * $number_submission_results / $number_enrolled, 1) : 0;
             $response['type'] = 'success';
