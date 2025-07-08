@@ -60,10 +60,20 @@ export default {
   }),
   mounted () {
     if (this.showModal && this.assignmentId && this.questionId) {
-      this.showRedirectToClickerModal()
+      this.deferModalOpen()
     }
   },
   methods: {
+    deferModalOpen () {
+      this.$nextTick(() => {
+        requestAnimationFrame(() => {
+          // This double-defer ensures DOM is fully stable before modal opens
+          requestAnimationFrame(() => {
+            this.showRedirectToClickerModal()
+          })
+        })
+      })
+    },
     redirectToClickerQuestion () {
       window.location.href = `/assignments/${this.assignmentId}/questions/view/${this.questionId}`
     },
