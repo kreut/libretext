@@ -3108,7 +3108,7 @@
                       :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
                       :assignment-id="+clickerAssignmentId"
                       :question-id="clickerQuestionId"
-                      :show-modal="+clickerAssignmentId !== +assignmentId || questions[currentPage-1].id !==clickerQuestionId"
+                      :show-modal="!clickerApp && (+clickerAssignmentId !== +assignmentId || questions[currentPage-1].id !==clickerQuestionId)"
                       @resetClickerAssignmentIdClickerQuestionId="resetClickerAssignmentIdClickerQuestionId()"
                     />
 
@@ -7027,7 +7027,7 @@ export default {
         this.assessmentType = assignment.assessment_type
         this.numberOfAllowedAttempts = assignment.number_of_allowed_attempts
         this.numberOfAllowedAttemptsPenalty = assignment.number_of_allowed_attempts_penalty
-        if (this.assessmentType !== 'clicker'){
+        if (this.assessmentType !== 'clicker') {
           this.presentationMode = false
         }
         this.capitalFormattedAssessmentType = this.assessmentType === 'learning tree' ? 'Learning Trees' : 'Questions'
