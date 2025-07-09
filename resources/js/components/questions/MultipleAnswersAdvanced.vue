@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-modal id="modal-single-marker-sketcher-viewer"
-             title="View Mark"
+             :title="`View Location of '${typeToView}'`"
              no-close-on-backdrop
              size="lg"
     >
@@ -40,10 +40,8 @@
       <template v-slot:cell(symbol)="data">
         <b-button :id="`label-${data.item.index}`"
                   :variant="hasMark(data.item) ? 'success' : ''"
-                  :disabled="!hasMark(data.item)"
-                  :style="!hasMark(data.item) ? 'pointer-events: none' : ''"
                   class="ml-2"
-                  @click="initLoadStructure(data.item.index,data.item.structuralComponent)"
+                  @click="initLoadStructure(data.item, hasMark(data.item))"
         >
           {{ data.item.structuralComponent === 'atom' ? data.item.symbol : data.item.type }}
         </b-button>
@@ -144,6 +142,7 @@ export default {
     }
   },
   data: () => ({
+    typeToView: '',
     structureToLoad: {},
     richEditorConfig: {
       toolbar: [
@@ -237,26 +236,39 @@ export default {
         this.$forceUpdate()
       }
     },
-    initLoadStructure (index, type) {
+    initLoadStructure (chosenItem, marked) {
+      const structuralIndex = chosenItem.structuralIndex
+      const type = chosenItem.structuralComponent
+      console.error('structural index')
+      console.error(structuralIndex)
+      this.typeToView = chosenItem.structuralComponent === 'atom' ? chosenItem.symbol : chosenItem.type
       this.$bvModal.show('modal-single-marker-sketcher-viewer')
       this.structureToLoad.atoms = []
       this.structureToLoad.bonds = []
       for (const item of ['atoms', 'bonds']) {
         for (let i = 0; i < this.qtiJson.solutionStructure[item].length; i++) {
           let value = JSON.parse(JSON.stringify(this.qtiJson.solutionStructure[item][i]))
-          console.error(item + 's', type)
-          console.error(index, i)
-          if (item === (type + 's') && index !== i) {
+          console.error(item, type + 's')
+          if (item !== (type + 's') || (item === (type + 's') && i !== structuralIndex)) {
             delete value.mark
+          }
+          if (item === (type + 's') && i === structuralIndex) {
+            value.mark = marked ? 0 : 1
           }
           this.structureToLoad[item].push(value)
         }
       }
+      console.error('Structure to load')
+      console.error(this.structureToLoad)
     },
     loadStructure () {
       document.getElementById('single-marker-sketcher-viewer').contentWindow.postMessage({
         method: 'load',
-        structure: this.structureToLoad
+        structure: this.structureToLoad,
+        style: {
+          mark_colors: ['#006100'],
+          atom_color: 'black'
+        }
       }, '*')
     },
     onCKEditorNamespaceLoaded (CKEDITOR) {
