@@ -908,7 +908,6 @@
       id="modal-submission-accepted"
       ref="modalSubmissionAccepted"
       :hide-footer="!learningTreeMessage"
-      :title="modalSubmissionAcceptedTitle"
       size="lg"
       :no-close-on-backdrop="true"
       @hidden="hideModalSubmissionAccepted"
