@@ -2915,7 +2915,7 @@
                 <b-button v-show="clickerStatus === 'show_open' && !openingClicker"
                           style="padding:20px"
                           variant="success"
-                          @click="startClickerAssessment"
+                          @click="openQuestion"
                 >
                   <span style="font-size:30px">Open</span>
                 </b-button>
