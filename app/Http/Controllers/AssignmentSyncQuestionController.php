@@ -1015,7 +1015,7 @@ class AssignmentSyncQuestionController extends Controller
         try {
             $assignmentSyncQuestion->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->update(['answer_shown'=> $show_answer]);
+                ->update(['answer_shown' => $show_answer]);
             $client = Helper::centrifuge();
             $published_response = ["view_clicker_submissions" => true,
                 "show_answer" => $show_answer,
@@ -1054,14 +1054,14 @@ class AssignmentSyncQuestionController extends Controller
                                   AssignmentSyncQuestion $assignmentSyncQuestion,
                                   Webwork                $webwork): array
     {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('endClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
         try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('endClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
             $assignment_question = $assignmentSyncQuestion->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
@@ -1075,15 +1075,17 @@ class AssignmentSyncQuestionController extends Controller
             $published_response['show_solution_radio_button'] = $assignment_question->release_solution_when_question_is_closed;
             if ($published_response['show_solution_radio_button']) {
                 $published_response['solution_html'] = $request->solution_html ? str_replace('<h2 class="editable">Solution</h2>', '', $request->solution_html) : '';
+                if ($published_response['solution_html']) {
+                    $published_response['solution_html'] = base64_encode($request->solution_html);
+                }
                 if ($question->qti_json) {
-                    $published_response['qti_answer_json'] = $question->formatQtiJson('answer_json', $question->qti_json, [], true);
+                    $published_response['qti_answer_json'] = base64_encode($question->formatQtiJson('answer_json', $question->qti_json, [], true));
                 }
             }
             $client = Helper::centrifuge();
+            $published_response['solution_html'] = base64_encode($request->solution_html);
             $client->publish("clicker-status-$assignment->id", $published_response);
             $response['type'] = 'success';
-
-
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -1411,7 +1413,7 @@ class AssignmentSyncQuestionController extends Controller
             DB::commit();
             // }
             $time_to_submit = $request->time_to_submit;
-            $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 4, true);
+            $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 5, true);
             $response['type'] = 'success';
             $response['message'] = 'Your students can begin submitting responses.';
 
@@ -1501,7 +1503,7 @@ class AssignmentSyncQuestionController extends Controller
             $data = $request->validated();
             $time_to_submit = $data['time_to_submit'];
             $reload_student_view = $request->reload_student_view ? $request->reload_student_view : false;
-            $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 2, $reload_student_view);
+            $assignmentSyncQuestion->startClickerAssessment($FCMNotification, $assignment, $question, $time_to_submit, 5, $reload_student_view);
             $response['type'] = 'success';
             $response['message'] = 'Your students can begin submitting responses.';
 

@@ -8,6 +8,8 @@ use App\Helpers\Helper;
 use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use DateTime;
+use DateTimeZone;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
@@ -66,9 +68,23 @@ class AssignmentSyncQuestion extends Model
                     "time_left" => $time_left]);
 
         }
+        $question_title = $question->title;
+        if (!$question_title) {
+            $assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
 
+            $question_title = $assignment_question->custom_question_title ? $assignment_question->custom_question_title : "Question #$assignment_question->order";
+        }
+        $timezone = new DateTimeZone(auth()->user()->time_zone);
+        $date = new DateTime('now', $timezone);
+        $formatted_time = $date->format('g:i A T');
         $message['message'] = [
-            'notification' => ['title' => 'Clicker Launch', 'body' => 'You have been invited to participate in an ADAPT poll.'],
+            'notification' => [
+                'title' => 'Clicker Launch',
+                'body' =>
+                    "ADAPT poll, '{$question_title}' in {$assignment->course->name}, opening at $formatted_time"],
             'data' => [
                 'path' => "Assignment/$assignment->id/Question/$question->id",
                 'assignment_id' => (string)$assignment->id,
@@ -644,6 +660,8 @@ class AssignmentSyncQuestion extends Model
         foreach ($assignment_questions as $assignment_question) {
             $assignment_question->assignment_id = $to_assignment_id;
             $assignment_question->question_revision_id = $question_revision_ids_by_question_ids[$assignment_question->question_id] ?? null;
+            $assignment_question->clicker_start = null;
+            $assignment_question->clicker_end = null;
             if ($assignment_question->discuss_it_settings) {
                 if ($reset_discuss_it_settings_to_default) {
                     $assignment_question->discuss_it_settings = Helper::defaultDiscussItSettings();
