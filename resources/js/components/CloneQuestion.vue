@@ -95,7 +95,7 @@
        href=""
        style="text-decoration: none"
        @click.prevent="openModalCopyQuestion()"
-    ><span class="align-middle">
+    ><span :class="alignMiddle ? 'align-middle' : ''">
       <b-button v-if="asButton" size="sm" variant="outline-secondary">
         <font-awesome-icon
           :id="`clone-${questionId}`"
@@ -155,6 +155,10 @@ export default {
     ToggleButton
   },
   props: {
+    alignMiddle: {
+      type: Boolean,
+      default: true
+    },
     asButton: {
       type: Boolean,
       default: false
