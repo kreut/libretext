@@ -7,27 +7,47 @@
     />
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course"/>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course"/>
-    <b-modal id="modal-discussion-questions-exist"
-             title="Discuss-it Question Settings"
+    <b-modal id="modal-discuss-it-or-clicker-questions-exist"
+             title="Question Settings Within Assignments"
              no-close-on-esc
              no-close-on-backdrop
              size="lg"
     >
       <p>
-        There are questions in this course which are Discuss-it questions. You can use the settings of the imported
+          There are questions in this course which are customized at the assignment level.</p>
+      <p>You can use the settings of the imported
         questions or reset the settings to the default ADAPT settings. After you import the course, you can always
         manually adjust
         any settings.
       </p>
       <b-form-group
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label="Reset Settings to Default"
+        label-cols-sm="5"
+        label-cols-lg="4"
+        label="Reset Discuss-it Settings"
         label-for="reset_discuss_it_settings_to_default"
       >
         <b-form-radio-group
           id="reset_discuss_it_settings_to_default"
           v-model="resetDiscussItSettingsToDefault"
+          class="mt-2"
+        >
+          <b-form-radio value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        label-cols-sm="5"
+        label-cols-lg="4"
+        label="Reset Clicker Settings"
+        label-for="reset_clicker_settings_to_default"
+      >
+        <b-form-radio-group
+          id="reset_clicker_settings_to_default"
+          v-model="resetClickerSettingsToDefault"
           class="mt-2"
         >
           <b-form-radio value="1">
@@ -170,7 +190,7 @@
           variant="primary"
           size="sm"
           class="float-right"
-          @click="checkedForDiscussItQuestions = false;clone(courseToClone)"
+          @click="checkedForDiscussItOrClickerQuestions = false;clone(courseToClone)"
         >
           Submit
         </b-button>
@@ -264,7 +284,7 @@
           size="sm"
           class="float-right"
           :disabled="disableYesImportCourse || importingCourse"
-          @click="checkedForDiscussItQuestions=false;handleImportCourse()"
+          @click="checkedForDiscussItOrClickerQuestions=false;handleImportCourse()"
         >
           Yes, import course!
         </b-button>
@@ -679,9 +699,12 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    discussItQuestionsExist: false,
+    clickerQuestionsExist: false,
     importType: '',
-    resetDiscussItSettingsToDefault: false,
-    checkedForDiscussItQuestions: false,
+    resetDiscussItSettingsToDefault: '1',
+    resetClickerSettingsToDefault: '1',
+    checkedForDiscussItOrClickerQuestions: false,
     centrifuge: {},
     importedCourse: { name: '', id: 0 },
     importingCourseMessage: {},
@@ -830,8 +853,8 @@ export default {
     initCentrifuge,
     isMobile,
     async continueToCloneOrImport () {
-      this.checkedForDiscussItQuestions = true
-      this.$bvModal.hide('modal-discussion-questions-exist')
+      this.checkedForDiscussItOrClickerQuestions = true
+      this.$bvModal.hide('modal-discuss-it-or-clicker-questions-exist')
       this.importType === 'clone'
         ? await this.clone(this.courseToClone)
         : await this.handleImportCourse()
@@ -854,7 +877,7 @@ export default {
       this.checkForBeta()
     },
     checkForBeta () {
-      this.checkedForDiscussItQuestions = false
+      this.checkedForDiscussItOrClickerQuestions = false
       if (this.courseToClone.is_beta_course) {
         this.cloneCourseOption = 'as-beta'
         this.$bvModal.show('modal-clone-beta')
@@ -875,14 +898,16 @@ export default {
       }
       return false
     },
-    async checkForDiscussItQuestions (course, importType) {
+    async checkForDiscussItOrClickerQuestions (course, importType) {
       try {
         const { data } = await axios.get(`/api/assignment-sync-question/check-for-discuss-it-or-clicker-questions-by-course-or-assignment/course/${course.id}`)
         if (data.type === 'success') {
-          if (data.discuss_it_questions_exist) {
-            this.$bvModal.show('modal-discussion-questions-exist')
+          this.discussItQuestionsExist = data.discuss_it_questions_exist
+          this.clickerQuestionsExist = data.clicker_questions_exist
+          if (this.discussItQuestionsExist || this.clickerQuestionsExist) {
+            this.$bvModal.show('modal-discuss-it-or-clicker-questions-exist')
           } else {
-            this.checkedForDiscussItQuestions = true
+            this.checkedForDiscussItOrClickerQuestions = true
             this.importType = importType
             this.importType === 'clone' ? await this.clone(course) : await this.handleImportCourse()
           }
@@ -894,10 +919,10 @@ export default {
       }
     },
     async clone (course) {
-      if (!this.checkedForDiscussItQuestions) {
+      if (!this.checkedForDiscussItOrClickerQuestions) {
         this.courseToClone = course
         this.resetDiscussItSettingsToDefault = false
-        await this.checkForDiscussItQuestions(course, 'clone')
+        await this.checkForDiscussItOrClickerQuestions(course, 'clone')
         return
       }
       this.courseToImportForm.action = 'clone'
@@ -922,6 +947,7 @@ export default {
         id: course.id
       }
       this.courseToImportForm.reset_discuss_it_settings_to_default = +this.resetDiscussItSettingsToDefault === 1
+      this.courseToImportForm.reset_clicker_settings_to_default = +this.resetClickerSettingsToDefault === 1
       try {
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${course.id}`)
         this.$bvModal.hide('modal-clone-beta')
@@ -1067,13 +1093,10 @@ export default {
       }
     },
     async handleImportCourse () {
-      if (!this.checkedForDiscussItQuestions) {
-        this.resetDiscussItSettingsToDefault = false
-        console.error(this.courseToImport)
-        console.error(this.addIdToCourseToImport(this.courseToImport))
-        console.error(this.courseToImport)
-        console.error(this.getIdOfCourseToImport(this.courseToImport))
-        await this.checkForDiscussItQuestions(this.addIdToCourseToImport(this.courseToImport), 'import')
+      if (!this.checkedForDiscussItOrClickerQuestions) {
+        this.resetDiscussItSettingsToDefault = '0'
+        this.resetClickerSettingsToDefault = '0'
+        await this.checkForDiscussItOrClickerQuestions(this.addIdToCourseToImport(this.courseToImport), 'import')
         return
       }
       this.centrifuge = await initCentrifuge()
@@ -1090,6 +1113,7 @@ export default {
         this.importedCourse = { name: this.courseToImport, id: IdOfCourseToImport }
         console.error(this.importedCourse)
         this.courseToImportForm.reset_discuss_it_settings_to_default = +this.resetDiscussItSettingsToDefault === 1
+        this.courseToImportForm.reset_clicker_settings_to_default = +this.resetClickerSettingsToDefault === 1
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${IdOfCourseToImport}`)
         this.courseToImport = ''
         if (data.type === 'error') {

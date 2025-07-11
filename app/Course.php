@@ -312,8 +312,9 @@ class Course extends Model
                 }
 
                 $assignment->saveAssignmentTimingAndGroup($imported_assignment, $default_timing);
-                $reset_discuss_it_settings_to_default = property_exists($request, 'reset_discuss_it_settings_to_default') ? $request->reset_discuss_it_settings_to_default : true;
-                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $reset_discuss_it_settings_to_default);
+                $reset_discuss_it_settings_to_default = property_exists($request, 'reset_discuss_it_settings_to_default') ? +$request->reset_discuss_it_settings_to_default : true;
+                $reset_clicker_settings_to_default = property_exists($request, 'reset_clicker_settings_to_default') ? +$request->reset_clicker_settings_to_default : true;
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $reset_discuss_it_settings_to_default, $reset_clicker_settings_to_default);
             }
 
             $this->prepareNewCourse($user, $section, $imported_course, $this, $enrollment, $finalGrade);
