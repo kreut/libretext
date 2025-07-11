@@ -888,20 +888,6 @@
                                                      @addQuestions="addQuestions"
                                                      @reloadCurrentAssignmentQuestions="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
                                 />
-                                <CloneQuestion
-                                  :key="`copy-question-${assignmentQuestion.id}`"
-                                  :assignment-id="0"
-                                  class="pl-1"
-                                  :question-id="assignmentQuestion.id"
-                                  :question-editor-user-id="assignmentQuestion.question_editor_user_id"
-                                  :title="assignmentQuestion.title"
-                                  :license="assignmentQuestion.license"
-                                  :public="assignmentQuestion.public"
-                                  :library="assignmentQuestion.library"
-                                  :non-technology="assignmentQuestion.non_technology"
-                                  :align-middle="false"
-                                  @reloadQuestions="getCurrentAssignmentQuestionsBasedOnChosenAssignmentOrSavedQuestionsFolder"
-                                />
                               </td>
                             </tr>
                           </draggable>

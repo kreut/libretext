@@ -95,7 +95,7 @@
        href=""
        style="text-decoration: none"
        @click.prevent="openModalCopyQuestion()"
-    ><span :class="alignMiddle ? 'align-middle' : ''">
+    ><span class="alignMiddle">
       <b-button v-if="asButton" size="sm" variant="outline-secondary">
         <font-awesome-icon
           :id="`clone-${questionId}`"
@@ -108,6 +108,7 @@
           v-if="bigIcon"
           :id="`clone-${questionId}`"
           :class="canClone ? 'text-muted' : 'text-danger'"
+          class="align-middle"
           :icon="copyIcon"
           style="font-size:24px;"
         />
@@ -155,10 +156,6 @@ export default {
     ToggleButton
   },
   props: {
-    alignMiddle: {
-      type: Boolean,
-      default: true
-    },
     asButton: {
       type: Boolean,
       default: false

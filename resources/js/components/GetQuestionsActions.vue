@@ -156,28 +156,6 @@
         </b-tooltip>
       </span>
     </span>
-    <span v-if="questionSource === 'my_favorites' && showTrash">
-      <a
-        href=""
-        @click.prevent="$emit('removeMyFavoritesQuestion',assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
-      >
-        <b-icon icon="trash"
-                class="text-muted"
-                size="size"
-                :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
-        />
-      </a>
-      <b-tooltip
-        :target="getTooltipTarget('remove-from-my-favorites-within-my-favorites',assignmentQuestion.question_id)"
-        delay="1000"
-        triggers="hover focus"
-        :title="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
-      >
-        Remove from the My Favorites folder {{
-          assignmentQuestion.my_favorites_folder_name
-        }}
-      </b-tooltip>
-    </span>
     <span
       v-if="assignmentQuestion.technology === 'webwork' || user.is_developer || isAdmin || questionSource === 'my_questions' || (questionSource === 'all_questions' && user.role === 5)"
     >
@@ -198,13 +176,26 @@
                 :aria-label="`Edit ${assignmentQuestion.title}`"
         />
       </a>
-      <a v-if="showTrash"
-         :id="getTooltipTarget(`delete${componentId}`,assignmentQuestion.question_id)"
-         href=""
-         class="pr-1"
-         @click.prevent="initDeleteQuestions([assignmentQuestion.question_id])"
+       <CloneQuestion
+         :key="`copy-question-${assignmentQuestion.question_id}`"
+         :assignment-id="0"
+         :question-id="assignmentQuestion.question_id"
+         :question-editor-user-id="assignmentQuestion.question_editor_user_id"
+         :title="assignmentQuestion.title"
+         :license="assignmentQuestion.license"
+         :public="assignmentQuestion.public"
+         :library="assignmentQuestion.library"
+         :non-technology="assignmentQuestion.non_technology"
+         @reloadQuestions="$emit('reloadCurrentAssignmentQuestions')"
+       />
+      <span v-if="questionSource !== 'my_favorites' &&  showTrash">
+      <a
+        href=""
+        class="pr-1"
+        @click.prevent="initDeleteQuestions([assignmentQuestion.question_id])"
       >
-        <b-icon class="text-muted"
+        <b-icon :id="getTooltipTarget(`delete${componentId}`,assignmentQuestion.question_id)"
+                class="text-muted"
                 icon="trash"
                 :size="size"
                 :aria-label="`Delete ${assignmentQuestion.title}`"
@@ -216,7 +207,30 @@
        >
         Delete the question
       </b-tooltip>
-
+        </span>
+ <span v-if="questionSource === 'my_favorites' && showTrash">
+      <a
+        :id="getTooltipTarget(`remove-from-my-favorites-within-my-favorites-${assignmentQuestion.question_id}`,assignmentQuestion.question_id)"
+        href=""
+        @click.prevent="$emit('removeMyFavoritesQuestion',assignmentQuestion.my_favorites_folder_id,assignmentQuestion.question_id)"
+      >
+        <b-icon icon="trash"
+                class="text-muted"
+                size="size"
+                :aria-label="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
+        />
+      </a>
+      <b-tooltip
+        :target="getTooltipTarget(`remove-from-my-favorites-within-my-favorites-${assignmentQuestion.question_id}`,assignmentQuestion.question_id)"
+        delay="1000"
+        triggers="hover focus"
+        :title="`Remove from ${assignmentQuestion.my_favorites_folder_name}`"
+      >
+        Remove from the My Favorites folder {{
+          assignmentQuestion.my_favorites_folder_name
+        }}
+      </b-tooltip>
+    </span>
     </span>
   </span>
 </template>
@@ -231,10 +245,11 @@ import { mapGetters } from 'vuex'
 import { v4 as uuidv4 } from 'uuid'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
+import CloneQuestion from './CloneQuestion.vue'
 
 export default {
   name: 'GetQuestionsActions',
-  components: { FontAwesomeIcon, CreateQuestion },
+  components: { CloneQuestion, FontAwesomeIcon, CreateQuestion },
   props: {
     showPlusMinusForAddRemove: {
       type: Boolean,
@@ -323,6 +338,7 @@ export default {
     this.componentId = uuidv4()
   },
   methods: {
+    getTooltipTarget,
     doCopy,
     setQuestionRevision (revision) {
       console.log('setting revision')
