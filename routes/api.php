@@ -595,7 +595,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/submission-score-overrides', 'SubmissionScoreOverrideController@update');
 
     Route::post('/assignment-sync-question/check-for-discuss-it-questions-over-multiple-assignment-questions', 'AssignmentSyncQuestionController@checkForDiscussItQuestionsOverMultipleAssignmentQuestions');
-    Route::get('/assignment-sync-question/check-for-discuss-it-questions-by-course-or-assignment/{level}/{id}', 'AssignmentSyncQuestionController@checkForDiscussItQuestionsByCourseOrAssignment');
+    Route::get('/assignment-sync-question/check-for-discuss-it-or-clicker-questions-by-course-or-assignment/{level}/{id}', 'AssignmentSyncQuestionController@checkForDiscussitOrClickerQuestionsByCourseOrAssignment');
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
     Route::delete('/assignments/{assignment}/questions/{question}/delete-custom-rubric', 'AssignmentSyncQuestionController@deleteCustomRubric');
     Route::patch('/assignments/{assignment}/questions/{question}/update-custom-rubric', 'AssignmentSyncQuestionController@updateCustomRubric');

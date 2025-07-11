@@ -38,7 +38,7 @@ class AssignmentSyncQuestionPolicy
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return Response
      */
-    public function checkForDiscussItQuestionsByCourseOrAssignment(User                   $user,
+    public function checkForDiscussitOrClickerQuestionsByCourseOrAssignment(User                   $user,
                                                                    AssignmentSyncQuestion $assignmentSyncQuestion): Response
     {
         return in_array($user->role, [2, 4, 5])

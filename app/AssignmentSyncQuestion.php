@@ -645,7 +645,8 @@ class AssignmentSyncQuestion extends Model
 
     public function importAssignmentQuestionsAndLearningTrees(int  $from_assignment_id,
                                                               int  $to_assignment_id,
-                                                              bool $reset_discuss_it_settings_to_default)
+                                                              bool $reset_discuss_it_settings_to_default,
+                                                              bool $reset_clicker_settings_to_default)
     {
 
         $assignment_questions = DB::table('assignment_question')
@@ -668,7 +669,15 @@ class AssignmentSyncQuestion extends Model
                 } else {
                     $assignment_question->discuss_it_settings = Helper::makeDiscussItSettingsBackwardsCompatible($assignment_question->discuss_it_settings);
                 }
-            }//add each question
+            }
+            $assignment_question->clicker_start = null;
+            $assignment_question->clicker_end = null;
+            if ($reset_clicker_settings_to_default) {
+                $assignment_question->custom_clicker_time_to_submit = null;
+                $assignment_question->release_solution_when_question_is_closed = 1;
+            }
+
+            //add each question
             $assignment_question_array = json_decode(json_encode($assignment_question), true);
             unset($assignment_question_array['id']);
             $new_assignment_question_id = DB::table('assignment_question')->insertGetId($assignment_question_array);

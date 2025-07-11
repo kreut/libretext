@@ -308,13 +308,13 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function checkForDiscussItQuestionsByCourseOrAssignment(string                 $level,
-                                                                   int                    $id,
-                                                                   AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public function checkForDiscussitOrClickerQuestionsByCourseOrAssignment(string                 $level,
+                                                                            int                    $id,
+                                                                            AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         try {
             $response['type'] = 'error';
-            $authorized = Gate::inspect('checkForDiscussItQuestionsByCourseOrAssignment', $assignmentSyncQuestion);
+            $authorized = Gate::inspect('checkForDiscussitOrClickerQuestionsByCourseOrAssignment', $assignmentSyncQuestion);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
@@ -327,6 +327,16 @@ class AssignmentSyncQuestionController extends Controller
                         ->where('courses.id', $id)
                         ->whereNotNull('assignment_question.discuss_it_settings')
                         ->exists();
+                    $clicker_questions_exist = DB::table('courses')
+                        ->join('assignments', 'courses.id', '=', 'assignments.course_id')
+                        ->join('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
+                        ->where('courses.id', $id)
+                        ->where(function ($query) {
+                            return $query
+                                ->whereNotNull('assignment_question.custom_clicker_time_to_submit')
+                                ->orWhere('assignment_question.custom_clicker_time_to_submit', 0);
+                        })
+                        ->exists();
                     break;
                 case('assignment'):
                     $discuss_it_questions_exist = DB::table('assignments')
@@ -334,11 +344,21 @@ class AssignmentSyncQuestionController extends Controller
                         ->where('assignments.id', $id)
                         ->whereNotNull('assignment_question.discuss_it_settings')
                         ->exists();
+                    $clicker_questions_exist = DB::table('assignments')
+                        ->join('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
+                        ->where('assignments.id', $id)
+                        ->where(function ($query) {
+                            return $query
+                                ->whereNotNull('assignment_question.custom_clicker_time_to_submit')
+                                ->orWhere('assignment_question.release_solution_when_question_is_closed', 0);
+                        })
+                        ->exists();
                     break;
                 default:
                     throw new Exception("$level is not a valid level.");
             }
             $response['discuss_it_questions_exist'] = $discuss_it_questions_exist;
+            $response['clicker_questions_exist'] = $clicker_questions_exist;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

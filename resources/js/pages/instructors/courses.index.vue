@@ -877,7 +877,7 @@ export default {
     },
     async checkForDiscussItQuestions (course, importType) {
       try {
-        const { data } = await axios.get(`/api/assignment-sync-question/check-for-discuss-it-questions-by-course-or-assignment/course/${course.id}`)
+        const { data } = await axios.get(`/api/assignment-sync-question/check-for-discuss-it-or-clicker-questions-by-course-or-assignment/course/${course.id}`)
         if (data.type === 'success') {
           if (data.discuss_it_questions_exist) {
             this.$bvModal.show('modal-discussion-questions-exist')
