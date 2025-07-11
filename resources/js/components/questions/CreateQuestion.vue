@@ -1492,7 +1492,7 @@
                 </div>
                 <div v-if="qtiQuestionType === 'highlight_text'">
                   <b-alert show variant="info">
-                    Write out a prompt, where text within brackets will automatically become your highlighted text. Once
+                    Write out a prompt, where text within square brackets will automatically become your highlighted text. Once
                     the
                     text is added, determine whether it is a correct answer or a distractor.
                   </b-alert>
