@@ -906,6 +906,7 @@
     <b-modal
       id="modal-submission-accepted"
       ref="modalSubmissionAccepted"
+      :title="modalSubmissionAcceptedTitle"
       :hide-footer="!learningTreeMessage"
       size="lg"
       :no-close-on-backdrop="true"
