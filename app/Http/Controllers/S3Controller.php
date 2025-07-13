@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Auth\Access\Response;
 
 class S3Controller extends Controller
 {
@@ -47,6 +48,11 @@ class S3Controller extends Controller
                     break;
                 case('discuss-it-comments'):
                     $authorized = Gate::inspect('discussItComments', [$preSignedURL, $assignment, $upload_file_type]);
+                    break;
+                case('structure'):
+                    $authorized = $request->user()->role === 2
+                        ? Response::allow()
+                        : Gate::inspect('structure', [$preSignedURL, $assignment]);
                     break;
                 default:
                     $authorized = Gate::inspect('preSignedURL', [$preSignedURL, $assignment, $upload_file_type]);
@@ -86,6 +92,8 @@ class S3Controller extends Controller
                 case('vtt'):
                     $dir = $questionMediaUpload->getDir();
                     break;
+                case('structure'):
+                    $dir = 'uploads/structures/' . $request->user()->id;
             }
             if (!$dir) {
                 throw new Exception("This is not a valid upload file type.");
@@ -117,6 +125,8 @@ class S3Controller extends Controller
                 case('discuss-it-comments'):
                     $response['discuss_it_comments_filename'] = $uploaded_filename;
                     break;
+                case('structure'):
+                    $response['structure_filename'] = $uploaded_filename;
                 default:
                     $response['submission'] = $uploaded_filename;
 

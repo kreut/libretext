@@ -10,12 +10,25 @@ class SketcherController extends Controller
     {
         switch ($type) {
             case('readonly'):
-                return view('sketcher_readonly');
+                $view = view('sketcher_readonly');
+                break;
             case('empty_sketcher'):
-                return view('empty_sketcher');
+                $view = view('empty_sketcher');
+                break;
             default:
-                return view('sketcher', ['configuration' => $type]);
+                $view = view('sketcher', ['configuration' => $type]);
+                break;
         }
+        return response($view)
+            ->header('X-Debug-CSP', 'yes')
+            ->header('Content-Security-Policy',
+                "default-src 'self'; " .
+                "script-src 'self' https://cdnjs.cloudflare.com https://molview.libretexts.org 'unsafe-inline'; " .
+                "style-src 'self' 'unsafe-inline'; " .
+                "frame-src 'self' https://molview.libretexts.org; " .
+                "connect-src 'self' https://cactus.nci.nih.gov; " .
+                "frame-ancestors *;"
+            );
 
     }
 }

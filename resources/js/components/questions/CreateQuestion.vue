@@ -1492,7 +1492,8 @@
                 </div>
                 <div v-if="qtiQuestionType === 'highlight_text'">
                   <b-alert show variant="info">
-                    Write out a prompt, where text within square brackets will automatically become your highlighted text. Once
+                    Write out a prompt, where text within square brackets will automatically become your highlighted
+                    text. Once
                     the
                     text is added, determine whether it is a correct answer or a distractor.
                   </b-alert>
@@ -1710,10 +1711,10 @@
                   </b-card>
                   <div v-if="qtiQuestionType === 'discuss_it'">
                     <div v-if="isEdit" class="pt-3">
-                    <b-alert variant="info" show>
-                      If there are student comments and you edit any of the associated media
-                      the comments will be deleted.
-                    </b-alert>
+                      <b-alert variant="info" show>
+                        If there are student comments and you edit any of the associated media
+                        the comments will be deleted.
+                      </b-alert>
                     </div>
                     <QuestionMediaUpload :key="`question-media-upload-key-${questionMediaUploadKey}`"
                                          :media-uploads="questionForm.media_uploads"
@@ -1746,6 +1747,41 @@
                     >
                       Only approve identical stereoisomers
                     </b-form-checkbox>
+                  </div>
+                  <div v-show="qtiQuestionType !== 'marker' || !qtiJson.solutionStructure">
+                    <b-form-group
+                      class="pt-2"
+                      label-cols-sm="1"
+                      label-cols-lg="1"
+                      label="SMILES"
+                      label-for="smiles"
+                    >
+                      <template v-slot:label>
+                        SMILES
+
+                        <QuestionCircleTooltip id="smiles-tooltip"/>
+                        <b-tooltip target="smiles-tooltip"
+                                   delay="250"
+                                   triggers="hover focus"
+                        >
+                          You can manually enter the smiles associated with the molecule.
+                        </b-tooltip>
+                      </template>
+                      <b-form-row>
+                        <b-form-input
+                          id="smiles"
+                          v-model="smiles"
+                          type="text"
+                          size="sm"
+                          style="width:80%"
+                          class="mr-2"
+                        />
+                        <b-button size="sm" @click="convertToMolecule">
+                          Convert to Molecule
+                        </b-button>
+                      </b-form-row>
+                    </b-form-group>
+                    <StructureImageUploader/>
                   </div>
                   <div v-if="qtiQuestionType === 'marker'" class="d-inline-flex">
                     <label class="mr-2">
@@ -2487,6 +2523,7 @@ import ConsultInsight from '../ConsultInsight.vue'
 import RubricProperties from '../RubricProperties.vue'
 import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import { canEdit, responseFormatOptions } from '~/helpers/Questions'
+import StructureImageUploader from '../StructureImageUploader.vue'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2639,6 +2676,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    StructureImageUploader,
     MultipleAnswersAdvanced,
     RubricProperties,
     ConsultInsight,
@@ -2705,6 +2743,7 @@ export default {
     }
   },
   data: () => ({
+    smiles: '',
     initSketcherReload: false,
     multipleAnswersAdvancedKey: 0,
     sketcherType: 'default',
@@ -3047,6 +3086,13 @@ export default {
   methods: {
     canEdit,
     updateModalToggleIndex,
+    convertToMolecule () {
+      const iframe = document.querySelector('iframe[src="/api/sketcher/default"]')
+      iframe.contentWindow.postMessage({
+        method: 'import',
+        smiles: this.smiles
+      }, '*')
+    },
     setAtomsAndBonds (atomsAndBonds) {
       this.questionForm.atoms_and_bonds = atomsAndBonds
     },
@@ -3104,7 +3150,7 @@ export default {
           select.value = 'qti'
           select.dispatchEvent(new Event('change'))
           window.setTimeout(() => {
-              document.querySelector('input[type="radio"][name="native-question-type"][value="sketcher"]').click()
+            document.querySelector('input[type="radio"][name="native-question-type"][value="sketcher"]').click()
             }
             , 250
           )

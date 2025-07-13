@@ -1,6 +1,24 @@
 <template>
   <div class="pb-3 pr-3 pl-3 pt-2">
     <b-modal
+      id="modal-confirm-structure"
+      title="Confirm Structure"
+      @hidden="confirmedStructure = true"
+    >
+      Before submitting, verify that the molecule in the sketcher accurately reflected the
+      molecule in the upload image or photo and if not use the sketcher to edit the molecule as needed.
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          variant="primary"
+          class="float-right"
+          @click="$bvModal.hide('modal-confirm-structure')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
       id="modal-submission-error"
       title="Submission Not Accepted"
       size="lg"
@@ -43,7 +61,7 @@
       />
       <div
         v-if="['submit_molecule',
-        'marker',
+               'marker',
                'matching',
                'true_false',
                'multiple_choice',
@@ -181,14 +199,21 @@
         :qti-json="JSON.parse(qtiJson)"
         :show-response-feedback="showResponseFeedback"
       />
-      <b-button v-if="showSubmit"
+      <b-button v-show="showSubmit"
                 variant="primary"
                 :disabled="!submitButtonActive"
                 size="sm"
-                @click="submitResponse()"
+                @click="handleSubmit()"
       >
         Submit
       </b-button>
+      <StructureImageUploader v-if="assignmentId && questionId && questionType === 'submit_molecule'"
+                              :assignment-id="assignmentId"
+                              :question-id="questionId"
+                              :submit-button-active="submitButtonActive"
+                              @setStructureS3Key="setStructureS3Key"
+                              @setImageSmiles="setImageSmiles"
+      />
       <b-button v-if="showResetResponse"
                 variant="info"
                 size="sm"
@@ -234,10 +259,12 @@ import MultipleChoiceTrueFalseViewer from './viewers/MultipleChoiceTrueFalseView
 import MatrixMultipleResponseViewer from './viewers/MatrixMultipleResponseViewer'
 import { formatQuestionMediaPlayer } from '~/helpers/Questions'
 import DiscussItViewer from './viewers/DiscussItViewer.vue'
+import StructureImageUploader from './StructureImageUploader.vue'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    StructureImageUploader,
     DiscussItViewer,
     SketcherViewer,
     MatrixMultipleResponseViewer,
@@ -308,6 +335,8 @@ export default {
 
   },
   data: () => ({
+      confirmedStructure: false,
+      structureS3Key: '',
       solutionStructure: '',
       response: '',
       receivedStructure: false,
@@ -349,7 +378,6 @@ export default {
         iframe.style.height = '600px'
         iframe.style.width = '100%'
       })
-
     })
 
     this.question = JSON.parse(this.qtiJson)
@@ -428,20 +456,33 @@ export default {
   },
   methods: {
     formatQuestionMediaPlayer,
+    setStructureS3Key (s3Key) {
+      this.structureS3Key = s3Key
+    },
+    setImageSmiles () {
+      const iframe = document.getElementById('sketcherViewer')
+      iframe.contentWindow.postMessage('export', '*')
+    },
     openContactGraderModal (type) {
       this.$emit('openContactGraderModal', type)
-    }
-    ,
+    },
     receiveMessage (event) {
+      console.error('a')
+      console.error(event.data)
+      if (event.data.image_smiles) {
+        this.imageSmiles = event.data.image_smiles
+      }
       if (event.data.structure) {
         this.response = {
           structure: event.data.structure
         }
+        if (event.data.submitted_smiles) {
+          this.response.submitted_smiles = event.data.submitted_smiles
+        }
         this.receivedStructure = true
         this.$forceUpdate()
       }
-    }
-    ,
+    },
     showRandomizedMessage () {
       if (this.presentationMode) {
         return false
@@ -457,15 +498,13 @@ export default {
         return JSON.parse(this.qtiJson).randomizeOrder !== 'no'
       }
       return false
-    }
-    ,
+    },
     shuffleArray (array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]]
       }
-    }
-    ,
+    },
     waitForStructure () {
       return new Promise((resolve) => {
         const intervalId = setInterval(() => {
@@ -477,13 +516,29 @@ export default {
           }
         }, 50)
       })
-    }
-    ,
+    },
     async handleGetStructure () {
       await this.waitForStructure()
       this.message = 'Structure received!'
-    }
-    ,
+    },
+    handleSubmit () {
+      if (!this.confirmedStructure && this.questionType === 'submit_molecule') {
+        this.checkIfUploadedWithoutEditing()
+      } else {
+        this.submitResponse()
+      }
+    },
+    async checkIfUploadedWithoutEditing () {
+      if (!this.structureS3Key || (this.response.submitted_smiles !== this.imageSmiles)) {
+        await this.submitResponse()
+      } else {
+        this.confirmedStructure = true
+        const iframe = document.getElementById('sketcherViewer')
+        iframe.contentWindow.postMessage('save', '*')
+        await this.handleGetStructure()
+        this.$bvModal.show('modal-confirm-structure')
+      }
+    },
     async submitResponse () {
       let response
       let invalidResponse = false
@@ -494,6 +549,14 @@ export default {
           const iframe = document.getElementById('sketcherViewer')
           iframe.contentWindow.postMessage('save', '*')
           await this.handleGetStructure()
+          if (this.structureS3Key) {
+            this.response.structure_s3_key = this.structureS3Key
+          }
+          if (this.imageSmiles) {
+            this.response.image_smiles = this.imageSmiles
+          }
+          this.imageSmiles = ''
+          this.structureS3Key = ''
           response = JSON.stringify(this.response)
           break
         case ('numerical'):
@@ -675,7 +738,7 @@ export default {
           : this.$bvModal.show('modal-submission-error')
         return false
       }
-      console.log(response)
+      console.error(response)
       this.$emit('submitResponse', { data: response, origin: 'qti' })
     }
 

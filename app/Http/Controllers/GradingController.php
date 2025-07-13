@@ -421,6 +421,9 @@ class GradingController extends Controller
             foreach ($seeds as $seed) {
                 $user_ids_with_seeds[] = $seed->user_id;
             }
+            $response['qti_answer_json'] = $question->qti_json && in_array($question->qti_json_type, ['submit_molecule', 'marker'])
+                    ? $question->formatQtiJson('answer_json', $question->qti_json, [], true)
+                    : '';
 
             if (!in_array($question->technology, ['text', 'h5p'])) {
                 foreach ($enrolled_users as $user) {

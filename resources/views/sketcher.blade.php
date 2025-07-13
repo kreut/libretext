@@ -34,7 +34,7 @@
           console.error(toolset)
           console.error('toolset above')
           // Use the config object as needed
-          const configName = div.dataset.config;
+          const configName = div.dataset.config
           if (configName !== 'default') {
             await sketcher.set_props({
               toolset: toolset
@@ -53,11 +53,33 @@
         }
 
       }
+      if (event.data.method === 'import') {
+        const sketcher = document.getElementById('sketcher')
+        await sketcher.import('smiles', event.data.smiles)
+
+      }
+      if (event.data === 'export') {
+        const sketcher = document.getElementById('sketcher')
+        await sketcher.save()
+        await new Promise(resolve => setTimeout(resolve, 200))
+        const smiles = await sketcher.export('smiles')
+        event.source.postMessage({
+          image_smiles: smiles
+        }, '*')
+      }
+      if (event.data === 'setMolecule') {
+        const sketcher = document.getElementById('sketcher')
+        await sketcher.set_props({
+          toolset: 'marker-only'
+        })
+      }
       if (event.data === 'save') {
         const sketcher = document.getElementById('sketcher')
         const structure = await sketcher.save()
+        const smiles = await sketcher.export('smiles')
         event.source.postMessage({
-          structure: structure
+          structure: structure,
+          submitted_smiles: smiles
         }, '*')
       }
     }
@@ -79,7 +101,8 @@
   @endphp
 
   <div data-toolset='@json((object) ($toolsetMap[$configuration] ?? []))'
-       data-config="{{ $configuration }}"></div>
+       data-config="{{ $configuration }}"
+  ></div>
   @php
     $sketcher_token = app()->environment('local') ? env('SKETCHER_TOKEN') : "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MzA4MzQxNjcsIm5hbWUiOiJMaWJyZVRleHRzIiwibGljZW5zZSI6eyJob3N0bmFtZXMiOlsibGlicmV0ZXh0cy5vcmciXSwiZmVhdHVyZXMiOlsic2tldGNoZXIiXX19.nVlAsWHy-E2bd4CRTFMafHSq9wmZdgbGeyI5R_PYK_UlN4Xw7_8Jf3ykM_JuCdyL8jwvHtjY08co_hJ6VCntPvi1VvWWyS-fbiBP9drRZPHH16cMci9HFQ8aZAtXZsRtqGTO-xUdPZ9GINRFWBHJ_RDpyPglS5UxnsI6-ZPlvgWC8OK_UMBu_cP3KH0U6UGyNePuBBsMCVkHpa115wMG2SG8OrUI32fnnPHcNqoBGQpRhD9gi1O92BfvRt2DlunfI9Gyqo7JTN-OeA743n-ds1gwYYzWQbQR9sf0w5yQ14wRkuWzE6Qpp6-FzqLbQxKDHv7OJpyAQD7dEZuyZwtZhQ";
   @endphp

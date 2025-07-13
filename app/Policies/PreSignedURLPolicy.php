@@ -36,7 +36,7 @@ class PreSignedURLPolicy
     {
         $authorized = in_array($question_id, $assignment->questions->pluck('id')->toArray())
             && $assignment->course->enrollments->contains('user_id', $user->id);
-        return  $authorized
+        return $authorized
             ? Response::allow()
             : Response::deny('You are not allowed to submit work for this question.');
 
@@ -111,6 +111,23 @@ class PreSignedURLPolicy
      * @param User $user
      * @param PreSignedURL $preSignedURL
      * @param Assignment $assignment
+     * @return Response
+     */
+    public function structure(User         $user,
+                              PreSignedURL $preSignedURL,
+                              Assignment   $assignment): Response
+    {
+        $has_access = $assignment->course->enrollments->contains('user_id', $user->id);
+        return $has_access
+            ? Response::allow()
+            : Response::deny("You are not allowed to upload a chemical structure for this question.");
+
+    }
+
+    /**
+     * @param User $user
+     * @param PreSignedURL $preSignedURL
+     * @param Assignment $assignment
      * @param string $upload_file_type
      * @return Response
      */
@@ -127,6 +144,10 @@ class PreSignedURLPolicy
                 break;
             case('submission'):
                 $has_access = $user->role === 3 && $assignment->course->enrollments->contains('user_id', $user->id);
+                break;
+            case('structure'):
+                $has_access = $assignment->course->user_id === $user->id
+                    || ($user->role === 3 && $assignment->course->enrollments->contains('user_id', $user->id));
         }
 
 

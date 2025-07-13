@@ -13,6 +13,13 @@
         frameborder="0"
         @load="loadStructure"
       />
+      <template #modal-footer>
+        <b-button size="sm" variant="primary"
+                  @click="$bvModal.hide('modal-single-marker-sketcher-viewer')"
+        >
+        OK
+        </b-button>
+      </template>
     </b-modal>
     <b-table
       aria-label="'Atoms and Bonds"

@@ -879,6 +879,10 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/can-give-up/assignments/{assignment}/questions/{question}/validate', 'CanGiveUpController@validateCanGiveUp');
 
+
+    Route::put('/math-pix/convert-to-smiles', 'MathPixController@convertToSmiles');
+    Route::patch('/math-pix/temporary-url', 'MathPixController@temporaryUrl');
+
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');
     Route::post('/submission-files/get-temporary-url-from-request', 'SubmissionFileController@getTemporaryUrlFromRequest');
     Route::post('/submission-files/download', 'SubmissionFileController@downloadSubmissionFile');
