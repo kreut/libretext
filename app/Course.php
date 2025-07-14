@@ -12,6 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 
 class Course extends Model
@@ -62,7 +63,25 @@ class Course extends Model
         DB::table('lti_launches')->whereIn('assignment_id', $assignment_ids)->delete();
         DB::table('assignments')->whereIn('id', $assignment_ids)
             ->update(['lms_resource_link_id' => null]);
+        $discussions = Discussion::whereIn('assignment_id', $assignment_ids)->get();
+        foreach ($discussions as $discussion) {
+            DB::table('discussion_groups')->where('assignment_id', $discussion->assignment_id)->delete();
 
+            $discussion_comments = DiscussionComment::where('discussion_id', $discussion->id)->get();
+            foreach ($discussion_comments as $discussion_comment) {
+                $file = $discussion_comment->file;
+                if ($file) {
+                    foreach ([$file, pathinfo($file, PATHINFO_FILENAME) . '.vtt'] as $filename) {
+                        $s3_key = "uploads/question-media/$filename";
+                        if (Storage::disk('s3')->exists($s3_key)) {
+                            Storage::disk('s3')->delete($s3_key);
+                        }
+                    }
+                }
+                $discussion_comment->delete();
+            }
+            $discussion->delete();
+        }
 
         $this->extensions()->delete();
         $this->extraCredits()->delete();
@@ -135,7 +154,8 @@ class Course extends Model
     /**
      * @return Collection
      */
-    public function betaCoursesInfo(): Collection
+    public
+    function betaCoursesInfo(): Collection
     {
         return DB::table('beta_courses')
             ->join('courses', 'beta_courses.id', '=', 'courses.id')
@@ -152,14 +172,16 @@ class Course extends Model
     /**
      * @return bool
      */
-    public function isBetaCourse(): bool
+    public
+    function isBetaCourse(): bool
     {
         return DB::table('beta_courses')->where('id', $this->id)->first() !== null;
 
     }
 
 
-    public function betaAssignmentIds(): array
+    public
+    function betaAssignmentIds(): array
     {
         $beta_assignment_ids = [];
         $beta_assignments = DB::table('assignments')
@@ -175,27 +197,32 @@ class Course extends Model
         return $beta_assignment_ids;
     }
 
-    public function school()
+    public
+    function school()
     {
         return $this->belongsTo('App\School');
     }
 
-    public function extraCredits()
+    public
+    function extraCredits()
     {
         return $this->hasMany('App\ExtraCredit');
     }
 
-    public function headGrader()
+    public
+    function headGrader()
     {
         return $this->hasOne('App\HeadGrader');
     }
 
-    public function sections()
+    public
+    function sections()
     {
         return $this->hasMany('App\Section');
     }
 
-    public function graderNotifications()
+    public
+    function graderNotifications()
     {
         return $this->hasOne('App\GraderNotification');
     }
@@ -206,8 +233,9 @@ class Course extends Model
      * @return array
      * @throws Exception
      */
-    public function import(User  $user,
-                           array $request): array
+    public
+    function import(User  $user,
+                    array $request): array
     {
         $request = (object)$request;
         $school = new School();
@@ -373,7 +401,8 @@ class Course extends Model
 
     }
 
-    public function getLtiRegistration()
+    public
+    function getLtiRegistration()
     {
         return DB::table('lti_schools')
             ->join('lti_registrations', 'lti_registrations.id', '=', 'lti_schools.lti_registration_id')
@@ -384,7 +413,8 @@ class Course extends Model
     /**
      * @return HasManyThrough
      */
-    public function scores()
+    public
+    function scores()
     {
         return $this->hasManyThrough('App\Score', 'App\Assignment');
     }
@@ -392,7 +422,8 @@ class Course extends Model
     /**
      * @throws Exception
      */
-    public function concludedCourses(string $operator_text, int $num_days): Collection
+    public
+    function concludedCourses(string $operator_text, int $num_days): Collection
     {
 
         $concluded_courses = DB::table('courses')
@@ -449,7 +480,8 @@ class Course extends Model
     /**
      * @return Collection
      */
-    public function assignmentGroups(): Collection
+    public
+    function assignmentGroups(): Collection
     {
         $default_assignment_groups = AssignmentGroup::where('user_id', 0)->select()->get();
         $course_assignment_groups = AssignmentGroup::where('user_id', Auth::user()->id)
@@ -461,7 +493,8 @@ class Course extends Model
 
     }
 
-    public function assignmentGroupWeights()
+    public
+    function assignmentGroupWeights()
     {
 
         $assignment_group_ids = DB::table('assignments')
@@ -485,7 +518,8 @@ class Course extends Model
     /**
      * @return Collection
      */
-    public function realStudentsWhoCanSubmit(): Collection
+    public
+    function realStudentsWhoCanSubmit(): Collection
     {
 
         return DB::table('enrollments')
@@ -497,7 +531,8 @@ class Course extends Model
     }
 
 
-    public function enrolledUsers()
+    public
+    function enrolledUsers()
     {
 
         return $this->hasManyThrough('App\User',
@@ -511,7 +546,8 @@ class Course extends Model
             ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
-    public function orderCourses(array $ordered_courses)
+    public
+    function orderCourses(array $ordered_courses)
     {
         foreach ($ordered_courses as $key => $course_id) {
             DB::table('courses')
@@ -523,7 +559,8 @@ class Course extends Model
     /**
      * @return array
      */
-    public function sectionEnrollmentsByUser()
+    public
+    function sectionEnrollmentsByUser()
     {
         $enrolled_user_ids = $this->enrolledUsers->pluck('id')->toArray();
         $enrollments = DB::table('enrollments')
@@ -542,7 +579,8 @@ class Course extends Model
         return $enrolled_users_by_section;
     }
 
-    public function enrolledUsersWithFakeStudent()
+    public
+    function enrolledUsersWithFakeStudent()
     {
 
         return $this->hasManyThrough('App\User',
@@ -554,7 +592,8 @@ class Course extends Model
             ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
-    public function extensions()
+    public
+    function extensions()
     {
         return $this->hasManyThrough('App\Extension',
             'App\Assignment',
@@ -564,7 +603,8 @@ class Course extends Model
             'id'); //local key in assignments table
     }
 
-    public function assignments()
+    public
+    function assignments()
     {
         return Auth::user() && Auth::user()->role === 3
             ? $this->hasMany('App\Assignment')
@@ -572,12 +612,14 @@ class Course extends Model
     }
 
 
-    public function enrollments()
+    public
+    function enrollments()
     {
         return $this->hasMany('App\Enrollment');
     }
 
-    public function fakeStudent()
+    public
+    function fakeStudent()
     {
         $fake_student_user_id = DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
             ->join('users', 'enrollments.user_id', '=', 'users.id')
@@ -589,7 +631,8 @@ class Course extends Model
         return User::find($fake_student_user_id);
     }
 
-    public function fakeStudentIds()
+    public
+    function fakeStudentIds()
     {
         return DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
             ->join('users', 'enrollments.user_id', '=', 'users.id')
@@ -602,12 +645,14 @@ class Course extends Model
     }
 
 
-    public function finalGrades()
+    public
+    function finalGrades()
     {
         return $this->hasOne('App\FinalGrade');
     }
 
-    public function graderSections($user = null)
+    public
+    function graderSections($user = null)
     {
         $user = ($user === null) ? Auth::user() : $user;
         return DB::table('graders')
@@ -625,7 +670,8 @@ class Course extends Model
      * @param int $user_id
      * @return array
      */
-    public function accessbileAssignmentsByGrader(int $user_id): array
+    public
+    function accessbileAssignmentsByGrader(int $user_id): array
     {
 
 
@@ -649,7 +695,8 @@ class Course extends Model
 
     }
 
-    public function contactGraderOverride()
+    public
+    function contactGraderOverride()
     {
         $contact_grader_override = DB::table('contact_grader_overrides')
             ->where('course_id', $this->id)
@@ -657,7 +704,8 @@ class Course extends Model
         return $contact_grader_override ? $contact_grader_override->user_id : null;
     }
 
-    public function graders()
+    public
+    function graders()
     {
 
         return DB::table('graders')
@@ -670,7 +718,8 @@ class Course extends Model
 
     }
 
-    public function graderInfo()
+    public
+    function graderInfo()
     {
 
         $grader_info = DB::table('graders')
@@ -707,7 +756,8 @@ class Course extends Model
      * @param Enrollment $enrollment
      * @return Enrollment
      */
-    public function enrollFakeStudent(int $course_id, int $section_id, Enrollment $enrollment): Enrollment
+    public
+    function enrollFakeStudent(int $course_id, int $section_id, Enrollment $enrollment): Enrollment
     {
         $fake_student = new User();
         $course = Course::find($course_id);
@@ -728,7 +778,8 @@ class Course extends Model
 
     }
 
-    public function isGrader()
+    public
+    function isGrader()
     {
         $graders = DB::table('graders')
             ->join('sections', 'graders.section_id', '=', 'sections.id')
@@ -740,7 +791,8 @@ class Course extends Model
         return (in_array(Auth::user()->id, $graders));
     }
 
-    public function assignTosByAssignmentAndUser()
+    public
+    function assignTosByAssignmentAndUser()
     {
         $assigned_assignments = DB::table('assignments')
             ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
@@ -755,7 +807,8 @@ class Course extends Model
         return $assigned_assignments_by_assignment_and_user_id;
     }
 
-    public function assignedToAssignmentsByUser()
+    public
+    function assignedToAssignmentsByUser()
     {
         $assigned_assignments = DB::table('assignments')
             ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
@@ -774,7 +827,8 @@ class Course extends Model
     /**
      * @return string
      */
-    public function bulkUploadAllowed(): string
+    public
+    function bulkUploadAllowed(): string
     {
         $beta_courses = DB::table('courses')
             ->join('beta_courses', 'courses.id', '=', 'beta_courses.alpha_course_id')

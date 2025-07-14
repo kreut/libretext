@@ -104,6 +104,11 @@ class Discussion extends Model
         $discussions_by_user_id = [];
         $htmlDom = new DOMDocument();
         foreach ($discussion_infos as $value) {
+            if (!isset($enrolled_student_time_zones_by_user_id[$value->discussion_user_id])) {
+                $missing_student = User::find($value->discussion_user_id);
+                $enrolled_student_time_zones_by_user_id[$value->discussion_user_id] = $missing_student->time_zone;
+                $enrolled_students_by_user_id[$value->discussion_user_id] = "Fake Student";
+            }
             $discussion_id = $value->discussion_id;
             if (!isset($discussions[$discussion_id])) {
                 $discussions[$discussion_id] = [
