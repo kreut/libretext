@@ -140,6 +140,7 @@ export default {
         }
         this.processingFile = false
         this.files = []
+        this.$emit('updateStructureImageUploaderKey')
       },
       importSmiles () {
         const iframe = document.querySelector('iframe[src="/api/sketcher/default"]')

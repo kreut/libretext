@@ -208,11 +208,13 @@
         Submit
       </b-button>
       <StructureImageUploader v-if="assignmentId && questionId && questionType === 'submit_molecule'"
+                              :key="`structure-image-uploader-key-${structureImageUploaderKey}`"
                               :assignment-id="assignmentId"
                               :question-id="questionId"
                               :submit-button-active="submitButtonActive"
                               @setStructureS3Key="setStructureS3Key"
                               @setImageSmiles="setImageSmiles"
+                              @updateStructureImageUploaderKey="updateStructureImageUploaderKey"
       />
       <b-button v-if="showResetResponse"
                 variant="info"
@@ -335,6 +337,7 @@ export default {
 
   },
   data: () => ({
+    structureImageUploaderKey: 0,
       confirmedStructure: false,
       structureS3Key: '',
       solutionStructure: '',
@@ -456,6 +459,9 @@ export default {
   },
   methods: {
     formatQuestionMediaPlayer,
+    updateStructureImageUploaderKey() {
+      this.structureImageUploaderKey++
+    },
     setStructureS3Key (s3Key) {
       this.structureS3Key = s3Key
     },
