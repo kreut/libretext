@@ -440,42 +440,6 @@
         </b-button>
       </template>
     </b-modal>
-
-    <b-modal
-      id="modal-auto-graded-redirect"
-      no-close-on-backdrop
-      :title="`Create ${getTextFromTechnology(questionForm.technology)} question`"
-      @hidden="newAutoGradedTechnology=null;$bvModal.hide('modal-auto-graded-redirect')"
-    >
-      <p>
-        In order to create an {{ getTextFromTechnology(questionForm.technology) }} question, we will need to re-direct
-        you to
-        {{ getTextFromTechnology(questionForm.technology) }}'s question editor. Please note that you must have
-        access to the editor.
-      </p>
-      <p>
-        Once the question is created, choose {{ getTextFromTechnology(questionForm.technology) }} from the "Existing"
-        auto-graded technology options to import it back into ADAPT.
-      </p>
-      <template #modal-footer>
-        <b-button
-          variant="secondary"
-          size="sm"
-          class="Cancel"
-          @click="newAutoGradedTechnology=null;$bvModal.hide('modal-auto-graded-redirect')"
-        >
-          Cancel
-        </b-button>
-        <b-button
-          variant="primary"
-          size="sm"
-          class="float-right"
-          @click="handleAutoGradedRedirect()"
-        >
-          Proceed
-        </b-button>
-      </template>
-    </b-modal>
     <b-modal
       id="modal-clone-history"
       size="lg"
@@ -1191,68 +1155,46 @@
                 label-cols-sm="4"
                 label-cols-lg="3"
                 label-for="technology"
-                label="Auto-Grade Tech Block"
               >
-                <b-form-group>
-                  <b-form-row class="pb-2 pt-2">
-                    <span class="mr-2">Existing
-                      <QuestionCircleTooltip id="existing-question-tooltip"/>
-                      <b-tooltip target="existing-question-tooltip"
-                                 delay="250"
-                                 triggers="hover focus"
-                      >
-                        If you've created a WebWork, H5P, or IMathAS question outside of ADAPT, then you can use the existing path (WebWork)
-                        or ID (H5P or IMathAS) to import that question into ADAPT so that it can be used within an ADAPT assignment.
-                      </b-tooltip>
-                    </span>
-                    <b-form-select
-                      v-model="existingQuestionFormTechnology"
-                      style="width:110px"
-                      title="technologies"
-                      size="sm"
-                      :options="existingAutoGradedTechnologyOptions"
-                      :aria-required="!isEdit"
-                      @change="initChangeExistingAutoGradedTechnology($event)"
-                    />
-                    <b-col>
-                      <ConsultInsight v-if="newAutoGradedTechnology === 'webwork'"
-                                      id="consult-insight-webwork"
-                                      :url="'https://commons.libretexts.org/insight/webwork-techniques'"
-                      />
-                    </b-col>
-                  </b-form-row>
 
-                  <b-form-row>
-                    <span style="margin-left:24px" class="mr-2">New  <QuestionCircleTooltip id="new-question-tooltip"/>
-                      <b-tooltip target="new-question-tooltip"
-                                 delay="250"
-                                 triggers="hover focus"
-                      >
-                        Create a question using one of ADAPT's native question types (multplie choice, true/false, numerical, etc.), use ADAPT's
-                        editor to create a new WebWork question, or ADAPT can re-direct you to H5P/IMathAS so that you can create new questions and
-                        then import them back into ADAPT.
-                      </b-tooltip></span>
-                    <b-form-select
-                      v-model="newAutoGradedTechnology"
-                      style="width:110px"
-                      title="auto-graded technologies"
-                      size="sm"
-                      :options="newAutoGradedTechnologyOptions"
-                      @change="openCreateAutoGradedTechnologyCode($event)"
-                    />
-                    <b-form-select
-                      v-if="webworkEditorShown"
-                      v-model="webworkTemplate"
-                      style="width:250px"
-                      title="webwork templates"
-                      size="sm"
-                      class="ml-3"
-                      :options="webworkTemplateOptions"
-                      @change="setWebworkTemplate($event)"
-                    />
-                  </b-form-row>
-                </b-form-group>
+                <template #label>
+                  Auto-Grade Tech Block
+                  <QuestionCircleTooltip id="new-question-tooltip"/>
+                  <b-tooltip target="new-question-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Create a question using one of ADAPT's native question types (multplie choice, true/false,
+                    numerical, etc.), use ADAPT's
+                    editor to create a new WebWork question, or ADAPT can re-direct you to H5P/IMathAS so that you
+                    can create new questions and
+                    then import them back into ADAPT.
+                  </b-tooltip>
+                </template>
+                <div class="d-flex flex-wrap align-items-center">
+                  <b-form-radio-group
+                    id="auto-grade-tech-block"
+                    v-model="newAutoGradedTechnology"
+                    name="question-type"
+                    class="mr-2"
+                    @input="openCreateAutoGradedTechnologyCode($event)"
+                  >
+                    <b-form-radio :value="null">None</b-form-radio>
+                    <b-form-radio value="qti">Native</b-form-radio>
+                    <b-form-radio value="h5p">H5P</b-form-radio>
+                    <b-form-radio value="imathas">IMathAS</b-form-radio>
+                    <b-form-radio value="webwork" class="ml-2">WeBWork</b-form-radio>
+                  </b-form-radio-group>
+
+                  <ConsultInsight
+                    v-if="newAutoGradedTechnology === 'webwork'"
+                    id="consult-insight-webwork"
+                    :url="'https://commons.libretexts.org/insight/webwork-techniques'"
+                    :formatting-class="''"
+                  />
+                </div>
               </b-form-group>
+
               <div v-if="questionForm.technology === 'qti'">
                 <b-form-group label="Native Question Type"
                               label-cols-sm="3"
@@ -2074,14 +2016,22 @@
                   </b-button>
                 </b-form-row>
               </b-form-group>
+              <div v-if="['imathas','h5p'].includes(questionForm.technology)">
+                <p>
+                  If you haven't already created the {{ getTextFromTechnology(questionForm.technology) }} question, you
+                  will need to visit
+                  {{ getTextFromTechnology(questionForm.technology) }}'s <a
+                  :href="questionForm.technology === 'h5p' ? h5pUrl : imathASUrl" target="_blank"
+                >question editor</a>. Please note that you must have
+                  access to the editor.
+                </p>
+              </div>
               <b-form-group
-                v-if="existingQuestionFormTechnology !== 'text'
-                  && !webworkEditorShown
-                  && questionForm.question_type === 'assessment'"
-                :label-cols-sm="existingQuestionFormTechnology === 'h5p' ? 2 : 3"
-                :label-cols-lg="existingQuestionFormTechnology === 'h5p' ? 1 : 2"
+                v-if="['imathas','h5p'].includes(questionForm.technology)"
+                :label-cols-sm="questionForm.technology === 'h5p' ? 2 : 3"
+                :label-cols-lg="questionForm.technology=== 'h5p' ? 1 : 2"
                 label-for="technology_id"
-                :label="existingQuestionFormTechnology === 'webwork' ? 'WeBWork Path' : `${getTextFromTechnology(questionForm.technology)} ID`"
+                :label="`${getTextFromTechnology(questionForm.technology)} ID`"
               >
                 <b-form-row>
                   <div>
@@ -2089,14 +2039,13 @@
                       id="technology_id"
                       v-model="questionForm.technology_id"
                       type="text"
-                      :style="existingQuestionFormTechnology === 'webwork' ? 'width:700px' : ''"
                       :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
                       @keydown="questionForm.errors.clear('technology_id')"
                     />
                     <has-error :form="questionForm" field="technology_id"/>
                   </div>
                   <div class="mt-1 ml-3">
-                    <b-button v-if="existingQuestionFormTechnology === 'h5p' && questionForm.technology_id" size="sm"
+                    <b-button v-if="questionForm.technology === 'h5p' && questionForm.technology_id" size="sm"
                               variant="outline-primary"
                               @click="viewInLibreStudio(questionForm.technology_id)"
                     >
@@ -2555,17 +2504,6 @@ const defaultQuestionForm = {
   source_url: ''
 }
 
-let newAutoGradedTechnologyOptions
-newAutoGradedTechnologyOptions = [{ value: null, text: 'None' }, { value: 'qti', text: 'Native' }]
-const h5pUrl = 'https://studio.libretexts.org/node/add/h5p'
-const imathASUrl = 'https://imathas.libretexts.org/imathas/course/moddataset.php'
-let commonTechnologyOptions = [{ value: h5pUrl, text: 'H5P' },
-  { value: 'webwork', text: 'WeBWork' },
-  { value: imathASUrl, text: 'IMathAS' }]
-
-for (let i = 1; i < commonTechnologyOptions.length; i++) {
-  newAutoGradedTechnologyOptions.push(commonTechnologyOptions[i])
-}
 const multipleResponseRichEditorConfig = {
   toolbar: [
     { name: 'math', items: ['Mathjax'] },
@@ -2744,6 +2682,8 @@ export default {
   },
   data: () => ({
     smiles: '',
+    h5pUrl: 'https://studio.libretexts.org/node/add/h5p',
+    imathASUrl: 'https://imathas.libretexts.org/imathas/course/moddataset.php',
     initSketcherReload: false,
     multipleAnswersAdvancedKey: 0,
     sketcherType: 'default',
@@ -2905,7 +2845,6 @@ export default {
     caretRightIcon: faCaretRight,
     newAutoGradedTechnology: null,
     createA11yAutoGradedTechnology: null,
-    newAutoGradedTechnologyOptions: newAutoGradedTechnologyOptions,
     savedQuestionsFolderKey: 0,
     questionToView: {},
     questionToViewKey: 0,
@@ -3150,7 +3089,7 @@ export default {
           select.value = 'qti'
           select.dispatchEvent(new Event('change'))
           window.setTimeout(() => {
-            document.querySelector('input[type="radio"][name="native-question-type"][value="sketcher"]').click()
+              document.querySelector('input[type="radio"][name="native-question-type"][value="sketcher"]').click()
             }
             , 250
           )
@@ -4746,15 +4685,13 @@ export default {
           this.questionForm.technology = 'qti'
           this.editorGroups.find(group => group.id === 'non_technology_text').expanded = false
           break
-        case (h5pUrl):
+        case ('h5p'):
           this.questionForm.technology = 'h5p'
           this.createAutoGradedRedirectTechnology = 'h5p'
-          this.$bvModal.show('modal-auto-graded-redirect')
           break
-        case (imathASUrl):
+        case ('imathas'):
           this.createAutoGradedRedirectTechnology = 'imathas'
           this.questionForm.technology = 'imathas'
-          this.$bvModal.show('modal-auto-graded-redirect')
           break
         case ('sketcher'):
           if (this.questionForm.non_technology_text) {
@@ -4771,22 +4708,6 @@ export default {
           alert(`${value} is not a valid option.`)
           break
       }
-    },
-    handleAutoGradedRedirect () {
-      let redirectUrl = ''
-      switch (this.createAutoGradedRedirectTechnology) {
-        case ('h5p'):
-          redirectUrl = h5pUrl
-          break
-        case ('imathas'):
-          redirectUrl = imathASUrl
-          break
-        default:
-          this.$noty.info(`${this.createAutoGradedRedirectTechnology} is not a valid technology for creating a new question.`)
-          return false
-      }
-      this.$bvModal.hide('modal-auto-graded-redirect')
-      window.open(redirectUrl, '_blank')
     },
     reloadCreateQuestionSavedQuestionsFolders (type) {
       this.savedQuestionsFolderKey++

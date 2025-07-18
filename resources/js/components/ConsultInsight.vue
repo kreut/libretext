@@ -1,9 +1,9 @@
 <template>
   <b-button
-            class="ml-auto mr-1"
-            size="sm"
-            variant="info"
-            @click="consultInsight"
+    :class="formattingClass"
+    size="sm"
+    variant="info"
+    @click="consultInsight"
   >Consult Insight
   </b-button>
 
@@ -16,6 +16,10 @@ export default {
     url: {
       type: String,
       default: ''
+    },
+    formattingClass: {
+      type: String,
+      default: 'ml-auto mr-1'
     }
   },
   methods: {
