@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div v-if="showFeedbackModal">
     <b-modal
       id="modal-multiple-answers-feedback"
       title="Feedback"
@@ -7,6 +8,7 @@
     >
       <span v-html="multipleAnswersFeedback"/>
     </b-modal>
+    </div>
     <b-form-checkbox-group
       v-model="selectedMultipleAnswers"
     >
@@ -56,7 +58,8 @@ export default {
   },
   data: () => ({
     selectedMultipleAnswers: [],
-    multipleAnswersFeedback: ''
+    multipleAnswersFeedback: '',
+    showFeedbackModal: false
   }),
   mounted () {
     if (this.qtiJson.studentResponse) {
@@ -67,6 +70,7 @@ export default {
   methods: {
     showFeedback (feedback) {
       this.multipleAnswersFeedback = feedback
+      this.showFeedbackModal = true
       this.$nextTick(() => {
         this.$bvModal.show('modal-multiple-answers-feedback')
       })
