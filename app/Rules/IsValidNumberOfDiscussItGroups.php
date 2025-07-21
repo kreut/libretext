@@ -4,6 +4,7 @@ namespace App\Rules;
 
 use App\Discussion;
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class IsValidNumberOfDiscussItGroups implements Rule
 {
@@ -46,12 +47,22 @@ class IsValidNumberOfDiscussItGroups implements Rule
             return false;
         }
 
+        $assignment_question = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment_id)
+            ->where('question_id', $this->question_id)
+            ->first();
+        if ($assignment_question && $assignment_question->discuss_it_settings) {
+            if (+json_decode($assignment_question->discuss_it_settings)->number_of_groups === +$value) {
+                return true;
+            }
+
+        }
         if (Discussion::where('assignment_id', $this->assignment_id)
                 ->where('question_id', $this->question_id)
-                ->where('group','<>', $value)
+                ->where('group', '<>', $value)
                 ->count() !== 0) {
             $this->message = 'If you would like to alter the number of groups, please first delete all discussions for this question.';
-       return false;
+            return false;
         }
         return true;
 
