@@ -11,8 +11,11 @@
              size="lg"
     >
       <p>
-        You are adding <span v-show="questionsToAdd.length>1">at least</span> one Discuss-it question. You can use the settings of the imported
-        questions or reset the settings to the default ADAPT settings. After adding the question<span v-show="questionsToAdd.length>1">s</span>, you can always
+        You are adding <span v-show="questionsToAdd.length>1">at least</span> one Discuss-it question. You can use the
+        settings of the imported
+        questions or reset the settings to the default ADAPT settings. After adding the question<span
+        v-show="questionsToAdd.length>1"
+      >s</span>, you can always
         manually adjust
         any settings.
       </p>
@@ -1007,7 +1010,7 @@
                             exam.
                           </b-tooltip>
                         </b-form-radio>
-                        <b-form-radio value="sketcher" @click="setFormattedQuestionType('sketcher')">
+                        <b-form-radio value="sketcher">
                           Sketcher
                         </b-form-radio>
                         <b-form-radio value="discuss_it" @click="setFormattedQuestionType('discuss_it')">
@@ -1025,7 +1028,7 @@
                                     v-model="allQuestionsTechnologyId"
                                     style="height:31px;width: 75px"
                       />
-                    <span v-if="allQuestionsTechnology === 'webwork'">
+                      <span v-if="allQuestionsTechnology === 'webwork'">
                       <b-form-radio-group
                         id="webwork-content-type"
                         v-model="webworkContentType"
@@ -1034,8 +1037,8 @@
                         class="pl-2 mt-1"
                       >
                           <span
-                                  style="font-size:14px;margin-right:11px;"
-                                  class="mt-2"
+                            style="font-size:14px;margin-right:11px;"
+                            class="mt-2"
                           >Technology ID</span>
                         <b-form-radio value="pgml">
                           pgml
@@ -1072,7 +1075,7 @@
                     </b-form>
                   </div>
                   <b-form-group
-                    v-show="['basic','nursing','all'].includes(qtiContentType)"
+                    v-show="['basic','nursing','all','sketcher'].includes(qtiContentType)"
                     label-for="adapt-id"
                     label-cols-sm="1"
                     label-align-sm="right"
@@ -1845,12 +1848,15 @@ export default {
       this.formattedQuestionTypesOptionsByTechnology = this.formattedQuestionTypesOptions
       if (this.allQuestionsTechnology !== 'any') {
         this.formattedQuestionTypesOptionsByTechnology = this.formattedQuestionTypesOptionsByTechnology.filter(item => item.technology === this.allQuestionsTechnology)
-        if (['basic', 'nursing'].includes(this.qtiContentType)) {
+        if (['basic', 'nursing', 'sketcher'].includes(this.qtiContentType)) {
           let options
           switch (this.qtiContentType) {
             case ('basic'):
               options = [
                 'Multiple Choice', 'True/False', 'Numerical', 'Multiple Answer', 'Fill-in-the-blank', 'Select Choice', 'Matching']
+              break
+            case ('sketcher'):
+              options = ['Submit Molecule', 'Marker']
               break
             case ('nursing'):
               options = this.nursingFormattedQuestionTypes()
@@ -2608,7 +2614,7 @@ export default {
           let questionType
           questionType = this.formattedQuestionType
           if (this.allQuestionsTechnology === 'qti') {
-            if (['discuss_it', 'sketcher'].includes(this.qtiContentType)) {
+            if (this.qtiContentType === 'discuss_it') {
               questionType = this.qtiContentType
             }
           }

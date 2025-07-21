@@ -1280,7 +1280,6 @@
                 </b-form-group>
                 <b-form-group>
                   <div v-if="nativeType === 'sketcher'">
-                    <span v-show="user.id === 5">
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="submit_molecule"
                                   @change="initQTIQuestionType($event)"
                     >
@@ -1291,7 +1290,6 @@
                     >
                       Marker
                     </b-form-radio>
-                      </span>
                   </div>
                   <div v-if="['all','basic'].includes(nativeType)">
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_choice"

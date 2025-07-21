@@ -3511,7 +3511,6 @@ class Question extends Model
      */
     public function saveFormat()
     {
-        return;
         $formatted_question_types = [];
         try {
             switch ($this->technology) {

@@ -313,6 +313,7 @@ class QuestionBankController extends Controller
                     ->toArray();
                 $question_ids = $question_ids->whereIn('questions.id', $question_ids_with_tags);
             }
+
             $nursing_formatted_question_types = ['Bow Tie',
                 'Highlight Table',
                 'Highlight Text',
@@ -325,7 +326,6 @@ class QuestionBankController extends Controller
                 $formatted_question_types = DB::table('formatted_question_types')
                     ->where('formatted_question_type', $formatted_question_type)
                     ->get();
-
                 if ($formatted_question_types->isNotEmpty()) {
                     $formatted_question_type_question_ids = $formatted_question_types->pluck('question_id')->toArray();
                     $question_ids = $question_ids->whereIn('id', $formatted_question_type_question_ids);
@@ -355,15 +355,10 @@ class QuestionBankController extends Controller
                     );
                     if (isset($nursing_formatted_question_types_with_values[$request->question_type])) {
                         $question_ids = $question_ids->where('qti_json_type', $nursing_formatted_question_types_with_values[$request->question_type]);
-
-                    } else if (in_array($request->question_type, ['sketcher', 'discuss_it'])) {
-                        switch ($request->question_type) {
-                            case('discuss_it'):
-                                $question_ids = $question_ids->where('qti_json_type', 'discuss_it');
-                                break;
-                            case('sketcher'):
-                                $question_ids = $question_ids->where('qti_json_type', 'submit_molecule');
-                        }
+                    } else if ($request->question_type === 'discuss_it') {
+                        $question_ids = $question_ids->where('qti_json_type', 'discuss_it');
+                    } else if (in_array($request->question_type, ['Marker', 'Submit Molecule'])) {
+                        $question_ids = $question_ids->where('qti_json_type', strtolower(str_replace(' ','_', $request->question_type)));
                     } else {
                         $basic_types = ['multiple_choice', 'true_false', 'numerical', 'multiple_answers', 'fill_in_the_blank', 'select_choice', 'matching'];
                         switch ($qti_question_type) {
@@ -468,7 +463,10 @@ class QuestionBankController extends Controller
             foreach ($questions_info as $key => $value) {
                 $questions[$key] = $value;
                 if ($questions[$key]->qti_json_type === 'submit_molecule') {
-                    $questions[$key]->question_type = 'Sketcher';
+                    $questions[$key]->question_type = 'Submit Molecule';
+                }
+                if ($questions[$key]->qti_json_type === 'marker') {
+                    $questions[$key]->question_type = 'Marker';
                 }
                 if ($questions[$key]->qti_json_type === 'discuss_it') {
                     $questions[$key]->question_type = 'Discuss-it';
