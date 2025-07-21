@@ -1185,13 +1185,16 @@
                     <b-form-radio value="imathas">IMathAS</b-form-radio>
                     <b-form-radio value="webwork" class="ml-2">WeBWork</b-form-radio>
                   </b-form-radio-group>
-
-                  <ConsultInsight
+                  <b-form-select
                     v-if="newAutoGradedTechnology === 'webwork'"
-                    id="consult-insight-webwork"
-                    :url="'https://commons.libretexts.org/insight/webwork-techniques'"
-                    :formatting-class="''"
+                    v-model="webworkTemplate"
+                    style="width:250px"
+                    title="webwork templates"
+                    size="sm"
+                    :options="webworkTemplateOptions"
+                    @change="setWebworkTemplate($event)"
                   />
+
                 </div>
               </b-form-group>
 
@@ -2053,7 +2056,11 @@
               </b-form-group>
               <div v-show="webworkEditorShown">
                 <div class="mb-2">
-                  If you need help getting started, please visit <a href="https://webwork.maa.org/wiki/Authors"
+                  If you need help getting started, please visit <ConsultInsight
+                  id="consult-insight-webwork"
+                  :url="'https://commons.libretexts.org/insight/webwork-techniques'"
+                  :formatting-class="''"
+                /> or visit <a href="https://webwork.maa.org/wiki/Authors"
                                                                     target="_blank"
                 >https://webwork.maa.org/wiki/Authors</a>.
                 </div>
