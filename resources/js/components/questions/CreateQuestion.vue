@@ -1171,7 +1171,7 @@
                     then import them back into ADAPT.
                   </b-tooltip>
                 </template>
-                <div class="d-flex flex-wrap align-items-center">
+                <div class="d-flex flex-wrap align-items-center mt-1">
                   <b-form-radio-group
                     id="auto-grade-tech-block"
                     v-model="newAutoGradedTechnology"
@@ -1725,6 +1725,35 @@
                     </b-form-group>
                     <StructureImageUploader/>
                   </div>
+                  <div id="to-sketcher-component" @click="handleSketcherClick">
+                  </div>
+                  <div class="mb-2" v-show="qtiQuestionType ==='marker'">
+                    <div v-if="!qtiJson.solutionStructure">
+                      <b-button
+                        variant="primary"
+                        size="sm"
+                        @click="setMolecule"
+                      >
+                        Set Molecule
+                      </b-button>
+                    </div>
+                    <div v-else>
+                      <b-button
+                        variant="info"
+                        size="sm"
+                        @click="updateMarks"
+                      >
+                        Update Marks
+                      </b-button>
+                      <b-button
+                        variant="danger"
+                        size="sm"
+                        @click="initUpdateStructure"
+                      >
+                        Update Structure
+                      </b-button>
+                    </div>
+                  </div>
                   <div v-if="qtiQuestionType === 'marker'" class="d-inline-flex">
                     <label class="mr-2">
                       Scoring
@@ -1762,36 +1791,6 @@
                       </b-tooltip>
                     </b-form-checkbox>
                     <div/>
-                  </div>
-                  <div id="to-sketcher-component" @click="handleSketcherClick">
-                    <!-- Sketcher will be appended here -->
-                  </div>
-                  <div class="mb-2" v-show="qtiQuestionType ==='marker'">
-                    <div v-if="!qtiJson.solutionStructure">
-                      <b-button
-                        variant="primary"
-                        size="sm"
-                        @click="setMolecule"
-                      >
-                        Set Molecule
-                      </b-button>
-                    </div>
-                    <div v-else>
-                      <b-button
-                        variant="info"
-                        size="sm"
-                        @click="updateMarks"
-                      >
-                        Update Marks
-                      </b-button>
-                      <b-button
-                        variant="danger"
-                        size="sm"
-                        @click="initUpdateStructure"
-                      >
-                        Update Structure
-                      </b-button>
-                    </div>
                   </div>
                   <MultipleAnswersAdvanced
                     v-if="qtiQuestionType === 'marker' && qtiJson.solutionStructure.atoms && qtiJson.solutionStructure.bonds"
