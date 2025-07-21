@@ -2049,6 +2049,7 @@ class CourseController extends Controller
                 'assignment_level_overrides',
                 'learning_tree_time_lefts',
                 'learning_tree_successful_branches',
+                'learning_tree_resets',
                 'learning_tree_node_seeds',
                 'lti_launches',
                 'lti_grade_passbacks',
