@@ -48,7 +48,7 @@
         {{ discussionCommentSubmissionResults }}
         {{ completionRequirements }}
       </div>
-      <table v-if="+discussItSettingsForm.completion_criteria" class="table table-striped">
+      <table  v-if="+discussItSettingsForm.completion_criteria" class="table table-striped table-responsive">
         <thead>
         <tr>
           <th scope="col">
