@@ -2137,6 +2137,11 @@ What assignment parameters??? */
             if (collection === 'all_public_courses' && course.instructor === 'Commons Instructor') {
               continue
             }
+            if (['all_public_courses', 'my_courses'].includes(collection)) {
+              if (course.term) {
+                text += ` (${course.term})`
+              }
+            }
             if (collection === 'all_public_courses') {
               text += ` --- ${course.instructor}`
               if (course.school !== 'Not Specified') {
