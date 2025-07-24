@@ -25,7 +25,7 @@ class CaseStudyNotePolicy
     public function getUnsavedChanges(User $user, CaseStudyNote $caseStudyNote, Assignment $assignment): Response
     {
 
-        return $user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the unsaved changes.');
     }
@@ -42,7 +42,7 @@ class CaseStudyNotePolicy
 
     public function resetAssignmentNotes(User $user, CaseStudyNote $caseStudyNote, Assignment $assignment): Response
     {
-        return $user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to reset these Case Study Notes.');
 
@@ -50,7 +50,7 @@ class CaseStudyNotePolicy
 
     public function update(User $user, CaseStudyNote $caseStudyNote, Assignment $assignment): Response
     {
-        return $user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update these Case Study Notes.');
 
@@ -65,7 +65,7 @@ class CaseStudyNotePolicy
      */
     public function show(User $user, CaseStudyNote $caseStudyNote, Assignment $assignment): Response
     {
-        return $user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve these Case Study Notes.');
 
@@ -79,7 +79,7 @@ class CaseStudyNotePolicy
      */
     public function saveAll(User $user, CaseStudyNote $caseStudyNote, Assignment $assignment): Response
     {
-        return $user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to save all of the Case Study Notes.');
 

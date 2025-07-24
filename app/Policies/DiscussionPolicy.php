@@ -29,7 +29,7 @@ class DiscussionPolicy
                 $has_access = $assignment->course->enrollments->contains('user_id', $user->id);
                 break;
             case(2):
-                $has_access = $assignment->course->user_id === $user->id;
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             default:
                 $has_access = false;
@@ -59,7 +59,7 @@ class DiscussionPolicy
                 }
                 break;
             case(2):
-                $has_access = $assignment->course->user_id === $user->id;
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             default:
                 $has_access = false;

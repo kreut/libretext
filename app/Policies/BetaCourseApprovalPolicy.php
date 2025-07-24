@@ -14,7 +14,7 @@ class BetaCourseApprovalPolicy
 
     public function getByCourse(User $user, BetaCourseApproval $betaCourseApproval, Course $course){
 
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the pending approvals.');
 

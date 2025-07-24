@@ -16,7 +16,7 @@ class PatientInformationPolicy
     public function destroy(User $user, PatientInformation $patientInformation, Assignment $assignment): Response
     {
 
-        return ($assignment->course->user_id === $user->id)
+        return ($assignment->course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to delete the Patient Information.');
 
@@ -32,7 +32,7 @@ class PatientInformationPolicy
     public function updateShowPatientUpdatedInformation(User $user, PatientInformation $patientInformation, Assignment $assignment): Response
     {
 
-        return ($assignment->course->user_id === $user->id)
+        return ($assignment->course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to update whether to show the updated Patient Information.');
 
@@ -46,7 +46,7 @@ class PatientInformationPolicy
     public function update(User $user, PatientInformation $patientInformation, Assignment $assignment): Response
     {
 
-        return ($assignment->course->user_id === $user->id)
+        return ($assignment->course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to update this patient information.');
 
@@ -55,7 +55,7 @@ class PatientInformationPolicy
     public function show(User $user, PatientInformation $patientInformation, Assignment $assignment): Response
     {
 
-        return ($assignment->course->user_id === $user->id)
+        return ($assignment->course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to view this patient information.');
 

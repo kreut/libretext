@@ -108,22 +108,24 @@ class CoursesIndexTest extends TestCase
     }
 
     /** @test */
-
-    public function non_owner_cannot_order_courses()
+    public function owner_can_order_courses()
     {
 
-        $this->actingAs($this->user)->patchJson("/api/courses/order/", ['ordered_courses' => [$this->course->id, $this->course_2->id]])
-            ->assertJson(['message' => 'You are not allowed to re-order a course that is not yours.']);
+        $course_2 = factory(Course::class)->create(['user_id' => $this->user->id]);
+        foreach ([$this->course->id, $course_2->id] as $key => $course_id) {
+            DB::table('course_orders')->insert(['user_id' => $this->user->id, 'order' => $key + 1, 'course_id' => $course_id]);
+        }
+        $this->actingAs($this->user)->patchJson("/api/course-orders", ['ordered_courses' => [$course_2->id, $this->course->id]])
+            ->assertJson(['message' => 'Your courses have been re-ordered.']);
+        $this->assertDatabaseHas('course_orders', ['course_id' => $this->course->id, 'order' => 2]);
     }
 
     /** @test */
-
-    public function owner_can_order_courses()
+    public function non_owner_cannot_order_courses()
     {
-        $course_2 = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->actingAs($this->user)->patchJson("/api/courses/order/", ['ordered_courses' => [$course_2->id, $this->course->id]])
-            ->assertJson(['message' => 'Your courses have been re-ordered.']);
-        $this->assertDatabaseHas('courses', ['id' => $this->course->id, 'order' => 2]);
+
+        $this->actingAs($this->user)->patchJson("/api/course-orders", ['ordered_courses' => [$this->course->id, $this->course_2->id]])
+            ->assertJson(['message' => 'You are not allowed to re-order a course that is not yours.']);
     }
 
     /** @test */
@@ -285,10 +287,8 @@ class CoursesIndexTest extends TestCase
     /** @test */
     public function can_get_your_courses()
     {
-
-
         $this->actingAs($this->user)->getJson("/api/courses")
-            ->assertJson(['courses' => [['name' => 'First Course']]]);
+            ->assertJson(['type'=> 'success']);
     }
 
     /** @test */

@@ -14,7 +14,7 @@
              size="lg"
     >
       <p>
-          There are questions in this course which are customized at the assignment level.</p>
+        There are questions in this course which are customized at the assignment level.</p>
       <p>You can use the settings of the imported
         questions or reset the settings to the default ADAPT settings. After you import the course, you can always
         manually adjust
@@ -533,6 +533,17 @@
                   This course is an Alpha course. Adding/removing assignments or assessments from this
                   course will be directly reflected in the associated Beta courses.
                 </b-tooltip>
+                <span v-if="course.is_co_instructor">
+                <b-tooltip :target="getTooltipTarget('coInstructor',course.id)"
+                           delay="500"
+                >
+                 You are a co-instructor in this course. The main instructor is {{ course.main_instructor_name }}.
+                </b-tooltip>
+                <font-awesome-icon :icon="coInstructorIcon"
+                                   :id="getTooltipTarget('coInstructor',course.id)"
+                                   class="text-muted"
+                />
+                  </span>
                 <span v-show="parseInt(course.is_beta_course) === 1"
                       :id="getTooltipTarget('betaCourse',course.id)"
                       class="text-muted"
@@ -675,6 +686,7 @@ import ImportAsBetaText from '~/components/ImportAsBetaText'
 import AllFormErrors from '~/components/AllFormErrors'
 import draggable from 'vuedraggable'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { faUsers } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { isMobile } from '~/helpers/mobileCheck'
 import ImportingCourseModal from '~/components/ImportingCourseModal.vue'
@@ -699,6 +711,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    coInstructorIcon: faUsers,
     discussItQuestionsExist: false,
     clickerQuestionsExist: false,
     importType: '',
@@ -984,7 +997,7 @@ export default {
         return false
       }
       try {
-        const { data } = await axios.patch(`/api/courses/order`, { ordered_courses: orderedCourses })
+        const { data } = await axios.patch(`/api/course-orders`, { ordered_courses: orderedCourses })
         this.$noty[data.type](data.message)
 
         if (data.type === 'success') {

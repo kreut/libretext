@@ -46,7 +46,7 @@ class EnrollmentPolicy
         $enrolled_users_ids = $course->enrolledUsers->pluck('id')->toArray();
         $enrolled_in_course = in_array($student_user->id, $enrolled_users_ids);
 
-        return ($enrolled_in_course && (int) $course->user_id === $user->id)
+        return ($enrolled_in_course &&  $course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to update a11y for this student.');
 
@@ -57,7 +57,7 @@ class EnrollmentPolicy
         $enrolled_users_ids = $course->enrolledUsers->pluck('id')->toArray();
         $enrolled_in_course = in_array($student_user->id, $enrolled_users_ids);
 
-        return ($enrolled_in_course && (int) $course->user_id === $user->id)
+        return ($enrolled_in_course &&  $course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to move this student.');
 
@@ -78,7 +78,7 @@ class EnrollmentPolicy
 
     public function enrollmentsFromAssignment(User $user, Enrollment $enrollment, Assignment $assignment)
     {
-        return ((int) $assignment->course->user_id === $user->id || $assignment->course->isGrader())
+        return ($assignment->course->ownsCourseOrIsCoInstructor($user->id) || $assignment->course->isGrader())
             ? Response::allow()
             : Response::deny('You are not allowed to get the enrollments for the course from this assignment.');
 
@@ -88,7 +88,7 @@ class EnrollmentPolicy
 
     public function details(User $user, Enrollment $enrollment, Course $course)
     {
-        return ((int) $course->user_id === $user->id)
+        return ( $course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to view these enrollment details.');
 

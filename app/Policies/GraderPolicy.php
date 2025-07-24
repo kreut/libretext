@@ -19,7 +19,7 @@ class GraderPolicy
 
     public function update(User $user, Grader $Grader, Course $course)
     {
-        return (int) $course->user_id === (int) $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to update the grader's sections.");
     }
@@ -35,7 +35,7 @@ class GraderPolicy
 
     public function getGraders(User $user, Grader $Grader, Course $course)
     {
-        return $this->ownsCourseByUser($course, $user)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the graders.');
     }
@@ -45,7 +45,7 @@ class GraderPolicy
         $is_grader = DB::table('graders')
                     ->where('course_id', $course->id)
                     ->where('user_id', $student_user->id);
-        return ($this->ownsCourseByUser($course, $user) && $is_grader)
+        return ($course->ownsCourseOrIsCoInstructor($user->id) && $is_grader)
             ? Response::allow()
             : Response::deny('You are not allowed to remove this grader.');
     }

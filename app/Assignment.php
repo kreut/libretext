@@ -374,7 +374,7 @@ class Assignment extends Model
                 $grader_access = true;
             }
         }
-        return $grader_access || $this->course->user_id === $user->id;
+        return $grader_access || $this->course->ownsCourseOrIsCoInstructor($user->id);
     }
 
 
@@ -632,7 +632,7 @@ class Assignment extends Model
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['lms'] = $course->lms;
-                $assignments_info[$key]['lms_only_entry'] =  $course->lms_only_entry;
+                $assignments_info[$key]['lms_only_entry'] = $course->lms_only_entry;
                 $assignments_info[$key]['lti_assignments_and_grades_url'] = $lti_assignments_and_grades_url_by_assignment_id[$assignment->id] ?? null;
                 $assignments_info[$key]['auto_release_show_dates'] = $auto_release_show_dates_by_assignment_id[$assignment->id] ?? null;
                 $assignments_info[$key]['lms_api'] = (bool)$course->lms_course_id;
@@ -803,7 +803,6 @@ class Assignment extends Model
                     $h->report($e);
                 }
             }
-
             $response['assignments'] = array_values($assignments_info);//fix the unset
             $response['unlinked_assignments'] = $unlinked_assignments;
             $response['type'] = 'success';

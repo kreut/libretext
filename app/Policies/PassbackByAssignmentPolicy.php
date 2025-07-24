@@ -21,7 +21,7 @@ class PassbackByAssignmentPolicy
     public function store(User       $user, PassbackByAssignment $passbackByAssignment,
                           Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to passback the grades by assignment.');
 

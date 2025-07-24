@@ -75,7 +75,7 @@ class PreSignedURLPolicy
     public function discussItComments(User $user, PreSignedURL $preSignedURL, Assignment $assignment)
     {
         $has_access = ($user->role === 3 && $assignment->course->enrollments->contains('user_id', $user->id))
-            || ($user->role === 2 && $assignment->course->user_id === $user->id);
+            || ($user->role === 2 && $assignment->course->ownsCourseOrIsCoInstructor($user->id));
 
         return $has_access
             ? Response::allow()
@@ -146,7 +146,7 @@ class PreSignedURLPolicy
                 $has_access = $user->role === 3 && $assignment->course->enrollments->contains('user_id', $user->id);
                 break;
             case('structure'):
-                $has_access = $assignment->course->user_id === $user->id
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id)
                     || ($user->role === 3 && $assignment->course->enrollments->contains('user_id', $user->id));
         }
 

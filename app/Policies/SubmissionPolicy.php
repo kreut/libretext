@@ -28,7 +28,7 @@ class SubmissionPolicy
     {
 
         $question_ids = $assignment->questions->pluck('id')->toArray();
-        return $assignment->course->user_id === $user->id && in_array($question_id, $question_ids)
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id) && in_array($question_id, $question_ids)
             ? Response::allow()
             : Response::deny("You are not allowed to delete the submissions for this question.");
 
@@ -42,7 +42,7 @@ class SubmissionPolicy
      */
     public function getSubmissionTimesByAssignmentAndStudent(User $user, Submission $submission, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to get the submission times by assignment and student.");
 
@@ -69,7 +69,7 @@ class SubmissionPolicy
     public function submissionArray(User $user, Submission $submission, Assignment $assignment): Response
     {
 
-        return $assignment->course->enrollments->contains('user_id', $user->id) || $user->id === $assignment->course->user_id
+        return $assignment->course->enrollments->contains('user_id', $user->id) || $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to access that submission array.");
 
@@ -268,7 +268,7 @@ class SubmissionPolicy
         switch ($user->role) {
             case(2):
                 $has_access = $question_in_assignment
-                    && ($assignment->course->user_id === (int)$user->id
+                    && ($assignment->course->ownsCourseOrIsCoInstructor($user->id)
                         || $assignment->course->public);
                 break;
             case(3):

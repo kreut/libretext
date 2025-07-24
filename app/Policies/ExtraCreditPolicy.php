@@ -13,7 +13,7 @@ class ExtraCreditPolicy
     use HandlesAuthorization;
 
     public function canAccessExtraCredit(Course $course, User $user,int  $student_user_id){
-        $owner_of_course = (int) $course->user_id === (int) $user->id;
+        $owner_of_course = $course->ownsCourseOrIsCoInstructor($user->id);
         $student_in_course = $course->enrollments->contains('user_id', $student_user_id);
         return  $owner_of_course && $student_in_course;
     }

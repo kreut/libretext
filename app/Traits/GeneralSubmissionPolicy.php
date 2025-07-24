@@ -31,7 +31,7 @@ trait GeneralSubmissionPolicy
          * return $response;
          * }**/
 
-        if ($assignment->course->user_id === $user->id
+        if ($assignment->course->ownsCourseOrIsCoInstructor($user->id)
             || $user->role === 5
             || $assignment->formative
             || $assignment->course->formative

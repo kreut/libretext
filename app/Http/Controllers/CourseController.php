@@ -13,7 +13,10 @@ use App\AutoRelease;
 use App\BetaAssignment;
 use App\BetaCourse;
 use App\BetaCourseApproval;
+use App\CoInstructor;
+use App\ContactGraderOverride;
 use App\Course;
+use App\CourseOrder;
 use App\Custom\LTIDatabase;
 use App\Discussion;
 use App\DiscussionComment;
@@ -64,6 +67,68 @@ class CourseController extends Controller
 {
 
     use DateFormatter;
+
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @param User $user
+     * @param CoInstructor $coInstructor
+     * @param CourseOrder $courseOrder
+     * @param ContactGraderOverride $contactGraderOverride
+     * @return array
+     * @throws Exception
+     */
+    public function changeMainInstructor(Request               $request,
+                                         Course                $course,
+                                         User                  $user,
+                                         CoInstructor          $coInstructor,
+                                         CourseOrder           $courseOrder,
+                                         ContactGraderOverride $contactGraderOverride): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('changeMainInstructor', $course);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            DB::beginTransaction();
+            $course->user_id = $user->id;
+            $course->save();
+            $coInstructor->where('user_id', $user->id)
+                ->where('course_id', $course->id)
+                ->delete();
+            switch ($request->role_after_transfer) {
+                case('become a co-instructor'):
+                    $coInstructor = new CoInstructor();
+                    $coInstructor->user_id = $request->user()->id;
+                    $coInstructor->course_id = $course->id;
+                    $coInstructor->status = 'accepted';
+                    $coInstructor->save();
+                    break;
+                case('leave the course'):
+                    $courseOrder->where('user_id', $request->user()->id)
+                        ->where('course_id', $course->id)
+                        ->delete();
+                    if ($contactGraderOverride->where('user_id', $request->user()->id)
+                        ->where('course_id', $course->id)->exists()) {
+                        $contactGraderOverride->where('user_id', $user->id)
+                            ->where('course_id', $course->id)
+                            ->update(['user_id' => $user->id]);
+                    }
+            }
+
+            DB::commit();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error changing the main instructor.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
      *
@@ -631,35 +696,6 @@ class CourseController extends Controller
         return $response;
     }
 
-    public
-    function order(Request $request, Course $course)
-    {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('order', [$course, $request->ordered_courses]);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-
-        try {
-            DB::beginTransaction();
-            $course->orderCourses($request->ordered_courses);
-            DB::commit();
-            $response['message'] = 'Your courses have been re-ordered.';
-            $response['type'] = 'success';
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error re-ordering your courses.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
-
-    }
-
     /**
      * @param Course $course
      * @return array
@@ -1212,16 +1248,28 @@ class CourseController extends Controller
         try {
             $results = DB::table('courses')
                 ->join('assignments', 'courses.id', '=', 'assignments.course_id')
-                ->where('courses.user_id', $request->user()->id)
-                ->select(DB::raw('courses.id AS course_id'),
+                ->where(function ($query) use ($request) {
+                    $query->where('courses.user_id', $request->user()->id)
+                        ->orWhereExists(function ($subquery) use ($request) {
+                            $subquery->select(DB::raw(1))
+                                ->from('co_instructors')
+                                ->whereColumn('co_instructors.course_id', 'courses.id')
+                                ->where('co_instructors.user_id', $request->user()->id)
+                                ->where('co_instructors.status', 'accepted');
+                        });
+                })
+                ->select(
+                    DB::raw('courses.id AS course_id'),
                     DB::raw('courses.name AS course_name'),
                     'courses.lms',
                     'assignments.lms_resource_link_id',
                     'assignments.assessment_type',
                     DB::raw('assignments.id AS assignment_id'),
-                    DB::raw('assignments.name AS assignment_name'))
+                    DB::raw('assignments.name AS assignment_name')
+                )
                 ->orderBy('courses.start_date', 'desc')
                 ->get();
+
             $course_ids = [];
             foreach ($results as $value) {
                 $course_id = $value->course_id;
@@ -1620,6 +1668,7 @@ class CourseController extends Controller
                     ->where('user_id', request()->user()->id)
                     ->where('school_id', $course->school_id)
                     ->first();
+
                 $course->lms_has_access_token = $course->lms_has_access_token !== null;
                 $lti_registration = $school->LTIRegistration();
                 $course->is_brightspace = $lti_registration && strpos($lti_registration->iss, 'brightspace') !== false;
@@ -1669,6 +1718,7 @@ class CourseController extends Controller
                 'school' => $course->school->name,
                 'discipline' => $course->discipline_id,
                 'name' => $course->name,
+                'co_instructors' => $course->coInstructors(),
                 'is_brightspace' => $course->is_brightspace,
                 'is_canvas' => $course->is_canvas,
                 'public_description' => $course->public_description,
@@ -1787,6 +1837,7 @@ class CourseController extends Controller
      * @param FinalGrade $finalGrade
      * @param Section $section
      * @param School $school
+     * @param CourseOrder $courseOrder
      * @return array
      * @throws Exception
      */
@@ -1797,7 +1848,8 @@ class CourseController extends Controller
                    Enrollment  $enrollment,
                    FinalGrade  $finalGrade,
                    Section     $section,
-                   School      $school): array
+                   School      $school,
+                   CourseOrder $courseOrder): array
     {
         //todo: check the validation rules
         $response['type'] = 'error';
@@ -1857,7 +1909,11 @@ class CourseController extends Controller
                 $data['discipline_id'] = $request->discipline;
             }
             $new_course = $course->create($data);
-
+            $courseOrder = new CourseOrder();
+            $courseOrder->course_id = $new_course->id;
+            $courseOrder->user_id = $request->user()->id;
+            $courseOrder->order = 0;
+            $courseOrder->save();
             $section->course_id = $new_course->id;
             $section->save();
             if ($is_instructor && !$formative) {
@@ -1872,7 +1928,7 @@ class CourseController extends Controller
             $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);
             $finalGrade->setDefaultLetterGrades($new_course->id);
 
-            $course->reOrderAllCourses(Auth::user());
+            $courseOrder->reOrderAllCourses(Auth::user());
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$request->name</strong> has been created.";
@@ -2092,6 +2148,12 @@ class CourseController extends Controller
                 DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);//queue this?
                 $discussion->deleteByAssignment($assignment);
             }
+            DB::table('co_instructors')
+                ->where('course_id', $course->id)
+                ->delete();
+            DB::table('course_orders')
+                ->where('course_id', $course->id)
+                ->delete();
             DB::table('pending_course_invitations')
                 ->where('course_id', $course->id)
                 ->delete();

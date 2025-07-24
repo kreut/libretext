@@ -33,7 +33,7 @@ class CoursePolicy
      */
     public function autoRelease(User $user, Course $course): Response
     {
-        return $user->id === $course->user_id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to set the auto-release for this course.');
 
@@ -48,7 +48,7 @@ class CoursePolicy
      */
     public function unlinkFromLMS(User $user, Course $course): Response
     {
-        return $user->id === $course->user_id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to unlink this course from an LMS.');
 
@@ -61,7 +61,7 @@ class CoursePolicy
      */
     public function linkToLMS(User $user, Course $course): Response
     {
-        return $user->id === $course->user_id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to link this course to an LMS.');
 
@@ -97,7 +97,7 @@ class CoursePolicy
             $has_access = false;
             $message = "There are students enrolled in this course so you can't auto-update the question revisions.";
         }
-        if ($user->id !== $course->user_id) {
+        if (!$course->ownsCourseOrIsCoInstructor($user->id)) {
             $has_access = false;
             $message = 'You are not allowed to auto-update question revisions for this course.';
         }
@@ -113,7 +113,7 @@ class CoursePolicy
      */
     public function storeTester(User $user, Course $course): Response
     {
-        return $user->id === $course->user_id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to add testers to this course.');
 
@@ -126,7 +126,7 @@ class CoursePolicy
      */
     public function getTesters(User $user, Course $course): Response
     {
-        return $user->id === $course->user_id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the testers for this course.');
 
@@ -147,7 +147,7 @@ class CoursePolicy
      */
     public function reset(User $user, Course $course): Response
     {
-        return (int)$course->user_id === $user->id || Helper::isAdmin()
+        return $course->ownsCourseOrIsCoInstructor($user->id) || Helper::isAdmin()
             ? Response::allow()
             : Response::deny('You are not allowed to reset that course.');
     }
@@ -189,33 +189,9 @@ class CoursePolicy
      */
     public function updateIFrameProperties(User $user, Course $course): Response
     {
-        return ((int)$course->user_id === (int)$user->id)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update what is shown in the iframe.');
-    }
-
-    /**
-     * @param User $user
-     * @param $courses
-     * @param $ordered_courses
-     * @return Response
-     */
-    public function order(User $user, $courses, $ordered_courses): Response
-    {
-        $owner_courses = DB::table('courses')
-            ->where('user_id', $user->id)
-            ->select('id')
-            ->pluck('id')
-            ->toArray();
-        $has_access = true;
-        foreach ($ordered_courses as $ordered_course) {
-            if (!in_array($ordered_course, $owner_courses)) {
-                $has_access = false;
-            }
-        }
-        return $has_access
-            ? Response::allow()
-            : Response::deny('You are not allowed to re-order a course that is not yours.');
     }
 
     public function getAssignmentNamesForPublicCourse(User $user, Course $course): Response
@@ -226,10 +202,18 @@ class CoursePolicy
 
 
     }
+    public function changeMainInstructor(User $user, Course $course): Response
+    {
+        return $user->id === $course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to change the main instructor for that course.');
+
+
+    }
 
     public function updateBetaApprovalNotifications(User $user, Course $course): Response
     {
-        return ((int)$course->user_id === (int)$user->id)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update the Beta course notifications for this course.');
 
@@ -237,7 +221,7 @@ class CoursePolicy
 
     public function courseAccessForGraders(User $user, Course $course): Response
     {
-        return ((int)$course->user_id === (int)$user->id)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to grant access to all assignments for all graders for this course.');
     }
@@ -245,14 +229,14 @@ class CoursePolicy
     public function getAssignmentOptions(User $user, Course $course): Response
     {
 
-        return ((int)$course->user_id === (int)$user->id)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to download the assignment options.');
     }
 
     public function copy(User $user, Course $course): Response
     {
-        return (int)$course->user_id === (int)$user->id
+        return !$course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to copy a course you do not own.');
 
@@ -262,7 +246,7 @@ class CoursePolicy
     public function import(User $user, Course $course): Response
     {
 
-        $owner_of_course = (int)$course->user_id === (int)$user->id;
+        $owner_of_course = $course->ownsCourseOrIsCoInstructor($user->id);
         $is_public = (int)$course->public === 1;
         $has_role_that_can_import = in_array($user->role, [2, 5]);
         $is_non_instructor_question_editor = (int)$user->role === 5;
@@ -298,7 +282,7 @@ class CoursePolicy
         $student_enrolled_in_course = $course->enrollments->contains('user_id', $student_user_id);
         switch ($user->role) {
             case(2):
-                $has_access = ($course->user_id === (int)$user->id);
+                $has_access = $course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(4):
                 $has_access = $course->isGrader();
@@ -346,7 +330,7 @@ class CoursePolicy
     public function viewCourseScores(User $user, Course $course)
     {
 
-        return ($course->isGrader() || $this->ownsCourseByUser($course, $user))
+        return ($course->isGrader() || $course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to view these scores.');
     }
@@ -370,7 +354,7 @@ class CoursePolicy
      */
     public function updateStudentsCanViewWeightedAverage(User $user, Course $course): Response
     {
-        return ($this->ownsCourseByUser($course, $user))
+        return ($course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to update being able to view the weighted average.');
     }
@@ -382,7 +366,7 @@ class CoursePolicy
      */
     public function updateShowZScores(User $user, Course $course): Response
     {
-        return ($this->ownsCourseByUser($course, $user))
+        return ($course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to update being able to view the z-scores.');
     }
@@ -394,7 +378,7 @@ class CoursePolicy
      */
     public function updateShowProgressReport(User $user, Course $course): Response
     {
-        return ($this->ownsCourseByUser($course, $user))
+        return ($course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to update being able to view the progress report.');
     }
@@ -418,7 +402,7 @@ class CoursePolicy
                 break;
             case(5):
             case(2):
-                $has_access = $this->ownsCourseByUser($course, $user);
+                $has_access = $course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(3):
             {
@@ -455,7 +439,7 @@ class CoursePolicy
      */
     public function createCourseAssignment(User $user, Course $course): Response
     {
-        return $this->ownsCourseByUser($course, $user)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to create assignments for this course.');
     }
@@ -473,14 +457,14 @@ class CoursePolicy
 
         $has_access = true;
         $message = '';
-        if (!$this->ownsCourseByUser($course, $user)) {
+        if (!$course->ownsCourseOrIsCoInstructor($user->id)) {
             $has_access = false;
             $message = 'You are not allowed to import assignments to this course.';
         }
         if ($has_access) {
             $has_access = $user->role === 2 && ($assignment->course->public
                     || Helper::isCommonsCourse($assignment->course)
-                    || $this->ownsCourseByUser($assignment->course, $user));
+                    || $assignment->course->ownsCourseOrIsCoInstructor($user->id));
             if (!$has_access) {
                 $message = 'You can only import assignments from your own courses, the Commons, or public courses.';
 
@@ -494,7 +478,7 @@ class CoursePolicy
 
     public function showCourse(User $user, Course $course): Response
     {
-        return $this->ownsCourseByUser($course, $user)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to show/hide this course.');
     }
@@ -522,7 +506,7 @@ class CoursePolicy
      */
     public function update(User $user, Course $course)
     {
-        return $this->ownsCourseByUser($course, $user)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update this course.');
     }
@@ -534,7 +518,7 @@ class CoursePolicy
      */
     public function delete(User $user, Course $course): Response
     {
-        return $this->ownsCourseByUser($course, $user)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to delete this course.');
     }

@@ -27,7 +27,7 @@ class TesterCoursePolicy
             ->where('user_id', $tester->id)
             ->where('course_id', $course->id)
             ->first();
-        return $tester_exists_in_course && $user->id === $course->user_id
+        return $tester_exists_in_course && $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to remove this tester.");
     }

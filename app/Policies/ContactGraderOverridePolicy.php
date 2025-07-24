@@ -8,6 +8,7 @@ use App\Course;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\DB;
 
 class ContactGraderOverridePolicy
 {
@@ -26,13 +27,18 @@ class ContactGraderOverridePolicy
                                                  $contact_override_grader_id): Response
     {
         $has_access = false;
-        if ($user->id !== $course->user_id) {
+        if (!$course->ownsCourseOrIsCoInstructor($user->id)) {
             $message = "You are not allowed to update the grader contact information for that course.";
         } else {
+            $co_instructors = DB::table('co_instructors')->where('course_id', $course->id)->get();
+            $co_instructor_user_ids = $co_instructors->isNotEmpty()
+                ? $co_instructors->pluck('user_id')->toArray()
+                : [];
             $has_access = $contact_override_grader_id === -1
-                || !$contact_override_grader_id ||
-                $contact_override_grader_id === $user->id ||
-                in_array($contact_override_grader_id, $course->graders()->pluck('id')->toArray());
+                || !$contact_override_grader_id
+                || $contact_override_grader_id === $user->id
+                || in_array($contact_override_grader_id, $course->graders()->pluck('id')->toArray())
+                    || in_array($contact_override_grader_id, $co_instructor_user_ids);
             if (!$has_access) {
                 $message = 'You are not allowed to update the grader contact information to that user.';
             }

@@ -13,14 +13,14 @@ class AssignmentGroupWeightPolicy
     use HandlesAuthorization;
 
     public function getAssignmentGroupWeights(User $user, AssignmentGroupWeight $assignmentGroupWeight, Course $course){
-        return $user->id === (int) $course->user_id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the assignment group weights.');
 
     }
 
     public function update(User $user, AssignmentGroupWeight $assignmentGroupWeight, Course $course){
-        return $user->id === (int) $course->user_id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update the assignment group weights.');
 

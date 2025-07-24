@@ -27,7 +27,7 @@ class DiscussionGroupPolicy
         $enrolled = $course->enrollments->contains('user_id', $user->id);
         $has_access = $user->role === 3
             ? $enrolled
-            : $course->user_id === $user->id;
+            : $course->ownsCourseOrIsCoInstructor($user->id);
 
 
         return $has_access

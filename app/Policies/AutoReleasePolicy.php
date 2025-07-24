@@ -16,7 +16,7 @@ class AutoReleasePolicy
     public function getGlobalAutoReleaseUpdateOptions(User $user, AutoRelease $autoRelease, Course $course): Response
     {
 
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the global auto-release options for this course.');
 
@@ -38,7 +38,7 @@ class AutoReleasePolicy
             $course = Course::find($course_id);
         }
 
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to globally update the auto-releases for this course.');
 
@@ -47,7 +47,7 @@ class AutoReleasePolicy
     public function updateActivated(User $user, AutoRelease $autoRelease, Assignment $assignment): Response
     {
 
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update the auto-release activation status.');
 

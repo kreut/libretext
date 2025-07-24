@@ -20,7 +20,7 @@ class WhitelistedDomainPolicy
      */
     public function store(User $user, WhitelistedDomain $whitelistedDomain, Course $course): Response
     {
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to store a whitelisted domain to that course.');
 
@@ -35,7 +35,7 @@ class WhitelistedDomainPolicy
     public function destroy(User $user, WhitelistedDomain $whitelistedDomain): Response
     {
         $course = Course::find($whitelistedDomain->course_id);
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to delete a whitelisted domain from that course.');
 
@@ -49,7 +49,7 @@ class WhitelistedDomainPolicy
      */
     public function getByCourse(User $user, WhitelistedDomain $whitelistedDomain, Course $course): Response
     {
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the whitelisted domains for that course.');
 

@@ -36,7 +36,7 @@ class SavedQuestionPolicy
     public function getSavedQuestionsWithCourseLevelUsageInfo(User $user, MyFavorite $savedQuestion, Assignment $assignment): Response
     {
 
-        return (int)$assignment->course->user_id === (int)$user->id
+        return (int)$assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to retrieve saved questions for that assignment.");
 

@@ -29,7 +29,7 @@ class CutupPolicy
             return Response::deny('That question is not in the assignment.');
         }
 
-        $has_access = $this->ownsCourseByUser($assignment->course, $user);
+        $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
 
         return $has_access
             ? Response::allow()

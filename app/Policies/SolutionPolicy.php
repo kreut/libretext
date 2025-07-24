@@ -88,7 +88,7 @@ class SolutionPolicy
 
     public function storeText(User $user, Solution $solution, Assignment $assignment, Question $question)
     {
-        return $assignment->questions->contains($question->id) && (int)$assignment->course->user_id === $user->id
+        return $assignment->questions->contains($question->id) && (int)$assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to submit a text-based solution to this question.');
 

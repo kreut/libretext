@@ -13,7 +13,7 @@ class ReportTogglePolicy
     use HandlesAuthorization;
     public function update(User $user, ReportToggle $reportToggle, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny();
     }

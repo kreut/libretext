@@ -16,7 +16,7 @@ class PendingCourseInvitationPolicy
                             PendingCourseInvitation $pendingCourseInvitation): Response
     {
         $course = Course::find($pendingCourseInvitation->course_id);
-        return ($course->user_id === $user->id)
+        return ($course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to delete this pending course invitation.');
 
@@ -33,7 +33,7 @@ class PendingCourseInvitationPolicy
                                                 Course                  $course): Response
     {
 
-        return ($course->user_id === $user->id)
+        return ($course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to get the pending course invitations for this course.');
 

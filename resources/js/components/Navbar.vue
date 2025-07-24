@@ -131,6 +131,17 @@
     <b-nav v-if="logoLoaded" role="navigation" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
            style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
     >
+      <span v-show="isCoInstructor" class="pt-1">
+      <b-tooltip target="coInstructor-tooltip"
+                 delay="500"
+      >
+        You are a co-instructor in this course. The main instructor is {{ mainInstructorName }}.
+      </b-tooltip>
+      <font-awesome-icon :icon="coInstructorIcon"
+                         id="coInstructor-tooltip"
+                         class="text-muted"
+      />
+        </span>
       <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
             style="padding-top:.3em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
       ><a
@@ -228,6 +239,8 @@ import Email from './Email'
 import { logout } from '~/helpers/Logout'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { toggleInstructorStudentViewRouteNames } from '~/helpers/StudentInstructorViewToggles'
+import { faUsers } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import LibreOne from './LibreOne.vue'
 import { updateLibreOnePassword, updateLibreOneProfile } from '../helpers/LibreOne'
 
@@ -235,6 +248,7 @@ export default {
   components: {
     LibreOne,
     Email,
+    FontAwesomeIcon,
     ToggleButton
   },
   props: {
@@ -245,6 +259,9 @@ export default {
     }
   },
   data: () => ({
+    mainInstructorName: '',
+    isCoInstructor: false,
+    coInstructorIcon: faUsers,
     localEnvironment: false,
     accountToSwitchTo: {},
     toggleInstructorStudentViewRouteNames: toggleInstructorStudentViewRouteNames,
@@ -481,6 +498,8 @@ export default {
           const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
           if (data.type === 'success') {
             this.breadcrumbs = data.breadcrumbs
+            this.isCoInstructor = data.is_co_instructor
+            this.mainInstructorName = data.main_instructor_name
           }
         }
         this.oneBreadcrumb = this.breadcrumbs.length === 1 &&

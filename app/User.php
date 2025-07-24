@@ -110,6 +110,14 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
         return $this->hasMany('App\LearningTree');
     }
 
+    public function getFullName(int $user_id)
+    {
+        return DB::table('users')
+            ->select(DB::raw("CONCAT(`first_name`,' ',`last_name`) AS name"))
+            ->where('id', $user_id)
+            ->first()
+            ->name;
+    }
     public function assignmentsAndAssignToTimingsByCourse(int $course_id)
     {
         $assignments_info = DB::table('assign_to_timings')

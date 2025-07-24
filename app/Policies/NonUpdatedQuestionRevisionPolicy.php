@@ -25,7 +25,7 @@ class NonUpdatedQuestionRevisionPolicy
                                                                Course $course): Response
      {
 
-         return $user->id === $course->user_id
+         return $course->ownsCourseOrIsCoInstructor($user->id)
              ? Response::allow()
              : Response::deny('You are not allowed to get the non-updated question revisions for this course.');
 

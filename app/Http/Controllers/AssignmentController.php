@@ -978,12 +978,13 @@ class AssignmentController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @return array
      * @throws Exception
      */
     public
-    function validateAssessmentType(Request $request, Assignment $assignment)
+    function validateAssessmentType(Request $request, Assignment $assignment): array
     {
         $response['type'] = 'error';
         try {

@@ -16,7 +16,7 @@ class BetaCoursePolicy
 
 
     public function untetherBetaCourseFromAlphaCourse(User $user, BetaCourse $betaCourse, Course $course){
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to untether this Beta Course.');
 
@@ -25,7 +25,7 @@ class BetaCoursePolicy
 
     public function getTetheredToAlphaCourse(User $user, BetaCourse $betaCourse, Course $course){
 
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the tethered to Alpha Course.');
 

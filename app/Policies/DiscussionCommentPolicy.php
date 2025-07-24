@@ -54,7 +54,7 @@ class DiscussionCommentPolicy
             case(2):
                 $discussion = Discussion::find($discussionComment->discussion_id);
                 $assignment = Assignment::find($discussion->assignment_id);
-                $has_access = $assignment->course->user_id === $user->id;
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             default:
                 $has_access = false;
@@ -79,7 +79,7 @@ class DiscussionCommentPolicy
                     ->first();
                 break;
             case(2):
-                $has_access = $course->user_id === $user->id;
+                $has_access = $course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             default:
                 $has_access = false;
@@ -100,7 +100,7 @@ class DiscussionCommentPolicy
     {
         $discussion = Discussion::find($discussionComment->discussion_id);
         $assignment = Assignment::find($discussion->assignment_id);
-        $has_access = $assignment->course->user_id === $user->id;
+        $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
         return $has_access
             ? Response::allow()
             : Response::deny("You are not allowed to re-process this transcript.");
@@ -115,7 +115,7 @@ class DiscussionCommentPolicy
     {
         $discussion = Discussion::find($discussionComment->discussion_id);
         $assignment = Assignment::find($discussion->assignment_id);
-        $has_access = $assignment->course->user_id === $user->id;
+        $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
         return $has_access
             ? Response::allow()
             : Response::deny("You are not allowed to update this transcript.");
@@ -143,7 +143,7 @@ class DiscussionCommentPolicy
                 }
                 break;
             case(2):
-                $has_access = $assignment->course->user_id === $user->id;
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             default:
                 $has_access = false;
@@ -221,7 +221,7 @@ class DiscussionCommentPolicy
                 $has_access = $user->id === $student_user_id;
                 break;
             case(2):
-                $has_access = $assignment->course->user_id === $user->id;
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
         }
         return $has_access

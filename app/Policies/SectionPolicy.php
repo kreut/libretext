@@ -45,7 +45,7 @@ class SectionPolicy
     public function store(User $user, Section $section, Course $course)
     {
 
-        return ($user->email !=='commons@libretexts.org' && (int)$course->user_id === $user->id)
+        return ($user->email !=='commons@libretexts.org' && $course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to create a section for this course.');
 

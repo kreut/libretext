@@ -16,28 +16,28 @@ class FinalGradePolicy
     use CommonPolicies;
 
    public function roundScores(User $user, FinalGrade $finalGrade, Course $course){
-       return $this->ownsCourseByUser($course, $user)
+       return $course->ownsCourseOrIsCoInstructor($user->id)
            ? Response::allow()
            : Response::deny('You are not allowed to choose how scores are rounded.');
 
    }
 
     public function updateLetterGrades(User $user, FinalGrade $finalGrade, Course $course){
-        return $this->ownsCourseByUser($course, $user)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed do update letter grades.');
 
     }
 
     public function releaseLetterGrades(User $user, FinalGrade $finalGrade, Course $course){
-        return $this->ownsCourseByUser($course, $user)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed do update whether letter grades are released.');
 
     }
 
     public function getCourseLetterGrades(User $user, FinalGrade $finalGrade, Course $course){
-        return $this->ownsCourseByUser($course, $user)
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the course letter grades.');
 

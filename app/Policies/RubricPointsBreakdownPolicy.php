@@ -30,7 +30,7 @@ class RubricPointsBreakdownPolicy
 
         switch ($user->role) {
             case(2):
-                $has_access = (int)$assignment->course->user_id === (int)$user->id;
+                $has_access = (int)$assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(3):
                 $has_access = $user->id === $student_user->id && $enrolled_in_course;
@@ -63,7 +63,7 @@ class RubricPointsBreakdownPolicy
             $has_access = $assignment->course->isGrader();
         }
         if ($user->role === 2) {
-            $has_access = (int)$assignment->course->user_id === (int)$user->id;
+            $has_access = (int)$assignment->course->ownsCourseOrIsCoInstructor($user->id);
         }
 
         return $has_access

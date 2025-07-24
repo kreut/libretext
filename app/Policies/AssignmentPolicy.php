@@ -50,7 +50,7 @@ class AssignmentPolicy
 
     public function getReviewHistoryByAssignment(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the review histories for this assignment.');
 
@@ -58,7 +58,7 @@ class AssignmentPolicy
 
     public function getDates(User $user, Assignment $assignment, Course $course): Response
     {
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the dates since you do not own this course.');
 
@@ -72,7 +72,7 @@ class AssignmentPolicy
      */
     public function validateNotWeightedPointsPerQuestionWithSubmissions(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to validate whether this is an assignment with weighted points per question that has a submission.');
 
@@ -80,7 +80,7 @@ class AssignmentPolicy
 
     public function unlinkFromLMS(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to unsync this assignment from your LMS.');
 
@@ -103,7 +103,7 @@ class AssignmentPolicy
      */
     public function linkToLMS(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to link this assignment to your LMS.');
 
@@ -117,7 +117,7 @@ class AssignmentPolicy
      */
     public function unlinkLti(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to unlink this assignment from your LMS.');
 
@@ -138,7 +138,7 @@ class AssignmentPolicy
      */
     public function questionUrlView(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update the question URL view for this assignment.');
 
@@ -151,7 +151,7 @@ class AssignmentPolicy
      */
     public function updateCommonQuestionText(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update the common question text for this assignment.');
 
@@ -159,7 +159,7 @@ class AssignmentPolicy
 
     public function showCommonQuestionText(User $user, Assignment $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the common question text for this assignment.');
 
@@ -168,7 +168,7 @@ class AssignmentPolicy
 
     public function linkAssignmentToLMS(User $user, Assignment $assignment)
     {
-        return (int)$assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to link this assignment.');
 
@@ -178,7 +178,7 @@ class AssignmentPolicy
     public function order(User $user, Assignment $assignment, Course $course)
     {
 
-        return (int)$course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to re-order the assignments in that course.');
 
@@ -220,7 +220,7 @@ class AssignmentPolicy
         switch ($user->role) {
             case(2):
                 $has_access = (($assignment->course->public || Helper::isCommonsCourse($assignment->course)) && Helper::hasAnonymousUserSession())
-                    || $this->ownsCourseByUser($assignment->course, $user);
+                    || $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(3):
                 $has_access = ($assignment->course->anonymous_users && Helper::isAnonymousUser())
@@ -240,7 +240,7 @@ class AssignmentPolicy
                 $has_access = $assignment->course->isGrader();
                 break;
             case(5):
-                $has_access = $this->ownsCourseByUser($assignment->course, $user);
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
         }
         return $has_access;
@@ -255,7 +255,7 @@ class AssignmentPolicy
      */
     public function getQuestionsInfo(User $user, Assignment $assignment)
     {
-        return $user->id === (int)$assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get questions for this assignment.');
     }
@@ -267,7 +267,7 @@ class AssignmentPolicy
      */
     public function downloadUsersForAssignmentOverride(User $user, Assignment $assignment)
     {
-        return $user->id === (int)$assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to download the users for this assignment.');
     }
@@ -281,7 +281,7 @@ class AssignmentPolicy
      */
     public function update(User $user, Assignment $assignment)
     {
-        return $user->id === (int)$assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update this assignment.');
     }
@@ -295,7 +295,7 @@ class AssignmentPolicy
      */
     public function createFromTemplate(User $user, Assignment $assignment)
     {
-        return $user->id === (int)$assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to create an assignment from this template.");
     }
@@ -308,7 +308,7 @@ class AssignmentPolicy
      */
     public function showAssignment(User $user, Assignment $assignment)
     {
-        return $user->id === (int)$assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to toggle whether students can view an assignment.');
     }
@@ -320,7 +320,7 @@ class AssignmentPolicy
      */
     public function showQuestionTitles(User $user, Assignment $assignment): Response
     {
-        return $user->id === (int)$assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to toggle whether students can view question titles.');
     }
@@ -330,7 +330,7 @@ class AssignmentPolicy
         $has_access = false;
         switch ($user->role) {
             case(2):
-                $has_access = $this->ownsCourseByUser($assignment->course, $user);
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(4):
                 $has_access = $assignment->course->isGrader();
@@ -349,7 +349,7 @@ class AssignmentPolicy
         $has_access = false;
         switch ($user->role) {
             case(2):
-                $has_access = $this->ownsCourseByUser($assignment->course, $user);
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(4):
                 $has_access = $assignment->course->isGrader();
@@ -366,7 +366,7 @@ class AssignmentPolicy
     {
         switch ($user->role) {
             case(2):
-                $has_access = $assignment->course->user_id === $user->id;
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(3):
                 $has_access = $assignment->course->enrollments->contains('user_id', $user->id) && $assignment->students_can_view_assignment_statistics;
@@ -409,7 +409,7 @@ class AssignmentPolicy
 
     public function gradersCanSeeStudentNames(User $user, Assignment $assignment)
     {
-        return $this->ownsCourseByUser($assignment->course, $user)
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to switch whether graders can view their students' names.");
     }
@@ -419,7 +419,7 @@ class AssignmentPolicy
         $has_access = false;
         switch ($user->role) {
             case(2):
-                $has_access = $this->ownsCourseByUser($assignment->course, $user);
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(4):
                 $has_access = $assignment->course->isGrader();
@@ -440,7 +440,7 @@ class AssignmentPolicy
         $has_access = false;
         switch ($user->role) {
             case(2):
-                $has_access = $this->ownsCourseByUser($assignment->course, $user);
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(4):
                 $has_access = $assignment->course->isGrader();
@@ -466,7 +466,7 @@ class AssignmentPolicy
     public function delete(User $user, Assignment $assignment)
     {
         //added (int) because wasn't working in the test
-        return $user->id === (int)$assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to delete this assignment.');
     }

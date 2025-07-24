@@ -25,6 +25,49 @@ class Course extends Model
     protected $guarded = [];
 
     /**
+     * @return Collection
+     */
+    public function coInstructors(): Collection
+    {
+        return DB::table('co_instructors')
+            ->join('users', 'co_instructors.user_id', '=', 'users.id')
+            ->select('users.id', 'users.email', DB::raw('CONCAT(first_name, " ", last_name) AS name'), 'status')
+            ->where('course_id', $this->id)
+            ->get();
+    }
+
+    /**
+     * @param int $user_id
+     * @return bool
+     */
+    public function isCoInstructor(int $user_id): bool
+    {
+        return DB::table('co_instructors')
+            ->where('course_id', $this->id)
+            ->where('user_id', $user_id)
+            ->where('status', 'accepted')
+            ->exists();
+    }
+
+    /**
+     * @param int $user_id
+     * @return bool
+     */
+    public function ownsCourseOrIsCoInstructor(int $user_id): bool
+    {
+        if ($this->user_id === $user_id) {
+            return true;
+        }
+        if (DB::table('co_instructors')->where('course_id', $this->id)
+            ->where('user_id', $user_id)
+            ->where('status', 'accepted')
+            ->exists()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * @return array
      */
     public function reset(): array
@@ -268,6 +311,11 @@ class Course extends Model
             $imported_course->order = 0;
             $imported_course->save();
             $course_id = $imported_course->id;
+            $courseOrder = new CourseOrder();
+            $courseOrder->user_id = $user->id;
+            $courseOrder->order = 0;
+            $courseOrder->course_id = $course_id;
+            $courseOrder->save();
             $whitelistedDomain = new WhitelistedDomain();
             $whitelistedDomain->whitelisted_domain = $whitelistedDomain->getWhitelistedDomainFromEmail($user->email);
             $whitelistedDomain->course_id = $course_id;
@@ -345,7 +393,7 @@ class Course extends Model
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $reset_discuss_it_settings_to_default, $reset_clicker_settings_to_default);
             }
 
-            $this->prepareNewCourse($user, $section, $imported_course, $this, $enrollment, $finalGrade);
+            $this->prepareNewCourse($user, $section, $imported_course, $this, $enrollment, $finalGrade, $courseOrder);
             $fake_user = DB::table('enrollments')
                 ->join('users', 'enrollments.user_id', '=', 'users.id')
                 ->where('course_id', $imported_course->id)
@@ -381,6 +429,7 @@ class Course extends Model
      * @param Course $course
      * @param Enrollment $enrollment
      * @param FinalGrade $finalGrade
+     * @param CourseOrder $courseOrder
      * @return void
      */
     public
@@ -389,7 +438,8 @@ class Course extends Model
                               Course     $new_course,
                               Course     $course,
                               Enrollment $enrollment,
-                              FinalGrade $finalGrade)
+                              FinalGrade $finalGrade,
+    CourseOrder $courseOrder)
     {
         $section->name = 'Main';
         $section->course_id = $new_course->id;
@@ -397,7 +447,7 @@ class Course extends Model
         $section->save();
         $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);
         $finalGrade->setDefaultLetterGrades($new_course->id);
-        $this->reorderAllCourses($user);
+        $courseOrder->reorderAllCourses($user);
 
     }
 
@@ -546,15 +596,6 @@ class Course extends Model
             ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
-    public
-    function orderCourses(array $ordered_courses)
-    {
-        foreach ($ordered_courses as $key => $course_id) {
-            DB::table('courses')
-                ->where('id', $course_id)//validation step!
-                ->update(['order' => $key + 1]);
-        }
-    }
 
     /**
      * @return array
@@ -904,19 +945,6 @@ class Course extends Model
             ->get();
     }
 
-    public
-    function reOrderAllCourses($user)
-    {
-        $courses = $this->getCourses($user);
-        $all_course_ids = [];
-        if ($courses) {
-            foreach ($courses as $value) {
-                $all_course_ids[] = $value->id;
-            }
-            $course = new Course();
-            $course->orderCourses($all_course_ids);
-        }
-    }
 
     public
     function getCourses($user)
@@ -938,11 +966,39 @@ class Course extends Model
             case(5):
             case(2):
                 return DB::table('courses')
-                    ->select('courses.*', DB::raw("beta_courses.id IS NOT NULL AS is_beta_course"))
+                    ->select(
+                        'courses.*',
+                        'course_orders.order as course_order',
+                        DB::raw("CONCAT(users.first_name, ' ', users.last_name) AS main_instructor_name"),
+                        DB::raw("beta_courses.id IS NOT NULL AS is_beta_course"),
+                        DB::raw("EXISTS (
+            SELECT 1
+            FROM co_instructors
+            WHERE co_instructors.course_id = courses.id
+              AND co_instructors.user_id = {$user->id}
+              AND co_instructors.status = 'accepted'
+        ) AS is_co_instructor")
+                    )
+                    ->join('course_orders', function ($join) use ($user) {
+                        $join->on('course_orders.course_id', '=', 'courses.id')
+                            ->where('course_orders.user_id', '=', $user->id);
+                    })
                     ->leftJoin('beta_courses', 'courses.id', '=', 'beta_courses.id')
-                    ->where('user_id', $user->id)
-                    ->orderBy('order')
+                    ->leftJoin('users', 'users.id', '=', 'courses.user_id') // Join to get main instructor
+                    ->where(function ($query) use ($user) {
+                        $query->where('courses.user_id', $user->id)
+                            ->orWhereExists(function ($subquery) use ($user) {
+                                $subquery->select(DB::raw(1))
+                                    ->from('co_instructors')
+                                    ->whereColumn('co_instructors.course_id', 'courses.id')
+                                    ->where('co_instructors.user_id', $user->id)
+                                    ->where('co_instructors.status', 'accepted');
+                            });
+                    })
+                    ->orderBy('course_orders.order')
                     ->get();
+
+
             case(4):
                 $sections = DB::table('graders')
                     ->join('sections', 'section_id', '=', 'sections.id')

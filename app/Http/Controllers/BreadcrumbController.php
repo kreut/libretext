@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\CoInstructor;
 use App\Framework;
 use App\Helpers\Helper;
 use Illuminate\Http\Request;
@@ -25,6 +26,8 @@ class BreadcrumbController extends Controller
         $assignment_id = $params['assignmentId'] ?? 0;
         $framework_id = $params['frameworkId'] ?? 0;
         $course = $assignment = $framework = null;
+        $response['is_co_instructor'] = false;
+        $check_co_instructor = false;
         if ($course_id) {
             $course = Course::find($course_id);
         }
@@ -147,6 +150,7 @@ class BreadcrumbController extends Controller
 
                             break;
                         case('course_properties.general_info'):
+                        case('course_properties.co_instructors'):
                         case('course_properties.sections'):
                         case('course_properties.letter_grades'):
                         case('course_properties.tethered_courses'):
@@ -161,6 +165,7 @@ class BreadcrumbController extends Controller
                         case('course_properties.non_updated_question_revisions'):
                         case('course_properties.auto_release'):
                         case('course_properties.reset'):
+                            $check_co_instructor = true;
                             $breadcrumbs[] = ['text' => $course->name,
                                 'href' => "/instructors/courses/{$course->id}/assignments"
                             ];
@@ -261,6 +266,7 @@ class BreadcrumbController extends Controller
                             break;
                         case('instructors.assignments.index'):
                             //My courses / the assignment's course
+                            $check_co_instructor = true;
                             $breadcrumbs[] = ['text' => $course->name,
                                 'href' => "/instructors/courses/{$course->id}/assignments",
                                 'active' => true];
@@ -283,6 +289,9 @@ class BreadcrumbController extends Controller
                         case('instructors.assignments.auto_graded_submissions'):
                         case('instructors.assignments.case.study.notes');
                         case('instructors.assignments.lab_report');
+                        if ($request->user()->role === 2){
+                            $check_co_instructor = true;
+                        }
                             //My courses / The assignment's course / that assignment;
                             $breadcrumbs[] = ['text' => $assignment->course->name,
                                 'href' => "/$users/courses/{$assignment->course->id}/assignments"];
@@ -291,6 +300,9 @@ class BreadcrumbController extends Controller
                                 'active' => true];
                             break;
                         case('questions.view'):
+                            if ($request->user()->role === 2){
+                                $check_co_instructor = true;
+                            }
                             //My courses / The assignment's course / that assignment summary / the assignment questions
                             if (Helper::isAnonymousUser()
                                 || (Helper::hasAnonymousUserSession() && $assignment->course->user_id !== request()->user()->id)) {
@@ -317,6 +329,8 @@ class BreadcrumbController extends Controller
                         case
                         ('gradebook.index'):
                             //My courses / that course
+                                $check_co_instructor = true;
+
                             $breadcrumbs[] = ['text' => $course->name,
                                 'href' => "/instructors/courses/{$course->id}/assignments"];
                             $breadcrumbs[] = ['text' => 'Gradebook',
@@ -325,6 +339,7 @@ class BreadcrumbController extends Controller
                             break;
                         case('assignment.mass_grading.index'):
                         case('assignment.grading.index'):
+                        $check_co_instructor = true;
                             $text = $name === 'assignment.grading.index' ? 'Open Grader' : 'Grading';
                             $breadcrumbs[] = ['text' => $assignment->course->name,
                                 'href' => "/instructors/courses/{$assignment->course->id}/assignments"];
@@ -333,6 +348,7 @@ class BreadcrumbController extends Controller
                                 'active' => true];
                             break;
                         case('question.view'):
+                            $check_co_instructor = true;
                             $breadcrumbs[] = ['text' => $assignment->course->name,
                                 'href' => "/instructors/courses/{$assignment->course->id}/assignments"];
                             if (in_array($assignment->submission_files, ['q', 'a'])) {
@@ -344,6 +360,19 @@ class BreadcrumbController extends Controller
                                 'href' => "#",
                                 'active' => true];
                     }
+                }
+            }
+            if ($check_co_instructor){
+                if ($assignment){
+                    $course = Course::find($assignment->course_id);
+                }
+                $response['is_co_instructor'] = $course && $course->isCoInstructor($request->user()->id);
+                if ( $response['is_co_instructor']){
+                $response['main_instructor_name'] = DB::table('users')
+                    ->where('id', $course->user_id)
+                    ->select(DB::raw('CONCAT(first_name, " ", last_name) AS main_instructor_name'))
+                    ->first()
+                    ->main_instructor_name;
                 }
             }
             $response['type'] = 'success';

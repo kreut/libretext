@@ -14,14 +14,14 @@ class GraderNotificationPolicy
 
     public function index(User $user, GraderNotification $graderNotification, Course $course)
     {
-        return (int) $course->user_id === (int) $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to view the grader notifications for this course.");
     }
 
     public function update(User $user, GraderNotification $graderNotification, Course $course)
     {
-        return (int) $course->user_id === (int) $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to update the grader notifications for this course.");
     }

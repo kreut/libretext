@@ -100,7 +100,8 @@ class LTIController extends Controller
      * @param Request $request
      * @param Assignment $assignment
      * @return array
-     * @throws Exception
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function linkAssignmentToLMS(Request $request, Assignment $assignment): array
     {

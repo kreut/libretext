@@ -45,7 +45,7 @@ class MathPixPolicy
     {
         $assignment = Assignment::find($assignment_id);
         $assignment_question_exists = in_array($question_id, $assignment->questions->pluck('id')->toArray());
-        $has_access = $user->id === $assignment->course->user_id
+        $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             && ($assignment->course->enrollments->contains('user_id', $user_id) || $assignment->course->isGrader())
             && $assignment_question_exists;
         return $has_access

@@ -15,7 +15,7 @@ class LmsAPIPolicy
 
     public function getOauthUrl(User $user, LmsAPI $lmsAPI, Course $course)
     {
-        return $course->user_id === $user->id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the oAuth URL.');
 

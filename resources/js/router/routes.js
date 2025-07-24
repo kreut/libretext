@@ -410,6 +410,11 @@ let general_paths = [
     ]
   },
   {
+    path: '/invitations/co-instructor/accept/:accessCode',
+    name: 'CoInstructorAcceptInvitation',
+    component: page('instructors/co_instructors_accept_invitation.vue')
+  },
+  {
     path: '/centrifugo',
     name: 'centrifugo',
     component: page('centrifugo.vue')
@@ -448,6 +453,11 @@ let general_paths = [
         path: 'edit-assignment-dates',
         name: 'course_properties.edit_assignment_dates',
         component: page('instructors/course_properties/edit_assignment_dates.vue')
+      },
+      {
+        path: 'co-instructors',
+        name: 'course_properties.co_instructors',
+        component: page('instructors/course_properties/co_instructors.vue')
       },
       {
         path: 'graders',

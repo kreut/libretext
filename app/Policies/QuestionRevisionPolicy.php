@@ -61,7 +61,7 @@ class QuestionRevisionPolicy
      * @return Response
      */
     public function emailStudentsWithSubmissions(User $user, QuestionRevision $questionRevision, Assignment $assignment): Response {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny("You are not allowed to email these students with submissions.");
 

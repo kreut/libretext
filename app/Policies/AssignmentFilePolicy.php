@@ -19,7 +19,7 @@ class AssignmentFilePolicy
     {
         switch ($user->role) {
             case(2):
-                $has_access = (int)Assignment::find($assignment_id)->course->user_id === $user->id;
+                $has_access = Assignment::find($assignment_id)->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(3):
                 //student who owns the assignment or the file feedback
@@ -43,7 +43,7 @@ class AssignmentFilePolicy
     public function createTemporaryUrl(User $user, AssignmentFile $assignmentFile, Course $course)
     {
 
-        return ($course->isGrader() || (int)$course->user_id === $user->id)
+        return ($course->isGrader() || $course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to create a temporary URL.');
     }
@@ -55,7 +55,7 @@ class AssignmentFilePolicy
             $message = 'You are not allowed to access these assignment files.';
         }
 
-        return (((int)$assignment->course->user_id === $user->id) && ((int)$assignment->assignment_files === 1))
+        return (($assignment->course->ownsCourseOrIsCoInstructor($user->id)) && ((int)$assignment->assignment_files === 1))
             ? Response::allow()
             : Response::deny($message);
     }

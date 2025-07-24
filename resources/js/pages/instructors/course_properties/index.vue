@@ -66,6 +66,11 @@ export default {
         },
         {
           icon: '',
+          name: 'Co-Instructors',
+          route: 'course_properties.co_instructors'
+        },
+        {
+          icon: '',
           name: 'Graders',
           route: 'course_properties.graders'
         },
@@ -137,9 +142,13 @@ export default {
     filteredTabs () {
       let tabs
       tabs = this.tabs
-      return this.formative
-        ? tabs.filter(tab => ['General Information', 'Embed Properties'].includes(tab.name))
-        : tabs
+      if (this.formative) {
+        tabs = tabs.filter(tab => ['General Information', 'Embed Properties'].includes(tab.name))
+      }
+      if (this.isCoInstructor) {
+        tabs = tabs.filter(tab => tab.name !== 'Co-Instructors')
+      }
+      return tabs
     },
     async getCourseInfo () {
       try {
@@ -150,6 +159,7 @@ export default {
           return false
         }
         this.formative = data.course.formative
+        this.isCoInstructor = data.course.co_instructors.find(item => item.id === this.user.id)
         this.isLoading = false
         this.$forceUpdate()
       } catch (error) {

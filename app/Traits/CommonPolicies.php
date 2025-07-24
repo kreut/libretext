@@ -35,7 +35,7 @@ trait CommonPolicies
      */
     public function isOwnerOrGrader($assignment, $user): bool
     {
-        $is_owner = $assignment && $assignment->course->user_id === $user->id;
+        $is_owner = $assignment && $assignment->course->ownsCourseOrIsCoInstructor($user->id);
         $is_grader = $assignment->course->isGrader();
         if ($is_grader) {
             $course_sections = $assignment->course->sections->pluck('id');

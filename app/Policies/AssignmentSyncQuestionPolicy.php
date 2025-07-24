@@ -57,7 +57,7 @@ class AssignmentSyncQuestionPolicy
                                                 AssignmentSyncQuestion $assignmentSyncQuestion,
                                                 Assignment             $assignment): Response
     {
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed update the can submit work override for this question.');
 
@@ -93,7 +93,7 @@ class AssignmentSyncQuestionPolicy
                                             Assignment             $assignment): Response
     {
 
-        return (int)$user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update whether to use an overriding or existing rubric for that question.');
     }
@@ -109,7 +109,7 @@ class AssignmentSyncQuestionPolicy
                                                        Assignment             $assignment): Response
     {
 
-        return (int)$user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to check whether all solutions are released when the questions are closed.');
     }
@@ -125,7 +125,7 @@ class AssignmentSyncQuestionPolicy
                                        Assignment             $assignment): Response
     {
 
-        return (int)$user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to delete the custom rubric for that question.');
     }
@@ -141,7 +141,7 @@ class AssignmentSyncQuestionPolicy
                                        Assignment             $assignment): Response
     {
 
-        return (int)$user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update the custom rubric for that question.');
     }
@@ -153,7 +153,7 @@ class AssignmentSyncQuestionPolicy
     {
         $question_in_assignment = in_array($question->id, $assignment->questions->pluck('id')->toArray());
 
-        $is_instructor = (int)$user->id === $assignment->course->user_id;
+        $is_instructor = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
         $is_student = in_array($user->id, $assignment->course->enrolledUsers->pluck('id')->toArray())
             || $user->fake_student
             || ($assignment->formative && $user->formative_student);
@@ -178,7 +178,7 @@ class AssignmentSyncQuestionPolicy
                                             Question               $question): Response
     {
 
-        return (int)$user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id) && in_array($question->id, $assignment->questions->pluck('id')->toArray())
             ? Response::allow()
             : Response::deny('You are not allowed to update the discuss-it settings for that question.');
 
@@ -199,7 +199,7 @@ class AssignmentSyncQuestionPolicy
                                            Question               $question): Response
     {
 
-        return (int)$user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id) && in_array($question->id, $assignment->questions->pluck('id')->toArray())
             ? Response::allow()
             : Response::deny('You are not allowed to update the iframe properties for that question.');
 
@@ -220,7 +220,7 @@ class AssignmentSyncQuestionPolicy
                                            Question               $question): Response
     {
 
-        return (int)$user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id) && in_array($question->id, $assignment->questions->pluck('id')->toArray())
             ? Response::allow()
             : Response::deny('You are not allowed to update to the latest revision for that question.');
 
@@ -233,7 +233,7 @@ class AssignmentSyncQuestionPolicy
                                       Question               $question): Response
     {
 
-        return (int)$user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id) && in_array($question->id, $assignment->questions->pluck('id')->toArray())
             ? Response::allow()
             : Response::deny('You are not allowed to update the question title for that question.');
 
@@ -245,7 +245,7 @@ class AssignmentSyncQuestionPolicy
                                                        Assignment             $assignment)
     {
 
-        return (int)$user->id === $assignment->course->user_id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to remix that assignment.');
 
@@ -255,7 +255,7 @@ class AssignmentSyncQuestionPolicy
     public function order(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
 
-        return (int)$assignment->course->user_id === $user->id
+        return (int)$assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to order the questions for this assignment.');
 
@@ -492,7 +492,7 @@ class AssignmentSyncQuestionPolicy
     {
 
 
-        return ($user->id === (int)$assignment->course->user_id)
+        return ($assignment->course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to add a question to this assignment.');
     }

@@ -71,7 +71,7 @@ class UserPolicy
      */
     public function revokeStudentInvitations(User $user, User $instructor_user, Course $course): Response
     {
-        return $course->user_id === request()->user()->id
+        return $course->ownsCourseOrIsCoInstructor(request()->user()->id)
             ? Response::allow()
             : Response::deny("You are not allowed to revoke student invitations for this course.");
     }

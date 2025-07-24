@@ -73,7 +73,7 @@ class MyFavoritePolicy
             $assignment = Assignment::find($assignment_id);
             $is_commons_course = Helper::isCommonsCourse($assignment->course);
             $is_public_course = $assignment->course->public;
-            $is_course_owner = $assignment->course->user_id === $user->id;
+            $is_course_owner = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
         } else {
             $is_public_question = Question::find($question_id)->public;
         }
@@ -102,7 +102,7 @@ class MyFavoritePolicy
 
         return ($user->role === 2 && ($assignment->course->public
                 || Helper::isCommonsCourse($assignment->course)
-                || $assignment->course->user_id === $user->id))
+                || $assignment->course->ownsCourseOrIsCoInstructor($user->id)))
             ? Response::allow()
             : Response::deny("You are not allowed to get the My Favorites questions for this assignment.");
 

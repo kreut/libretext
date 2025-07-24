@@ -43,7 +43,7 @@ class ScorePolicy
     {
         $has_access = true;
         $message = '';
-        if ($assignment->course->user_id !== $user->id) {
+        if (!$assignment->course->ownsCourseOrIsCoInstructor($user->id)) {
             $has_access = false;
             $message = "You can't override the scores since this is not one of your assignments.";
         } else {
@@ -90,14 +90,14 @@ class ScorePolicy
 
     public function overTotalPoints(User $user, Score $score, Assignment $assignment)
     {
-        return (int)$assignment->course->user_id === (int)$user->id || $assignment->course->isGrader()
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id) || $assignment->course->isGrader()
             ? Response::allow()
             : Response::deny('You are not allowed to check whether the scores are over the total number of points for this assignment.');
     }
 
     public function getAssignmentQuestionScoresByUser(User $user, Score $score, Assignment $assignment)
     {
-        return (int)$assignment->course->user_id === (int)$user->id || $assignment->course->isGrader()
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id) || $assignment->course->isGrader()
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the question scores by user for this assignment.');
     }
@@ -107,7 +107,7 @@ class ScorePolicy
         $has_access = false;
         switch ($user->role) {
             case(2):
-                $has_access = $assignment->course->user_id === $user->id ||
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id) ||
                     (($assignment->course->public || Helper::isCommonsCourse($assignment->course)) && Helper::hasAnonymousUserSession());
                 break;
             case(3):

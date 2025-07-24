@@ -338,7 +338,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
-    Route::patch('/courses/order', 'CourseController@order');
+    Route::patch('/course-orders', 'CourseOrderController@order');
     Route::patch('/courses/auto-release/{course}', 'CourseController@autoRelease');
     Route::get('/auto-release/compare-to-default/assignment/{assignment}/course/{course}', 'AutoReleaseController@compareAssignmentToCourseDefault');
     Route::get('/auto-release/statuses/{assignment}', 'AutoReleaseController@getStatuses');
@@ -382,6 +382,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::patch('/courses/{course}/show-progress-report', 'CourseController@updateShowProgressReport');
     Route::patch('/courses/{course}', 'CourseController@update');
+    Route::patch('/courses/{course}/change-main-instructor/{user}', 'CourseController@changeMainInstructor');
     Route::delete('/courses/{course}', 'CourseController@destroy');
     Route::delete('/courses/{course}/reset', 'CourseController@reset');
     Route::get('/courses/{course}/assignment-statuses', 'CourseController@getAssignmentStatusesByCourse');
@@ -888,6 +889,11 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/submission-files/download', 'SubmissionFileController@downloadSubmissionFile');
 
     Route::post('/invitations/grader', 'InvitationController@emailGraderInvitation');
+    Route::post('/invitations/co-instructor', 'InvitationController@emailCoInstructorInvitation');
+    Route::post('/co-instructors', 'CoInstructorController@store');
+    Route::delete('/co-instructors/course/{course}/co-instructor/{user}', 'CoInstructorController@destroy');
+
+
 
     Route::post('/graders/', 'GraderController@store');
     Route::get('/graders/{course}', 'GraderController@getGradersByCourse');
@@ -904,7 +910,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 });
 
 Route::group(['middleware' => ['guest:api', 'throttle:30,1']], function () {
-
+    Route::post('/co-instructors', 'CoInstructorController@store');
     Route::get('/courses/anonymous-user/can-log-in', 'CourseController@canLogInAsAnonymousUser');
     Route::get('/courses/open/index', 'CourseController@open');
     Route::get('/courses/{course}/can-log-into-course-as-anonymous-user', 'CourseController@canLogIntoCourseAsAnonymousUser');

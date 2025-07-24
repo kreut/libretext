@@ -46,7 +46,7 @@ class AssignmentQuestionCaseStudyNotesPolicy
                           Assignment                       $assignment): Response
     {
 
-        return $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update theses Case Study Notes.');
 

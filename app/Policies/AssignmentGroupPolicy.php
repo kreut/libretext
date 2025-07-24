@@ -13,7 +13,7 @@ class AssignmentGroupPolicy
     use HandlesAuthorization;
 
     public function store(User $user, AssignmentGroup $assignmentGroup, Course $course){
-        return $user->id === (int) $course->user_id
+        return $course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to create an assignment group for this course.');
 

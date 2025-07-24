@@ -535,6 +535,13 @@ export default {
         if (this.contactGraderOverride === null && !this.graders.length) {
           this.contactGraderOverride = this.user.id
         }
+        for (let i = 0; i < this.course.co_instructors.length; i++) {
+          let coInstructor = this.course.co_instructors[i]
+          if (coInstructor.status === 'accepted') {
+            let coInstructorInfo = { text: coInstructor.name, value: coInstructor.id }
+            this.contactGraderOverrideOptions.push(coInstructorInfo)
+          }
+        }
         for (let i = 0; i < this.graders.length; i++) {
           let grader = this.graders[i]
           let graderInfo = { text: grader.name, value: grader.user_id }

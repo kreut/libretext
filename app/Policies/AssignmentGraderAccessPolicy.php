@@ -14,7 +14,7 @@ class AssignmentGraderAccessPolicy
 
     public function index(User $user, AssignmentGraderAccess $assignmentGraderAccess, Assignment $assignment): Response
     {
-        return (int) $assignment->course->user_id === $user->id
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to view the grader access for this assignment.');
 
@@ -29,7 +29,7 @@ class AssignmentGraderAccessPolicy
     public function assignmentAccessForGraders(User $user, AssignmentGraderAccess $assignmentGraderAccess, Assignment $assignment): Response
     {
 
-        return (int) $assignment->course->user_id === $user->id
+        return  $assignment->course->ownsCourseOrIsCoInstructor($user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to give graders access to this assignment.');
 
@@ -46,7 +46,7 @@ class AssignmentGraderAccessPolicy
                                               AssignmentGraderAccess $assignmentGraderAccess,
                                               Assignment $assignment, User $grader): Response
     {
-        return (int) $assignment->course->user_id === $user->id && in_array($grader->id,$assignment->course->graders()->pluck('id')->toArray())
+        return  $assignment->course->ownsCourseOrIsCoInstructor($user->id) && in_array($grader->id,$assignment->course->graders()->pluck('id')->toArray())
             ? Response::allow()
             : Response::deny('You are not allowed to give this grader access to this assignment.');
 

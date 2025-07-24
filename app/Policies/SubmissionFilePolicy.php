@@ -22,7 +22,7 @@ class SubmissionFilePolicy
 
         switch ($user->role) {
             case(2):
-                $has_access = $is_student_in_course && $assignment->course->user_id === $user->id;
+                $has_access = $is_student_in_course && $assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(3):
                 $has_access = $user->id === $studentUser->id;
@@ -75,7 +75,7 @@ class SubmissionFilePolicy
     }
 
     public function getUngradedSubmissions(User $user, SubmissionFile $submissionFile, Course $course){
-        return ((int)$course->user_id === $user->id)
+        return ($course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to get the ungraded submissions for this course.');
 
@@ -83,7 +83,7 @@ class SubmissionFilePolicy
     public function createTemporaryUrl(User $user, SubmissionFile $submissionFile, Course $course)
     {
 
-        return ((int)$course->user_id === $user->id)
+        return ($course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to create a temporary URL.');
     }
@@ -94,7 +94,7 @@ class SubmissionFilePolicy
         $has_access = false;
         switch ($user->role) {
             case(2):
-                $has_access = (int)$assignment->course->user_id === $user->id;
+                $has_access = (int)$assignment->course->ownsCourseOrIsCoInstructor($user->id);
                 break;
             case(4):
                 if ($sectionId) {
