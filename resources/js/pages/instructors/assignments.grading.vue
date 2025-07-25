@@ -1359,18 +1359,22 @@ export default {
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
     scannedImageMessage (grading) {
-      if (grading &&
-        grading.auto_graded_submission &&
-        JSON.parse(grading.auto_graded_submission.submission) &&
-        JSON.parse(grading.auto_graded_submission.submission).submitted_smiles &&
-        JSON.parse(grading.auto_graded_submission.submission).image_smiles
-      ) {
-        const action = JSON.parse(grading.auto_graded_submission.submission).submitted_smiles ===
-        JSON.parse(grading.auto_graded_submission.submission).image_smiles
-          ? 'did not edit' : 'edited'
-        return `The student ${action} the scanned image.`
+      try {
+        if (grading &&
+          grading.auto_graded_submission &&
+          JSON.parse(grading.auto_graded_submission.submission) &&
+          JSON.parse(grading.auto_graded_submission.submission).submitted_smiles &&
+          JSON.parse(grading.auto_graded_submission.submission).image_smiles
+        ) {
+          const action = JSON.parse(grading.auto_graded_submission.submission).submitted_smiles ===
+          JSON.parse(grading.auto_graded_submission.submission).image_smiles
+            ? 'did not edit' : 'edited'
+          return `The student ${action} the scanned image.`
+        }
+        return ''
+      } catch (error){
+        return ''
       }
-      return ''
     },
     getStudentResponse (currentGrading) {
       if (currentGrading.student_response) {
