@@ -896,8 +896,10 @@ class Question extends Model
                         if ($student_response) {
                             $submission = new Submission();
                             foreach ($qti_array['studentResponse'] as $key => $response) {
-                                $correct_response = (object)$qti_array['responseDeclaration']['correctResponse'][$key];
-                                $qti_array['studentResponse'][$key]['answeredCorrectly'] = $submission->correctFillInTheBlank($correct_response, $response['value']);
+                                if (isset($qti_array['responseDeclaration']['correctResponse'][$key])) {
+                                    $correct_response = (object)$qti_array['responseDeclaration']['correctResponse'][$key];
+                                    $qti_array['studentResponse'][$key]['answeredCorrectly'] = $submission->correctFillInTheBlank($correct_response, $response['value']);
+                                }
                             }
                         }
                         unset($qti_array['responseDeclaration']['correctResponse']);
