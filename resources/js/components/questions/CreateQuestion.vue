@@ -877,8 +877,8 @@
             label="License*"
           >
             <b-form-row>
+              <b-col cols="12" md="6" lg="4" class="m-0 p-0">
               <b-form-select v-model="questionForm.license"
-                             style="width:365px"
                              title="license"
                              size="sm"
                              class="mt-2 mr-2"
@@ -887,6 +887,7 @@
                              @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
               />
               <has-error :form="questionForm" field="license"/>
+              </b-col>
             </b-form-row>
           </b-form-group>
           <b-form-group
