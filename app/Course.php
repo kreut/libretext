@@ -133,6 +133,7 @@ class Course extends Model
             ->where('course_id', $this->id)
             ->where('fake_student', 0)
             ->delete();
+        DB::table('pending_course_invitations')->where('course_id', $this->id)->delete();
         foreach ($assignments as $assignment) {
             DeleteAssignmentDirectoryFromS3::dispatch($assignment->id);
         }
