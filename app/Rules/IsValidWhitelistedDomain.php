@@ -40,7 +40,7 @@ class IsValidWhitelistedDomain implements Rule
         if (!$section) {
             $pending_course_invitation = DB::table('pending_course_invitations')->where('access_code', $this->access_code)->first();
             if ($pending_course_invitation) {
-                $section = DB::table('sections')->where('id', $pending_course_invitation->section_id)->first();
+               return true;
             }
         }
         if (!$section) {
