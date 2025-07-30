@@ -821,7 +821,6 @@
               </b-form-row>
             </b-form-group>
           </div>
-
           <b-form-group
             label-cols-sm="3"
             label-cols-lg="2"
@@ -835,7 +834,7 @@
               <span v-show="showFolderOptions">
                 <SavedQuestionsFolders
                   ref="savedQuestionsFolders1"
-                  :key="`saved-questions-folders-key-${savedQuestionsFolderKey}`"
+                  :key="`saved-questions-folders-key-${savedQuestionsFolderKey}-${questionForm.folder_id}`"
                   class="mt-2"
                   :type="'my_questions'"
                   :init-saved-questions-folder="questionForm.folder_id"
