@@ -19,6 +19,16 @@ class DiscussionComment extends Model
     protected $guarded = [];
 
     /**
+     * @param null $value
+     * @return string
+     */
+    public function getRecordingType($value = null): string
+    {
+        $discussion_comment = $value ?: $this;
+        return $discussion_comment->recording_type === 'audio' || ($discussion_comment->file && strpos($discussion_comment->file, '.mp3') !== false) ? 'audio' : 'video';
+    }
+
+    /**
      * @param string $type
      * @param object $discuss_it_settings
      * @param $request

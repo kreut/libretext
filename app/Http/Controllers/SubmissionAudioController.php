@@ -6,8 +6,10 @@ use App\Assignment;
 use App\AssignmentFile;
 use App\AssignmentLevelOverride;
 use App\AssignmentSyncQuestion;
+use App\DiscussionComment;
 use App\Exceptions\Handler;
 use App\QuestionLevelOverride;
+use App\QuestionMediaUpload;
 use App\Score;
 use App\User;
 use \Exception;
@@ -19,6 +21,8 @@ use App\Traits\S3;
 use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\SubmissionFiles;
 use Carbon\Carbon;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +31,7 @@ use Illuminate\Support\Facades\Storage;
 
 use Illuminate\Support\Facades\Log;
 use App\Traits\DateFormatter;
+use Illuminate\View\View;
 
 class SubmissionAudioController extends Controller
 {
@@ -35,6 +40,29 @@ class SubmissionAudioController extends Controller
     use S3;
     use GeneralSubmissionPolicy;
     use SubmissionFiles;
+
+    /**
+     * @param int $assignment_id
+     * @param string $s3_key
+     * @param int $is_phone
+     * @return Application|Factory|View
+     */
+    public
+    function mediaPlayer(int $assignment_id, string $s3_key, int $is_phone)
+    {
+
+        $path = "assignments/$assignment_id/$s3_key";
+        $temporary_url = Storage::disk('s3')->temporaryUrl($path, Carbon::now()->addDays(7));
+        if (!Storage::disk('s3')->exists($path)) {
+            return view('media_player_error', ['message' => "The file $path was not found on the server."]);
+        }
+        return view('media_player', [
+            'type' => 'audio',
+            'temporary_url' => $temporary_url,
+            'vtt_file' => '',
+            'start_time' => 0,
+            'is_phone' => $is_phone]);
+    }
 
     public function logError(Request $request)
     {
@@ -46,6 +74,8 @@ class SubmissionAudioController extends Controller
      * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
+     * @param int $is_phone
+     * @param string $submission
      * @param SubmissionFile $submissionFile
      * @param Extension $extension
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
@@ -55,6 +85,8 @@ class SubmissionAudioController extends Controller
     public function store(Request                $request,
                           Assignment             $assignment,
                           Question               $question,
+                          int                    $is_phone,
+                          string                 $submission = '',
                           SubmissionFile         $submissionFile,
                           Extension              $extension,
                           AssignmentSyncQuestion $assignmentSyncQuestion): array
@@ -64,7 +96,11 @@ class SubmissionAudioController extends Controller
         $question_id = $question->id;
         $user = $request->user();
         $user_id = $user->id;
+        if ($is_phone && !$submission) {
+            $response['message'] = "You are submitting with your phone but we cannot locate the file.";
+            return $response;
 
+        }
 
         if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id)) {
             if ($can_upload_response['type'] === 'error') {
@@ -96,16 +132,16 @@ class SubmissionAudioController extends Controller
 
             }
 
-            $submission = $request->file('audio')->store("assignments/$assignment->id", 'local');
-            $submissionContents = Storage::disk('local')->get($submission);
-            Storage::disk('s3')->put($submission, $submissionContents, ['StorageClass' => 'STANDARD_IA']);
-            $mime_type = Storage::disk('s3')->mimeType( $submission);
-            Log::info($mime_type);
-            if ($mime_type !== 'audio/mpeg'){
-                $response['message']= "Your file has a mime type of $mime_type which is not an accepted mime type.";
-                return $response;
+            if (!$is_phone) {
+                $submission = $request->file('audio')->store("assignments/$assignment->id", 'local');
+                $submissionContents = Storage::disk('local')->get($submission);
+                Storage::disk('s3')->put($submission, $submissionContents, ['StorageClass' => 'STANDARD_IA']);
+                $mime_type = Storage::disk('s3')->mimeType($submission);
+                if ($mime_type !== 'audio/mpeg') {
+                    $response['message'] = "Your file has a mime type of $mime_type which is not an accepted mime type.";
+                    return $response;
+                }
             }
-
             $submission_file_data = ['type' => 'audio',
                 'submission' => basename($submission),
                 'original_filename' => '',

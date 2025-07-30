@@ -2,21 +2,27 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-file-upload`"/>
     <b-container>
-      <b-row class="upload mt-3 ml-1">
-        <h2 class="h7">
+      <div class="mt-3 ml-1">
+        <div class="h7">
           Instructions
-        </h2>
-        <p>
-          <span v-show="commentType === 'audio'">Use the built-in "ADAPT recorder" below to record and upload your audio comment directly to
-            ADAPT.
+        </div>
+        <div v-show="commentType === 'audio'">
+          <span v-show="isPhone()">
+Use your phone to record and upload your audio comment directly to ADAPT.
+          </span><span v-show="!isPhone()">
+          Use the built-in "ADAPT recorder" below to record and upload your audio
+          comment directly to
+          ADAPT.
             Otherwise, you may record your audio as an .mp3 file with another program (outside of
             ADAPT),
-            save the .mp3 file to your computer, then</span>
-          <span v-show="commentType === 'video'">Use your webcam to  record and upload your video comment directly to
-            ADAPT.
+              save the .mp3 file to your computer, then</span></div>
+        <div v-show="commentType === 'video'">Use your webcam to record and upload your video comment directly to
+          ADAPT.<span v-show="!isPhone()">
             Otherwise, you may record your video comment as an .mp4 file with another program (outside of
             ADAPT),
             save the .mp4 file to your computer, then</span>
+        </div>
+        <span v-show="!isPhone()">
           <file-upload
             ref="discussItCommentUpload"
             v-model="files"
@@ -29,8 +35,8 @@
             upload the {{ commentType === 'audio' ? '.mp3' : '.mp4' }} file
           </file-upload>
           from your computer into ADAPT.
-        </p>
-      </b-row>
+        </span>
+      </div>
       <b-row class="upload mt-3 ml-1">
         <div v-if="files.length && (preSignedURL !== '')">
           <div v-for="file in files" :key="file.id">
@@ -80,6 +86,7 @@ import ErrorMessage from './ErrorMessage.vue'
 import axios from 'axios'
 import { fixInvalid } from '../helpers/accessibility/FixInvalid'
 import AllFormErrors from './AllFormErrors.vue'
+import { isPhone } from '../helpers/isPhone'
 
 export default {
   name: 'DiscussItCommentUpload',
@@ -112,6 +119,7 @@ export default {
     orderedMediaUploads: []
   }),
   methods: {
+    isPhone,
     initStartUpload () {
       this.allFormErrors = []
       this.$refs.discussItCommentUpload.active = true

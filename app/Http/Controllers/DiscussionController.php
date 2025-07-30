@@ -9,6 +9,7 @@ use App\DiscussionComment;
 use App\DiscussionGroup;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreDiscussionRequest;
+use App\Jobs\InitConvertToMP4;
 use App\Jobs\InitProcessTranscribe;
 use App\Question;
 use App\QuestionMediaUpload;
@@ -16,18 +17,10 @@ use App\Score;
 use App\Submission;
 use App\SubmissionFile;
 use App\User;
-use Carbon\Carbon;
-use DOMDocument;
 use Exception;
-use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\View\View;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
+use Illuminate\Support\Facades\Log;
 
 class DiscussionController extends Controller
 {
@@ -73,6 +66,7 @@ class DiscussionController extends Controller
             }
             $data = $request->validated();
             $type = $request->type;
+            $recording_type = $request->recording_type ? $request->recording_type : null;
             DB::beginTransaction();
             if (!$discussion_id) {
                 if ($request->user()->role === 3) {
@@ -93,16 +87,18 @@ class DiscussionController extends Controller
             $discussionComment->discussion_id = $discussion->id;
             $discussionComment->user_id = $request->user()->id;
             $discussionComment->{$type} = $data[$type];
+            $discussionComment->recording_type = $recording_type;
 
             $satisfied_requirement = $discussionComment->satisfiedRequirement($type, $discuss_it_settings, $request);
 
             $discussionComment->satisfied_requirement = $satisfied_requirement;
             $discussionComment->save();
-            if ($type === 'file') {
+            if ($type === 'file' && !app()->environment('local')) {
                 InitProcessTranscribe::dispatch($data['file'], 'discussion_comment');
             }
-
-
+            if ($recording_type === 'video' && str_contains($data['file'], '.webm')) {
+                InitConvertToMP4::dispatch($discussionComment->id, $assignment->id);
+            }
             $discussion_comment_submission_results = $discussionComment->satisfiedRequirements($assignment, $question->id, $request->user()->id, $discussion, $assignmentSyncQuestion);
             $discussionComment->updateScore($discuss_it_settings,
                 $discussion_comment_submission_results,

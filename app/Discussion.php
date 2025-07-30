@@ -89,6 +89,7 @@ class Discussion extends Model
                 'discussion_comments.id AS discussion_comments_id',
                 'discussion_comments.user_id AS discussion_comments_user_id',
                 'discussion_comments.id AS comment_id',
+                'discussion_comments.recording_type AS recording_type',
                 'discussion_comments.text',
                 'discussion_comments.file',
                 'discussion_comments.transcript',
@@ -119,13 +120,15 @@ class Discussion extends Model
                     'comments' => []
                 ];
             }
+            $discussionComment = new DiscussionComment();
             $discussions[$discussion_id]['comments'][] = [
                 'id' => $value->comment_id,
                 'created_by_user_id' => $value->discussion_comments_user_id,
                 'created_by_name' => $enrolled_students_by_user_id[$value->discussion_comments_user_id],
                 'text' => $question->addTimeToS3Images($value->text, $htmlDom, false),
                 'file' => $value->file,
-                'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
+                'recording_type' => $discussionComment->getRecordingType($value),
+            'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
                 're_processed_transcript' => $value->re_processed_transcript,
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_user_id])];
             if (!isset($discussions_by_user_id[$value->discussion_comments_user_id])) {

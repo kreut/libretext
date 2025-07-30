@@ -247,7 +247,7 @@ import NumericalViewer from './viewers/NumericalViewer'
 import BowTieViewer from './viewers/BowTieViewer'
 import MatrixMultipleChoiceViewer from './viewers/MatrixMultipleChoiceViewer'
 import MultipleResponseSelectAllThatApplyOrSelectNViewer
-  from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
+from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
 import MultipleResponseGroupingViewer from './viewers/MultipleResponseGroupingViewer'
 import DropDownTableViewer from './viewers/DropDownTableViewer'
 import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'

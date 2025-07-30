@@ -48,7 +48,7 @@
         {{ discussionCommentSubmissionResults }}
         {{ completionRequirements }}
       </div>
-      <table  v-if="+discussItSettingsForm.completion_criteria" class="table table-striped table-responsive">
+      <table v-if="+discussItSettingsForm.completion_criteria" class="table table-striped table-responsive">
         <thead>
         <tr>
           <th scope="col">
@@ -177,10 +177,10 @@
       <div v-if="activeDiscussionComment.file">
         <iframe
           v-resize="{ log: false }"
-          :src="`/discussion-comments/media-player/filename/${activeDiscussionComment.file}`"
+          :src="`/discussion-comments/media-player/filename/${activeDiscussionComment.file}/is-phone/${+this.isPhone()}`"
           width="100%"
           frameborder="0"
-          allowfullscreen=""
+          allowfullscreen
         />
       </div>
       <template #modal-footer>
@@ -201,23 +201,23 @@
              :title="`Comment by ${activeDiscussionComment.created_by_name} at ${activeDiscussionComment.created_at}`"
              size="lg"
              no-close-on-backdrop
-             :hide-footer="reRecording && !stoppedAudioRecording"
              @shown="currentFile = ''"
+             @hidden="reRecording=false"
     >
       <iframe v-if="!reRecording"
               :key="`transcript-key-${listenOrViewCommentKey}`"
               v-resize="{ log: false }"
-              :src="`/discussion-comments/media-player/discussion-comment-id/${activeDiscussionComment.id}`"
+              :src="`/discussion-comments/media-player/discussion-comment-id/${activeDiscussionComment.id}/is-phone/${+this.isPhone()}`"
               width="100%"
               frameborder="0"
-              allowfullscreen=""
+              allowfullscreen
       />
       <DiscussItSatisfiesRequirement v-if="reRecording && Boolean(+discussItSettingsForm.completion_criteria)"
                                      ref="discussItSatisfiesRequirement"
                                      :key="`discussItSatisfiesRequirement-${discussItSatisfiesRequirementKey}`"
                                      :milliseconds-time-until-requirement-satisfied="millisecondsTimeUntilRequirementSatisfied"
                                      :human-readable-time-until-requirement-satisfied="humanReadableTimeUntilRequirementSatisfied"
-                                     :comment-type="'audio'"
+                                     :comment-type="commentType"
                                      :show-satisfies-requirement-timer="showSatisfiesRequirementTimer"
                                      @setRequirementSatisfied="setRequirementSatisfied"
       />
@@ -230,21 +230,34 @@
                                 :question-id="questionId"
                                 @saveUploadedAudioVideoComment="saveUploadedAudioVideoComment"
         />
-        <audio-recorder
-          v-if="reRecording"
-          id="discuss-it-recorder"
-          ref="recorder"
-          :upload-url="`/api/discussion-comments/assignment/${assignmentId}/question/${questionId}/audio`"
-          :attempts="1"
-          :time="3"
-          class="m-auto"
-          :show-download-button="false"
-          :after-recording="afterRecording"
-          :before-recording="beforeRecording"
-          :successful-upload="successfulRecordingUpload"
-          :failed-upload="failedRecordingUpload"
-          :mic-failed="micFailed"
-        />
+        <div v-if="isPhone()">
+          <NativeAudioVideoRecorder :key="`new-comment-${commentType}`"
+                                    :recording-type="'audio'"
+                                    v-if="reRecording"
+                                    :assignment-id="+assignmentId"
+                                    @saveComment="saveComment"
+                                    @startVideoRecording="startVideoRecording"
+                                    @stopVideoRecording="stopVideoRecording"
+                                    @updateDiscussionCommentVideo="updateDiscussionCommentVideo"
+          />
+        </div>
+        <div v-else>
+          <audio-recorder
+            v-if="reRecording"
+            id="discuss-it-recorder"
+            ref="recorder"
+            :upload-url="`/api/discussion-comments/assignment/${assignmentId}/question/${questionId}/audio`"
+            :attempts="1"
+            :time="3"
+            class="m-auto"
+            :show-download-button="false"
+            :after-recording="afterRecording"
+            :before-recording="beforeRecording"
+            :successful-upload="successfulRecordingUpload"
+            :failed-upload="failedRecordingUpload"
+            :mic-failed="micFailed"
+          />
+        </div>
       </div>
       <div v-if="commentType === 'video'">
         <DiscussItCommentUpload v-if="reRecording"
@@ -254,13 +267,14 @@
                                 :question-id="questionId"
                                 @saveUploadedAudioVideoComment="saveUploadedAudioVideoComment"
         />
-        <WebCam v-if="reRecording"
-                key="update-video-comment"
-                :assignment-id="+assignmentId"
-                :active-discussion-comment="activeDiscussionComment"
-                @saveComment="saveComment"
-                @startVideoRecording="startVideoRecording"
-                @stopVideoRecording="stopVideoRecording"
+        <NativeAudioVideoRecorder v-if="reRecording"
+                                  key="update-video-comment"
+                                  :recording-type="'video'"
+                                  :assignment-id="+assignmentId"
+                                  :active-discussion-comment="activeDiscussionComment"
+                                  @saveComment="saveComment"
+                                  @startVideoRecording="startVideoRecording"
+                                  @stopVideoRecording="stopVideoRecording"
         />
       </div>
       <div v-if="user.role === 2 && !reRecording">
@@ -824,27 +838,39 @@
                                     :question-id="questionId"
                                     @saveUploadedAudioVideoComment="saveUploadedAudioVideoComment"
             />
-            <audio-recorder
-              id="discuss-it-recorder"
-              ref="recorder"
-              :upload-url="`/api/discussion-comments/assignment/${assignmentId}/question/${questionId}/audio`"
-              :attempts="1"
-              :time="3"
-              class="m-auto"
-              :show-download-button="false"
-              :after-recording="afterRecording"
-              :before-recording="beforeRecording"
-              :successful-upload="successfulRecordingUpload"
-              :failed-upload="failedRecordingUpload"
-              :mic-failed="micFailed"
-            />
+            <div v-if="isPhone()">
+              <NativeAudioVideoRecorder :key="`new-comment-${commentType}`"
+                                        :recording-type="'audio'"
+                                        :assignment-id="+assignmentId"
+                                        @saveComment="saveComment"
+                                        @startVideoRecording="startVideoRecording"
+                                        @stopVideoRecording="stopVideoRecording"
+                                        @updateDiscussionCommentVideo="updateDiscussionCommentVideo"
+              />
+            </div>
+            <div v-else>
+              <audio-recorder
+                id="discuss-it-recorder"
+                ref="recorder"
+                :upload-url="`/api/discussion-comments/assignment/${assignmentId}/question/${questionId}/audio`"
+                :attempts="1"
+                :time="3"
+                class="m-auto"
+                :show-download-button="false"
+                :after-recording="afterRecording"
+                :before-recording="beforeRecording"
+                :successful-upload="successfulRecordingUpload"
+                :failed-upload="failedRecordingUpload"
+                :mic-failed="micFailed"
+              />
+            </div>
           </div>
           <div v-if="discussionCommentAudio">
             <iframe v-resize="{ log: false }"
-                    :src="`/discussion-comments/media-player/discussion-comment-id/${activeDiscussionCommentId}`"
+                    :src="`/discussion-comments/media-player/discussion-comment-id/${activeDiscussionCommentId}/is-phone/${+this.isPhone()}`"
                     width="100%"
                     frameborder="0"
-                    allowfullscreen=""
+                    allowfullscreen
             />
             <div class="pb-4">
               <b-button v-if="false"
@@ -865,7 +891,7 @@
             :key="`discussItSatisfiesRequirement-${discussItSatisfiesRequirementKey}`"
             :milliseconds-time-until-requirement-satisfied="millisecondsTimeUntilRequirementSatisfied"
             :human-readable-time-until-requirement-satisfied="humanReadableTimeUntilRequirementSatisfied"
-            :comment-type="'audio'"
+            :comment-type="commentType"
             :show-satisfies-requirement-timer="showSatisfiesRequirementTimer"
             @setRequirementSatisfied="setRequirementSatisfied"
           />
@@ -875,12 +901,13 @@
                                   :question-id="questionId"
                                   @saveUploadedAudioVideoComment="saveUploadedAudioVideoComment"
           />
-          <WebCam :key="`new-comment-${commentType}`"
-                  :assignment-id="+assignmentId"
-                  @saveComment="saveComment"
-                  @startVideoRecording="startVideoRecording"
-                  @stopVideoRecording="stopVideoRecording"
-                  @updateDiscussionCommentVideo="updateDiscussionCommentVideo"
+          <NativeAudioVideoRecorder :key="`new-comment-${commentType}`"
+                                    :recording-type="'video'"
+                                    :assignment-id="+assignmentId"
+                                    @saveComment="saveComment"
+                                    @startVideoRecording="startVideoRecording"
+                                    @stopVideoRecording="stopVideoRecording"
+                                    @updateDiscussionCommentVideo="updateDiscussionCommentVideo"
           />
         </div>
       </div>
@@ -1184,17 +1211,19 @@ import AllFormErrors from '../AllFormErrors.vue'
 import ErrorMessage from '../ErrorMessage.vue'
 import { getTooltipTarget } from '../../helpers/Tooptips'
 import UserInitials from '../UserInitials.vue'
-import WebCam from '../WebCam.vue'
 import CompletedIcon from '../CompletedIcon.vue'
 import DiscussItSatisfiesRequirement from '../DiscussItSatisfiesRequirement.vue'
 import { fixCKEditor, updateModalToggleIndex } from '~/helpers/accessibility/fixCKEditor'
 import CKEditor from 'ckeditor4-vue'
 import Transcript from '../Transcript.vue'
 import DiscussItCommentUpload from '../DiscussItCommentUpload.vue'
+import NativeAudioVideoRecorder from '../NativeAudioVideoRecorder.vue'
+import { isPhone } from '../../helpers/isPhone'
 
 export default {
   name: 'DiscussItViewer',
   components: {
+    NativeAudioVideoRecorder,
     DiscussItCommentUpload,
     Transcript,
     DiscussItSatisfiesRequirement,
@@ -1202,7 +1231,6 @@ export default {
     ErrorMessage,
     AllFormErrors,
     UserInitials,
-    WebCam,
     VuePdfEmbed,
     ckeditor: CKEditor.component
   },
@@ -1389,6 +1417,7 @@ export default {
     }
   },
   methods: {
+    isPhone,
     updateModalToggleIndex,
     async updateGroup (group) {
       this.group = group
@@ -1554,7 +1583,7 @@ export default {
     },
     listenOrViewCommentText (comment) {
       if (comment.file) {
-        return comment.file.includes('mp3') ? 'Listen to Comment' : 'View Video'
+        return comment.recording_type === 'audio' ? 'Listen to Comment' : 'View Video'
       } else {
         return ''
       }
@@ -1712,14 +1741,7 @@ export default {
     listenOrViewComment (comment) {
       this.activeDiscussionComment = comment
       this.fileRequirementSatisfied = false
-      if (comment.file.endsWith('.mp3')) {
-        this.commentType = 'audio'
-      } else if (comment.file.endsWith('.webm') || comment.file.endsWith('.mp4')) {
-        this.commentType = 'video'
-      } else {
-        this.$noty.error('This file does not have an .mp3 or .mp4 extension.')
-        return false
-      }
+      this.commentType = comment.recording_type
       this.$bvModal.show('modal-listen-or-view-comment')
     },
     confirmDeleteComment (test) {
@@ -1810,7 +1832,7 @@ export default {
     getMediaUploadId () {
       return this.questionMediaUploads.find(mediaUpload => mediaUpload.order === this.currentMediaUploadOrder).id
     },
-    async saveComment (file = '') {
+    async saveComment (file = '', recordingType = '') {
       if (this.currentFile) {
         // hack to stop the audio recorder from double recording
         return
@@ -1827,8 +1849,17 @@ export default {
         : `/api/discussions/assignment/${this.assignmentId}/question/${this.questionId}/${mediaUploadId}/${discussionId}/${group}`
       this.commentForm.type = this.commentType
       if (file || ['audio', 'video'].includes(this.commentType)) {
+        if (file) {
+          if (file.endsWith('.mp3')) {
+            recordingType = 'audio'
+          }
+          if (file.endsWith('.mp4')) {
+            recordingType = 'video'
+          }
+        }
         this.commentForm.file = file
         this.commentForm.type = file ? 'file' : this.commentType
+        this.commentForm.recording_type = recordingType
         this.commentForm.file_requirement_satisfied = this.fileRequirementSatisfied
       }
 
