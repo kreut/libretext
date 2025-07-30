@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     .sketcher {
-      display: inline-block;
-      width: 40em;
-      height: 32em;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 3;
       border: 2px solid #555555;
     }
   </style>
