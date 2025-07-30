@@ -10,6 +10,7 @@ use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateDiscussionRequest;
+use App\Jobs\InitConvertToMP4;
 use App\Jobs\InitProcessTranscribe;
 use App\Question;
 use App\QuestionMediaUpload;
@@ -25,14 +26,209 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use PHPUnit\TextUI\Help;
+use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
+use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
+use MiladRahimi\Jwt\Generator;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DiscussionCommentController extends Controller
 {
+
+    /**
+     * @param Request $request
+     * @param DiscussionComment $discussionComment
+     * @return void
+     * @throws Exception
+     */
+    public function updateMp4ConversionStatus(Request $request, DiscussionComment $discussionComment)
+    {
+        try {
+            $num_updated = $discussionComment->where('file', $request->filename)->update([
+                'mp4_status' => $request->mp4_status,
+                'mp4_message' => $request->mp4_message]);
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
+    }
+
+
+    /**
+     * @param Request $request
+     * @param QuestionMediaUpload $questionMediaUpload
+     * @return void
+     */
+    public function processConvertWebmToMp4(Request $request, QuestionMediaUpload $questionMediaUpload): void
+    {
+        try {
+            $filename = $request->filename;
+            $environment = $request->environment;
+            DB::table('pending_mp4_conversions')->insert(['filename' => $filename,
+                'environment' => $environment,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now()]);
+
+            switch ($environment) {
+                case('production'):
+                    $disk = 'production_s3';
+                    break;
+                case('staging'):
+                    $disk = 'staging_s3';
+                    break;
+                case('dev'):
+                    $disk = 's3';
+                    break;
+                default:
+                    throw new Exception("$environment is not set up in the mp4 conversion endpoint.");
+            }
+            $adapter = Storage::disk($disk)->getDriver()->getAdapter(); // Get the filesystem adapter
+            $client = $adapter->getClient(); // Get the aws client
+            $bucket = $adapter->getBucket(); // Get the current bucket
+            // Download the file from S3 and save it locally
+            $local_path = storage_path('app/' . $questionMediaUpload->getDir() . "/" . $filename);
+            $client->getObject([
+                'Bucket' => $bucket,
+                'Key' => $questionMediaUpload->getDir() . "/" . $filename,
+                'SaveAs' => $local_path, // Save the file locally in the storage/app directory
+            ]);
+
+            $path_info = pathinfo($local_path);
+            $output_filename = $path_info['dirname'] . '/' . $path_info['filename'] . '.mp4';
+
+// Step 1: Get rotation metadata
+            exec("ffprobe -v error -select_streams v:0 -show_entries stream_tags=rotate -of default=noprint_wrappers=1:nokey=1 \"$local_path\"", $rotation_output);
+            $rotation = !empty($rotation_output) ? (int)$rotation_output[0] : 0;
+
+// Step 2: Get dimensions
+            exec("ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of default=noprint_wrappers=1 \"$local_path\"", $dimension_output);
+            $width = $height = null;
+            foreach ($dimension_output as $line) {
+                if (strpos($line, 'width=') === 0) {
+                    $width = (int)str_replace('width=', '', $line);
+                } elseif (strpos($line, 'height=') === 0) {
+                    $height = (int)str_replace('height=', '', $line);
+                }
+            }
+
+// Step 3: Decide if we need to rotate
+            $videoFilter = '';
+            $shouldRotate = false;
+
+            if ($rotation === 90) {
+                $videoFilter = '-vf "transpose=1"';
+                $shouldRotate = true;
+            } elseif ($rotation === 180) {
+                $videoFilter = '-vf "transpose=1,transpose=1"';
+                $shouldRotate = true;
+            } elseif ($rotation === 270) {
+                $videoFilter = '-vf "transpose=2"';
+                $shouldRotate = true;
+            } elseif ($rotation === 0 && $width !== null && $height !== null && $width > $height) {
+                // No rotate tag, but landscape pixels – likely needs to be rotated
+                $videoFilter = '-vf "transpose=1"';
+                $shouldRotate = true;
+            }
+
+// Step 4: Build ffmpeg command
+            if ($shouldRotate) {
+                $cmd = "ffmpeg -i \"$local_path\" $videoFilter -metadata:s:v:0 rotate=0 -c:v libx264 -crf 23 -preset fast -c:a aac -movflags +faststart -y \"$output_filename\"";
+            } else {
+                $cmd = "ffmpeg -i \"$local_path\" -c:v libx264 -crf 23 -preset fast -c:a aac -movflags +faststart -y \"$output_filename\"";
+            }
+
+// Step 5: Execute
+            exec($cmd, $ffmpegOutput, $returnVar);
+
+
+            if ($ffmpegOutput) {
+                throw new Error("FFmpeg failed: " . implode("\n", $ffmpegOutput));
+            } else {
+                $client->putObject([
+                    'Bucket' => $bucket,
+                    'Key' => $questionMediaUpload->getDir() . "/" . basename($output_filename)
+                ]);
+                $client->putObject([
+                    'Bucket' => $bucket,
+                    'Key' => $questionMediaUpload->getDir() . "/" . basename($output_filename),
+                    'SourceFile' => $output_filename,
+                    'ContentType' => 'video/mp4',  // Set the content type explicitly
+                ]);
+            }
+            $this->sendUpdatedMP4ConversionStatus($environment, $filename, "completed", '');
+
+        } catch (Exception $e) {
+            $this->sendUpdatedMP4ConversionStatus($request->environment, $filename, 'error', $e->getMessage());
+        }
+    }
+
+    public function sendUpdatedMP4ConversionStatus(string $environment,
+                                                   string $filename,
+                                                   string $status,
+                                                   string $message)
+    {
+        try {
+            $response = null;
+            switch ($environment) {
+                case('production'):
+                    $domain = "adapt.libretexts.org";
+                    break;
+                case('staging'):
+                    $domain = "staging-adapt.libretexts.org";
+                    break;
+                case('dev'):
+                    $domain = "dev.adapt.libretexts.org";
+                    break;
+                default:
+                    throw new Exception ("There is no domain for $environment so cannot update the transcription status.");
+            }
+
+            $key_secret = DB::table('key_secrets')->where('key', 'adapt_transcribe')->first();
+            if (!$key_secret) {
+                throw new Exception("No key_secret for adapt_transcribe exists.");
+            }
+
+            $hmac_key = new HmacKey($key_secret->secret);
+            $signer = new HS256($hmac_key);
+            $generator = new Generator($signer);
+
+            $jwt = $generator->generate(['convert_to_mp4' => 1]);
+
+            DB::table('pending_mp4_conversions')
+                ->where('environment', $environment)
+                ->where('filename', $filename)
+                ->update(['status' => $status,
+                    'message' => $message,
+                    'updated_at' => now()]);
+            $response = Http::patch("https://$domain/api/discussion-comment/mp4-conversion-status", [
+                'filename' => $filename,
+                'mp4_status' => $status,
+                'mp4_message' => $message
+            ]);
+
+            if (!$response->successful()) {
+                throw new Exception ("Unable to post an update to mp4-conversion-status; check the dev database");
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $message = $response && $response->body() ? $response->body() : $e->getMessage();
+            DB::table('pending_mp4_conversions')
+                ->where('filename', $filename)
+                ->where('filename', $filename)
+                ->update(
+                    ['status' => 'error',
+                        'message' => $message,
+                        'updated_at' => now()]
+                );
+
+        }
+    }
+
     /**
      * @param DiscussionComment $discussionComment
      * @param QuestionMediaUpload $questionMediaUpload
@@ -451,8 +647,18 @@ class DiscussionCommentController extends Controller
 
             $discussionComment->{$type} = $data[$type];
             $discussionComment->created_at = now();
+
+            Log::info(json_encode($request->all()));
             if ($type === 'file') {
-                InitProcessTranscribe::dispatch($data['file'], 'discussion_comment');
+                $discussionComment->file = $request->file;
+                $discussionComment->save();
+            }
+            if ($type === 'file' && !app()->environment('local')) {
+                InitProcessTranscribe::dispatch($request->file, 'discussion_comment');
+            }
+
+            if ($discussionComment->recording_type === 'video' && str_contains($request->file, '.webm')) {
+                InitConvertToMP4::dispatch($discussionComment->id, $assignment->id);
             }
             if ($satisfied_requirement) {
                 $discussionComment->satisfied_requirement = 1;
@@ -483,19 +689,20 @@ class DiscussionCommentController extends Controller
     /**
      * @param string $key
      * @param string $key_id
+     * @param int $is_phone
      * @param QuestionMediaUpload $questionMediaUpload
      * @return Application|Factory|View
      * @throws Exception
      */
     public
-    function mediaPlayer(string $key, string $key_id, QuestionMediaUpload $questionMediaUpload)
+    function mediaPlayer(string $key, string $key_id, int $is_phone, QuestionMediaUpload $questionMediaUpload)
     {
 
         switch ($key) {
             case('discussion-comment-id'):
                 $discussionComment = DiscussionComment::find($key_id);
                 $file = $discussionComment->file;
-                $type = strpos($file, '.mp3') !== false ? 'audio' : 'video';
+                $type = $discussionComment->getRecordingType();
                 break;
             case('filename'):
                 $type = 'video';
@@ -513,6 +720,11 @@ class DiscussionCommentController extends Controller
             $h = new Handler(app());
             $h->report($e);
         }
+        $mp4_file = $questionMediaUpload->getDir() . '/' . pathinfo($file, PATHINFO_FILENAME) . '.mp4';
+        $mp4_temporary_url = Storage::disk('s3')->exists($mp4_file)
+            ? Storage::disk('s3')->temporaryUrl($mp4_file, Carbon::now()->addDays(7))
+            : '';
+
         $vtt_file = $vtt_file_exists
             ? Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$vtt_file", Carbon::now()->addDays(7))
             : '';
@@ -520,6 +732,11 @@ class DiscussionCommentController extends Controller
         if (!Storage::disk('s3')->exists("{$questionMediaUpload->getDir()}/$file")) {
             return view('media_player_error', ['message' => "The file {$questionMediaUpload->getDir()}/$file was not found on the server."]);
         }
-        return view('media_player', ['type' => $type, 'temporary_url' => $temporary_url, 'vtt_file' => $vtt_file, 'start_time' => 0]);
+        return view('media_player', ['type' => $type,
+            'temporary_url' => $temporary_url,
+            'mp4_temporary_url' => $mp4_temporary_url,
+            'vtt_file' => $vtt_file,
+            'start_time' => 0,
+            'is_phone' => $is_phone]);
     }
 }

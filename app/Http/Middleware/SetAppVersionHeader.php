@@ -20,9 +20,8 @@ class SetAppVersionHeader
     {
         $response = $next($request);
         //$app_version = env('VAPOR_COMMIT_HASH') ? env('VAPOR_COMMIT_HASH') : '1.0';
-        if(!$response instanceof StreamedResponse) {
-            //https://stackoverflow.com/questions/72060913/call-to-undefined-method-symfony-component-httpfoundation-streamedresponsehead
-            $response->header('appversion', '3.45');
+        if (!$response instanceof StreamedResponse) {
+            $response->header('appversion', '3.95');
         }
         return $response;
     }

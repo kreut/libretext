@@ -75,7 +75,7 @@
         <iframe
           v-if="comment.file"
           v-resize="{ log: false }"
-          :src="`/discussion-comments/media-player/discussion-comment-id/${comment.id}`"
+          :src="`/discussion-comments/media-player/discussion-comment-id/${comment.id}/is-phone/0`"
           width="100%"
           frameborder="0"
           allowfullscreen=""
@@ -559,7 +559,7 @@
                               <iframe
                                 v-if="comment.file"
                                 v-resize="{ log: false }"
-                                :src="`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}`"
+                                :src="`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`"
                                 width="100%"
                                 frameborder="0"
                                 allowfullscreen=""

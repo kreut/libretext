@@ -26,6 +26,9 @@ Route::get('/courses/commons-courses-and-assignments-by-course', 'CourseControll
 
 Route::get('/auto-provision', 'OIDCController@autoProvision');
 Route::post('/question-media/init-transcribe', 'QuestionMediaController@initTranscribe');
+Route::post('/discussion-comment/convert-to-mp4', 'DiscussionCommentController@initConvertToMp4');
+Route::post('/discussion-comment/process-convert-to-mp4', 'DiscussionCommentController@processConvertWebmToMp4');
+Route::patch('/discussion-comment/mp4-conversion-status', 'DiscussionCommentController@updateMp4ConversionStatus');
 Route::patch('/question-media/transcribe-status', 'QuestionMediaController@updateTranscribeStatus');
 Route::post('/enrollments/update-license-status', 'EnrollmentController@updateLicenseStatus');
 Route::get('/enrollments/latest-enrollment-date', 'EnrollmentController@latestEnrollmentDate');
@@ -154,7 +157,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
 
     Route::post('/lti-launch/assignment/{assignment}/create-lti-launch-if-needed', 'LtiLaunchController@createLtiLaunchIfNeeded');
-
 
 
     Route::post('/access-code', 'AccessCodeController@store');
@@ -457,10 +459,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::delete('/rubric-templates/{rubricTemplate}', 'RubricTemplateController@destroy');
     Route::get('/rubric-templates', 'RubricTemplateController@index');
     Route::post('/rubric-templates/validate-rubric-items', 'RubricTemplateController@validateRubricItems');
-
-
-
-
 
 
     Route::post('/sso/finish-registration', 'Auth\SSOController@finishRegistration');
@@ -774,7 +772,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
 
     Route::post('/submission-audios/audio-feedback/{user}/{assignment}/{question}', 'SubmissionAudioController@storeAudioFeedback');
-    Route::post('/submission-audios/{assignment}/{question}', 'SubmissionAudioController@store');
+    Route::post('/submission-audios/{assignment}/{question}/{is_phone}/{submission?}', 'SubmissionAudioController@store');
     Route::post('/submission-audios/error', 'SubmissionAudioController@logError');
 
 
@@ -879,7 +877,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/rubric-points-breakdown/assignment/{assignment}/question/{question}/exists', 'RubricPointsBreakdownController@existsByAssignmentQuestion');
 
 
-
     Route::get('/can-give-up/assignments/{assignment}/questions/{question}/validate', 'CanGiveUpController@validateCanGiveUp');
 
 
@@ -894,7 +891,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/invitations/co-instructor', 'InvitationController@emailCoInstructorInvitation');
     Route::post('/co-instructors', 'CoInstructorController@store');
     Route::delete('/co-instructors/course/{course}/co-instructor/{user}', 'CoInstructorController@destroy');
-
 
 
     Route::post('/graders/', 'GraderController@store');
