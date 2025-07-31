@@ -30,6 +30,7 @@ use App\Rules\IsValidQtiPrompt;
 use App\Rules\IsValidRubricItems;
 use App\Rules\IsValidRubricTemplate;
 use App\Rules\IsValidSelectChoice;
+use App\Rules\IsValidSketcherStructure;
 use App\Rules\MatrixMultipleResponseColumns;
 use App\Rules\MatrixMultipleResponseRows;
 use App\Rules\MultipleResponseSelectPrompt;
@@ -153,12 +154,13 @@ class StoreQuestionRequest extends FormRequest
                                 case('submit_molecule'):
                                 case('marker'):
                                     $rules['qti_prompt'] = ['required'];
-                                    $rules['solution_structure'] = ['required'];
-                                    if ($qti_array['questionType'] === 'marker' && $qti_array['partialCredit'] === 'inclusive'){
-                                        $rules['atoms_and_bonds'] =['required', new AtomsAndBonds()];
+                                    $rules['solution_structure'] = ['required', new isValidSketcherStructure()];
+                                    if ($qti_array['questionType'] === 'marker' && $qti_array['partialCredit'] === 'inclusive') {
+                                        $rules['atoms_and_bonds'] = ['required', new AtomsAndBonds()];
                                     }
                                     break;
-                                case('highlight_table'):
+                                case
+                                ('highlight_table'):
                                     $rules['colHeaders'] = ['required', new HighlightTableHeaders()];
                                     $rules['rows'] = ['required', new HighlightTableRows()];
                                     break;
@@ -278,7 +280,8 @@ class StoreQuestionRequest extends FormRequest
                     }
                 }
                 break;
-            case('exposition'):
+            case
+            ('exposition'):
                 $rules['non_technology_text'] = 'required';
                 $rules['technology'] = ['required', Rule::in(['text'])];
         }
