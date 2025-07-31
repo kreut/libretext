@@ -37,7 +37,7 @@
       </b-alert>
     </div>
     <b-alert v-if="user.role === 2
-               && questionType === 'multiple_choice'
+              && ['multiple_choice','select_choice'].includes(questionType)
                && JSON.parse(qtiJson).randomizeOrder === 'no'"
              show
              variant="info"
@@ -337,7 +337,7 @@ export default {
 
   },
   data: () => ({
-    structureImageUploaderKey: 0,
+      structureImageUploaderKey: 0,
       confirmedStructure: false,
       structureS3Key: '',
       solutionStructure: '',
@@ -459,7 +459,7 @@ export default {
   },
   methods: {
     formatQuestionMediaPlayer,
-    updateStructureImageUploaderKey() {
+    updateStructureImageUploaderKey () {
       this.structureImageUploaderKey++
     },
     setStructureS3Key (s3Key) {
@@ -495,13 +495,10 @@ export default {
       }
       if (!this.showQtiAnswer &&
         this.user.role === 2 &&
-        ['select_choice', 'drop_down_rationale', 'multiple_answers', 'drop_down_rationale_triad'].includes(this.questionType)) {
+        (['drop_down_rationale', 'multiple_answers', 'drop_down_rationale_triad'].includes(this.questionType) ||
+        ((['multiple_choice', 'select_choice'].includes(this.questionType) &&
+          JSON.parse(this.qtiJson).randomizeOrder === 'yes'))) || (this.questionType === 'select_choice' && !JSON.parse(this.qtiJson).randomizeOrder)) {
         return true
-      }
-      if (!this.showQtiAnswer &&
-        this.user.role === 2 &&
-        this.questionType === 'multiple_choice') {
-        return JSON.parse(this.qtiJson).randomizeOrder !== 'no'
       }
       return false
     },

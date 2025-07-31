@@ -6,81 +6,115 @@
       hide-footer
     >
       <b-alert show variant="info">
-        <span v-html="selectChoiceIdentifierError"/>
+        <span v-html="selectChoiceIdentifierError" />
       </b-alert>
     </b-modal>
     <div class="text-danger">
-      <span v-html="selectChoiceMultipleMatchError"/>
+      <span v-html="selectChoiceMultipleMatchError" />
     </div>
+    <b-form-group
+      label-cols-sm="3"
+      label-cols-lg="2"
+      label-for="select_choice_randomize_order"
+    >
+      <template v-slot:label>
+        Randomize Order*
+        <QuestionCircleTooltip id="randomize-order-tooltip" />
+        <b-tooltip target="randomize-order-tooltip"
+                   delay="250"
+                   triggers="hover focus"
+        >
+          By default, students will receive a randomized ordering of the responses within each dropdown. If you would
+          like to maintain the
+          order that you
+          provide below, then choose "No".
+        </b-tooltip>
+      </template>
+      <b-form-row>
+        <b-form-select
+          id="select_choice_randomize_order"
+          v-model="randomizeOrder"
+          style="width:100px"
+          size="sm"
+          inline
+          class="mt-2"
+          :options="randomizeOrderOptions"
+          @change="setRandomizeOrder($event)"
+        />
+        <ErrorMessage v-if="questionForm.errors.has('qti_randomize_order')"
+                      :message="'Please select one of the options.'"
+        />
+      </b-form-row>
+    </b-form-group>
     <table
       v-if="Object.keys(qtiJson.inline_choice_interactions).length"
       class="table table-striped"
     >
       <thead>
-      <tr>
-        <th scope="col">
-          Identifier
-        </th>
-        <th scope="col">
-          Choices
-        </th>
-      </tr>
+        <tr>
+          <th scope="col">
+            Identifier
+          </th>
+          <th scope="col">
+            Choices
+          </th>
+        </tr>
       </thead>
       <tbody>
-      <tr v-for="(selectChoice,index) in selectChoices" :key="`selectChoices-${index}`">
-        <td>
-          <span v-html="selectChoice"/>
-          <ErrorMessage v-if="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"
-                        :message="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"
-          />
-        </td>
-        <td>
-          <ul v-for="(choice, choiceIndex) in qtiJson.inline_choice_interactions[selectChoice]"
-              :key="`selectChoice-${choiceIndex}`"
-              style="padding-left:0"
-          >
-            <li v-if="qtiJson.inline_choice_interactions[selectChoice][choiceIndex]" style="list-style:none;">
-              <b-input-group class="pb-3">
-                <b-button v-if="choiceIndex === 0"
-                          class="text-success"
-                          variant="outline-secondary"
-                >
-                  <b-icon-check scale="1.5"/>
-                </b-button>
-                <b-input-group-prepend>
-                  <b-button v-if="choiceIndex !== 0"
-                            class="font-weight-bold text-danger"
+        <tr v-for="(selectChoice,index) in selectChoices" :key="`selectChoices-${index}`">
+          <td>
+            <span v-html="selectChoice" />
+            <ErrorMessage v-if="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"
+                          :message="questionForm.errors.get(`qti_select_choice_${selectChoice}`)"
+            />
+          </td>
+          <td>
+            <ul v-for="(choice, choiceIndex) in qtiJson.inline_choice_interactions[selectChoice]"
+                :key="`selectChoice-${choiceIndex}`"
+                style="padding-left:0"
+            >
+              <li v-if="qtiJson.inline_choice_interactions[selectChoice][choiceIndex]" style="list-style:none;">
+                <b-input-group class="pb-3">
+                  <b-button v-if="choiceIndex === 0"
+                            class="text-success"
                             variant="outline-secondary"
-                            style="width:46px"
                   >
-                    X
+                    <b-icon-check scale="1.5" />
                   </b-button>
-                </b-input-group-prepend>
-                <b-form-input
-                  :id="`select-choice-${choiceIndex}`"
-                  v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
-                  type="text"
-                  :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
-                  class="form-control"
-                  :class="choiceIndex === 0 ? 'text-success' : 'text-danger'"
-                  required
-                  @focus="questionForm.errors.clear(`qti_select_choice_${selectChoice}`)"
-                />
-                <b-input-group-append v-if="choiceIndex > 0">
-                  <b-input-group-text>
-                    <b-icon-trash
-                      @click="deleteChoiceFromSelectChoice(selectChoice,choice)"
-                    />
-                  </b-input-group-text>
-                </b-input-group-append>
-              </b-input-group>
-            </li>
-          </ul>
-          <b-button size="sm" variant="outline-primary" @click="addChoiceToSelectChoice(selectChoice)">
-            Add Distractor
-          </b-button>
-        </td>
-      </tr>
+                  <b-input-group-prepend>
+                    <b-button v-if="choiceIndex !== 0"
+                              class="font-weight-bold text-danger"
+                              variant="outline-secondary"
+                              style="width:46px"
+                    >
+                      X
+                    </b-button>
+                  </b-input-group-prepend>
+                  <b-form-input
+                    :id="`select-choice-${choiceIndex}`"
+                    v-model="qtiJson.inline_choice_interactions[selectChoice][choiceIndex].text"
+                    type="text"
+                    :placeholder="choiceIndex === 0 ? 'Correct Response' : `Distractor ${choiceIndex}`"
+                    class="form-control"
+                    :class="choiceIndex === 0 ? 'text-success' : 'text-danger'"
+                    required
+                    @focus="questionForm.errors.clear(`qti_select_choice_${selectChoice}`)"
+                  />
+                  <b-input-group-append v-if="choiceIndex > 0">
+                    <b-input-group-text>
+                      <b-icon-trash
+                        @click="deleteChoiceFromSelectChoice(selectChoice,choice)"
+                      />
+                    </b-input-group-text>
+                  </b-input-group-append>
+                </b-input-group>
+              </li>
+            </ul>
+            <b-button size="sm" variant="outline-primary" @click="addChoiceToSelectChoice(selectChoice)">
+              Add Distractor
+            </b-button>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -106,6 +140,13 @@ export default {
     }
   },
   data: () => ({
+    randomizeOrder: 'yes',
+    randomizeOrderOptions: [
+      {
+        text: 'Yes', value: 'yes'
+      },
+      { text: 'No', value: 'no' }
+    ],
     selectChoiceIdentifierError: '',
     selectChoiceMultipleMatchError: ''
   }),
@@ -192,7 +233,14 @@ export default {
       this.$forceUpdate()
     }
   },
+  mounted () {
+    this.randomizeOrder = this.qtiJson && this.qtiJson.randomizeOrder ? this.qtiJson.randomizeOrder : 'yes'
+  },
   methods: {
+    setRandomizeOrder (randomizeOrder) {
+      this.qtiJson.randomizeOrder = randomizeOrder
+      this.questionForm.errors.clear('qti_randomize_order')
+    },
     decodeHtmlEntity (html) {
       const txt = document.createElement('textarea')
       txt.innerHTML = html

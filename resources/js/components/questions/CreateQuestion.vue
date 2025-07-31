@@ -3584,7 +3584,7 @@ export default {
             }
 
             this.questionForm.qti_prompt = this.qtiJson['prompt']
-            if (this.qtiQuestionType === 'multiple_choice') {
+            if (['select_choice','multiple_choice'].includes(this.qtiQuestionType)) {
               this.questionForm.qti_randomize_order = this.qtiJson.randomizeOrder
             }
             let correctResponse = this.qtiJson.simpleChoice.find(choice => choice.correctResponse)

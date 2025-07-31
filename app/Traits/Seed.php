@@ -104,9 +104,15 @@ trait Seed
                     case('select_choice'):
                     case('drop_down_rationale_triad'):
                         $seed = [];
+                        $randomize_order = !isset($qti_array['randomizeOrder'])
+                            || $question_type !== 'select_choice'
+                            || $qti_array['randomizeOrder'] === 'yes';
                         foreach ($qti_array['inline_choice_interactions'] as $identifier => $choices) {
                             $indices = range(0, count($choices) - 1);
-                            shuffle($indices);
+                            if ($randomize_order) {
+                                shuffle($choices);
+                                shuffle($indices);
+                            }
                             $seed[$identifier] = $indices;
                         }
                         $seed = json_encode($seed);
