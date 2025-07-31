@@ -59,7 +59,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('remove:NoRoles')->everyMinute();
         if (env('APP_ENV') === 'production') {
-
+            $schedule->command('remove:pendingCourseInvitationsFromClosedCourses')->daily();
             $schedule->command('auto:registerAndEnrollForNonLMSOnlyCourse')->daily();
             $schedule->command('send:frameworkItemsByQuestionUpdates')->daily();
             $schedule->command('notify:failedTranscriptions')->hourly();
