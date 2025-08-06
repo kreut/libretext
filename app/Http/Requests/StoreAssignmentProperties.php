@@ -143,7 +143,7 @@ class StoreAssignmentProperties extends FormRequest
                 }
             }
             $new_assign_tos = [];
-            if (!$this->is_template && !$formative) {
+            if (!$this->is_template && !$formative && $this->assessment_type !== 'clicker') {
                 foreach ($this->assign_tos as $key => $assign_to) {
                     $new_assign_tos[$key]['available_from'] = "{$assign_to['available_from_date']} {$assign_to['available_from_time']}";
                     $new_assign_tos[$key]['due'] = "{$assign_to['due_date']} {$assign_to['due_time']}";
@@ -203,7 +203,7 @@ class StoreAssignmentProperties extends FormRequest
             }
             if ($this->assessment_type === 'clicker') {
                 $rules['default_clicker_time_to_submit'] = new IsValidPeriodOfTime();
-                $rules['number_of_allowed_attempts'] = $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
+                $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
             }
             if ($this->late_policy === 'deduction') {
                 //has to be at least one or division by 0 issue in setScoreBasedOnLatePolicy

@@ -76,7 +76,7 @@ trait AssignmentProperties
      */
     public function getNumberOfAllowedAttempts($request)
     {
-        return in_array($request->assessment_type, ['real time', 'learning tree', 'clicker']) && $request->scoring_type === 'p' ? $request->number_of_allowed_attempts : null;
+        return in_array($request->assessment_type, ['real time', 'learning tree', 'clicker']) ? $request->number_of_allowed_attempts : null;
     }
 
     /**
