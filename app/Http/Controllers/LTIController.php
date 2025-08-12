@@ -393,7 +393,7 @@ class LTIController extends Controller
             $h = new Handler(app());
             $h->report($e);
             if ($e->getMessage() === 'State not found') {
-                echo "We were not able to log you in.  Are you using Safari?  If so, please try Chrome, Edge, or Firefox.  And if you are still having issues, please contact us at <a href='mailto:adapt@libretexts.org' target='_blank' rel='noopener noreferrer''>adapt@libretexts.org</a> so that we can help you troubleshoot this.";
+                echo "We were not able to log you in.  Are you using Safari?  If so, please try Chrome, Edge, or Firefox.  In addition, please make sure that you have 3rd Party Cookies enabled in your browser.  And if you are still having issues, please contact us at <a href='mailto:adapt@libretexts.org' target='_blank' rel='noopener noreferrer''>adapt@libretexts.org</a> so that we can help you troubleshoot this.";
             } else {
                 echo "We were unable to log you in.  Error message: {$e->getMessage()}.  Please contact us at <a href='mailto:adapt@libretexts.org' target='_blank' rel='noopener noreferrer''>adapt@libretexts.org</a> so that we can help you troubleshoot this.";
             }
