@@ -39,12 +39,72 @@ use App\Exceptions\Handler;
 use \Exception;
 
 use App\Traits\DateFormatter;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class EnrollmentController extends Controller
 {
 
+
+    /**
+     * @var mixed|string
+     */
+    private $bearer_token;
     use DateFormatter;
+
+    public function __construct()
+    {
+        $credentials = DB::table('libreone_credentials')->first();
+        $this->bearer_token = $credentials ? $credentials->bearer_token : '';
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     * @throws Exception
+     */
+    public function updateLicenseStatus(Request $request): array
+    {
+        try {
+            $response['type'] = 'error';
+            $claims = Helper::authorizedLibreOneClaims($request, $this->bearer_token);
+            Log::info(json_encode($claims));
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = $e->getMessage();
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function latestEnrollmentDate(Request $request): array
+    {
+        try {
+            $response['type'] = 'error';
+            $claims = Helper::authorizedLibreOneClaims($request, $this->bearer_token);
+            $central_identity_id = $claims['central_identity_id'] ?? null;
+            if (!$central_identity_id) {
+                throw new Exception("Your claims needs a central_identity_id.");
+            }
+            $user = User::where('central_identity_id', $central_identity_id)->first();
+            if (!$user) {
+                throw new Exception ("There is no user with central identity id $central_identity_id.");
+            }
+            $latest_enrollment = Enrollment::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            $response['latest_enrollment_date'] = $latest_enrollment->created_at;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $response['message'] = $e->getMessage();
+        }
+        return $response;
+    }
 
     /**
      * @param AutoEnrollStudent $request

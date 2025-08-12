@@ -20,16 +20,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
-use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
-use MiladRahimi\Jwt\Exceptions\InvalidSignatureException;
-use MiladRahimi\Jwt\Exceptions\InvalidTokenException;
-use MiladRahimi\Jwt\Exceptions\JsonDecodingException;
-use MiladRahimi\Jwt\Exceptions\SigningException;
-use MiladRahimi\Jwt\Exceptions\ValidationException;
-use MiladRahimi\Jwt\Parser;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -92,7 +83,7 @@ class OIDCController extends Controller
         $this->profileUrl = "$this->baseUrl/cas/oidc/profile";
         $this->logoutUrl = "$this->baseUrl/cas/logout";
         $this->jwksUrl = "$this->baseUrl/cas/oidc/jwks";
-        $credentials = DB::table('oidc_credentials')->first();
+        $credentials = DB::table('libreone_credentials')->first();
         $this->client_id = '';
         $this->bearer_token = '';
         $this->client_secret = '';
@@ -230,7 +221,7 @@ class OIDCController extends Controller
     {
         try {
             $response['type'] = 'error';
-            $claims = $this->_hasAccess($request);
+            $claims = Helper::authorizedLibreOneClaims($request, $this->bearer_token);
             $instructor = $user->where('central_identity_id', $claims['central_identity_id'])->first();
             $instructor->verify_status = $claims['verify_status'];
             $instructor->save();
@@ -251,11 +242,11 @@ class OIDCController extends Controller
      * @throws Exception
      */
     public
-    function deprovision(Request $request, User $user)
+    function deprovision(Request $request, User $user): array
     {
         try {
             $response['type'] = 'error';
-            $claims = $this->_hasAccess($request);
+            $claims = Helper::authorizedLibreOneClaims($request, $this->bearer_token);
             if ($claims['central_identity_id']) {
                 $user->where('central_identity_id', $claims['central_identity_id'])
                     ->update(['final_deletion_date' => $claims['final_deletion_date']]);
@@ -284,7 +275,7 @@ class OIDCController extends Controller
     {
         try {
             $response['type'] = 'error';
-            $claims = $this->_hasAccess($request);
+            $claims = Helper::authorizedLibreOneClaims($request, $this->bearer_token);
             $email = $claims['email'];
             $new_user = $user->where('email', $email)->first();
             if ($new_user) {
@@ -373,29 +364,6 @@ class OIDCController extends Controller
             ->withCookie($expiredCookie2);
 
 
-    }
-
-    /**
-     * @param Request $request
-     * @return array
-     * @throws InvalidSignatureException
-     * @throws InvalidTokenException
-     * @throws JsonDecodingException
-     * @throws SigningException
-     * @throws ValidationException
-     * @throws Exception
-     */
-    private
-    function _hasAccess(Request $request): array
-    {
-        if (!$request->bearerToken()) {
-            throw new Exception ('Missing Bearer Token.');
-        }
-        $token = $request->bearerToken();
-        $key = new HmacKey($this->bearer_token);
-        $signer = new HS256($key);
-        $parser = new Parser($signer);
-        return $parser->parse($token);
     }
 
     /**

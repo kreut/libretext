@@ -27,6 +27,8 @@ Route::get('/courses/commons-courses-and-assignments-by-course', 'CourseControll
 Route::get('/auto-provision', 'OIDCController@autoProvision');
 Route::post('/question-media/init-transcribe', 'QuestionMediaController@initTranscribe');
 Route::patch('/question-media/transcribe-status', 'QuestionMediaController@updateTranscribeStatus');
+Route::post('/enrollments/update-license-status', 'EnrollmentController@updateLicenseStatus');
+Route::get('/enrollments/latest-enrollment-date', 'EnrollmentController@latestEnrollmentDate');
 Route::get('/oidc/redirect', 'OIDCController@redirect');
 Route::get('/embedded-login', function () {
     $url = request()->query('url'); // Extract the 'url' parameter

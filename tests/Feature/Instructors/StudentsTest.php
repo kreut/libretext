@@ -136,9 +136,7 @@ class StudentsTest extends TestCase
             SubmissionFile::create($data);
         }
     }
-
     /** @test */
-
     public function non_owner_cannot_move_student_to_a_different_section()
     {
 

@@ -2,17 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Helper;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
-use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
-use MiladRahimi\Jwt\Exceptions\InvalidSignatureException;
-use MiladRahimi\Jwt\Exceptions\InvalidTokenException;
-use MiladRahimi\Jwt\Exceptions\JsonDecodingException;
-use MiladRahimi\Jwt\Exceptions\SigningException;
-use MiladRahimi\Jwt\Exceptions\ValidationException;
-use MiladRahimi\Jwt\Parser;
+
 
 class PendingDeletedUserController extends Controller
 {
@@ -24,7 +18,7 @@ class PendingDeletedUserController extends Controller
 
     public function __construct()
     {
-        $credentials = DB::table('oidc_credentials')->first();
+        $credentials = DB::table('libreone_credentials')->first();
         $this->bearer_token = $credentials ? $credentials->bearer_token : '';
     }
 
@@ -36,7 +30,7 @@ class PendingDeletedUserController extends Controller
     {
         try {
             $response['type'] = 'error';
-            $claims = $this->_hasAccess($request);
+            $claims = Helper::authorizedLibreOneClaims($request, $this->bearer_token);
             if (!isset($claims['central_identity_id']) || !$claims['central_identity_id']) {
                 $response['message'] = 'Missing the central_identity_id.';
                 return $response;
@@ -63,26 +57,6 @@ class PendingDeletedUserController extends Controller
             $response['message'] = $e->getMessage();
         }
         return $response;
-    }
-
-    /**
-     * @throws InvalidTokenException
-     * @throws SigningException
-     * @throws ValidationException
-     * @throws InvalidSignatureException
-     * @throws JsonDecodingException
-     * @throws Exception
-     */
-    private function _hasAccess(Request $request): array
-    {
-        if (!$request->bearerToken()) {
-            throw new Exception ('Missing Bearer Token.');
-        }
-        $token = $request->bearerToken();
-        $key = new HmacKey($this->bearer_token);
-        $signer = new HS256($key);
-        $parser = new Parser($signer);
-        return $parser->parse($token);
     }
 
 }

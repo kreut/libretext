@@ -4,15 +4,17 @@ namespace App\Helpers;
 
 use App\Discussion;
 use App\DiscussionComment;
-use App\Question;
 use App\QuestionMediaUpload;
 use App\User;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
+use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
+use MiladRahimi\Jwt\Parser;
 use phpcent\Client;
 
 class Helper
@@ -407,6 +409,24 @@ class Helper
         }
         return json_encode($discuss_it_settings);
 
+    }
+
+    /**
+     * @param Request $request
+     * @param string $bearer_token
+     * @return array
+     * @throws Exception
+     */
+    public static function authorizedLibreOneClaims(Request $request, string $bearer_token): array
+    {
+        if (!$request->bearerToken()) {
+            throw new Exception ('Missing Bearer Token.');
+        }
+        $token = $request->bearerToken();
+        $key = new HmacKey($bearer_token);
+        $signer = new HS256($key);
+        $parser = new Parser($signer);
+        return $parser->parse($token);
     }
 
 }
