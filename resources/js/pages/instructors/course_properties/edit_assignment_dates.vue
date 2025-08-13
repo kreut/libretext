@@ -268,7 +268,7 @@
               </td>
               <td>{{ formatDate(assignmentDate.available_from) }}</td>
               <td>{{ formatDate(assignmentDate.due) }}</td>
-              <td>{{ formatDate(assignmentDate.final_submission_deadline) }}</td>
+              <td>{{ formatDate(assignmentDate.final_submission_deadline, true) }}</td>
             </tr>
             </tbody>
           </table>
@@ -490,11 +490,11 @@ export default {
         }
       }
     },
-    formatDate (date) {
+    formatDate (date, isFinalSubmissionDeadline = false) {
       if (date) {
         return this.$moment(date).format('ddd, M/D/YY h:mm A')
       }
-      return 'N/A'
+      return isFinalSubmissionDeadline ? 'N/A - No late submissions' : 'N/A'
     },
     async getAssignmentDates () {
       try {
