@@ -7,21 +7,6 @@
         variant="success"
       />
       {{ title }}
-      <span v-if="cloneSourceId">
-        <font-awesome-icon
-          id="clone-source-id-tooltip"
-          :icon="copyIcon"
-          class="mb-1 text-success"
-          style="height:20px;"
-          aria-label="Update custom title"
-        />
-        <b-tooltip target="clone-source-id-tooltip"
-                   delay="750"
-                   triggers="hover"
-        >
-          This question was cloned from the question with ADAPT ID {{ cloneSourceId }}.
-        </b-tooltip>
-      </span>
       <CustomTitle v-if="title && showPencil"
                    :assignment-id="assignmentId"
                    :question-id="questionId"

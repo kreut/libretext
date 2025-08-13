@@ -379,7 +379,6 @@
               />
               <AlgorithmicIcon :algorithmic-question="item.algorithmic"
                                :algorithmic-assignment="isAlgorithmicAssignment"/>
-              <CloneMessage :question="item"/>
               <FormativeWarning :formative-question="item.is_formative_question"
                                 :question-id="item.question_id"
               />
@@ -590,14 +589,12 @@ import Form from 'vform'
 import LearningTreeProperties from '~/components/LearningTreeProperties.vue'
 import AllFormErrors from '~/components/AllFormErrors.vue'
 import { isMobile } from '~/helpers/mobileCheck'
-import CloneMessage from '~/components/CloneMessage.vue'
 import AlgorithmicIcon from '~/components/AlgorithmicIcon.vue'
 
 export default {
   middleware: 'auth',
   components: {
     AlgorithmicIcon,
-    CloneMessage,
     AllFormErrors,
     LearningTreeProperties,
     CustomTitle,
