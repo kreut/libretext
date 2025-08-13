@@ -1,6 +1,6 @@
 <template>
   <b-container>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-file-upload-${modalId}`" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-file-upload-${modalId}`"/>
     <b-modal id="modal-upload-vtt"
              title="Upload Transcript"
              no-close-on-backdrop
@@ -31,8 +31,8 @@
             <div v-for="file in files2" :key="file.id">
               File to upload:
               <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                file.name
-              }}</span> -
+                  file.name
+                }}</span> -
               <span>{{ formatFileSize(file.size) }} </span>
               <b-button
                 v-if="(preSignedURL !== '') && (!$refs.vttUpload || !$refs.vttUpload.active)"
@@ -45,7 +45,7 @@
                 Upload
               </b-button>
               <span v-else-if="file.active" class="ml-2 text-info">
-                <b-spinner small type="grow" />
+                <b-spinner small type="grow"/>
                 Uploading File...
               </span>
               <b-button size="sm"
@@ -62,7 +62,7 @@
           </div>
         </b-row>
         <b-progress v-if="preSignedURL && isVttUpload" max="100" class="mt-2 mb-3">
-          <b-progress-bar :value="progress" :label="`${Number(progress).toFixed(0)}%`" show-progress animated />
+          <b-progress-bar :value="progress" :label="`${Number(progress).toFixed(0)}%`" show-progress animated/>
         </b-progress>
       </div>
     </b-modal>
@@ -141,7 +141,7 @@
         >
           {{ isDiscussIt ? 'Upload Media' : 'Upload Audio or Video file' }}
         </file-upload>
-        <QuestionCircleTooltipModal v-show="!isDiscussIt" :modal-id="'modal-upload-question-media'" />
+        <QuestionCircleTooltipModal v-show="!isDiscussIt" :modal-id="'modal-upload-question-media'"/>
         <b-button v-show="isDiscussIt"
                   size="sm"
                   variant="info"
@@ -185,8 +185,8 @@
         <div v-for="file in files" :key="file.id">
           File to upload:
           <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-            file.name
-          }}</span> -
+              file.name
+            }}</span> -
           <span>{{ formatFileSize(file.size) }} </span>
           <b-button
             v-if="(preSignedURL !== '') && (!$refs.questionMediaUpload || !$refs.questionMediaUpload.active)"
@@ -199,7 +199,7 @@
             Upload
           </b-button>
           <span v-else-if="file.active" class="ml-2 text-info">
-            <b-spinner small type="grow" />
+            <b-spinner small type="grow"/>
             Uploading File...
           </span>
           <b-button size="sm"
@@ -216,62 +216,62 @@
       </div>
     </b-row>
     <b-progress v-if="preSignedURL && !isVttUpload" max="100" class="mt-2 mb-3">
-      <b-progress-bar :value="progress" :label="`${Number(progress).toFixed(0)}%`" show-progress animated />
+      <b-progress-bar :value="progress" :label="`${Number(progress).toFixed(0)}%`" show-progress animated/>
     </b-progress>
     <b-row v-if="uploadFileErrorMessage" class="mb-3">
-      <ErrorMessage :message="uploadFileErrorMessage" />
+      <ErrorMessage :message="uploadFileErrorMessage"/>
     </b-row>
     <div v-show="mediaUploads.length>0">
       <table class="table table-striped" aria-label="Media">
         <thead>
-          <tr>
-            <th v-if="isDiscussIt" scope="col">
-              Order
-            </th>
-            <th scope="col">
-              Filename
-            </th>
-            <th scope="col">
-              Actions
-            </th>
-          </tr>
+        <tr>
+          <th v-if="isDiscussIt" scope="col">
+            Order
+          </th>
+          <th scope="col">
+            Filename
+          </th>
+          <th scope="col">
+            Actions
+          </th>
+        </tr>
         </thead>
         <tbody is="draggable" :key="mediaUploads.length" v-model="orderedMediaUploads" tag="tbody"
                @end="updateQuestionMediaUploadsOrder"
         >
-          <tr
-            v-for="(mediaUpload, mediaUploadIndex) in mediaUploads"
-            :key="`media-upload-${mediaUploadIndex}`"
-          >
-            <th v-if="isDiscussIt" scope="row">
-              <b-icon icon="list" />
-              {{ mediaUpload.order }}
-            </th>
-            <td style="width:80%">
-              {{ mediaUpload.original_filename }}
-            </td>
+        <tr
+          v-for="(mediaUpload, mediaUploadIndex) in mediaUploads"
+          :key="`media-upload-${mediaUploadIndex}`"
+        >
+          <th v-if="isDiscussIt" scope="row">
+            <b-icon icon="list"/>
+            {{ mediaUpload.order }}
+          </th>
+          <td style="width:80%">
+            {{ mediaUpload.original_filename }}
+          </td>
 
-            <td>
-              <span v-show="false" :id="`copy-question-media-url-${mediaUpload.s3_key}`">{{ mediaUpload.url }}</span>
-              <a v-show="!isDiscussIt"
-                 :id="getTooltipTarget('copyURL',mediaUpload.s3_key)"
-                 href=""
-                 aria-label="Copy URL"
-                 style="cursor: pointer;color:#212529 !important"
-                 class="mr-1"
-                 @click.prevent="doCopy(`copy-question-media-url-${mediaUpload.s3_key}`, 'Successfully copied!  You may add this URL to a link in your question.')"
-              >
-                <font-awesome-icon :icon="copyIcon" />
-              </a>
-              <b-tooltip :target="getTooltipTarget('copyURL',mediaUpload.s3_key)"
-                         triggers="hover"
-                         delay="500"
-              >
-                Copy the URL, then create a link inside the question editor and ADAPT will convert the format the media
-                for
-                listening/viewing.
-              </b-tooltip>
-              <span v-show="needsTranscript(mediaUpload)">
+          <td>
+            <span v-show="false" :id="`copy-question-media-url-${mediaUpload.s3_key}`">{{ mediaUpload.url }}</span>
+            <a v-show="!isDiscussIt"
+               :id="getTooltipTarget('copyURL',mediaUpload.s3_key)"
+               href=""
+               aria-label="Copy URL"
+               style="cursor: pointer;color:#212529 !important"
+               class="mr-1"
+               @click.prevent="doCopy(`copy-question-media-url-${mediaUpload.s3_key}`, 'Successfully copied!  You may add this URL to a link in your question.')"
+            >
+              <font-awesome-icon :icon="copyIcon"/>
+            </a>
+            <b-tooltip :target="getTooltipTarget('copyURL',mediaUpload.s3_key)"
+                       triggers="hover"
+                       delay="500"
+            >
+              Copy the URL, then create a link inside the question editor and ADAPT will convert the format the media
+              for
+              listening/viewing.
+            </b-tooltip>
+            <span v-show="needsTranscript(mediaUpload)">
                 <b-icon :id="getTooltipTarget('editCaptions',mediaUpload.s3_key)"
                         icon="pencil"
                         :aria-label="`Edit question transcription`"
@@ -318,23 +318,48 @@
                   </b-tooltip>
                 </span>
               </span>
-              <b-icon :id="getTooltipTarget('deleteQuestionMedia',mediaUpload.s3_key)"
-                      icon="trash"
-                      :aria-label="`Delete question media`"
-                      style="cursor: pointer;"
-                      class="mr-1"
-                      @click="confirmDeleteQuestionMedia(mediaUpload)"
-              />
-              <b-tooltip :target="getTooltipTarget('deleteQuestionMedia',mediaUpload.s3_key)"
-                         triggers="hover"
-                         delay="500"
-              >
-                Delete {{ mediaUpload.original_filename }}
-              </b-tooltip>
-            </td>
-          </tr>
+            <b-icon :id="getTooltipTarget('deleteQuestionMedia',mediaUpload.s3_key)"
+                    icon="trash"
+                    :aria-label="`Delete question media`"
+                    style="cursor: pointer;"
+                    class="mr-1"
+                    @click="confirmDeleteQuestionMedia(mediaUpload)"
+            />
+            <b-tooltip :target="getTooltipTarget('deleteQuestionMedia',mediaUpload.s3_key)"
+                       triggers="hover"
+                       delay="500"
+            >
+              Delete {{ mediaUpload.original_filename }}
+            </b-tooltip>
+          </td>
+        </tr>
         </tbody>
       </table>
+      <b-form-group v-if="!isDiscussIt"
+                    label-cols-sm="3"
+                    label-cols-lg="2"
+                    label-for="show-captions"
+      >
+        <template #label>
+          Show Captions
+          <QuestionCircleTooltip id="show-captions-tooltip"/>
+          <b-tooltip target="show-captions-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >ADAPT will use AI to automatically create captions. You can optionally hide these. Note that
+            these will be shown to students if they require an accessible alternative.
+          </b-tooltip>
+        </template>
+        <b-form-radio-group
+          id="show-captions"
+          v-model="showCaptions"
+          class="mt-2"
+          inline
+        >
+          <b-form-radio value="yes">Yes</b-form-radio>
+          <b-form-radio value="no">No</b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
     </div>
   </b-container>
 </template>
@@ -385,7 +410,13 @@ export default {
       }
     }
   },
+  watch: {
+    showCaptions (newValue) {
+      this.$emit('updateQtiJson', 'showCaptions', newValue)
+    }
+  },
   data: () => ({
+    showCaptions: 'yes',
     isVttUpload: false,
     files2: [],
     copyIcon: faCopy,
@@ -411,6 +442,12 @@ export default {
 
     if (this.questionMediaUploadId) {
       this.autoOpenTranscript()
+    }
+    console.error(this.qtiJson)
+    try {
+      this.showCaptions = JSON.parse(this.qtiJson).showCaptions === 'no' ? 'no' : 'yes'
+    } catch {
+      this.showCaptions = 'yes'
     }
   },
   methods: {

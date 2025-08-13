@@ -1327,7 +1327,7 @@ class QuestionController extends Controller
                         $unsets = ['solution_structure'];
                         break;
                     case('marker'):
-                        $unsets =['solution_structure','atoms_and_bonds'];
+                        $unsets = ['solution_structure', 'atoms_and_bonds'];
                         $qti_json = json_decode($request->qti_json, 1);
 
                         $atoms = array_filter($request->atoms_and_bonds, function ($c) {
@@ -1515,6 +1515,11 @@ class QuestionController extends Controller
             DB::beginTransaction();
             $new_question_revision_id = 0;
             $currentQuestionRevision = null;
+            $show_captions = true;
+            if ($request->qti_json) {
+                $qti_json = json_decode($request->qti_json, 1);
+                $show_captions = !isset($qti_json['showCaptions']) || $qti_json['showCaptions'] === 'yes';
+            }
             if ($is_update) {
                 $question = Question::find($request->id);
                 if (!QuestionRevision::where('question_id', $question->id)->first()) {
@@ -1528,7 +1533,9 @@ class QuestionController extends Controller
                         RubricCategory::where('question_id', $question->id)->update(['question_revision_id' => $initial_question_revision->id]);
                     }
                     WebworkAttachment::where('question_id', $question->id)->update(['question_revision_id' => $initial_question_revision->id]);
-                    QuestionMediaUpload::where('question_id', $question->id)->update(['question_revision_id' => $initial_question_revision->id]);
+                    QuestionMediaUpload::where('question_id', $question->id)->update([
+                        'question_revision_id' => $initial_question_revision->id,
+                        'show_captions' => $show_captions]);
                 }
                 $question->update($data);
                 $currentQuestionRevision = QuestionRevision::where('question_id', $question->id)->orderBy('revision_number', 'desc')->first();
@@ -1740,6 +1747,7 @@ class QuestionController extends Controller
                         $questionMediaUpload->order = $new_media_upload['order'] ?? null;
                         $questionMediaUpload->transcript = '';
                         $questionMediaUpload->question_revision_id = $new_question_revision_id;
+                        $questionMediaUpload->show_captions = $show_captions;
                         $questionMediaUpload->save();
                         if (!in_array($new_media_upload['s3_key'], $current_s3_keys)) {
                             InitProcessTranscribe::dispatch($questionMediaUpload->s3_key, 'question_media_upload');

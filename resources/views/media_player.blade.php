@@ -19,7 +19,7 @@
     rel="stylesheet"
   />
 
-@if(!$is_phone)
+  @if(!$is_phone)
     <link rel="stylesheet" href="{{ asset('assets/js/ableplayer/build/ableplayer.min.css')}}" type="text/css"/>
     <script src="{{ asset('assets/js/ableplayer/build/ableplayer.min.js') }}"></script>
   @endif
@@ -73,7 +73,9 @@
              data-start-time="{{ $start_time }}"
       >
         <source type="audio/mpeg" src="{{ $temporary_url }}"/>
-        <track kind="captions" src="{{ $vtt_file }}"/>
+        @if ($vtt_file)
+          <track kind="captions" src="{{ $vtt_file }}"/>
+        @endif
       </audio>
     @elseif($type === 'video')
       <video id="video1"
@@ -84,7 +86,9 @@
       >
         <source src="{{ $mp4_temporary_url }}" type="video/mp4">
         <source src="{{ $temporary_url }}" type="video/webm">
-        <track kind="captions" src="{{ $vtt_file }}"/>
+        @if ($vtt_file)
+          <track kind="captions" src="{{ $vtt_file }}"/>
+        @endif
       </video>
       <div class="controls" style="margin-bottom:50px">
         <button type="button" class="btn btn-primary me-2" onclick="rotateLeft()">
@@ -104,26 +108,26 @@
 
 </div>
 <script>
-  let rotation = 0;
-  const video = document.getElementById('video1');
+  let rotation = 0
+  const video = document.getElementById('video1')
 
-  function applyRotation() {
-    video.style.transform = `rotate(${rotation}deg)`;
+  function applyRotation () {
+    video.style.transform = `rotate(${rotation}deg)`
   }
 
-  function rotateLeft() {
-    rotation -= 90;
-    applyRotation();
+  function rotateLeft () {
+    rotation -= 90
+    applyRotation()
   }
 
-  function rotateRight() {
-    rotation += 90;
-    applyRotation();
+  function rotateRight () {
+    rotation += 90
+    applyRotation()
   }
 
-  function resetRotation() {
-    rotation = 0;
-    applyRotation();
+  function resetRotation () {
+    rotation = 0
+    applyRotation()
   }
 </script>
 

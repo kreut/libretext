@@ -2893,8 +2893,17 @@ class AssignmentSyncQuestionController extends Controller
             $question_revisions_by_question_id = [];
             foreach ($question_revisions as $question_revision) {
                 $question_revisions_by_question_id[$question_revision->question_id] = $question_revision;
+                $question_revision_ids[] = $question_revision->id;
             }
-
+            $question_media_uploads = DB::table('question_media_uploads')
+                ->select('s3_key','show_captions')
+                ->whereIn('question_revision_id',$question_revision_ids)
+                ->get();
+            $show_captions = [];
+            foreach ($question_media_uploads as $question_media_upload){
+                $show_captions[$question_media_upload->s3_key] = $question_media_upload->show_captions;
+            }
+            session()->put('show_captions', $show_captions);
             //for current or upcoming assignments get pending question revisions
 
             $pending_question_revisions_by_question_id = $pendingQuestionRevision->getCurrentOrUpcomingByAssignment($assignment);

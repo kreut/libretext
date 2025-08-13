@@ -119,17 +119,17 @@ class QuestionMediaController extends Controller
             }
             $data = $request->validated();
             $question_media_upload_dir = $questionMediaUpload->getDir();
-            $data['text'] = str_replace('<p>&nbsp;</p>','', $data['text']);
+            $data['text'] = str_replace('<p>&nbsp;</p>', '', $data['text']);
             Storage::disk('s3')->put("$question_media_upload_dir/pending-$s3_key", $data['text']);
             $questionMediaUpload = QuestionMediaUpload::where('s3_key', $s3_key)->first();
-           /* if ($questionMediaUpload) {
-                $questionMediaUpload->original_filename = $data['description'];
-                $questionMediaUpload->text = $data['text'];
-                $questionMediaUpload->save();
-            } else {
-                $response['message'] = 'We were unable to locate that text file. Please try again or contact us for assistance.';
-                return $response;
-            }*/
+            /* if ($questionMediaUpload) {
+                 $questionMediaUpload->original_filename = $data['description'];
+                 $questionMediaUpload->text = $data['text'];
+                 $questionMediaUpload->save();
+             } else {
+                 $response['message'] = 'We were unable to locate that text file. Please try again or contact us for assistance.';
+                 return $response;
+             }*/
             $response['s3_key'] = $s3_key;
             $response['size'] = Storage::disk('s3')->size("$question_media_upload_dir/$s3_key");
             $response['type'] = 'success';
@@ -242,9 +242,9 @@ class QuestionMediaController extends Controller
                     ->orderBy('order')
                     ->get()
                     : $questionMediaUpload
-                        ->where('question_id', $question->id)
-                        ->orderBy('order')
-                        ->get();
+                    ->where('question_id', $question->id)
+                    ->orderBy('order')
+                    ->get();
 
             $domDocument = new DOMDocument();
             foreach ($question_media_uploads as $key => $value) {
@@ -418,10 +418,14 @@ class QuestionMediaController extends Controller
     function index(string $media, int $start_time = 0)
     {
         $questionMediaUpload = new QuestionMediaUpload();
+        $show_captions_session = session()->get('show_captions');
+
+        $show_captions = !(in_array($media, array_keys($show_captions_session)) && $show_captions_session[$media] === 0);
+
         $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($media);
         $type = strpos($media, '.mp3') !== false ? 'audio' : 'video';
         $temporary_url = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$media", Carbon::now()->addDays(7));
-        $vtt_file = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$vtt_file", Carbon::now()->addDays(7));
+        $vtt_file = $show_captions ? Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$vtt_file", Carbon::now()->addDays(7)) : '';
         $is_phone = 0;
         return view('media_player', ['type' => $type,
             'temporary_url' => $temporary_url,

@@ -878,15 +878,15 @@
           >
             <b-form-row>
               <b-col cols="12" md="6" lg="4" class="m-0 p-0">
-              <b-form-select v-model="questionForm.license"
-                             title="license"
-                             size="sm"
-                             class="mt-2 mr-2"
-                             :class="{ 'is-invalid': questionForm.errors.has('license') }"
-                             :options="licenseOptions"
-                             @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
-              />
-              <has-error :form="questionForm" field="license"/>
+                <b-form-select v-model="questionForm.license"
+                               title="license"
+                               size="sm"
+                               class="mt-2 mr-2"
+                               :class="{ 'is-invalid': questionForm.errors.has('license') }"
+                               :options="licenseOptions"
+                               @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
+                />
+                <has-error :form="questionForm" field="license"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -1126,6 +1126,7 @@
                       @updateQuestionMediaUploads="updateQuestionMediaUploads"
                       @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
                       @updateQuestionTranscript="updateQuestionTranscript"
+                      @updateQtiJson="updateQtiJson"
                     />
                   </b-row>
                 </b-container>
@@ -1594,6 +1595,7 @@
                                            @updateQuestionMediaUploads="updateQuestionMediaUploads"
                                            @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
                                            @updateQuestionTranscript="updateQuestionTranscript"
+                                           @updateQtiJson="updateQtiJson"
                       />
                     </b-row>
                   </b-container>
@@ -1632,6 +1634,7 @@
                                            @updateQuestionMediaUploads="updateQuestionMediaUploads"
                                            @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
                                            @updateQuestionTranscript="updateQuestionTranscript"
+                                           @updateQtiJson="updateQtiJson"
                       />
                     </b-row>
                   </b-container>
@@ -1872,6 +1875,7 @@
                                          @updateQuestionMediaUploads="updateQuestionMediaUploads"
                                          @deleteQuestionMediaUpload="deleteQuestionMediaUpload"
                                          @updateQuestionTranscript="updateQuestionTranscript"
+                                         @updateQtiJson="updateQtiJson"
                     />
                   </div>
                   <ckeditor
@@ -2056,12 +2060,14 @@
               </b-form-group>
               <div v-show="webworkEditorShown">
                 <div class="mb-2">
-                  If you need help getting started, please visit <ConsultInsight
-                  id="consult-insight-webwork"
-                  :url="'https://commons.libretexts.org/insight/webwork-techniques'"
-                  :formatting-class="''"
-                /> or visit <a href="https://webwork.maa.org/wiki/Authors"
-                                                                    target="_blank"
+                  If you need help getting started, please visit
+                  <ConsultInsight
+                    id="consult-insight-webwork"
+                    :url="'https://commons.libretexts.org/insight/webwork-techniques'"
+                    :formatting-class="''"
+                  />
+                  or visit <a href="https://webwork.maa.org/wiki/Authors"
+                              target="_blank"
                 >https://webwork.maa.org/wiki/Authors</a>.
                 </div>
                 <b-row>
@@ -3029,6 +3035,10 @@ export default {
   methods: {
     canEdit,
     updateModalToggleIndex,
+    updateQtiJson (key, value) {
+      this.qtiJson[key] = value
+      console.error(this.qtiJson)
+    },
     convertToMolecule () {
       const iframe = document.querySelector('iframe[src="/api/sketcher/default"]')
       iframe.contentWindow.postMessage({
@@ -3584,7 +3594,7 @@ export default {
             }
 
             this.questionForm.qti_prompt = this.qtiJson['prompt']
-            if (['select_choice','multiple_choice'].includes(this.qtiQuestionType)) {
+            if (['select_choice', 'multiple_choice'].includes(this.qtiQuestionType)) {
               this.questionForm.qti_randomize_order = this.qtiJson.randomizeOrder
             }
             let correctResponse = this.qtiJson.simpleChoice.find(choice => choice.correctResponse)
