@@ -1616,6 +1616,7 @@ class AssignmentSyncQuestionController extends Controller
                     DB::raw('questions.id AS question_id'),
                     'questions.library',
                     'questions.qti_json',
+                    'questions.qti_json_type',
                     'questions.question_editor_user_id',
                     'questions.answer_html',
                     'questions.solution_html',
@@ -1672,7 +1673,8 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['learning_tree_description'] = $value->learning_tree_description;
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
                 $columns['solution'] = $uploaded_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
-
+                $columns['qti_json'] = $value->qti_json;
+                $columns['qti_json_type'] = $value->qti_json_type;
                 $columns['h5p_non_adapt'] = $h5p_non_adapts_by_question_id[$value->question_id] ?? null;
                 $columns['imathas_solution'] = $IMathAS->solutionExists($value);
                 $columns['solution_file_url'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;

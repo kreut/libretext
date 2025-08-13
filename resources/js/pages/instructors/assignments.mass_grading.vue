@@ -57,9 +57,18 @@
     >
       <p>
         <span class="font-weight-bold">Students:</span> <span>{{ selectedStudentText }}</span><br>
-        <span class="font-weight-bold">Submission:</span> <span>{{
+        <span class="font-weight-bold">Submission:</span> <span v-show="!['submit_molecule','marker'].includes(question.qti_json_type)"><span>{{
           selectedSubmissionText
-        }}</span><br>
+        }}</span><br></span>
+        <SketcherViewer
+          v-if="['submit_molecule','marker'].includes(question.qti_json_type)"
+          ref="sketcherViewer"
+          :key="`sketcher--1`"
+          :qti-json="JSON.parse(question.qti_json)"
+          :student-response="JSON.stringify(JSON.parse(items[0].submission).structure)"
+          :read-only="true"
+          :configuration="question.qti_json_type === 'marker' ? 'marker-only' : 'default'"
+        />
         <span class="font-weight-bold">Score:</span> <span>{{ selectedScoreText }}</span><br>
         <span class="font-weight-bold">Apply To:</span> <span>
           {{
@@ -334,12 +343,23 @@
               :items="items"
             >
               <template v-slot:cell(submission)="data">
-                <span v-if="autoGradedView">
-                  <div v-html="data.item.submission"/>
-                </span>
+                <div v-if="autoGradedView">
+                  <div v-if="['submit_molecule','marker'].includes(question.qti_json_type)">
+                    <SketcherViewer
+                      ref="sketcherViewer"
+                      :key="`sketcher-${data.item.user_id}`"
+                      :qti-json="JSON.parse(question.qti_json)"
+                      :student-response="JSON.stringify(JSON.parse(data.item.submission).structure)"
+                      :read-only="true"
+                      :configuration="question.qti_json_type === 'marker' ? 'marker-only' : 'default'"
+                    />
+                  </div>
+                  <div v-else>
+                    <div v-html="data.item.submission"/>
+                  </div>
+                </div>
                 <span v-if="openEndedView">
                   <b-button size="sm" variant="primary" @click="openSubmissionFileModal(data.item)">View</b-button>
-
                 </span>
               </template>
             </b-table>
@@ -372,9 +392,13 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
 import ConsultInsight from '../../components/ConsultInsight.vue'
+import QtiJsonQuestionViewer from '../../components/QtiJsonQuestionViewer.vue'
+import SketcherViewer from '../../components/viewers/SketcherViewer.vue'
 
 export default {
   components: {
+    SketcherViewer,
+    QtiJsonQuestionViewer,
     ConsultInsight,
     Loading,
     FontAwesomeIcon,
@@ -386,6 +410,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    question: {},
     minValue: '',
     maxValue: '',
     allFormErrors: [],
@@ -456,9 +481,17 @@ export default {
       this.submission = this.submissionsOptions[0].value
       this.score = this.scoresOptions[0].value
     }
+    this.question = this.questions.find(question => question.order === this.currentQuestionPage)
   },
 
   methods: {
+    getQtiJson (question) {
+      try {
+        return JSON.parse(this.questions.find(item => item.question_id === question.question_id).qti_json)
+      } catch {
+        return ''
+      }
+    },
     async updateRangeOfValues () {
       this.isTableLoading = true
       await this.updateFilter(this.studentId, [this.minValue, this.maxValue], this.score)
@@ -556,6 +589,7 @@ export default {
     async updateQuestionsFilter () {
       this.isTableLoading = true
       this.questionId = this.questions.find(question => question.order === this.currentQuestionPage).question_id
+      this.question = this.questions.find(question => question.order === this.currentQuestionPage)
       await this.getScoresByAssignmentAndQuestion()
       this.studentId = null
       this.submission = null
