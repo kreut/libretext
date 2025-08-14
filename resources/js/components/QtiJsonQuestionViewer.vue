@@ -678,7 +678,7 @@ export default {
           let notSelecteds = []
           let selecteds = []
           let repeats = []
-          $('.drop-down-cloze-select').each(function (index) {
+          $('#question .drop-down-cloze-select').each(function (index) {
             let response = $(this).val()
             if (response) {
               if (selecteds.includes(response)) {
