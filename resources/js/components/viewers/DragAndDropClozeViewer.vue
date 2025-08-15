@@ -10,7 +10,7 @@
     </div>
     <b-form inline>
       <span v-for="(item,promptIndex) in parsedPrompt" :key="`prompt-${promptIndex}-${optionsKey}`">
-        <span v-if="promptIndex % 2 === 0" v-html="removePTag(item)"/>
+        <span v-if="promptIndex % 2 === 0" v-html="removePTag(item)" />
         <span v-if="promptIndex % 2 !== 0">
           <b-form-select :value="selectedOptions[(promptIndex - 1) / 2]"
                          :options="decodedSelectOptions"
@@ -67,17 +67,17 @@ export default {
       let reg = /\[(.*?)\]/g
       return this.qtiJson.prompt.split(reg)
     },
-    decodedSelectOptions() {
+    decodedSelectOptions () {
       return this.qtiJson.selectOptions.map(opt => ({
         ...opt,
         text: opt.text.replace(/&#39;/g, "'")
-      }));
+      }))
     }
   },
   mounted () {
     this.componentId = uuidv4()
     this.$forceUpdate()
-    for (let i = 0; i < $(`#${this.componentId} .drop-down-cloze-select`).length; i++) {
+    for (let i = 0; i < $(`.drop-down-cloze-select`).length; i++) {
       this.selectedOptions[i] = null
     }
     if (this.qtiJson.studentResponse) {
