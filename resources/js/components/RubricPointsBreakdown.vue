@@ -75,9 +75,9 @@
           <td role="rowheader">
             Total:
           </td>
-          <td>{{ roundToDecimalSigFig(totalMaxPoints) }}</td>
-          <td v-show="showPointsAwardedInfo">{{ totalPointsGiven }}</td>
-          <td v-show="showPointsAwardedInfo">{{ roundToDecimalSigFig(totalPercentage) }}%</td>
+          <td>{{ roundToDecimalSigFig(totalMaxPoints, 2) }}</td>
+          <td v-show="showPointsAwardedInfo">{{ roundToDecimalSigFig(totalPointsGiven, 2) }}</td>
+          <td v-show="showPointsAwardedInfo">{{ roundToDecimalSigFig(totalPercentage, 2) }}%</td>
         </tr>
         </tbody>
       </table>
@@ -147,7 +147,7 @@ export default {
   }),
   async mounted () {
     await this.getRubricPointsBreakdown()
-    this.showPointsAwardedInfo = this.user.role === 2 || this.user.role=== 3 && this.rubricPointsBreakdownExists
+    this.showPointsAwardedInfo = this.user.role === 2 || (this.user.role === 3 && this.rubricPointsBreakdownExists)
     console.error('setting original rubric')
     console.error(this.originalRubric)
     const originalRubric = JSON.parse(this.originalRubric)
@@ -157,8 +157,9 @@ export default {
       const points = +rubricItems[i].points
       this.originalMaxPoints += points
     }
+    const scale = this.questionPoints / this.originalMaxPoints
     for (let i = 0; i < rubricItems.length; i++) {
-      const points = +rubricItems[i].points
+      const points = roundToDecimalSigFig(+rubricItems[i].points * scale, 2)
       this.originalRubricPoints.push(points)
     }
 
@@ -183,7 +184,7 @@ export default {
         if (+rubricItem.points < 0) {
           return 'is-invalid'
         }
-        return this.roundToDecimalSigFig(+rubricItem.points) <= this.roundToDecimalSigFig(this.getMax(rubricItemIndex)) ? 'is-valid' : 'is-invalid'
+        return this.roundToDecimalSigFig(+rubricItem.points, 2) <= this.roundToDecimalSigFig(this.getMax(rubricItemIndex), 2) ? 'is-valid' : 'is-invalid'
       }
     },
     recomputeOpenEndedPoints () {
@@ -200,13 +201,14 @@ export default {
           }
         }
       }
-      this.$emit('updateOpenEndedSubmissionScore', this.rubricPointsBreakdown, points)
+      this.$emit('updateOpenEndedSubmissionScore', this.rubricPointsBreakdown, this.roundToDecimalSigFig(points, 2))
     },
     getMax (rubricItemIndex) {
       const points = this.originalRubricPoints[rubricItemIndex]
+
       if (isNaN(points)) return false
       if (+points < 0) return false
-      return +this.questionPoints * points / this.originalMaxPoints
+      return +points
     },
     async getRubricPointsBreakdown () {
       try {
@@ -214,6 +216,7 @@ export default {
         if (data.type === 'success') {
           console.error('setting rubric points breakdown')
           this.rubricPointsBreakdown = JSON.parse(data.rubric_points_breakdown).rubric_items
+          console.error(this.rubricPointsBreakdown)
           console.error('setting score input type')
           if (data.rubric_points_breakdown_exists) {
             this.$emit('setRubricPointsBreakdown', this.rubricPointsBreakdown)
