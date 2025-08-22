@@ -510,29 +510,43 @@
                           <ul v-show="discussItCompletionCriteria" style="list-style: none;">
                             <li>
                               <CompletedIcon
-                                :completed="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement"
+                                :completed="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement"
                               />
                               <span
-                                :class="discussItRequirementsInfo.satisfied_min_number_of_discussion_threads_requirement ? 'text-success' : 'text-danger'"
+                                :class="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement ? 'text-success' : 'text-danger'"
                               >
-                                Submitted {{ discussItRequirementsInfo.number_of_discussion_threads_participated_in }} discussion thread<span
-                                v-if="+discussItRequirementsInfo.number_of_discussion_threads_participated_in !== 1"
+                                Initiated {{ discussItRequirementsInfo.number_of_initiated_discussion_threads }} discussion thread<span
+                                v-if="+discussItRequirementsInfo.number_of_initiated_discussion_threads !== 1"
                               >s</span>,
-                                with {{ discussItRequirementsInfo.min_number_of_discussion_threads }} required.
+                                with {{ discussItRequirementsInfo.min_number_of_initiated_discussion_threads }} required.
                               </span>
                             </li>
                             <li>
                               <CompletedIcon
-                                :completed="discussItRequirementsInfo.satisfied_min_number_of_comments_requirement"
+                                :completed="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement"
                               />
                               <span
-                                :class="discussItRequirementsInfo.satisfied_min_number_of_comments_requirement ? 'text-success' : 'text-danger'"
+                                :class="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement ? 'text-success' : 'text-danger'"
                               >
-                                Submitted {{ discussItRequirementsInfo.number_of_comments_submitted }} comment<span
-                                v-if="+discussItRequirementsInfo.number_of_comments_submitted !== 1"
-                              >s</span>, with {{ discussItRequirementsInfo.min_number_of_comments_required }} required.
+                                Submitted {{ discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements }}
+                                {{+discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements !== 1 ? 'replies' : 'reply'}},
+                                with {{ discussItRequirementsInfo.min_number_of_replies }} required.
                               </span>
                             </li>
+                            <li>
+                              <CompletedIcon
+                                :completed="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement"
+                              />
+                              <span
+                                :class="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement ? 'text-success' : 'text-danger'"
+                              >
+                                Initiated or replied to {{ discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements }} discussion thread<span
+                                v-if="+discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements !== 1"
+                              >s</span>,
+                                with {{ discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads }} required.
+                              </span>
+                            </li>
+
                           </ul>
 
                           <div
