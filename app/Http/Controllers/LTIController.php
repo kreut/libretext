@@ -328,7 +328,7 @@ class LTIController extends Controller
                             ->where('user_id', $lti_user->id)
                             ->where('assignment_id', $linked_assignment->id)
                             ->first();
-                        if ($score_exists) {
+                        if ($score_exists && $linked_assignment->lms_grade_passback === 'automatic') {
                             $ltiGradePassback->initPassBackByUserIdAndAssignmentId($score_exists->score, $lti_launch_by_user_and_assignment);
                         }
                     } else {
