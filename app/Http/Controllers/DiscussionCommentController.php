@@ -380,7 +380,6 @@ class DiscussionCommentController extends Controller
             $satisfied_requirements = $discussionComment->satisfiedRequirements($assignment,
                 $discussion->question_id,
                 $discussionComment->user_id,
-                $discussion,
                 $assignmentSyncQuestion);
 
             $satisfied_all_requirements = $satisfied_requirements['satisfied_all_requirements'];
@@ -393,7 +392,6 @@ class DiscussionCommentController extends Controller
                 $satisfied_requirements = $discussionComment->satisfiedRequirements($assignment,
                     $discussion->question_id,
                     $discussionComment->user_id,
-                    $discussion,
                     $assignmentSyncQuestion);
                 $satisfied_all_requirements = $satisfied_requirements['satisfied_all_requirements'];
                 $response['type'] = 'success';
@@ -504,7 +502,6 @@ class DiscussionCommentController extends Controller
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param DiscussionComment $discussionComment
-     * @param Discussion $discussion
      * @return array
      * @throws Exception
      */
@@ -513,8 +510,7 @@ class DiscussionCommentController extends Controller
                                    Question               $question,
                                    User                   $user,
                                    AssignmentSyncQuestion $assignmentSyncQuestion,
-                                   DiscussionComment      $discussionComment,
-                                   Discussion             $discussion): array
+                                   DiscussionComment      $discussionComment): array
     {
         try {
             $response['type'] = 'error';
@@ -527,7 +523,6 @@ class DiscussionCommentController extends Controller
             $satisfied_requirements = $discussionComment->satisfiedRequirements($assignment,
                 $question->id,
                 $user->id,
-                $discussion,
                 $assignmentSyncQuestion);
 
             $response['type'] = 'success';
@@ -664,7 +659,7 @@ class DiscussionCommentController extends Controller
                 $discussionComment->satisfied_requirement = 1;
             }
             $discussionComment->save();
-            $discussion_comment_submission_results = $discussionComment->satisfiedRequirements($assignment, $question->id, $request->user()->id, $discussion, $assignmentSyncQuestion);
+            $discussion_comment_submission_results = $discussionComment->satisfiedRequirements($assignment, $question->id, $request->user()->id, $assignmentSyncQuestion);
             $discussionComment->updateScore($discuss_it_settings,
                 $discussion_comment_submission_results,
                 $assignmentSyncQuestion,

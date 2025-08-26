@@ -896,8 +896,8 @@
                   </div>
                 </div>
               </div>
-              <ConsultInsight v-if="user && user.role === 2 && course.lms && consultInsightUrl"
-                              :url="consultInsightUrl"
+              <ConsultInsight v-if="user && user.role === 2 && course.lms"
+                              :url="'https://commons.libretexts.org/insight/interfacing-adapt-to-lms-via-lti-and-api'"
               />
             </b-alert>
             <div v-show="false && lms &&
@@ -1657,7 +1657,6 @@ export default {
   },
   data: () => ({
     clickerQuestionsExist: false,
-    consultInsightUrl: '',
     discussItQuestionsExist: false,
     errorMessage: '',
     canvasCourseUrlForm: new Form({ url: '', course_id: 0 }),
@@ -1806,13 +1805,6 @@ export default {
     if (!await this.getCourseInfo()) {
       this.isLoading = false
       return false
-    }
-    if (this.course.is_brightspace) {
-      this.consultInsightUrl = 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-d2l-via-lti-only'
-    } else if (this.course.is_canvas) {
-      this.consultInsightUrl = this.course.lms_has_api_key
-        ? 'https://commons.libretexts.org/insight/lti-and-api'
-        : 'https://commons.libretexts.org/insight/coupling-adapt-courses-to-canvas-via-lti-only'
     }
     this.assignmentGroups = await getAssignmentGroups(this.courseId, this.$noty)
     if (this.user.role === 2) {

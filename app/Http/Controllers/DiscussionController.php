@@ -99,7 +99,7 @@ class DiscussionController extends Controller
             if ($recording_type === 'video' && str_contains($data['file'], '.webm')) {
                 InitConvertToMP4::dispatch($discussionComment->id, $assignment->id);
             }
-            $discussion_comment_submission_results = $discussionComment->satisfiedRequirements($assignment, $question->id, $request->user()->id, $discussion, $assignmentSyncQuestion);
+            $discussion_comment_submission_results = $discussionComment->satisfiedRequirements($assignment, $question->id, $request->user()->id, $assignmentSyncQuestion);
             $discussionComment->updateScore($discuss_it_settings,
                 $discussion_comment_submission_results,
                 $assignmentSyncQuestion,

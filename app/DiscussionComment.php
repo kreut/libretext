@@ -101,7 +101,6 @@ class DiscussionComment extends Model
      * @param Assignment $assignment
      * @param int $question_id
      * @param int $user_id
-     * @param Discussion $discussion
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      */
@@ -109,7 +108,6 @@ class DiscussionComment extends Model
     function satisfiedRequirements(Assignment             $assignment,
                                    int                    $question_id,
                                    int                    $user_id,
-                                   Discussion             $discussion,
                                    AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $user = User::find($user_id);
@@ -216,13 +214,11 @@ class DiscussionComment extends Model
             }
         }
 
-
         $response['submission_summary'] = $submission_summary;
         $response['satisfied_all_requirements'] = $satisfied_min_number_of_initiated_discussion_threads_requirement
             && $satisfied_min_number_of_replies_requirement
             && $satisfied_min_number_of_initiate_or_reply_in_threads_requirement
             && $satisfied_min_number_of_comments_requirement;
-
         return $response;
     }
 

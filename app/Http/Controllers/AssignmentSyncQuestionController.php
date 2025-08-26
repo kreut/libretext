@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\BetaCourseApproval;
 use App\Custom\FCMNotification;
+use App\DiscussionComment;
 use App\DiscussionGroup;
 use App\Enrollment;
 use App\Exceptions\Handler;
@@ -2896,11 +2897,11 @@ class AssignmentSyncQuestionController extends Controller
                 $question_revision_ids[] = $question_revision->id;
             }
             $question_media_uploads = DB::table('question_media_uploads')
-                ->select('s3_key','show_captions')
-                ->whereIn('question_revision_id',$question_revision_ids)
+                ->select('s3_key', 'show_captions')
+                ->whereIn('question_revision_id', $question_revision_ids)
                 ->get();
             $show_captions = [];
-            foreach ($question_media_uploads as $question_media_upload){
+            foreach ($question_media_uploads as $question_media_upload) {
                 $show_captions[$question_media_upload->s3_key] = $question_media_upload->show_captions;
             }
             session()->put('show_captions', $show_captions);
@@ -3016,6 +3017,16 @@ class AssignmentSyncQuestionController extends Controller
                         $request->user()->time_zone, 'M d, Y \a\t g:i:s a')
                     : null;
                 $submission_score = Helper::removeZerosAfterDecimal($response_info['submission_score']);
+                $assignment->questions[$key]['discuss_it_satisfied_all_requirements'] = null;
+                if ($question->qti_json_type === 'discuss_it') {
+                    $discussionComment = new DiscussionComment();
+                    $discuss_it_satisfied_requirements =
+                        $discussionComment->satisfiedRequirements($assignment,
+                            $question->id,
+                            request()->user()->id,
+                            $assignmentSyncQuestion);
+                    $assignment->questions[$key]['discuss_it_satisfied_all_requirements'] = $discuss_it_satisfied_requirements['satisfied_all_requirements'] ?? null;
+                }
                 $last_submitted = $response_info['last_submitted'];
                 $submission_count = $response_info['submission_count'];
                 $late_question_submission = $response_info['late_question_submission'];
