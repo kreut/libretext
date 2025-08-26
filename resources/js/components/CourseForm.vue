@@ -550,8 +550,12 @@
             LMS*
             <QuestionCircleTooltip :id="'lms_course_tooltip'"/>
           </template>
-          <span v-show="!ltiIsEnabled">The LMS at <span class="font-weight-bold">{{ form.school }}</span> has not been
-            configured to be used with ADAPT.  If you would like to integrate ADAPT with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
+          <span v-show="!ltiIsEnabled"><span v-if="form.school === 'Not Specified'">
+            Please first select a school at the top of this form so that we can verify whether the school has been configured to be used with ADAPT.</span>
+           <span v-if="form.school !== 'Not Specified'"> The LMS at <span class="font-weight-bold">{{ form.school }}</span> has not been
+            configured to be used with ADAPT.  If you would like to integrate ADAPT with your LMS, please have your
+            LMS Admin reach out to us via the contact form.</span>
+          </span>
           <b-form-radio-group v-if="ltiIsEnabled"
                               v-model="form.lms"
                               required
