@@ -30,6 +30,8 @@ class FCMNotification
                 try {
                     $url = "https://fcm.googleapis.com/v1/projects/adapt-go/messages:send";
                     $message['message']['token'] = $fcm_token->fcm_token;
+                    $message['android'] = ['priority' => 'high'];
+                    $message['apns'] = ['headers' => ['apns-priority' => 10]];
                     $http_response = Http::withToken($accessToken)
                         ->post($url, $message);
 
