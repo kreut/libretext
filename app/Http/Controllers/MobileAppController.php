@@ -21,7 +21,7 @@ class MobileAppController extends Controller
 
     public function androidAssetLink()
     {
-        $json = '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"edu.ualr.adapt.clicker","sha256_cert_fingerprints":["97:BB:A2:CB:51:34:55:2E:0D:9A:79:32:02:94:45:1E:C6:3E:2E:2B:3D:3E:65:82:B6:91:D3:2A:4A:AF:66:8A"]}}]';
+        $json = '{"relation":["delegate_permission/common.handle_all_urls","delegate_permission/common.get_login_creds"],"target":{"namespace":"android_app","package_name":"edu.ualr.adapt.clicker.go","sha256_cert_fingerprints":["F2:0C:65:B9:A4:42:BF:D4:1B:D9:F0:72:A3:0C:02:D3:08:35:CC:D7:72:92:84:5D:C4:D0:78:5D:39:B0:A5:C4"]}}';
         return response($json, 200)
             ->header('Content-Type', 'application/json');
 
