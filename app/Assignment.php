@@ -157,9 +157,12 @@ class Assignment extends Model
         DB::table('submission_histories')->where('assignment_id', $this->id)->delete();
         DB::table('release_assignment_contacted_instructors')->where('assignment_id', $this->id)->delete();
         DB::table('rubric_points_breakdowns')->where('assignment_id', $this->id)->delete();
+        DB::table('maximum_number_of_allowed_attempts_notifications')->where('assignment_id', $this->id)->delete();
         DB::table('auto_releases')->where('type', 'assignment')
             ->where('type_id', $this->id)
             ->delete();
+
+
         $discussion = new Discussion();
         $discussion->deleteByAssignment($this);
         $this->graders()->detach();

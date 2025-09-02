@@ -72,6 +72,13 @@
                   <span class="hover-underline">  Course Gradebook</span>
                 </a>
               </li>
+              <router-link v-if="user.role !== 5 && isLms"
+                           :to="{ name: 'instructors.assignments.resend_grades_to_lms' }"
+                           class="nav-link"
+                           active-class="active"
+              >
+                <span class="hover-underline"> Resend Grades to LMS</span>
+              </router-link>
             </ul>
           </b-card>
         </div>
@@ -101,6 +108,7 @@ export default {
     CreateQuestion
   },
   data: () => ({
+    isLms: false,
     showPanel: false,
     isFormative: false,
     tabKey: 0,
@@ -224,6 +232,7 @@ export default {
         this.isFormative = data.assignment.is_formative_course || data.assignment.formative
         this.isBetaAssignment = data.assignment.is_beta_assignment
         this.assessmentUrlType = data.assignment.assessment_type === 'learning tree' ? 'learning-trees' : 'questions'
+        this.isLms = data.assignment.lms
       } catch (error) {
         this.$noty.error(error.message)
       }

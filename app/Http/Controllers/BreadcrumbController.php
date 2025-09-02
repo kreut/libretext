@@ -287,8 +287,9 @@ class BreadcrumbController extends Controller
                         case('instructors.assignments.edit_scores'):
                         case('instructors.assignments.gradebook'):
                         case('instructors.assignments.auto_graded_submissions'):
-                        case('instructors.assignments.case.study.notes');
-                        case('instructors.assignments.lab_report');
+                        case('instructors.assignments.case.study.notes'):
+                        case('instructors.assignments.lab_report'):
+                        case('instructors.assignments.resend_grades_to_lms'):
                         if ($request->user()->role === 2){
                             $check_co_instructor = true;
                         }

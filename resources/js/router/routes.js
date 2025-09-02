@@ -392,6 +392,11 @@ let general_paths = [
         component: page('instructors/assignment_information/grader_access.vue')
       },
       {
+        path: 'resend-grades-to-lms',
+        name: 'instructors.assignments.resend_grades_to_lms',
+        component: page('instructors/assignment_information/resend_grades_to_lms.vue')
+      },
+      {
         path: 'statistics',
         name: 'instructors.assignments.statistics',
         component: page('instructors/assignment_information/statistics.vue')
