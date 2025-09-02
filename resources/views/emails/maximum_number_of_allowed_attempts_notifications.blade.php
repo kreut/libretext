@@ -3,7 +3,7 @@
 @section('content')
 
   @include ('beautymail::templates.sunny.heading' , [
-      'heading' => 'Upcoming Assignment Due',
+      'heading' => 'Incorrect Canvas Setting',
       'level' => 'h1',
   ])
 
@@ -17,7 +17,8 @@
     treated by Canvas as a new “assignment submission.” If submissions aren’t unlimited,
     Canvas will stop accepting scores once the maximum number is reached. </p> <p> After updating this setting in
     Canvas,
-    you can go to the assignment settings in ADAPT (<a href="{{$url}}" style="color:blue">{{$url}}</a>) to resend the
+    you can log into ADAPT and go to the assignment settings:</p>
+  <p><a href="{{$url}}" style="color:blue">{{$url}}</a></p><p> to resend the
     grades back to
     Canvas.
   </p>

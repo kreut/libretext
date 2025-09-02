@@ -19,7 +19,7 @@ class CreateMaximumNumberOfAllowedAttemptsNotificationsTable extends Migration
             $table->string('status')->default('pending');
             $table->text('message')->nullable();
             $table->timestamps();
-            $table->foreign('assignment_id')
+            $table->foreign('assignment_id', 'max_number_allowed_passbacks_foreign')
                 ->references('id')
                 ->on('assignments');
         });

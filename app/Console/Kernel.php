@@ -74,6 +74,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('notify:instructorCanvasMaxAttemptsError')->hourly();
 
             $schedule->command('passback:manualPendingScores')->everyMinute();
+            $schedule->command('notify:LmsMaximumNumberOfAttemptsError')->everyFiveMinutes();
             $schedule->command('passback:pendingScores')->everyMinute();
 
             $schedule->command('get:NonTechnologiesWithNullNonTechnologyHtml')->hourly();

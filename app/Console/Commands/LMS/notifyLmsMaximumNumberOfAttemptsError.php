@@ -42,6 +42,7 @@ class notifyLmsMaximumNumberOfAttemptsError extends Command
      * Execute the console command.
      *
      * @return int
+     * @throws Exception
      */
     public function handle()
     {
@@ -49,11 +50,9 @@ class notifyLmsMaximumNumberOfAttemptsError extends Command
             $fiveMinutesAgo = Carbon::now()->subMinutes(5);
             $sent_notification_assignment_ids = DB::table('maximum_number_of_allowed_attempts_notifications')
                 ->select('assignment_id')
-                ->where('status', 'success')
                 ->get()
                 ->pluck('assignment_id')
                 ->toArray();
-
             $maximum_number_of_allowed_attempts = LtiGradePassback::where('updated_at', '>', $fiveMinutesAgo)
                 ->where('status', 'error')
                 ->where('message', 'LIKE', '%maximum number of allowed attempts%')
@@ -64,9 +63,10 @@ class notifyLmsMaximumNumberOfAttemptsError extends Command
                     $assignment_ids_needing_notifications[] = $value->assignment_id;
                 }
             }
+            $assignment_ids_needing_notifications = array_unique($assignment_ids_needing_notifications);
             $beauty_mail = app()->make(Beautymail::class);
             if ($assignment_ids_needing_notifications) {
-                $assignment_ids_needing_notifications = array_unique($assignment_ids_needing_notifications);
+
                 $instructor_infos = DB::table('assignments')
                     ->join('courses', 'assignments.course_id', '=', 'courses.id')
                     ->join('users', 'courses.user_id', '=', 'users.id')
@@ -74,19 +74,21 @@ class notifyLmsMaximumNumberOfAttemptsError extends Command
                         'assignments.id AS assignment_id',
                         'assignments.name AS assignment_name',
                         'users.email')
-                    ->whereIn('id', $assignment_ids_needing_notifications)
+                    ->whereIn('assignments.id', $assignment_ids_needing_notifications)
                     ->get();
                 foreach ($instructor_infos as $instructor_info) {
                     $email_info = ['course_name' => $instructor_info->course_name,
-                        'assignment_name' => $instructor_info->assignmebnt_name,
+                        'assignment_name' => $instructor_info->assignment_name,
                         'url' => Helper::schemaAndHost() . "instructors/assignments/$instructor_info->assignment_id/information/resend-grades-to-lms"
                     ];
                     $to_email = $instructor_info->email;
                     try {
                         $id = '';
                         $id = DB::table('maximum_number_of_allowed_attempts_notifications')
-                            ->insertGetId(['assignment_id' => $instructor_info->assignment_id]);
-                        $beauty_mail->send('emails.notify_lms_maximum_number_of_attempts_errors', $email_info, function ($message)
+                            ->insertGetId(['assignment_id' => $instructor_info->assignment_id,
+                                'created_at' => now(),
+                                'updated_at' => now()]);
+                        $beauty_mail->send('emails.maximum_number_of_allowed_attempts_notifications', $email_info, function ($message)
                         use ($to_email) {
                             $message
                                 ->from('adapt@noreply.libretexts.org', 'ADAPT')
@@ -95,7 +97,7 @@ class notifyLmsMaximumNumberOfAttemptsError extends Command
                         });
                         DB::table('maximum_number_of_allowed_attempts_notifications')
                             ->where('id', $id)
-                            ->update(['status' => 'success']);
+                            ->update(['status' => 'success', 'updated_at'=>now()]);
                     } catch (Exception $e) {
                         if (!$id) {
                             throw new Exception("Could not get ID in the notifyLmsMaximumNUmberOfAttemptsError script");
@@ -107,6 +109,7 @@ class notifyLmsMaximumNumberOfAttemptsError extends Command
                 }
             }
         } catch (Exception $e) {
+            dd($e->getMessage());
             $h = new Handler(app());
             $h->report($e);
             return 1;
