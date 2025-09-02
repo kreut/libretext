@@ -28,8 +28,7 @@ class FCMNotification
         if ($fcm_tokens) {
             foreach ($fcm_tokens as $fcm_token) {
                 try {
-                    $projectId = 'libretexts-adapt'; // from service account JSON
-                    $url = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
+                    $url = "https://fcm.googleapis.com/v1/projects/adapt-go/messages:send";
                     $message['message']['token'] = $fcm_token->fcm_token;
                     $http_response = Http::withToken($accessToken)
                         ->post($url, $message);
