@@ -359,7 +359,7 @@ public function correctly_computes_the_final_score_with_randomized_assessment_as
     {
         $this->actingAs($this->user)->postJson("/api/extensions/{$this->assignment->id}/{$this->student_user->id}",
             [
-                'extension_date' => '2025-09-02',
+                'extension_date' => '2027-09-02',
                 'extension_time' => '09:00:00'
             ])
             ->assertJson(['type' => 'success']);
@@ -392,7 +392,7 @@ public function correctly_computes_the_final_score_with_randomized_assessment_as
     {
         $this->actingAs($this->user_2)->postJson("/api/extensions/{$this->assignment->id}/{$this->student_user->id}",
             [
-                'extension_date' => '2025-09-02',
+                'extension_date' => '2029-09-02',
                 'extension_time' => '09:00:00'
             ])
             ->assertJson(['type' => 'error',

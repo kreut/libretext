@@ -56,6 +56,19 @@ class CoursesIndexTest extends TestCase
 
 
     /** @test */
+    public function linking_to_lms_will_show_if_in_different_account()
+    {
+        $lms_course_id = 'adsfs';
+        $new_course = factory(Course::class)->create([
+            'user_id' => $this->user_2->id, 'lms_course_id' => $lms_course_id]);
+        $this->actingAs($this->user)
+            ->patchJson("/api/courses/{$this->course->id}/link-to-lms", ['lms_course_id' => $lms_course_id])
+            ->assertJson(['type' => 'info',
+                'message' => "The LMS course is already linked to your ADAPT course $new_course->name. Please log into your account with email address {$this->user_2->email} and unlink the course."]);
+    }
+
+
+    /** @test */
     public function non_admin_cannot_update_disciplines()
     {
         $this->actingAs($this->user_2)
@@ -288,7 +301,7 @@ class CoursesIndexTest extends TestCase
     public function can_get_your_courses()
     {
         $this->actingAs($this->user)->getJson("/api/courses")
-            ->assertJson(['type'=> 'success']);
+            ->assertJson(['type' => 'success']);
     }
 
     /** @test */
