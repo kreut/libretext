@@ -70,7 +70,6 @@ class Score extends Model
                 $assignment_scores_by_user_id[$assignment_score->user_id] = $assignment_score;
             }
             DB::beginTransaction();
-            $at_least_one_grade_passback = false;
             foreach ($submissions as $submission) {
                 $adjustment = $new_score - $submission->score;
                 $submission->score = $new_score;
@@ -84,29 +83,18 @@ class Score extends Model
                 }
                 $assignment_score->score += $adjustment;
                 $assignment_score->save();
-                if (isset($lti_launches_by_user_id[$submission->user_id])) {
-                    $at_least_one_grade_passback = true;
-                    $this->updateOrCreate(['user_id' => $submission->user_id, 'assignment_id' => $assignment->id],
-                        [
-                            'launch_id' => $lti_launches_by_user_id[$submission->user_id]->launch_id,
-                            'status' => 'pending',
-                            'score' => $assignment_score->score,
-                            'message' => 'none'
-                        ]
-                    );
-                }
             }
-            if ($at_least_one_grade_passback) {
+            if ($assignment->course->lms) {
                 DB::table('passback_by_assignments')->insert(
                     ['assignment_id' => $assignment->id,
-                        'status' => 'pending',
+                        'status' => 'manual_pending',
                         'created_at' => now(),
                         'updated_at' => now()]);
             }
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The scores have been updated.';
-            if ($at_least_one_grade_passback) {
+            if ($assignment->course->lms) {
                 $response['message'] .= '  Please allow 5-10 minutes for the new scores to appear in your LMS.';
             }
 
