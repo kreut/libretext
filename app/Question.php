@@ -688,8 +688,8 @@ class Question extends Model
                     }
                 }
                 if (!$show_solution) {
-                    foreach ($qti_array['rows'] as $row) {
-                        unset($row['correctResponse']);
+                    foreach ($qti_array['rows'] as $key => $row) {
+                        unset($qti_array['rows'][$key]['correctResponse']);
                     }
                     if (request()->user()->role === 3) {
                         unset($qti_array['feedback']);

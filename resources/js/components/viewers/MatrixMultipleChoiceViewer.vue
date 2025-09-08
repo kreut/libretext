@@ -29,7 +29,7 @@
                           role="radio"
                           @input="updateSelected(rowIndex,colIndex)"
             >
-              <span v-if="row.selected === colIndex && showResponseFeedback">
+              <span v-if="row.selected === colIndex && showResponseFeedback && row.hasOwnProperty('correctResponse')">
                 <b-icon-check-circle-fill v-if="row.correctResponse === row.selected" class="text-success" />
                 <b-icon-x-circle-fill v-if="row.correctResponse !== row.selected" class="text-danger" />
               </span>
