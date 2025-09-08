@@ -1647,9 +1647,6 @@ export default {
       },
       {
         value: 'exposition', text: 'Exposition'
-      },
-      {
-        value: 'report', text: 'Report'
       }],
     content: 'both',
     contentOptions: [
