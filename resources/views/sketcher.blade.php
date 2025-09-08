@@ -67,12 +67,6 @@
           image_smiles: smiles
         }, '*')
       }
-      if (event.data === 'setMolecule') {
-        const sketcher = document.getElementById('sketcher')
-        await sketcher.set_props({
-          toolset: 'marker-only'
-        })
-      }
       if (event.data === 'save') {
         const sketcher = document.getElementById('sketcher')
         const structure = await sketcher.save()
