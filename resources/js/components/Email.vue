@@ -12,7 +12,7 @@
     >
       <p>{{ extraEmailModalText }}</p>
       <b-form ref="form">
-        <RequiredText/>
+        <RequiredText v-show="type !== 'contact_grader'"/>
         <b-form-group
           v-show="showRequestInstructorAccessCode"
           label-cols-sm="3"
@@ -45,27 +45,18 @@
             <has-error :form="sendEmailForm" field="subject"/>
           </div>
         </b-form-group>
-        <b-form-group
-          v-show="type === 'contact_grader'"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="  Subject*"
-          label-for="subject"
-        >
-          {{sendEmailForm.subject}}
-          <div v-show="false">
-            <b-form-input
-              id="subject"
-              v-model="sendEmailForm.subject"
-              required
-              class="col-8"
-              type="text"
-              :class="{ 'is-invalid': sendEmailForm.errors.has('subject') }"
-              @keydown="sendEmailForm.errors.clear('subject')"
-            />
-            <has-error :form="sendEmailForm" field="subject"/>
-          </div>
-        </b-form-group>
+        <div v-show="false">
+          <b-form-input
+            id="subject"
+            v-model="sendEmailForm.subject"
+            required
+            class="col-8"
+            type="text"
+            :class="{ 'is-invalid': sendEmailForm.errors.has('subject') }"
+            @keydown="sendEmailForm.errors.clear('subject')"
+          />
+          <has-error :form="sendEmailForm" field="subject"/>
+        </div>
         <b-form-group
           v-if="sendEmailForm.subject !== 'Email Change' && type !== 'contact_grader'"
           label-cols-sm="3"
@@ -131,9 +122,11 @@
           v-if="sendEmailForm.subject !== 'Email Change'"
           label-cols-sm="3"
           label-cols-lg="2"
-          label="Message*"
           label-for="message"
         >
+          <template #label>
+            <span class="ml-1">Message<span v-show="type !== 'contact_grader'">*</span></span>
+          </template>
           <b-form-textarea
             id="message"
             v-model="sendEmailForm.text"
@@ -256,7 +249,7 @@ export default {
         this.showSchool = true
         this.showRequestInstructorAccessCode = false
       }
-      if (this.type === 'contact_grader'){
+      if (this.type === 'contact_grader') {
         this.showRequestInstructorAccessCode = false
       }
       this.sendEmailForm.type = this.type
