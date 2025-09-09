@@ -150,7 +150,6 @@
                           :qti-json="JSON.parse(qtiJson)"
                           :show-submit="showSubmit"
           />
-
           <MultipleChoiceTrueFalseViewer v-if="['true_false','multiple_choice'].includes(questionType)"
                                          ref="multipleChoiceTrueFalseViewer"
                                          :key="`multiple-choice-true-false-${qtiJsonCacheKey}`"
@@ -247,7 +246,7 @@ import NumericalViewer from './viewers/NumericalViewer'
 import BowTieViewer from './viewers/BowTieViewer'
 import MatrixMultipleChoiceViewer from './viewers/MatrixMultipleChoiceViewer'
 import MultipleResponseSelectAllThatApplyOrSelectNViewer
-from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
+  from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
 import MultipleResponseGroupingViewer from './viewers/MultipleResponseGroupingViewer'
 import DropDownTableViewer from './viewers/DropDownTableViewer'
 import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'
@@ -262,6 +261,7 @@ import MatrixMultipleResponseViewer from './viewers/MatrixMultipleResponseViewer
 import { formatQuestionMediaPlayer } from '~/helpers/Questions'
 import DiscussItViewer from './viewers/DiscussItViewer.vue'
 import StructureImageUploader from './StructureImageUploader.vue'
+import { v4 as uuidv4 } from 'uuid'
 
 export default {
   name: 'QtiJsonQuestionViewer',
@@ -375,6 +375,7 @@ export default {
     window.removeEventListener('message', this.hotKeys)
   },
   mounted () {
+   // this.qtiJsonCacheKey = uuidv4()
     this.$nextTick(() => {
       const iframes = document.querySelectorAll('iframe[title="3D Renderer"]')
       iframes.forEach((iframe) => {
@@ -496,8 +497,8 @@ export default {
       if (!this.showQtiAnswer &&
         this.user.role === 2 &&
         (['drop_down_rationale', 'multiple_answers', 'drop_down_rationale_triad'].includes(this.questionType) ||
-        ((['multiple_choice', 'select_choice'].includes(this.questionType) &&
-          JSON.parse(this.qtiJson).randomizeOrder === 'yes'))) || (this.questionType === 'select_choice' && !JSON.parse(this.qtiJson).randomizeOrder)) {
+          ((['multiple_choice', 'select_choice'].includes(this.questionType) &&
+            JSON.parse(this.qtiJson).randomizeOrder === 'yes'))) || (this.questionType === 'select_choice' && !JSON.parse(this.qtiJson).randomizeOrder)) {
         return true
       }
       return false

@@ -5,7 +5,7 @@
       title="Feedback"
       hide-footer
     >
-      <span v-html="multipleChoiceFeedback" />
+      <span v-html="multipleChoiceFeedback"/>
     </b-modal>
     <div class="pt-4">
       <div v-for="choice in qtiJson.simpleChoice" :key="`identifier-${choice.identifier}-student-response`">
@@ -15,7 +15,7 @@
           :size="presentationMode ? 'lg' : ''"
           style="padding-bottom:5px"
         >
-          <span class="multiple-choice-responses" v-html="choice.value" />
+          <span class="multiple-choice-responses" v-html="choice.value"/>
           <span
             v-if="selectedSimpleChoice === choice.identifier
               && qtiJson.studentResponse === choice.identifier
@@ -50,10 +50,10 @@
           :fields="['choice','feedback']"
         >
           <template v-slot:cell(choice)="data">
-            <div v-html="data.item.choice" />
+            <div v-html="data.item.choice"/>
           </template>
           <template v-slot:cell(feedback)="data">
-            <div v-html="data.item.feedback" />
+            <div v-html="data.item.feedback"/>
           </template>
         </b-table>
       </b-card>
@@ -99,22 +99,24 @@ export default {
     })
   },
   mounted () {
-    this.isStudent = ![2, 4, 5].includes(this.user.role)
-    if (this.qtiJson.questionType === 'true_false') {
-      this.setTrueFalseLanguage(this.qtiJson.simpleChoice[0].value)
-    }
-    if (this.qtiJson.studentResponse) {
-      this.selectedSimpleChoice = this.qtiJson.studentResponse
-
-      if (this.qtiJson.feedback && this.qtiJson.feedback[this.selectedSimpleChoice]) {
-        this.qtiJson.feedback.specific = this.qtiJson.feedback[this.selectedSimpleChoice]
-        this.feedbackKey++
+    if (this.qtiJson.simpleChoice) {
+      this.isStudent = ![2, 4, 5].includes(this.user.role)
+      if (this.qtiJson.questionType === 'true_false') {
+        this.setTrueFalseLanguage(this.qtiJson.simpleChoice[0].value)
       }
-      for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
-        let simpleChoice = this.qtiJson.simpleChoice[i]
-        simpleChoice.chosenStudentResponse = this.selectedSimpleChoice === simpleChoice.identifier
-        if (simpleChoice.chosenStudentResponse && simpleChoice.correctResponse) {
-          this.feedbackType = 'correct'
+      if (this.qtiJson.studentResponse) {
+        this.selectedSimpleChoice = this.qtiJson.studentResponse
+
+        if (this.qtiJson.feedback && this.qtiJson.feedback[this.selectedSimpleChoice]) {
+          this.qtiJson.feedback.specific = this.qtiJson.feedback[this.selectedSimpleChoice]
+          this.feedbackKey++
+        }
+        for (let i = 0; i < this.qtiJson.simpleChoice.length; i++) {
+          let simpleChoice = this.qtiJson.simpleChoice[i]
+          simpleChoice.chosenStudentResponse = this.selectedSimpleChoice === simpleChoice.identifier
+          if (simpleChoice.chosenStudentResponse && simpleChoice.correctResponse) {
+            this.feedbackType = 'correct'
+          }
         }
       }
     }
