@@ -67,6 +67,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('remove:oldSubmissionConfirmations')->daily();
             $schedule->command('email:studentsWithSubmissions')->everyMinute();
             $schedule->command('cache:IMathSolutions')->everyMinute();
+            $schedule->command('delete:OldFCMTokens')->daily();
 
             $schedule->command('email:submissionFeedbackSummary')->daily();
             $schedule->command('email:pendingQuestionRevisionNotifications')->daily();
