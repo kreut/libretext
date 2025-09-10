@@ -1,13 +1,18 @@
 <template>
   <div>
+    <div
+      v-if="qtiJson.studentResponse"
+      id="original-response"
+      :data-ids="JSON.stringify(qtiJson.studentResponse)"
+    />
     <div v-if="showFeedbackModal">
-    <b-modal
-      id="modal-multiple-answers-feedback"
-      title="Feedback"
-      hide-footer
-    >
-      <span v-html="multipleAnswersFeedback"/>
-    </b-modal>
+      <b-modal
+        id="modal-multiple-answers-feedback"
+        title="Feedback"
+        hide-footer
+      >
+        <span v-html="multipleAnswersFeedback"/>
+      </b-modal>
     </div>
     <b-form-checkbox-group
       v-model="selectedMultipleAnswers"
@@ -31,7 +36,6 @@
               /></span>
           </span>
         </b-form-checkbox>
-
       </div>
     </b-form-checkbox-group>
   </div>
@@ -64,7 +68,6 @@ export default {
   mounted () {
     if (this.qtiJson.studentResponse) {
       this.selectedMultipleAnswers = this.qtiJson.studentResponse
-      console.log(this.selectedMultipleAnswers)
     }
   },
   methods: {

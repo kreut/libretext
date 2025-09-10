@@ -3274,52 +3274,57 @@
                       <div class="h7">
                         Instructions
                       </div>
-                        <div v-if="isPhone()">
-                          <p>
-                            Use your phone to record and upload your audio submission directly to ADAPT.
-                          </p>
-                          <NativeAudioVideoRecorder :key="`new-submission-${questions[currentPage-1].id}-${previouslyUploadedAudioFile}`"
-                                                    :recording-type="'audio'"
-                                                    :upload-type="'submission'"
-                                                    :assignment-id="+assignmentId"
-                                                    :question-id="questions[currentPage-1].id"
-                                                    :previously-uploaded-file="previouslyUploadedAudioFile"
-                                                    @submitAudio="submitAudio"
-                          />
-                          <div class="text-center">
-                        <b-button v-show="previouslyUploadedAudioFile"
-                                  variant='primary'
-                                  size='sm'
-                                  @click="previouslyUploadedAudioFile =''">Re-record</b-button>
+                      <div v-if="isPhone()">
+                        <p>
+                          Use your phone to record and upload your audio submission directly to ADAPT.
+                        </p>
+                        <NativeAudioVideoRecorder
+                          :key="`new-submission-${questions[currentPage-1].id}-${previouslyUploadedAudioFile}`"
+                          :recording-type="'audio'"
+                          :upload-type="'submission'"
+                          :assignment-id="+assignmentId"
+                          :question-id="questions[currentPage-1].id"
+                          :previously-uploaded-file="previouslyUploadedAudioFile"
+                          @submitAudio="submitAudio"
+                        />
+                        <div class="text-center">
+                          <b-button v-show="previouslyUploadedAudioFile"
+                                    variant="primary"
+                                    size="sm"
+                                    @click="previouslyUploadedAudioFile =''"
+                          >Re-record
+                          </b-button>
 
-                          </div>
                         </div>
-                        <div v-else class="ml-5">
-                          <p>
-                            Use the built-in "ADAPT recorder" below to record and upload your audio submission directly to
-                            ADAPT. After you hit record, click on the recording (for example, Record 1), and then click the
-                            disk
-                            icon to save it and submit it.
-                            Otherwise, you may record your audio submission as an .mp3 file with another program (outside of
-                            ADAPT),
-                            save the .mp3 file to your computer, then <a href=""
-                                                                         variant="sm"
-                                                                         @click.prevent="openUploadFileModal(questions[currentPage - 1].id)"
-                          >
-                            upload the .mp3 file</a> from your computer into ADAPT.
-                          </p>
-                          <audio-recorder
-                            v-show="showAudioUploadComponent"
-                            ref="uploadRecorder"
-                            :key="questions[currentPage-1].id"
-                            tabindex="0"
-                            class="m-auto"
-                            :upload-url="audioUploadUrl"
-                            :time="1"
-                            :successful-upload="submittedAudioUpload"
-                            :failed-upload="failedAudioUpload"
-                          />
-                        </div>
+                      </div>
+                      <div v-else class="ml-5">
+                        <p>
+                          Use the built-in "ADAPT recorder" below to record and upload your audio submission directly to
+                          ADAPT. After you hit record, click on the recording (for example, Record 1), and then click
+                          the
+                          disk
+                          icon to save it and submit it.
+                          Otherwise, you may record your audio submission as an .mp3 file with another program (outside
+                          of
+                          ADAPT),
+                          save the .mp3 file to your computer, then <a href=""
+                                                                       variant="sm"
+                                                                       @click.prevent="openUploadFileModal(questions[currentPage - 1].id)"
+                        >
+                          upload the .mp3 file</a> from your computer into ADAPT.
+                        </p>
+                        <audio-recorder
+                          v-show="showAudioUploadComponent"
+                          ref="uploadRecorder"
+                          :key="questions[currentPage-1].id"
+                          tabindex="0"
+                          class="m-auto"
+                          :upload-url="audioUploadUrl"
+                          :time="1"
+                          :successful-upload="submittedAudioUpload"
+                          :failed-upload="failedAudioUpload"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -4515,7 +4520,7 @@ export default {
     if (this.user.role === 2) {
       // await this.startClickerAssessment()
     }
-    this.previouslyUploadedAudioFile = this.questions[this.currentPage-1].submission ? this.questions[this.currentPage-1].submission : ''
+    this.previouslyUploadedAudioFile = this.questions[this.currentPage - 1].submission ? this.questions[this.currentPage - 1].submission : ''
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
@@ -4542,6 +4547,18 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    revertToOriginal (type) {
+      switch (type) {
+        case ('multiple_answers'):
+          const el = document.querySelector('#question-to-view #original-response');
+          if (!el) return
+          const originalIds = JSON.parse(el.dataset.ids || '[]')
+          let qtiJson = JSON.parse(this.qtiJson)
+          qtiJson.studentResponse = originalIds
+          this.questions[this.currentPage - 1].qti_json = JSON.stringify(qtiJson)
+          break
+      }
+    },
     async submitAudio (filename) {
       try {
         const { data } = await axios.post(`/api/submission-audios/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/1/${filename}`)
@@ -6518,6 +6535,16 @@ export default {
         this.showSubmitMoleculeSubmission = true
         this.renderMathJax()
       } else {
+        let questionType
+        try {
+          const qtiJson = JSON.parse(this.questions[this.currentPage - 1].qti_json)
+          questionType = qtiJson.questionType
+        } catch (error) {
+          questionType = ''
+        }
+        if (questionType === 'multiple_answers') {
+          this.revertToOriginal('multiple_answers')
+        }
         if (this.clickerApp) {
           let submissionDataMessage = data.message.replace('"', '\'\'')
           window.parent.postMessage(`{"source": "app_clicker","message": "${submissionDataMessage}","type":"error"}`, '*')
