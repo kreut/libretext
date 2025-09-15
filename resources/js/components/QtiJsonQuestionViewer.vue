@@ -597,7 +597,7 @@ export default {
           response = []
           let chosenOptions = []
           let questionType = this.questionType
-          $('select.select-choice').each(function () {
+          $('#question select.select-choice').each(function () {
             console.log($(this).val())
             if (questionType === 'drop_down_rationale_triad') {
               chosenOptions.push($(this).val())
