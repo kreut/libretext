@@ -90,19 +90,22 @@
           <track kind="captions" src="{{ $vtt_file }}"/>
         @endif
       </video>
-      <div class="controls" style="margin-bottom:50px">
-        <button type="button" class="btn btn-primary me-2" onclick="rotateLeft()">
-          <i class="fas fa-rotate-left"></i> Rotate Left
-        </button>
+      @if (isset($show_buttons) && $show_buttons)
+        )
+        <div class="controls" style="margin-bottom:50px">
+          <button type="button" class="btn btn-primary me-2" onclick="rotateLeft()">
+            <i class="fas fa-rotate-left"></i> Rotate Left
+          </button>
 
-        <button type="button" class="btn btn-primary me-2" onclick="rotateRight()">
-          <i class="fas fa-rotate-right"></i> Rotate Right
-        </button>
+          <button type="button" class="btn btn-primary me-2" onclick="rotateRight()">
+            <i class="fas fa-rotate-right"></i> Rotate Right
+          </button>
 
-        <button type="button" class="btn btn-secondary" onclick="resetRotation()">
-          <i class="fas fa-undo"></i> Reset
-        </button>
-      </div>
+          <button type="button" class="btn btn-secondary" onclick="resetRotation()">
+            <i class="fas fa-undo"></i> Reset
+          </button>
+        </div>
+      @endif
     @endif
   @endif
 

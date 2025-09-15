@@ -425,15 +425,17 @@ class QuestionMediaController extends Controller
         $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($media);
         $type = strpos($media, '.mp3') !== false ? 'audio' : 'video';
         $temporary_url = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$media", Carbon::now()->addDays(7));
+        $mp4_temporary_url = $type === 'video' ? $temporary_url : '';
         $vtt_file = $show_captions ? Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$vtt_file", Carbon::now()->addDays(7)) : '';
         $is_phone = 0;
 
         return view('media_player', ['type' => $type,
             'temporary_url' => $temporary_url,
-            'mp4_temporary_url' => '',
+            'mp4_temporary_url' => $mp4_temporary_url,
             'vtt_file' => $vtt_file,
             'start_time' => $start_time,
-            'is_phone' => $is_phone]);
+            'is_phone' => $is_phone,
+            'show_buttons' => false]);
     }
 
     /**
