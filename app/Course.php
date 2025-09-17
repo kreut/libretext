@@ -98,6 +98,7 @@ class Course extends Model
         DB::table('scores')->whereIn('assignment_id', $assignment_ids)->delete();
         DB::table('cutups')->whereIn('assignment_id', $assignment_ids)->delete();
         DB::table('seeds')->whereIn('assignment_id', $assignment_ids)->delete();
+        DB::table('assignment_question_time_on_tasks')->whereIn('assignment_id', $assignment_ids)->delete();
         DB::table('compiled_pdf_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
         DB::table('question_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
         DB::table('assignment_level_overrides')->whereIn('assignment_id', $assignment_ids)->delete();
