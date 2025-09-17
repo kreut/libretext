@@ -339,7 +339,7 @@
         </b-alert>
       </div>
       <div v-show="!+form.formative">
-        <div v-if="'section' in form">
+        <div v-if="'section' in form" v-show="false">
           <b-form-group
             v-if="user.role === 2"
             label-cols-sm="4"
@@ -368,6 +368,7 @@
           </b-form-group>
           <b-form-group
             v-if="user.role === 2"
+            v-show="false"
             label-cols-sm="4"
             label-cols-lg="3"
             label-for="crn"
