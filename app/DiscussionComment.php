@@ -312,6 +312,8 @@ class DiscussionComment extends Model
     function countWords($htmlString): int
     {
         // Load the HTML string into a DOMDocument
+        $htmlString = str_replace("\xc2\xa0", ' ', $htmlString);
+        $htmlString = str_replace('&nbsp;', ' ', $htmlString);
         $dom = new DOMDocument();
         @$dom->loadHTML($htmlString, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
 
