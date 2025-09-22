@@ -38,8 +38,8 @@ class AssignmentSyncQuestionPolicy
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return Response
      */
-    public function checkForDiscussitOrClickerQuestionsByCourseOrAssignment(User                   $user,
-                                                                   AssignmentSyncQuestion $assignmentSyncQuestion): Response
+    public function checkForDiscussitClickerOrOpenEndedQuestionsByCourseOrAssignment(User                   $user,
+                                                                                     AssignmentSyncQuestion $assignmentSyncQuestion): Response
     {
         return in_array($user->role, [2, 4, 5])
             ? Response::allow()
@@ -104,9 +104,25 @@ class AssignmentSyncQuestionPolicy
      * @param Assignment $assignment
      * @return Response
      */
+    public function removeOpenEndedQuestions(User                   $user,
+                                             AssignmentSyncQuestion $assignmentSyncQuestion,
+                                             Assignment             $assignment): Response
+    {
+
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to check whether all solutions are released when the questions are closed.');
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
     public function allSolutionsReleasedWhenClosed(User                   $user,
-                                                       AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                       Assignment             $assignment): Response
+                                                   AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                   Assignment             $assignment): Response
     {
 
         return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
@@ -407,7 +423,6 @@ class AssignmentSyncQuestionPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to reset this clicker assessment.');
     }
-
 
 
     /**

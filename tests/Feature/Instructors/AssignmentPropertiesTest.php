@@ -68,12 +68,11 @@ class AssignmentPropertiesTest extends TestCase
             'question_id' => $this->question->id,
             'points' => 10,
             'order' => 1,
-            'open_ended_submission_type' => 'none'
+            'open_ended_submission_type' => '0'
         ]);
         $this->assignment->source = 'a';
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/validate-assessment-type",
-            ['source' => 'x'])
-            ->assertJson(['message' => "You can't switch to an external assignment until you remove all ADAPT questions from the assignment."]);
+            ['source' => 'x'])->assertJson(['message' => "You can't switch to an external assignment until you remove all ADAPT questions from the assignment."]);
     }
 
 

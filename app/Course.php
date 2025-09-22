@@ -390,9 +390,11 @@ class Course extends Model
                 }
 
                 $assignment->saveAssignmentTimingAndGroup($imported_assignment, $default_timing);
-                $reset_discuss_it_settings_to_default = property_exists($request, 'reset_discuss_it_settings_to_default') ? +$request->reset_discuss_it_settings_to_default : true;
-                $reset_clicker_settings_to_default = property_exists($request, 'reset_clicker_settings_to_default') ? +$request->reset_clicker_settings_to_default : true;
-                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $reset_discuss_it_settings_to_default, $reset_clicker_settings_to_default);
+                $reset_discuss_it_settings_to_default = property_exists($request, 'reset_discuss_it_settings_to_default') ? +$request->reset_discuss_it_settings_to_default : false;
+                $reset_clicker_settings_to_default = property_exists($request, 'reset_clicker_settings_to_default') ? +$request->reset_clicker_settings_to_default : false;
+                $remove_open_ended_questions_from_real_time_assignments = property_exists($request, 'remove_open_ended_questions_from_real_time_assignments') ? +$request->remove_open_ended_questions_from_real_time_assignments : false;
+
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $reset_discuss_it_settings_to_default, $reset_clicker_settings_to_default, $remove_open_ended_questions_from_real_time_assignments);
             }
 
             $this->prepareNewCourse($user, $section, $imported_course, $this, $enrollment, $finalGrade, $courseOrder);
@@ -435,13 +437,13 @@ class Course extends Model
      * @return void
      */
     public
-    function prepareNewCourse(User       $user,
-                              Section    $section,
-                              Course     $new_course,
-                              Course     $course,
-                              Enrollment $enrollment,
-                              FinalGrade $finalGrade,
-    CourseOrder $courseOrder)
+    function prepareNewCourse(User        $user,
+                              Section     $section,
+                              Course      $new_course,
+                              Course      $course,
+                              Enrollment  $enrollment,
+                              FinalGrade  $finalGrade,
+                              CourseOrder $courseOrder)
     {
         $section->name = 'Main';
         $section->course_id = $new_course->id;

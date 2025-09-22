@@ -23,6 +23,7 @@ use App\LmsAPI;
 use App\LtiAssignmentsAndGradesUrl;
 use App\PendingQuestionRevision;
 use App\Question;
+use App\QuestionRevision;
 use App\Score;
 use App\Section;
 use App\Solution;
@@ -1004,7 +1005,11 @@ class AssignmentController extends Controller
                 ->first();
             $assessment_type = $request->assessment_type;
             $source = $request->source;
-
+            $response['open_ended_in_real_time'] = false;
+            if ($open_ended && $assessment_type !== 'delayed') {
+                $response['open_ended_in_real_time'] = true;
+                return $response;
+            }
             if ($source === 'x' && ($question || $learning_tree)) {
                 $response['message'] = "You can't switch to an external assignment until you remove all ADAPT questions from the assignment.";
                 return $response;
@@ -1178,7 +1183,8 @@ class AssignmentController extends Controller
             if ($level === 'properties_and_questions') {
                 $reset_discuss_it_settings_to_default = +$request->reset_discuss_it_settings_to_default === 1;
                 $reset_clicker_settings_to_default = +$request->reset_clicker_settings_to_default === 1;
-                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $reset_discuss_it_settings_to_default, $reset_clicker_settings_to_default);
+                $remove_open_ended_questions_in_real_time_assignment = +$request->remove_open_ended_questions_in_real_time_assignment === 1;
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id, $reset_discuss_it_settings_to_default, $reset_clicker_settings_to_default, $remove_open_ended_questions_in_real_time_assignment);
                 $case_study_notes = CaseStudyNote::where('assignment_id', $assignment->id)->get();
                 foreach ($case_study_notes as $case_study_note) {
                     $imported_case_study_note = $case_study_note->replicate()->fill([
@@ -1310,7 +1316,8 @@ class AssignmentController extends Controller
             if ($request->level === 'properties_and_questions') {
                 $reset_discuss_it_settings_to_default = +$request->reset_discuss_it_settings_to_default === 1;
                 $reset_clicker_settings_to_default = +$request->reset_clicker_settings_to_default === 1;
-                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $new_assignment->id, $reset_discuss_it_settings_to_default, $reset_clicker_settings_to_default);
+                $remove_open_ended_questions_in_real_time_assignment = +$request->remove_open_ended_questions_in_real_time_assignment === 1;
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $new_assignment->id, $reset_discuss_it_settings_to_default, $reset_clicker_settings_to_default, $remove_open_ended_questions_in_real_time_assignment);
             }
 
 

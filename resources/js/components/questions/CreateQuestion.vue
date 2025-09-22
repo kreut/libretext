@@ -2,12 +2,40 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-discuss-it-text-form"/>
+    <b-modal id="modal-confirm-no-open-ended-submission-with-no-auto-grading"
+             title="Confirm No Open-ended Submission"
+             no-close-on-esc
+             no-close-on-backdrop
+    >
+      <p>
+        You are creating a question with an HTML block but no open-ended submission and no auto-grading submission.
+        Typically questions with only HTML will have some way for students to submit their work.
+      </p>
+      <p>Would you like to save the question as is?</p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          @click="$bvModal.hide('modal-confirm-no-open-ended-submission-with-no-auto-grading')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          size="sm"
+          variant="primary"
+          @click="$bvModal.hide('modal-confirm-no-open-ended-submission-with-no-auto-grading');checkedOpenEndedSubmissionType = true; initSaveQuestion()"
+        >
+          Save
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-confirm-update-structure"
              title="Confirm Update Structure"
              no-close-on-backdrop
     >
-      <p>Please confirm that you would like to update the structure. By doing so, the Sketcher will be reset: your
-        structure, any associated point values, and any feedback will also be deleted as well.</p>
+      <p>
+        Please confirm that you would like to update the structure. By doing so, the Sketcher will be reset: your
+        structure, any associated point values, and any feedback will also be deleted as well.
+      </p>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -1085,6 +1113,7 @@
           </p>
 
           <p>Both blocks are rendered in problem to students.</p>
+
           <b-card border-variant="primary"
                   class="mb-3"
           >
@@ -1147,6 +1176,34 @@
               </div>
             </div>
           </b-card>
+
+          <b-card border-variant="primary"
+                  class="mb-3"
+          >
+            <div>
+              <b-form-group
+                label-for="open_ended_submission_type"
+              >
+                <template #label>
+                  Open-Ended Submission Type
+                  <QuestionCircleTooltip id="open-ended-submission-type-tooltip"/>
+                  <b-tooltip target="open-ended-submission-type-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Specify the open-ended submission type associated with this question. Instructors may override this
+                    at
+                    the usage level.
+                  </b-tooltip>
+                </template>
+                <b-form-select v-model="questionForm.open_ended_submission_type"
+                               :options="openEndedSubmissionTypeOptions"
+                               :style="['0',0,'no submission, manual grading'].includes(questionForm.open_ended_submission_type) ? 'width:250px' : 'width:100px'"
+                               size="sm"
+                />
+              </b-form-group>
+            </div>
+          </b-card>
           <b-card border-variant="primary"
                   class="mb-3"
           >
@@ -1157,7 +1214,6 @@
                 label-cols-lg="3"
                 label-for="technology"
               >
-
                 <template #label>
                   Auto-Grade Tech Block
                   <QuestionCircleTooltip id="new-question-tooltip"/>
@@ -1180,11 +1236,21 @@
                     class="mr-2"
                     @input="openCreateAutoGradedTechnologyCode($event)"
                   >
-                    <b-form-radio :value="null">None</b-form-radio>
-                    <b-form-radio value="qti">Native</b-form-radio>
-                    <b-form-radio value="h5p">H5P</b-form-radio>
-                    <b-form-radio value="imathas">IMathAS</b-form-radio>
-                    <b-form-radio value="webwork" class="ml-2">WeBWork</b-form-radio>
+                    <b-form-radio :value="null">
+                      None
+                    </b-form-radio>
+                    <b-form-radio value="qti">
+                      Native
+                    </b-form-radio>
+                    <b-form-radio value="h5p">
+                      H5P
+                    </b-form-radio>
+                    <b-form-radio value="imathas">
+                      IMathAS
+                    </b-form-radio>
+                    <b-form-radio value="webwork" class="ml-2">
+                      WeBWork
+                    </b-form-radio>
                   </b-form-radio-group>
                   <b-form-select
                     v-if="newAutoGradedTechnology === 'webwork'"
@@ -1195,10 +1261,8 @@
                     :options="webworkTemplateOptions"
                     @change="setWebworkTemplate($event)"
                   />
-
                 </div>
               </b-form-group>
-
               <div v-if="questionForm.technology === 'qti'">
                 <b-form-group label="Native Question Type"
                               label-cols-sm="3"
@@ -1729,9 +1793,8 @@
                     </b-form-group>
                     <StructureImageUploader/>
                   </div>
-                  <div id="to-sketcher-component" @click="handleSketcherClick">
-                  </div>
-                  <div class="mb-2" v-show="qtiQuestionType ==='marker'">
+                  <div id="to-sketcher-component" @click="handleSketcherClick"/>
+                  <div v-show="qtiQuestionType ==='marker'" class="mb-2">
                     <div v-if="!qtiJson.solutionStructure">
                       <b-button
                         variant="primary"
@@ -2420,7 +2483,7 @@
         id="save-question"
         size="sm"
         variant="primary"
-        @click="initSaveQuestion()"
+        @click="checkedOpenEndedSubmissionType = false;initSaveQuestion()"
       >Save</b-button>
     </span>
     <span v-if="savingQuestion">
@@ -2481,7 +2544,7 @@ import QuestionCircleTooltipModal from '../QuestionCircleTooltipModal.vue'
 import ConsultInsight from '../ConsultInsight.vue'
 import RubricProperties from '../RubricProperties.vue'
 import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
-import { canEdit, responseFormatOptions } from '~/helpers/Questions'
+import { canEdit, responseFormatOptions, openEndedSubmissionTypeOptions } from '~/helpers/Questions'
 import StructureImageUploader from '../StructureImageUploader.vue'
 
 const defaultQuestionForm = {
@@ -2497,6 +2560,7 @@ const defaultQuestionForm = {
   technology_id: '',
   non_technology_text: '',
   purpose: '',
+  open_ended_submission_type: '0',
   grading_style_id: null,
   rubric_categories: [],
   rubric_name: '',
@@ -2691,6 +2755,8 @@ export default {
     }
   },
   data: () => ({
+    checkedOpenEndedSubmissionType: false,
+    openEndedSubmissionTypeOptions: openEndedSubmissionTypeOptions,
     smiles: '',
     h5pUrl: 'https://studio.libretexts.org/node/add/h5p',
     imathASUrl: 'https://imathas.libretexts.org/imathas/course/moddataset.php',
@@ -3023,7 +3089,7 @@ export default {
       this.fullyMounted = true
     })
     this.$nextTick(() => {
-      //this.setToQuestionType('marker')
+      // this.setToQuestionType('marker')
     })
   },
   destroyed () {
@@ -3407,6 +3473,14 @@ export default {
       this.message = 'Structure received!'
     },
     async initSaveQuestion () {
+      if (!this.checkedOpenEndedSubmissionType &&
+        this.questionForm.technology === 'text' &&
+        this.questionForm.non_technology_text !== '' &&
+        this.questionForm.open_ended_submission_type === '0') {
+        this.checkedOpenEndedSubmissionType = true
+        this.$bvModal.show('modal-confirm-no-open-ended-submission-with-no-auto-grading')
+        return
+      }
       this.questionForm.changes_are_topical = ''
       console.log(`Technology: ${this.questionForm.technology}`)
       if (!this.validateImagesHaveAlts()) {
@@ -4168,6 +4242,7 @@ export default {
       if (event.ctrlKey) {
         switch (event.key) {
           case ('S'):
+            this.checkedOpenEndedSubmissionType = false
             this.initSaveQuestion()
             break
           case ('V'):
@@ -4334,6 +4409,7 @@ export default {
       }
       switch (questionType) {
         case ('discuss_it'):
+          this.questionForm.open_ended_component = '1'
           this.qtiJson = {
             questionType: 'discuss_it',
             prompt: ''

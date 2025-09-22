@@ -110,7 +110,7 @@ class QuestionsGetTest extends TestCase
     public function heck_for_discuss_it_questions_over_course_or_assignment_should_be_course_or_assignment()
     {
         $this->actingAs($this->user)
-            ->getJson("/api/assignment-sync-question/check-for-discuss-it-or-clicker-questions-by-course-or-assignment/blah/1")
+            ->getJson("/api/assignment-sync-question/discuss-it-clicker-or-open-ended-questions-by-course-or-assignment/blah/1")
             ->assertJson(['message' => 'There was an error determining whether discuss it questions exist in the blah.  Please try again or contact us for assistance.']);
 
     }
@@ -119,7 +119,7 @@ class QuestionsGetTest extends TestCase
     public function non_instructor_cannot_check_for_discuss_it_questions_over_course_or_assignment()
     {
         $this->actingAs($this->user_2)
-            ->getJson("/api/assignment-sync-question/check-for-discuss-it-or-clicker-questions-by-course-or-assignment/assignment/1")
+            ->getJson("/api/assignment-sync-question/discuss-it-clicker-or-open-ended-questions-by-course-or-assignment/assignment/1")
             ->assertJson(['message' => 'You are not allowed to check for Discuss-it questions by course or assignment.']);
 
     }

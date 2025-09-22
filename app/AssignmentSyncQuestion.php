@@ -25,6 +25,101 @@ class AssignmentSyncQuestion extends Model
     protected $guarded = [];
 
     /**
+     * @throws Exception
+     */
+    public
+    function reOrderAndWeightQuestions(Assignment $assignment): array
+    {
+        $response = [];
+        $currently_ordered_questions = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->orderBy('order')
+            ->get();
+
+        if ($currently_ordered_questions) {
+            $currently_ordered_question_ids = [];
+            foreach ($currently_ordered_questions as $currently_ordered_question) {
+                $currently_ordered_question_ids[] = $currently_ordered_question->question_id;
+            }
+            $this->orderQuestions($currently_ordered_question_ids, $assignment);
+
+            $this->updatePointsBasedOnWeights($assignment);
+            if ($assignment->points_per_question === 'question weight') {
+                $response['updated_points'] = $this->getQuestionPointsByAssignment($assignment);
+            }
+        }
+        return $response;
+    }
+
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return array
+     */
+    public
+    function removeRandomizedAssessment(Assignment $assignment, Question $question)
+    {
+        $response['message'] = '';
+        $response['return_response'] = false;
+        if ($assignment->number_of_randomized_assessments) {
+            $assignment_questions = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->get();
+            if ($assignment_questions->count() === $assignment->number_of_randomized_assessments + 1) {
+                $response['message'] = "You can't remove a question because there wouldn't be enough questions left to randomize from.";
+                $response['return_response'] = true;
+                return $response;
+            }
+            $question_ids = $assignment->questions->pluck('id')->toArray();
+            $randomized_assignment_questions = RandomizedAssignmentQuestion::where('assignment_id', $assignment->id)->get();
+            $randomized_assignment_questions_by_user_id = [];
+            foreach ($randomized_assignment_questions as $randomized_assignment_question) {
+                if (!isset($randomized_assignment_questions_by_user_id[$randomized_assignment_question->user_id])) {
+                    $randomized_assignment_questions_by_user_id[$randomized_assignment_question->user_id] = [];
+                }
+                $randomized_assignment_questions_by_user_id[$randomized_assignment_question->user_id][] = $randomized_assignment_question->question_id;
+            }
+
+            foreach ($randomized_assignment_questions_by_user_id as $user_id => $user_question_ids) {
+                if (in_array($question->id, $user_question_ids)) {
+                    $other_question_id = $this->getOtherRandomizedQuestionId($user_question_ids, $question_ids, $question->id);
+                    if (!$other_question_id) {
+                        $response['message'] = "We were unable to remove the question due to an issue with re-configuring the randomizations.  Please contact support.";
+                        $response['return_response'] = true;
+                        return $response;
+                    }
+                    $randomizedAssignmentQuestion = new RandomizedAssignmentQuestion();
+                    $randomizedAssignmentQuestion->assignment_id = $assignment->id;
+                    $randomizedAssignmentQuestion->question_id = $other_question_id;
+                    $randomizedAssignmentQuestion->user_id = $user_id;
+                    $randomizedAssignmentQuestion->save();
+                }
+                $response['message'] = "As this is a randomized assignment, please ask your students to revisit their assignment as a question may have been updated.";
+                return $response;
+            }
+        }
+        return $response;
+    }
+
+    /**
+     * @param array $user_question_ids
+     * @param array $question_ids
+     * @param int $question_id_to_remove
+     * @return false|mixed
+     */
+    function getOtherRandomizedQuestionId(array $user_question_ids, array $question_ids, int $question_id_to_remove)
+    {
+        foreach ($question_ids as $question_id) {
+            if (($question_id !== $question_id_to_remove) && !in_array($question_id, $user_question_ids)) {
+                return $question_id;
+            }
+        }
+        return false;
+
+    }
+
+    /**
      * @param FCMNotification $FCMNotification
      * @param Assignment $assignment
      * @param Question $question
@@ -34,12 +129,13 @@ class AssignmentSyncQuestion extends Model
      * @return void
      * @throws Exception
      */
-    public function startClickerAssessment(FCMNotification $FCMNotification,
-                                           Assignment      $assignment,
-                                           Question        $question,
-                                                           $time_to_submit,
-                                           int             $seconds_padding,
-                                           bool            $reload_student_view = false)
+    public
+    function startClickerAssessment(FCMNotification $FCMNotification,
+                                    Assignment      $assignment,
+                                    Question        $question,
+                                                    $time_to_submit,
+                                    int             $seconds_padding,
+                                    bool            $reload_student_view = false)
 
     {
 
@@ -100,7 +196,8 @@ class AssignmentSyncQuestion extends Model
      * @param $question_id
      * @return mixed|null
      */
-    public function customRubric(int $assignment_id, $question_id)
+    public
+    function customRubric(int $assignment_id, $question_id)
     {
         $assignment_question_info = DB::table('assignment_question')
             ->where('assignment_question.assignment_id', $assignment_id)
@@ -145,7 +242,8 @@ class AssignmentSyncQuestion extends Model
      * @param Question $question
      * @return array
      */
-    public function getAssignmentIdsWithTheQuestion(Question $question): array
+    public
+    function getAssignmentIdsWithTheQuestion(Question $question): array
     {
         return DB::table('assignment_question')
             ->where('question_id', $question->id)
@@ -160,7 +258,8 @@ class AssignmentSyncQuestion extends Model
      * @param string $setting
      * @return mixed
      */
-    public function discussItSetting(int $assignment_id, int $question_id, string $setting)
+    public
+    function discussItSetting(int $assignment_id, int $question_id, string $setting)
     {
         $assignment_question = DB::table('assignment_question')
             ->where('assignment_id', $assignment_id)
@@ -170,7 +269,8 @@ class AssignmentSyncQuestion extends Model
 
     }
 
-    public function discussItCompletionStatus(int $user_id, int $assignment_id, int $question_id)
+    public
+    function discussItCompletionStatus(int $user_id, int $assignment_id, int $question_id)
     {
         $discuss_it_settings = json_decode($this->discussItSettings($assignment_id, $question_id));
         $completion_items = ['min_length_of_audio_video',
@@ -230,7 +330,8 @@ class AssignmentSyncQuestion extends Model
      * @param int $question_id
      * @return false|string
      */
-    public function discussItSettings(int $assignment_id, int $question_id)
+    public
+    function discussItSettings(int $assignment_id, int $question_id)
     {
         $assignment_question_info = DB::table('assignment_question')
             ->where('assignment_id', $assignment_id)
@@ -259,7 +360,8 @@ class AssignmentSyncQuestion extends Model
     }
 
 
-    public function rubricCategoriesByAssignmentAndQuestion(Assignment $assignment, Question $question)
+    public
+    function rubricCategoriesByAssignmentAndQuestion(Assignment $assignment, Question $question)
     {
         $question_revision_id = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
             ->where('question_id', $question->id)
@@ -291,9 +393,10 @@ class AssignmentSyncQuestion extends Model
      * @return int
      * @throws Exception
      */
-    public function store(Assignment         $assignment,
-                          Question           $question,
-                          BetaCourseApproval $betaCourseApproval): int
+    public
+    function store(Assignment         $assignment,
+                   Question           $question,
+                   BetaCourseApproval $betaCourseApproval): int
     {
 
 
@@ -301,6 +404,9 @@ class AssignmentSyncQuestion extends Model
             ? $assignment->default_points_per_question
             : 0;
         $open_ended_submission_type = $assignment->default_open_ended_submission_type;
+        if ($question->open_ended_submission_type) {
+            $open_ended_submission_type = $question->open_ended_submission_type;
+        }
         $open_ended_text_editor = $assignment->default_open_ended_text_editor;
         if ($assignment->isBetaAssignment()) {
             $alpha_assignment_id = BetaAssignment::find($assignment->id)->alpha_assignment_id;
@@ -321,7 +427,7 @@ class AssignmentSyncQuestion extends Model
             'weight' => $assignment->points_per_question === 'number of points' ? null : 1,
             'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
             'open_ended_submission_type' => $question->isDiscussIt() ? 0 : $open_ended_submission_type,
-            'discuss_it_settings' => Helper::defaultDiscussItSettings(),
+            'discuss_it_settings' => $question->isDiscussIt() ? Helper::defaultDiscussItSettings() : null,
             'open_ended_text_editor' => $open_ended_text_editor];
 
         $assignment_question_id = DB::table('assignment_question')
@@ -334,7 +440,8 @@ class AssignmentSyncQuestion extends Model
 
     }
 
-    public function switchPointsPerQuestion(Assignment $assignment, $total_points)
+    public
+    function switchPointsPerQuestion(Assignment $assignment, $total_points)
     {
         switch ($assignment->points_per_question) {
             case('question weight'):
@@ -364,7 +471,8 @@ class AssignmentSyncQuestion extends Model
      * @param Assignment $assignment
      * @return array
      */
-    public function getQuestionPointsByAssignment(Assignment $assignment): array
+    public
+    function getQuestionPointsByAssignment(Assignment $assignment): array
     {
 
         $updated_points_info = DB::table('assignment_question')
@@ -392,13 +500,14 @@ class AssignmentSyncQuestion extends Model
      * @return void
      * @throws Exception
      */
-    public function addQuestionToAssignmentByQuestionId(Assignment             $assignment,
-                                                        int                    $question_id,
-                                                        AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                                               $open_ended_submission_type,
-                                                                               $open_ended_text_editor,
-                                                        BetaCourseApproval     $betaCourseApproval,
-                                                                               $custom_rubric)
+    public
+    function addQuestionToAssignmentByQuestionId(Assignment             $assignment,
+                                                 int                    $question_id,
+                                                 AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                                        $open_ended_submission_type,
+                                                                        $open_ended_text_editor,
+                                                 BetaCourseApproval     $betaCourseApproval,
+                                                                        $custom_rubric)
     {
 
         switch ($assignment->points_per_question) {
@@ -438,7 +547,8 @@ class AssignmentSyncQuestion extends Model
      * @return void
      * @throws Exception
      */
-    public function updatePointsBasedOnWeights($assignment)
+    public
+    function updatePointsBasedOnWeights($assignment)
     {
         $assignment_questions = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
@@ -485,7 +595,8 @@ class AssignmentSyncQuestion extends Model
      * @param Question $question
      * @return bool
      */
-    public function questionExistsInOtherAssignments(Assignment $assignment, Question $question)
+    public
+    function questionExistsInOtherAssignments(Assignment $assignment, Question $question)
     {
         return DB::table('assignment_question')
             ->where('assignment_id', '<>', $assignment->id)
@@ -499,7 +610,8 @@ class AssignmentSyncQuestion extends Model
      * @param Question $question
      * @return bool
      */
-    public function questionHasAutoGradedOrFileSubmissionsInOtherAssignments(Assignment $assignment, Question $question): bool
+    public
+    function questionHasAutoGradedOrFileSubmissionsInOtherAssignments(Assignment $assignment, Question $question): bool
     {
         $auto_graded_submissions = DB::table('submissions')
             ->join('users', 'submissions.user_id', '=', 'users.id')
@@ -522,7 +634,8 @@ class AssignmentSyncQuestion extends Model
      * @param Question $question
      * @return bool
      */
-    public function questionHasSomeTypeOfRealStudentSubmission(Assignment $assignment, Question $question): bool
+    public
+    function questionHasSomeTypeOfRealStudentSubmission(Assignment $assignment, Question $question): bool
     {
         $auto_graded_submissions = DB::table('submissions')
             ->join('users', 'submissions.user_id', '=', 'users.id')
@@ -553,7 +666,8 @@ class AssignmentSyncQuestion extends Model
      * @param Question $question
      * @return array
      */
-    public function studentEmailsAssociatedWithSomeTypeOfStudentSubmission(Assignment $assignment, Question $question): array
+    public
+    function studentEmailsAssociatedWithSomeTypeOfStudentSubmission(Assignment $assignment, Question $question): array
     {
         $auto_graded_submission_emails = DB::table('submissions')
             ->join('users', 'submissions.user_id', '=', 'users.id')
@@ -588,9 +702,10 @@ class AssignmentSyncQuestion extends Model
     }
 
 
-    public function addLearningTreeIfBetaAssignment(int $assignment_question_id,
-                                                    int $assignment_id,
-                                                    int $question_id)
+    public
+    function addLearningTreeIfBetaAssignment(int $assignment_question_id,
+                                             int $assignment_id,
+                                             int $question_id)
     {
         $beta_learning_tree = DB::table('beta_course_approvals')
             ->where('beta_assignment_id', $assignment_id)
@@ -609,7 +724,8 @@ class AssignmentSyncQuestion extends Model
 
     }
 
-    public function completedAllAssignmentQuestions($assignment)
+    public
+    function completedAllAssignmentQuestions($assignment)
     {
         $num_technology_questions = $assignment->number_of_randomized_assignments
             ?: DB::table('assignment_question')
@@ -643,16 +759,33 @@ class AssignmentSyncQuestion extends Model
 
     }
 
-    public function importAssignmentQuestionsAndLearningTrees(int  $from_assignment_id,
-                                                              int  $to_assignment_id,
-                                                              bool $reset_discuss_it_settings_to_default,
-                                                              bool $reset_clicker_settings_to_default)
+    /**
+     * @param int $from_assignment_id
+     * @param int $to_assignment_id
+     * @param bool $reset_discuss_it_settings_to_default
+     * @param bool $reset_clicker_settings_to_default
+     * @param bool $remove_open_ended_questions_in_real_time_assignment
+     * @return void
+     */
+    public
+    function importAssignmentQuestionsAndLearningTrees(int  $from_assignment_id,
+                                                       int  $to_assignment_id,
+                                                       bool $reset_discuss_it_settings_to_default,
+                                                       bool $reset_clicker_settings_to_default,
+                                                       bool $remove_open_ended_questions_in_real_time_assignment)
     {
-
         $assignment_questions = DB::table('assignment_question')
             ->where('assignment_id', $from_assignment_id)
             ->get();
-
+        $from_assignment = Assignment::find($from_assignment_id);
+        Log::info($remove_open_ended_questions_in_real_time_assignment);
+        if ($from_assignment->assessment_type === 'real time' && $remove_open_ended_questions_in_real_time_assignment) {
+            foreach ($assignment_questions as $key => $assignment_question) {
+                if ($assignment_question->open_ended_submission_type !== '0') {
+                    $assignment_questions->forget($key);
+                }
+            }
+        }
         $question_ids = [];
         foreach ($assignment_questions as $assignment_question) {
             $question_ids[] = $assignment_question->question_id;
@@ -699,7 +832,8 @@ class AssignmentSyncQuestion extends Model
         }
     }
 
-    public function getNewQuestionOrder(Assignment $assignment)
+    public
+    function getNewQuestionOrder(Assignment $assignment)
     {
         $max_order = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
@@ -711,7 +845,8 @@ class AssignmentSyncQuestion extends Model
      * @param Collection $assignments
      * @return array
      */
-    public function getQuestionCountByAssignmentIds(Collection $assignments): array
+    public
+    function getQuestionCountByAssignmentIds(Collection $assignments): array
     {
         $questions_count_by_assignment_id = [];
         $non_randomized_assignment_ids = [];
@@ -741,7 +876,8 @@ class AssignmentSyncQuestion extends Model
      * @param $question_info
      * @return string
      */
-    public function getFormattedClickerStatus(int $solutions_released, $question_info): string
+    public
+    function getFormattedClickerStatus(int $solutions_released, $question_info): string
     {
         $formatted_clicker_status = 'Error with formatted clicker status logic';
         if (auth()->user()->role === 2) {
@@ -768,7 +904,8 @@ class AssignmentSyncQuestion extends Model
         return $formatted_clicker_status;
     }
 
-    public function orderQuestions(array $ordered_questions, Assignment $assignment)
+    public
+    function orderQuestions(array $ordered_questions, Assignment $assignment)
     {
         foreach ($ordered_questions as $key => $question_id) {
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
@@ -854,7 +991,8 @@ class AssignmentSyncQuestion extends Model
      * @param array $question_ids
      * @return array
      */
-    public function getLatestQuestionRevisionsByAssignment(array $question_ids): array
+    public
+    function getLatestQuestionRevisionsByAssignment(array $question_ids): array
     {
 
         $latest_question_revisions = DB::table('question_revisions')
@@ -872,4 +1010,73 @@ class AssignmentSyncQuestion extends Model
 
 
     }
+
+    /**
+     * @param Assignment $assignment
+     * @return Collection
+     */
+    public function getAssignmentQuestionsConsideringRevisions(Assignment $assignment): Collection
+    {
+
+        $assignment_questions = DB::table('assignment_question')
+            ->where('assignment_question.assignment_id', $assignment->id)
+            ->get();
+        $question_ids = [];
+        foreach ($assignment_questions as $assignment_question) {
+            $question_ids[] = $assignment_question->question_id;
+        }
+        $question_revisions = DB::table('assignment_question')
+            ->join('question_revisions', 'assignment_question.question_revision_id', '=', 'question_revisions.id')
+            ->select(
+                'question_revisions.*',
+                'question_revisions.id as question_revision_id',
+                'question_revisions.question_id as id',
+                'assignment_question.open_ended_submission_type as open_ended_submission_type'
+            )
+            ->where('assignment_question.assignment_id', $assignment->id)
+            ->get();
+        $question_revision_question_ids = [];
+        foreach ($question_revisions as $question_revision) {
+            $question_revision_question_ids[] = $question_revision->question_id;
+        }
+        $questions = Question::whereIn('id', $question_ids)
+            ->whereNotIn('id', $question_revision_question_ids)
+            ->get();
+        return $question_revisions->concat($questions)->values();
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param $assignment_questions
+     * @return bool
+     */
+    public function openEndedQuestionsInRealTimeAssignmentExists(Assignment $assignment, $assignment_questions): bool
+    {
+
+        if ($assignment->assessment_type !== 'real time') {
+            return false;
+        }
+        foreach ($assignment_questions as $assignment_question) {
+            if ($assignment_question->open_ended_submission_type !== '0') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param $assignment_questions
+     * @return bool
+     */
+    public function discussItQuestionsExist($assignment_questions): bool
+    {
+        foreach ($assignment_questions as $assignment_question) {
+            if ($assignment_question->qti_json && json_decode($assignment_question->qti_json)->questionType === 'discuss_it') {
+                return true;
+            }
+
+        }
+        return false;
+    }
+
 }

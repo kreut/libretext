@@ -2189,10 +2189,11 @@ class QuestionController extends Controller
                 return $response;
             }
             $question_id = $question_to_add_info['question_id'];
+            $open_ended_submission_type = Question::find($question_id)->open_ended_submission_type;
             $direct_import_id = $question_to_add_info['direct_import_id'];
             DB::beginTransaction();
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
-            $open_ended_submission_type = $assignment->default_open_ended_submission_type;
+            $open_ended_submission_type = $open_ended_submission_type ?: $assignment->default_open_ended_submission_type;
             $open_ended_text_editor = $assignment->default_open_ended_text_editor;
             $custom_rubric = null;
             if ($type === 'adapt id') {

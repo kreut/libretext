@@ -1,11 +1,26 @@
 <template>
   <div>
     <h1 style="font-size:32px" class="page-title">
+          <span v-show="openEndedQuestionInRealTimeAssignment">
+      <b-icon
+        id="delayed-in-real-time-tooltip"
+        variant="danger"
+        icon="exclamation-triangle"
+        style="cursor:pointer;"
+      />
+      <b-tooltip target="delayed-in-real-time-tooltip"
+                 delay="500"
+                 triggers="hover focus"
+      >
+        This question is an open-ended question in a real time assignment. These types of questions are
+        typically used in delayed assignments.
+      </b-tooltip>
       <b-icon
         v-if="learningTreeId"
         icon="tree"
         variant="success"
       />
+        </span>
       {{ title }}
       <CustomTitle v-if="title && showPencil"
                    :assignment-id="assignmentId"
@@ -43,6 +58,7 @@
         <font-awesome-icon :icon="copyIcon"/>
       </a>
     </span>
+
     </span>
     <hr>
   </div>
@@ -55,6 +71,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import FormativeWarning from './FormativeWarning.vue'
 import CustomTitle from './CustomTitle.vue'
 import AlgorithmicIcon from './AlgorithmicIcon.vue'
+
 export default {
   name: 'PageTitle',
   components: {
@@ -64,6 +81,10 @@ export default {
     AlgorithmicIcon
   },
   props: {
+    openEndedQuestionInRealTimeAssignment: {
+      type: Boolean,
+      default: false
+    },
     isInstructorWithAnonymousView: {
       type: Boolean,
       default: false

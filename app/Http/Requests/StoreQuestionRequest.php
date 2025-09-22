@@ -69,12 +69,13 @@ class StoreQuestionRequest extends FormRequest
     public function rules(Question $question)
     {
         $rules = [
-            'question_type' => Rule::in('assessment', 'exposition', 'report'),
+            'question_type' => Rule::in('assessment', 'exposition'),
             'public' => 'required',
             'title' => 'required|string',
             'description' => 'nullable',
             'author' => 'required',
             'tags' => 'nullable',
+            'open_ended_submission_type' => ['required', Rule::in('rich text', 'file', 'audio', '0', 'no submission, manual grading',)],
             'framework_item_sync_question' => new IsValidFrameworkItemSyncQuestion(),
             'text_question' => 'nullable',
             'a11y_auto_graded_question_id' => new isValidA11yAutoGradedQuestionId(),
@@ -337,6 +338,7 @@ class StoreQuestionRequest extends FormRequest
             : "A prompt is required.";
         $messages['qti_item_body.required'] = "The question text is required.";
         $messages['source_url.url'] = "Please enter a valid URL.";
+        $messages['open_ended_submission_type.required'] = "The open-ended submission type field is required.";
         return $messages;
     }
 

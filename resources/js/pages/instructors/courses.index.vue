@@ -7,26 +7,30 @@
     />
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course"/>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course"/>
-    <b-modal id="modal-discuss-it-or-clicker-questions-exist"
+    <b-modal id="modal-discuss-it-or-clicker-or-open-ended-in-realtime-questions-exist"
              title="Question Settings Within Assignments"
              no-close-on-esc
              no-close-on-backdrop
              size="lg"
     >
-      <p>
-        There are questions in this course which are customized at the assignment level.</p>
-      <p>You can use the settings of the imported
-        questions or reset the settings to the default ADAPT settings. After you import the course, you can always
-        manually adjust
-        any settings.
-      </p>
+      <p>When importing this course, please let us know how you would like us to handle the following.</p>
       <b-form-group
         label-cols-sm="5"
         label-cols-lg="4"
-        label="Reset Discuss-it Settings"
         label-for="reset_discuss_it_settings_to_default"
       >
+        <template #label>
+          Reset Discuss-it Settings
+          <QuestionCircleTooltip :id="'discuss-it-settings-tooltip'"/>
+          <b-tooltip target="discuss-it-settings-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Regardless of which option you choose, you can adjust the settings at the usage level.
+          </b-tooltip>
+        </template>
         <b-form-radio-group
+          v-show="discussItQuestionsExist"
           id="reset_discuss_it_settings_to_default"
           v-model="resetDiscussItSettingsToDefault"
           class="mt-2"
@@ -40,11 +44,21 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
+        v-show="clickerQuestionsExist"
         label-cols-sm="5"
         label-cols-lg="4"
         label="Reset Clicker Settings"
         label-for="reset_clicker_settings_to_default"
       >
+        <template #label>Reset Clicker Settings
+          <QuestionCircleTooltip :id="'discuss-it-settings-tooltip'"/>
+          <b-tooltip target="discuss-it-settings-tooltip"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            Regardless of which option you choose, you can adjust the settings at the usage level.
+          </b-tooltip>
+        </template>
         <b-form-radio-group
           id="reset_clicker_settings_to_default"
           v-model="resetClickerSettingsToDefault"
@@ -55,6 +69,25 @@
           </b-form-radio>
           <b-form-radio value="0">
             No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        v-show="openEndedQuestionsInRealTimeAssignmentExist"
+        id="remove_open_ended_questions_in_real_time_assignment_in_real_time_assignments"
+        label-cols-sm="5"
+        label-cols-lg="4"
+        label="Open-ended Questions"
+      >
+        <b-form-radio-group
+          v-model="removeOpenEndedQuestionsFromRealTimeAssignments"
+          stacked
+        >
+          <b-form-radio value="1">
+            Remove open-ended questions from real time assignments (recommended)
+          </b-form-radio>
+          <b-form-radio value="0">
+            Keep open-ended questions in real time assignments
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
@@ -190,7 +223,7 @@
           variant="primary"
           size="sm"
           class="float-right"
-          @click="checkedForDiscussItOrClickerQuestions = false;clone(courseToClone)"
+          @click="checkedForDiscussItOrClickerOrOpenEndedInRealTimeQuestions = false;clone(courseToClone)"
         >
           Submit
         </b-button>
@@ -284,7 +317,7 @@
           size="sm"
           class="float-right"
           :disabled="disableYesImportCourse || importingCourse"
-          @click="checkedForDiscussItOrClickerQuestions=false;handleImportCourse()"
+          @click="checkedForDiscussItOrClickerOrOpenEndedInRealTimeQuestions=false;handleImportCourse()"
         >
           Yes, import course!
         </b-button>
@@ -711,13 +744,15 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    openEndedQuestionsInRealTimeAssignmentExist: false,
     coInstructorIcon: faUsers,
     discussItQuestionsExist: false,
     clickerQuestionsExist: false,
     importType: '',
     resetDiscussItSettingsToDefault: '1',
     resetClickerSettingsToDefault: '1',
-    checkedForDiscussItOrClickerQuestions: false,
+    removeOpenEndedQuestionsFromRealTimeAssignments: '1',
+    checkedForDiscussItOrClickerOrOpenEndedInRealTimeQuestions: false,
     centrifuge: {},
     importedCourse: { name: '', id: 0 },
     importingCourseMessage: {},
@@ -867,8 +902,8 @@ export default {
     initCentrifuge,
     isMobile,
     async continueToCloneOrImport () {
-      this.checkedForDiscussItOrClickerQuestions = true
-      this.$bvModal.hide('modal-discuss-it-or-clicker-questions-exist')
+      this.checkedForDiscussItOrClickerOrOpenEndedInRealTimeQuestions = true
+      this.$bvModal.hide('modal-discuss-it-or-clicker-or-open-ended-in-realtime-questions-exist')
       this.importType === 'clone'
         ? await this.clone(this.courseToClone)
         : await this.handleImportCourse()
@@ -891,7 +926,7 @@ export default {
       this.checkForBeta()
     },
     checkForBeta () {
-      this.checkedForDiscussItOrClickerQuestions = false
+      this.checkedForDiscussItOrClickerOrOpenEndedInRealTimeQuestions = false
       if (this.courseToClone.is_beta_course) {
         this.cloneCourseOption = 'as-beta'
         this.$bvModal.show('modal-clone-beta')
@@ -912,16 +947,29 @@ export default {
       }
       return false
     },
-    async checkForDiscussItOrClickerQuestions (course, importType) {
+    async checkForDiscussItClickerOrOpenEndedQuestionsInRealTimeAssignment (course, importType) {
       try {
-        const { data } = await axios.get(`/api/assignment-sync-question/check-for-discuss-it-or-clicker-questions-by-course-or-assignment/course/${course.id}`)
+        const { data } = await axios.get(`/api/assignment-sync-question/discuss-it-clicker-or-open-ended-questions-by-course-or-assignment/course/${course.id}`)
         if (data.type === 'success') {
+          this.resetClickerSettingsToDefault = '0'
+          this.resetDiscussItSettingsToDefault = '0'
+          this.removeOpenEndedQuestionsFromRealTimeAssignments = '0'
           this.discussItQuestionsExist = data.discuss_it_questions_exist
+          if (this.discussItQuestionsExist) {
+            this.resetDiscussItSettingsToDefault = '1'
+          }
           this.clickerQuestionsExist = data.clicker_questions_exist
-          if (this.discussItQuestionsExist || this.clickerQuestionsExist) {
-            this.$bvModal.show('modal-discuss-it-or-clicker-questions-exist')
+          if (this.clickerQuestionsExist) {
+            this.resetClickerSettingsToDefault = '1'
+          }
+          this.openEndedQuestionsInRealTimeAssignmentExist = data.open_ended_questions_in_real_time_assignment_exist
+          if (this.openEndedQuestionsInRealTimeAssignmentExist){
+            this.removeOpenEndedQuestionsFromRealTimeAssignments = '1'
+          }
+          if (this.discussItQuestionsExist || this.clickerQuestionsExist || this.openEndedQuestionsInRealTimeAssignmentExist) {
+            this.$bvModal.show('modal-discuss-it-or-clicker-or-open-ended-in-realtime-questions-exist')
           } else {
-            this.checkedForDiscussItOrClickerQuestions = true
+            this.checkedForDiscussItOrClickerOrOpenEndedInRealTimeQuestions = true
             this.importType = importType
             this.importType === 'clone' ? await this.clone(course) : await this.handleImportCourse()
           }
@@ -933,10 +981,10 @@ export default {
       }
     },
     async clone (course) {
-      if (!this.checkedForDiscussItOrClickerQuestions) {
+      if (!this.checkedForDiscussItOrClickerOrOpenEndedInRealTimeQuestions) {
         this.courseToClone = course
-        this.resetDiscussItSettingsToDefault = false
-        await this.checkForDiscussItOrClickerQuestions(course, 'clone')
+        this.resetDiscussItSettingsToDefault = '1'
+        await this.checkForDiscussItClickerOrOpenEndedQuestionsInRealTimeAssignment(course, 'clone')
         return
       }
       this.courseToImportForm.action = 'clone'
@@ -962,6 +1010,8 @@ export default {
       }
       this.courseToImportForm.reset_discuss_it_settings_to_default = +this.resetDiscussItSettingsToDefault === 1
       this.courseToImportForm.reset_clicker_settings_to_default = +this.resetClickerSettingsToDefault === 1
+      this.courseToImportForm.remove_open_ended_questions_from_real_time_assignments = +this.removeOpenEndedQuestionsFromRealTimeAssignments === 1
+
       try {
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${course.id}`)
         this.$bvModal.hide('modal-clone-beta')
@@ -1107,10 +1157,11 @@ export default {
       }
     },
     async handleImportCourse () {
-      if (!this.checkedForDiscussItOrClickerQuestions) {
+      if (!this.checkedForDiscussItOrClickerOrOpenEndedInRealTimeQuestions) {
         this.resetDiscussItSettingsToDefault = '0'
         this.resetClickerSettingsToDefault = '0'
-        await this.checkForDiscussItOrClickerQuestions(this.addIdToCourseToImport(this.courseToImport), 'import')
+        this.removeOpenEndedQuestionsFromRealTimeAssignments = '0'
+        await this.checkForDiscussItClickerOrOpenEndedQuestionsInRealTimeAssignment(this.addIdToCourseToImport(this.courseToImport), 'import')
         return
       }
       this.centrifuge = await initCentrifuge()
@@ -1128,6 +1179,8 @@ export default {
         console.error(this.importedCourse)
         this.courseToImportForm.reset_discuss_it_settings_to_default = +this.resetDiscussItSettingsToDefault === 1
         this.courseToImportForm.reset_clicker_settings_to_default = +this.resetClickerSettingsToDefault === 1
+        this.courseToImportForm.remove_open_ended_questions_from_real_time_assignments = +this.removeOpenEndedQuestionsFromRealTimeAssignments === 1
+
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${IdOfCourseToImport}`)
         this.courseToImport = ''
         if (data.type === 'error') {

@@ -294,7 +294,7 @@
         >
           <thead>
           <tr>
-            <th scope="col">
+            <th scope="col" style="width:85px;">
               Order
             </th>
             <th scope="col">
@@ -353,10 +353,26 @@
                  :options="{disabled : user.role === 4,handle: '.handle'}"
                  @end="saveNewOrder"
           >
-          <tr v-for="item in items" :key="item.id">
+          <tr v-for="item in items"
+              :key="item.id"
+              :style="assessmentType !== 'delayed' && item.is_open_ended ? 'background-color: #ffcccc;' :''"
+          >
             <th scope="row">
               <b-icon v-if="user.role === 2" class="handle" icon="list"/>
               {{ item.order }}
+              <b-icon v-if="user.role === 2 && assessmentType !== 'delayed' && item.is_open_ended"
+                      :id="`delayed-in-real-time-tooltip-${item.id}`"
+                      variant="primary"
+                      style="cursor:pointer;"
+                      icon="exclamation-triangle"
+              />
+              <b-tooltip :target="`delayed-in-real-time-tooltip-${item.id}`"
+                         delay="500"
+                         triggers="hover focus"
+              >
+                This question is an open-ended question in a real time assignment. These types of questions are
+                typically used in delayed assignments.
+              </b-tooltip>
             </th>
             <td>
                 <span v-show="isBetaAssignment"
@@ -378,7 +394,8 @@
                 @updateCustomQuestionTitle="updateCustomQuestionTitle"
               />
               <AlgorithmicIcon :algorithmic-question="item.algorithmic"
-                               :algorithmic-assignment="isAlgorithmicAssignment"/>
+                               :algorithmic-assignment="isAlgorithmicAssignment"
+              />
               <FormativeWarning :formative-question="item.is_formative_question"
                                 :question-id="item.question_id"
               />
@@ -574,7 +591,6 @@ import CreateQuestion from '~/components/questions/CreateQuestion'
 import QtiJsonAnswerViewer from '~/components/QtiJsonAnswerViewer'
 import {
   h5pText,
-  updateOpenEndedInRealTimeMessage,
   updateLearningTreeInNonLearningTreeMessage,
   updateNonLearningTreeInLearningTreeMessage,
   updateH5pNonAdaptQuestionsMessage,
@@ -663,7 +679,6 @@ export default {
     isAdmin: () => window.config.isAdmin
   },
   created () {
-    this.updateOpenEndedInRealTimeMessage = updateOpenEndedInRealTimeMessage
     this.updateLearningTreeInNonLearningTreeMessage = updateLearningTreeInNonLearningTreeMessage
     this.updateNonLearningTreeInLearningTreeMessage = updateNonLearningTreeInLearningTreeMessage
     this.updateH5pNonAdaptQuestionsMessage = updateH5pNonAdaptQuestionsMessage
@@ -936,7 +951,6 @@ export default {
         console.log(data)
         this.updateH5pNonAdaptQuestionsMessage()
         this.updatePendingQuestionRevisionsMessage()
-        this.updateOpenEndedInRealTimeMessage()
         this.updateLearningTreeInNonLearningTreeMessage()
         this.updateNonLearningTreeInLearningTreeMessage()
 

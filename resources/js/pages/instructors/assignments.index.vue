@@ -445,12 +445,13 @@
       <b-modal
         id="modal-create-assignment-from-template"
         ref="modal"
+        size="lg"
         title="Create Assignment From Template"
       >
         <b-form-group
           id="create_assignment_from_template_level"
-          label-cols-sm="4"
-          label-cols-lg="3"
+          label-cols-sm="3"
+          label-cols-lg="2"
           label="Level"
           label-for="Level"
         >
@@ -469,8 +470,8 @@
 
         <b-form-group
           id="create_assignment_from_template_assign_to_groups"
-          label-cols-sm="4"
-          label-cols-lg="3"
+          label-cols-sm="3"
+          label-cols-lg="2"
           label="Assign To's"
           label-for="Assign To's"
         >
@@ -490,8 +491,8 @@
         <b-form-group
           v-if="discussItQuestionsExist && createAssignmentFromTemplateForm.level === 'properties_and_questions'"
           id="reset_discuss_it_settings_to_default"
-          label-cols-sm="4"
-          label-cols-lg="3"
+          label-cols-sm="3"
+          label-cols-lg="2"
           label="Discuss-it Settings"
         >
           <b-form-radio-group
@@ -509,8 +510,8 @@
         <b-form-group
           v-if="clickerQuestionsExist && createAssignmentFromTemplateForm.level === 'properties_and_questions'"
           id="reset_clicker_settings_to_default"
-          label-cols-sm="4"
-          label-cols-lg="3"
+          label-cols-sm="3"
+          label-cols-lg="2"
           label="Clicker Settings"
         >
           <b-form-radio-group
@@ -522,6 +523,25 @@
             </b-form-radio>
             <b-form-radio value="1">
               Reset settings to default settings
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-if="openEndedQuestionsInRealTimeAssignmentExist && createAssignmentFromTemplateForm.level === 'properties_and_questions'"
+          id="remove_open_ended_questions_in_real_time_assignment_in_real_time_assignment"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Open-ended Questions"
+        >
+          <b-form-radio-group
+            v-model="createAssignmentFromTemplateForm.remove_open_ended_questions_in_real_time_assignment"
+            stacked
+          >
+            <b-form-radio value="0">
+              Keep open-ended questions in this real time assignment
+            </b-form-radio>
+            <b-form-radio value="1">
+              Remove open-ended questions from this real time assignment (recommended)
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
@@ -639,6 +659,26 @@
             </b-form-radio>
             <b-form-radio value="1">
               Reset settings to default settings
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+
+        <b-form-group
+          v-if="openEndedQuestionsInRealTimeAssignmentExist && importAssignmentForm.level === 'properties_and_questions'"
+          id="remove_open_ended_questions_in_real_time_assignment_in_real_time_assignment"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Open-ended Questions"
+        >
+          <b-form-radio-group
+            v-model="importAssignmentForm.remove_open_ended_questions_in_real_time_assignment"
+            stacked
+          >
+            <b-form-radio value="0">
+              Keep open-ended questions in this real time assignment
+            </b-form-radio>
+            <b-form-radio value="1">
+              Remove open-ended questions from this real time assignment (recommended)
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
@@ -1656,6 +1696,7 @@ export default {
     return { title: `${this.course.name} - assignments` }
   },
   data: () => ({
+    openEndedQuestionsInRealTimeAssignmentExist: false,
     clickerQuestionsExist: false,
     discussItQuestionsExist: false,
     errorMessage: '',
@@ -2304,7 +2345,8 @@ What assignment parameters??? */
           level: this.importAssignmentForm.level,
           lms_grade_passback: this.importAssignmentForm.lms_grade_passback,
           reset_discuss_it_settings_to_default: this.importAssignmentForm.reset_discuss_it_settings_to_default,
-          reset_clicker_settings_to_default: this.importAssignmentForm.reset_clicker_settings_to_default
+          reset_clicker_settings_to_default: this.importAssignmentForm.reset_clicker_settings_to_default,
+          remove_open_ended_questions_in_real_time_assignment: this.importAssignmentForm.remove_open_ended_questions_in_real_time_assignment
         }
         if (this.nonMatchingAutoReleases.length) {
           importData.auto_releases = this.importedAssignmentAutoRelease
@@ -2338,12 +2380,14 @@ What assignment parameters??? */
     async checkIfDiscussItOrClickerQuestionsExistsInAssignment (assignmentId) {
       this.discussItQuestionsExist = false
       try {
-        const { data } = await axios.get(`/api/assignment-sync-question/check-for-discuss-it-or-clicker-questions-by-course-or-assignment/assignment/${assignmentId}`)
+        const { data } = await axios.get(`/api/assignment-sync-question/discuss-it-clicker-or-open-ended-questions-by-course-or-assignment/assignment/${assignmentId}`)
         if (data.type === 'success') {
           this.importAssignmentForm.reset_discuss_it_settings_to_default = '0'
           this.discussItQuestionsExist = data.discuss_it_questions_exist
           this.importAssignmentForm.reset_clicker_settings_to_default = '0'
           this.clickerQuestionsExist = data.clicker_questions_exist
+          this.openEndedQuestionsInRealTimeAssignmentExist = data.open_ended_questions_in_real_time_assignment_exist
+          this.importAssignmentForm.remove_open_ended_questions_in_real_time_assignment = '0'
         } else {
           this.$noty.error(data.message)
         }
@@ -2352,15 +2396,18 @@ What assignment parameters??? */
       }
     },
     async initCreateAssignmentFromTemplate (assignmentId) {
+      //open_ended_questions_in_real_time_assignment_exists aaaaaaaaaa
       this.createAssignmentFromTemplateAssignmentId = assignmentId
       this.discussItQuestionsExist = false
       try {
-        const { data } = await axios.get(`/api/assignment-sync-question/check-for-discuss-it-or-clicker-questions-by-course-or-assignment/assignment/${assignmentId}`)
+        const { data } = await axios.get(`/api/assignment-sync-question/discuss-it-clicker-or-open-ended-questions-by-course-or-assignment/assignment/${assignmentId}`)
         if (data.type === 'success') {
           this.createAssignmentFromTemplateForm.reset_discuss_it_settings_to_default = '0'
           this.discussItQuestionsExist = data.discuss_it_questions_exist
           this.createAssignmentFromTemplateForm.reset_clicker_settings_to_default = '0'
           this.clickerQuestionsExist = data.clicker_questions_exist
+          this.openEndedQuestionsInRealTimeAssignmentExist = data.open_ended_questions_in_real_time_assignment_exist
+          this.createAssignmentFromTemplateForm.remove_open_ended_questions_in_real_time_assignment = '0'
           this.$bvModal.show('modal-create-assignment-from-template')
         } else {
           this.$noty.error(data.message)

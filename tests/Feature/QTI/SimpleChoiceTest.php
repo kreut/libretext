@@ -32,6 +32,7 @@ class SimpleChoiceTest extends TestCase
             "technology" => "qti",
             "technology_id" => null,
             "non_technology_text" => null,
+            'open_ended_submission_type' => '0',
             "text_question" => null,
             "a11y_auto_graded_question_id" => null,
             "answer_html" => null,

@@ -70,6 +70,92 @@ class AssignmentSyncQuestionController extends Controller
     /**
      * @param Assignment $assignment
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param BetaCourseApproval $betaCourseApproval
+     * @return array
+     * @throws Exception
+     */
+    public function removeOpenEndedQuestions(Assignment             $assignment,
+                                             AssignmentSyncQuestion $assignmentSyncQuestion,
+                                             BetaCourseApproval     $betaCourseApproval): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('allSolutionsReleasedWhenClosed', [$assignmentSyncQuestion, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $fake_student_user_id = Enrollment::join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('course_id', $assignment->course->id)
+                ->where('users.fake_student', 1)
+                ->select('users.id')
+                ->first()
+                ->id;
+            $assignment_questions = $assignmentSyncQuestion->where('assignment_id', $assignment->id)->get();
+            $submissions = Submission::where('assignment_id', $assignment->id)
+                ->join('users', 'submissions.user_id', '=', 'users.id')
+                ->whereNotIn('users.id', [$fake_student_user_id, $assignment->course->user_id])
+                ->get();
+            $question_ids_with_submissions = [];
+            foreach ($submissions as $submission) {
+                $question_ids_with_submissions[] = $submission->question_id;
+            }
+            $submission_files = SubmissionFile::where('assignment_id', $assignment->id)
+                ->join('users', 'submission_files.user_id', '=', 'users.id')
+                ->whereNotIn('users.id', [$fake_student_user_id, $assignment->course->user_id])
+                ->get();
+            foreach ($submission_files as $submission_file) {
+                $question_ids_with_submissions[] = $submission_file->question_id;
+            }
+            $question_ids_with_submissions = array_unique($question_ids_with_submissions);
+            if ($question_ids_with_submissions) {
+                $response['type'] = 'error';
+                $response['message'] = 'You cannot remove questions from this assignment since there are already student submissions.';
+                return $response;
+            }
+            DB::beginTransaction();
+            foreach ($assignment_questions as $assignment_question) {
+                if ($assignment_question->open_ended_submission_type !== '0') {
+                    $question = Question::find($assignment_question->question_id);
+                    $assignmentSyncQuestion->removeRandomizedAssessment($assignment, $question);
+                    $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+                    Helper::removeAllStudentSubmissionTypesByAssignmentAndQuestion($assignment->id, $question->id);
+                    DB::table('assignment_question')->where('question_id', $question->id)
+                        ->where('assignment_id', $assignment->id)
+                        ->delete();
+                    DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)
+                        ->where('question_id', $question->id)
+                        ->delete();
+                    DB::table('question_level_overrides')->where('question_id', $question->id)
+                        ->where('assignment_id', $assignment->id)
+                        ->delete();
+                    DB::table('submission_histories')->where('question_id', $question->id)
+                        ->where('assignment_id', $assignment->id)
+                        ->delete();
+                    $assignmentSyncQuestion->reOrderAndWeightQuestions($assignment);
+
+                    $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'remove', 0);
+                }
+            }
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = 'The open-ended assessments have been removed.';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to remove the open-ended questions from this assignment.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
@@ -309,25 +395,34 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function checkForDiscussitOrClickerQuestionsByCourseOrAssignment(string                 $level,
-                                                                            int                    $id,
-                                                                            AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public function checkForDiscussitClickerOrOpenEndedQuestionsByCourseOrAssignment(string                 $level,
+                                                                                     int                    $id,
+                                                                                     AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         try {
             $response['type'] = 'error';
-            $authorized = Gate::inspect('checkForDiscussitOrClickerQuestionsByCourseOrAssignment', $assignmentSyncQuestion);
+            $authorized = Gate::inspect('checkForDiscussitClickerOrOpenEndedQuestionsByCourseOrAssignment', $assignmentSyncQuestion);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
             }
             switch ($level) {
                 case('course'):
-                    $discuss_it_questions_exist = DB::table('courses')
-                        ->join('assignments', 'courses.id', '=', 'assignments.course_id')
-                        ->join('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
-                        ->where('courses.id', $id)
-                        ->whereNotNull('assignment_question.discuss_it_settings')
-                        ->exists();
+                    $assignments = Assignment::where('course_id', $id)->get();
+                    $discuss_it_questions_exist = false;
+                    $open_ended_questions_in_real_time_assignment_exist = false;
+                    foreach ($assignments as $assignment) {
+                        if ($discuss_it_questions_exist && $open_ended_questions_in_real_time_assignment_exist) {
+                            continue;
+                        }
+                        $assignment_questions = $assignmentSyncQuestion->getAssignmentQuestionsConsideringRevisions($assignment);
+                        if (!$discuss_it_questions_exist) {
+                            $discuss_it_questions_exist = $assignmentSyncQuestion->discussItQuestionsExist($assignment_questions);
+                        }
+                        if (!$open_ended_questions_in_real_time_assignment_exist) {
+                            $open_ended_questions_in_real_time_assignment_exist = $assignmentSyncQuestion->openEndedQuestionsInRealTimeAssignmentExists($assignment, $assignment_questions);
+                        }
+                    }
                     $clicker_questions_exist = DB::table('courses')
                         ->join('assignments', 'courses.id', '=', 'assignments.course_id')
                         ->join('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
@@ -340,11 +435,6 @@ class AssignmentSyncQuestionController extends Controller
                         ->exists();
                     break;
                 case('assignment'):
-                    $discuss_it_questions_exist = DB::table('assignments')
-                        ->join('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
-                        ->where('assignments.id', $id)
-                        ->whereNotNull('assignment_question.discuss_it_settings')
-                        ->exists();
                     $clicker_questions_exist = DB::table('assignments')
                         ->join('assignment_question', 'assignments.id', '=', 'assignment_question.assignment_id')
                         ->where('assignments.id', $id)
@@ -354,11 +444,19 @@ class AssignmentSyncQuestionController extends Controller
                                 ->orWhere('assignment_question.release_solution_when_question_is_closed', 0);
                         })
                         ->exists();
+                    $assignment = Assignment::find($id);
+                    $assignment_questions = $assignmentSyncQuestion->getAssignmentQuestionsConsideringRevisions($assignment);
+                    $discuss_it_questions_exist = $assignmentSyncQuestion->discussItQuestionsExist($assignment_questions);
+                    $open_ended_questions_in_real_time_assignment_exist = $assignmentSyncQuestion->openEndedQuestionsInRealTimeAssignmentExists($assignment, $assignment_questions);
+
                     break;
                 default:
                     throw new Exception("$level is not a valid level.");
             }
+
+
             $response['discuss_it_questions_exist'] = $discuss_it_questions_exist;
+            $response['open_ended_questions_in_real_time_assignment_exist'] = $open_ended_questions_in_real_time_assignment_exist;
             $response['clicker_questions_exist'] = $clicker_questions_exist;
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -1664,7 +1762,8 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
                 $columns['is_open_ended'] = $value->open_ended_submission_type !== '0';
                 $columns['is_formative_question'] = in_array($value->question_id, $formative_questions);
-                $columns['is_auto_graded'] = $value->technology !== 'text';
+                $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
+                $columns['is_open_ended'] = $value->open_ended_submission_type !== '0';
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
                 $columns['learning_tree_id'] = $value->learning_tree_id;
                 $columns['learning_tree_user_id'] = $value->learning_tree_user_id;
@@ -1920,6 +2019,9 @@ class AssignmentSyncQuestionController extends Controller
 
             $response['type'] = 'success';
             $response['message'] = "The open-ended submission type has been updated.";
+            if ($assignment->assessment_type !== 'delayed' && !($data['open_ended_submission_type'] === 0 || $data['open_ended_submission_type'] === 'no submission, manual grading')) {
+                $response['message'] = "You are requesting that your students submit an open-ended response in a <strong>real time assignment</strong>.<br><br>This is not recommended.";
+            }
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -2185,48 +2287,13 @@ class AssignmentSyncQuestionController extends Controller
 
         try {
             DB::beginTransaction();
-
-            if ($assignment->number_of_randomized_assessments) {
-
-                $assignment_questions = DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
-                    ->get();
-                if ($assignment_questions->count() === $assignment->number_of_randomized_assessments + 1) {
-                    $response['message'] = "You can't remove a question because there wouldn't be enough questions left to randomize from.";
+            $remove_randomized_assessment_response = $assignmentSyncQuestion->removeRandomizedAssessment($assignment, $question);
+            if ($remove_randomized_assessment_response['message']) {
+                $response['message'] = $remove_randomized_assessment_response['message'];
+                if ($remove_randomized_assessment_response['return_response']) {
                     return $response;
                 }
-                $question_ids = $assignment->questions->pluck('id')->toArray();
-                $randomized_assignment_questions = RandomizedAssignmentQuestion::where('assignment_id', $assignment->id)->get();
-                $randomized_assignment_questions_by_user_id = [];
-                foreach ($randomized_assignment_questions as $randomized_assignment_question) {
-                    if (!isset($randomized_assignment_questions_by_user_id[$randomized_assignment_question->user_id])) {
-                        $randomized_assignment_questions_by_user_id[$randomized_assignment_question->user_id] = [];
-                    }
-                    $randomized_assignment_questions_by_user_id[$randomized_assignment_question->user_id][] = $randomized_assignment_question->question_id;
-                }
-
-                foreach ($randomized_assignment_questions_by_user_id as $user_id => $user_question_ids) {
-                    if (in_array($question->id, $user_question_ids)) {
-                        $other_question_id = $this->getOtherRandomizedQuestionId($user_question_ids, $question_ids, $question->id);
-                        if (!$other_question_id) {
-                            $response['message'] = "We were unable to remove the question due to an issue with re-configuring the randomizations.  Please contact support.";
-                            return $response;
-                        }
-                        $randomizedAssignmentQuestion = new RandomizedAssignmentQuestion();
-                        $randomizedAssignmentQuestion->assignment_id = $assignment->id;
-                        $randomizedAssignmentQuestion->question_id = $other_question_id;
-                        $randomizedAssignmentQuestion->user_id = $user_id;
-                        $randomizedAssignmentQuestion->save();
-                    }
-                    ///get all assignment questions
-                    /// get all students for which this affects
-                    /// add a different question
-
-
-                    $response['message'] = "As this is a randomized assignment, please ask your students to revisit their assignment as a question may have been updated.";
-                }
             }
-
             $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
             $assignment_question_id = DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
@@ -2265,25 +2332,11 @@ class AssignmentSyncQuestionController extends Controller
             DB::table('rubric_points_breakdowns')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
                 ->delete();
-            $currently_ordered_questions = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->orderBy('order')
-                ->get();
 
-            if ($currently_ordered_questions) {
-                $currently_ordered_question_ids = [];
-                foreach ($currently_ordered_questions as $currently_ordered_question) {
-                    $currently_ordered_question_ids[] = $currently_ordered_question->question_id;
-                }
-                $assignmentSyncQuestion->orderQuestions($currently_ordered_question_ids, $assignment);
-
-                $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
-                if ($assignment->points_per_question === 'question weight') {
-                    $response['updated_points'] = $assignmentSyncQuestion->getQuestionPointsByAssignment($assignment);
-                }
-
+            $re_order_and_Weight_questions_response = $assignmentSyncQuestion->reOrderAndWeightQuestions($assignment);
+            if (isset($re_order_and_Weight_questions_response['updated_points'])) {
+                $response['updated_points'] = $re_order_and_Weight_questions_response['updated_points'];
             }
-
 
             $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'remove', $learning_tree_id);
 
@@ -3386,16 +3439,6 @@ class AssignmentSyncQuestionController extends Controller
         return $seed;
     }
 
-    function getOtherRandomizedQuestionId(array $user_question_ids, array $question_ids, int $question_id_to_remove)
-    {
-        foreach ($question_ids as $question_id) {
-            if (($question_id !== $question_id_to_remove) && !in_array($question_id, $user_question_ids)) {
-                return $question_id;
-            }
-        }
-        return false;
-
-    }
 
     /**
      * @param Request $request

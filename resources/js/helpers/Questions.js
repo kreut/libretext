@@ -152,3 +152,11 @@ export const responseFormatOptions = [
   { text: 'Other', value: 'other' }
 ]
 
+export const openEndedSubmissionTypeOptions = [
+  { value: 'rich text', text: 'Rich Text' },
+  { value: 'file', text: 'File' },
+  { value: 'audio', text: 'Audio' },
+  { value: 0, text: 'No submission, auto grading' },
+  { value: 'no submission, manual grading', text: 'No submission, manual grading' }
+]
+

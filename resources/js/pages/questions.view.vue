@@ -919,7 +919,7 @@
         Be sure to paste the different sections of the report in the form below.
       </div>
       <div v-if="questions[currentPage-1]
-        && (assessmentType === 'real time' || (assessmentType === 'delayed' && solutionsReleased))
+       && (assessmentType === 'real time' || (assessmentType === 'delayed' && (user.role === 2 || solutionsReleased)))
         && !ish5pActivitySet"
       >
         <SubmissionArray :submission-array="submissionArray"
@@ -1670,6 +1670,7 @@
                    :question-id="questions.length && questions[currentPage-1].id"
                    :is-instructor-with-anonymous-view="isInstructorWithAnonymousView"
                    :clone-source-id="+(user && user.role===2 && questions[currentPage - 1] && questions[currentPage - 1].clone_source_id)"
+                   :open-ended-question-in-real-time-assignment="user && user.role === 2 && isOpenEnded && assessmentType === 'real time'"
                    @updateCustomQuestionTitle="updateCustomQuestionTitle"
         />
       </div>
@@ -2263,7 +2264,7 @@
                 </a>
               </b-row>
             </div>
-            <b-form-row v-if="instructorInNonBasicView() && openEndedSubmissionTypeAllowed && !isDiscussIt()"
+            <b-form-row v-if="instructorInNonBasicView() && (openEndedSubmissionTypeAllowed || questions[currentPage-1].technology === 'text') && !isDiscussIt()"
                         style="margin-left:0"
             >
               <span class="pr-2">
@@ -3929,9 +3930,10 @@ import ErrorMessage from '../components/ErrorMessage.vue'
 import { h5pOnLoadCssUpdates } from '../helpers/CSSUpdates'
 import HandsontableChart from '../components/HandsonTable.vue'
 import DefaultSubmissionResultsViewer from '../components/viewers/DefaultSubmissionResultsViewer.vue'
-import { formatFileSize, inputFile, inputFilter, triggerFileSelect } from '../helpers/UploadFiles'
+import { formatFileSize, inputFile, inputFilter } from '../helpers/UploadFiles'
 import { isPhone } from '../helpers/isPhone'
 import NativeAudioVideoRecorder from '../components/NativeAudioVideoRecorder.vue'
+import { openEndedSubmissionTypeOptions } from '../helpers/Questions'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -4227,13 +4229,7 @@ export default {
     isOpenEndedAudioSubmission: false,
 
     responseText: '',
-    openEndedSubmissionTypeOptions: [
-      { value: 'rich text', text: 'Rich Text' },
-      { value: 'file', text: 'File' },
-      { value: 'audio', text: 'Audio' },
-      { value: 0, text: 'No submission, auto grading' },
-      { value: 'no submission, manual grading', text: 'No submission, manual grading' }
-    ],
+    openEndedSubmissionTypeOptions: openEndedSubmissionTypeOptions,
     openEndedSubmissionCompiledPDFTypeOptions: [
       { value: 'file', text: 'PDF' },
       { value: 0, text: 'None' }
@@ -4550,7 +4546,7 @@ export default {
     revertToOriginal (type) {
       switch (type) {
         case ('multiple_answers'):
-          const el = document.querySelector('#question-to-view #original-response');
+          const el = document.querySelector('#question-to-view #original-response')
           if (!el) return
           const originalIds = JSON.parse(el.dataset.ids || '[]')
           let qtiJson = JSON.parse(this.qtiJson)

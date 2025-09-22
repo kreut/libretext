@@ -596,7 +596,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/submission-score-overrides', 'SubmissionScoreOverrideController@update');
 
     Route::post('/assignment-sync-question/check-for-discuss-it-questions-over-multiple-assignment-questions', 'AssignmentSyncQuestionController@checkForDiscussItQuestionsOverMultipleAssignmentQuestions');
-    Route::get('/assignment-sync-question/check-for-discuss-it-or-clicker-questions-by-course-or-assignment/{level}/{id}', 'AssignmentSyncQuestionController@checkForDiscussitOrClickerQuestionsByCourseOrAssignment');
+    Route::get('/assignment-sync-question/discuss-it-clicker-or-open-ended-questions-by-course-or-assignment/{level}/{id}', 'AssignmentSyncQuestionController@checkForDiscussitClickerOrOpenEndedQuestionsByCourseOrAssignment');
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
     Route::delete('/assignments/{assignment}/questions/{question}/delete-custom-rubric', 'AssignmentSyncQuestionController@deleteCustomRubric');
     Route::patch('/assignments/{assignment}/questions/{question}/update-custom-rubric', 'AssignmentSyncQuestionController@updateCustomRubric');
@@ -747,6 +747,8 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/assignments/{assignment}/questions/{question}/update-open-ended-submission-type', 'AssignmentSyncQuestionController@updateOpenEndedSubmissionType');
     Route::get('/assignments/{assignment}/questions/{question}/has-non-scored-submission-files', 'AssignmentSyncQuestionController@hasNonScoredSubmissionFiles');
 
+
+    Route::delete('/assignments/{assignment}/questions/remove-open-ended-questions', 'AssignmentSyncQuestionController@removeOpenEndedQuestions');
 
     Route::patch('/assignments/{assignment}/questions/{question}/update-points', 'AssignmentSyncQuestionController@updatePoints');
     Route::patch('/assignments/{assignment}/questions/{question}/update-weight', 'AssignmentSyncQuestionController@updateWeight');

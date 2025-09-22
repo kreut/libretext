@@ -1451,7 +1451,6 @@ import $ from 'jquery'
 
 import {
   h5pText,
-  updateOpenEndedInRealTimeMessage,
   updateLearningTreeInNonLearningTreeMessage,
   updateNonLearningTreeInLearningTreeMessage
 } from '~/helpers/AssessmentTypeWarnings'
@@ -1747,7 +1746,6 @@ export default {
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
-    this.updateOpenEndedInRealTimeMessage = updateOpenEndedInRealTimeMessage
     this.updateLearningTreeInNonLearningTreeMessage = updateLearningTreeInNonLearningTreeMessage
     this.updateNonLearningTreeInLearningTreeMessage = updateNonLearningTreeInLearningTreeMessage
     this.h5pText = h5pText
@@ -2757,7 +2755,6 @@ export default {
             this.openEndedQuestionsInRealTime += this.items[i].order + ', '
           }
         }
-        this.updateOpenEndedInRealTimeMessage()
         this.updateLearningTreeInNonLearningTreeMessage()
         this.updateNonLearningTreeInLearningTreeMessage()
 

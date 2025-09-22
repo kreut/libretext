@@ -46,22 +46,6 @@ export function h5pText () {
   return 'This assignment has non-H5P assessments. Clicker assignments can only be used with H5P true-false and H5P multiple choice assessments. Please remove any non-H5P assessments.'
 }
 
-export function updateOpenEndedInRealTimeMessage () {
-  this.openEndedQuestionsInRealTime = ''
-  let numIssues = 0
-  if (this.assessmentType !== 'delayed') {
-    for (let i = 0; i < this.items.length; i++) {
-      if (!this.items[i].auto_graded_only) {
-        numIssues++
-        this.openEndedQuestionsInRealTime += this.items[i].order + ', '
-      }
-    }
-    if (this.openEndedQuestionsInRealTime && numIssues >= 1) {
-      this.openEndedQuestionsInRealTime = this.openEndedQuestionsInRealTime.replace(new RegExp(', $'), '')
-    }
-  }
-}
-
 export function updatePendingQuestionRevisionsMessage () {
   this.pendingQuestionRevisions = ''
   let numIssues = 0

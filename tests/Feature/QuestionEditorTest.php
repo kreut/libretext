@@ -171,6 +171,7 @@ class QuestionEditorTest extends TestCase
             'technology_id' => 'some file path',
             'author' => 'some author',
             'license' => 'publicdomain',
+            'open_ended_submission_type' => '0',
             'tags' => [],
             'folder_id' => $this->my_questions_folder->id
         ];

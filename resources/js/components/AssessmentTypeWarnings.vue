@@ -28,11 +28,6 @@
       changes
       if they would like to be reflected in their assignments.
     </b-alert>
-    <b-alert :show="openEndedQuestionsInRealTime !== ''">
-      It looks like the following assessments have an open-ended component: {{ openEndedQuestionsInRealTime }}. These
-      types of assessments are appropriate for
-      delayed assessments. Please either change the assessment type to Delayed or remove these assessments.
-    </b-alert>
     <b-alert :show="pendingQuestionRevisions !== ''">
       The following questions have pending revisions: {{ pendingQuestionRevisions }}. If you would like to update the
       question to the most current revision, please go to that question.
