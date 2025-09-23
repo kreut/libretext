@@ -587,7 +587,9 @@
                       </div>
                       <div v-else>
                         <b-button
-                          v-show="grading[currentStudentPage - 1].auto_graded_submission && grading[currentStudentPage - 1].auto_graded_submission.submission.includes('structure_s3_key')"
+                          v-show="grading[currentStudentPage - 1].auto_graded_submission
+                          && grading[currentStudentPage - 1].auto_graded_submission.submission
+                          && grading[currentStudentPage - 1].auto_graded_submission.submission.includes('structure_s3_key')"
                           variant="primary"
                           size="sm"
                           @click="viewStructureImage(grading[currentStudentPage - 1])"
