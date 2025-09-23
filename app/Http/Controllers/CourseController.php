@@ -441,7 +441,7 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        if (app()->environment('testing')){
+        if (app()->environment('testing')) {
             $data['lms_course_id'] = $request->lms_course_id;
         } else {
             $data = $request->validated();
@@ -1744,6 +1744,9 @@ class CourseController extends Controller
                 'graders' => $course->graderInfo(),
                 'start_date' => $course->start_date,
                 'end_date' => $course->end_date,
+                'formatted_end_date' => Carbon::parse($course->end_date, 'UTC')
+                    ->setTimezone(request()->user()->time_zone)
+                    ->translatedFormat('F j, Y'),
                 'public' => $course->public,
                 'auto_release_shown' => $course->auto_release_shown,
                 'auto_release_show_scores' => $course->auto_release_show_scores,

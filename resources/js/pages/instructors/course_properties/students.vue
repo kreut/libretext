@@ -189,8 +189,7 @@
              @hidden="getEnrolledAndInvitedStudents()"
     >
       <p>
-        Invite students to enroll in your course by emailing them an access code. Access codes are valid for 48
-        hours.
+        Invite students to enroll in your course by emailing them an access code. Access codes are valid until the end of your course, currently set as <strong>{{ course.formatted_end_date}}</strong>.
       </p>
       <b-form-group
         v-show="inviteToSectionOptions.length > 2"

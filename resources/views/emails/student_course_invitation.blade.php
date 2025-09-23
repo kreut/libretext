@@ -14,7 +14,6 @@
     by {{$instructor_name}}. You can enroll in the
     course using the following access code:</p>
   <p><strong>{{$access_code}}</strong></p>
-  <p>This code is valid for 48 hours.</p>
   <p>In addition, you have been given an account on LibreOne with this email as your username.</p>
   <br>
   <p>-ADAPT support</p>
