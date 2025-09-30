@@ -6,6 +6,7 @@ namespace App;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Traits\JWT;
+use DOMDocument;
 use \Exception;
 use App\Http\Requests\StoreSubmission;
 use Illuminate\Database\Eloquent\Model;
@@ -1960,9 +1961,11 @@ class Submission extends Model
                     if ($submission_info && isset($submission_info['score']) && isset($submission_info['score']['answers'])) {
                         foreach ($submission_info['score']['answers'] as $identifier => $value) {
                             if (isset($value['preview_latex_string'])) {
-                                $formatted_submission = '\(' . $value['preview_latex_string'] . '\)';
+                                $submission_has_html = $this->hasHtml($value['preview_latex_string']);
+                                $formatted_submission = $submission_has_html ? $value['preview_latex_string'] : '\(' . $value['preview_latex_string'] . '\)';
                             } else {
                                 $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
+                                $submission_has_html = $this->hasHtml($formatted_submission);
                             }
                             $value['score'] = $value['score'] ?? 0;
                             $is_correct = $value['score'] === 1;
@@ -1973,6 +1976,7 @@ class Submission extends Model
                             $percent = !$is_learning_tree_node && $assignment_question->points > 0 ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
 
                             $submission_array_value = [
+                                'submission_has_html' => $submission_has_html,
                                 'submission' => $formatted_submission,
                                 'identifier' => $identifier,
                                 'correct' => $is_correct,
@@ -1981,14 +1985,26 @@ class Submission extends Model
                                 'percent' => $percent];
                             $show_solution_as_student = Cache::get('show_solution_' . request()->user()->id . '_' . $assignment->id . '_' . $question->id, false);
                             if (request()->user()->role === 2 || $show_solution_as_student) {
-                                $correct_ans = $value['correct_ans_latex_string'] ?? $value['correct_ans'] ?? "This WeBWorK question is missing the 'correct_ans' key.  Please fix the weBWork code.";
-                                $submission_array_value['correct_ans'] = '\(' . $correct_ans . '\)';
+                                if (isset($value['correct_ans_latex_string'])) {
+                                    $correct_ans_has_html = $this->hasHtml($value['correct_ans_latex_string']);
+                                    $correct_ans = $correct_ans_has_html ? $value['correct_ans_latex_string'] : '\(' . $value['correct_ans_latex_string'] . '\)';
+                                } elseif (isset($value['correct_ans'])) {
+                                    $correct_ans_has_html = $this->hasHtml($value['correct_ans']);
+                                    $correct_ans = $correct_ans_has_html ? $value['correct_ans'] : '\(' . $value['correct_ans'] . '\)';
+                                } else {
+                                    $correct_ans = "This WeBWorK question is missing the 'correct_ans' key.  Please fix the weBWork code.";
+                                    $correct_ans_has_html = false;
+                                }
+                                $submission_array_value['correct_ans'] = $correct_ans;
+                                $submission_array_value['correct_ans_has_html'] = $correct_ans_has_html;
                             }
+
                             $submission_array[] = $submission_array_value;
                         }
                     }
                     break;
-                case('imathas'):
+                case
+                ('imathas'):
                     if ($submission_info) {
                         $tks = explode('.', $submission_info['state']);
                         list($headb64, $bodyb64, $cryptob64) = $tks;
@@ -2090,6 +2106,16 @@ class Submission extends Model
     function getPercent($assignment_question, $points)
     {
         return $assignment_question->points > 0 ? Helper::removeZerosAfterDecimal(round(100 * $points / $assignment_question->points, 2)) : 0;
+    }
+
+    /**
+     * @param $string
+     * @return bool
+     */
+    public
+    function hasHtml($string): bool
+    {
+        return $string !== strip_tags($string);
     }
 
     private
@@ -2225,7 +2251,8 @@ class Submission extends Model
      * @param $submission_results
      * @return array
      */
-    public function defaultSummaryOfResultsForWebwork($submission_results): array
+    public
+    function defaultSummaryOfResultsForWebwork($submission_results): array
     {
         $results_by_part = [];
         foreach ($submission_results as $submission_result) {
@@ -2372,7 +2399,8 @@ class Submission extends Model
         return $choices;
     }
 
-    public function formatSubmissionResultScores($submission_results)
+    public
+    function formatSubmissionResultScores($submission_results)
     {
         return $submission_results->groupBy('score')->map(function ($group, $score) {
             $normalized_score = rtrim(rtrim(number_format((float)$score, 3, '.', ''), '0'), '.');

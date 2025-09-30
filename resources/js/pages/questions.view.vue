@@ -873,7 +873,10 @@
           <tr v-for="(item, itemIndex) in unconfirmedSubmission"
               :key="`unconfirmed-submission-${itemIndex}`"
           >
-            <td>{{ item ? item : 'Nothing submitted' }}</td>
+            <td>
+              <div v-if="hasHTML" v-html="item"/>
+                <div v-if="!hasHTML">{{ item ? item : 'Nothing submitted' }}</div>
+            </td>
           </tr>
           </tbody>
         </table>
@@ -2264,8 +2267,9 @@
                 </a>
               </b-row>
             </div>
-            <b-form-row v-if="instructorInNonBasicView() && (openEndedSubmissionTypeAllowed || questions[currentPage-1].technology === 'text') && !isDiscussIt()"
-                        style="margin-left:0"
+            <b-form-row
+              v-if="instructorInNonBasicView() && (openEndedSubmissionTypeAllowed || questions[currentPage-1].technology === 'text') && !isDiscussIt()"
+              style="margin-left:0"
             >
               <span class="pr-2">
                 Open-Ended Submission Type:
@@ -3650,14 +3654,14 @@
                         class="pl-1"
                       >
                         <RubricPointsBreakdownModal
-                            v-if="questions[currentPage-1].rubric"
-                            :key="`rubric-points-modal-${questions[currentPage - 1].id}`"
-                            :user-id="user.id"
-                            :assignment-id="+assignmentId"
-                            :rubric="questions[currentPage-1].rubric"
-                            :question-id="questions[currentPage-1].id"
-                            :question-points="+questions[currentPage - 1].points"
-                          />
+                          v-if="questions[currentPage-1].rubric"
+                          :key="`rubric-points-modal-${questions[currentPage - 1].id}`"
+                          :user-id="user.id"
+                          :assignment-id="+assignmentId"
+                          :rubric="questions[currentPage-1].rubric"
+                          :question-id="questions[currentPage-1].id"
+                          :question-points="+questions[currentPage - 1].points"
+                        />
                         </span>
                       </li>
                       <li v-if="questions[currentPage - 1].submission_file_late_penalty_percent">
@@ -3984,6 +3988,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    hasHTML: false,
     previouslyUploadedAudioFile: '',
     isStructureImageUploader: false,
     resizeCacheIndex: 0,
@@ -5154,6 +5159,7 @@ export default {
         if (data.type === 'error') {
           this.$noty.error(data.message)
         } else {
+          this.hasHTML = data.has_html
           this.unconfirmedSubmission = data.unconfirmed_submission
           this.$bvModal.show('modal-confirm-submission')
         }

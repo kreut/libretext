@@ -26,7 +26,11 @@ class UnconfirmedSubmissionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function show(Request $request, Assignment $assignment, Question $question, UnconfirmedSubmission $unconfirmedSubmission): array
+    public function show(Request               $request,
+                         Assignment            $assignment,
+                         Question              $question,
+                         UnconfirmedSubmission $unconfirmedSubmission,
+                         Submission            $submission): array
     {
         $response['type'] = 'error';
         try {
@@ -40,16 +44,24 @@ class UnconfirmedSubmissionController extends Controller
             }
             $formatted_unconfirmed_submission = [];
             $submission_info = json_decode($unconfirmed_submission->submission, 1);
+            $has_html = false;
             if ($submission_info && isset($submission_info['submission'])
                 && isset($submission_info['submission']['score'])
                 && isset($submission_info['submission']['score']['answers'])) {
                 foreach ($submission_info['submission']['score']['answers'] as $value) {
                     if (isset($value['preview_latex_string'])) {
-                        $formatted_submission ='\(' . $value['preview_latex_string'] . '\)';
-                    } else $formatted_submission = $value['original_student_ans'] ?? 'Nothing submitted.';
+                        $has_html = $submission->hasHtml($value['preview_latex_string']);
+                        $formatted_submission = $has_html ? $value['preview_latex_string'] : '\(' . $value['preview_latex_string'] . '\)';
+                    } elseif (isset($value['original_student_ans'])) {
+                        $has_html = $submission->hasHtml($value['original_student_ans']);
+                        $formatted_submission = $has_html ? $value['original_student_ans'] : '\(' . $value['original_student_ans'] . '\)';
+                    } else {
+                        $formatted_submission = 'Nothing submitted.';
+                    }
                     $formatted_unconfirmed_submission[] = $formatted_submission;
                 }
             }
+            $response['has_html'] = $has_html;
             $response['unconfirmed_submission'] = $formatted_unconfirmed_submission;
             $response['type'] = 'success';
         } catch (Exception $e) {

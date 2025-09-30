@@ -36,9 +36,16 @@
             :key="`submission-result-${itemIndex}`"
         >
           <td>
-                <span :class="item.correct ? 'text-success' : 'text-danger'">
+                <span v-show="!item.submission_has_html"
+                      :class="item.correct ? 'text-success' : 'text-danger'"
+                >
                   {{ item.submission ? item.submission : 'Nothing submitted' }}
                 </span>
+            <div v-show="item.submission_has_html"
+                 :class="item.correct ? 'text-success' : 'text-danger'"
+                 v-html="item.submission ? item.submission : 'Nothing submitted'"
+            >
+            </div>
           </td>
           <td>
             <span v-show="item.correct" class="text-success">Correct</span>
@@ -47,7 +54,12 @@
                 </span>
           </td>
           <td v-if="(userRole === 2 || showCorrectAnswer) && technology === 'webwork'">
-            <span :class="item.correct ? 'text-success' : 'text-danger'">{{ item.correct_ans }}</span>
+            <span v-show="!item.correct_ans_has_html" :class="item.correct ? 'text-success' : 'text-danger'">{{
+                item.correct_ans
+              }}</span>
+            <div v-show="item.correct_ans_has_html" :class="item.correct ? 'text-success' : 'text-danger'"
+                 v-html="item.correct_ans"
+            />
           </td>
           <td v-if="scoringType === 'p'">
                 <span :class="item.correct ? 'text-success' : 'text-danger'">
