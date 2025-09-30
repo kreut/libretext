@@ -46,7 +46,7 @@
           <td>
             {{ originalRubricPoints[rubricItemIndex] }}
           </td>
-          <td>
+          <td v-show="user.role === 3 && showPointsAwardedInfo || user.role !== 3">
             <div v-if="user.role === 3 && showPointsAwardedInfo">
               {{ rubricItem.points }}
             </div>

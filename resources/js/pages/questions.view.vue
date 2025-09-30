@@ -2289,7 +2289,7 @@
                                    @hideRubricProperties="showRubricProperties = false"
             />
             <b-row
-              v-show="+openEndedSubmissionType !== 0"
+              v-show="user.role === 2 && (+openEndedSubmissionType !== 0 || isDiscussIt())"
               class="pl-3 pb-2 pt-2"
             >
               <span v-if="assessmentType !== 'clicker' && questions[currentPage - 1].question_rubric_exists"
@@ -3634,7 +3634,7 @@
                           :assignment-id="+assignmentId"
                           :rubric="questions[currentPage-1].rubric"
                           :question-id="questions[currentPage-1].id"
-                          :question-points="10000"
+                          :question-points="+questions[currentPage - 1].points"
                         />
                       </li>
                       <li v-if="showScores">
@@ -3649,14 +3649,14 @@
                         <strong>Score: {{ questions[currentPage - 1].submission_file_score }}</strong><span
                         class="pl-1"
                       >
-                          <RubricPointsBreakdownModal
+                        <RubricPointsBreakdownModal
                             v-if="questions[currentPage-1].rubric"
                             :key="`rubric-points-modal-${questions[currentPage - 1].id}`"
                             :user-id="user.id"
                             :assignment-id="+assignmentId"
                             :rubric="questions[currentPage-1].rubric"
                             :question-id="questions[currentPage-1].id"
-                            :question-points="10000"
+                            :question-points="+questions[currentPage - 1].points"
                           />
                         </span>
                       </li>
