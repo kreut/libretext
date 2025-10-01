@@ -9,6 +9,36 @@
     />
     <CannotDeleteAssessmentFromBetaAssignmentModal/>
     <b-modal
+      id="modal-confirm-remove-open-ended-component"
+      no-close-on-backdrop
+      no-close-on-esc
+      size="lg"
+      title="Confirm Remove Open-ended Components"
+    >
+      <p>The following questions have open-ended components that may be removed to make the questions fully
+        auto-graded. All open-ended submissions will be removed.</p>
+      <b-table aria-label="Open-ended components to remove"
+               striped
+               hover
+               title="Questions with open-ended components"
+               :fields="openEndedComponentsToRemoveFields"
+               :items="openEndedComponentsToRemove"
+      />
+      <template #modal-footer="{ cancel, ok }">
+        <b-button size="sm"
+                  @click="$bvModal.hide('modal-confirm-remove-open-ended-component')"
+        >
+          Close
+        </b-button>
+        <b-button size="sm"
+                  variant="primary"
+                  @click="removeOpenEndedComponents()"
+        >
+          Remove Open-ended Components
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
       v-if="questionToEdit"
       :id="`modal-edit-question-${questionToEdit.id}`"
       :key="`modal-edit-question-${questionToEdit.id}`"
@@ -216,6 +246,22 @@
             </p>
           </div>
         </div>
+        <b-alert :show="assessmentType ==='real time' && hasOpenEndedQuestions" variant="info">
+          <p>The questions colored in red below have open-ended components associated with this real time
+            assignment. It is recommended
+            to only use auto-graded questions in real time assignments.</p>
+          <p v-show="items.find(question => question.submission.search(',') !== -1)">Some of your questions have both an
+            open-ended component and an
+            auto-graded component. You
+            can
+            <b-button size="sm"
+                      variant="info"
+                      @click="initRemoveOpenEndedComponent"
+            >remove the open-ended component
+            </b-button>
+            to make them purely auto-graded.
+          </p>
+        </b-alert>
         <b-card v-show="user.role === 2 && betaCourseApprovals.length"
                 header="default"
                 header-html="<h2 class=&quot;h7&quot;>Beta Course Approvals</h2>"
@@ -630,6 +676,10 @@ export default {
     return { title: 'Assignment Questions' }
   },
   data: () => ({
+    openEndedComponentsToRemoveFields: ['order', 'title', 'status'],
+    openEndedComponentsToRemove: [],
+    hasOpenEndedQuestions: false,
+    showResetOpenEndedButton: false,
     isAlgorithmicAssignment: false,
     canEditLearningTree: false,
     allFormErrors: [],
@@ -705,6 +755,26 @@ export default {
     isMobile,
     editQuestionSource,
     uniqueId,
+    async removeOpenEndedComponents () {
+      for (let i = 0; i < this.openEndedComponentsToRemove.length; i++) {
+        const question = this.openEndedComponentsToRemove[i]
+        try {
+          const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${question.question_id}/update-open-ended-submission-type`, { 'open_ended_submission_type': '0' })
+          const status = data.type === 'success' ? 'Updated' : data.message
+          this.$set(this.openEndedComponentsToRemove[i], 'status', status)
+        } catch (error) {
+          this.$set(this.openEndedComponentsToRemove[i], 'status', error.message)
+        }
+      }
+      await this.getAssignmentInfo()
+    },
+    initRemoveOpenEndedComponent () {
+      this.openEndedComponentsToRemove = this.items.filter(item => item.submission.search(',') !== -1)
+      for (let i = 0; i < this.openEndedComponentsToRemove.length; i++) {
+        this.$set(this.openEndedComponentsToRemove[i], 'status', 'Pending')
+      }
+      this.$bvModal.show('modal-confirm-remove-open-ended-component')
+    },
     isDiscussIt (question) {
       try {
         return JSON.parse(question.qti_answer_json).questionType === 'discuss_it'
@@ -923,6 +993,8 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        this.hasOpenEndedQuestions = data.has_open_ended_questions
+        this.showResetOpenEndedButton = data.show_reset_open_ended_button
         this.formative = data.formative
         this.submissionsExist = data.submissions_exist
         this.assessmentType = data.assessment_type

@@ -1748,6 +1748,8 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($questions as $question) {
                 $questions_by_question_id[$question->id] = $question;
             }
+            $show_reset_open_ended_button= false;
+            $has_open_ended_questions = false;
             foreach ($assignment_questions as $value) {
                 $columns = [];
                 $columns['title'] = $value->title;
@@ -1764,6 +1766,12 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['is_formative_question'] = in_array($value->question_id, $formative_questions);
                 $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
                 $columns['is_open_ended'] = $value->open_ended_submission_type !== '0';
+                if (in_array($value->open_ended_submission_type,['audio', 'file', 'text'])) {
+                    $show_reset_open_ended_button= true;
+                }
+                if ( $columns['is_open_ended'] ){
+                    $has_open_ended_questions = true;
+                }
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
                 $columns['learning_tree_id'] = $value->learning_tree_id;
                 $columns['learning_tree_user_id'] = $value->learning_tree_user_id;
@@ -1835,6 +1843,8 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['title'] = $value->custom_question_title ?: $title;
                 $rows[] = $columns;
             }
+            $response['show_reset_open_ended_button'] = $show_reset_open_ended_button;
+            $response['has_open_ended_questions'] = $has_open_ended_questions;
             $response['assessment_type'] = $assignment->assessment_type;
             $response['formative'] = $assignment->course->formative || $assignment->formative;
             $response['beta_assignments_exist'] = $assignment->betaAssignments() !== [];
