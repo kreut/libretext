@@ -1521,6 +1521,9 @@
                     <b-form-radio value="sketcher">
                       Sketcher
                     </b-form-radio>
+                    <b-form-radio value="3d_model" v-if="false">
+                      3D Model
+                    </b-form-radio>
                     <b-modal id="modal-discuss-it"
                              title="Explanation of Discuss-it Questions"
                              size="xl"
@@ -1572,6 +1575,20 @@
                                   @change="initQTIQuestionType($event)"
                     >
                       Marker
+                    </b-form-radio>
+                  </div>
+                  <div v-if="nativeType === '3d_model'">
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                                  value="three_d_model_multiple_choice"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multiple Choice
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                                  value="three_d_model_multiple_answer"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multiple Answer
                     </b-form-radio>
                   </div>
                   <div v-if="['all','basic'].includes(nativeType)">
@@ -1908,6 +1925,7 @@
                          'bow_tie',
                          'highlight_text',
                          'highlight_table',
+                         'three_d_model_multiple_choice',
                          'submit_molecule',
                          'marker',
                          'discuss_it'].includes(qtiQuestionType) && qtiJson"
@@ -1968,6 +1986,15 @@
                                          @initDiscussItText="initDiscussItText"
                     />
                   </div>
+                </div>
+                <div v-if="['three_d_model_multiple_choice'].includes(qtiQuestionType)">
+                  <ThreeDModel
+                    :qti-json="qtiJson"
+                    :three-d-model-parameter-errors="threeDModelParameterErrors"
+                    :three-d-model-solution-structure-errors="threeDModelSolutionStructureErrors"
+                    :three-d-model-rich-editor-config="threeDModelRichEditorConfig"
+                    @updateQtiJson="updateQtiJson"
+                  />
                 </div>
                 <div v-if="(isLocalMe || user.id === 36892)">
                   Debugging: {{ qtiJson }}
@@ -2827,7 +2854,22 @@ import {
 } from '~/helpers/Questions'
 import StructureImageUploader from '../StructureImageUploader.vue'
 import { capitalize, getQuestionChapterIdOptions, getQuestionSubjectIdOptions } from '../../helpers/Questions'
+import ThreeDModel from './ThreeDModel.vue'
 
+const parameters3DModel = {
+  modelID: '',
+  BGImage: '',
+  BGColor: '',
+  mode: '',
+  annotations: '',
+  modelOffset: '',
+  cameraOffset: '',
+  selectionColor: '',
+  panel: 'no',
+  autospin: 'no',
+  STLmatCol: '',
+  hideDistance: ''
+}
 const defaultQuestionForm = {
   question_type: 'assessment',
   question_subject_id: null,
@@ -2914,6 +2956,7 @@ const matchingRichEditorConfig = {
 
 const simpleChoiceFeedbackConfig = JSON.parse(JSON.stringify(matchingRichEditorConfig))
 const simpleChoiceConfig = JSON.parse(JSON.stringify(matchingRichEditorConfig))
+const threeDModelRichEditorConfig = JSON.parse(JSON.stringify(matchingRichEditorConfig))
 
 const richEditorConfig = {
   toolbar: [
@@ -2968,10 +3011,12 @@ const textEntryInteractionJson = {
   },
   'itemBody': {}
 }
+
 export default {
   name: 'CreateQuestion',
   components: {
     CKEditorFileToLinkUploader,
+    ThreeDModel,
     StructureImageUploader,
     MultipleAnswersAdvanced,
     RubricProperties,
@@ -3052,6 +3097,8 @@ export default {
     preSignedURL: '',
     uploadProgress: 0,
     selectedFile: null,
+    threeDModelSolutionStructureErrors: '',
+    threeDModelParameterErrors: [],
     questionSubjectChapterSectionAction: '',
     questionSubjectChapterSectionForm: new Form({}),
     questionSubjectChapterSectionToAddEditLevel: '',
@@ -3061,6 +3108,7 @@ export default {
     questionSectionIdOptions: [{ value: null, text: 'Choose a section' }],
     checkedOpenEndedSubmissionType: false,
     openEndedSubmissionTypeOptions: openEndedSubmissionTypeOptions,
+    parameters3DModel: parameters3DModel,
     smiles: '',
     h5pUrl: 'https://studio.libretexts.org/node/add/h5p',
     imathASUrl: 'https://imathas.libretexts.org/imathas/course/moddataset.php',
@@ -3266,14 +3314,15 @@ export default {
     shorterRichEditorConfig: shorterRichEditorConfig,
     multipleResponseRichEditorConfig: multipleResponseRichEditorConfig,
     simpleChoiceConfig: simpleChoiceConfig,
-    matchingRichEditorConfig: matchingRichEditorConfig
+    matchingRichEditorConfig: matchingRichEditorConfig,
+    threeDModelRichEditorConfig: threeDModelRichEditorConfig
   }),
   watch: {
     activeTabIndex: async function (value) {
       if (value === 1) {
         this.moveSketcherToTab()
       } else {
-        await this.moveSketcherFromTab(true)
+        await this.moveSketcherFromTab(this.nativeType === 'sketcher')
       }
     },
     nativeType: async function (value) {
@@ -3393,9 +3442,11 @@ export default {
     this.$nextTick(() => {
       this.fullyMounted = true
     })
-    this.$nextTick(() => {
-      // this.setToQuestionType('marker')
-    })
+    if (!this.isEdit) {
+      this.$nextTick(() => {
+        //this.setToQuestionType('three_d_model_multiple_choice')
+      })
+    }
   },
   destroyed () {
     if (this.questionToEdit) {
@@ -3565,10 +3616,21 @@ export default {
     setToQuestionType (questionType) {
       document.getElementById('primary-content___BV_tab_button__').click()
       switch (questionType) {
+        case ('three_d_model_multiple_choice'):
+          document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="native-question-type"][value="3d_model"]').click()
+            }
+            , 250
+          )
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="three_d_model_multiple_choice"]').click()
+            }
+            , 250
+          )
+          break
         case ('marker'):
-          const select = document.querySelector('select[title="auto-graded technologies"]')
-          select.value = 'qti'
-          select.dispatchEvent(new Event('change'))
+          document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
               document.querySelector('input[type="radio"][name="native-question-type"][value="sketcher"]').click()
             }
@@ -3736,15 +3798,29 @@ export default {
       this.questionForm.media_uploads = orderedMediaUploads
     },
     receiveMessage (event) {
-      console.log(event.data)
-      if (event.data.structure) {
-        this.receivedStructure = true
-        this.qtiJson.solutionStructure = event.data.structure
-        this.solutionStructure = event.data.structure
-        this.questionForm.solution_structure = JSON.stringify(this.qtiJson.solutionStructure)
-        this.questionForm.qti_prompt = this.qtiJson.prompt
-        this.questionForm.qti_json = JSON.stringify(this.qtiJson)
-        this.$forceUpdate()
+      console.error(event.data)
+      console.error(this.nativeType)
+      switch (this.nativeType) {
+        case ('3d_model'):
+          if (event.data.modelStructureData) {
+            this.receivedModelStructureData = true
+            this.qtiJson.solutionStructure = event.data.modelStructureData
+            this.questionForm.solution_structure = JSON.stringify(this.qtiJson.solutionStructure)
+            console.error(this.qtiJson.solutionStructure)
+            this.$forceUpdate()
+          }
+          break
+        case ('sketcher'):
+          if (event.data.structure) {
+            this.receivedStructure = true
+            this.qtiJson.solutionStructure = event.data.structure
+            this.solutionStructure = event.data.structure
+            this.questionForm.solution_structure = JSON.stringify(this.qtiJson.solutionStructure)
+            this.questionForm.qti_prompt = this.qtiJson.prompt
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            this.$forceUpdate()
+          }
+          break
       }
     },
     viewInLibreStudio (id) {
@@ -3857,6 +3933,18 @@ export default {
         this.$forceUpdate()
       })
     },
+    waitFor3DModel () {
+      return new Promise((resolve) => {
+        const intervalId = setInterval(() => {
+          if (this.receivedModelStructureData) {
+            clearInterval(intervalId)
+            resolve()
+          } else {
+            console.log('Checking for received3DModel...')
+          }
+        }, 50)
+      })
+    },
     waitForStructure () {
       return new Promise((resolve) => {
         const intervalId = setInterval(() => {
@@ -3868,6 +3956,10 @@ export default {
           }
         }, 50)
       })
+    },
+    async handleGet3DModel () {
+      await this.waitFor3DModel()
+      this.message = '3D Model received!'
     },
     async handleGetStructure () {
       await this.waitForStructure()
@@ -3882,6 +3974,7 @@ export default {
         this.$bvModal.show('modal-confirm-no-open-ended-submission-with-no-auto-grading')
         return
       }
+      this.threeDModelSolutionStructureErrors = ''
       this.questionForm.changes_are_topical = ''
       console.log(`Technology: ${this.questionForm.technology}`)
       if (!this.validateImagesHaveAlts()) {
@@ -3907,7 +4000,17 @@ export default {
             delete this.questionForm[key]
           }
         }
+
         switch (this.qtiQuestionType) {
+          case ('three_d_model_multiple_choice'):
+            this.receivedModelStructureData = false
+            document.getElementById('threeDModel').contentWindow.postMessage('save3DModel', '*')
+            await this.handleGet3DModel()
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            this.questionForm.parameters = this.qtiJson.parameters
+            break
           case ('discuss_it'):
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']
@@ -4226,6 +4329,13 @@ export default {
           case ('discuss_it'):
             this.qtiPrompt = this.qtiJson['prompt']
             this.qtiQuestionType = this.qtiJson.questionType
+            break
+          case ('three_d_model_multiple_choice'):
+            this.qtiQuestionType = this.qtiJson.questionType
+            this.nativeType = '3d_model'
+            if (!this.qtiJson.feedback) {
+              this.qtiJson.feedback = {}
+            }
             break
           case ('submit_molecule'):
           case ('marker'):
@@ -4825,6 +4935,23 @@ export default {
             prompt: ''
           }
           this.qtiQuestionType = 'discuss_it'
+          break
+        case ('three_d_model_multiple_choice'):
+          this.parameters3DModel.mode = 'selection'
+          this.qtiJson = {
+            questionType: 'three_d_model_multiple_choice',
+            parameters: this.parameters3DModel,
+            generalIncorrectFeedback: '',
+            feedbacks: { }
+          }
+          break
+        case ('three_d_model_multiple_answer'):
+          this.parameters3DModel.mode = 'selection'
+          this.qtiJson = {
+            questionType: 'three_d_model_multiple_answer',
+            parameters: this.parameters3DModel,
+            feedback: {}
+          }
           break
         case ('submit_molecule'):
           this.qtiJson = {
@@ -5458,6 +5585,16 @@ export default {
             console.error(errors[property])
             console.error(property)
             switch (property) {
+              case ('parameters'):
+                formattedErrors.push('Please fix the errors associated with your 3D Model parameters')
+                this.threeDModelParameterErrors = errors['parameters']
+                break
+              case ('solution_structure'):
+                this.threeDModelSolutionStructureErrors = errors['solution_structure'] ? errors['solution_structure'][0] : ''
+                if (this.threeDModelSolutionStructureErrors) {
+                  formattedErrors.push(this.threeDModelSolutionStructureErrors)
+                }
+                break
               case ('rubric_items'):
                 formattedErrors.push('Not all of your rubric criterion are valid.')
                 this.questionForm.errors.errors.rubric_items = JSON.parse(this.questionForm.errors.errors.rubric_items)

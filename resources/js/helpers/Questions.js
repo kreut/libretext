@@ -2,6 +2,45 @@ import axios from 'axios'
 import { updateModalToggleIndex } from './accessibility/fixCKEditor'
 import Form from 'vform/src'
 
+export function create3DModelSrc (parameters) {
+
+  //No model url then add hideModel
+  let src = 'https://devapp02.libretexts.org/?'
+  if (parameters.modelID) {
+    src += parameters.modelID ? 'modelID=' + parameters.modelID : 'BGImage' + parameters.BGImage
+  }
+  if (!parameters.modelID) {
+    src += '&hideModel=1'
+  }
+
+  if (parameters.annotations) {
+    src += '&annotations=' + parameters.annotations
+  }
+  src += '&mode=' + parameters.mode
+  if (parameters.BGColor) {
+    src += '&BGColor' + parameters.BGColor
+  }
+  if (parameters.modelOffset) {
+    src += '&modelOffset' + parameters.modelOffset
+  }
+  if (parameters.selectionColor) {
+    src += '&selectionColor' + parameters.selectionColor
+  }
+  if (parameters.panel === 'no') {
+    src += '&panel=hide'
+  }
+  if (parameters.autospin === 'no') {
+    src += '&autospin=no'
+  }
+  if (parameters.STLmatCol === 'no') {
+    src += '&STLmatCol=' + parameters.STLmatCol
+  }
+  if (parameters.hideDistance) {
+    src += '&hideDistance=' + parameters.hideDistance
+  }
+  return src
+}
+
 export function formatQuestionMediaPlayer (htmlString) {
   const currentDomain = window.location.origin
   const regex = new RegExp(`<a\\s+href="${currentDomain}/question-media-player/([^"]+)">([^<]+)<\\/a>`, 'g')

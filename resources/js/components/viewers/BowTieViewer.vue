@@ -170,7 +170,7 @@
 
 <script>
 import CheckBoxResponseFeedback
-  from '../feedback/CheckBoxResponseFeedback'
+from '../feedback/CheckBoxResponseFeedback'
 import GeneralFeedback from '../feedback/GeneralFeedback'
 
 export default {

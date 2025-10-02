@@ -27,6 +27,7 @@ trait Seed
                 $question_type = $qti_array['questionType'];
                 $seed = '';
                 if (in_array($question_type, [
+                    'three_d_model_multiple_choice',
                     'discuss_it',
                     'submit_molecule',
                     'marker',

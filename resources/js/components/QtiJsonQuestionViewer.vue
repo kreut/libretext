@@ -60,7 +60,9 @@
                             :show-response-feedback="showResponseFeedback"
       />
       <div
-        v-if="['submit_molecule',
+        v-if="['three_d_model_multiple_choice',
+              'three_d_model_multiple_answer',
+              'submit_molecule',
                'marker',
                'matching',
                'true_false',
@@ -106,6 +108,10 @@
             :student-response="studentResponse ? JSON.stringify(JSON.parse(studentResponse).structure) : solutionStructure"
             :read-only="previewOrSolution || !submitButtonActive"
             :configuration="questionType === 'marker' ? 'marker-only' : 'default'"
+          />
+
+          <ThreeDModelViewer v-if="['three_d_model_multiple_choice','three_d_model_multiple_answer'].includes(questionType)"
+                             :qti-json="JSON.parse(qtiJson)"
           />
           <DropDownTableViewer v-if="questionType === 'drop_down_table'"
                                ref="dropDownTableViewer"
@@ -170,18 +176,18 @@
           />
         </b-form-group>
       </div>
-     <div v-if="questionType === 'discuss_it' && previewingQuestion">
-       <DiscussItViewer v-if="questionType === 'discuss_it'"
-                        ref="discussItViewer"
-                        :key="`discussIt-${assignmentId}-${questionId}`"
-                        :qti-json="JSON.parse(qtiJson)"
-                        :question-id="questionId"
-                        :assignment-id="assignmentId"
-                        :can-start-discussion-or-add-comments="submitButtonActive"
-                        :previewing-question="previewingQuestion"
-                        @openContactGraderModal="openContactGraderModal"
-       />
-     </div>
+      <div v-if="questionType === 'discuss_it' && previewingQuestion">
+        <DiscussItViewer v-if="questionType === 'discuss_it'"
+                         ref="discussItViewer"
+                         :key="`discussIt-${assignmentId}-${questionId}`"
+                         :qti-json="JSON.parse(qtiJson)"
+                         :question-id="questionId"
+                         :assignment-id="assignmentId"
+                         :can-start-discussion-or-add-comments="submitButtonActive"
+                         :previewing-question="previewingQuestion"
+                         @openContactGraderModal="openContactGraderModal"
+        />
+      </div>
       <DiscussItViewer v-if="questionType === 'discuss_it' && assignmentId"
                        ref="discussItViewer"
                        :key="`discussIt-${assignmentId}-${questionId}`"
@@ -273,6 +279,7 @@ import MatrixMultipleResponseViewer from './viewers/MatrixMultipleResponseViewer
 import { formatQuestionMediaPlayer } from '~/helpers/Questions'
 import DiscussItViewer from './viewers/DiscussItViewer.vue'
 import StructureImageUploader from './StructureImageUploader.vue'
+import ThreeDModelViewer from './viewers/ThreeDModelViewer.vue'
 import { v4 as uuidv4 } from 'uuid'
 
 export default {
@@ -281,6 +288,7 @@ export default {
     StructureImageUploader,
     DiscussItViewer,
     SketcherViewer,
+    ThreeDModelViewer,
     MatrixMultipleResponseViewer,
     MultipleChoiceTrueFalseViewer,
     MultipleAnswersViewer,
@@ -349,6 +357,7 @@ export default {
 
   },
   data: () => ({
+      receivedModelStructureData: false,
       structureImageUploaderKey: 0,
       confirmedStructure: false,
       structureS3Key: '',
@@ -387,7 +396,7 @@ export default {
     window.removeEventListener('message', this.hotKeys)
   },
   mounted () {
-   // this.qtiJsonCacheKey = uuidv4()
+    // this.qtiJsonCacheKey = uuidv4()
     this.$nextTick(() => {
       const iframes = document.querySelectorAll('iframe[title="3D Renderer"]')
       iframes.forEach((iframe) => {
@@ -419,6 +428,7 @@ export default {
     switch (this.questionType) {
       case ('discuss_it'):
         break
+      case ('three_d_model_multiple_choice'):
       case ('submit_molecule'):
       case ('marker'):
       case ('numerical'):
@@ -472,6 +482,18 @@ export default {
   },
   methods: {
     formatQuestionMediaPlayer,
+    waitFor3DModel () {
+      return new Promise((resolve) => {
+        const intervalId = setInterval(() => {
+          if (this.receivedModelStructureData) {
+            clearInterval(intervalId)
+            resolve()
+          } else {
+            console.log('Checking for received3DModel...')
+          }
+        }, 50)
+      })
+    },
     updateStructureImageUploaderKey () {
       this.structureImageUploaderKey++
     },
@@ -486,8 +508,12 @@ export default {
       this.$emit('openContactGraderModal', type)
     },
     receiveMessage (event) {
-      console.error('a')
-      console.error(event.data)
+      if (event.data.modelStructureData) {
+        console.error(event.data.modelStructureData)
+        this.response = event.data.modelStructureData
+        this.receivedModelStructureData = true
+        this.$forceUpdate()
+      }
       if (event.data.image_smiles) {
         this.imageSmiles = event.data.image_smiles
       }
@@ -558,11 +584,21 @@ export default {
         this.$bvModal.show('modal-confirm-structure')
       }
     },
+    async handleGet3DModel () {
+      await this.waitFor3DModel()
+      this.message = '3D Model received!'
+    },
     async submitResponse () {
       let response
       let invalidResponse = false
       let submissionErrorMessage
       switch (this.questionType) {
+        case ('three_d_model_multiple_choice'):
+          const markComponentiframe = document.querySelector('#question-to-view .threeDModelViewer')
+          markComponentiframe.contentWindow.postMessage('save3DModel', '*')
+          await this.handleGet3DModel()
+          response = JSON.stringify(this.response)
+          break
         case ('submit_molecule'):
         case ('marker'):
           const iframe = document.getElementById('sketcherViewer')

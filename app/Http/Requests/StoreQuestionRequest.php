@@ -14,6 +14,8 @@ use App\Rules\correctResponseRequired;
 use App\Rules\DragAndDropClozeDistractors;
 use App\Rules\DragAndDropClozePrompt;
 use App\Rules\DropDownTableRows;
+use App\Rules\hasValid3DModelParameters;
+use App\Rules\hasValid3dModelSolutionStructure;
 use App\Rules\HighlightTableHeaders;
 use App\Rules\HighlightTableRows;
 use App\Rules\HighlightTextPrompt;
@@ -154,6 +156,15 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('three_d_model_multiple_choice'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['parameters'] = new hasValid3DModelParameters();
+                                    $rules['solution_structure'] = new hasValid3dModelSolutionStructure();
+                                    break;
+                                case('three_d_model_multiple_answer'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['parameters'] = new hasValid3DModelParameters();
+                                    break;
                                 case('discuss_it'):
                                     $rules['qti_prompt'] = ['required'];
                                     $rules['media_uploads'] = ['required', "array", "min:1"];

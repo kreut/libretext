@@ -1440,6 +1440,20 @@ class QuestionController extends Controller
                 $data['qti_json_type'] = $question_type;
 
                 switch ($question_type) {
+                    case('three_d_model_multiple_choice'):
+                        $unsets = ['parameters','solution_structure'];
+                        $parameters = ["modelID", "BGImage", "annotations", "mode", "BGColor", "piece", "modelOffset", "cameraOffset", "selectionColor", "panel", "autospin", "STLmatCol", "hideDistance"];
+
+                        $all_parameter_info = json_decode($request->qti_json, 1)['parameters'];
+                        foreach ($all_parameter_info as $key => $value) {
+                            if (!in_array($key, $parameters)) {
+                                unset($all_parameter_info[$key]);
+                            }
+                        }
+                        $qti_json = json_decode($request->qti_json, 1);
+                        $qti_json['parameters'] = $all_parameter_info;
+                        $request->qti_json = json_encode($qti_json);
+                        break;
                     case('discuss_it'):
                         $unsets = ['media_uploads'];
                         break;

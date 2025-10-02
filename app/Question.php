@@ -266,7 +266,7 @@ class Question extends Model
             $href = $linkTag->getAttribute('href');
             $is_s3_url = strpos($href, 'amazonaws.com') !== false;
 
-            foreach (['secondary-content','assignment-instructions'] as $upload_type) {
+            foreach (['secondary-content', 'assignment-instructions'] as $upload_type) {
                 if ($is_s3_url && strpos($href, "/uploads/$upload_type/") !== false) {
                     $s3_file = strtok(pathinfo($href, PATHINFO_BASENAME), '?');
                     $url = Storage::disk('s3')->temporaryUrl("uploads/$upload_type/$s3_file", Carbon::now()->addDays(7));
@@ -565,6 +565,45 @@ class Question extends Model
                  * foreach ($qti_array['media_uploads'] as $key => $question_media_upload) {
                  * $qti_array['media_uploads'][$key]['text'] = $question_media_upload->getText($this, $domDocument);
                  * }**/
+                break;
+            case('three_d_model_multiple_choice'):
+                if ($student_response) {
+                    $qti_array['studentResponse'] = json_decode($student_response, 1);
+                    if (isset($qti_array['studentResponse']['selectedIndex'])) {
+                        $selected_index = $qti_array['studentResponse']['selectedIndex'];
+                        if ($qti_array['solutionStructure']['selectedIndex'] !== $selected_index
+                            && isset($qti_array['generalIncorrectFeedback'])
+                            && $qti_array['generalIncorrectFeedback']) {
+                            $qti_array['feedback'] = $qti_array['generalIncorrectFeedback'];
+                        }
+                        if (isset($qti_array['feedbacks'][$selected_index]) && $qti_array['feedbacks'][$selected_index]) {
+                            $qti_array['feedback'] = $qti_array['feedbacks'][$selected_index];
+                        }
+                    }
+                }
+                if (!$show_solution) {
+                    if (request()->user()->role === 3) {
+                        unset($qti_array['feedbacks']);
+                        unset($qti_array['feedback']);
+                        $qti_array['solutionStructure'] = [];
+                    }
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedback']);
+                            unset($qti_array['feedbacks']);
+                            $qti_array['solutionStructure'] = [];
+                        }
+                    }
+                    if ($json_type === 'answer_json') {
+                        $qti_array['studentResponse'] = $qti_array['solutionStructure'];
+                        if (request()->user()->role === 3) {
+                            unset($qti_array['feedbacks']);
+                            unset($qti_array['feedback']);
+                        }
+
+                    }
+                }
                 break;
             case('marker'):
                 if (!$show_solution) {

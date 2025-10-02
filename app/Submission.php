@@ -132,6 +132,16 @@ class Submission extends Model
             case('qti'):
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
+                    case('three_d_model_multiple_choice'):
+                        $student_selected_index = json_decode($submission->student_response)->selectedIndex;
+                        if (!is_int($student_selected_index) || $student_selected_index < 0) {
+                            $response['type'] = 'error';
+                            $response['message'] = "You did not select any part of the model.";
+                            $this->_returnJsonAndExit($response);
+                        }
+                        $proportion_correct = +($submission->question->solutionStructure->selectedIndex === $student_selected_index);
+
+                        break;
                     case('marker'):
                         $compare_marks_info = $this->_compareMarks($submission->question->partialCredit, $submission->question->solutionStructure, json_decode($submission->student_response)->structure);
                         $proportion_correct = Round($compare_marks_info['proportion_correct'], 2);
