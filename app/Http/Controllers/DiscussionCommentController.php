@@ -643,7 +643,6 @@ class DiscussionCommentController extends Controller
             $discussionComment->{$type} = $data[$type];
             $discussionComment->created_at = now();
 
-            Log::info(json_encode($request->all()));
             if ($type === 'file') {
                 $discussionComment->file = $request->file;
                 $discussionComment->save();
@@ -682,6 +681,7 @@ class DiscussionCommentController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param string $key
      * @param string $key_id
      * @param int $is_phone
@@ -690,7 +690,11 @@ class DiscussionCommentController extends Controller
      * @throws Exception
      */
     public
-    function mediaPlayer(string $key, string $key_id, int $is_phone, QuestionMediaUpload $questionMediaUpload)
+    function mediaPlayer(Request             $request,
+                         string              $key,
+                         string              $key_id,
+                         int                 $is_phone,
+                         QuestionMediaUpload $questionMediaUpload)
     {
 
         switch ($key) {
@@ -726,6 +730,35 @@ class DiscussionCommentController extends Controller
         $temporary_url = Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$file", Carbon::now()->addDays(7));
         if (!Storage::disk('s3')->exists("{$questionMediaUpload->getDir()}/$file")) {
             return view('media_player_error', ['message' => "The file {$questionMediaUpload->getDir()}/$file was not found on the server."]);
+        } else {
+            try {
+                $disk = Storage::disk('s3');
+                $client = $disk->getDriver()->getAdapter()->getClient();
+                $bucket = $disk->getDriver()->getAdapter()->getBucket(); // Get the current bucket
+                $result = $client->headObject([
+                    'Bucket' => $bucket,
+                    'Key' => "{$questionMediaUpload->getDir()}/$file",
+                ]);
+                $sizeBytes = $result['ContentLength'];
+                $sizeMB = round($sizeBytes / 1024 / 1024, 2); // convert to MB with 2 decimals
+                $endpoint = $request->path();
+                $timestamp = now()->format('Y-m-d H:i:s'); // rounds to the nearest second
+
+                DB::table('s3_log')->updateOrInsert(
+                    [
+                        'endpoint' => $endpoint,
+                        's3_key' => "{$questionMediaUpload->getDir()}/$file",
+                        'created_at' => $timestamp, // key part, to-the-second precision
+                    ],
+                    [
+                        'filesize' => $sizeMB,
+                        'updated_at' => now(),
+                    ]
+                );
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+            }
         }
         return view('media_player', ['type' => $type,
             'temporary_url' => $temporary_url,
