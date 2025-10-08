@@ -27,6 +27,9 @@ use App\Rules\IsValidLearningOutcomes;
 use App\Rules\IsValidMatchingPrompt;
 use App\Rules\IsValidNumericalPrompt;
 use App\Rules\IsValidQtiPrompt;
+use App\Rules\IsValidQuestionChapterId;
+use App\Rules\IsValidQuestionSectionId;
+use App\Rules\IsValidQuestionSubjectId;
 use App\Rules\IsValidRubricItems;
 use App\Rules\IsValidRubricTemplate;
 use App\Rules\IsValidSelectChoice;
@@ -73,6 +76,9 @@ class StoreQuestionRequest extends FormRequest
             'public' => 'required',
             'title' => 'required|string',
             'description' => 'nullable',
+            'question_subject_id' => new IsValidQuestionSubjectId(),
+            'question_chapter_id'=> new IsValidQuestionChapterId($this->question_subject_id),
+            'question_section_id'=> new IsValidQuestionSectionId($this->question_chapter_id),
             'author' => 'required',
             'tags' => 'nullable',
             'open_ended_submission_type' => ['required', Rule::in('rich text', 'file', 'audio', '0', 'no submission, manual grading',)],

@@ -6,11 +6,51 @@ namespace App\Traits;
 
 use App\Assignment;
 use App\Grader;
+use App\Helpers\Helper;
+use App\Question;
 use App\User;
+use Illuminate\Auth\Access\Response;
 
 trait CommonPolicies
 
 {
+    /**
+     * @param User $user
+     * @param string $level
+     * @return Response
+     */
+    public function storeQuestionSubjectChapterSection(User $user, string $level): Response
+    {
+        $authorize = true;
+        $message = "no message provided";
+        if (!in_array($user->role, [2, 5])) {
+            $authorize = false;
+            $message = "You are not allowed to add {$level}s.";
+        }
+        return $authorize
+            ? Response::allow()
+            : Response::deny($message);
+
+    }
+
+    /**
+     * @param User $user
+     * @param string $level
+     * @return Response
+     */
+    public function updateQuestionSubjectChapterSection(User $user, string $level): Response
+    {
+        $authorize = true;
+        $message = "no message provided";
+        if (!in_array($user->role, [2, 5])) {
+            $authorize = false;
+            $message = "You are not allowed to update {$level}s.";
+        }
+        return $authorize
+            ? Response::allow()
+            : Response::deny($message);
+    }
+
     /**
      * @param $user
      * @param $assignment_id

@@ -354,6 +354,21 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/auto-release/assignment/{assignment}/property/{property}/timing-message', 'AutoReleaseController@autoReleaseTimingMessage');
 
 
+    Route::get('/question-subjects', 'QuestionSubjectController@index');
+    Route::get('/question-subjects/technology/{technology}', 'QuestionSubjectController@getByTechnology');
+    Route::patch('/question-subjects/{question_subject}', 'QuestionSubjectController@update');
+    Route::patch('/question-chapters/{question_chapter}', 'QuestionChapterController@update');
+
+    Route::patch('/question-sections/{question_section}', 'QuestionSectionController@update');
+    Route::post('/question-subjects', 'QuestionSubjectController@store');
+    Route::post('/question-chapters/question-subject/{question_subject}', 'QuestionChapterController@store');
+    Route::post('/question-sections/question-chapter/{question_chapter}', 'QuestionSectionController@store');
+
+
+
+    Route::get('/question-chapters/question-subject/{question_subject}', 'QuestionChapterController@getQuestionChaptersByQuestionSubject');
+    Route::get('/question-sections/question-chapter/{question_chapter}', 'QuestionSectionController@getQuestionSectionsByQuestionChapter');
+
     Route::patch('/courses/{course}/auto-update-question-revisions', 'CourseController@autoUpdateQuestionRevisions');
     Route::patch('/courses/{course}/link-to-lms', 'CourseController@linkToLMS');
     Route::patch('/courses/{course}/unlink-from-lms', 'CourseController@unlinkFromLMS');

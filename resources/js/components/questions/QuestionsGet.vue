@@ -1029,48 +1029,48 @@
                                     style="height:31px;width: 75px"
                       />
                       <span v-if="allQuestionsTechnology === 'webwork'">
-                      <b-form-radio-group
-                        id="webwork-content-type"
-                        v-model="webworkContentType"
-                        inline
-                        name="webwork-file-type"
-                        class="pl-2 mt-1"
-                      >
+                        <b-form-radio-group
+                          id="webwork-content-type"
+                          v-model="webworkContentType"
+                          inline
+                          name="webwork-file-type"
+                          class="pl-2 mt-1"
+                        >
                           <span
                             style="font-size:14px;margin-right:11px;"
                             class="mt-2"
                           >Technology ID</span>
-                        <b-form-radio value="pgml">
-                          pgml
-                        </b-form-radio>
-                        <b-form-radio value="pl">
-                          pl
-                        </b-form-radio>
-                        <b-form-radio value="either">
-                          Either
-                        </b-form-radio>
-                      </b-form-radio-group>
-                      <b-form-radio-group
-                        id="wwebwork-algorithmic"
-                        v-model="webworkAlgorithmic"
-                        inline
-                        name="webwork-algorithmic"
-                        class="pl-2 mt-1"
-                      >
-                         <span
-                           style="font-size:14px;margin-right:29px;"
-                           class="mt-2"
-                         >Algorithmic</span>
-                        <b-form-radio value="algorithmic only">
-                          Algorithmic Only
-                        </b-form-radio>
-                        <b-form-radio value="non-algorithmic only">
-                          Non-algorithmic only
-                        </b-form-radio>
-                        <b-form-radio value="either">
-                          Either
-                        </b-form-radio>
-                      </b-form-radio-group>
+                          <b-form-radio value="pgml">
+                            pgml
+                          </b-form-radio>
+                          <b-form-radio value="pl">
+                            pl
+                          </b-form-radio>
+                          <b-form-radio value="either">
+                            Either
+                          </b-form-radio>
+                        </b-form-radio-group>
+                        <b-form-radio-group
+                          id="wwebwork-algorithmic"
+                          v-model="webworkAlgorithmic"
+                          inline
+                          name="webwork-algorithmic"
+                          class="pl-2 mt-1"
+                        >
+                          <span
+                            style="font-size:14px;margin-right:29px;"
+                            class="mt-2"
+                          >Algorithmic</span>
+                          <b-form-radio value="algorithmic only">
+                            Algorithmic Only
+                          </b-form-radio>
+                          <b-form-radio value="non-algorithmic only">
+                            Non-algorithmic only
+                          </b-form-radio>
+                          <b-form-radio value="either">
+                            Either
+                          </b-form-radio>
+                        </b-form-radio-group>
                       </span>
                     </b-form>
                   </div>
@@ -1094,6 +1094,49 @@
                       </b-button>
                     </span>
                   </b-form-group>
+                  <div v-if="questionSubjectIdOptions.length>1">
+                    <b-form-group
+                      label-for="subject"
+                      label-cols-sm="2"
+                      label-cols-lg="1"
+                      label="Subject"
+                    >
+                      <b-form-select v-model="questionSubjectId"
+                                     :options="questionSubjectIdOptions"
+                                     size="sm"
+                                     style="width:400px"
+                                     @change="questionChapterId = null;questionSectionId = null;getQuestionChapterIdOptions(questionSubjectId)"
+                      />
+                    </b-form-group>
+                    <b-form-group
+                      label-for="chapter"
+                      label-cols-sm="2"
+                      label-cols-lg="1"
+                      label="Chapter"
+                    >
+                      <b-form-select v-model="questionChapterId"
+                                     :options="questionChapterIdOptions"
+                                     size="sm"
+                                     style="width:400px"
+                                     :disabled="questionSubjectId === null"
+                                     @change="questionSectionId = null;getQuestionSectionIdOptions(questionChapterId)"
+                      />
+                    </b-form-group>
+                    <b-form-group
+                      label-for="section"
+                      label-cols-sm="2"
+                      label-cols-lg="1"
+                      label="Section"
+                    >
+                      <b-form-select v-model="questionSectionId"
+                                     :options="questionSectionIdOptions"
+                                     size="sm"
+                                     style="width:400px"
+                                     :disabled="questionChapterId === null || questionSectionIdOptions.length === 1"
+                      />
+                    </b-form-group>
+                  </div>
+
                   <b-form-group
                     label-for="adapt-id"
                     label-cols-sm="1"
@@ -1437,7 +1480,7 @@ import axios from 'axios'
 import { h5pResizer } from '~/helpers/H5PResizer'
 import { mapGetters } from 'vuex'
 import { submitUploadFile, getAcceptedFileTypes } from '~/helpers/UploadFiles'
-import { getTechnologySrc } from '~/helpers/Questions'
+import { getTechnologySrc, getQuestionChapterIdOptions, getQuestionSectionIdOptions } from '~/helpers/Questions'
 import { downloadSolutionFile } from '~/helpers/DownloadFiles'
 import Form from 'vform'
 import Loading from 'vue-loading-overlay'
@@ -1504,6 +1547,12 @@ export default {
     }
   },
   data: () => ({
+    questionSubjectId: null,
+    questionSubjectIdOptions: [],
+    questionChapterId: null,
+    questionChapterIdOptions: [],
+    questionSectionId: null,
+    questionSectionIdOptions: [],
     checkedForDiscussItQuestions: false,
     resetDiscussItSettingsToDefault: '1',
     questionsToAdd: [],
@@ -1800,10 +1849,44 @@ export default {
       await this.getCollection('')
     }
     await this.getShowDescriptions()
+    await this.getSubjectsByTechnology()
   },
   methods: {
     doCopy,
     initCentrifuge,
+    getQuestionChapterIdOptions,
+    getQuestionSectionIdOptions,
+    changeTechnology () {
+      this.questionSubjectId = null
+      this.questionChapterId = null
+      this.questionSectionId = null
+      this.questionChapterIdOptions = []
+      this.questionSubjectIdOptions = []
+      this.questionSectionIdOptions = []
+      this.webworkContentType = 'either'
+      if (this.allQuestionsTechnology === 'text') {
+        this.formattedQuestionType = null
+      }
+      this.getSubjectsByTechnology()
+    },
+    async getSubjectsByTechnology () {
+      this.questionChapterId = null
+      this.questionSectionId = null
+      const { data } = await axios.get(`/api/question-subjects/technology/${this.allQuestionsTechnology}`)
+      if (data.type === 'error') {
+        this.$noty.error(data.message)
+      }
+      if (data.question_subjects) {
+        this.questionChapterIdOptions = [{ value: null, text: 'Choose a chapter' }]
+        this.questionSubjectIdOptions = [{ value: null, text: 'Choose a subject' }]
+        this.questionSectionIdOptions = [{ value: null, text: 'Choose a section' }]
+        for (let i = 0; i < data.question_subjects.length; i++) {
+          const questionSubject = data.question_subjects[i]
+          this.questionSubjectIdOptions.push({ value: questionSubject.id, text: questionSubject.name })
+        }
+      }
+      console.error(this.questionSubjectIdOptions)
+    },
     isDiscussIt (question) {
       try {
         return JSON.parse(question.qti_json).questionType === 'discuss_it'
@@ -1828,12 +1911,6 @@ export default {
         'Matrix Multiple Response',
         'Drag and Drop Cloze'
       ]
-    },
-    changeTechnology () {
-      this.webworkContentType = 'either'
-      if (this.allQuestionsTechnology === 'text') {
-        this.formattedQuestionType = null
-      }
     },
     initChooseType () {
       if (this.allQuestionsTechnology === 'text') {
@@ -2614,6 +2691,9 @@ export default {
             }
           }
           allQuestionsData = {
+            question_subject_id: this.questionSubjectId,
+            question_chapter_id: this.questionChapterId,
+            question_section_id: this.questionSectionId,
             current_page: this.allQuestionsCurrentPage,
             question_id: this.allQuestionsAdaptId,
             per_page: this.allQuestionsPerPage,

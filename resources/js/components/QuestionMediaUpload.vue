@@ -221,7 +221,7 @@
     <b-row v-if="uploadFileErrorMessage" class="mb-3">
       <ErrorMessage :message="uploadFileErrorMessage"/>
     </b-row>
-    <div v-show="mediaUploads.length>0">
+    <div v-if="mediaUploads.length>0">
       <table class="table table-striped" aria-label="Media">
         <thead>
         <tr>

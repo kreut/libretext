@@ -9,6 +9,36 @@ export function formatQuestionMediaPlayer (htmlString) {
   })
 }
 
+export async function getQuestionChapterIdOptions (questionSubjectId) {
+  if (questionSubjectId !== null) {
+    try {
+      const { data } = await axios.get(`/api/question-chapters/question-subject/${questionSubjectId}`)
+      this.questionChapterIdOptions = [{ value: null, text: 'Choose a chapter' }]
+      for (let i = 0; i < data.question_chapters.length; i++) {
+        const questionChapter = data.question_chapters[i]
+        this.questionChapterIdOptions.push({ value: questionChapter.id, text: questionChapter.name })
+      }
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  }
+}
+
+export async function getQuestionSectionIdOptions (questionChapterId) {
+  if (questionChapterId !== null) {
+    try {
+      const { data } = await axios.get(`/api/question-sections/question-chapter/${questionChapterId}`)
+      this.questionSectionIdOptions = [{ value: null, text: 'Choose a section' }]
+      for (let i = 0; i < data.question_sections.length; i++) {
+        const questionSection = data.question_sections[i]
+        this.questionSectionIdOptions.push({ value: questionSection.id, text: questionSection.name })
+      }
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  }
+}
+
 export function getTechnologySrc (technology, src, question) {
   let technologySrc = ''
   let text

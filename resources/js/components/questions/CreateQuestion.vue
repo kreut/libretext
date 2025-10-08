@@ -2,27 +2,39 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
     <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-discuss-it-text-form"/>
-    <b-modal id="modal-confirm-no-open-ended-submission-with-no-auto-grading"
-             title="Confirm No Open-ended Submission"
-             no-close-on-esc
+    <AllFormErrors :all-form-errors="allFormErrors"
+                   modal-id="modal-form-errors-question-subject-chapter-section-errors"
+    />
+    <b-modal id="modal-add-edit-question-subject-chapter-section"
+             :title="`${capitalize(questionSubjectChapterSectionAction)} ${capitalize(questionSubjectChapterSectionToAddEditLevel)}`"
              no-close-on-backdrop
+             size="lg"
     >
-      <p>
-        You are creating a question with an HTML block but no open-ended submission and no auto-grading submission.
-        Typically questions with only HTML will have some way for students to submit their work.
-      </p>
-      <p>Would you like to save the question as is?</p>
+      <b-form-group
+        label-cols-sm="2"
+        label-cols-lg="1"
+        label-for="level"
+        label-align="center"
+        label="Name"
+      >
+        <b-form-input v-model="questionSubjectChapterSectionForm.name"
+                      required
+                      :class="{ 'is-invalid': questionSubjectChapterSectionForm.errors.has('name')}"
+                      @keydown="questionSubjectChapterSectionForm.errors.clear('name')"
+        />
+        <has-error :form="questionSubjectChapterSectionForm" field="name"/>
+      </b-form-group>
       <template #modal-footer>
         <b-button
           size="sm"
-          @click="$bvModal.hide('modal-confirm-no-open-ended-submission-with-no-auto-grading')"
+          @click="$bvModal.hide('modal-add-edit-question-subject-chapter-section')"
         >
           Cancel
         </b-button>
         <b-button
           size="sm"
           variant="primary"
-          @click="$bvModal.hide('modal-confirm-no-open-ended-submission-with-no-auto-grading');checkedOpenEndedSubmissionType = true; initSaveQuestion()"
+          @click="handleAddEditQuestionSubjectChapterSection"
         >
           Save
         </b-button>
@@ -96,7 +108,8 @@
                      delay="250"
                      triggers="hover focus"
           >
-            A short description, not viewable by the student, but used as an identifier in the list of associated media
+            A short description, not viewable by the student, but used as an identifier in the list of associated
+            media
             uploads for this question.
           </b-tooltip>
         </template>
@@ -323,7 +336,8 @@
       id="modal-confirm-delete-webwork-attachment"
       :title="`Delete ${webworkAttachmentToDelete.filename}`"
     >
-      Please confirm whether you would like to delete {{ webworkAttachmentToDelete.filename }}. If you delete this file,
+      Please confirm whether you would like to delete {{ webworkAttachmentToDelete.filename }}. If you delete this
+      file,
       be sure to update your WeBWork code as well.
       <template #modal-footer>
         <b-button
@@ -477,7 +491,9 @@
         <div class="modal-header" style="width:100%;border:none;padding:0px">
           <h2 class="h5 modal-title">
             ADAPT ID <span id="clone-history-question-id">{{ copyHistoryQuestionId }}</span>
-            <span class="text-muted" @click="doCopy('clone-history-question-id')"><font-awesome-icon :icon="copyIcon"/></span>
+            <span class="text-muted" @click="doCopy('clone-history-question-id')"><font-awesome-icon
+              :icon="copyIcon"
+            /></span>
           </h2>
           <button type="button" aria-label="Close" class="close" @click="$bvModal.hide('modal-clone-history')">
             ×
@@ -806,7 +822,8 @@
                                delay="250"
                                triggers="hover focus"
                     >
-                      An Exposition consists of source (text, video, simulation, any other HTML) without an auto-graded
+                      An Exposition consists of source (text, video, simulation, any other HTML) without an
+                      auto-graded
                       component. They can be used in any of the non-root
                       nodes within Learning Trees.
                     </b-tooltip>
@@ -874,7 +891,9 @@
                 />
               </span>
             </b-form-row>
-            <ErrorMessage v-if="questionForm.errors.get('folder_id')" :message="questionForm.errors.get('folder_id')"/>
+            <ErrorMessage v-if="questionForm.errors.get('folder_id')"
+                          :message="questionForm.errors.get('folder_id')"
+            />
           </b-form-group>
           <div>
             <b-form-group
@@ -1054,7 +1073,8 @@
                 >
                   Over time, we will be adding new learning outcome frameworks for different subjects. If you are
                   aware
-                  of a learning outcome framework and your subject is not shown here, please contact us with the source
+                  of a learning outcome framework and your subject is not shown here, please contact us with the
+                  source
                   of
                   the framework.
                 </b-tooltip>
@@ -1091,6 +1111,85 @@
                   }} x
                 </b-button>
               </div>
+            </b-form-group>
+            <b-form-group
+              label-for="subject"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label="Subject"
+            >
+              <b-form-select v-model="questionForm.question_subject_id"
+                             :options="questionSubjectIdOptions"
+                             size="sm"
+                             style="width:400px"
+                             @change="questionForm.question_chapter_id = null; questionForm.question_section_id=null;getQuestionChapterIdOptions(questionForm.question_subject_id)"
+              />
+              <b-button size="sm"
+                        variant="outline-info"
+                        :disbled="questionForm.question_subject_id === null"
+                        @click="initAddEditQuestionSubjectChapterSection('edit','subject')"
+              >
+                Edit
+              </b-button>
+              <b-button size="sm" variant="outline-primary"
+                        @click="initAddEditQuestionSubjectChapterSection('add','subject')"
+              >
+                Add
+              </b-button>
+            </b-form-group>
+            <b-form-group
+              label-for="chapter"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label="Chapter"
+            >
+              <b-form-select v-model="questionForm.question_chapter_id"
+                             :options="questionChapterIdOptions"
+                             size="sm"
+                             style="width:400px"
+                             :disabled="questionForm.question_subject_id === null || questionChapterIdOptions.length === 1"
+                             @change="questionForm.question_section_id = null;getQuestionSectionIdOptions(questionForm.question_chapter_id)"
+              />
+              <b-button size="sm"
+                        variant="outline-info"
+                        :disabled="questionForm.question_chapter_id === null"
+                        @click="initAddEditQuestionSubjectChapterSection('edit','chapter')"
+              >
+                Edit
+              </b-button>
+              <b-button size="sm" variant="outline-primary"
+                        :disabled="questionForm.question_subject_id === null"
+                        @click="initAddEditQuestionSubjectChapterSection('add','chapter')"
+              >
+                Add
+              </b-button>
+            </b-form-group>
+            <b-form-group
+              label-for="section"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label="Section"
+            >
+              <b-form-select v-model="questionForm.question_section_id"
+                             :options="questionSectionIdOptions"
+                             :disabled="questionForm.question_chapter_id === null  || questionSectionIdOptions.length === 1"
+                             size="sm"
+                             style="width:400px"
+              />
+              <b-button size="sm"
+                        variant="outline-info"
+                        :disabled="questionForm.question_section_id === null"
+                        @click="initAddEditQuestionSubjectChapterSection('edit','section')"
+              >
+                Edit
+              </b-button>
+              <b-button size="sm"
+                        variant="outline-primary"
+                        :disabled="questionForm.question_chapter_id === null"
+                        @click="initAddEditQuestionSubjectChapterSection('add','section')"
+              >
+                Add
+              </b-button>
             </b-form-group>
           </div>
         </b-card>
@@ -1191,7 +1290,8 @@
                              delay="250"
                              triggers="hover focus"
                   >
-                    Specify the open-ended submission type associated with this question. Instructors may override this
+                    Specify the open-ended submission type associated with this question. Instructors may override
+                    this
                     at
                     the usage level.
                   </b-tooltip>
@@ -1284,7 +1384,8 @@
                                  delay="250"
                                  triggers="hover focus"
                       >
-                        You can export questions in QTI format from your LMS and import them through the Bulk Import tab
+                        You can export questions in QTI format from your LMS and import them through the Bulk Import
+                        tab
                         and
                         then
                         edit them in ADAPT.
@@ -1414,7 +1515,8 @@
                     >
                       Matrix Multiple Choice
                     </b-form-radio>
-                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_select_n"
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                                  value="multiple_response_select_n"
                                   @change="initQTIQuestionType($event)"
                     >
                       Multiple Response Select N
@@ -1435,7 +1537,8 @@
                     >
                       Highlight Text
                     </b-form-radio>
-                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_response_grouping"
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                                  value="multiple_response_grouping"
                                   @change="initQTIQuestionType($event)"
                     >
                       Multiple Response Grouping
@@ -1481,10 +1584,12 @@
                 </b-form-group>
                 <div v-if="qtiQuestionType === 'highlight_table'">
                   <b-alert show variant="info">
-                    Optionally add a prompt for this question. Then, in each row, add a description in the first column.
+                    Optionally add a prompt for this question. Then, in each row, add a description in the first
+                    column.
                     Then in
                     the second column, write text, where text within
-                    brackets will automatically become your highlighted text. Once the text is added, determine whether
+                    brackets will automatically become your highlighted text. Once the text is added, determine
+                    whether
                     it
                     is a
                     correct answer or a distractor.
@@ -1508,7 +1613,8 @@
                 </div>
                 <div v-if="qtiQuestionType === 'select_choice'">
                   <b-alert show variant="info">
-                    Using brackets, place the correct answer in the location that you want the select choice to appear.
+                    Using brackets, place the correct answer in the location that you want the select choice to
+                    appear.
                     Then, add the choices below. <br>
                     <br>
                     Example. [Star Wars] took place in a [galaxy] far, far away.
@@ -1516,7 +1622,8 @@
                     Note that bracketed words should only appear once. If you need to use the same correct answer
                     multiple
                     times,
-                    you can use a dummy identifier such as [Star Wars-1] where the "1" should be increased each time you
+                    you can use a dummy identifier such as [Star Wars-1] where the "1" should be increased each time
+                    you
                     need to use the same correct answer.
                     Then, below, you can update the correct answer manually.<br>
                     <br>Each student will receive a randomized ordering of the choices.<br>
@@ -1576,7 +1683,8 @@
                 </div>
                 <div v-if="qtiQuestionType === 'multiple_choice'">
                   <b-alert show variant="info">
-                    Write a question prompt and then create a selection of answers, choosing the correct answer from the
+                    Write a question prompt and then create a selection of answers, choosing the correct answer from
+                    the
                     list. Students will receive a shuffled ordering of the selection.
                     Optionally provide feedback at the individual question level or general feedback for a correct
                     response, an incorrect response, or any response.
@@ -1585,15 +1693,18 @@
 
                 <div v-if="qtiQuestionType === 'numerical'">
                   <b-alert show variant="info">
-                    Write a question prompt which requires a numerical response, specifying the margin of error accepted
+                    Write a question prompt which requires a numerical response, specifying the margin of error
+                    accepted
                     in
                     the response.
-                    Optionally provide general feedback for a correct response, an incorrect response, or any response.
+                    Optionally provide general feedback for a correct response, an incorrect response, or any
+                    response.
                   </b-alert>
                 </div>
                 <div v-if="qtiQuestionType === 'drag_and_drop_cloze'">
                   <b-alert show variant="info">
-                    Bracket off the portions of the text where you would like the Drag and Drop Cloze to occur, using a
+                    Bracket off the portions of the text where you would like the Drag and Drop Cloze to occur, using
+                    a
                     bracketed response
                     to
                     denote the correct answer. Then, add distractors below. Example: The client is at risk for
@@ -1624,13 +1735,15 @@
                 </div>
                 <div v-if="qtiQuestionType === 'multiple_response_select_all_that_apply'">
                   <b-alert show variant="info">
-                    Write a question prompt where students have to select all responses that apply. Example. Select the
+                    Write a question prompt where students have to select all responses that apply. Example. Select
+                    the
                     following activities which contribute to heart disease:
                   </b-alert>
                 </div>
                 <div v-if="qtiQuestionType === 'multiple_response_grouping'">
                   <b-alert show variant="info">
-                    Write a question prompt and then create groupings with sets of checkboxes, checking off the correct
+                    Write a question prompt and then create groupings with sets of checkboxes, checking off the
+                    correct
                     responses for each grouping.
                   </b-alert>
                 </div>
@@ -2075,7 +2188,9 @@
                     style="width:500px"
                     class="mr-2"
                   />
-                  <b-button size="sm" @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)">
+                  <b-button size="sm"
+                            @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)"
+                  >
                     <span v-if="!updatingTempalteWithPreexistingWebworkFilePath">Update template</span>
                     <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow"/>
                       Updating...
@@ -2085,7 +2200,8 @@
               </b-form-group>
               <div v-if="['imathas','h5p'].includes(questionForm.technology)">
                 <p>
-                  If you haven't already created the {{ getTextFromTechnology(questionForm.technology) }} question, you
+                  If you haven't already created the {{ getTextFromTechnology(questionForm.technology) }} question,
+                  you
                   will need to visit
                   {{ getTextFromTechnology(questionForm.technology) }}'s <a
                   :href="questionForm.technology === 'h5p' ? h5pUrl : imathASUrl" target="_blank"
@@ -2497,6 +2613,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import QuestionMediaUpload from '~/components/QuestionMediaUpload.vue'
 import { doCopy } from '~/helpers/Copy'
 import AllFormErrors from '~/components/AllFormErrors'
@@ -2544,7 +2661,13 @@ import QuestionCircleTooltipModal from '../QuestionCircleTooltipModal.vue'
 import ConsultInsight from '../ConsultInsight.vue'
 import RubricProperties from '../RubricProperties.vue'
 import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
-import { canEdit, responseFormatOptions, openEndedSubmissionTypeOptions } from '~/helpers/Questions'
+import {
+  canEdit,
+  responseFormatOptions,
+  openEndedSubmissionTypeOptions,
+  getQuestionChapterIdOptions,
+  getQuestionSectionIdOptions
+} from '~/helpers/Questions'
 import StructureImageUploader from '../StructureImageUploader.vue'
 
 const defaultQuestionForm = {
@@ -2755,6 +2878,13 @@ export default {
     }
   },
   data: () => ({
+    questionSubjectChapterSectionAction: '',
+    questionSubjectChapterSectionForm: new Form({}),
+    questionSubjectChapterSectionToAddEditLevel: '',
+    questionSubjectChapterSectionToEditName: '',
+    questionChapterIdOptions: [{ value: null, text: 'Choose a chapter' }],
+    questionSubjectIdOptions: [{ value: null, text: 'Choose a subject' }],
+    questionSectionIdOptions: [{ value: null, text: 'Choose a section' }],
     checkedOpenEndedSubmissionType: false,
     openEndedSubmissionTypeOptions: openEndedSubmissionTypeOptions,
     smiles: '',
@@ -3059,6 +3189,7 @@ export default {
     if (![2, 5].includes(this.user.role)) {
       return false
     }
+    await this.getQuestionSubjectIdOptions()
     this.updateTabInvalids()
     // this.questionType = 'native'
     // this.nativeType = 'sketcher'
@@ -3100,7 +3231,141 @@ export default {
   },
   methods: {
     canEdit,
+    getQuestionChapterIdOptions,
+    getQuestionSectionIdOptions,
     updateModalToggleIndex,
+    capitalize (str) {
+      if (!str) return ''
+      return str.charAt(0).toUpperCase() + str.slice(1)
+    },
+    async handleAddEditQuestionSubjectChapterSection () {
+      let url
+      let action
+      console.error(this.questionForm)
+      switch (this.questionSubjectChapterSectionAction) {
+        case ('add'):
+          action = 'post'
+          url = `/api/question-${this.questionSubjectChapterSectionToAddEditLevel}s`
+          switch (this.questionSubjectChapterSectionToAddEditLevel) {
+            case ('subject'):
+              break
+            case ('chapter'):
+              url += `/question-subject/${this.questionForm.question_subject_id}`
+              break
+            case ('section'):
+              url += `/question-chapter/${this.questionForm.question_chapter_id}`
+              break
+            default:
+              this.$noty.error(`${this.questionSubjectChapterSectionToAddEditLevel} is not a level for adding.`)
+              return false
+          }
+          break
+        case ('edit'):
+          action = 'patch'
+          switch (this.questionSubjectChapterSectionToAddEditLevel) {
+            case ('subject'):
+              url = `/api/question-subjects/${this.questionForm.question_subject_id}`
+              break
+            case ('chapter'):
+              url = `/api/question-chapters/${this.questionForm.question_chapter_id}`
+              this.questionSubjectChapterSectionForm.question_subject_id = this.questionForm.question_subject_id
+              break
+            case ('section'):
+              url = `/api/question-sections/${this.questionForm.question_section_id}`
+              this.questionSubjectChapterSectionForm.question_chapter_id = this.questionForm.question_chapter_id
+              break
+            default:
+              this.$noty.error(`${this.questionSubjectChapterSectionToAddEditLevel} is not a level for editing.`)
+              return false
+          }
+      }
+      try {
+        const { data } = await this.questionSubjectChapterSectionForm[action](url)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          switch (this.questionSubjectChapterSectionAction) {
+            case ('add'):
+              switch (this.questionSubjectChapterSectionToAddEditLevel) {
+                case ('subject'):
+                  await this.getQuestionSubjectIdOptions()
+                  this.questionForm.question_subject_id = data.question_level_id
+                  this.questionForm.question_chapter_id = null
+                  this.questionChapterIdOptions = [{ value: null, text: 'Choose a chapter' }]
+                  this.questionForm.question_section_id = null
+                  this.questionSectionIdOptions = [{ value: null, text: 'Choose a section' }]
+                  break
+                case ('chapter'):
+                  this.questionForm.question_section_id = null
+                  this.questionSectionIdOptions = [{ value: null, text: 'Choose a section' }]
+                  await this.getQuestionChapterIdOptions(this.questionForm.question_subject_id)
+                  this.questionForm.question_chapter_id = data.question_level_id
+                  break
+                case ('section'):
+                  await this.getQuestionSectionIdOptions(this.questionForm.question_chapter_id)
+                  this.questionForm.question_section_id = data.question_level_id
+                  break
+              }
+              this.$forceUpdate()
+              break
+            case ('edit'):
+              switch (this.questionSubjectChapterSectionToAddEditLevel) {
+                case ('subject'):
+                  this.questionSubjectIdOptions.find(item => item.value === this.questionForm.question_subject_id).text = this.questionSubjectChapterSectionForm.name
+                  break
+                case ('chapter'):
+                  this.questionChapterIdOptions.find(item => item.value === this.questionForm.question_chapter_id).text = this.questionSubjectChapterSectionForm.name
+                  break
+                case ('section'):
+                  this.questionSectionIdOptions.find(item => item.value === this.questionForm.question_section_id).text = this.questionSubjectChapterSectionForm.name
+                  break
+              }
+          }
+          this.$bvModal.hide('modal-add-edit-question-subject-chapter-section')
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.questionSubjectChapterSectionForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-question-subject-chapter-section-errors')
+        }
+      }
+    },
+    initAddEditQuestionSubjectChapterSection (action, level) {
+      this.questionSubjectChapterSectionToAddEditLevel = level
+      this.questionSubjectChapterSectionAction = action
+      this.questionSubjectChapterSectionForm = new Form({ name: '' })
+      if (this.questionSubjectChapterSectionAction === 'edit') {
+        switch (level) {
+          case ('subject'):
+            this.questionSubjectChapterSectionToEditName = this.questionSubjectIdOptions.find(item => item.value === this.questionForm.question_subject_id).text
+            break
+          case ('chapter'):
+            this.questionSubjectChapterSectionToEditName = this.questionChapterIdOptions.find(item => item.value === this.questionForm.question_chapter_id).text
+            break
+          case ('section'):
+            this.questionSubjectChapterSectionToEditName = this.questionSectionIdOptions.find(item => item.value === this.questionForm.question_section_id).text
+            break
+          default:
+            alert(`${level} does not yet exist as an option.`)
+            return false
+        }
+        this.questionSubjectChapterSectionForm.name = this.questionSubjectChapterSectionToEditName
+      }
+      this.$bvModal.show('modal-add-edit-question-subject-chapter-section')
+    },
+    async getQuestionSubjectIdOptions () {
+      try {
+        const { data } = await axios.get('/api/question-subjects')
+        this.questionSubjectIdOptions = [{ value: null, text: 'Choose a subject' }]
+        for (let i = 0; i < data.question_subjects.length; i++) {
+          const questionSubject = data.question_subjects[i]
+          this.questionSubjectIdOptions.push({ value: questionSubject.id, text: questionSubject.name })
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateQtiJson (key, value) {
       this.qtiJson[key] = value
       console.error(this.qtiJson)
@@ -3961,6 +4226,12 @@ export default {
       }
       if (this.questionToEdit.license_version) {
         this.questionToEdit.license_version = Number(this.questionToEdit.license_version).toFixed(1) // some may be saved as 4 vs 4.0 in the database
+      }
+      if (this.questionToEdit.question_subject_id) {
+        await this.getQuestionChapterIdOptions(this.questionToEdit.question_subject_id)
+      }
+      if (this.questionToEdit.question_chapter_id) {
+        await this.getQuestionSectionIdOptions(this.questionToEdit.question_chapter_id)
       }
       this.questionForm = new Form(this.questionToEdit)
 

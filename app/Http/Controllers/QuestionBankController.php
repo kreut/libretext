@@ -253,7 +253,9 @@ class QuestionBankController extends Controller
         $webwork_algorithmic = $request->webwork_algorithmic;
         $question_class = $request->question_class;
         $formatted_question_type = $request->question_type;
-
+        $question_subject_id = $request->question_subject_id;
+        $question_chapter_id = $request->question_chapter_id;
+        $question_section_id = $request->question_section_id;
         $qti_question_type = $request->qti_question_type;
         $technology_id = $technology !== 'any' ? $request->technology_id : null;
         $question_id = $request->question_id;
@@ -299,6 +301,7 @@ class QuestionBankController extends Controller
                 }
 
             }
+
             if ($request->tags) {
                 $question_ids_with_tags = DB::table('tags')
                     ->join('question_tag', 'tags.id', '=', 'question_tag.tag_id')
@@ -334,6 +337,18 @@ class QuestionBankController extends Controller
 
             }
 
+            $question_subject_id = $request->question_subject_id;
+            $question_chapter_id = $request->question_chapter_id;
+            $question_section_id = $request->question_section_id;
+            if ($question_subject_id) {
+                $question_ids = $question_ids->where('question_subject_id', $question_subject_id);
+            }
+            if ($question_chapter_id) {
+                $question_ids = $question_ids->where('question_chapter_id', $question_chapter_id);
+            }
+            if ($question_section_id) {
+                $question_ids = $question_ids->where('question_section_id', $question_section_id);
+            }
             if ($title) {
                 $question_ids = $question_ids->where('title', 'LIKE', "%$title%");
             }
@@ -358,7 +373,7 @@ class QuestionBankController extends Controller
                     } else if ($request->question_type === 'discuss_it') {
                         $question_ids = $question_ids->where('qti_json_type', 'discuss_it');
                     } else if (in_array($request->question_type, ['Marker', 'Submit Molecule'])) {
-                        $question_ids = $question_ids->where('qti_json_type', strtolower(str_replace(' ','_', $request->question_type)));
+                        $question_ids = $question_ids->where('qti_json_type', strtolower(str_replace(' ', '_', $request->question_type)));
                     } else {
                         $basic_types = ['multiple_choice', 'true_false', 'numerical', 'multiple_answers', 'fill_in_the_blank', 'select_choice', 'matching'];
                         switch ($qti_question_type) {
