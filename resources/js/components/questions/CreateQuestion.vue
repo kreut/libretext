@@ -5,6 +5,31 @@
     <AllFormErrors :all-form-errors="allFormErrors"
                    modal-id="modal-form-errors-question-subject-chapter-section-errors"
     />
+    <b-modal id="modal-confirm-no-open-ended-submission-with-no-auto-grading"
+             title="Confirm No Open-ended Submission"
+             no-close-on-esc
+    >
+      <p>
+        You are creating a question with an HTML block but no open-ended submission and no auto-graded submission.
+        Typically questions with only HTML will have some way for students to submit their work.
+      </p>
+      <p>Would you like to save the question as is?</p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          @click="$bvModal.hide('modal-confirm-no-open-ended-submission-with-no-auto-grading')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          size="sm"
+          variant="primary"
+          @click="$bvModal.hide('modal-confirm-no-open-ended-submission-with-no-auto-grading');checkedOpenEndedSubmissionType = true; initSaveQuestion()"
+        >
+          Save
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-add-edit-question-subject-chapter-section"
              :title="`${capitalize(questionSubjectChapterSectionAction)} ${capitalize(questionSubjectChapterSectionToAddEditLevel)}`"
              no-close-on-backdrop
@@ -2672,6 +2697,7 @@ import StructureImageUploader from '../StructureImageUploader.vue'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
+  question_subject_id: null,
   public: '0',
   title: '',
   description: '',
