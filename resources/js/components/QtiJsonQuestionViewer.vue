@@ -170,6 +170,18 @@
           />
         </b-form-group>
       </div>
+     <div v-if="questionType === 'discuss_it' && !assignmentId">
+       <DiscussItViewer v-if="questionType === 'discuss_it'"
+                        ref="discussItViewer"
+                        :key="`discussIt-${assignmentId}-${questionId}`"
+                        :qti-json="JSON.parse(qtiJson)"
+                        :question-id="questionId"
+                        :assignment-id="assignmentId"
+                        :can-start-discussion-or-add-comments="submitButtonActive"
+                        :previewing-question="previewingQuestion"
+                        @openContactGraderModal="openContactGraderModal"
+       />
+     </div>
       <DiscussItViewer v-if="questionType === 'discuss_it' && assignmentId"
                        ref="discussItViewer"
                        :key="`discussIt-${assignmentId}-${questionId}`"
