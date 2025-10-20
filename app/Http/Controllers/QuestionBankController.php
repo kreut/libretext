@@ -253,9 +253,6 @@ class QuestionBankController extends Controller
         $webwork_algorithmic = $request->webwork_algorithmic;
         $question_class = $request->question_class;
         $formatted_question_type = $request->question_type;
-        $question_subject_id = $request->question_subject_id;
-        $question_chapter_id = $request->question_chapter_id;
-        $question_section_id = $request->question_section_id;
         $qti_question_type = $request->qti_question_type;
         $technology_id = $technology !== 'any' ? $request->technology_id : null;
         $question_id = $request->question_id;
@@ -374,6 +371,8 @@ class QuestionBankController extends Controller
                         $question_ids = $question_ids->where('qti_json_type', 'discuss_it');
                     } else if (in_array($request->question_type, ['Marker', 'Submit Molecule'])) {
                         $question_ids = $question_ids->where('qti_json_type', strtolower(str_replace(' ', '_', $request->question_type)));
+                    } else if ($request->qti_content_type === 'sketcher') {
+                        $question_ids = $question_ids->whereIn('qti_json_type',['marker', 'submit_molecule']);
                     } else {
                         $basic_types = ['multiple_choice', 'true_false', 'numerical', 'multiple_answers', 'fill_in_the_blank', 'select_choice', 'matching'];
                         switch ($qti_question_type) {

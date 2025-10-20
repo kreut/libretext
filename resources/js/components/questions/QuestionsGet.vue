@@ -2704,6 +2704,7 @@ export default {
             webwork_content_type: this.webworkContentType,
             webwork_algorithmic: this.webworkAlgorithmic,
             qti_question_type: this.allQuestionsTechnology === 'qti' ? this.qtiQuestionType : '',
+            qti_content_type: this.allQuestionsTechnology === 'qti' ? this.qtiContentType : '',
             technology_id: this.allQuestionsTechnologyId,
             course_id: this.commonsCourse,
             assignment_id: this.commonsCourseAssignment,
