@@ -875,7 +875,7 @@
           >
             <td>
               <div v-if="hasHTML" v-html="item"/>
-                <div v-if="!hasHTML">{{ item ? item : 'Nothing submitted' }}</div>
+              <div v-if="!hasHTML">{{ item ? item : 'Nothing submitted' }}</div>
             </td>
           </tr>
           </tbody>
@@ -1851,8 +1851,9 @@
               </li>
               <li>
                 <span v-if="['real time','learning tree'].includes(assessmentType)
-                  && canViewHint
-                  && questions[currentPage-1].hint_exists"
+                  && canViewHintAtAssignmentLevel
+                  && questions[currentPage-1].hint_exists
+&& (user.role ===2 || canViewHint)"
                 >
                   <b-button
                     size="sm"
@@ -4071,6 +4072,7 @@ export default {
     hintPenaltyIfShownHint: 0,
     questionNumbersShownInIframe: false,
     hintPenalty: 0,
+    canViewHintAtAssignmentLevel: false,
     canViewHint: false,
     isFormative: false,
     isBetaAssignment: false,
@@ -5229,6 +5231,7 @@ export default {
           console.log(`Cannot submit: ${data.message}`)
         }
         this.submitButtonActive = data.type === 'success'
+        this.canViewHint = this.submitButtonActive
         if (this.questions[this.currentPage - 1]['technology'] === 'h5p') {
           let vm = this
           await this.hideSubmitButtonsIfCannotSubmit(vm, 'questions.view', 'h5p', true)
@@ -6952,7 +6955,6 @@ export default {
         this.isBetaAssignment = assignment.is_beta_assignment
         this.isFormative = assignment.is_formative_course || assignment.formative
         this.scoringType = assignment.scoring_type
-        this.canViewHint = assignment.can_view_hint
         this.hintPenaltyIfShownHint = assignment.hint_penalty
         this.questionNumbersShownInIframe = assignment.question_numbers_shown_in_iframe
         this.questionNumbersShownOutOfIframe = this.user.role !== 3 || (assignment.question_url_view === 'assignment' || (assignment.question_url_view === 'question' && !this.$route.params.questionId))
@@ -7008,6 +7010,7 @@ export default {
         this.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
         this.showPointsPerQuestion = assignment.show_points_per_question
         this.showUpdatePointsPerQuestion = assignment.points_per_question === 'number of points'
+        this.canViewHintAtAssignmentLevel = assignment.can_view_hint
       } catch (error) {
         if (error.message.includes('status code 404')) {
           this.showInvalidAssignmentMessage = true
