@@ -170,7 +170,7 @@
           />
         </b-form-group>
       </div>
-     <div v-if="questionType === 'discuss_it' && $route.name !== 'questions.view'">
+     <div v-if="questionType === 'discuss_it' && previewingQuestion">
        <DiscussItViewer v-if="questionType === 'discuss_it'"
                         ref="discussItViewer"
                         :key="`discussIt-${assignmentId}-${questionId}`"
