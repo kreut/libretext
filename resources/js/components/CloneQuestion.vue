@@ -108,9 +108,8 @@
           v-if="bigIcon"
           :id="`clone-${questionId}`"
           :class="canClone ? 'text-muted' : 'text-danger'"
-          class="align-middle"
           :icon="copyIcon"
-          style="font-size:24px;"
+          style="font-size:18px;"
         />
       </span>
       <font-awesome-icon

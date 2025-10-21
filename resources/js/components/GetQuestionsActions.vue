@@ -177,8 +177,10 @@
         />
       </a>
        <CloneQuestion
+       inline
          :key="`copy-question-${assignmentQuestion.question_id}`"
          :assignment-id="0"
+         :big-icon="size === 'lg'"
          :question-id="assignmentQuestion.question_id"
          :question-editor-user-id="assignmentQuestion.question_editor_user_id"
          :title="assignmentQuestion.title"

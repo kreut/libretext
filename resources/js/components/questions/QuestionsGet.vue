@@ -307,20 +307,7 @@
             </b-button>
           </span>
         </span>
-        <CloneQuestion
-          :key="`copy-question-${questionToView.id}`"
-          :assignment-id="!questionToView.in_current_assignment ? +assignmentId: 0"
-          class="pl-1"
-          :question-id="questionToView.id"
-          :question-editor-user-id="questionToView.question_editor_user_id"
-          :title="questionToView.title"
-          :license="questionToView.license"
-          :public="questionToView.public"
-          :library="questionToView.library"
-          :non-technology="questionToView.non_technology"
-          :big-icon="true"
-          @reloadQuestions="reloadQuestions"
-        />
+
         <span v-show="!questionToView.my_favorites_folder_id" class="p-1">
           <b-tooltip
             :target="`add-to-my-favorites-${questionToView.question_id}`"
