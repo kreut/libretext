@@ -628,7 +628,7 @@ class EnrollmentController extends Controller
             }
             if ($section->course->lms && $section->course->lms_only_entry && !$request->session()->has('lti_user_id')) {
                 DB::rollback();
-                $response = '{"message":"The given data was invalid.","errors":{"access_code":["You are trying to enroll in a course that is being served through an LMS such as Canvas, Blackboard, or Brightspace.  Please log into your LMS and enter the first ADAPT assignment; you will then be prompted to enter the access code."]}}';
+                $response = '{"message":"The given data was invalid.","errors":{"access_code":["You are trying to enroll in a course that is being served through an LMS such as Canvas, Blackboard, or Brightspace.  Please log into your LMS and enter the first ADAPT assignment."]}}';
                 return response($response, 422);
             }
             if ($section->course->lms && !$section->course->lms_only_entry && !$user->fake_student) {
