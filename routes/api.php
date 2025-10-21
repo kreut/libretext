@@ -361,6 +361,9 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::patch('/question-sections/{question_section}', 'QuestionSectionController@update');
     Route::post('/question-subjects', 'QuestionSubjectController@store');
+    Route::delete('/question-subjects/{question_subject}', 'QuestionSubjectController@destroy');
+    Route::delete('/question-chapters/{question_chapter}', 'QuestionChapterController@destroy');
+    Route::delete('/question-sections/{question_section}', 'QuestionSectionController@destroy');
     Route::post('/question-chapters/question-subject/{question_subject}', 'QuestionChapterController@store');
     Route::post('/question-sections/question-chapter/{question_chapter}', 'QuestionSectionController@store');
 

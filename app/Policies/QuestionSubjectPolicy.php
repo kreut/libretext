@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Question;
 use App\QuestionSubject;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -22,5 +21,9 @@ class QuestionSubjectPolicy
     public function update(User $user, QuestionSubject $questionSubject): Response
     {
         return $this->updateQuestionSubjectChapterSection($user, 'subject');
+    }
+    public function destroy(User $user, QuestionSubject $questionSubject): Response
+    {
+        return $this->destroyQuestionSubjectChapterSection($user, 'subject');
     }
 }

@@ -5,16 +5,52 @@ namespace App\Http\Controllers;
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreQuestionChapterRequest;
 use App\Http\Requests\StoreQuestionSectionRequest;
+use App\Question;
 use App\QuestionChapter;
+use App\QuestionRevision;
 use App\QuestionSection;
 use App\QuestionSubject;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class QuestionSectionController extends Controller
 {
 
+    /**
+     * @param QuestionSection $questionSection
+     * @return array
+     * @throws Exception
+     */
+    public function destroy(QuestionSection $questionSection): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('destroy', [$questionSection, 'section']);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            DB::beginTransaction();
+            $name = $questionSection->name;
+            Question::where('question_section_id', $questionSection->id)
+                ->update(['question_section_id' => null]);
+            QuestionRevision::where('question_section_id', $questionSection->id)
+                ->update(['question_section_id' => null]);
+            $questionSection->delete();
+            DB::commit();
+            $response['type'] = 'info';
+            $response['message'] = "The section <strong>$name</strong> has been deleted.";
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to delete the question section.  Please try again.";
+
+        }
+        return $response;
+    }
     /**
      * @param QuestionChapter $questionChapter
      * @return array

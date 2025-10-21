@@ -88,6 +88,11 @@ export default {
         },
         {
           icon: '',
+          name: 'Sub–Chap–Sect Manager',
+          route: 'subjectChapterSectionManager'
+        },
+        {
+          icon: '',
           name: 'Metrics',
           route: 'metrics'
         },

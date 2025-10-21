@@ -38,6 +38,25 @@ trait CommonPolicies
      * @param string $level
      * @return Response
      */
+    public function destroyQuestionSubjectChapterSection(User $user, string $level): Response
+    {
+        $authorize = true;
+        $message = "no message provided";
+        if (!Helper::isAdmin()) {
+            $authorize = false;
+            $message = "You are not allowed to delete {$level}s.";
+        }
+        return $authorize
+            ? Response::allow()
+            : Response::deny($message);
+    }
+
+
+    /**
+     * @param User $user
+     * @param string $level
+     * @return Response
+     */
     public function updateQuestionSubjectChapterSection(User $user, string $level): Response
     {
         $authorize = true;

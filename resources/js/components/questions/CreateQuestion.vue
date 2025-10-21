@@ -1152,12 +1152,12 @@
               <b-button size="sm"
                         variant="outline-info"
                         :disbled="questionForm.question_subject_id === null"
-                        @click="initAddEditQuestionSubjectChapterSection('edit','subject')"
+                        @click="initAddEditDeleteQuestionSubjectChapterSection('edit','subject')"
               >
                 Edit
               </b-button>
               <b-button size="sm" variant="outline-primary"
-                        @click="initAddEditQuestionSubjectChapterSection('add','subject')"
+                        @click="initAddEditDeleteQuestionSubjectChapterSection('add','subject')"
               >
                 Add
               </b-button>
@@ -1178,13 +1178,13 @@
               <b-button size="sm"
                         variant="outline-info"
                         :disabled="questionForm.question_chapter_id === null"
-                        @click="initAddEditQuestionSubjectChapterSection('edit','chapter')"
+                        @click="initAddEditDeleteQuestionSubjectChapterSection('edit','chapter')"
               >
                 Edit
               </b-button>
               <b-button size="sm" variant="outline-primary"
                         :disabled="questionForm.question_subject_id === null"
-                        @click="initAddEditQuestionSubjectChapterSection('add','chapter')"
+                        @click="initAddEditDeleteQuestionSubjectChapterSection('add','chapter')"
               >
                 Add
               </b-button>
@@ -1204,14 +1204,14 @@
               <b-button size="sm"
                         variant="outline-info"
                         :disabled="questionForm.question_section_id === null"
-                        @click="initAddEditQuestionSubjectChapterSection('edit','section')"
+                        @click="initAddEditDeleteQuestionSubjectChapterSection('edit','section')"
               >
                 Edit
               </b-button>
               <b-button size="sm"
                         variant="outline-primary"
                         :disabled="questionForm.question_chapter_id === null"
-                        @click="initAddEditQuestionSubjectChapterSection('add','section')"
+                        @click="initAddEditDeleteQuestionSubjectChapterSection('add','section')"
               >
                 Add
               </b-button>
@@ -2691,9 +2691,12 @@ import {
   responseFormatOptions,
   openEndedSubmissionTypeOptions,
   getQuestionChapterIdOptions,
-  getQuestionSectionIdOptions
+  getQuestionSectionIdOptions,
+  initAddEditDeleteQuestionSubjectChapterSection,
+  handleAddEditQuestionSubjectChapterSection
 } from '~/helpers/Questions'
 import StructureImageUploader from '../StructureImageUploader.vue'
+import { capitalize, getQuestionSubjectIdOptions } from '../../helpers/Questions'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -2907,7 +2910,7 @@ export default {
     questionSubjectChapterSectionAction: '',
     questionSubjectChapterSectionForm: new Form({}),
     questionSubjectChapterSectionToAddEditLevel: '',
-    questionSubjectChapterSectionToEditName: '',
+    questionSubjectChapterSectionToEditDeleteName: '',
     questionChapterIdOptions: [{ value: null, text: 'Choose a chapter' }],
     questionSubjectIdOptions: [{ value: null, text: 'Choose a subject' }],
     questionSectionIdOptions: [{ value: null, text: 'Choose a section' }],
@@ -3256,142 +3259,14 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    capitalize,
+    getQuestionSubjectIdOptions,
+    handleAddEditQuestionSubjectChapterSection,
+    initAddEditDeleteQuestionSubjectChapterSection,
     canEdit,
     getQuestionChapterIdOptions,
     getQuestionSectionIdOptions,
     updateModalToggleIndex,
-    capitalize (str) {
-      if (!str) return ''
-      return str.charAt(0).toUpperCase() + str.slice(1)
-    },
-    async handleAddEditQuestionSubjectChapterSection () {
-      let url
-      let action
-      console.error(this.questionForm)
-      switch (this.questionSubjectChapterSectionAction) {
-        case ('add'):
-          action = 'post'
-          url = `/api/question-${this.questionSubjectChapterSectionToAddEditLevel}s`
-          switch (this.questionSubjectChapterSectionToAddEditLevel) {
-            case ('subject'):
-              break
-            case ('chapter'):
-              url += `/question-subject/${this.questionForm.question_subject_id}`
-              break
-            case ('section'):
-              url += `/question-chapter/${this.questionForm.question_chapter_id}`
-              break
-            default:
-              this.$noty.error(`${this.questionSubjectChapterSectionToAddEditLevel} is not a level for adding.`)
-              return false
-          }
-          break
-        case ('edit'):
-          action = 'patch'
-          switch (this.questionSubjectChapterSectionToAddEditLevel) {
-            case ('subject'):
-              url = `/api/question-subjects/${this.questionForm.question_subject_id}`
-              break
-            case ('chapter'):
-              url = `/api/question-chapters/${this.questionForm.question_chapter_id}`
-              this.questionSubjectChapterSectionForm.question_subject_id = this.questionForm.question_subject_id
-              break
-            case ('section'):
-              url = `/api/question-sections/${this.questionForm.question_section_id}`
-              this.questionSubjectChapterSectionForm.question_chapter_id = this.questionForm.question_chapter_id
-              break
-            default:
-              this.$noty.error(`${this.questionSubjectChapterSectionToAddEditLevel} is not a level for editing.`)
-              return false
-          }
-      }
-      try {
-        const { data } = await this.questionSubjectChapterSectionForm[action](url)
-        this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          switch (this.questionSubjectChapterSectionAction) {
-            case ('add'):
-              switch (this.questionSubjectChapterSectionToAddEditLevel) {
-                case ('subject'):
-                  await this.getQuestionSubjectIdOptions()
-                  this.questionForm.question_subject_id = data.question_level_id
-                  this.questionForm.question_chapter_id = null
-                  this.questionChapterIdOptions = [{ value: null, text: 'Choose a chapter' }]
-                  this.questionForm.question_section_id = null
-                  this.questionSectionIdOptions = [{ value: null, text: 'Choose a section' }]
-                  break
-                case ('chapter'):
-                  this.questionForm.question_section_id = null
-                  this.questionSectionIdOptions = [{ value: null, text: 'Choose a section' }]
-                  await this.getQuestionChapterIdOptions(this.questionForm.question_subject_id)
-                  this.questionForm.question_chapter_id = data.question_level_id
-                  break
-                case ('section'):
-                  await this.getQuestionSectionIdOptions(this.questionForm.question_chapter_id)
-                  this.questionForm.question_section_id = data.question_level_id
-                  break
-              }
-              this.$forceUpdate()
-              break
-            case ('edit'):
-              switch (this.questionSubjectChapterSectionToAddEditLevel) {
-                case ('subject'):
-                  this.questionSubjectIdOptions.find(item => item.value === this.questionForm.question_subject_id).text = this.questionSubjectChapterSectionForm.name
-                  break
-                case ('chapter'):
-                  this.questionChapterIdOptions.find(item => item.value === this.questionForm.question_chapter_id).text = this.questionSubjectChapterSectionForm.name
-                  break
-                case ('section'):
-                  this.questionSectionIdOptions.find(item => item.value === this.questionForm.question_section_id).text = this.questionSubjectChapterSectionForm.name
-                  break
-              }
-          }
-          this.$bvModal.hide('modal-add-edit-question-subject-chapter-section')
-        }
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        } else {
-          this.allFormErrors = this.questionSubjectChapterSectionForm.errors.flatten()
-          this.$bvModal.show('modal-form-errors-question-subject-chapter-section-errors')
-        }
-      }
-    },
-    initAddEditQuestionSubjectChapterSection (action, level) {
-      this.questionSubjectChapterSectionToAddEditLevel = level
-      this.questionSubjectChapterSectionAction = action
-      this.questionSubjectChapterSectionForm = new Form({ name: '' })
-      if (this.questionSubjectChapterSectionAction === 'edit') {
-        switch (level) {
-          case ('subject'):
-            this.questionSubjectChapterSectionToEditName = this.questionSubjectIdOptions.find(item => item.value === this.questionForm.question_subject_id).text
-            break
-          case ('chapter'):
-            this.questionSubjectChapterSectionToEditName = this.questionChapterIdOptions.find(item => item.value === this.questionForm.question_chapter_id).text
-            break
-          case ('section'):
-            this.questionSubjectChapterSectionToEditName = this.questionSectionIdOptions.find(item => item.value === this.questionForm.question_section_id).text
-            break
-          default:
-            alert(`${level} does not yet exist as an option.`)
-            return false
-        }
-        this.questionSubjectChapterSectionForm.name = this.questionSubjectChapterSectionToEditName
-      }
-      this.$bvModal.show('modal-add-edit-question-subject-chapter-section')
-    },
-    async getQuestionSubjectIdOptions () {
-      try {
-        const { data } = await axios.get('/api/question-subjects')
-        this.questionSubjectIdOptions = [{ value: null, text: 'Choose a subject' }]
-        for (let i = 0; i < data.question_subjects.length; i++) {
-          const questionSubject = data.question_subjects[i]
-          this.questionSubjectIdOptions.push({ value: questionSubject.id, text: questionSubject.name })
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     updateQtiJson (key, value) {
       this.qtiJson[key] = value
       console.error(this.qtiJson)

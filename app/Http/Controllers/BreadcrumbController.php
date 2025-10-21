@@ -191,6 +191,9 @@ class BreadcrumbController extends Controller
                         case('lti.integrations'):
                             $breadcrumbs[0] = ['text' => 'LTI Integrations', 'href' => ""];
                             break;
+                        case('subjectChapterSectionManager'):
+                            $breadcrumbs[0] = ['text' => 'Subject-Chapter-Section Manager', 'href' => ""];
+                            break;
                         case('instructorAccessCodes'):
                             $breadcrumbs[0] = ['text' => 'Instructor Access Codes', 'href' => ""];
                             break;

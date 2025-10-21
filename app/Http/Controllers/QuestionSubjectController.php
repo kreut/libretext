@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
 use App\Http\Requests\StoreQuestionSubjectRequest;
+use App\Question;
+use App\QuestionChapter;
+use App\QuestionRevision;
 use App\QuestionSubject;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class QuestionSubjectController extends Controller
 {
@@ -84,6 +88,55 @@ class QuestionSubjectController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were unable to update the question subject.  Please try again.";
+
+        }
+        return $response;
+    }
+
+    /**
+     * @param QuestionSubject $questionSubject
+     * @return array
+     * @throws Exception
+     */
+    public function destroy(QuestionSubject $questionSubject): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('destroy', [$questionSubject, 'subject']);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            DB::beginTransaction();
+            $name = $questionSubject->name;
+            Question::where('question_subject_id', $questionSubject->id)
+                ->update(
+                    ['question_subject_id' => null,
+                        'question_chapter_id' => null,
+                        'question_section_id' => null]);
+            QuestionRevision::where('question_subject_id', $questionSubject->id)
+                ->update(
+                    ['question_subject_id' => null,
+                        'question_chapter_id' => null,
+                        'question_section_id' => null]);
+            $questionChapters = QuestionChapter::where('question_subject_id', $questionSubject->id)->get();
+            $chapter_ids = [];
+            foreach ($questionChapters as $chapter) {
+                $chapter_ids[] = $chapter->id;
+            }
+            DB::table('question_sections')
+                ->whereIn('question_chapter_id', $chapter_ids)
+                ->delete();
+            DB::table('question_chapters')->whereIn('id', $chapter_ids)->delete();
+            $questionSubject->delete();
+            DB::commit();
+            $response['type'] = 'info';
+            $response['message'] = "The subject <strong>$name</strong> has been deleted.";
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to delete the question subject.  Please try again.";
 
         }
         return $response;

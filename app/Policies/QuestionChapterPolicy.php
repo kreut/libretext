@@ -22,4 +22,8 @@ class QuestionChapterPolicy
     {
         return $this->updateQuestionSubjectChapterSection($user, 'chapter');
     }
+    public function destroy(User $user, QuestionChapter $questionChapter): Response
+    {
+        return $this->destroyQuestionSubjectChapterSection($user, 'chapter');
+    }
 }
