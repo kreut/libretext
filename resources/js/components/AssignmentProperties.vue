@@ -98,7 +98,7 @@
       </b-card>
       <hr v-if="!courseId" class="pb-2">
       <b-form-group
-        v-if="assignmentId"
+        v-if="assignmentId && !lms"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="assignment-url"
@@ -134,7 +134,7 @@
         </div>
       </b-form-group>
       <b-form-group
-        v-if="assignmentId"
+        v-if="assignmentId && !lms"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="qr_code"
