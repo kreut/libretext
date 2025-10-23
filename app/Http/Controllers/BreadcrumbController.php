@@ -194,6 +194,9 @@ class BreadcrumbController extends Controller
                         case('subjectChapterSectionManager'):
                             $breadcrumbs[0] = ['text' => 'Subject-Chapter-Section Manager', 'href' => ""];
                             break;
+                        case('disciplineManager'):
+                            $breadcrumbs[0] = ['text' => 'Discipline Manager', 'href' => ""];
+                            break;
                         case('instructorAccessCodes'):
                             $breadcrumbs[0] = ['text' => 'Instructor Access Codes', 'href' => ""];
                             break;

@@ -201,6 +201,11 @@ let control_panel_paths = [
         component: page('control_panel/classification-manager.vue')
       },
       {
+        path: 'discipline-manager',
+        name: 'disciplineManager',
+        component: page('control_panel/discipline-manager.vue')
+      },
+      {
         path: 'subject–chapter–section-manager',
         name: 'subjectChapterSectionManager',
         component: page('control_panel/subject–chapter–section-manager.vue')

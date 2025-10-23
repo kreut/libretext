@@ -30,6 +30,7 @@ import { mapGetters } from 'vuex'
 export default {
   middleware: 'auth',
   data: () => ({
+    isLocal: () => window.config.environment === 'local',
     isBetaAssignment: false,
     courseId: 0,
     hasAccess: false
@@ -85,6 +86,11 @@ export default {
           icon: '',
           name: 'Classification Manager',
           route: 'classificationManager'
+        },
+        {
+          icon: '',
+          name: 'Discipline Manager',
+          route: 'disciplineManager'
         },
         {
           icon: '',

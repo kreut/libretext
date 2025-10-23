@@ -47,7 +47,7 @@
                     type="text"
                     @keydown="disciplineForm.errors.clear('name')"
       />
-      <has-error :form="disciplineForm" field="name" />
+      <has-error :form="disciplineForm" field="name"/>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -142,7 +142,7 @@
         </li>
       </ul>
     </b-modal>
-    <PageTitle :title="title" />
+    <PageTitle :title="title"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -190,7 +190,7 @@
         <template v-slot:label>
           Title
           <span v-show="type === 'public_courses'">
-            <QuestionCircleTooltip id="title-tooltip" />
+            <QuestionCircleTooltip id="title-tooltip"/>
             <b-tooltip target="title-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -344,6 +344,13 @@ import ImportCourse from '~/components/ImportCourse'
 import { logout } from '~/helpers/Logout'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import DisciplineSelect from '../components/DisciplineSelect.vue'
+import {
+  getDisciplines,
+  initEditDiscipline,
+  initDeleteDiscipline,
+  saveDiscipline,
+  deleteDiscipline, resetDiscipline
+} from '../helpers/Disciplines'
 
 export default {
   components: {
@@ -413,80 +420,15 @@ export default {
     window.removeEventListener('resize', this.resizeHandler)
   },
   methods: {
+    initEditDiscipline,
+    initDeleteDiscipline,
+    saveDiscipline,
+    deleteDiscipline,
+    getDisciplines,
+    resetDiscipline,
     reload () {
       this.getOpenCourses()
       this.getDisciplines()
-    },
-    resetDiscipline () {
-      this.activeDiscipline = {}
-      this.disciplineForm.name = ''
-    },
-    initEditDiscipline (discipline) {
-      this.activeDiscipline = discipline
-      this.disciplineForm.name = discipline.text
-      this.$bvModal.show('modal-edit-new-discipline')
-    },
-    initDeleteDiscipline (discipline) {
-      this.activeDiscipline = discipline
-      this.$bvModal.show('modal-delete-discipline')
-    },
-    async getDisciplines () {
-      try {
-        const { data } = await axios.get('/api/disciplines')
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.disciplineOptions = [{ value: null, text: 'Choose a discipline' }]
-        for (let i = 0; i < data.disciplines.length; i++) {
-          const discipline = data.disciplines[i]
-          this.disciplineOptions.push({ value: discipline.id, text: discipline.name })
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async saveDiscipline (activeDisciplineId = null) {
-      let url
-      let method
-      if (activeDisciplineId) {
-        url = `/api/disciplines/${activeDisciplineId}`
-        method = 'patch'
-      } else {
-        url = `/api/disciplines`
-        method = 'post'
-      }
-      try {
-        const { data } = await this.disciplineForm[method](url)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        } else {
-          await this.getOpenCourses()
-          await this.getDisciplines()
-          this.$bvModal.hide('modal-edit-new-discipline')
-        }
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
-    },
-    async deleteDiscipline (discipline) {
-      try {
-        const { data } = await axios.delete(`/api/disciplines/${discipline}`)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        } else {
-          await this.getOpenCourses()
-          await this.getDisciplines()
-          this.disciplineCache++
-          this.$bvModal.hide('modal-delete-discipline')
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
     },
     reset () {
       this.$refs.authorSearch.value = ''

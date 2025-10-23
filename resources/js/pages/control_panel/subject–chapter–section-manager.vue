@@ -114,6 +114,15 @@
           There are currently no chapters associated with this subject.
         </b-alert>
       </div>
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          @click="$bvModal.hide('modal-sections')"
+        >
+         OK
+        </b-button>
+      </template>
     </b-modal>
     <b-modal id="modal-chapters"
              title="Chapters"
@@ -161,6 +170,15 @@
           There are currently no chapters associated with this subject.
         </b-alert>
       </div>
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          @click="$bvModal.hide('modal-chapters')"
+        >
+          OK
+        </b-button>
+      </template>
     </b-modal>
     <div class="pb-3">
       <b-button size="sm"
