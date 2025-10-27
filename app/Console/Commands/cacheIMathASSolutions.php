@@ -45,6 +45,7 @@ class cacheIMathASSolutions extends Command
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
             $result = curl_exec($ch); // Execute the cURL statement
+            var_dump($result);
             if ($result === false) {
                 throw new Exception('Connection issue with IMathAS: ' . curl_error($ch));
             } else {
