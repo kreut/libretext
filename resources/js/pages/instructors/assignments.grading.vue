@@ -528,8 +528,12 @@
                               <span
                                 :class="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement ? 'text-success' : 'text-danger'"
                               >
-                                Submitted {{ discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements }}
-                                {{+discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements !== 1 ? 'replies' : 'reply'}},
+                                Submitted {{
+                                  discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements
+                                }}
+                                {{
+                                  +discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements !== 1 ? 'replies' : 'reply'
+                                }},
                                 with {{ discussItRequirementsInfo.min_number_of_replies }} required.
                               </span>
                             </li>
@@ -540,7 +544,9 @@
                               <span
                                 :class="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement ? 'text-success' : 'text-danger'"
                               >
-                                Initiated or replied to {{ discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements }} discussion thread<span
+                                Initiated or replied to {{
+                                  discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements
+                                }} discussion thread<span
                                 v-if="+discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements !== 1"
                               >s</span>,
                                 with {{ discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads }} required.
@@ -570,6 +576,18 @@
                               <a href=""
                                  @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
                               >{{ comment.created_at }}:</a> <span v-if="comment.text" v-html="comment.text"/>
+
+                              <b-tooltip :target="`view-in-new-tab-${comment.discussion_comment_id}`" triggers="hover focus" delay="500">
+                               View in New Tab
+                              </b-tooltip>
+                              <span
+                                :id="`view-in-new-tab-${comment.discussion_comment_id}`"
+                                class="float-right primary"
+                                style="cursor: pointer"
+                                @click="viewInNewTab(`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`)"
+                              >
+                                <font-awesome-icon :icon="externalLink"/>
+                              </span>
                               <iframe
                                 v-if="comment.file"
                                 v-resize="{ log: false }"
@@ -1175,20 +1193,21 @@ import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates } from '~/helpers/CSSUpdat
 import QtiJsonQuestionViewer from '../../components/QtiJsonQuestionViewer.vue'
 import SubmissionArray from '../../components/SubmissionArray.vue'
 import CompletedIcon from '../../components/CompletedIcon.vue'
-import RubricProperties from '../../components/RubricProperties.vue'
 import RubricPointsBreakdown from '../../components/RubricPointsBreakdown.vue'
 import { roundToDecimalSigFig } from '../../helpers/Math'
 import ConsultInsight from '../../components/ConsultInsight.vue'
 import QtiJsonAnswerViewer from '../../components/QtiJsonAnswerViewer.vue'
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    FontAwesomeIcon,
     QtiJsonAnswerViewer,
     ConsultInsight,
     RubricPointsBreakdown,
-    RubricProperties,
     CompletedIcon,
     SubmissionArray,
     QtiJsonQuestionViewer,
@@ -1205,6 +1224,7 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    externalLink: faExternalLinkAlt,
     qtiAnswerJson: '',
     structureImageTemporaryUrl: '',
     scoreInputType: '',
@@ -1374,6 +1394,9 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    viewInNewTab (url) {
+      window.open(url, '_blank')
+    },
     scannedImageMessage (grading) {
       try {
         if (grading &&
@@ -1388,7 +1411,7 @@ export default {
           return `The student ${action} the scanned image.`
         }
         return ''
-      } catch (error){
+      } catch (error) {
         return ''
       }
     },
