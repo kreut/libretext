@@ -537,7 +537,7 @@
                                 with {{ discussItRequirementsInfo.min_number_of_replies }} required.
                               </span>
                             </li>
-                            <li>
+                            <li v-show="discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads > 0">
                               <CompletedIcon
                                 :completed="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement"
                               />
