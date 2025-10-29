@@ -581,6 +581,7 @@
                                View in New Tab
                               </b-tooltip>
                               <span
+                                v-show="comment.file"
                                 :id="`view-in-new-tab-${comment.discussion_comment_id}`"
                                 class="float-right primary"
                                 style="cursor: pointer"
