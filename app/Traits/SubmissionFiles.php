@@ -74,6 +74,7 @@ trait SubmissionFiles
     {
 
         //last_submitted is handled at the question and assignment level
+
         $formatted_submission_file_info = [];
         $formatted_submission_file_info['assignment_id'] = $assignment_id;
         $formatted_submission_file_info['submission'] = $submission_file['submission'] ?? null;

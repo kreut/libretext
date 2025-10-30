@@ -71,7 +71,6 @@ class SubmissionTextController extends Controller
      * @param SubmissionFile $submissionFile
      * @param Submission $submission
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
-     * @param Score $score
      * @return array
      * @throws Exception
      */
@@ -131,11 +130,11 @@ class SubmissionTextController extends Controller
             Storage::disk('s3')->put($file_path, $request->text_submission, ['StorageClass' => 'STANDARD_IA']);
 
 
-
             $submission_text_data = [
                 'original_filename' => '',
                 'submission' => $filename,
                 'type' => 'text',
+                'pasted_content' => $request->pasted_content ? $request->pasted_content : 0,
                 'file_feedback' => null,
                 'text_feedback' => null,
                 'date_graded' => null,

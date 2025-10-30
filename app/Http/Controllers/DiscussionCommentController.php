@@ -620,6 +620,8 @@ class DiscussionCommentController extends Controller
         $data = $request->validated();
         $type = $request->type;
 
+
+        $pasted_comment = $request->pasted_comment ? 1 : 0;
         try {
 
             $discussion_info = DB::table('discussion_comments')
@@ -641,6 +643,7 @@ class DiscussionCommentController extends Controller
             $satisfied_requirement = $discussionComment->satisfiedRequirement($type, $discuss_it_settings, $request);
 
             $discussionComment->{$type} = $data[$type];
+            $discussionComment->pasted_comment = $pasted_comment;
             $discussionComment->created_at = now();
 
             if ($type === 'file') {

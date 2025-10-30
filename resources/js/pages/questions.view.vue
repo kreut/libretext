@@ -8,6 +8,36 @@
     <AllFormErrors :all-form-errors="allFormErrors"
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
+    <b-modal id="modal-confirm-paste-into-ckeditor"
+             title="Pasted Content"
+             no-close-on-esc
+             no-close-on-backdrop
+             hide-header-close
+    >
+      <p>
+        You have just pasted content for your text submission. We will tag your submission
+        so that your instructor is aware of this.
+      </p>
+      <p>Alternatively, you may start the process again and type in your response directly.</p>
+      <template #modal-footer>
+        <span class="mr-2">
+          <b-button
+            variant="primary"
+            size="sm"
+            @click="keepPastedContent"
+          >
+            Keep Pasted Content
+          </b-button>
+        </span>
+        <b-button
+          size="sm"
+          variant="outline-danger"
+          @click="startAgain"
+        >
+          Start Again
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-confirm-update-use-existing-cubric"
              title="Confirm Switching Rubric"
     >
@@ -3248,12 +3278,12 @@
                       <div class="mt-1">
                         <ckeditor
                           ref="textSubmissionEditor"
-                          :key="questions[currentPage-1].id"
+                          :key="`${questions[currentPage-1].id}-${ckeditorTextSubmissionKey}`"
                           v-model="textSubmissionForm.text_submission"
                           tabindex="0"
                           aria-label="Text submission box"
                           :config="richEditorConfig"
-                          @ready="handleFixCKEditor()"
+                          @ready="handleFixCKEditorWithPasteWarning"
                           @namespaceloaded="onCKEditorNamespaceLoaded"
                         />
                       </div>
@@ -3939,6 +3969,7 @@ import { formatFileSize, inputFile, inputFilter } from '../helpers/UploadFiles'
 import { isPhone } from '../helpers/isPhone'
 import NativeAudioVideoRecorder from '../components/NativeAudioVideoRecorder.vue'
 import { openEndedSubmissionTypeOptions } from '../helpers/Questions'
+import { handleFixCKEditorWithPasteWarning } from '../helpers/ckeditor'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -3989,6 +4020,8 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    ckeditorTextSubmissionKey: 0,
+    pastedContent: false,
     hasHTML: false,
     previouslyUploadedAudioFile: '',
     isStructureImageUploader: false,
@@ -4541,6 +4574,7 @@ export default {
     }
   },
   methods: {
+    handleFixCKEditorWithPasteWarning,
     formatFileSize,
     inputFilter,
     inputFile,
@@ -4550,6 +4584,16 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    keepPastedContent () {
+      this.pastedContent = true
+      this.$bvModal.hide('modal-confirm-paste-into-ckeditor')
+    },
+    startAgain () {
+      this.textSubmissionForm.text_submission = ''
+      this.ckeditorTextSubmissionKey++
+      this.$bvModal.hide('modal-confirm-paste-into-ckeditor')
+      this.pastedContent = false
+    },
     revertToOriginal (type) {
       switch (type) {
         case ('multiple_answers'):
@@ -6239,6 +6283,7 @@ export default {
       try {
         this.textSubmissionForm.questionId = this.questions[this.currentPage - 1].id
         this.textSubmissionForm.assignmentId = this.assignmentId
+        this.textSubmissionForm.pasted_content = this.pastedContent
         const { data } = await this.textSubmissionForm.post('/api/submission-texts')
         this.submissionDataMessage = data.message
         if (data.type === 'success') {

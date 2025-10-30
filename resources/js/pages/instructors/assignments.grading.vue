@@ -575,7 +575,21 @@
                               </span>
                               <a href=""
                                  @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
-                              >{{ comment.created_at }}:</a> <span v-if="comment.text" v-html="comment.text"/>
+                              >{{ comment.created_at }}:</a>
+                              <b-alert :show="comment.pasted_comment === 1">
+                                This comment was pasted in by the student.  <QuestionCircleTooltip :id="`pasted-comment-${comment.id}`"/>
+                                <b-tooltip :target="`pasted-comment-${comment.id}`"
+                                           delay="250"
+                                           width="600"
+                                           triggers="hover focus"
+                                           custom-class="custom-tooltip"
+                                >
+                                  If a student pastes in a comment, they are informed that you will be notified.<br><br>Comments that were
+                                  pasted in may have first been written by the student in an application such as Microsoft Word or the
+                                  student may have used ChatGPT to generate the comment.
+                                </b-tooltip>
+                              </b-alert>
+                              <div v-if="comment.text" v-html="comment.text"/>
 
                               <b-tooltip :target="`view-in-new-tab-${comment.discussion_comment_id}`" triggers="hover focus" delay="500">
                                View in New Tab
@@ -1096,6 +1110,25 @@
               <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
                 <b-row v-if="fullView" align-h="center" class="pb-2">
                   <span class="font-weight-bold">Open-Ended Submission</span>
+                </b-row>
+              </div>
+              <div
+                v-if="(grading[currentStudentPage - 1]['open_ended_submission']['pasted_content'])"
+              >
+                <b-row v-if="fullView" align-h="center" class="pb-2">
+                  <b-alert show>
+                    This text submission  was pasted in by the student.  <QuestionCircleTooltip id="pasted-submission-tooltip"/>
+                    <b-tooltip target="pasted-submission-tooltip"
+                               delay="250"
+                               width="600"
+                               triggers="hover focus"
+                               custom-class="custom-tooltip"
+                    >
+                      If a student pastes in a text submission, they are informed that you will be notified.<br><br>Text submissions that were
+                      pasted in may have first been written by the student in an application such as Microsoft Word or the
+                      student may have used ChatGPT to generate the comment.
+                    </b-tooltip>
+                  </b-alert>
                 </b-row>
               </div>
               <div

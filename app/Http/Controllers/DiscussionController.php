@@ -67,6 +67,7 @@ class DiscussionController extends Controller
             $data = $request->validated();
             $type = $request->type;
             $recording_type = $request->recording_type ? $request->recording_type : null;
+            $pasted_comment = $request->pasted_comment ? 1 : 0;
             DB::beginTransaction();
             if (!$discussion_id) {
                 if ($request->user()->role === 3) {
@@ -87,6 +88,7 @@ class DiscussionController extends Controller
             $discussionComment->discussion_id = $discussion->id;
             $discussionComment->user_id = $request->user()->id;
             $discussionComment->{$type} = $data[$type];
+            $discussionComment->pasted_comment = $pasted_comment;
             $discussionComment->recording_type = $recording_type;
 
             $satisfied_requirement = $discussionComment->satisfiedRequirement($type, $discuss_it_settings, $request);

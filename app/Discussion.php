@@ -91,6 +91,7 @@ class Discussion extends Model
                 'discussion_comments.id AS comment_id',
                 'discussion_comments.recording_type AS recording_type',
                 'discussion_comments.text',
+                'discussion_comments.pasted_comment',
                 'discussion_comments.file',
                 'discussion_comments.transcript',
                 'discussion_comments.re_processed_transcript',
@@ -126,6 +127,7 @@ class Discussion extends Model
                 'created_by_user_id' => $value->discussion_comments_user_id,
                 'created_by_name' => $enrolled_students_by_user_id[$value->discussion_comments_user_id],
                 'text' => $question->addTimeToS3Images($value->text, $htmlDom, false),
+                'pasted_comment' => $value->pasted_comment,
                 'file' => $value->file,
                 'recording_type' => $discussionComment->getRecordingType($value),
             'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
@@ -140,6 +142,7 @@ class Discussion extends Model
                 'discussion_comment_id' => $value->comment_id,
                 'discussion_id' => $discussion_id,
                 'text' => $question->addTimeToS3Images($value->text, $htmlDom, false),
+                'pasted_comment' => $value->pasted_comment,
                 'file' => $value->file,
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_comments_user_id])
             ];

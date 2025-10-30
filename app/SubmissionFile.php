@@ -217,6 +217,7 @@ class SubmissionFile extends Model
                 $question_id = $question->question_id;
                 $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
+                $pasted_content = $questionFilesByUser[$question->question_id][$user->id]->pasted_content ?? 0;
                 $text_feedback_editor = $questionFilesByUser[$question->question_id][$user->id]->text_feedback_editor ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
                 $extension = $extensions[$user->user_id] ?? null;
@@ -269,6 +270,7 @@ class SubmissionFile extends Model
                 $all_info['late_penalty_percent'] = $late_penalty_percent ?? null;
                 $all_info['applied_late_penalty'] = $applied_late_penalty;
                 $all_info['order'] = $question->order;
+                $all_info['pasted_content'] = $pasted_content;
                 $all_info['submission_status'] = $this->submissionStatus($all_info);
                 $user_and_submission_file_info[$question->question_id][$key] = $all_info;
 
