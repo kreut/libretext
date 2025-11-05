@@ -67,7 +67,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('get:slowDatabaseQueriesSummary')->daily();
             $schedule->command('remove:oldSubmissionConfirmations')->daily();
             $schedule->command('email:studentsWithSubmissions')->everyMinute();
-            //$schedule->command('cache:IMathSolutions')->everyMinute();
+            $schedule->command('cache:IMathSolutions')->everyMinute();
             $schedule->command('delete:OldFCMTokens')
                 ->cron('0 0 1 */2 *'); // midnight on the 1st, every 2 months
 
