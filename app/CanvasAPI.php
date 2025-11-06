@@ -325,6 +325,11 @@ class CanvasAPI extends Model
         $authorization = "Authorization: Bearer $access_token"; // Prepare the authorisation token
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/json', $authorization]); // Inject the token into the header
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Accept: application/json',
+            'User-Agent: ADAPT https://adapt.libretexts.org/ (adapt@libretexts.org)', // Add this line
+            $authorization
+        ]);
         curl_setopt($ch, CURLOPT_URL, $this->_buildUrl($url));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 

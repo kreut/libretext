@@ -82,6 +82,9 @@ class LTI_Service_Connector
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($auth_request));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'User-Agent: ADAPT https://adapt.libretexts.org/ (adapt@libretexts.org)'
+        ]);
         $resp = curl_exec($ch);
         $token_data = json_decode($resp, true);
         curl_close($ch);
@@ -99,6 +102,7 @@ class LTI_Service_Connector
             $headers = [
                 'Authorization: Bearer ' . $this->get_access_token($scopes),
                 'Accept:' . $accept,
+                'User-Agent: ADAPT https://adapt.libretexts.org/ (adapt@libretexts.org)'
             ];
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -123,6 +127,7 @@ class LTI_Service_Connector
             $headers = [
                 'Authorization: Bearer ' . $this->get_access_token($scopes),
                 'Accept:' . $accept,
+                'User-Agent: ADAPT https://adapt.libretexts.org/ (adapt@libretexts.org)'
             ];
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
