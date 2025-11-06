@@ -7,6 +7,7 @@ use DOMDocument;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Discussion extends Model
 {
@@ -122,6 +123,17 @@ class Discussion extends Model
                 ];
             }
             $discussionComment = new DiscussionComment();
+            if (!isset($enrolled_student_time_zones_by_user_id[$value->discussion_user_id])) {
+                $enrolled_student_time_zones_by_user_id[$value->discussion_user_id] = User::find($value->discussion_user_id)->time_zone;
+            }
+            if (!isset($enrolled_students_by_user_id[$value->discussion_comments_user_id])) {
+                $user_by_discussion_comments_user_id = User::find($value->discussion_comments_user_id);
+                $enrolled_students_by_user_id[$value->discussion_comments_user_id] = "$user_by_discussion_comments_user_id->first_name $user_by_discussion_comments_user_id->last_name";
+                $enrolled_student_time_zones_by_user_id[$value->discussion_comments_user_id] = $user_by_discussion_comments_user_id->time_zone;
+
+            }
+
+
             $discussions[$discussion_id]['comments'][] = [
                 'id' => $value->comment_id,
                 'created_by_user_id' => $value->discussion_comments_user_id,
@@ -130,7 +142,7 @@ class Discussion extends Model
                 'pasted_comment' => $value->pasted_comment,
                 'file' => $value->file,
                 'recording_type' => $discussionComment->getRecordingType($value),
-            'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
+                'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
                 're_processed_transcript' => $value->re_processed_transcript,
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_user_id])];
             if (!isset($discussions_by_user_id[$value->discussion_comments_user_id])) {
