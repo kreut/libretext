@@ -611,6 +611,7 @@
         :current-page="1"
         :show-na="false"
         assignment-name="Question"
+        :modal-id="'preview-question'"
         :is-preview-solution-html="true"
       />
       <div v-if="questionForm.technology === 'qti'">

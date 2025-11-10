@@ -7,7 +7,7 @@
         aria-label="Solution"
         size="lg"
       ><div v-if="imathasSolution">
-         <h2 class="editable">Solution</h2>
+         <h2 class="editable">Solution</h2><hr>
          <iframe
            :key="`technology-iframe-${questions[currentPage-1].id}-1`"
            v-resize="{ log: false, checkOrigin: false }"
@@ -40,9 +40,8 @@
             </div>
           </div>
         </div>
-        <h2 v-if="isPreviewSolutionHtml && !renderedWebworkSolution && !questions[currentPage-1].imathas_solution"
-            class="editable"
-        >Solution</h2>
+        <div v-if="isPreviewSolutionHtml && !renderedWebworkSolution && !questions[currentPage-1].imathas_solution">
+        <h2 class="editable">Solution</h2><hr></div>
         <div v-html="renderedWebworkSolution"/>
         <div v-if="!renderedWebworkSolution && !questions[currentPage - 1].render_webwork_solution"
              v-html="questions[currentPage-1].solution_html"
@@ -187,7 +186,7 @@ export default {
             let jsonObj = JSON.parse(event.data)
             console.log(jsonObj.solutions)
             if (jsonObj.solutions.length) {
-              this.renderedWebworkSolution = '<h2 class="editable">Solution</h2>'
+              this.renderedWebworkSolution = '<h2 class="editable">Solution</h2><hr>'
               for (let i = 0; i < jsonObj.solutions.length; i++) {
                 this.renderedWebworkSolution += jsonObj.solutions[i]
               }
