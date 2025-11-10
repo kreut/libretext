@@ -5,6 +5,7 @@
                                :key="`highlighted-text-${highlightedTextIndex}`"
                                :highlighted-text="highlightedText"
                                :responses="qtiJson.responses"
+                               :check-marks="qtiJson.check_marks"
                                :show-response-feedback="showResponseFeedback"
     />
     <GeneralFeedback

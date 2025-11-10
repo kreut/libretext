@@ -3,7 +3,8 @@
     <span v-for="(item,index) in highlightedTextArr" :key="`html-${index}`">
       <span v-html="item"/>
       <span v-if="getId(item) && showResponseFeedback">
-        <b-icon-check-circle-fill v-if="isCorrect(getId(item)) === 'correct'"
+        <b-icon-check-circle-fill v-if="isCorrect(getId(item)) === 'correct'
+        && (checkMarks === 'correctly checked answers and correctly unchecked incorrect answers' || correctAndChecked(getId(item)))"
                                   class="text-success"
         />
         <b-icon-x-circle-fill v-if="isCorrect(getId(item)) === 'not correct'"
@@ -30,6 +31,10 @@ export default {
     showResponseFeedback: {
       type: Boolean,
       default: true
+    },
+    checkMarks: {
+      type: String,
+      default: 'correctly checked answers and correctly unchecked incorrect answers'
     }
   },
   data: () => ({
@@ -59,6 +64,13 @@ export default {
     this.$forceUpdate()
   },
   methods: {
+    correctAndChecked (identifier) {
+      let response = this.responses.find(item => item.identifier === identifier)
+      if (response.correctResponse && response.selected) {
+        return 'correct'
+      }
+      return null
+    },
     isCorrect (identifier) {
       let response = this.responses.find(item => item.identifier === identifier)
       if (response.correctResponse && response.selected) {

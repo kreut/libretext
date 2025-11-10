@@ -14,13 +14,15 @@
             :key="`response-feedback-${index}`"
             :identifier="option.value"
             :responses="qtiJson.responses"
+            :check-marks="checkMarks"
             :student-response="qtiJson.studentResponse"
           />
         </b-form-checkbox>
       </div>
     </b-form-checkbox-group>
     <GeneralFeedback :feedback="qtiJson.feedback"
-                     :feedback-type="feedbackType"/>
+                     :feedback-type="feedbackType"
+    />
   </div>
 </template>
 
@@ -47,11 +49,15 @@ export default {
     }
   },
   data: () => ({
+    checkMarks: '',
     selectedAllThatApply: [],
     selectAllThatApplyOptions: [],
     feedbackType: ''
   }),
   mounted () {
+    if (this.qtiJson.check_marks) {
+      this.checkMarks = this.qtiJson.check_marks
+    }
     if (this.qtiJson.studentResponse) {
       this.feedbackType = 'correct'
     }

@@ -8,7 +8,8 @@
             <li v-for="(response,index) in responses" :key="`correct-response-${index}`">
               <b-form-group>
                 <b-form-radio-group v-model="response.correctResponse"
-                                    @input="updateResponse($event)">
+                                    @input="updateResponse($event)"
+                >
                   <span v-html="response.text"/>
                   <b-form-radio :value="true">
                     Correct Response
@@ -62,17 +63,18 @@ export default {
   computed: {
     responses () {
       if (this.qtiJson.prompt) {
-        console.log(this.currentResponses)
         const regex = /(\[.*?])/
         let matches = String(this.qtiJson.prompt).split(regex).filter(Boolean)
         let responses = []
         if (matches && matches.length) {
           for (let i = 0; i < matches.length; i++) {
             let match = matches[i]
+            console.error(match)
             if (match.includes('[') && match.includes(']')) {
               let text = match.replace('[', '').replace(']', '')
               // not sure why but quotes are being replaced.  Maybe CKeditor? See storing the question serverside and HighlightText.vue
-              text = text.replaceAll('&quot;', '"').replaceAll('&#39;', "'")
+              text = text.replaceAll('&quot;', '"').replaceAll('&#39;', '\'')
+              console.error(text)
               let currentResponse = this.currentResponses.find(response => response.text === text)
               let correctResponse = currentResponse ? currentResponse.correctResponse : null
               let identifier = currentResponse ? currentResponse.identifier : uuidv4()
@@ -80,6 +82,7 @@ export default {
             }
           }
         }
+        console.error(responses)
         if (!responses.length) {
           responses = null
         }
@@ -106,23 +109,24 @@ export default {
           }
         }
       }
-    }
-  },
-  mounted () {
-    this.$nextTick(() => {
-      this.$forceUpdate()
-      if (this.questionForm.qti_json) {
-        let questionFormResponses = JSON.parse(this.questionForm.qti_json).responses
-        console.log(this.responses)
-        for (let i = 0; i < questionFormResponses.length; i++) {
-          console.log(questionFormResponses[i].text)
-          let promptResponse = this.responses.find(response => response.text === questionFormResponses[i].text)
-          if (promptResponse) {
-            promptResponse.correctResponse = questionFormResponses[i].correctResponse
-          }
+    },
+    'questionForm.qti_json': {
+      handler (newVal) {
+        if (newVal) {
+          const questionFormResponses = JSON.parse(newVal).responses
+          questionFormResponses.forEach(item => {
+            const promptResponse = this.responses.find(
+              response => response.text === item.text
+            )
+            if (promptResponse) {
+              promptResponse.correctResponse = item.correctResponse
+            }
+          })
         }
-      }
-    })
+      },
+      deep: true,
+      immediate: false // set to true if you want it to run on component mount
+    }
   },
   methods: {
     updateResponse () {

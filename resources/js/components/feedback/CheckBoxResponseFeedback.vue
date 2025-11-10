@@ -9,8 +9,9 @@
     <b-icon-x-circle-fill v-if="!response.correctResponse && studentResponse.includes(response.identifier)"
                           class="text-danger"
     />
-    <b-icon-check-circle-fill v-if="!response.correctResponse && !studentResponse.includes(response.identifier)"
-                          class="text-success"
+    <b-icon-check-circle-fill v-if="!response.correctResponse && !studentResponse.includes(response.identifier)
+&& checkMarks === 'correctly checked answers and correctly unchecked incorrect answers'"
+                              class="text-success"
     />
   </span>
 </template>
@@ -18,6 +19,10 @@
 <script>
 export default {
   props: {
+    checkMarks: {
+      type: String,
+      default: ''
+    },
     responses: {
       type: Array,
       default: () => {
