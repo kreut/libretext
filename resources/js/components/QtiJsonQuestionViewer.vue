@@ -508,9 +508,12 @@ export default {
       }
       if (!this.showQtiAnswer &&
         this.user.role === 2 &&
-        (['drop_down_rationale', 'multiple_answers', 'drop_down_rationale_triad'].includes(this.questionType) ||
-          ((['multiple_choice', 'select_choice'].includes(this.questionType) &&
-            JSON.parse(this.qtiJson).randomizeOrder === 'yes'))) || (this.questionType === 'select_choice' && !JSON.parse(this.qtiJson).randomizeOrder)) {
+        (
+          ['drop_down_rationale', 'multiple_answers', 'drop_down_rationale_triad'].includes(this.questionType) ||
+          (['multiple_choice', 'select_choice'].includes(this.questionType) && JSON.parse(this.qtiJson).randomizeOrder === 'yes') ||
+          (this.questionType === 'select_choice' && !JSON.parse(this.qtiJson).randomizeOrder)
+        )
+      ) {
         return true
       }
       return false

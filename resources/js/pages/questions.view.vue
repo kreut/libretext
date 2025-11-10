@@ -2433,7 +2433,7 @@
                   && !isDiscussIt()
                   && ['real time', 'delayed'].includes(assessmentType)"
               >
-                <label for="can_submit_work_override" class="pl-3 mr-2">Can submi f work</label>
+                <label for="can_submit_work_override" class="pl-3 mr-2">Can submit work</label>
                 <b-form-radio-group
                   id="can_submit_work_override"
                   v-model="questions[currentPage-1].can_submit_work"
