@@ -28,7 +28,7 @@ class CKEditorController extends Controller
                     ->header('Content-Type', 'text/html');
             }
             if ($request->hasFile('upload')) {
-                if (!in_array($request->file('upload')->getMimeType(), ['image/jpeg', 'image/png', 'image/tiff'])) {
+                if (!in_array($request->file('upload')->getMimeType(), ['image/jpeg', 'image/png', 'image/tiff','image/gif'])) {
                     $message = $request->file('upload')->getMimeType() . " is not a valid mimetype.  Please verify that you are uploading an image.";
                     $response = $this->_formatCkeditorTextResponse($CKEditorFuncNum, $message);
                     return response($response, 200)

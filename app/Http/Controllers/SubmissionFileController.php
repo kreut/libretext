@@ -466,7 +466,14 @@ class SubmissionFileController extends Controller
             $mime_type = Storage::disk('s3')->mimeType($submission);
             $valid_mime_type = $assignment->file_upload_mode === 'compiled_pdf'
                 ? $mime_type === 'application/pdf'
-                : in_array($mime_type, ['application/pdf', 'text/plain', 'image/png', 'image/jpeg', 'audio/mpeg']);
+                : in_array($mime_type, [
+                    'application/pdf',
+                    'text/plain',
+                    'image/png',
+                    'image/jpeg',
+                    'audio/mpeg',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                ]);
             if (!$valid_mime_type) {
                 $response['message'] = "Your file has a mime type of $mime_type which is not an accepted mime type.";
                 return $response;

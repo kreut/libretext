@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { fixInvalid } from './accessibility/FixInvalid'
 
-export function getAcceptedFileTypes (fileTypes = '.pdf, .txt, .png, .jpeg, .jpg') {
+export function getAcceptedFileTypes (fileTypes = '.pdf, .txt, .png, .jpeg, .jpg, .xlsx') {
   return fileTypes // update the validator in the S3 Trait if this changes
 }
 
@@ -39,7 +39,7 @@ export async function inputFilter (newFile, oldFile, prevent) {
     if (!this.isStructureImageUploader) {
       validUploadTypesMessage = `The valid upload types are: ${this.getSolutionUploadTypes()}`
       if (this.uploadLevel === 'question') {
-        validExtension = this.isOpenEndedAudioSubmission ? /\.(mp3)$/i.test(newFile.name) : /\.(pdf|txt|png|jpeg|jpg)$/i.test(newFile.name)
+        validExtension = this.isOpenEndedAudioSubmission ? /\.(mp3)$/i.test(newFile.name) : /\.(pdf|txt|png|jpeg|jpg|xlsx)$/i.test(newFile.name)
       } else {
         validExtension = /\.(pdf)$/i.test(newFile.name)
       }

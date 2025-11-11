@@ -31,20 +31,22 @@
                delay="500"
     >
       <span v-if="!currentSubmittedWorkAt">
-      Optionally submit supporting work for this auto-graded submission. Your instructor may take it into account while grading
-      this question.
+       Optionally, upload supporting work after submitting your answer. Your instructor may review it when grading this question.
       </span>
       <span v-if="currentSubmittedWorkAt">
         Your instructor may take your supporting work into account while grading
       this question.  You last submitted supporting work on<br>{{ currentSubmittedWorkAt }}.
       </span>
     </b-tooltip>
-    <b-button id="submit-work"
+    <span id="submit-work" class="d-inline-block" tabindex="0">
+    <b-button
               size="sm"
-              :variant="submittedWorkUrl ? 'success' : 'primary'"
+              :disabled="disabled"
+              :variant="submittedWorkUrl ? 'success' : 'info'"
               @click="initShowSubmitWorkModal()"
     >Submit<span v-show="submittedWorkUrl">ted</span> Work
     </b-button>
+    </span>
     <b-modal id="modal-submit-work"
              title="Submit Work"
              size="lg"
@@ -133,6 +135,10 @@ export default {
   name: 'SubmitWork',
   components: { AllFormErrors, FileUpload: VueUploadComponent },
   props: {
+    disabled: {
+      type: Boolean,
+      default: false
+    },
     submittedWork: {
       type: String,
       default: null

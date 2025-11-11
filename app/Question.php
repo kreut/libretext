@@ -1899,7 +1899,6 @@ class Question extends Model
         $this->text_question = $dom_elements_from_body['text_question'];
         $this->solution_html = $dom_elements_from_body['solution_html'];
         $this->hint = $dom_elements_from_body['hint'];
-        $this->libretexts_link = $dom_elements_from_body['libretexts_link'];
         $this->notes = $dom_elements_from_body['notes'];
         $this->save();
     }
@@ -1946,7 +1945,6 @@ class Question extends Model
         $answer_html = $dom_elements_from_body['answer_html'];
         $solution_html = $dom_elements_from_body['solution_html'];
         $hint = $dom_elements_from_body['hint'];
-        $libretexts_link = $dom_elements_from_body['libretexts_link'];
         $notes = $dom_elements_from_body['notes'];
         $technology_id = null;
         try {
@@ -2001,7 +1999,6 @@ class Question extends Model
                 'answer_html' => $answer_html,
                 'solution_html' => $solution_html,
                 'hint' => $hint,
-                'libretexts_link' => $libretexts_link,
                 'question_editor_user_id' => request()->user()->id,
                 'folder_id' => $saved_questions_folder->id,
                 'notes' => $technology === 'h5p' ? $question_extras['notes'] : $notes];
@@ -2071,7 +2068,6 @@ class Question extends Model
         $answer_html = $dom_elements_from_body['answer_html'];
         $solution_html = $dom_elements_from_body['solution_html'];
         $hint = $dom_elements_from_body['hint'];
-        $libretexts_link = $dom_elements_from_body['libretexts_link'];
         $notes = $dom_elements_from_body['notes'];
         $technology_id = null;
         try {
@@ -2107,7 +2103,6 @@ class Question extends Model
                     'answer_html' => $answer_html,
                     'solution_html' => $solution_html,
                     'hint' => $hint,
-                    'libretexts_link' => $libretexts_link,
                     'notes' => $technology === 'h5p' ? $question_extras['notes'] : $notes,
                     'cached' => 1,
                     'title' => $title,
@@ -2255,7 +2250,6 @@ class Question extends Model
             'answer_html',
             'solution_html',
             'hint',
-            'libretexts_link',
             'notes');
 
     }
@@ -2590,7 +2584,6 @@ class Question extends Model
 
         }
         $question['text_question'] = $question_info['text_question'];
-        $question['libretexts_link'] = $question_info['libretexts_link'];
 
         $question['notes'] = $question['answer_html'] = $question['solution_html'] = $question['hint'] = null;
         if (in_array(Auth::user()->role, [2, 5])) {

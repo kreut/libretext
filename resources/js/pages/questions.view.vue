@@ -9,13 +9,43 @@
                    :modal-id="'modal-form-errors-assignment-question-learning-tree-info'"
     />
     <div v-if="questions[currentPage-1]">
-      <b-modal id="modal-submission-information"
-               title="Submission Information"
+      <b-modal
+        :id="`modal-save-to-my-favorites`"
+        ref="saveToMyFavorites"
+        title="Save Question To My Favorites"
       >
-        <b-card v-if="(questions[currentPage-1].technology === 'qti' || questions[currentPage-1].technology_iframe) && !isDiscussIt()
-                  && showSubmissionInformation && showQuestion && assessmentType !== 'learning tree' && !isFormative"
-                header="default"
-                header-html="<h2 class=&quot;h7&quot;>Auto-Graded Submission Information</h2>"
+        <SavedQuestionsFolders
+          ref="savedQuestionsFolders"
+          :type="'my_favorites'"
+          :init-saved-questions-folder="myFavoritesFolder"
+          :create-modal-add-saved-questions-folder="true"
+          :question-source-is-my-favorites="false"
+          @savedQuestionsFolderSet="setMyFavoritesFolder"
+        />
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide(`modal-save-to-my-favorites`)"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="addQuestionToFavorites('single')"
+          >
+            Submit
+          </b-button>
+        </template>
+      </b-modal>
+      <b-modal id="modal-submission-information"
+               :title="modalSubmissionInformationTitle"
+      >
+        <b-card v-if="showAutoGradedSubmissionInformation"
+                :class="{'no-card-style': !showOpenEndedSubmissionInformation}"
+                :header-html="autoGradedSubmissionInformationHeader"
         >
           <b-card-text>
             <ul style="list-style-type:none" class="pl-0">
@@ -34,21 +64,6 @@
                             @click="$bvModal.show('modal-h5p-activity-set-submissions')"
                   >View</b-button>
                 </span>
-                <span v-if="!isOpenEnded
-                  && questions[currentPage - 1].last_submitted !== 'N/A'
-                  && questions[currentPage-1].can_submit_work"
-                >
-                  <SubmitWork :key="`submit-work-${submitWorkKey}`"
-                              class="pl-1"
-                              :submit-button-active="submitButtonActive"
-                              :user-id="questions[currentPage-1].user_id"
-                              :assignment-id="+assignmentId"
-                              :question-id="+questions[currentPage-1].id"
-                              :submitted-work="questions[currentPage-1].submitted_work"
-                              :submitted-work-at="questions[currentPage-1].submitted_work_at"
-                              @updateSubmittedWork="updateSubmittedWork"
-                  />
-                </span>
               </li>
               <li
                 v-if="(questions[currentPage-1].qti_json_type === 'marker' && questions[currentPage-1].qti_answer_json) || (['webwork','imathas'].includes(questions[currentPage-1].technology) && submissionArray.length)"
@@ -59,21 +74,6 @@
                 </span>
                 <span v-if="questions[currentPage - 1].last_submitted !== 'N/A'">
                   <b-button size="sm" variant="info" @click="showSubmissionArray">View Summary</b-button></span>
-                <span v-if="!isOpenEnded
-                  && questions[currentPage - 1].last_submitted !== 'N/A'
-                  && questions[currentPage-1].can_submit_work"
-                >
-                  <SubmitWork :key="`submit-work-${submitWorkKey}`"
-                              class="pl-1"
-                              :submit-button-active="submitButtonActive"
-                              :user-id="questions[currentPage-1].user_id"
-                              :assignment-id="+assignmentId"
-                              :question-id="+questions[currentPage-1].id"
-                              :submitted-work="questions[currentPage-1].submitted_work"
-                              :submitted-work-at="questions[currentPage-1].submitted_work_at"
-                              @updateSubmittedWork="updateSubmittedWork"
-                  />
-                </span>
               </li>
               <li>
                 <span class="font-weight-bold">Submitted At:
@@ -83,22 +83,6 @@
                       questions[currentPage - 1].last_submitted
                     }} </span>
                 </span>
-              </li>
-              <li v-if="!isOpenEnded
-                && questions[currentPage - 1].last_submitted !== 'N/A'
-                && questions[currentPage-1].can_submit_work
-                && !(['webwork','imathas'].includes(questions[currentPage-1].technology) && submissionArray.length)"
-              >
-                <SubmitWork :key="`submit-work-${submitWorkKey}`"
-                            class="pl-1"
-                            :submit-button-active="submitButtonActive"
-                            :user-id="questions[currentPage-1].user_id"
-                            :assignment-id="+assignmentId"
-                            :question-id="+questions[currentPage-1].id"
-                            :submitted-work="questions[currentPage-1].submitted_work"
-                            :submitted-work-at="questions[currentPage-1].submitted_work_at"
-                            @updateSubmittedWork="updateSubmittedWork"
-                />
               </li>
               <li v-if="showScores">
                 <span class="font-weight-bold">Score: {{
@@ -116,13 +100,9 @@
             </ul>
           </b-card-text>
         </b-card>
-        <b-card v-if="(isOpenEnded || questions[currentPage -1].rubric)
-                  && (user.role === 3)
-                  && (showSubmissionInformation || openEndedSubmissionType === 'file' || questions[currentPage -1].rubric)
-                  && !isAnonymousUser"
-                header="Default"
-                :class="{ 'mt-3': (questions[currentPage-1].technology_iframe && showSubmissionInformation) || zoomedOut, 'mb-3': true }"
-                :header-html="getOpenEndedTitle()"
+        <b-card v-if="showOpenEndedSubmissionInformation"
+                :class="{'no-card-style': !showAutoGradedSubmissionInformation, 'mt-3':showAutoGradedSubmissionInformation }"
+                :header-html="openEndedSubmissionInformationHeader"
         >
           <b-card-text>
             <ul style="list-style-type:none" class="pl-0">
@@ -216,13 +196,6 @@
             @click="$bvModal.hide('modal-submission-information')"
           >
             OK
-          </b-button>
-          <b-button v-show="showContactGrader() || showContactInstructorAutoGraded"
-                    size="sm"
-                    variant="outline-primary"
-                    @click="openContactGraderModal( 'auto-graded')"
-          >
-            Contact Grader
           </b-button>
         </template>
       </b-modal>
@@ -1617,20 +1590,6 @@
       hide-footer
       @hidden="showAudioUploadComponent = true;handleCancel()"
     >
-      <span v-if="user.role === 2">
-        <toggle-button
-          class="mt-1"
-          :width="105"
-          :value="solutionTypeIsPdfImage"
-          :sync="true"
-          :font-size="14"
-          :margin="4"
-          :color="toggleColors"
-          :labels="{checked: 'PDF/Image', unchecked: 'Audio'}"
-          @change="solutionTypeIsPdfImage= !solutionTypeIsPdfImage"
-        />
-
-      </span>
       <div v-if="!solutionTypeIsPdfImage">
         <audio-recorder
           ref="recorder"
@@ -1672,148 +1631,7 @@
       </div>
 
       <div v-if="solutionTypeIsPdfImage">
-        <p>
-          <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let ADAPT cut up the PDF for you. Or, upload one
-            solution at a time. If you upload a full PDF, students will be able to both download a full solution key
-            and download solutions on a per question basis.</span>
-        </p>
-        <p v-if="user.role === 2">
-          <span><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
-        </p>
         <b-form ref="form">
-          <b-form-group v-show="user.role !== 3">
-            <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment"
-                          @click="showCurrentFullPDF = true"
-            >
-              Upload
-              <span v-if="user.role === 2">solutions from a single PDF that ADAPT can cutup for you.</span>
-              <span v-if="user.role !== 2">a PDF and let us know which page your submission is on.</span>
-            </b-form-radio>
-            <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">
-              Upload individual
-              <span v-if="user.role === 2">question solutions</span>
-              <span v-if="user.role !== 2">question file submissions</span>
-            </b-form-radio>
-          </b-form-group>
-
-          <div v-if="uploadLevel === 'assignment' && showCurrentFullPDF">
-            <hr>
-            <p>
-              <span v-show="user.role === 2">Select a single page or a comma separated list of pages to submit as your solution to
-                this question or </span>
-              <span v-show="user.role === 3">Tell us which page your question submission starts on or
-              </span>
-              <a href="#" @click="showCurrentFullPDF = false">
-                upload a new PDF</a>.
-            </p>
-            <p v-show="user.role === 3">
-              <span class="font-weight-bold">Important:</span>
-              If your submission spans multiple pages, just enter the first page where the submission starts.
-            </p>
-            <b-container v-show="user.role === 2" class="mb-2">
-              <b-form-group
-                id="chosen_cutups"
-                label-cols-sm="2"
-                label-cols-lg="2"
-                label="Chosen cutups"
-                label-for="chosen_cutups"
-              >
-                <b-form-row lg="12">
-                  <b-col lg="3">
-                    <b-form-input
-                      id="name"
-                      v-model="cutupsForm.chosen_cutups"
-                      lg="3"
-                      type="text"
-                      :class="{ 'is-invalid': cutupsForm.errors.has('chosen_cutups') }"
-                      @keydown="cutupsForm.errors.clear('chosen_cutups')"
-                    />
-                    <has-error :form="cutupsForm" field="chosen_cutups"/>
-                  </b-col>
-                  <b-col lg="8" class="ml-3">
-                    <b-row>
-                      <b-button class="mt-1" size="sm" variant="outline-primary"
-                                @click="setCutupAsSolution(questions[currentPage-1].id)"
-                      >
-                        Set As Solution
-                      </b-button>
-                      <span v-show="settingAsSolution" class="ml-2">
-                        <b-spinner small type="grow"/>
-                        Processing your file...
-                      </span>
-                    </b-row>
-                  </b-col>
-                </b-form-row>
-              </b-form-group>
-            </b-container>
-            <div v-show="user.role === 2" class="overflow-auto">
-              <b-pagination
-                v-model="currentCutup"
-                :total-rows="cutups.length"
-                :limit="12"
-                :per-page="perPage"
-                first-number
-                last-number
-                size="sm"
-                align="center"
-              />
-            </div>
-
-            <b-container v-show="user.role === 3" class="mb-2">
-              <b-form-group
-                id="page"
-                label-cols-sm="4"
-                label-cols-lg="4"
-                label="My submission starts on page:"
-                label-for="Page"
-              >
-                <b-form-row lg="12">
-                  <b-col lg="2">
-                    <b-form-input
-                      id="name"
-                      v-model="questionSubmissionPageForm.page"
-                      lg="2"
-                      type="text"
-                      :class="{ 'is-invalid': questionSubmissionPageForm.errors.has('page') }"
-                      @keydown="questionSubmissionPageForm.errors.clear('page')"
-                    />
-                    <has-error :form="questionSubmissionPageForm" field="page"/>
-                  </b-col>
-                  <b-col lg="8" class="ml-3">
-                    <b-row>
-                      <b-button class="mt-1" size="sm" variant="outline-primary"
-                                @click="setPageAsSubmission(questions[currentPage-1].id)"
-                      >
-                        Set As Question File Submission
-                      </b-button>
-                      <span v-show="settingAsSolution" class="ml-2">
-                        <b-spinner small type="grow"/>
-                        Processing your file...
-                      </span>
-                    </b-row>
-                  </b-col>
-                </b-form-row>
-              </b-form-group>
-            </b-container>
-
-            <div v-if="showCurrentFullPDF && cutups.length && cutups[currentCutup-1]">
-              <b-embed
-                type="iframe"
-                aspect="16by9"
-                :src="cutups[currentCutup-1].temporary_url"
-                allowfullscreen
-              />
-            </div>
-            <div v-if="fullPdfUrl">
-              <b-embed
-                :key="questionSubmissionPageForm.page"
-                type="iframe"
-                aspect="16by9"
-                :src="getFullPdfUrlAtPage(fullPdfUrl, questionSubmissionPageForm.page)"
-                allowfullscreen
-              />
-            </div>
-          </div>
           <b-container v-show="uploadLevel === 'assignment' && (!showCurrentFullPDF && (cutups.length || fullPdfUrl))">
             <b-row align-h="center">
               <b-button class="ml-2" size="sm" variant="outline-primary" @click="showCurrentFullPDF = true">
@@ -1822,10 +1640,28 @@
             </b-row>
           </b-container>
           <b-container>
-            <hr v-show="user.role !== 3">
-
+            <div v-if="!isOpenEndedAudioSubmission">
+              <div v-if="bothFileUploadMode">
+                <p>
+                  Upload individual question submission. Optionally, upload an entire PDF with one submission per page
+                  and let ADAPT cut up the PDF for you on the assignment's
+                  <a :href="`/students/assignments/${assignmentId}/summary`" target="_blank">summary page</a>.
+                </p>
+              </div>
+              <p v-if="compiledPDF">
+                Please upload an entire PDF with one submission per page and let ADAPT cut up the PDF for you on the
+                assignment's
+                <a :href="`/students/assignments/${assignmentId}/summary`" target="_blank">summary page</a>.
+              </p>
+              <p>
+                <strong>Important:</strong> For best results, don't crop any of your pages. In addition, please make
+                sure that they are
+                all
+                oriented in the same direction.
+              </p>
+            </div>
             <file-upload
-              v-if="isOpenEndedAudioSubmission"
+              v-if="isOpenEndedAudioSubmission && !compiledPDF"
               ref="upload"
               v-model="files"
               accept=".mp3"
@@ -1834,7 +1670,7 @@
               @input-filter="inputFilter"
             />
             <b-button
-              v-if="!isOpenEndedAudioSubmission"
+              v-if="!isOpenEndedAudioSubmission && !compiledPDF"
               variant="primary"
               size="sm"
               @click="triggerFileSelect"
@@ -1847,7 +1683,7 @@
                 v-if="!isOpenEndedAudioSubmission"
                 ref="upload"
                 v-model="files"
-                accept=".pdf,.txt,.png,.jpg,.jpeg"
+                accept=".pdf,.txt,.png,.jpg,.jpeg,.xlsx"
                 put-action="/put.method"
                 @input-file="inputFile"
                 @input-filter="inputFilter"
@@ -1939,7 +1775,14 @@
                 <small v-show="questionStatus"
                        :class="getQuestionStatusClass()"
                        style="position: relative; top: -2px;"
-                >Status: {{ capitalize(questionStatus) }}</small>
+                >Status: {{ capitalize(questionStatus) }}
+                  <QuestionCircleTooltip v-if="user.fake_student" :id="'fake-student-status-open-tooltip'"/>
+                  <b-tooltip target="fake-student-status-open-tooltip" delay="250"
+                             triggers="hover focus"
+                  >
+                    Assignments are always open for "fake students"
+                  </b-tooltip>
+                </small>
               </b-col>
               <b-col cols="auto" class="text-right">
                 <div
@@ -1951,21 +1794,21 @@
                 >
                   <span
                     v-if="(questions[currentPage - 1].last_submitted === 'N/A' && isNaN(questions[currentPage - 1].submission_file_score))
- || typeof(questions[currentPage - 1].total_score) === 'undefined'"
+                      || typeof(questions[currentPage - 1].total_score) === 'undefined'"
                   >-/</span>
                   <span v-else>{{
                       questions[currentPage - 1].total_score * 1
                     }}/</span>{{ questions[currentPage - 1].points * 1 }}
                   point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}
                 </div>
-                <small v-if="studentNonClicker() && assessmentType === 'real time'"
+                <small v-if="assessmentType === 'delayed' || (studentNonClicker() && assessmentType === 'real time')"
                        class="text-muted"
                 >
                   <span v-show="numberOfAllowedAttempts !== 'unlimited'
                     && scoringType === 'p'"
                   >{{ numberOfRemainingAttempts }}</span>
-                  <span v-show="numberOfAllowedAttempts === 'unlimited'
-                    && !isFormative"
+                  <span v-show="(numberOfAllowedAttempts === 'unlimited'
+                    && !isFormative) || assessmentType === 'delayed'"
                   >&infin; attempts left</span>
                 </small>
               </b-col>
@@ -2084,17 +1927,17 @@
                 v-if="isInstructor() && !isInstructorWithAnonymousView && assessmentType !== 'clicker' && !inIFrame"
                 class="mb-2"
               >
-                <span class="font-weight-bold">Question View:</span>
+                <span class="font-weight-bold">Question Attributes:</span>
                 <toggle-button
-                  :width="100"
+                  :width="83"
                   class="mt-2"
                   :value="questionView === 'basic'"
                   :sync="true"
                   :font-size="14"
                   :margin="4"
-                  :color="{checked: '#17a2b8', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Basic', unchecked: 'Advanced'}"
-                  @change="toggleQuestionView()"
+                  :color="{checked: '#6c757d', unchecked:'#17a2b8' }"
+                  :labels="{checked: 'Hidden', unchecked: 'Shown'}"
+                  @change="toggleQuestionAttributes()"
                 />
               </li>
               <li v-if="assessmentType !== 'clicker'
@@ -2127,7 +1970,7 @@
                 && numberOfAllowedAttempts !== '1'
                 && numberOfAllowedAttemptsPenalty
                 && !isFormative
-&& false"
+                && false"
             >
               Next Attempt Points: {{ maximumNumberOfPointsPossible }}
               <QuestionCircleTooltip :id="'real-time-per-attempt-penalty-tooltip'"/>
@@ -2172,165 +2015,132 @@
             <div v-if="studentNonClicker() && completionScoringModeMessage">
               <span class="font-weight-bold" v-html="completionScoringModeMessage"/>
             </div>
+            <div v-show="false" id="action-icons" class="pb-1">
+              <a id="question-properties-tooltip" href="" class="p-1" @click.prevent="openModalProperties()">
+                <b-icon icon="gear"
+                        aria-label="Properties"
+                        class="text-muted"
+                        scale="1.2"
+                />
+              </a>
+              <b-tooltip target="question-properties-tooltip"
+                         delay="750"
+                         triggers="hover"
+              >
+                View the question's properties
+              </b-tooltip>
+              <CloneQuestion
+                :assignment-id="+assignmentId"
+                class="pl-1"
+                :question-id="questions[currentPage - 1].id"
+                :question-editor-user-id="questions[currentPage - 1].question_editor_user_id"
+                :title="questions[currentPage - 1].title"
+                :license="questions[currentPage - 1].license"
+                :public="questions[currentPage - 1].public"
+                :library="questions[currentPage - 1].library"
+                :non-technology="+questions[currentPage - 1].non_technology"
+                @reloadQuestions="getSelectedQuestions(assignmentId, questions[currentPage - 1].id)"
+              />
+              <RefreshQuestion v-if="false"
+                               :assignment-id="parseInt(assignmentId)"
+                               :question-id="questions[currentPage - 1].id"
+                               :reload-question-parent="reloadQuestionParent"
+                               :icon="true"
+              />
+              <a v-if="assessmentType !== 'learning tree'"
+                 id="edit-question-tooltip"
+                 class="p-1"
+                 href=""
+                 @click.prevent="editQuestionSource(questions[currentPage-1])"
+              >
+                <b-icon icon="pencil"
+                        aria-label="Edit Question"
+                        class="text-muted"
+                        scale="1.1"
+                />
+              </a>
+              <b-tooltip target="edit-question-tooltip"
+                         delay="750"
+                         triggers="hover"
+              >
+                Edit the question
+              </b-tooltip>
+              <a v-if="assessmentType === 'learning tree'"
+                 id="edit-learning-tree-tooltip"
+                 class="p-1"
+                 href=""
+                 @click.prevent="editLearningTree(questions[currentPage-1].learning_tree_id)"
+              >
+                <b-icon icon="pencil"
+                        aria-label="Edit Learning Tree"
+                        class="text-muted"
+                        scale="1.1"
+                />
+              </a>
+              <b-tooltip target="edit-learning-tree-tooltip"
+                         delay="750"
+                         triggers="hover"
+              >
+                Edit the learning tree
+              </b-tooltip>
+              <a id="remove-question-tooltip"
+                 href=""
+                 class="p-1"
+                 @click.prevent="openRemoveQuestionModal()"
+              >
+                <b-icon icon="trash"
+                        aria-label="Remove Question"
+                        class="text-muted"
+                        scale="1.1"
+                />
+              </a>
+              <b-tooltip target="remove-question-tooltip"
+                         delay="750"
+                         triggers="hover"
+              >
+                Remove question from the assignment
+              </b-tooltip>
+
+              <span v-show="!myFavoriteQuestionIds.includes(questions[currentPage-1].id)">
+                <a id="add-to-favorites-tooltip"
+                   href=""
+                   class="p-1"
+                   @click.prevent="$bvModal.show('modal-save-to-my-favorites')"
+                >
+                  <font-awesome-icon :icon="heartIcon"
+                                     aria-label="Add To My Favorites"
+                                     class="text-muted"
+                                     scale="1.1"
+                  />
+                </a>
+                <b-tooltip target="add-to-favorites-tooltip"
+                           delay="750"
+                           triggers="hover"
+                >
+                  Add question to My Favorites
+                </b-tooltip>
+              </span>
+              <span v-show="myFavoriteQuestionIds.includes(questions[currentPage-1].id)">
+                <a id="remove-from-favorites-tooltip"
+                   href=""
+                   class="p-1"
+                   @click.prevent="removeMyFavoritesQuestion()"
+                >
+                  <font-awesome-icon :icon="heartIcon"
+                                     aria-label="Remove From My Favorites"
+                                     class="text-danger"
+                                     scale="1.1"
+                  />
+                </a>
+                <b-tooltip target="remove-from-favorites-tooltip"
+                           delay="750"
+                           triggers="hover"
+                >
+                  Remove question from My Favorites
+                </b-tooltip>
+              </span>
+            </div>
             <div v-if="instructorInNonBasicView() && !clickerApp">
-              <div id="action-icons" class="pb-1">
-                <a id="question-properties-tooltip" href="" class="p-1" @click.prevent="openModalProperties()">
-                  <b-icon icon="gear"
-                          aria-label="Properties"
-                          class="text-muted"
-                          scale="1.2"
-                  />
-                </a>
-                <b-tooltip target="question-properties-tooltip"
-                           delay="750"
-                           triggers="hover"
-                >
-                  View the question's properties
-                </b-tooltip>
-                <CloneQuestion
-                  :key="`copy-question-${questions[currentPage - 1].id}`"
-                  :assignment-id="+assignmentId"
-                  class="pl-1"
-                  :question-id="questions[currentPage - 1].id"
-                  :question-editor-user-id="questions[currentPage - 1].question_editor_user_id"
-                  :title="questions[currentPage - 1].title"
-                  :license="questions[currentPage - 1].license"
-                  :public="questions[currentPage - 1].public"
-                  :library="questions[currentPage - 1].library"
-                  :non-technology="+questions[currentPage - 1].non_technology"
-                  @reloadQuestions="getSelectedQuestions(assignmentId, questions[currentPage - 1].id)"
-                />
-                <RefreshQuestion v-if="false"
-                                 :assignment-id="parseInt(assignmentId)"
-                                 :question-id="questions[currentPage - 1].id"
-                                 :reload-question-parent="reloadQuestionParent"
-                                 :icon="true"
-                />
-                <a v-if="questionView !== 'basic' && assessmentType !== 'learning tree'"
-                   id="edit-question-tooltip"
-                   class="p-1"
-                   href=""
-                   @click.prevent="editQuestionSource(questions[currentPage-1])"
-                >
-                  <b-icon icon="pencil"
-                          aria-label="Edit Question"
-                          class="text-muted"
-                          scale="1.1"
-                  />
-                </a>
-                <b-tooltip target="edit-question-tooltip"
-                           delay="750"
-                           triggers="hover"
-                >
-                  Edit the question
-                </b-tooltip>
-                <a v-if="questionView !== 'basic' && assessmentType === 'learning tree'"
-                   id="edit-learning-tree-tooltip"
-                   class="p-1"
-                   href=""
-                   @click.prevent="editLearningTree(questions[currentPage-1].learning_tree_id)"
-                >
-                  <b-icon icon="pencil"
-                          aria-label="Edit Learning Tree"
-                          class="text-muted"
-                          scale="1.1"
-                  />
-                </a>
-                <b-tooltip target="edit-learning-tree-tooltip"
-                           delay="750"
-                           triggers="hover"
-                >
-                  Edit the learning tree
-                </b-tooltip>
-                <a id="remove-question-tooltip"
-                   href=""
-                   class="p-1"
-                   @click.prevent="openRemoveQuestionModal()"
-                >
-                  <b-icon icon="trash"
-                          aria-label="Remove Question"
-                          class="text-muted"
-                          scale="1.1"
-                  />
-                </a>
-                <b-tooltip target="remove-question-tooltip"
-                           delay="750"
-                           triggers="hover"
-                >
-                  Remove question from the assignment
-                </b-tooltip>
-
-                <span v-if="!myFavoriteQuestionIds.includes(questions[currentPage-1].id)">
-                  <a id="add-to-favorites-tooltip"
-                     href=""
-                     class="p-1"
-                     @click.prevent="$bvModal.show('modal-save-to-my-favorites')"
-                  >
-                    <font-awesome-icon :icon="heartIcon"
-                                       aria-label="Add To My Favorites"
-                                       class="text-muted"
-                                       scale="1.1"
-                    />
-                  </a>
-                  <b-modal
-                    :id="`modal-save-to-my-favorites`"
-                    ref="saveToMyFavorites"
-                    title="Save Question To My Favorites"
-                  >
-                    <SavedQuestionsFolders
-                      ref="savedQuestionsFolders"
-                      :type="'my_favorites'"
-                      :init-saved-questions-folder="myFavoritesFolder"
-                      :create-modal-add-saved-questions-folder="true"
-                      :question-source-is-my-favorites="false"
-                      @savedQuestionsFolderSet="setMyFavoritesFolder"
-                    />
-                    <template #modal-footer>
-                      <b-button
-                        size="sm"
-                        class="float-right"
-                        @click="$bvModal.hide(`modal-save-to-my-favorites`)"
-                      >
-                        Cancel
-                      </b-button>
-                      <b-button
-                        variant="primary"
-                        size="sm"
-                        class="float-right"
-                        @click="addQuestionToFavorites('single')"
-                      >
-                        Submit
-                      </b-button>
-                    </template>
-                  </b-modal>
-
-                  <b-tooltip target="add-to-favorites-tooltip"
-                             delay="750"
-                             triggers="hover"
-                  >
-                    Add question to My Favorites
-                  </b-tooltip>
-                </span>
-                <span v-if="myFavoriteQuestionIds.includes(questions[currentPage-1].id)">
-                  <a id="remove-from-favorites-tooltip"
-                     href=""
-                     class="p-1"
-                     @click.prevent="removeMyFavoritesQuestion()"
-                  >
-                    <font-awesome-icon :icon="heartIcon"
-                                       aria-label="Add To My Favorites"
-                                       class="text-danger"
-                                       scale="1.1"
-                    />
-                  </a>
-                  <b-tooltip target="remove-from-favorites-tooltip"
-                             delay="750"
-                             triggers="hover"
-                  >
-                    Remove question from My Favorites
-                  </b-tooltip>
-                </span>
-              </div>
               <b-form-row v-show="!isFormative" style="margin-left:0">
                 This question is worth <span v-show="!showUpdatePointsPerQuestion" class="pl-1 pr-1"
               > {{ questions[currentPage - 1].points }} </span>
@@ -2486,10 +2296,11 @@
                                    @hideRubricProperties="showRubricProperties = false"
             />
             <b-row
-              v-show="user.role === 2 && (+openEndedSubmissionType !== 0 || isDiscussIt())"
+              v-show="user.role === 2 && (+openEndedSubmissionType !== 0 || isDiscussIt()) && questionView === 'expanded'"
               class="pl-3 pb-2 pt-2"
             >
-              <span v-if="assessmentType !== 'clicker' && questions[currentPage - 1].question_rubric_exists"
+              <span v-if="assessmentType !== 'clicker'
+                      && questions[currentPage - 1].question_rubric_exists"
                     class="mr-2 mt-1"
               >
                 <toggle-button
@@ -2506,7 +2317,9 @@
                 />
               </span>
               <span
-                v-show="user.role === 2 && assessmentType !== 'clicker' && (!questions[currentPage - 1].use_existing_rubric || (questions[currentPage - 1].use_existing_rubric && !questions[currentPage - 1].rubric))"
+                v-show="user.role === 2
+                  && assessmentType !== 'clicker'
+                  && (!questions[currentPage - 1].use_existing_rubric || (questions[currentPage - 1].use_existing_rubric && !questions[currentPage - 1].rubric))"
               >
                 <b-button size="sm"
                           variant="outline-info"
@@ -3293,7 +3106,7 @@
                         </div>
                       </div>
                     </div>
-                    <div v-if="isOpenEndedFileSubmission">
+                    <div v-if="isOpenEndedFileSubmission && user.role === 3">
                       <div class="mt-2 ml-2">
                         <b-button variant="primary"
                                   size="sm"
@@ -3303,24 +3116,113 @@
                           Upload New File
                         </b-button>
                       </div>
-                      <div v-show="submitButtonActive && (!inIFrame
-                             && (compiledPDF || bothFileUploadMode)
-                             && user.role === 3
-                             && submitButtonActive)"
-                           class="mt-2"
-                      >
-                        {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the
-                        assignment's
-                        <router-link
-                          class="ml-1 mr-0"
-                          :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
-                        >
-                          summary page.
-                        </router-link>
-                      </div>
                       <b-alert :show="!submitButtonActive" variant="info" class="mt-3">
                         No additional submissions will be accepted.
                       </b-alert>
+                    </div>
+                    <div v-if="isOpenEndedTextSubmission && user.role === 3 && !isAnonymousUser">
+                      <div class="mt-1">
+                        <ckeditor
+                          ref="textSubmissionEditor"
+                          :key="`${questions[currentPage-1].id}-${ckeditorTextSubmissionKey}`"
+                          v-model="textSubmissionForm.text_submission"
+                          tabindex="0"
+                          aria-label="Text submission box"
+                          :config="richEditorConfig"
+                          @ready="handleFixCKEditorWithPasteWarning"
+                          @namespaceloaded="onCKEditorNamespaceLoaded"
+                        />
+                      </div>
+                      <b-container class="mt-2 mb-3">
+                        <b-row>
+                          <b-button v-if="questions[currentPage-1].open_ended_default_text"
+                                    v-b-modal.modal-reset-to-default-text
+                                    variant="danger"
+                                    size="sm"
+                                    class="mr-2"
+                          >
+                            Reset Default Text
+                          </b-button>
+                          <b-button variant="primary"
+                                    size="sm"
+                                    @click="submitText"
+                          >
+                            Submit
+                          </b-button>
+                        </b-row>
+                      </b-container>
+                    </div>
+                    <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
+                      <div class="h7">
+                        Instructions
+                      </div>
+                      <div v-if="isPhone()">
+                        <p>
+                          Use your phone to record and upload your audio submission directly to ADAPT.
+                        </p>
+                        <NativeAudioVideoRecorder
+                          :key="`new-submission-${questions[currentPage-1].id}-${previouslyUploadedAudioFile}`"
+                          :recording-type="'audio'"
+                          :upload-type="'submission'"
+                          :assignment-id="+assignmentId"
+                          :question-id="questions[currentPage-1].id"
+                          :previously-uploaded-file="previouslyUploadedAudioFile"
+                          @submitAudio="submitAudio"
+                        />
+                        <div class="text-center">
+                          <b-button v-show="previouslyUploadedAudioFile"
+                                    variant="primary"
+                                    size="sm"
+                                    @click="previouslyUploadedAudioFile =''"
+                          >
+                            Re-record
+                          </b-button>
+                        </div>
+                      </div>
+                      <div v-else class="ml-5">
+                        <p>
+                          Use the built-in "ADAPT recorder" below to record and upload your audio submission directly
+                          to
+                          ADAPT. After you hit record, click on the recording (for example, Record 1), and then click
+                          the
+                          disk
+                          icon to save it and submit it.
+                          Otherwise, you may record your audio submission as an .mp3 file with another program
+                          (outside
+                          of
+                          ADAPT),
+                          save the .mp3 file to your computer, then <a href=""
+                                                                       variant="sm"
+                                                                       @click.prevent="openUploadFileModal(questions[currentPage - 1].id)"
+                        >
+                          upload the .mp3 file</a> from your computer into ADAPT.
+                        </p>
+                        <audio-recorder
+                          v-show="showAudioUploadComponent"
+                          ref="uploadRecorder"
+                          :key="questions[currentPage-1].id"
+                          tabindex="0"
+                          class="m-auto"
+                          :upload-url="audioUploadUrl"
+                          :time="1"
+                          :successful-upload="submittedAudioUpload"
+                          :failed-upload="failedAudioUpload"
+                        />
+                      </div>
+                    </div>
+                    <div v-if="questions[currentPage-1].can_submit_work"
+                    >
+                      <SubmitWork :key="`submit-work-${submitWorkKey}`"
+                                  style="margin-left:12px"
+                                  :disabled="questions[currentPage - 1].last_submitted === 'N/A' || (['webwork','imathas'].includes(questions[currentPage-1].technology) && !submissionArray.length)"
+                                  :submit-button-active="submitButtonActive"
+                                  :user-id="questions[currentPage-1].user_id"
+                                  :assignment-id="+assignmentId"
+                                  :question-id="+questions[currentPage-1].id"
+                                  :submitted-work="questions[currentPage-1].submitted_work"
+                                  :submitted-work-at="questions[currentPage-1].submitted_work_at"
+                                  @updateSubmittedWork="updateSubmittedWork"
+                      />
                     </div>
                   </b-card>
                   <div v-if="assessmentType === 'clicker'
@@ -3429,6 +3331,15 @@
                         While in Student View, you can reset the submission which may aid in testing questions.
                       </b-tooltip>
                     </span>
+                    <span class="float-right">
+                      <b-button v-show="showContactGrader() || showContactInstructorAutoGraded"
+                                size="sm"
+                                variant="outline-primary"
+                                @click="openContactGraderModal( 'auto-graded')"
+                      >
+                        Contact Grader
+                      </b-button>
+                    </span>
                   </div>
                   <div>
                     <div
@@ -3459,96 +3370,6 @@
                             </b-button>
                           </b-row>
                         </b-container>
-                      </div>
-                    </div>
-                    <div v-if="isOpenEndedTextSubmission && user.role === 3 && !isAnonymousUser">
-                      <div class="mt-1">
-                        <ckeditor
-                          ref="textSubmissionEditor"
-                          :key="`${questions[currentPage-1].id}-${ckeditorTextSubmissionKey}`"
-                          v-model="textSubmissionForm.text_submission"
-                          tabindex="0"
-                          aria-label="Text submission box"
-                          :config="richEditorConfig"
-                          @ready="handleFixCKEditorWithPasteWarning"
-                          @namespaceloaded="onCKEditorNamespaceLoaded"
-                        />
-                      </div>
-                      <b-container class="mt-2 mb-3">
-                        <b-row align-h="end">
-                          <b-button v-if="questions[currentPage-1].open_ended_default_text"
-                                    v-b-modal.modal-reset-to-default-text
-                                    variant="danger"
-                                    size="sm"
-                                    class="mr-2"
-                          >
-                            Reset Default Text
-                          </b-button>
-                          <b-button variant="primary"
-                                    size="sm"
-                                    @click="submitText"
-                          >
-                            Submit
-                          </b-button>
-                        </b-row>
-                      </b-container>
-                    </div>
-                    <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
-                      <div class="h7">
-                        Instructions
-                      </div>
-                      <div v-if="isPhone()">
-                        <p>
-                          Use your phone to record and upload your audio submission directly to ADAPT.
-                        </p>
-                        <NativeAudioVideoRecorder
-                          :key="`new-submission-${questions[currentPage-1].id}-${previouslyUploadedAudioFile}`"
-                          :recording-type="'audio'"
-                          :upload-type="'submission'"
-                          :assignment-id="+assignmentId"
-                          :question-id="questions[currentPage-1].id"
-                          :previously-uploaded-file="previouslyUploadedAudioFile"
-                          @submitAudio="submitAudio"
-                        />
-                        <div class="text-center">
-                          <b-button v-show="previouslyUploadedAudioFile"
-                                    variant="primary"
-                                    size="sm"
-                                    @click="previouslyUploadedAudioFile =''"
-                          >
-                            Re-record
-                          </b-button>
-                        </div>
-                      </div>
-                      <div v-else class="ml-5">
-                        <p>
-                          Use the built-in "ADAPT recorder" below to record and upload your audio submission directly
-                          to
-                          ADAPT. After you hit record, click on the recording (for example, Record 1), and then click
-                          the
-                          disk
-                          icon to save it and submit it.
-                          Otherwise, you may record your audio submission as an .mp3 file with another program
-                          (outside
-                          of
-                          ADAPT),
-                          save the .mp3 file to your computer, then <a href=""
-                                                                       variant="sm"
-                                                                       @click.prevent="openUploadFileModal(questions[currentPage - 1].id)"
-                        >
-                          upload the .mp3 file</a> from your computer into ADAPT.
-                        </p>
-                        <audio-recorder
-                          v-show="showAudioUploadComponent"
-                          ref="uploadRecorder"
-                          :key="questions[currentPage-1].id"
-                          tabindex="0"
-                          class="m-auto"
-                          :upload-url="audioUploadUrl"
-                          :time="1"
-                          :successful-upload="submittedAudioUpload"
-                          :failed-upload="failedAudioUpload"
-                        />
                       </div>
                     </div>
                   </div>
@@ -3757,11 +3578,6 @@
                    class="mt-3 libretexts-border"
               >
                 <div class="mt-3" v-html="questions[currentPage - 1].hint"/>
-              </div>
-              <div v-if="questions[currentPage-1].libretexts_link"
-                   class="mt-3 libretexts-border"
-              >
-                <div class="mt-3" v-html="questions[currentPage - 1].libretexts_link"/>
               </div>
               <div v-if="questions[currentPage-1].notes"
                    class="mt-3 libretexts-border"
@@ -4319,7 +4135,35 @@ export default {
       user: 'auth/user'
     }),
     isAdmin: () => window.config.isAdmin,
-    isLocalMe: () => window.config.isAdmin && window.location.hostname === 'local.adapt'
+    isLocalMe: () => window.config.isAdmin && window.location.hostname === 'local.adapt',
+    showAutoGradedSubmissionInformation () {
+      return (this.questions[this.currentPage - 1].technology === 'qti' || this.questions[this.currentPage - 1].technology_iframe) && !this.isDiscussIt() &&
+        this.showSubmissionInformation &&
+        this.showQuestion && this.assessmentType !== 'learning tree' && !this.isFormative
+    },
+    showOpenEndedSubmissionInformation () {
+      return (this.isOpenEnded || this.questions[this.currentPage - 1].rubric) &&
+        (this.user.role === 3) &&
+        (this.showSubmissionInformation || this.openEndedSubmissionType === 'file' || this.questions[this.currentPage - 1].rubric) &&
+        !this.isAnonymousUser
+    },
+    modalSubmissionInformationTitle () {
+      if (this.showAutoGradedSubmissionInformation && this.showOpenEndedSubmissionInformation) {
+        return 'Submission Information'
+      }
+      if (this.showAutoGradedSubmissionInformation) {
+        return 'Auto-Graded Submission Information'
+      }
+      return this.getOpenEndedTitle()
+    },
+    autoGradedSubmissionInformationHeader () {
+      return this.showAutoGradedSubmissionInformation && this.showOpenEndedSubmissionInformation ?
+        '<h2 class="h7">Auto-Graded Submission Information</h2>' : ''
+    },
+    openEndedSubmissionInformationHeader () {
+      return this.showAutoGradedSubmissionInformation && this.showOpenEndedSubmissionInformation ?
+        `<h2 class="h7">${this.getOpenEndedTitle()}</h2>` : ''
+    }
   },
   watch: {
     openEndedSubmissionType: function (newVal, oldVal) {
@@ -4412,6 +4256,13 @@ export default {
         this.questionId = this.questions[0].id
       }
       await this.changePage(this.currentPage)
+      this.$nextTick(() => {
+        const sourceDiv = document.getElementById('action-icons')
+        const targetDiv = document.getElementById('instructor-action-icons')
+        if (targetDiv) {
+          targetDiv.append(...sourceDiv.childNodes)
+        }
+      })
       if (this.isDiscussIt()) {
         this.$nextTick(() => {
           document.querySelectorAll('.container').forEach(element => {
@@ -5701,6 +5552,7 @@ export default {
           my_favorites_folder_id: this.myFavoritesFolder,
           my_favorites_question_id: this.questions[this.currentPage - 1].id
         })
+        this.$bvModal.hide(`modal-save-to-my-favorites`)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -5942,11 +5794,10 @@ export default {
         }
       }
     },
-    async toggleQuestionView () {
+    async toggleQuestionAttributes () {
       try {
         // console.log(this.questionView)
         const { data } = await axios.patch(`/api/cookie/set-question-view/${this.questionView}`)
-        this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false
         }
@@ -6233,7 +6084,7 @@ export default {
         let openEndedSubmissionType = this.openEndedSubmissionType.includes('text') ? 'text' : this.openEndedSubmissionType
         capitalizedTitle = this.capitalize(openEndedSubmissionType)
       }
-      return `<h2 class="h7">${capitalizedTitle} Submission Information</h2>`
+      return `${capitalizedTitle} Submission Information`
     },
     async submitText () {
       try {
@@ -7235,5 +7086,21 @@ div.ar-icon svg {
 
 .clicker-pagination .page-link {
   color: inherit;
+}
+
+.no-card-style {
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.no-card-style .card-header {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.no-card-style .card-body {
+  padding: 0 !important;
 }
 </style>
