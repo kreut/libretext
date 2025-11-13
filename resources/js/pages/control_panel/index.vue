@@ -2,7 +2,7 @@
   <div>
     <div v-if="hasAccess">
       <div class="row">
-        <div v-if="[1, 5].includes(user.id)" class="mt-2 mb-2">
+        <div v-if="isAdmin" class="mt-2 mb-2">
           <card title="Control Panel" class="properties-card mt-3">
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">

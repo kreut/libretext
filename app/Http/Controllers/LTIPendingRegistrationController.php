@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Http\Requests\StoreLTIPendingRegistrationRequest;
 use App\LtiPendingRegistration;
 use App\LtiRegistration;
@@ -20,6 +21,10 @@ class LTIPendingRegistrationController extends Controller
     {
         try {
             $response['type'] = 'error';
+            if (!Helper::isAdmin()){
+                $response['message'] = "You cannot created pending registration requests.";
+                return $response;
+            }
             $data = $request->validated();
             $campus_id = Str::slug($data['campus']);
             if (LtiPendingRegistration::where('campus_id', $campus_id)->first()){
