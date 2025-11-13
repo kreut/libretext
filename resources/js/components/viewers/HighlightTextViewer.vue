@@ -20,6 +20,7 @@ import $ from 'jquery'
 import { addHighlights, toggleSelected } from '~/helpers/Highlighter'
 import HighlightResponseFeedback from '../feedback/HighlightResponseFeedback'
 import GeneralFeedback from '../feedback/GeneralFeedback'
+import { formatQuestionMediaPlayer } from '../../helpers/Questions'
 
 export default {
   name: 'HighlightTextViewer',
@@ -57,6 +58,7 @@ export default {
     this.qtiJson.prompt = this.qtiJson.prompt.replaceAll('&quot;', '"').replaceAll('&#39;', '\'')
     console.log(this.qtiJson.prompt)
     this.highlightedText = addHighlights(this.qtiJson.prompt, this.qtiJson.responses)
+    this.highlightedText = this.formatQuestionMediaPlayer(this.highlightedText)
     this.highlightedTextIndex++
     $(document).ready(function () {
       toggleSelected()
@@ -71,6 +73,9 @@ export default {
       })
       $('li').css('margin-bottom', '12px')
     })
+  },
+  methods: {
+    formatQuestionMediaPlayer
   }
 }
 </script>
