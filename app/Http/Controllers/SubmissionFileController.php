@@ -471,6 +471,7 @@ class SubmissionFileController extends Controller
                     'text/plain',
                     'image/png',
                     'image/jpeg',
+                    'image/gif',
                     'audio/mpeg',
                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 ]);

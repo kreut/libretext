@@ -1683,7 +1683,7 @@
                 v-if="!isOpenEndedAudioSubmission"
                 ref="upload"
                 v-model="files"
-                accept=".pdf,.txt,.png,.jpg,.jpeg,.xlsx"
+                accept=".pdf,.txt,.png,.jpg,.jpeg,.gif,.xlsx"
                 put-action="/put.method"
                 @input-file="inputFile"
                 @input-filter="inputFilter"
@@ -1801,8 +1801,9 @@
                     }}/</span>{{ questions[currentPage - 1].points * 1 }}
                   point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}
                 </div>
+
                 <small v-if="assessmentType === 'delayed' || (studentNonClicker() && assessmentType === 'real time')"
-                       class="text-muted"
+                       :class="getQuestionStatusClass()"
                 >
                   <span v-show="numberOfAllowedAttempts !== 'unlimited'
                     && scoringType === 'p'"
@@ -2016,7 +2017,7 @@
               <span class="font-weight-bold" v-html="completionScoringModeMessage"/>
             </div>
             <div v-show="false" id="action-icons" class="pb-1">
-              <a id="question-properties-tooltip" href="" class="p-1" @click.prevent="openModalProperties()">
+              <a id="question-properties-tooltip" href="" @click.prevent="openModalProperties()">
                 <b-icon icon="gear"
                         aria-label="Properties"
                         class="text-muted"
@@ -2049,7 +2050,6 @@
               />
               <a v-if="assessmentType !== 'learning tree'"
                  id="edit-question-tooltip"
-                 class="p-1"
                  href=""
                  @click.prevent="editQuestionSource(questions[currentPage-1])"
               >
@@ -2067,7 +2067,6 @@
               </b-tooltip>
               <a v-if="assessmentType === 'learning tree'"
                  id="edit-learning-tree-tooltip"
-                 class="p-1"
                  href=""
                  @click.prevent="editLearningTree(questions[currentPage-1].learning_tree_id)"
               >
@@ -2085,7 +2084,6 @@
               </b-tooltip>
               <a id="remove-question-tooltip"
                  href=""
-                 class="p-1"
                  @click.prevent="openRemoveQuestionModal()"
               >
                 <b-icon icon="trash"
@@ -2104,7 +2102,6 @@
               <span v-show="!myFavoriteQuestionIds.includes(questions[currentPage-1].id)">
                 <a id="add-to-favorites-tooltip"
                    href=""
-                   class="p-1"
                    @click.prevent="$bvModal.show('modal-save-to-my-favorites')"
                 >
                   <font-awesome-icon :icon="heartIcon"
@@ -3107,7 +3104,7 @@
                       </div>
                     </div>
                     <div v-if="isOpenEndedFileSubmission && user.role === 3">
-                      <div class="mt-2 ml-2">
+                      <div class="mt-2 ml-1">
                         <b-button variant="primary"
                                   size="sm"
                                   :disabled="!submitButtonActive"
@@ -3211,9 +3208,10 @@
                       </div>
                     </div>
                     <div v-if="questions[currentPage-1].can_submit_work"
+                           class="pl-1"
                     >
                       <SubmitWork :key="`submit-work-${submitWorkKey}`"
-                                  style="margin-left:12px"
+                                  style="margin-top: 3px"
                                   :disabled="questions[currentPage - 1].last_submitted === 'N/A' || (['webwork','imathas'].includes(questions[currentPage-1].technology) && !submissionArray.length)"
                                   :submit-button-active="submitButtonActive"
                                   :user-id="questions[currentPage-1].user_id"

@@ -42,7 +42,7 @@
           />
         </h1>
         <small class="text-muted">
-        <span v-if="adaptId">ADAPT ID: <span id="adapt-id">{{ adaptId }}</span>  <span class="text-info">
+        <span v-if="adaptId">ID: <span id="adapt-id">{{ adaptId }}</span>  <span class="text-info">
           <a href=""
              aria-label="Copy ADAPT ID"
              @click.prevent="doCopy('adapt-id')"
@@ -66,7 +66,7 @@
         </small>
       </b-col>
       <b-col v-if="user.role === 2" cols="auto" class="text-right" />
-      <div id="instructor-action-icons">
+      <div id="instructor-action-icons" style="display: flex;align-items: flex-end; padding-bottom: 0 !important;gap: 0.25rem; ">
   </div>
     </b-row>
     <hr style="margin-top:7px">
