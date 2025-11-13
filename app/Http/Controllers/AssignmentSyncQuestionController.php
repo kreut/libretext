@@ -1748,7 +1748,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($questions as $question) {
                 $questions_by_question_id[$question->id] = $question;
             }
-            $show_reset_open_ended_button= false;
+            $show_reset_open_ended_button = false;
             $has_open_ended_questions = false;
             foreach ($assignment_questions as $value) {
                 $columns = [];
@@ -1766,10 +1766,10 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['is_formative_question'] = in_array($value->question_id, $formative_questions);
                 $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
                 $columns['is_open_ended'] = $value->open_ended_submission_type !== '0';
-                if (in_array($value->open_ended_submission_type,['audio', 'file', 'text'])) {
-                    $show_reset_open_ended_button= true;
+                if (in_array($value->open_ended_submission_type, ['audio', 'file', 'text'])) {
+                    $show_reset_open_ended_button = true;
                 }
-                if ( $columns['is_open_ended'] ){
+                if ($columns['is_open_ended']) {
                     $has_open_ended_questions = true;
                 }
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
@@ -1813,9 +1813,9 @@ class AssignmentSyncQuestionController extends Controller
                     $columns['solution_type'] = 'html';
                     $columns['problem_jwt'] = $technology_src_and_problemJWT['problemJWT'];
                 } else {
-                    $columns['solution_html'] = $question->addTimeToS3Images($value->solution_html, $dom);
+                    $columns['solution_html'] = $question->addTimeToS3IFiles($value->solution_html, $dom);
                     if (!$columns['solution_html']) {
-                        $columns['solution_html'] = $question->addTimeToS3Images($value->answer_html, $dom);
+                        $columns['solution_html'] = $question->addTimeToS3IFiles($value->answer_html, $dom);
                     }
                 }
                 if ($columns['solution_html']) {
@@ -2385,7 +2385,8 @@ class AssignmentSyncQuestionController extends Controller
                                                 Extension              $Extension,
                                                 AssignmentSyncQuestion $assignmentSyncQuestion,
                                                 IMathAS                $IMathAS,
-                                                Webwork                $webwork): array
+                                                Webwork                $webwork,
+                                                DOMDocument            $DOMDocument): array
     {
         /**helper function to get the response info from server side technologies...*/
 
@@ -2457,8 +2458,8 @@ class AssignmentSyncQuestionController extends Controller
             }
             if (($question->solution_html || $question->answer_html) && !$solution) {
                 $solution_type = 'html';
-                $solution_html = $question->solution_html;
-                $answer_html = $question->answer_html;
+                $solution_html = $question->addTimeToS3IFiles($question->solution_html, $DOMDocument, false);
+                $answer_html = $question->addTimeToS3IFiles($question->answer_html, $DOMDocument, false);
 
             }
             if ($question->technology === 'webwork') {
@@ -3228,12 +3229,12 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['submission_score_override'] = $submission_score_overrides_by_question_id[$question->id] ?? null;
                 }
                 $local_solution_exists = isset($uploaded_solutions_by_question_id[$question->id]['solution_file_url']);
-                $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->answer_html, $domd) : null;
+                $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3IFiles($assignment->questions[$key]->answer_html, $domd) : null;
 
                 if ($webwork->inCodeSolution($assignment->questions[$key])) {
                     $assignment->questions[$key]->solution_html = $webwork->inCodeSolution($assignment->questions[$key]);
                 }
-                $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Images($assignment->questions[$key]->solution_html, $domd) : null;
+                $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3IFiles($assignment->questions[$key]->solution_html, $domd) : null;
                 $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id)
                     : '';
@@ -3259,16 +3260,16 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson('question_json', $question->qti_json, $seed, $assignment->assessment_type === 'real time' || $request->user()->role === 2, $student_response) : null;
 
                 $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'text_question')
-                    ? $question->addTimeToS3Images($assignment->questions[$key]->text_question, $domd)
+                    ? $question->addTimeToS3IFiles($assignment->questions[$key]->text_question, $domd)
                     : null;
                 $shown_hint = $assignment->can_view_hint && (Auth::user()->role === 2 || (Auth::user()->role === 3 && in_array($question->id, $shown_hints)));
                 $assignment->questions[$key]['shown_hint'] = $shown_hint;
                 $assignment->questions[$key]['hint_exists'] = $assignment->questions[$key]->hint !== null && $assignment->questions[$key]->hint !== '';
                 $assignment->questions[$key]['hint'] = $shown_hint
-                    ? $question->addTimeToS3Images($assignment->questions[$key]->hint, $domd)
+                    ? $question->addTimeToS3IFiles($assignment->questions[$key]->hint, $domd)
                     : null;
 
-                $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Images($assignment->questions[$key]->notes, $domd) : null;
+                $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3IFiles($assignment->questions[$key]->notes, $domd) : null;
 
                 $custom_claims = [];
                 if ($question->technology === 'imathas' && isset($submissions_by_question_id[$question->id])) {

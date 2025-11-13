@@ -2163,7 +2163,7 @@ class AssignmentController extends Controller
                 if ($in_code_solution = $webwork->inCodeSolution($questions_by_id[$question_id])) {
                     $questions_by_id[$question_id]->solution_html = $in_code_solution;
                 }
-                $solution['solution_html'] = $Question->addTimeToS3Images($questions_by_id[$question_id]->solution_html, $dom);
+                $solution['solution_html'] = $Question->addTimeToS3IFiles($questions_by_id[$question_id]->solution_html, $dom);
                 if (!$solution['solution_html']) {
                     $solution['solution_html'] = $questions_by_id[$question_id]->answer_html;
                 }

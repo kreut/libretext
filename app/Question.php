@@ -225,7 +225,7 @@ class Question extends Model
     }
 
     public
-    function addTimeToS3Images($contents, DOMDocument $htmlDom, $with_php = true): string
+    function addTimeToS3IFiles($contents, DOMDocument $htmlDom, $with_php = true): string
     {
         if (!$contents) {
             return '';
@@ -260,7 +260,18 @@ class Question extends Model
                 $imageTag->setAttribute('src', $url);
             }
         }
+// Handle links
+        $linkTags = $htmlDom->getElementsByTagName('a');
+        foreach ($linkTags as $linkTag) {
+            $href = $linkTag->getAttribute('href');
+            $is_s3_url = strpos($href, 'amazonaws.com') !== false;
 
+            if ($is_s3_url && strpos($href, '/uploads/secondary-content/') !== false) {
+                $s3_file = strtok(pathinfo($href, PATHINFO_BASENAME), '?');
+                $url = Storage::disk('s3')->temporaryUrl("uploads/secondary-content/$s3_file", Carbon::now()->addDays(7));
+                $linkTag->setAttribute('href', $url);
+            }
+        }
         $contents = $htmlDom->saveHTML();
 
         foreach ($header_tags as $header_tag) {
@@ -536,13 +547,13 @@ class Question extends Model
             if (isset($qti_array[$key])) {
                 if ($key === 'itemBody') {
                     if (isset($qti_array['itemBody']['textEntryInteraction'])) {
-                        $qti_array['itemBody']['textEntryInteraction'] = $this->addTimeToS3Images($qti_array['itemBody']['textEntryInteraction'], $domDocument, false);
+                        $qti_array['itemBody']['textEntryInteraction'] = $this->addTimeToS3IFiles($qti_array['itemBody']['textEntryInteraction'], $domDocument, false);
                     } else {
-                        $qti_array['itemBody'] = $this->addTimeToS3Images($qti_array['itemBody'], $domDocument, false);
+                        $qti_array['itemBody'] = $this->addTimeToS3IFiles($qti_array['itemBody'], $domDocument, false);
 
                     }
                 } else {
-                    $qti_array[$key] = $this->addTimeToS3Images($qti_array[$key], $domDocument, false);
+                    $qti_array[$key] = $this->addTimeToS3IFiles($qti_array[$key], $domDocument, false);
                 }
             }
         }
@@ -1133,11 +1144,11 @@ class Question extends Model
                     $qti_array['studentResponse'] = $student_response;
                 }
                 foreach ($qti_array['possibleMatches'] as $key => $possible_match) {
-                    $qti_array['possibleMatches'][$key]['matchingTerm'] = $this->addTimeToS3Images($possible_match['matchingTerm'], $domDocument, false);
+                    $qti_array['possibleMatches'][$key]['matchingTerm'] = $this->addTimeToS3IFiles($possible_match['matchingTerm'], $domDocument, false);
                 }
                 foreach ($qti_array['termsToMatch'] as $key => $value) {
-                    $qti_array['termsToMatch'][$key]['termToMatch'] = $this->addTimeToS3Images($value['termToMatch'], $domDocument, false);
-                    $qti_array['feedback'][$key]['feedback'] = $this->addTimeToS3Images($value['feedback'], $domDocument, false);
+                    $qti_array['termsToMatch'][$key]['termToMatch'] = $this->addTimeToS3IFiles($value['termToMatch'], $domDocument, false);
+                    $qti_array['feedback'][$key]['feedback'] = $this->addTimeToS3IFiles($value['feedback'], $domDocument, false);
                 }
 
                 if ($seed) {
@@ -1228,7 +1239,7 @@ class Question extends Model
                     if (isset($qti_array['feedback'])) {
                         foreach ($feedback_identifiers as $identifier) {
                             if (isset($qti_array['feedback'][$identifier])) {
-                                $qti_array['feedback'][$identifier] = $this->addTimeToS3Images($qti_array['feedback'][$identifier], $domDocument, false);
+                                $qti_array['feedback'][$identifier] = $this->addTimeToS3IFiles($qti_array['feedback'][$identifier], $domDocument, false);
                             }
                         }
                     } else {
@@ -1277,7 +1288,7 @@ class Question extends Model
 
                 }
                 foreach ($qti_array['simpleChoice'] as $key => $choice) {
-                    $qti_array['simpleChoice'][$key]['value'] = $this->addTimeToS3Images($choice['value'], $domDocument, false);
+                    $qti_array['simpleChoice'][$key]['value'] = $this->addTimeToS3IFiles($choice['value'], $domDocument, false);
                     unset($qti_array['simpleChoice'][$key]['editorShown']);
                     if (!$show_solution) {
                         if (request()->user()->role === 3) {
@@ -2435,7 +2446,7 @@ class Question extends Model
     function cleanUpExtraHtml(DOMDocument $dom, $html): ?string
     {
         libxml_use_internal_errors(true);
-        $html = $this->addTimeToS3Images($html, $dom);
+        $html = $this->addTimeToS3IFiles($html, $dom);
         @$dom->loadHTML($html);
         libxml_clear_errors();
         $selector = new \DOMXPath($dom);
@@ -2588,9 +2599,9 @@ class Question extends Model
         $question['notes'] = $question['answer_html'] = $question['solution_html'] = $question['hint'] = null;
         if (in_array(Auth::user()->role, [2, 5])) {
             $question['notes'] = $question_info['notes'];
-            $question['answer_html'] = $this->addTimeToS3Images($question_info['answer_html'], new DOMDocument(), false);
-            $question['solution_html'] = $this->addTimeToS3Images($question_info['solution_html'], new DOMDocument(), false);
-            $question['hint'] = $question_info['hint'];
+            $question['answer_html'] = $this->addTimeToS3IFiles($question_info['answer_html'], new DOMDocument(), false);
+            $question['solution_html'] = $this->addTimeToS3IFiles($question_info['solution_html'], new DOMDocument(), false);
+            $question['hint'] = $this->addTimeToS3IFiles($question_info['hint'], new DOMDocument(), false);
         }
 
         return $question;
@@ -3147,7 +3158,7 @@ class Question extends Model
         if ($question_to_edit['non_technology']) {
             $contents = $question_to_edit['non_technology_html'];
             // dd($contents);
-            $question_to_edit['non_technology_text'] = trim($this->addTimeToS3Images($contents, $dom, false));
+            $question_to_edit['non_technology_text'] = trim($this->addTimeToS3IFiles($contents, $dom, false));
             $question_to_edit['non_technology_text'] = trim(str_replace(array("\n", "\r"), '', $question_to_edit['non_technology_text']));
 
             $in_paragraph = substr($question_to_edit['non_technology_text'], 0, 3) === '<p>' && substr($question_to_edit['non_technology_text'], -4) === '</p>';

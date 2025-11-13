@@ -69,6 +69,19 @@ class PreSignedURLPolicy
     /**
      * @param User $user
      * @param PreSignedURL $preSignedURL
+     * @return Response
+     */
+    public function secondaryContent(User $user, PreSignedURL $preSignedURL): Response
+    {
+
+        return $user->role === 2
+            ? Response::allow()
+            : Response::deny('You are not allowed to upload files for the secondary content.');
+
+    }
+    /**
+     * @param User $user
+     * @param PreSignedURL $preSignedURL
      * @param Assignment $assignment
      * @return Response
      */

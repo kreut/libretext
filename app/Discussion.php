@@ -138,7 +138,7 @@ class Discussion extends Model
                 'id' => $value->comment_id,
                 'created_by_user_id' => $value->discussion_comments_user_id,
                 'created_by_name' => $enrolled_students_by_user_id[$value->discussion_comments_user_id],
-                'text' => $question->addTimeToS3Images($value->text, $htmlDom, false),
+                'text' => $question->addTimeToS3IFiles($value->text, $htmlDom, false),
                 'pasted_comment' => $value->pasted_comment,
                 'file' => $value->file,
                 'recording_type' => $discussionComment->getRecordingType($value),
@@ -153,7 +153,7 @@ class Discussion extends Model
             $discussions_by_user_id[$value->discussion_comments_user_id]['comments'][] = [
                 'discussion_comment_id' => $value->comment_id,
                 'discussion_id' => $discussion_id,
-                'text' => $question->addTimeToS3Images($value->text, $htmlDom, false),
+                'text' => $question->addTimeToS3IFiles($value->text, $htmlDom, false),
                 'pasted_comment' => $value->pasted_comment,
                 'file' => $value->file,
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_comments_user_id])

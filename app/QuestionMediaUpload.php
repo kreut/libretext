@@ -141,7 +141,7 @@ class QuestionMediaUpload extends Model
                     $this->save();
                     $text = $this->text;
                 }
-                $text = $question->addTimeToS3Images($text, new DOMDocument(), false);
+                $text = $question->addTimeToS3IFiles($text, new DOMDocument(), false);
             } catch (Exception $e) {
                 $text = "Unable to retrieve the text for this discuss it question.";
             }

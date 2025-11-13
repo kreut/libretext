@@ -54,6 +54,9 @@ class S3Controller extends Controller
                         ? Response::allow()
                         : Gate::inspect('structure', [$preSignedURL, $assignment]);
                     break;
+                case('secondary-content'):
+                    $authorized = Gate::inspect('secondaryContent', $preSignedURL);
+                    break;
                 default:
                     $authorized = Gate::inspect('preSignedURL', [$preSignedURL, $assignment, $upload_file_type]);
 
@@ -85,6 +88,9 @@ class S3Controller extends Controller
                     break;
                 case('qti'):
                     $dir = 'uploads/qti/' . $request->user()->id;
+                    break;
+                case('secondary-content'):
+                    $dir = 'uploads/secondary-content';
                     break;
                 case('discuss-it-comments'):
                 case('discuss-it-media'):
@@ -127,6 +133,9 @@ class S3Controller extends Controller
                     break;
                 case('structure'):
                     $response['structure_filename'] = $uploaded_filename;
+                    break;
+                case('secondary-content'):
+                    $response['secondary_content_file'] = $uploaded_filename;
                 default:
                     $response['submission'] = $uploaded_filename;
 

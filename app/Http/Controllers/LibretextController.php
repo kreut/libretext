@@ -188,7 +188,7 @@ class LibretextController extends Controller
             $h->report($e);
         }
 
-        $non_technology_html = trim($question->addTimeToS3Images($non_technology_html, new DOMDocument(), false));
+        $non_technology_html = trim($question->addTimeToS3IFiles($non_technology_html, new DOMDocument(), false));
         $non_technology_html = trim(str_replace(array("\n", "\r"), '', $non_technology_html));
 
         return view('header_html', ['non_technology_html' => $non_technology_html]);
