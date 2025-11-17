@@ -14,7 +14,7 @@
       <tbody>
       <tr v-for="(item,index) in termsToMatch" :key="`matching-answer-${item.identifier}`">
         <th scope="row">
-          <span v-html="item.termToMatch"/>
+          <div v-html="formatQuestionMediaPlayer(item.termToMatch)"/>
         </th>
         <td :class="qtiJson.studentResponse ? 'd-flex' : ''">
           <b-dropdown :id="`matching-answer-${item.identifier}`"
@@ -84,6 +84,7 @@
 
 <script>
 import $ from 'jquery'
+import { formatQuestionMediaPlayer } from '../../helpers/Questions'
 
 export default {
   name: 'MatchingViewer',
@@ -145,6 +146,7 @@ export default {
     }
   },
   methods: {
+    formatQuestionMediaPlayer,
     getMatchingFeedbacks () {
       for (let i = 0; i < this.qtiJson.termsToMatch.length; i++) {
         let termToMatch = this.qtiJson.termsToMatch[i]
