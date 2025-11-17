@@ -3208,7 +3208,7 @@
                       </div>
                     </div>
                     <div v-if="questions[currentPage-1].can_submit_work"
-                           class="pl-1"
+                         class="pl-1"
                     >
                       <SubmitWork :key="`submit-work-${submitWorkKey}`"
                                   style="margin-top: 3px"
@@ -5232,15 +5232,8 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    getNumberOfAttemptsLeftMessage () {
-      if (this.numberOfAllowedAttempts === 'unlimited') {
-        return 'You still have an unlimited number of attempts left.'
-      } else {
-        let numLeft = parseInt(this.numberOfAllowedAttempts) - parseInt(this.questions[this.currentPage - 1].submission_count)
-        let plural = numLeft > 1
-          ? 's' : ''
-        return `You currently have ${numLeft} reset${plural} left.`
-      }
+    getNumberOfAttemptsAttempts () {
+      return parseInt(this.numberOfAllowedAttempts) - parseInt(this.questions[this.currentPage - 1].submission_count)
     },
     async refreshToken () {
       try {
@@ -5335,8 +5328,12 @@ export default {
       }
     },
     getNumberOfRemainingAttempts () {
-      const plural = +this.numberOfAllowedAttempts !== 1 ? 's' : ''
-      return `${this.numberOfAllowedAttempts} attempt${plural} left`
+      const submissionCount = Number(this.questions[this.currentPage - 1].submission_count)
+        ? parseInt(this.questions[this.currentPage - 1].submission_count)
+        : 0
+      const numberOfRemainingAttempts = parseInt(this.numberOfAllowedAttempts) - submissionCount
+      const plural = +numberOfRemainingAttempts !== 1 ? 's' : ''
+      return `${numberOfRemainingAttempts} attempt${plural} left`
     },
     setMyFavoritesFolder (myFavoritesFolder) {
       this.myFavoritesFolder = myFavoritesFolder
