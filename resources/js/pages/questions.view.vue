@@ -2988,6 +2988,33 @@
                       </b-button>
                     </span>
                   </div>
+                  <div v-if="attachments.length && questions[currentPage-1].id" class="pb-1 pt-1">
+                    <b-icon-paperclip/>
+                    Attachment<span
+                    v-if="attachments.length>1"
+                  >s</span>: <span v-show="attachments.length === 1">
+                       <a
+                         :href="downloadAttachmentUrl(attachments[0],questions[currentPage-1].id)"
+                         aria-label="Download attachment"
+                       >
+                      {{ attachments[0].original_filename }}
+                       </a>
+                    </span>
+                    <span v-if="attachments.length > 1">
+                      <ul>
+                    <li v-for="(attachment,attachmentIndex) in attachments"
+                        :key="`attachments-${attachmentIndex}-${questions[currentPage-1].id}`"
+                    >
+                       <a
+                         :href="downloadAttachmentUrl(attachment,questions[currentPage-1].id)"
+                         aria-label="Download attachment"
+                       >
+                      {{ attachment.original_filename }}
+                       </a>
+                    </li>
+                        </ul>
+                    </span>
+                  </div>
                   <b-card
                     v-show="assessmentType !== 'clicker' || (assessmentType === 'clicker' && (user.role === 2 && !presentationMode) ||(user.role === 3 && clickerStatus !== 'neither_view_nor_submit'))"
                     no-body
@@ -3776,6 +3803,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    attachments: [],
     questionStatus: '',
     ckeditorTextSubmissionKey: 0,
     pastedContent: false,
@@ -4155,12 +4183,12 @@ export default {
       return this.getOpenEndedTitle()
     },
     autoGradedSubmissionInformationHeader () {
-      return this.showAutoGradedSubmissionInformation && this.showOpenEndedSubmissionInformation ?
-        '<h2 class="h7">Auto-Graded Submission Information</h2>' : ''
+      return this.showAutoGradedSubmissionInformation && this.showOpenEndedSubmissionInformation
+        ? '<h2 class="h7">Auto-Graded Submission Information</h2>' : ''
     },
     openEndedSubmissionInformationHeader () {
-      return this.showAutoGradedSubmissionInformation && this.showOpenEndedSubmissionInformation ?
-        `<h2 class="h7">${this.getOpenEndedTitle()}</h2>` : ''
+      return this.showAutoGradedSubmissionInformation && this.showOpenEndedSubmissionInformation
+        ? `<h2 class="h7">${this.getOpenEndedTitle()}</h2>` : ''
     }
   },
   watch: {
@@ -4376,6 +4404,9 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    downloadAttachmentUrl (attachment, questionId) {
+      return `/api/questions/download-attachment/assignment/${this.assignmentId}/question/${questionId}/s3-key/${attachment.s3_key}`
+    },
     getQuestionStatusClass (border = false) {
       let questionStatusClass = ''
       switch (this.questionStatus) {
@@ -6574,6 +6605,7 @@ export default {
       window.location = `/assignments/${this.assignmentId}/questions/view/${this.questions[newPageNumber - 1].id}`
     },
     async changePage (currentPage) {
+      this.attachments = []
       this.questionStatus = ''
       if (this.latePolicy === 'marked late' && this.timeLeft === 0) {
         this.questionStatus = 'late'
@@ -6593,6 +6625,7 @@ export default {
       }
 
       this.qtiJson = this.questions[this.currentPage - 1].qti_json
+
       this.iframeDomLoaded = false
       this.submitButtonsDisabled = false
       console.log('webwork stuff')
@@ -6620,6 +6653,8 @@ export default {
           this.submissionArray = this.questions[this.currentPage - 1]['submission_array']
         }
       )
+      this.attachments = this.questions[this.currentPage - 1].attachments ? JSON.parse(this.questions[this.currentPage - 1].attachments) : []
+
       if (this.user.role === 3) {
         if (this.pastDue) {
           await this.initReviewQuestionTimeSpent()

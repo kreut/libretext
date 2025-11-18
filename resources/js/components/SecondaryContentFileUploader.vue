@@ -9,14 +9,15 @@
                title="Adding Files to Secondary Content"
                no-close-on-backdrop
       >
-        <b-embed
-          id="bio"
-          type="iframe"
-          aspect="16by9"
-          src="https://www.youtube.com/embed/yDTZhXGWugs?rel=0"
-          allowfullscreen
-          class="mb-2"
-        />
+        <div style="position: relative; padding-top: 65.26898734177216%;">
+          <iframe
+            src="https://customer-9mlff0qha6p39qdq.cloudflarestream.com/7fa7a91d78df24a66bf62c3e766d5058/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F7fa7a91d78df24a66bf62c3e766d5058%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600"
+            loading="lazy"
+            style="border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+            allowfullscreen="true"
+          />
+        </div>
         <template #modal-footer>
           <b-button
             variant="primary"

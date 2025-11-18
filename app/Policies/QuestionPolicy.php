@@ -12,6 +12,7 @@ use App\Question;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 
 class QuestionPolicy
@@ -28,6 +29,92 @@ class QuestionPolicy
             ? Response::allow()
             : Response::deny("You are not allowed to get the answer to this question.");
 
+    }
+
+    /**
+     * @param User $user
+     * @param Question $question
+     * @param $question_id
+     * @param $s3_key
+     * @return Response
+     */
+    public function deleteAttachment(User $user, Question $question, $question_id, $s3_key): Response
+    {
+        $message = '';
+        if ($question_id) {
+            $question = Question::find($question_id);
+        }
+        if (Helper::isAdmin()) {
+            $authorize = true;
+        } else if ($user->role === 5) {
+            $authorize = true;
+            if ($question_id) {
+                $question_editor = User::find($question->question_editor_user_id);
+                if ($question_editor->role !== 5) {
+                    $authorize = false;
+                    $message = "You are a non-instructor editor but the question was created by someone who is not a non-instructor editor.";
+                }
+            }
+        } else {
+            $authorize = (int)$user->id == $question->question_editor_user_id;;
+            if (!$authorize) {
+                $message = "As a non-owner, you cannot delete that attachment.";
+            }
+        }
+
+        if ($authorize && $question) {
+            $attachments = json_decode($question->attachments);
+            if ($attachments) {
+                $authorize = false;
+            }
+            foreach ($attachments as $attachment) {
+                if ($attachment->s3_key === $s3_key) {
+                    $authorize = true;
+                }
+            }
+            if (!$authorize) {
+                $message = "That attachment is not part of that question.";
+            }
+        }
+        return $authorize
+            ? Response::allow()
+            : Response::deny($message);
+    }
+
+    /**
+     * @param User $user
+     * @param Question $question
+     * @param $assignment_id
+     * @param $question_id
+     * @param $s3_key
+     * @return Response
+     */
+    public function downloadAttachment(User $user, Question $question, $assignment_id, $question_id, $s3_key): Response
+    {
+        $has_access = true;
+        $message = '';
+
+        if ($user->role === 3) {
+            $question_in_assignment = $this->_questionInAssignment($user->id, $assignment_id, $question_id);
+            $question = $question->find($question_id);
+            $attachments = $question->attachments ? json_decode($question->attachments) : [];
+            $exists_in_question = false;
+            foreach ($attachments as $attachment) {
+                if ($attachment->s3_key === $s3_key) {
+                    $exists_in_question = true;
+                }
+            }
+            if (!$question_in_assignment) {
+                $message = "That attachment is in a question which you don't have access to.";
+                $has_access = false;
+            } else if (!$exists_in_question) {
+                $message = "That attachment is not part of that question.";
+                $has_access = false;
+            }
+        }
+        return $has_access
+            ? Response::allow()
+            : Response::deny($message);
     }
 
     /**
@@ -299,13 +386,7 @@ class QuestionPolicy
                                                                        int          $question_id): Response
     {
 
-        $question_in_assignment = DB::table('assignment_question')
-            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
-            ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
-            ->where('enrollments.user_id', $user->id)
-            ->where('assignment_id', $assignment->id)
-            ->where('question_id', $question->id)
-            ->first();
+        $question_in_assignment = $this->_questionInAssignment($user->id, $assignment->id, $question->id);
 
         $remediation_question_id = 0;
         $blocks = json_decode($learningTree->learning_tree)->blocks;
@@ -375,6 +456,17 @@ class QuestionPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to view the text associated with this question.');
 
+    }
+
+    private function _questionInAssignment(int $user_id, int $assignment_id, int $question_id)
+    {
+        return DB::table('assignment_question')
+            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+            ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')
+            ->where('enrollments.user_id', $user_id)
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->first();
     }
 
 

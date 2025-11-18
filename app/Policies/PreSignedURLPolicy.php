@@ -66,6 +66,20 @@ class PreSignedURLPolicy
 
     }
 
+
+    /**
+     * @param User $user
+     * @param PreSignedURL $preSignedURL
+     * @return Response
+     */
+    public function questionAttachment(User $user, PreSignedURL $preSignedURL): Response
+    {
+
+        return $user->role === 2
+            ? Response::allow()
+            : Response::deny('You are not allowed to upload files for the question attachments.');
+
+    }
     /**
      * @param User $user
      * @param PreSignedURL $preSignedURL

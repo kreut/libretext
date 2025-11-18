@@ -631,6 +631,9 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/questions', 'QuestionController@index');
     Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
+    Route::post('/questions/delete-attachment', 'QuestionController@deleteAttachment');
+    Route::get('/questions/download-attachment/assignment/{assignment_id}/question/{question_id}/s3-key/{s3_key}', 'QuestionController@downloadAttachment');
+
     Route::get('/questions/properties/{question}', 'QuestionController@getProperties');
     Route::get('/questions/compare-cached-and-non-cached/{question}', 'QuestionController@compareCachedAndNonCachedQuestions');
     Route::get('/questions/valid-licenses', 'QuestionController@getValidLicenses');

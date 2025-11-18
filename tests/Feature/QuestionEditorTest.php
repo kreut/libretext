@@ -179,6 +179,41 @@ class QuestionEditorTest extends TestCase
         $this->assignment_template = factory(AssignmentTemplate::class)->create(['user_id' => $this->user->id]);
     }
 
+    /** @test */
+    public function cannot_delete_attachment_if_do_not_own_question()
+    {
+        $this->question->attachments = '[
+  {"s3_key": "b55954d63c857ceb82e1e9231c84e441.txt", "original_filename": "backup_all.txt"},
+  {"s3_key": "695def5d0766147bc04132ff99a02384.docx", "original_filename": "Science Questions Minerals.docx"}
+]';
+
+        $this->question->question_editor_user_id= $this->user->id;
+        $this->question->save();
+        $user = factory(User::class)->create(['role' => 2]);
+        $this->actingAs($user)->postJson("/api/questions/delete-attachment",
+            ['filename' => 'backup_all.txt',
+                's3_key' => 'b55954d63c857ceb82e1e9231c84e441.txt',
+                'question_id' => $this->question->id])
+            ->assertJson(['message' => "As a non-owner, you cannot delete that attachment."]);
+    }
+
+    /** @test */
+    public function cannot_delete_attachment_if_not_part_of_the_question()
+    {
+        $this->question->attachments = '[
+  {"s3_key": "b55954d63c857ceb82e1e9231c84e441.txt", "original_filename": "backup_all.txt"},
+  {"s3_key": "695def5d0766147bc04132ff99a02384.docx", "original_filename": "Science Questions Minerals.docx"}
+]';
+
+        $this->question->question_editor_user_id= $this->user->id;
+        $this->question->save();
+        $this->actingAs($this->user)->postJson("/api/questions/delete-attachment",
+            ['filename' => 'backup_all.txt',
+                's3_key' => 'ab55954d63c857ceb82e1e9231c84e441.txt',
+                'question_id' => $this->question->id])
+            ->assertJson(['message' => "That attachment is not part of that question."]);
+    }
+
 
     /** @test */
     public function cannot_add_new_question_if_not_your_assignment()
@@ -237,7 +272,6 @@ class QuestionEditorTest extends TestCase
             ->assertJson(['message' => "The question has been updated."]);
 
     }
-
 
     /** @test */
     public function question_editor_can_edit_question_of_another_question_editor()

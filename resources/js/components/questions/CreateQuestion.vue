@@ -5,6 +5,26 @@
     <AllFormErrors :all-form-errors="allFormErrors"
                    modal-id="modal-form-errors-question-subject-chapter-section-errors"
     />
+    <b-modal id="modal-confirm-delete-attachment"
+             title="Confirm Remove Attachment"
+    >
+      <p>You are about to remove: <br><br><span class="text-center"><strong>{{ attachmentToDelete.original_filename }}</strong></span><br><br> Please save your question to make this change permanent.</p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          @click="$bvModal.hide('modal-confirm-delete-attachment')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          size="sm"
+          variant="danger"
+          @click="$bvModal.hide('modal-confirm-delete-attachment');deleteAttachment();"
+        >
+          Remove
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-confirm-no-open-ended-submission-with-no-auto-grading"
              title="Confirm No Open-ended Submission"
              no-close-on-esc
@@ -1239,6 +1259,53 @@
 
           <p>Both blocks are rendered in problem to students.</p>
 
+          <div class="mb-2">
+            <b-button variant="primary"
+                      size="sm"
+                      @click="triggerFileDialog"
+            >
+              Upload Attachment
+            </b-button>
+            <QuestionCircleTooltip :id="'attachments-tooltip'"/>
+            <b-tooltip target="attachments-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              You can attach files to your question that can then be downloaded by your students.
+            </b-tooltip>
+            <b-progress v-if="preSignedURL" max="100" class="mt-2 mb-3">
+              <b-progress-bar :value="uploadProgress" :label="`${Number(uploadProgress).toFixed(0)}%`" show-progress
+                              animated
+              />
+            </b-progress>
+            <!-- Hidden file input -->
+            <input
+              ref="fileInput"
+              type="file"
+              style="display:none"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.csv,.zip,.png,.jpg,.jpeg,.gif,.svg,.mp4,.mp3,.py,.java,.cpp,.c,.js,.html,.css,.json,.xml,.r,.m,.ipynb"
+              @change="onFileChange"
+            >
+          </div>
+          <div v-if="questionForm.attachments && questionForm.attachments.length" class="mb-2">
+            <b-table
+              striped
+              hover
+              :no-border-collapse="true"
+              :items="questionForm.attachments"
+              :fields="attachmentsFields"
+              responsive
+            >
+              <template v-slot:cell(actions)="data">
+                <b-icon-trash style="cursor: pointer;" @click="initDeleteAttachment(data.item)"/>
+                <a class="text-muted" :href="`/api/questions/download-attachment/assignment/0/question/0/s3-key/${data.item.s3_key.split('/').pop()}`">
+                  <b-icon-download
+                    style="cursor: pointer;"
+                  />
+                </a>
+              </template>
+            </b-table>
+          </div>
           <b-card border-variant="primary"
                   class="mb-3"
           >
@@ -1791,9 +1858,8 @@
                   </b-alert>
                   <b-container v-if="questionForm.technology === 'qti'" class="mt-2">
                     <b-row>
-                      aaaab {{activeTabIndex}}
                       <QuestionMediaUpload v-if="activeQuestionMediaUpload === 1"
-                                          :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                                           :key="`question-media-upload-key-${questionMediaUploadKey}`"
                                            :media-uploads="questionForm.media_uploads"
                                            :question-media-upload-id="questionMediaUploadId"
                                            :qti-json="JSON.stringify(qtiJson)"
@@ -2074,7 +2140,7 @@
                 >
                   <div v-if="qtiQuestionType === 'select_choice'">
                     <QuestionMediaUpload v-if="activeQuestionMediaUpload === 1"
-                                          :key="`question-media-upload-key-${questionMediaUploadKey}`"
+                                         :key="`question-media-upload-key-${questionMediaUploadKey}`"
                                          :media-uploads="questionForm.media_uploads"
                                          :qti-json="JSON.stringify(qtiJson)"
                                          :question-media-upload-id="questionMediaUploadId"
@@ -2142,8 +2208,9 @@
                                :question-form="questionForm"
                 />
                 <div class="pb-2">
-                  <b-card v-if="['highlight_text','multiple_response_select_all_that_apply'].includes(qtiQuestionType)"
-                          header="default"
+                  <b-card
+                    v-if="['highlight_text','multiple_response_select_all_that_apply'].includes(qtiQuestionType)"
+                    header="default"
                   >
                     <template #header>
                       <span class="ml-2 h7">Checkmark Feedback   <QuestionCircleTooltip id="checkmarks-tooltip"/>
@@ -2553,10 +2620,10 @@
                     v-if="!editorGroups.find(group => group.id === editorGroup.id).expanded"
                     :icon="caretRightIcon" size="lg"
                   />
-                <font-awesome-icon v-if="editorGroups.find(group => group.id === editorGroup.id).expanded"
-                                   :icon="caretDownIcon" size="lg"
-                />
-                  </span>
+                  <font-awesome-icon v-if="editorGroups.find(group => group.id === editorGroup.id).expanded"
+                                     :icon="caretDownIcon" size="lg"
+                  />
+                </span>
               </span>
               <div v-if="questionForm.technology === 'qti' && editorGroup.id === 'answer_html'">
                 <b-alert show variant="info">
@@ -2677,7 +2744,6 @@
 </template>
 
 <script>
-import _ from 'lodash'
 import QuestionMediaUpload from '~/components/QuestionMediaUpload.vue'
 import SecondaryContentFileUploader from '~/components/SecondaryContentFileUploader.vue'
 import { doCopy } from '~/helpers/Copy'
@@ -2728,12 +2794,11 @@ import RubricProperties from '../RubricProperties.vue'
 import { faCaretDown, faCaretRight } from '@fortawesome/free-solid-svg-icons'
 import {
   canEdit,
-  responseFormatOptions,
-  openEndedSubmissionTypeOptions,
-  getQuestionChapterIdOptions,
   getQuestionSectionIdOptions,
+  handleAddEditQuestionSubjectChapterSection,
   initAddEditDeleteQuestionSubjectChapterSection,
-  handleAddEditQuestionSubjectChapterSection
+  openEndedSubmissionTypeOptions,
+  responseFormatOptions
 } from '~/helpers/Questions'
 import StructureImageUploader from '../StructureImageUploader.vue'
 import { capitalize, getQuestionSubjectIdOptions } from '../../helpers/Questions'
@@ -2745,6 +2810,7 @@ const defaultQuestionForm = {
   title: '',
   description: '',
   learning_outcomes: [],
+  attachments: [],
   media_uploads: [],
   author: '',
   tags: [],
@@ -2948,6 +3014,19 @@ export default {
     }
   },
   data: () => ({
+    attachmentToDelete: {},
+    attachmentsFields: [
+      {
+        key: 'original_filename',
+        label: 'Filename'
+      },
+      'actions'
+    ],
+    temporaryUrl: '',
+    filename: '',
+    preSignedURL: '',
+    uploadProgress: 0,
+    selectedFile: null,
     questionSubjectChapterSectionAction: '',
     questionSubjectChapterSectionForm: new Form({}),
     questionSubjectChapterSectionToAddEditLevel: '',
@@ -3305,9 +3384,98 @@ export default {
     handleAddEditQuestionSubjectChapterSection,
     initAddEditDeleteQuestionSubjectChapterSection,
     canEdit,
-    getQuestionChapterIdOptions,
     getQuestionSectionIdOptions,
+    initDeleteAttachment (attachment) {
+      this.attachmentToDelete = attachment
+      this.$bvModal.show('modal-confirm-delete-attachment')
+    },
+    async deleteAttachment () {
+      this.questionForm.attachments = this.questionForm.attachments.filter(item => item.s3_key !== this.attachmentToDelete.s3_key)
+      return
+      const attachment = this.attachmentToDelete
+      try {
+        const { data } = await axios.post(`/api/questions/delete-attachment`, {
+          filename: attachment.original_filename,
+          s3_key: attachment.s3_key,
+          question_id: this.questionToEdit ? this.questionToEdit.id : 0
+        })
+        if (data.type === 'info') {
+          this.questionForm.attachments = this.questionForm.attachments.filter(item => item.s3_key !== attachment.s3_key)
+        }
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    triggerFileDialog () {
+      this.$refs.fileInput.click()
+    },
     updateModalToggleIndex,
+    onFileChange (e) {
+      const file = e.target.files[0]
+      if (!file) return
+      this.selectedFile = file
+      this.getPresignedUrlAndUpload(file)
+    },
+    async getPresignedUrlAndUpload (file) {
+      this.preSignedURL = ''
+      try {
+        let uploadFileData = {
+          upload_file_type: 'question-attachment',
+          file_name: file.name
+        }
+        const { data } = await axios.post('/api/s3/pre-signed-url', uploadFileData)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+
+        this.preSignedURL = data.preSignedURL
+        this.s3_key = data.s3_key
+        this.fileName = file.name
+        await this.uploadWithProgress(file, this.preSignedURL)
+        console.log('Upload complete!')
+      } catch (err) {
+        console.error('Upload failed:', err)
+      }
+    },
+    async uploadWithProgress (file, url) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        // progress event
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            this.uploadProgress = Math.round((e.loaded / e.total) * 100)
+            if (this.uploadProgress === 100) {
+              this.preSignedURL = ''
+            }
+          }
+        })
+
+        // success
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            resolve()
+            if (!Array.isArray(this.questionForm.attachments)) {
+              this.questionForm.attachments = []
+            }
+            console.error(this.questionForm.attachments)
+            this.questionForm.attachments.push({ original_filename: this.fileName, s3_key: this.s3_key })
+            this.$forceUpdate()
+          } else {
+            reject(new Error('Upload failed with status ' + xhr.status))
+          }
+        }
+
+        // error
+        xhr.onerror = () => reject(new Error('XHR network error'))
+
+        // PUT request to the presigned URL
+        xhr.open('PUT', url)
+        xhr.send(file)
+      })
+    },
     updateQtiJson (key, value) {
       this.qtiJson[key] = value
       console.error(this.qtiJson)
@@ -4005,6 +4173,9 @@ export default {
       this.showFolderOptions = this.user.id === this.questionToEdit.question_editor_user_id
       this.initiallyWebworkQuestion = this.questionToEdit.technology === 'webwork'
       await this.getFrameworkItemSyncQuestion()
+      if (this.questionToEdit.attachments) {
+        this.questionToEdit.attachments = JSON.parse(this.questionToEdit.attachments)
+      }
       if (this.questionToEdit.rubric) {
         this.isEditRubric = true
         this.questionToEdit.rubric_shown = JSON.parse(this.questionToEdit.rubric).rubric_shown

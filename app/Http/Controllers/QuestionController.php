@@ -36,6 +36,7 @@ use Carbon\Carbon;
 use DOMDocument;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Traits\IframeFormatter;
 use App\Traits\LibretextFiles;
@@ -146,6 +147,107 @@ class QuestionController extends Controller
             "Solution",
             "Hint"
         ];
+
+    }
+
+    /**
+     * @param Request $request
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function deleteAttachment(Request  $request,
+                                     Question $question): array
+    {
+        try {
+            $response['type'] = 'error';
+            $question_id = $request->question_id;
+            $s3_key = $request->s3_key;
+            $authorized = Gate::inspect('deleteAttachment', [$question, $question_id, $s3_key]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $file_exists_in_revision = false;
+            if ($request->question_id) {
+                $revisions = QuestionRevision::where('question_id', $request->question_id);
+                foreach ($revisions as $revision) {
+                    $attachments = $revision->question_attachments;
+                    if ($attachments) {
+                        $attachments = json_decode($attachments);
+                        foreach ($attachments as $attachment) {
+                            if ($attachment->s3_key === $s3_key) {
+                                $file_exists_in_revision = true;
+                            }
+                        }
+                    }
+                }
+                $question = Question::find($request->question_id);
+                $attachments = json_decode($question->attachments);
+                foreach ($attachments as $key => $attachment) {
+                    if ($attachment->s3_key === $s3_key) {
+                        unset($attachments[$key]);
+                    }
+                }
+                $question->attachments = json_encode($attachments);
+
+                // delete not working!
+                $question->save();
+            }
+            if (!$file_exists_in_revision) {
+                if (Storage::disk('s3')->exists("uploads/question-attachments/$s3_key")) {
+                    Storage::disk('s3')->delete("uploads/question-attachments/$s3_key");
+                }
+            }
+            $response['type'] = 'info';
+            $response['message'] = "$request->filename has been removed from this question.";
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not delete the attachment.  Please contact support.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Request $request
+     * @param int $assignment_id
+     * @param int $question_id
+     * @param string $s3_key
+     * @param Question $question
+     * @return array|Application|ResponseFactory|JsonResponse|Response
+     * @throws Exception
+     */
+    public function downloadAttachment(Request  $request,
+                                       int      $assignment_id,
+                                       int      $question_id,
+                                       string   $s3_key,
+                                       Question $question)
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('downloadAttachment', [$question, $assignment_id, $question_id, $s3_key]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $s3_key = "uploads/question-attachments/$request->s3_key";
+            if (Storage::disk('s3')->exists($s3_key)) {
+                return Storage::disk('s3')->download($s3_key);
+            } else {
+                $response['message'] = "File not found.";
+            }
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not download the attachment.  Please contact support.";
+
+
+        }
+        return $response;
 
     }
 
@@ -1310,6 +1412,12 @@ class QuestionController extends Controller
         try {
             $data = $request->validated();
             $question_type = '';
+            $attachments = $request->attachments ? $request->attachments : [];
+
+            foreach ($attachments as $key => $attachment) {
+                $attachments[$key]['s3_key'] = basename($attachment['s3_key']);
+            }
+            $data['attachments'] = json_encode($attachments);
             if ($data['technology'] === 'qti') {
                 foreach ($data as $key => $value) {
                     if (strpos($key, 'qti_') !== false) {
