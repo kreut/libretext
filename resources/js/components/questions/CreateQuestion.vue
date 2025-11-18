@@ -1271,7 +1271,6 @@
               >
                 <b-container class="mt-2">
                   <b-row id="question-media-upload-html-block">
-                    aaaa {{activeTabIndex}}
                     <QuestionMediaUpload
                       v-if="activeTabIndex === 1 && editorGroups.find(group => group.id === 'non_technology_text').expanded || ('exposition' === questionForm.question_type)"
                       :key="`question-media-upload-key-${questionMediaUploadKey}`"

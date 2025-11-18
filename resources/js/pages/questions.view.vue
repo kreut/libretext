@@ -1870,21 +1870,6 @@
           </span>
         </b-alert>
       </div>
-      <div
-        v-if="isLocked()"
-      >
-        <b-alert variant="info" :show="true">
-          <p>
-            This problem is locked. Since students have already submitted responses, you cannot update the
-            points per question.
-          </p>
-          <p v-if="!showUpdatePointsPerQuestion">
-            In addition, since you are computing points by question weights, you will not be able to remove the
-            question
-            as it will affect already submitted questions.
-          </p>
-        </b-alert>
-      </div>
       <div v-if="user.role === 2 && !inIFrame && !isLoading && !isInstructorWithAnonymousView">
         <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"/>
       </div>
@@ -2138,6 +2123,21 @@
               </span>
             </div>
             <div v-if="instructorInNonBasicView() && !clickerApp">
+              <div
+                v-if="isLocked()"
+              >
+                <b-alert variant="info" :show="true">
+                  <p>
+                    This problem is locked. Since students have already submitted responses, you cannot update the
+                    points per question.
+                  </p>
+                  <p v-if="!showUpdatePointsPerQuestion">
+                    In addition, since you are computing points by question weights, you will not be able to remove the
+                    question
+                    as it will affect already submitted questions.
+                  </p>
+                </b-alert>
+              </div>
               <b-form-row v-show="!isFormative" style="margin-left:0">
                 This question is worth <span v-show="!showUpdatePointsPerQuestion" class="pl-1 pr-1"
               > {{ questions[currentPage - 1].points }} </span>
