@@ -43,10 +43,13 @@ class reencodeVideosByAssignment extends Command
     public function handle()
     {
         try {
-            $assignment_id = 145196;
+            $assignment_id = 152633;
             $assignment = Assignment::find($assignment_id);
             $question_ids = $assignment->questions->pluck('id')->toArray();
-            $question_media_uploads = QuestionMediaUpload::whereIn('question_id', $question_ids)->get();
+            $question_media_uploads = QuestionMediaUpload::whereIn('question_id', $question_ids)
+                ->get()
+                ->groupBy('s3_key')
+                ->map->first();
             foreach ($question_media_uploads as $file) {
                 $s3_key = $file->s3_key;
                 // Download the file
