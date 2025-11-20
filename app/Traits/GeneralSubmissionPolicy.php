@@ -3,6 +3,8 @@
 
 namespace App\Traits;
 
+use App\Assignment;
+use App\Grader;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\Helper;
@@ -12,6 +14,42 @@ trait GeneralSubmissionPolicy
 
 
 {
+    public function canViewSubmittedFiles(User       $user,
+                                          Assignment $assignment,
+                                          User       $studentUser,
+                                          Grader     $grader)
+    {
+
+        $is_student_in_course = $assignment->course->enrollments->contains('user_id', $studentUser->id);
+
+        switch ($user->role) {
+            case(2):
+                $has_access = $is_student_in_course && $assignment->course->ownsCourseOrIsCoInstructor($user->id);
+                break;
+            case(3):
+                $has_access = $user->id === $studentUser->id;
+                break;
+            case(4):
+                $section_id = $assignment->course->enrollments->where('user_id', $studentUser->id)->pluck('section_id')->first();
+                $grader_sections = $grader->where('user_id', $user->id)->select('section_id')->get();
+
+                $override_access = false;
+                $access_level_override = $assignment->graders()
+                    ->where('assignment_grader_access.user_id', $user->id)
+                    ->first();
+                if ($access_level_override) {
+                    $override_access = $access_level_override->pivot->access_level;
+                }
+
+                $has_access = $is_student_in_course && ($override_access || $grader_sections->isNotEmpty() && in_array($section_id, $grader_sections->pluck('section_id')->toArray()));
+                break;
+            default:
+                $has_access = false;
+
+        }
+        return $has_access;
+    }
+
     /**
      * @param User $user
      * @param $assignment

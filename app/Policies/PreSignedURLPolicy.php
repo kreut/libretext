@@ -29,16 +29,14 @@ class PreSignedURLPolicy
      * @param User $user
      * @param PreSignedURL $preSignedURL
      * @param Assignment $assignment
-     * @param int $question_id
      * @return Response
      */
-    public function submittedWork(User $user, PreSignedURL $preSignedURL, Assignment $assignment, int $question_id): Response
+    public function submittedWork(User $user, PreSignedURL $preSignedURL, Assignment $assignment): Response
     {
-        $authorized = in_array($question_id, $assignment->questions->pluck('id')->toArray())
-            && $assignment->course->enrollments->contains('user_id', $user->id);
+        $authorized =  $assignment->course->enrollments->contains('user_id', $user->id);
         return $authorized
             ? Response::allow()
-            : Response::deny('You are not allowed to submit work for this question.');
+            : Response::deny('You are not allowed to submit work for this assignment.');
 
     }
 

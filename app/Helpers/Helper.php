@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
@@ -427,6 +428,69 @@ class Helper
         $signer = new HS256($key);
         $parser = new Parser($signer);
         return $parser->parse($token);
+    }
+
+    /**
+     * @param Request $request
+     * @param string $dir
+     * @return string
+     * @throws Exception
+     */
+    public static function storeAudio(Request $request, string $dir): string
+    {
+
+        $file = md5(uniqid('', true)) . '.mp3';
+        $audio_file = $request->file('audio');
+
+        $efs_dir = "/mnt/local/";
+        $is_efs = is_dir($efs_dir);
+        $storage_path = $is_efs
+            ? $efs_dir
+            : Storage::disk('local')->getAdapter()->getPathPrefix();
+        if (!is_dir($storage_path)) {
+            mkdir($storage_path);
+        }
+        $full_path = $storage_path . $dir;
+        if (!is_dir($full_path)) {
+            mkdir($full_path, 0755, true);
+        }
+        $audio_file_path = $storage_path . "$dir/$file";
+        $output_file_path = $storage_path . "$dir/temp-$file";
+        file_put_contents($audio_file_path, file_get_contents($audio_file));
+
+        $command = "ffmpeg -y -i $audio_file_path -acodec libmp3lame -b:a 128k $output_file_path";
+        list($returnValue, $output, $errorOutput) = Helper::runFfmpegCommand($command);
+
+        if ($returnValue === 0) {
+            if (file_exists($audio_file_path)) {
+                unlink($audio_file_path);
+            }
+            rename($output_file_path, $audio_file_path);
+        } else {
+            if (file_exists($output_file_path)) {
+                unlink($output_file_path);
+            }
+            throw new Exception ("FFmpeg error processing audio upload for user {$request->user()->id}: $errorOutput)");
+        }
+
+
+        //Storage::disk('s3')->putObject($questionMediaUpload->getDir() . "/$file", file_get_contents($audio_file_path));
+        $adapter = Storage::disk('s3')->getDriver()->getAdapter(); // Get the filesystem adapter
+        $client = $adapter->getClient(); // Get the aws client
+        $bucket = $adapter->getBucket(); // Get the current bucket
+        $client->putObject([
+            'Bucket' => $bucket,
+            'Key' => "$dir/$file",
+            'SourceFile' => $audio_file_path,
+            'ContentType' => 'audio/mpeg',  // Set the content type explicitly
+        ]);
+        if (file_exists($output_file_path)) {
+            unlink($output_file_path);
+        }
+        if (file_exists($audio_file_path)) {
+            unlink($audio_file_path);
+        }
+        return $file;
     }
 
 }

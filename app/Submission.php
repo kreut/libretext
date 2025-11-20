@@ -679,6 +679,32 @@ class Submission extends Model
                 ->select('learning_tree')
                 ->get();
             $message = 'Auto-graded submission saved.';
+            $submitted_work = false;
+            if ($assignment->can_submit_work) {
+                $submitted_work = DB::table('submitted_works')
+                    ->where('assignment_id', $data['assignment_id'])
+                    ->where('question_id', $data['question_id'])
+                    ->where('user_id', $data['user_id'])
+                    ->exists();
+                switch ($assignment->submitted_work_policy) {
+                    case('optional'):
+                        $message .= '  You may optionally "Submit Work" that can be reviewed by your instructor.';
+                        break;
+                    case('required with auto-approval'):
+                        if (!$submitted_work) {
+                            $message .= '  In order for any points to be awarded, please also be sure to "Submit Work".';
+                        }
+                        break;
+                    case('required with manual approval'):
+                        if (!$submitted_work) {
+                            $message .= '  Please also "Submit Work" so that your instructor may review your submission and associated work.';
+                        } else {
+                            $message .= '  Your instructor will review your submission and associated work.';
+                        }
+                        break;
+
+                }
+            }
             $hint_penalty = in_array($assignment->assessment_type, ['real time', 'learning tree'])
                 ? $this->getHintPenalty($data['user_id'], $assignment, $data['question_id'])
                 : 0;
@@ -803,6 +829,30 @@ class Submission extends Model
                 ];
                 LearningTreeAnalytics::create($learning_tree_analytics_data);
             }
+            if ($assignment->can_submit_work && $assignment->submitted_work_policy !== 'optional') {
+                $submitted_work = DB::table('submitted_works')
+                    ->where('assignment_id', $data['assignment_id'])
+                    ->where('question_id', $data['question_id'])
+                    ->where('user_id', $data['user_id'])
+                    ->exists();
+                $submittedWorkPendingScore = new SubmittedWorkPendingScore();
+                $score_to_move_to_pending = request()->user()->role === 3 ? $this->applyLatePenalyToScore($assignment, $data['score']) : $data['score'];
+                switch ($assignment->submitted_work_policy) {
+                    case('required with manual approval'):
+                        $this->moveScoreToPending($submittedWorkPendingScore, $submission, $data, $score_to_move_to_pending);
+                        break;
+                    case('required with auto-approval'):
+                        if (!$submitted_work) {
+                            $this->moveScoreToPending($submittedWorkPendingScore, $submission, $data, $score_to_move_to_pending);
+                        } else {
+                            $submittedWorkPendingScore->where('user_id', $data['user_id'])
+                                ->where('assignment_id', $data['assignment_id'])
+                                ->where('question_id', $data['question_id'])
+                                ->delete();
+                        }
+                }
+            }
+
             $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->lms_grade_passback === 'automatic');
             try {
                 $assignment_course_info = $assignment->assignmentCourseInfo();
@@ -879,7 +929,8 @@ class Submission extends Model
         return Round($score * (100 - $late_penalty_percent) / 100, 4);
     }
 
-    private function _computeLatePercent(Assignment $assignment, Carbon $due, Carbon $submitted_at)
+    private
+    function _computeLatePercent(Assignment $assignment, Carbon $due, Carbon $submitted_at)
     {
         $late_deduction_application_period = $assignment->late_deduction_application_period;
         $late_deduction_percent = 0;
@@ -906,7 +957,8 @@ class Submission extends Model
      * @param Carbon $submitted_at
      * @return float|int
      */
-    public function latePenaltyPercentGivenUserId(int $user_id, Assignment $assignment, Carbon $submitted_at)
+    public
+    function latePenaltyPercentGivenUserId(int $user_id, Assignment $assignment, Carbon $submitted_at)
     {
         //helper function to specifically get the
         $late_deduction_percent = 0;
@@ -1645,7 +1697,8 @@ class Submission extends Model
      * @param $student_response
      * @return array
      */
-    public function computeScoreFromSubmitMolecule($question, $student_response): array
+    public
+    function computeScoreFromSubmitMolecule($question, $student_response): array
     {
         $token = DB::table('key_secrets')->where('key', 'sketcher')->first()->secret;
         $proportion_correct_response['type'] = 'error';
@@ -1675,7 +1728,8 @@ class Submission extends Model
      * @return array
      * @throws Exception
      */
-    public function submissionChartData(Assignment $assignment, Question $question, string $response_format): array
+    public
+    function submissionChartData(Assignment $assignment, Question $question, string $response_format): array
     {
         try {
             $response['type'] = 'error';
@@ -1713,8 +1767,9 @@ class Submission extends Model
      * @param string $response_format
      * @return bool
      */
-    public function prettyPresentationExists(object $submission_result,
-                                             string $response_format): bool
+    public
+    function prettyPresentationExists(object $submission_result,
+                                      string $response_format): bool
     {
         $technology = $submission_result->technology;
         $submission = json_decode($submission_result->submission, true);
@@ -2439,12 +2494,13 @@ class Submission extends Model
      * @return array|float|int
      * @throws Exception
      */
-    public function computeScore(Assignment             $assignment,
-                                 Question               $question,
-                                 Score                  $score,
-                                 AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                        $assignment_question,
-                                                        $data)
+    public
+    function computeScore(Assignment             $assignment,
+                          Question               $question,
+                          Score                  $score,
+                          AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                 $assignment_question,
+                                                 $data)
 
     {
         switch ($data['technology']) {
@@ -2503,6 +2559,31 @@ class Submission extends Model
         }
         return $data['score'];
     }
+
+    /**
+     * @param SubmittedWorkPendingScore $submittedWorkPendingScore
+     * @param Submission $submission
+     * @param StoreSubmission $data
+     * @param $score
+     * @return void
+     */
+    public function moveScoreToPending(SubmittedWorkPendingScore $submittedWorkPendingScore,
+                                       Submission                $submission,
+                                       StoreSubmission           $data,
+                                                                 $score)
+    {
+        $submittedWorkPendingScore->updateOrCreate(
+            [
+                'user_id' => $data['user_id'],
+                'assignment_id' => $data['assignment_id'],
+                'question_id' => $data['question_id']
+            ],
+            ['score' => $score]
+        );
+        $submission->score = 0;
+        $submission->save();
+    }
+
 }
 
 

@@ -4,51 +4,37 @@ namespace App\Policies;
 
 use App\Grader;
 use App\Section;
+use App\Traits\GeneralSubmissionPolicy;
 use App\User;
 use App\Assignment;
 use App\SubmissionFile;
 use App\Course;
 use Illuminate\Auth\Access\HandlesAuthorization;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Access\Response;
 
 class SubmissionFilePolicy
 {
     use HandlesAuthorization;
+    use GeneralSubmissionPolicy;
 
-    public function getFilesFromS3(User $user, SubmissionFile $submissionFile, Assignment $assignment, User $studentUser, Grader $grader)
+    /**
+     * @param User $user
+     * @param SubmissionFile $submissionFile
+     * @param Assignment $assignment
+     * @param User $studentUser
+     * @param Grader $grader
+     * @return Response
+     */
+    public function getFilesFromS3(User           $user,
+                                   SubmissionFile $submissionFile,
+                                   Assignment     $assignment,
+                                   User           $studentUser,
+                                   Grader         $grader): Response
     {
-        $is_student_in_course = $assignment->course->enrollments->contains('user_id', $studentUser->id);
-
-        switch ($user->role) {
-            case(2):
-                $has_access = $is_student_in_course && $assignment->course->ownsCourseOrIsCoInstructor($user->id);
-                break;
-            case(3):
-                $has_access = $user->id === $studentUser->id;
-                break;
-            case(4):
-                $section_id = $assignment->course->enrollments->where('user_id', $studentUser->id)->pluck('section_id')->first();
-                $grader_sections = $grader->where('user_id', $user->id)->select('section_id')->get();
-
-                $override_access = false;
-                $access_level_override = $assignment->graders()
-                    ->where('assignment_grader_access.user_id', $user->id)
-                    ->first();
-                if ($access_level_override) {
-                    $override_access = $access_level_override->pivot->access_level;
-                }
-
-                $has_access = $is_student_in_course && ($override_access || $grader_sections->isNotEmpty() && in_array($section_id, $grader_sections->pluck('section_id')->toArray()));
-                break;
-            default:
-                $has_access = false;
-
-        }
+        $has_access = $this->canViewSubmittedFiles($user, $assignment, $studentUser, $grader);
         return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to view that submission file.');
-
 
     }
 
@@ -74,12 +60,14 @@ class SubmissionFilePolicy
 
     }
 
-    public function getUngradedSubmissions(User $user, SubmissionFile $submissionFile, Course $course){
+    public function getUngradedSubmissions(User $user, SubmissionFile $submissionFile, Course $course)
+    {
         return ($course->ownsCourseOrIsCoInstructor($user->id))
             ? Response::allow()
             : Response::deny('You are not allowed to get the ungraded submissions for this course.');
 
     }
+
     public function createTemporaryUrl(User $user, SubmissionFile $submissionFile, Course $course)
     {
 

@@ -8,23 +8,25 @@
         </div>
         <div v-show="commentType === 'audio'">
           <span v-show="isPhone()">
-Use your phone to record and upload your audio comment directly to ADAPT.
+Use your phone to record and upload your {{ submissionType === 'discuss-it' ? 'audio comment' : 'submitted work' }} directly to ADAPT.
           </span><span v-show="!isPhone()">
-          Use the built-in "ADAPT recorder" below to record and upload your audio
-          comment directly to
+          Use the built-in "ADAPT recorder" below to record and upload your {{
+            submissionType === 'discuss-it' ? 'audio comment' : 'submitted work'
+          }} directly to
           ADAPT.
             Otherwise, you may record your audio as an .mp3 file with another program (outside of
             ADAPT),
               save the .mp3 file to your computer, then</span></div>
-        <div v-show="commentType === 'video'">Use your webcam to record and upload your video comment directly to
+        <div v-show="commentType === 'video'">Use your webcam to record and upload your
+          {{ submissionType === 'discuss-it' ? 'video comment' : 'submitted work' }} directly to
           ADAPT.<span v-show="!isPhone()">
-            Otherwise, you may record your video comment as an .mp4 file with another program (outside of
+            Otherwise, you may record your {{ submissionType === 'discuss-it' ? 'video comment' : 'submitted work' }} as an .mp4 file with another program (outside of
             ADAPT),
             save the .mp4 file to your computer, then</span>
         </div>
         <span v-show="!isPhone()">
           <file-upload
-            ref="discussItCommentUpload"
+            ref="componentFileUploader"
             v-model="files"
             class="btn btn-outline-primary btn-sm"
             :accept="commentType === 'audio' ? '.mp3' : '.mp4'"
@@ -89,9 +91,13 @@ import AllFormErrors from './AllFormErrors.vue'
 import { isPhone } from '../helpers/isPhone'
 
 export default {
-  name: 'DiscussItCommentUpload',
+  name: 'DiscussItCommentAndSubmitWorkUpload',
   components: { AllFormErrors, ErrorMessage },
   props: {
+    submissionType: {
+      type: String,
+      default: 'discuss-it'
+    },
     commentType: {
       type: String,
       default: ''
@@ -107,7 +113,7 @@ export default {
   },
   data: () => ({
     allFormErrors: [],
-    discussItCommentUpload: {},
+    componentFileUploader: {},
     progress: 0,
     uploadFileErrorMessage: '',
     disableStartUpload: false,
@@ -122,7 +128,7 @@ export default {
     isPhone,
     initStartUpload () {
       this.allFormErrors = []
-      this.$refs.discussItCommentUpload.active = true
+      this.$refs.componentFileUploader.active = true
     },
     async inputUploadFileFilter (newFile, oldFile, prevent) {
       this.uploadFileErrorMessage = ''
@@ -147,7 +153,7 @@ export default {
           try {
             this.preSignedURL = ''
             let uploadFileData = {
-              upload_file_type: 'discuss-it-comments',
+              upload_file_type: this.submissionType === 'discuss-it' ? 'discuss-it-comments' : 'submitted-work',
               file_name: newFile.name,
               assignment_id: this.assignmentId
             }
@@ -208,8 +214,17 @@ export default {
     async handleOK (newFile) {
       this.preSignedURL = ''
       this.disableStartUpload = false
-      const fileRequirementSatisfied = await this.fileRequirementSatisfied(newFile.discuss_it_comments_filename)
-      this.$emit('saveUploadedAudioVideoComment', newFile.discuss_it_comments_filename, fileRequirementSatisfied)
+      switch (this.submissionType) {
+        case ('discuss-it'):
+          const fileRequirementSatisfied = await this.fileRequirementSatisfied(newFile.discuss_it_comments_filename)
+          this.$emit('saveUploadedAudioVideoComment', newFile.discuss_it_comments_filename, fileRequirementSatisfied)
+          break
+        case ('submit-work'):
+          this.$emit('saveUploadedAudioVideoSubmittedWork', this.s3Key)
+          break
+        default:
+          alert(`${this.submissionType} is not a valid submission type for audio/video upload.`)
+      }
     },
     async fileRequirementSatisfied (discussItCommentsFilename) {
       try {

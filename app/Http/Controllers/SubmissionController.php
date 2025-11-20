@@ -80,82 +80,6 @@ class SubmissionController extends Controller
 
     }
 
-    /**
-     * @param Request $request
-     * @param Assignment $assignment
-     * @param Question $question
-     * @param Submission $submission
-     * @return array
-     * @throws Exception
-     */
-    public function submitWork(Request    $request,
-                               Assignment $assignment,
-                               Question   $question,
-                               Submission $submission): array
-    {
-
-        try {
-            $response['type'] = 'error';
-            $submitted_work = $request->submitted_work;
-            $authorized = Gate::inspect('submitWork', [$submission, $assignment, $assignment->id, $question->id]);
-            if (!$authorized->allowed()) {
-                $response['message'] = $authorized->message();
-                return $response;
-            }
-            if (Storage::disk('s3')->exists("$submitted_work")) {
-                $submission->where('user_id', $request->user()->id)
-                    ->where('assignment_id', $assignment->id)
-                    ->where('question_id', $question->id)
-                    ->update(['submitted_work' => pathinfo($submitted_work, PATHINFO_BASENAME),
-                        'submitted_work_at' => now()]);
-                $response['message'] = "Your work has been submitted.";
-                $response['type'] = 'success';
-                $response['submitted_work_url'] = Storage::disk('s3')->temporaryUrl($submitted_work, now()->addDay());
-                $response['submitted_work_at'] = Carbon::now('UTC') // Get the current UTC time
-                ->setTimezone($request->user()->time_zone) // Adjust to the user's timezone
-                ->format('M d, Y \a\t g:i:s a');
-
-            } else {
-                $response['message'] = "We were unable to locate the submitted work on the server.  Please try again or contact us for assistance.";
-            }
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "We were not able to save your submitted work.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
-    }
-
-    public function deleteSubmittedtWork(Request    $request,
-                                         Assignment $assignment,
-                                         Question   $question,
-                                         Submission $submission)
-    {
-
-        try {
-            $response['type'] = 'error';
-            $authorized = Gate::inspect('deleteSubmittedWork', [$submission, $assignment, $assignment->id, $question->id]);
-            if (!$authorized->allowed()) {
-                $response['message'] = $authorized->message();
-                return $response;
-            }
-            $submission->where('user_id', $request->user()->id)
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->update(['submitted_work' => null,
-                    'submitted_work_at' => null]);
-            $response['message'] = "Your submitted work has been deleted.";
-            $response['type'] = 'info';
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "We were not able to delete your submitted work.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
-    }
 
     /**
      * @param Request $request
@@ -443,7 +367,9 @@ class SubmissionController extends Controller
                 'seeds',
                 'can_give_ups',
                 'shown_hints',
-                'submission_histories'];
+                'submission_histories',
+                'submitted_works',
+                'submitted_work_pending_scores'];
             foreach ($tables as $table) {
                 DB::table($table)
                     ->where('user_id', $request->user()->id)

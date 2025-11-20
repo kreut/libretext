@@ -2,6 +2,28 @@
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-canned-response'"/>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-errors-grading-form'"/>
+
+    <b-modal id="modal-submitted-work"
+             :title="`Submitted on ${submittedWork.submitted_at}`"
+             size="xl"
+    >
+      <b-embed
+        v-resize="{ log: false, checkOrigin: false }"
+        width="100%"
+        :src="submittedWork.url"
+        allowfullscreen
+      />
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          variant="primary"
+          class="float-right"
+          @click="$bvModal.hide('modal-submitted-work')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-structure-image"
              title="Scanned Image"
              size="xl"
@@ -38,29 +60,6 @@
         and update the Open-Ended Submission Type to one of the manual options.
       </p>
     </b-modal>
-    <div v-if="grading[currentStudentPage - 1] && grading[currentStudentPage - 1]['auto_graded_submission']">
-      <b-modal id="modal-submitted-work"
-               :title="`Submitted on ${grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work_at']}`"
-               size="xl"
-      >
-        <b-embed
-          v-resize="{ log: false, checkOrigin: false }"
-          width="100%"
-          :src="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
-          allowfullscreen
-        />
-        <template #modal-footer>
-          <b-button
-            size="sm"
-            variant="primary"
-            class="float-right"
-            @click="$bvModal.hide('modal-submitted-work')"
-          >
-            OK
-          </b-button>
-        </template>
-      </b-modal>
-    </div>
     <b-modal id="modal-discussion"
              :title="`Started by ${activeDiscussion.started_by} on ${activeDiscussion.created_at}`"
              no-close-on-backdrop
@@ -577,22 +576,27 @@
                                  @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
                               >{{ comment.created_at }}:</a>
                               <b-alert :show="comment.pasted_comment === 1">
-                                This comment was pasted in by the student.  <QuestionCircleTooltip :id="`pasted-comment-${comment.id}`"/>
+                                This comment was pasted in by the student.
+                                <QuestionCircleTooltip :id="`pasted-comment-${comment.id}`"/>
                                 <b-tooltip :target="`pasted-comment-${comment.id}`"
                                            delay="250"
                                            width="600"
                                            triggers="hover focus"
                                            custom-class="custom-tooltip"
                                 >
-                                  If a student pastes in a comment, they are informed that you will be notified.<br><br>Comments that were
-                                  pasted in may have first been written by the student in an application such as Microsoft Word or the
+                                  If a student pastes in a comment, they are informed that you will be notified.<br><br>Comments
+                                  that were
+                                  pasted in may have first been written by the student in an application such as
+                                  Microsoft Word or the
                                   student may have used ChatGPT to generate the comment.
                                 </b-tooltip>
                               </b-alert>
                               <div v-if="comment.text" v-html="comment.text"/>
 
-                              <b-tooltip :target="`view-in-new-tab-${comment.discussion_comment_id}`" triggers="hover focus" delay="500">
-                               View in New Tab
+                              <b-tooltip :target="`view-in-new-tab-${comment.discussion_comment_id}`"
+                                         triggers="hover focus" delay="500"
+                              >
+                                View in New Tab
                               </b-tooltip>
                               <span
                                 v-show="comment.file"
@@ -650,6 +654,21 @@
                         @load="receiveMessage"
                       />
                     </div>
+                    <div v-if="canSubmitWork">
+                      <div v-if="submittedWork.url">
+                        <b-button @click="$bvModal.show('modal-submitted-work')"
+                                  variant="primary"
+                                  size="sm"
+                        >
+                          Submitted Work
+                        </b-button>
+                      </div>
+                      <div v-else>
+                        <b-alert variant="danger" show>
+                          There is no submitted work.
+                        </b-alert>
+                      </div>
+                    </div>
                   </b-card-text>
                 </b-card>
               </b-col>
@@ -701,6 +720,28 @@
                         </span>
                         <br>
                         <br>
+                        <div v-if="submittedWork.pending_score" class="mb-2">
+                          <strong>Pending auto-graded score</strong>: <span
+                          :class="{'text-success': submittedWork.submitted_work, 'text-danger': !submittedWork.submitted_work}"
+                        >{{ roundToDecimalSigFig(submittedWork.pending_score, 4) }}
+                          <span id="apply-pending-score-tooltip">
+                       <b-button
+                         :variant="submittedWork.submitted_work ? 'outline-success' : 'outline-danger'"
+                         size="sm"
+                         class="ml-1"
+                         @click="applyPendingScore()"
+                       >
+  Approve
+</b-button>
+                        </span>
+          <b-tooltip v-if="!submittedWork.submitted_work"
+                     target="apply-pending-score-tooltip"
+                     delay="500"
+                     triggers="hover focus"
+          >You will be applying the score even though this student has not submitted work.
+          </b-tooltip>
+</span>
+                        </div>
                         <b-form-group
                           v-if="!isDiscussIt"
                           label-cols-sm="5"
@@ -1036,21 +1077,6 @@
             <b-row v-if="!isDiscussIt && submissionArray.length" class="mt-2">
               <b-col>
                 <b-card header="default" :header-html="getSubmissionSummaryTitle()">
-                  <b-row v-if="grading[currentStudentPage - 1]['auto_graded_submission']['submitted_work']"
-                         class="pb-2 pl-2"
-                  >
-                    <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
-                          title="This submitted work is only applicable to the current submission."
-                    >
-                      <b-button
-                        variant="primary"
-                        size="sm"
-                        @click="$bvModal.show('modal-submitted-work')"
-                      >
-                        View Submitted Work
-                      </b-button>
-                    </span>
-                  </b-row>
                   <SubmissionArray
                     :key="`submission-array-${+renderMathJax}`"
                     :submission-array="submissionArray"
@@ -1117,15 +1143,18 @@
               >
                 <b-row v-if="fullView" align-h="center" class="pb-2">
                   <b-alert show>
-                    This text submission  was pasted in by the student.  <QuestionCircleTooltip id="pasted-submission-tooltip"/>
+                    This text submission was pasted in by the student.
+                    <QuestionCircleTooltip id="pasted-submission-tooltip"/>
                     <b-tooltip target="pasted-submission-tooltip"
                                delay="250"
                                width="600"
                                triggers="hover focus"
                                custom-class="custom-tooltip"
                     >
-                      If a student pastes in a text submission, they are informed that you will be notified.<br><br>Text submissions that were
-                      pasted in may have first been written by the student in an application such as Microsoft Word or the
+                      If a student pastes in a text submission, they are informed that you will be notified.<br><br>Text
+                      submissions that were
+                      pasted in may have first been written by the student in an application such as Microsoft Word or
+                      the
                       student may have used ChatGPT to generate the comment.
                     </b-tooltip>
                   </b-alert>
@@ -1228,11 +1257,11 @@ import QtiJsonQuestionViewer from '../../components/QtiJsonQuestionViewer.vue'
 import SubmissionArray from '../../components/SubmissionArray.vue'
 import CompletedIcon from '../../components/CompletedIcon.vue'
 import RubricPointsBreakdown from '../../components/RubricPointsBreakdown.vue'
-import { roundToDecimalSigFig } from '../../helpers/Math'
 import ConsultInsight from '../../components/ConsultInsight.vue'
 import QtiJsonAnswerViewer from '../../components/QtiJsonAnswerViewer.vue'
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { roundToDecimalSigFig } from '../../helpers/Math'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
@@ -1258,6 +1287,8 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    canSubmitWork: false,
+    submittedWork: {},
     externalLink: faExternalLinkAlt,
     qtiAnswerJson: '',
     structureImageTemporaryUrl: '',
@@ -1422,12 +1453,42 @@ export default {
     this.$forceUpdate()
   },
   methods: {
-    roundToDecimalSigFig,
     addGlow,
     downloadSubmissionFile,
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    roundToDecimalSigFig,
+    async applyPendingScore () {
+      this.gradingForm.question_submission_score = this.roundToDecimalSigFig(this.submittedWork.pending_score)
+      this.gradingForm.submitted_work_pending_score = true
+      const lastGraded = await this.submitGradingForm(false)
+      if (lastGraded) {
+        this.gradingForm.submitted_work_pending_score = false
+        this.submittedWork.pending_score = null
+        this.grading[this.currentStudentPage - 1]['last_graded'] = lastGraded
+      }
+    },
+    async getSubmittedWorkWithPendingScore () {
+      try {
+        let current
+        current = this.grading[this.currentStudentPage - 1]['auto_graded_submission']
+        if (!current.question_id) {
+          current = this.grading[this.currentStudentPage - 1]['open_ended_submission']
+        }
+        const { data } = await axios.get(`/api/submitted-work/assignments/${this.assignmentId}/questions/${current.question_id}/user/${current.user_id}/with-pending-score`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        } else {
+          this.canSubmitWork = data.can_submit_work
+          if (this.canSubmitWork) {
+            this.submittedWork = data.submitted_work
+          }
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     viewInNewTab (url) {
       window.open(url, '_blank')
     },
@@ -1967,6 +2028,8 @@ export default {
           if (next && this.currentStudentPage < this.numStudents) {
             this.currentStudentPage++
             await this.changePage()
+          } else {
+            return data.last_graded
           }
         }
       } catch (error) {
@@ -1983,6 +2046,7 @@ export default {
           this.allFormErrors = this.gradingForm.errors.flatten()
           this.$bvModal.show('modal-errors-grading-form')
         }
+        return false
       }
     },
     openUploadFileModal () {
@@ -2084,6 +2148,8 @@ export default {
       }
     },
     async changePage () {
+      this.submittedWork = {}
+      this.canSubmitWork = false
       if (!this.grading.length) {
         this.showNoAutoGradedOrOpenSubmissionsExistAlert = true
         return false
@@ -2136,6 +2202,7 @@ export default {
       console.log(this.grading[this.currentStudentPage - 1]['open_ended_submission'])
 
       this.openEndedType = this.grading[this.currentStudentPage - 1]['open_ended_submission'].open_ended_submission_type
+      await this.getSubmittedWorkWithPendingScore()
       await this.getFilesFromS3()
       if (this.isDiscussIt) {
         await this.getDiscussItRequirementInfo()

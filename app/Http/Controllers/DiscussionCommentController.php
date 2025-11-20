@@ -436,55 +436,8 @@ class DiscussionCommentController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
-            $file = md5(uniqid('', true)) . '.mp3';
 
-
-            $audio_file = $request->file('audio');
-
-            $efs_dir = "/mnt/local/";
-            $is_efs = is_dir($efs_dir);
-            $storage_path = $is_efs
-                ? $efs_dir
-                : Storage::disk('local')->getAdapter()->getPathPrefix();
-
-            $audio_file_path = $storage_path . $questionMediaUpload->getDir() . "/$file";
-            $output_file_path = $storage_path . $questionMediaUpload->getDir() . "/temp-$file";
-            file_put_contents($audio_file_path, file_get_contents($audio_file));
-
-            $command = "ffmpeg -y -i $audio_file_path -acodec libmp3lame -b:a 128k $output_file_path";
-            list($returnValue, $output, $errorOutput) = Helper::runFfmpegCommand($command);
-
-            if ($returnValue === 0) {
-                if (file_exists($audio_file_path)) {
-                    unlink($audio_file_path);
-                }
-                rename($output_file_path, $audio_file_path);
-            } else {
-                if (file_exists($output_file_path)) {
-                    unlink($output_file_path);
-                }
-                throw new Exception ("FFmpeg error processing audio upload for user {$request->user()->id}: $errorOutput)");
-            }
-
-
-            //Storage::disk('s3')->putObject($questionMediaUpload->getDir() . "/$file", file_get_contents($audio_file_path));
-            $adapter = Storage::disk('s3')->getDriver()->getAdapter(); // Get the filesystem adapter
-            $client = $adapter->getClient(); // Get the aws client
-            $bucket = $adapter->getBucket(); // Get the current bucket
-            $client->putObject([
-                'Bucket' => $bucket,
-                'Key' => $questionMediaUpload->getDir() . "/" . $file,
-                'SourceFile' => $audio_file_path,
-                'ContentType' => 'audio/mpeg',  // Set the content type explicitly
-            ]);
-            if (file_exists($output_file_path)) {
-                unlink($output_file_path);
-            }
-            if (file_exists($audio_file_path)) {
-                unlink($audio_file_path);
-            }
-
-            //'ContentType' => 'audio/mpeg',
+            $file = Helper::storeAudio($request, $questionMediaUpload->getDir());
             $response['type'] = 'success';
             $response['file'] = $file;
 

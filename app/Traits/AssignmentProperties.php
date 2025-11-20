@@ -189,6 +189,8 @@ trait AssignmentProperties
             'number_of_allowed_attempts' => $this->getNumberOfAllowedAttempts($request),
             'number_of_allowed_attempts_penalty' => $this->getNumberOfAllowedAttemptsPenalty($request),
             'can_view_hint' =>$request->can_view_hint,
+            'can_submit_work' =>$request->can_submit_work,
+            'submitted_work_format' =>+$request->can_submit_work ? json_encode($request->submitted_work_format) : null,
             'hint_penalty' => $this->getHintPenalty($request),
             'algorithmic' => $this->getAlgorithmic($request),
             'solutions_availability' => $this->getSolutionsAvailability($request),

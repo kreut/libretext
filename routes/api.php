@@ -368,7 +368,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/question-sections/question-chapter/{question_chapter}', 'QuestionSectionController@store');
 
 
-
     Route::get('/question-chapters/question-subject/{question_subject}', 'QuestionChapterController@getQuestionChaptersByQuestionSubject');
     Route::get('/question-sections/question-chapter/{question_chapter}', 'QuestionSectionController@getQuestionSectionsByQuestionChapter');
 
@@ -833,9 +832,13 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
     Route::patch('/submissions/assignments/{assignment}/question/{question}/reset-submission', 'SubmissionController@resetSubmission');
-    Route::patch('/submissions/assignments/{assignment}/questions/{question}/submit-work', 'SubmissionController@submitWork');
-    Route::delete('/submissions/assignments/{assignment}/questions/{question}/submitted-work', 'SubmissionController@deleteSubmittedtWork');
     Route::delete('/submissions/assignments/{assignment}/questions/{question}/delete-by-assignment-and-question', 'SubmissionController@deleteByAssignmentAndQuestion');
+
+    Route::patch('/submitted-work/assignments/{assignment}/questions/{question}', 'SubmittedWorkController@store');
+    Route::post('/submitted-work/assignments/{assignment}/questions/{question}/audio', 'SubmittedWorkController@storeAudioSubmittedWork');
+    Route::delete('/submitted-work/assignments/{assignment}/questions/{question}', 'SubmittedWorkController@destroy');
+    Route::get('/submitted-work/assignments/{assignment}/questions/{question}', 'SubmittedWorkController@show');
+    Route::get('/submitted-work/assignments/{assignment}/questions/{question}/user/{student_user}/with-pending-score', 'SubmittedWorkController@getSubmittedWorkWithPendingScore');
 
 
     Route::patch('/submissions/time-spent/assignment/{assignment}/question/{question}', 'AssignmentQuestionTimeOnTaskController@update');

@@ -52,6 +52,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
 use MiladRahimi\Jwt\Exceptions\InvalidSignatureException;
@@ -2094,6 +2095,11 @@ class CourseController extends Controller
         try {
             DB::beginTransaction();
             $assignment_ids = $course->assignments->pluck('id')->toArray();
+            foreach ($assignment_ids as $assignment_id){
+                $folderPath = "submitted-work/$assignment_id";
+                $files = Storage::disk('s3')->files($folderPath);
+                Storage::disk('s3')->delete($files);
+            }
             $assignment_question_ids = DB::table('assignment_question')
                 ->whereIn('assignment_id', $assignment_ids)
                 ->get()
@@ -2135,7 +2141,9 @@ class CourseController extends Controller
                 'release_assignment_contacted_instructors',
                 'submission_score_overrides',
                 'rubric_points_breakdowns',
-                'maximum_number_of_allowed_attempts_notifications'];
+                'maximum_number_of_allowed_attempts_notifications',
+                'submitted_works',
+                'submitted_work_pending_scores'];
             foreach ($tables as $table) {
                 DB::table($table)->whereIn('assignment_id', $assignment_ids)->delete();
             }

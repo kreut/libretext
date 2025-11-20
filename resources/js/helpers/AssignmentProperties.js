@@ -154,6 +154,8 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   }
   form.late_policy = 'not accepted'
   form.can_submit_work = 0
+  form.submitted_work_policy = 'optional'
+  form.submitted_work_format = []
   form.can_contact_instructor_auto_graded = 'always'
   form.late_deduction_percent = null
   form.late_deduction_applied_once = 1
@@ -197,6 +199,8 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.solutionsReleased = assignmentProperties.solutions_released
   vm.number_of_questions = assignmentProperties.num_questions
   vm.form.can_submit_work = assignmentProperties.can_submit_work
+  vm.form.submitted_work_format = assignmentProperties.can_submit_work ? JSON.parse(assignmentProperties.submitted_work_format) : []
+  vm.form.submitted_work_policy = assignmentProperties.submitted_work_policy
   vm.form.can_contact_instructor_auto_graded = assignmentProperties.can_contact_instructor_auto_graded
   // auto-release
   vm.form.auto_release_shown = assignmentProperties.auto_release_shown
@@ -265,7 +269,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.form.hint_penalty = assignmentProperties.hint_penalty !== null
     ? `${assignmentProperties.hint_penalty}%`
     : ''
-  if (['',null].includes(vm.form.hint_penalty) && vm.form.can_view_hint) {
+  if (['', null].includes(vm.form.hint_penalty) && vm.form.can_view_hint) {
     vm.form.hint_penalty = '0%'
   }
   vm.form.shown = assignmentProperties.shown

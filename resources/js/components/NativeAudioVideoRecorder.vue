@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-container>
-      <iframe v-if="!isRecording && audioVideoFilename"
+      <iframe v-if="!isRecording && audioVideoFilename && uploadType !== 'submitted-work'"
               v-resize="{ log: false }"
               :src="getSrc()"
               width="100%"
@@ -186,6 +186,10 @@ export default {
           break
         case ('submission'):
           this.audioVideoFilename = data.submission
+          break
+        case ('submitted-work'):
+          this.audioVideoFilename = data.submitted_work
+          break
       }
       this.resetPlayer()
       if (this.uploadType === 'discuss-it-comments') {
@@ -215,6 +219,9 @@ export default {
           break
         case ('submission'):
           methodToEmit = 'submitAudio'
+          break
+        case ('submitted-work'):
+          methodToEmit = 'storeSubmittedWork'
       }
       this.$emit(methodToEmit, this.audioVideoFilename, this.recordingType)
     }

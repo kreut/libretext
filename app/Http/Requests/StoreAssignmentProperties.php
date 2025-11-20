@@ -16,6 +16,7 @@ use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
 use App\Rules\IsValidPeriodOfTime;
 use App\Rules\IsADateLaterThan;
 use App\Rules\IsValidAssesmentTypeForScoringType;
+use App\Rules\SubmittedWorkFormatRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -70,6 +71,10 @@ class StoreAssignmentProperties extends FormRequest
                 $rules['can_contact_instructor_auto_graded'] = ['required', Rule::in(['always', 'before submission', 'before due date', 'after due date', 'never'])];
                 $rules['assignment_group_id'] = 'required|exists:assignment_groups,id';
                 $rules['can_submit_work'] = ['required', Rule::in([0, 1])];
+                if ($this->can_submit_work) {
+                    $rules['submitted_work_format'] = ['required', new SubmittedWorkFormatRule()];
+                    $rules['submitted_work_policy'] = ['required', Rule::in('optional', 'required with auto-approval', 'required with manual approval')];
+                }
                 $auto_releases = ['auto_release_shown',
                     'auto_release_show_scores',
                     'auto_release_solutions_released',

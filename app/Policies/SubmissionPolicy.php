@@ -24,7 +24,7 @@ class SubmissionPolicy
      * @param int $question_id
      * @return Response
      */
-    public function deleteByAssignmentAndQuestion(User $user, Submission $submission, Assignment $assignment, int $question_id)
+    public function deleteByAssignmentAndQuestion(User $user, Submission $submission, Assignment $assignment, int $question_id): Response
     {
 
         $question_ids = $assignment->questions->pluck('id')->toArray();
@@ -197,39 +197,7 @@ class SubmissionPolicy
     }
 
 
-    /**
-     * @param User $user
-     * @param $submission
-     * @param $assignment
-     * @param int $assignment_id
-     * @param int $question_id
-     * @return Response
-     */
-    public function deleteSubmittedWork(User $user, $submission, $assignment, int $assignment_id, int $question_id): Response
-    {
-        $response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id);
-        $has_access = $response['type'] === 'success';
-        return $has_access
-            ? Response::allow()
-            : Response::deny("You are not allowed to delete submitted work for this question.");
-    }
 
-    /**
-     * @param User $user
-     * @param $submission
-     * @param $assignment
-     * @param int $assignment_id
-     * @param int $question_id
-     * @return Response
-     */
-    public function submitWork(User $user, $submission, $assignment, int $assignment_id, int $question_id): Response
-    {
-        $response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id);
-        $has_access = $response['type'] === 'success';
-        return $has_access
-            ? Response::allow()
-            : Response::deny("You are not allowed to submit work for this question.");
-    }
     /**
      * @param User $user
      * @param $submission

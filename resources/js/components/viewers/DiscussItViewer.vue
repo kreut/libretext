@@ -223,7 +223,7 @@
       />
 
       <div v-if="commentType === 'audio'">
-        <DiscussItCommentUpload v-if="reRecording"
+        <DiscussItCommentAndSubmitWorkUpload v-if="reRecording"
                                 :key="'re-record-audio'"
                                 :comment-type="'audio'"
                                 :assignment-id="assignmentId"
@@ -260,7 +260,7 @@
         </div>
       </div>
       <div v-if="commentType === 'video'">
-        <DiscussItCommentUpload v-if="reRecording"
+        <DiscussItCommentAndSubmitWorkUpload v-if="reRecording"
                                 :key="'re-record-video'"
                                 :comment-type="'video'"
                                 :assignment-id="assignmentId"
@@ -861,7 +861,7 @@
                                            :show-satisfies-requirement-timer="showSatisfiesRequirementTimer"
                                            @setRequirementSatisfied="setRequirementSatisfied"
             />
-            <DiscussItCommentUpload :key="'new-audio'"
+            <DiscussItCommentAndSubmitWorkUpload :key="'new-audio'"
                                     :comment-type="'audio'"
                                     :assignment-id="assignmentId"
                                     :question-id="questionId"
@@ -924,7 +924,7 @@
             :show-satisfies-requirement-timer="showSatisfiesRequirementTimer"
             @setRequirementSatisfied="setRequirementSatisfied"
           />
-          <DiscussItCommentUpload :key="'new-video'"
+          <DiscussItCommentAndSubmitWorkUpload :key="'new-video'"
                                   :comment-type="'video'"
                                   :assignment-id="assignmentId"
                                   :question-id="questionId"
@@ -1244,16 +1244,16 @@ import DiscussItSatisfiesRequirement from '../DiscussItSatisfiesRequirement.vue'
 import { updateModalToggleIndex } from '~/helpers/accessibility/fixCKEditor'
 import CKEditor from 'ckeditor4-vue'
 import Transcript from '../Transcript.vue'
-import DiscussItCommentUpload from '../DiscussItCommentUpload.vue'
+import DiscussItCommentAndSubmitWorkUpload from '../DiscussItCommentAndSubmitWorkUpload.vue'
 import NativeAudioVideoRecorder from '../NativeAudioVideoRecorder.vue'
-import { isPhone } from '../../helpers/isPhone'
+import { isPhone } from '~/helpers/isPhone'
 import { handleFixCKEditorWithPasteWarning } from '~/helpers/ckeditor.js'
 
 export default {
   name: 'DiscussItViewer',
   components: {
     NativeAudioVideoRecorder,
-    DiscussItCommentUpload,
+    DiscussItCommentAndSubmitWorkUpload,
     Transcript,
     DiscussItSatisfiesRequirement,
     CompletedIcon,

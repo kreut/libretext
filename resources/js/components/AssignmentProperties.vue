@@ -6,7 +6,8 @@
              size="lg"
     >
       <p>
-        You have open-ended questions in this assignment but are about to change the assessment type to "real time". Typically
+        You have open-ended questions in this assignment but are about to change the assessment type to "real time".
+        Typically
         open-ended questions are reserved for "delayed" assessments.
       </p>
       <b-form-group
@@ -581,7 +582,7 @@
                 :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                 @keydown="form.errors.clear('points_per_question')"
               >
-                Specify number of points for each question
+                Specify the points for each question individually
                 <QuestionCircleTooltip :id="'points-per-question-specify-actual-values-tooltip'"/>
                 <b-tooltip target="points-per-question-specify-actual-values-tooltip"
                            delay="250"
@@ -591,8 +592,7 @@
                 </b-tooltip>
               </b-form-radio>
               <b-form-radio name="points_per_question" value="question weight">
-                Determine
-                by question weight using the total assignment points
+                Specify the points for assignment and use weights to vary individual question points
                 <QuestionCircleTooltip
                   :id="'points-per-question-determine-by-weights-tooltip'"
                 />
@@ -726,69 +726,101 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
-          <b-form-group
-            v-show="form.assessment_type !== 'clicker'"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="can_submit_work"
+          <component
+            :is="+form.can_submit_work ? 'b-card' : 'div'"
+            id="submit-work-card"
+            :body-class="+form.can_submit_work ? 'pb-0' : ''"
+            :class="+form.can_submit_work ? 'mb-3' : ''"
           >
-            <template v-slot:label>
-              Can Submit Work*
-              <CanSubmitWorkTooltip/>
-            </template>
-            <b-form-radio-group id="can_submit_work"
-                                v-model="form.can_submit_work"
-                                required
-                                stacked
-            >
-              <b-form-radio name="can_submit_work" value="1">
-                Yes
-              </b-form-radio>
-              <b-form-radio name="can_submit_work" value="0">
-                No
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
-          <b-form-group
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="can_contact_instructor_auto_graded"
-            v-show="form.assessment_type !== 'clicker'"
-          >
-            <template v-slot:label>
-              Can Contact Instructor (auto-graded)
-              <QuestionCircleTooltip id="can_contact_instructor_auto_graded_tooltip"/>
-              <b-tooltip target="can_contact_instructor_auto_graded_tooltip"
-                         delay="250"
-                         triggers="hover focus"
+            <b-card-text>
+              <b-form-group
+                v-show="form.assessment_type !== 'clicker'"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="can_submit_work"
               >
-                For auto-graded questions, optionally allow your students to contact you or your grader (if one exists
-                for a given section) directly through ADAPT. This may be for clarifying purposes or if they need a
-                question to be regraded.
-              </b-tooltip>
-            </template>
-            <b-form-radio-group id="can_contact_instructor_auto_graded"
-                                v-model="form.can_contact_instructor_auto_graded"
-                                required
-                                stacked
-            >
-              <b-form-radio name="can_contact_instructor" value="always">
-                Always
-              </b-form-radio>
-              <b-form-radio name="can_contact_instructor" value="before submission">
-                Before submission
-              </b-form-radio>
-              <b-form-radio name="can_contact_instructor" value="before due date">
-                Before due date
-              </b-form-radio>
-              <b-form-radio name="can_contact_instructor" value="after due date">
-                Only after due date
-              </b-form-radio>
-              <b-form-radio name="never" value="never">
-                Never
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
+                <template v-slot:label>
+                  Can Submit Work*
+                  <CanSubmitWorkTooltip/>
+                </template>
+                <b-form-radio-group
+                  id="can_submit_work"
+                  v-model="form.can_submit_work"
+                  required
+                  stacked
+                >
+                  <div>
+                    <b-form-radio name="can_submit_work" value="1" class="d-inline-block">
+                      Yes
+                    </b-form-radio>
+                    <span v-if="+form.can_submit_work === 1" class="ml-3 d-inline-block">
+      <b-form-checkbox-group
+        id="submitted_work_format"
+        v-model="form.submitted_work_format"
+        name="submitted_work_format"
+        @change="form.errors.clear('submitted_work_format')"
+      >
+        <b-form-checkbox value="file">File</b-form-checkbox>
+        <b-form-checkbox value="audio">Audio</b-form-checkbox>
+        <b-form-checkbox value="video">Video</b-form-checkbox>
+      </b-form-checkbox-group>
+      </span>
+                    <ErrorMessage :message="form.errors.get('submitted_work_format')"/>
+                  </div>
+                  <b-form-radio name="can_submit_work" value="0">
+                    No
+                  </b-form-radio>
+                </b-form-radio-group>
+              </b-form-group>
+              <b-form-group
+                v-show="form.can_submit_work"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="submitted_work_policy"
+                label="Submitted Work Policy*"
+              >
+                <b-form-radio-group
+                  id="submitted_work_policy"
+                  v-model="form.submitted_work_policy"
+                  required
+                  stacked
+                  @change="form.errors.clear('submitted_work_policy')"
+                >
+                  <b-form-radio name="submitted_work_policy" value="optional">
+                    Optional
+                    <QuestionCircleTooltip id="optional_tooltip"/>
+                    <b-tooltip target="optional_tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Students may submit work to request regrades if needed.
+                    </b-tooltip>
+                  </b-form-radio>
+                  <b-form-radio name="submitted_work_policy" value="required with auto-approval">
+                    Required with auto-approval
+                    <QuestionCircleTooltip id="required_with_auto_graded_submission_tooltip"/>
+                    <b-tooltip target="required_with_auto_graded_submission_tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Students must submit work to receive points; work quality reviewed separately in the Open Grader.
+                    </b-tooltip>
+                  </b-form-radio>
+                  <b-form-radio name="submitted_work_policy" value="required with manual approval">
+                    Required with manual approval
+                    <QuestionCircleTooltip id="required_with_manually_graded_submission_tooltip"/>
+                    <b-tooltip target="required_with_manually_graded_submission_tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Students must submit work; grade based on both answer correctness and work quality
+                    </b-tooltip>
+                  </b-form-radio>
+                </b-form-radio-group>
+                <ErrorMessage :message="form.errors.get('submitted_work_policy')"/>
+              </b-form-group>
+            </b-card-text>
+          </component>
           <div v-if="form.assessment_type === 'learning tree'">
             <b-form-group
               label-cols-sm="4"
@@ -1159,7 +1191,8 @@
                            triggers="hover focus"
                 >
                   <p>
-                    If you choose this option, your students will upload a single compiled PDF and let ADAPT know which
+                    If you choose this option, your students will upload a single compiled PDF and let ADAPT know
+                    which
                     pages
                     are associated with which questions.
                   </p>
@@ -1173,7 +1206,8 @@
                            triggers="hover focus"
                 >
                   <p>
-                    If you choose this option, your students will be able to upload either a compiled PDF or individual
+                    If you choose this option, your students will be able to upload either a compiled PDF or
+                    individual
                     assessment uploads. Use this option if you have both several assessments which require a PDF
                     submission
                     and you also have non-PDF assessments such as text, images, or audio.
@@ -1198,7 +1232,8 @@
                          delay="250"
                          triggers="hover focus"
               >
-                Adjust this option if your assignment consists of open-ended questions. This option can be changed on a
+                Adjust this option if your assignment consists of open-ended questions. This option can be changed on
+                a
                 per
                 question basis once you start adding questions to the assignment.
               </b-tooltip>
@@ -1951,6 +1986,10 @@ export default {
     anonymousUsers: { type: Boolean, default: false }
   },
   data: () => ({
+    submittedWorkFormat: [
+      { item: 'file', name: 'File' },
+      { item: 'audio', name: 'Audio' },
+      { item: 'video', name: 'Video' }],
     actionToBeTakenForRealTimeQuestionsInDelayedAssignment: 'leave open-ended questions',
     autoReleaseKey: 0,
     initNumberOfAllowedAttemptsPenalty: 0,
@@ -2060,6 +2099,7 @@ export default {
         this.form.formative = '1'
       }
       this.initNumberOfAllowedAttemptsPenalty = this.form.number_of_allowed_attempts_penalty
+      console.error(this.form.submitted_work_format)
     })
     if (this.courseId) {
       await this.getAssignToGroups()

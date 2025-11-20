@@ -9,7 +9,7 @@
              triggers="hover focus"
   >
     Allow students to optionally submit their work to accompany their
-    submissions.
+    submissions based on the upload type(s) chosen by their instructors.
     Instructors may then review the work and adjust the score if appropriate.
   </b-tooltip>
     </span>

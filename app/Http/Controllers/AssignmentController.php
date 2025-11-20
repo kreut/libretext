@@ -294,7 +294,7 @@ class AssignmentController extends Controller
                 ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
                 ->select('assignments.id as id', 'assign_to_timings.*', 'assignments.name')
                 ->where('group', 'course')
-                ->where('assessment_type', '<>', 'clicker')
+               ->where('assessment_type', '<>', 'clicker')
                 ->get();
             foreach ($assignment_dates as &$assignment_date) {
                 foreach (['due', 'available_from', 'final_submission_deadline'] as $key) {
@@ -1967,6 +1967,8 @@ class AssignmentController extends Controller
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
                 'can_view_hint' => $assignment->can_view_hint,
                 'can_submit_work' => $assignment->can_submit_work,
+                'submitted_work_format' => $assignment->submitted_work_format ? json_decode($assignment->submitted_work_format) : [],
+                'submitted_work_policy' => $assignment->submitted_work_policy,
                 'hint_penalty' => $assignment->hint_penalty,
                 'file_upload_mode' => $assignment->file_upload_mode,
                 'has_submissions_or_file_submissions' => $assignment->hasNonFakeStudentFileOrQuestionSubmissions(),
@@ -2245,12 +2247,12 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function getAssignmentSummary(Request                 $request,
-                                  Assignment              $assignment,
-                                  AssignmentGroup         $assignmentGroup,
-                                  SubmissionFile          $submissionFile,
-                                  AssignmentSyncQuestion  $assignmentSyncQuestion,
-                                  Question $question): array
+    function getAssignmentSummary(Request                $request,
+                                  Assignment             $assignment,
+                                  AssignmentGroup        $assignmentGroup,
+                                  SubmissionFile         $submissionFile,
+                                  AssignmentSyncQuestion $assignmentSyncQuestion,
+                                  Question               $question): array
     {
 
         $response['type'] = 'error';
@@ -2265,7 +2267,7 @@ class AssignmentController extends Controller
             $can_view_assignment_statistics = in_array($role, [2, 4])
                 || ($role === 3 && $assignment->students_can_view_assignment_statistics);
             $response['assignment'] = $assignment->attributesToArray();
-            $response['assignment']['instructions'] = $response['assignment']['instructions']  ? $question->addTimeToS3IFiles($response['assignment']['instructions'],new DOMDocument(), false) : '';
+            $response['assignment']['instructions'] = $response['assignment']['instructions'] ? $question->addTimeToS3IFiles($response['assignment']['instructions'], new DOMDocument(), false) : '';
             $formatted_items = [
                 'assignment_groups' => $assignmentGroup->assignmentGroupsByCourse($assignment->course->id),
                 'total_points' => Helper::removeZerosAfterDecimal(round($this->getTotalPoints($assignment), 2)),

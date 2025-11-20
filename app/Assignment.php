@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\DateFormatter;
+use Illuminate\Support\Facades\Storage;
 
 class Assignment extends Model
 {
@@ -117,47 +118,58 @@ class Assignment extends Model
             ->get()
             ->pluck('id');
 
+        $folderPath = "submitted-work/$this->id";
+        $files = Storage::disk('s3')->files($folderPath);
+        Storage::disk('s3')->delete($files);
+
+
         DB::table('assignment_question_learning_tree')
             ->whereIn('assignment_question_id', $assignment_question_ids)
             ->delete();
+        $tables = [
+            'assignment_question',
+            'extensions',
+            'scores',
+            'submission_score_overrides',
+            'submission_files',
+            'submissions',
+            'can_give_ups',
+            'seeds',
+            'cutups',
+            'lti_launches',
+            'lti_assignments_and_grades_urls',
+            'randomized_assignment_questions',
+            'compiled_pdf_overrides',
+            'question_level_overrides',
+            'assignment_level_overrides',
+            'case_study_notes',
+            'learning_tree_successful_branches',
+            'learning_tree_node_seeds',
+            'learning_tree_node_submissions',
+            'learning_tree_resets',
+            'learning_tree_time_lefts',
+            'remediation_submissions',
+            'assignment_question_time_on_tasks',
+            'review_histories',
+            'shown_hints',
+            'assignment_topics',
+            'submission_confirmations',
+            'unconfirmed_submissions',
+            'rubric_category_submissions',
+            'report_toggles',
+            'rubric_category_custom_criteria',
+            'pending_question_revisions',
+            'passback_by_assignments',
+            'submission_histories',
+            'release_assignment_contacted_instructors',
+            'rubric_points_breakdowns',
+            'maximum_number_of_allowed_attempts_notifications',
+            'submitted_work_pending_scores'
+        ];
 
-        DB::table('assignment_question')->where('assignment_id', $this->id)->delete();
-        DB::table('extensions')->where('assignment_id', $this->id)->delete();
-        DB::table('scores')->where('assignment_id', $this->id)->delete();
-        DB::table('submission_score_overrides')->where('assignment_id', $this->id)->delete();
-        DB::table('submission_files')->where('assignment_id', $this->id)->delete();
-        DB::table('submissions')->where('assignment_id', $this->id)->delete();
-        DB::table('can_give_ups')->where('assignment_id', $this->id)->delete();
-        DB::table('seeds')->where('assignment_id', $this->id)->delete();
-        DB::table('cutups')->where('assignment_id', $this->id)->delete();
-        DB::table('lti_launches')->where('assignment_id', $this->id)->delete();
-        DB::table('lti_assignments_and_grades_urls')->where('assignment_id', $this->id)->delete();
-        DB::table('randomized_assignment_questions')->where('assignment_id', $this->id)->delete();
-        DB::table('compiled_pdf_overrides')->where('assignment_id', $this->id)->delete();
-        DB::table('question_level_overrides')->where('assignment_id', $this->id)->delete();
-        DB::table('assignment_level_overrides')->where('assignment_id', $this->id)->delete();
-        DB::table('case_study_notes')->where('assignment_id', $this->id)->delete();
-        DB::table('learning_tree_successful_branches')->where('assignment_id', $this->id)->delete();
-        DB::table('learning_tree_node_seeds')->where('assignment_id', $this->id)->delete();
-        DB::table('learning_tree_node_submissions')->where('assignment_id', $this->id)->delete();
-        DB::table('learning_tree_resets')->where('assignment_id', $this->id)->delete();
-        DB::table('learning_tree_time_lefts')->where('assignment_id', $this->id)->delete();
-        DB::table('remediation_submissions')->where('assignment_id', $this->id)->delete();
-        DB::table('assignment_question_time_on_tasks')->where('assignment_id', $this->id)->delete();
-        DB::table('review_histories')->where('assignment_id', $this->id)->delete();
-        DB::table('shown_hints')->where('assignment_id', $this->id)->delete();
-        DB::table('assignment_topics')->where('assignment_id', $this->id)->delete();
-        DB::table('submission_confirmations')->where('assignment_id', $this->id)->delete();
-        DB::table('unconfirmed_submissions')->where('assignment_id', $this->id)->delete();
-        DB::table('rubric_category_submissions')->where('assignment_id', $this->id)->delete();
-        DB::table('report_toggles')->where('assignment_id', $this->id)->delete();
-        DB::table('rubric_category_custom_criteria')->where('assignment_id', $this->id)->delete();
-        DB::table('pending_question_revisions')->where('assignment_id', $this->id)->delete();
-        DB::table('passback_by_assignments')->where('assignment_id', $this->id)->delete();
-        DB::table('submission_histories')->where('assignment_id', $this->id)->delete();
-        DB::table('release_assignment_contacted_instructors')->where('assignment_id', $this->id)->delete();
-        DB::table('rubric_points_breakdowns')->where('assignment_id', $this->id)->delete();
-        DB::table('maximum_number_of_allowed_attempts_notifications')->where('assignment_id', $this->id)->delete();
+        foreach ($tables as $table) {
+            DB::table($table)->where('assignment_id', $this->id)->delete();
+        }
         DB::table('auto_releases')->where('type', 'assignment')
             ->where('type_id', $this->id)
             ->delete();

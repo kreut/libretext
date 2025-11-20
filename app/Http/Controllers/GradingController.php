@@ -19,6 +19,7 @@ use App\Score;
 use App\Submission;
 use App\SubmissionFile;
 use App\SubmissionScoreOverride;
+use App\SubmittedWorkPendingScore;
 use App\User;
 use App\Webwork;
 use Carbon\Carbon;
@@ -55,18 +56,18 @@ class GradingController extends Controller
      * @return array
      * @throws Exception
      */
-    public function store(GradingRequest $request,
-                          Assignment     $Assignment,
-                          AssignmentFile $assignmentFile,
-                          User           $user,
-                          Score          $score): array
+    public function store(GradingRequest            $request,
+                          Assignment                $Assignment,
+                          AssignmentFile            $assignmentFile,
+                          User                      $user,
+                          Score                     $score,
+                          SubmittedWorkPendingScore $submittedWorkPendingScore): array
     {
         $response['type'] = 'error';
         $assignment_id = $request->assignment_id;
         $question_id = $request->question_id;
         $student_user_id = $request->user_id;
         $assignment = $Assignment->find($assignment_id);
-
 
         $authorized = Gate::inspect('storeScore', [$assignmentFile, $user->find($student_user_id), $assignment]);
         if (!$authorized->allowed()) {
@@ -89,6 +90,12 @@ class GradingController extends Controller
             $text_feedback = $request->textFeedback ? trim($request->textFeedback) : '';
 
             DB::beginTransaction();
+            if ($request->submitted_work_pending_score) {
+                $submittedWorkPendingScore ->where('user_id', $student_user_id)
+                    ->where('assignment_id', $assignment_id)
+                    ->where('question_id', $question_id)
+                    ->delete();
+            }
             if ($is_discuss_it) {
                 if (!DB::table('submission_files')
                     ->where('user_id', $student_user_id)
@@ -256,9 +263,14 @@ class GradingController extends Controller
             return $response;
         }
 
-        if ($current_file_submission && $request->file_submission_score === null) {
-            $response['message'] = "You can't submit an empty score for the open-ended submission.";
-            return $response;
+        if ($current_file_submission)  {
+            $assignment_question = AssignmentSyncQuestion::where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->first();
+            if ($request->file_submission_score === null && !in_array($assignment_question->open_ended_submission_type, ["0", "no submission, manual grading"])) {
+                $response['message'] = "You can't submit an empty score for the open-ended submission.";
+                return $response;
+            }
         }
 
 
@@ -422,8 +434,8 @@ class GradingController extends Controller
                 $user_ids_with_seeds[] = $seed->user_id;
             }
             $response['qti_answer_json'] = $question->qti_json && in_array($question->qti_json_type, ['submit_molecule', 'marker'])
-                    ? $question->formatQtiJson('answer_json', $question->qti_json, [], true)
-                    : '';
+                ? $question->formatQtiJson('answer_json', $question->qti_json, [], true)
+                : '';
 
             if (!in_array($question->technology, ['text', 'h5p'])) {
                 foreach ($enrolled_users as $user) {

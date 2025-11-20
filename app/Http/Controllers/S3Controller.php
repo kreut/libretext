@@ -29,7 +29,7 @@ class S3Controller extends Controller
             $upload_file_type = $request->upload_file_type;
             switch ($upload_file_type) {
                 case('submitted-work'):
-                    $authorized = Gate::inspect('submittedWork', [$preSignedURL, $assignment, $request->question_id]);
+                    $authorized = Gate::inspect('submittedWork', [$preSignedURL, $assignment]);
                     break;
                 case('student-roster'):
                     $authorized = Gate::inspect('studentRoster', $preSignedURL);
@@ -148,6 +148,9 @@ class S3Controller extends Controller
                     break;
                 case('secondary-content'):
                     $response['secondary_content_file'] = $uploaded_filename;
+                    break;
+                case('submitted-work'):
+                    $response['submitted_work'] = $uploaded_filename;
                     break;
                 default:
                     $response['submission'] = $uploaded_filename;
