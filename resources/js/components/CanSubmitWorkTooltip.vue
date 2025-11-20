@@ -8,9 +8,9 @@
              delay="250"
              triggers="hover focus"
   >
-    For auto-graded assessments, allow students to optionally submit their work to accompany their
+    Allow students to optionally submit their work to accompany their
     submissions.
-    Instructors may then review the work and adjust the auto-graded score if appropriate.
+    Instructors may then review the work and adjust the score if appropriate.
   </b-tooltip>
     </span>
 </template>
