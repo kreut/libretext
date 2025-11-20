@@ -2250,7 +2250,7 @@ class AssignmentController extends Controller
                                   AssignmentGroup         $assignmentGroup,
                                   SubmissionFile          $submissionFile,
                                   AssignmentSyncQuestion  $assignmentSyncQuestion,
-                                  PendingQuestionRevision $pendingQuestionRevision): array
+                                  Question $question): array
     {
 
         $response['type'] = 'error';
@@ -2265,7 +2265,7 @@ class AssignmentController extends Controller
             $can_view_assignment_statistics = in_array($role, [2, 4])
                 || ($role === 3 && $assignment->students_can_view_assignment_statistics);
             $response['assignment'] = $assignment->attributesToArray();
-
+            $response['assignment']['instructions'] = $response['assignment']['instructions']  ? $question->addTimeToS3IFiles($response['assignment']['instructions'],new DOMDocument(), false) : '';
             $formatted_items = [
                 'assignment_groups' => $assignmentGroup->assignmentGroupsByCourse($assignment->course->id),
                 'total_points' => Helper::removeZerosAfterDecimal(round($this->getTotalPoints($assignment), 2)),

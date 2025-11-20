@@ -1448,6 +1448,10 @@
           label-for="instructions"
         >
           <b-form-row>
+            <CKEditorFileToLinkUploader :upload-file-type="'assignment-instructions'"
+                                        :tutorial-video-src="'https://customer-9mlff0qha6p39qdq.cloudflarestream.com/42a374a283d79e8c7c9db3d35180d7d1/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F42a374a283d79e8c7c9db3d35180d7d1%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600'"
+                                        :modal-title="'Adding Files to Your Instructions'"
+            />
             <ckeditor
               id="instructions"
               v-model="form.instructions"
@@ -1892,6 +1896,7 @@ import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/Co
 import AllFormErrors from '~/components/AllFormErrors'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
+import CKEditorFileToLinkUploader from './CKEditorFileToLinkUploader.vue'
 
 import { doCopy } from '~/helpers/Copy'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
@@ -1904,6 +1909,7 @@ import CanSubmitWorkTooltip from './CanSubmitWorkTooltip.vue'
 
 export default {
   components: {
+    CKEditorFileToLinkUploader,
     CanSubmitWorkTooltip,
     AutoRelease,
     VueTimepicker,

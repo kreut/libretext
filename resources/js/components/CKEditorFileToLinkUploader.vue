@@ -1,17 +1,17 @@
 <template>
   <b-container>
     <AllFormErrors :all-form-errors="allFormErrors"
-                   :modal-id="`modal-form-errors-secondary-content-upload-${modalId}`"
+                   :modal-id="`modal-form-errors-ckeditor-upload-${modalId}`"
     />
     <b-row>
-      <b-modal id="modal-adding-files-to-secondary-content"
+      <b-modal id="modal-adding-files-to-ckeditor"
                size="xl"
-               title="Adding Files to Secondary Content"
+               :title="modalTitle"
                no-close-on-backdrop
       >
         <div style="position: relative; padding-top: 65.26898734177216%;">
           <iframe
-            src="https://customer-9mlff0qha6p39qdq.cloudflarestream.com/7fa7a91d78df24a66bf62c3e766d5058/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F7fa7a91d78df24a66bf62c3e766d5058%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600"
+            :src="tutorialVideoSrc"
             loading="lazy"
             style="border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;"
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
@@ -23,7 +23,7 @@
             variant="primary"
             size="sm"
             class="float-right"
-            @click="$bvModal.hide('modal-adding-files-to-secondary-content')"
+            @click="$bvModal.hide('modal-adding-files-to-ckeditor')"
           >
             OK
           </b-button>
@@ -31,7 +31,7 @@
       </b-modal>
       <div>
         <file-upload
-          ref="secondaryContentFileUploader"
+          ref="CKEditorFileToLinkUploader"
           v-model="files"
           class="btn btn-primary btn-sm"
           :accept="'.pdf,.docx,.xlxs'"
@@ -42,7 +42,7 @@
           Upload .pdf, .docx, or .xlxs file
         </file-upload>
         <QuestionCircleTooltipModal :aria-label="'Adding Files to Secondary Content'"
-                                    :modal-id="'modal-adding-files-to-secondary-content'"
+                                    :modal-id="'modal-adding-files-to-ckeditor'"
                                     :color-class="'font-bold'"
         />
       </div>
@@ -56,12 +56,12 @@
             }}</span> -
           <span>{{ formatFileSize(file.size) }} </span>
           <b-button
-            v-if="(preSignedURL !== '') && (!$refs.secondaryContentFileUploader || !$refs.secondaryContentFileUploader.active)"
+            v-if="(preSignedURL !== '') && (!$refs.CKEditorFileToLinkUploader || !$refs.CKEditorFileToLinkUploader.active)"
             variant="info"
             size="sm"
             style="vertical-align: top"
             :disabled="disableStartUpload"
-            @click.prevent="initStartUpload('secondaryContentFileUploader')"
+            @click.prevent="initStartUpload('CKEditorFileToLinkUploader')"
           >
             Upload
           </b-button>
@@ -100,7 +100,6 @@ import { v4 as uuidv4 } from 'uuid'
 import Vue from 'vue'
 import { doCopy } from '~/helpers/Copy'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { getTooltipTarget } from '~/helpers/Tooptips'
 import QuestionCircleTooltipModal from './QuestionCircleTooltipModal.vue'
 
@@ -113,13 +112,27 @@ export default {
     ErrorMessage,
     AllFormErrors
   },
+  props: {
+    uploadFileType: {
+      type: String,
+      default: ''
+    },
+    modalTitle: {
+      type: String,
+      default: ''
+    },
+    tutorialVideoSrc: {
+      type: String,
+      default: ''
+    }
+  },
 
   data: () => ({
     files2: [],
     copyIcon: faCopy,
     secondaryContentFileUploaderKey: 0,
     allFormErrors: [],
-    secondaryContentFileUploader: {},
+    CKEditorFileToLinkUploader: {},
     progress: 0,
     uploadFileErrorMessage: '',
     disableStartUpload: false,
@@ -135,9 +148,6 @@ export default {
     formatFileSize,
     fixInvalid,
     doCopy,
-    hideMediaModal () {
-      this.$bvModal.hide('modal-secondary-content-upload')
-    },
     cancelUpload () {
       this.files = []
       this.preSignedURL = ''
@@ -160,7 +170,7 @@ export default {
           this.uploadFileErrorMessage = '30 MB max allowed.  Your file is too large.'
           this.$nextTick(() => fixInvalid())
           this.allFormErrors = [this.uploadFileErrorMessage]
-          this.$bvModal.show(`modal-form-errors-secondary-content-upload-${this.modalId}`)
+          this.$bvModal.show(`modal-form-errors-ckeditor-upload-${this.modalId}`)
           return prevent()
         }
         let acceptedExtensionsRegex
@@ -171,13 +181,13 @@ export default {
           this.uploadFileErrorMessage = `${newFile.name} does not have a valid extension.`
           this.$nextTick(() => fixInvalid())
           this.allFormErrors = [this.uploadFileErrorMessage]
-          this.$bvModal.show(`modal-form-errors-secondary-content-upload-${this.modalId}`)
+          this.$bvModal.show(`modal-form-errors-ckeditor-upload-${this.modalId}`)
           return prevent()
         } else {
           try {
             this.preSignedURL = ''
             let uploadFileData = {
-              upload_file_type: 'secondary-content',
+              upload_file_type: this.uploadFileType,
               file_name: newFile.name
             }
             const { data } = await axios.post('/api/s3/pre-signed-url', uploadFileData)

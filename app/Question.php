@@ -266,10 +266,12 @@ class Question extends Model
             $href = $linkTag->getAttribute('href');
             $is_s3_url = strpos($href, 'amazonaws.com') !== false;
 
-            if ($is_s3_url && strpos($href, '/uploads/secondary-content/') !== false) {
-                $s3_file = strtok(pathinfo($href, PATHINFO_BASENAME), '?');
-                $url = Storage::disk('s3')->temporaryUrl("uploads/secondary-content/$s3_file", Carbon::now()->addDays(7));
-                $linkTag->setAttribute('href', $url);
+            foreach (['secondary-content','assignment-instructions'] as $upload_type) {
+                if ($is_s3_url && strpos($href, "/uploads/$upload_type/") !== false) {
+                    $s3_file = strtok(pathinfo($href, PATHINFO_BASENAME), '?');
+                    $url = Storage::disk('s3')->temporaryUrl("uploads/$upload_type/$s3_file", Carbon::now()->addDays(7));
+                    $linkTag->setAttribute('href', $url);
+                }
             }
         }
         $contents = $htmlDom->saveHTML();

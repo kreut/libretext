@@ -37,6 +37,7 @@ use DOMDocument;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Traits\IframeFormatter;
 use App\Traits\LibretextFiles;
@@ -44,6 +45,7 @@ use App\Exceptions\Handler;
 use Exception;
 
 use Illuminate\Http\Response;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -217,7 +219,7 @@ class QuestionController extends Controller
      * @param int $question_id
      * @param string $s3_key
      * @param Question $question
-     * @return array|Application|ResponseFactory|JsonResponse|Response
+     * @return array|Application|RedirectResponse|Redirector
      * @throws Exception
      */
     public function downloadAttachment(Request  $request,
@@ -235,7 +237,17 @@ class QuestionController extends Controller
             }
             $s3_key = "uploads/question-attachments/$request->s3_key";
             if (Storage::disk('s3')->exists($s3_key)) {
-                return Storage::disk('s3')->download($s3_key);
+                // Generate a temporary signed URL (valid for 5 minutes)
+                $url = Storage::disk('s3')->temporaryUrl(
+                    $s3_key,
+                    now()->addMinutes(5),
+                    [
+                        'ResponseContentDisposition' => 'attachment; filename="' . basename($s3_key) . '"'
+                    ]
+                );
+
+                // Redirect to the signed URL
+                return redirect($url);
             } else {
                 $response['message'] = "File not found.";
             }

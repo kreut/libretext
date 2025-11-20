@@ -72,6 +72,20 @@ class PreSignedURLPolicy
      * @param PreSignedURL $preSignedURL
      * @return Response
      */
+    public function assignmentInstructions(User $user, PreSignedURL $preSignedURL): Response
+    {
+
+        return $user->role === 2
+            ? Response::allow()
+            : Response::deny('You are not allowed to upload files for the assignment instructions.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param PreSignedURL $preSignedURL
+     * @return Response
+     */
     public function questionAttachment(User $user, PreSignedURL $preSignedURL): Response
     {
 

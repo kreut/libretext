@@ -60,6 +60,9 @@ class S3Controller extends Controller
                 case('question-attachment'):
                     $authorized = Gate::inspect('questionAttachment', $preSignedURL);
                     break;
+                case('assignment-instructions'):
+                    $authorized = Gate::inspect('assignmentInstructions', $preSignedURL);
+                    break;
                 default:
                     $authorized = Gate::inspect('preSignedURL', [$preSignedURL, $assignment, $upload_file_type]);
 
@@ -97,6 +100,9 @@ class S3Controller extends Controller
                     break;
                 case('question-attachment'):
                     $dir = 'uploads/question-attachments';
+                    break;
+                case('assignment-instructions'):
+                    $dir = 'uploads/assignment-instructions';
                     break;
                 case('discuss-it-comments'):
                 case('discuss-it-media'):

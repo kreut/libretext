@@ -1299,14 +1299,15 @@
               responsive
             >
               <template v-slot:cell(actions)="data">
-                <b-icon-trash  :id="`delete-question-attachment-tooltip-${data.item.s3_key}`"
-                               style="cursor: pointer;"
-                              @click="initDeleteAttachment(data.item)"/>
+                <b-icon-trash :id="`delete-question-attachment-tooltip-${data.item.s3_key}`"
+                              style="cursor: pointer;"
+                              @click="initDeleteAttachment(data.item)"
+                />
                 <b-tooltip :target="`delete-question-attachment-tooltip-${data.item.s3_key}`"
                            delay="750"
                            triggers="hover"
                 >
-                  Delete {{data.item.original_filename}}
+                  Delete {{ data.item.original_filename }}
                 </b-tooltip>
                 <span :id="`download-question-attachment-tooltip-${data.item.s3_key}`">
                 <a class="text-muted"
@@ -1321,7 +1322,7 @@
                            delay="1000"
                            triggers="hover"
                 >
-                  Download {{data.item.original_filename}}
+                  Download {{ data.item.original_filename }}
                 </b-tooltip>
               </template>
             </b-table>
@@ -2589,7 +2590,11 @@
             An answer/solution to the question, and a hint for students may
             be optionally associated with the question.
           </p>
-          <SecondaryContentFileUploader v-if="activeTabIndex === 3"/>
+          <CKEditorFileToLinkUploader v-if="activeTabIndex === 3"
+                                      :upload-file-type="'secondary-content'"
+                                      :tutorial-video-src="'https://customer-9mlff0qha6p39qdq.cloudflarestream.com/7fa7a91d78df24a66bf62c3e766d5058/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F7fa7a91d78df24a66bf62c3e766d5058%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600'"
+                                      :modal-title="'Adding Files to Secondary Content'"
+          />
           <div
             v-for="editorGroup in editorGroups.filter(group => !['technology','a11y_auto_graded_question_id','non_technology_text','text_question','notes'].includes(group.id))"
             :key="editorGroup.id"
@@ -2765,7 +2770,7 @@
 
 <script>
 import QuestionMediaUpload from '~/components/QuestionMediaUpload.vue'
-import SecondaryContentFileUploader from '~/components/SecondaryContentFileUploader.vue'
+import CKEditorFileToLinkUploader from '~/components/CKEditorFileToLinkUploader.vue'
 import { doCopy } from '~/helpers/Copy'
 import AllFormErrors from '~/components/AllFormErrors'
 import ErrorMessage from '~/components/ErrorMessage'
@@ -2966,7 +2971,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
-    SecondaryContentFileUploader,
+    CKEditorFileToLinkUploader,
     StructureImageUploader,
     MultipleAnswersAdvanced,
     RubricProperties,
