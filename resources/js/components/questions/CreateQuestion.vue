@@ -8,7 +8,9 @@
     <b-modal id="modal-confirm-delete-attachment"
              title="Confirm Remove Attachment"
     >
-      <p>You are about to remove: <br><br><span class="text-center"><strong>{{ attachmentToDelete.original_filename }}</strong></span><br><br> Please save your question to make this change permanent.</p>
+      <p>You are about to remove: <br><br><span class="text-center"><strong>{{
+          attachmentToDelete.original_filename
+        }}</strong></span><br><br> Please save your question to make this change permanent.</p>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -1297,12 +1299,30 @@
               responsive
             >
               <template v-slot:cell(actions)="data">
-                <b-icon-trash style="cursor: pointer;" @click="initDeleteAttachment(data.item)"/>
-                <a class="text-muted" :href="`/api/questions/download-attachment/assignment/0/question/0/s3-key/${data.item.s3_key.split('/').pop()}`">
+                <b-icon-trash  :id="`delete-question-attachment-tooltip-${data.item.s3_key}`"
+                               style="cursor: pointer;"
+                              @click="initDeleteAttachment(data.item)"/>
+                <b-tooltip :target="`delete-question-attachment-tooltip-${data.item.s3_key}`"
+                           delay="750"
+                           triggers="hover"
+                >
+                  Delete {{data.item.original_filename}}
+                </b-tooltip>
+                <span :id="`download-question-attachment-tooltip-${data.item.s3_key}`">
+                <a class="text-muted"
+                   :href="`/api/questions/download-attachment/assignment/0/question/0/s3-key/${data.item.s3_key.split('/').pop()}`"
+                >
                   <b-icon-download
                     style="cursor: pointer;"
                   />
                 </a>
+                  </span>
+                <b-tooltip :target="`download-question-attachment-tooltip-${data.item.s3_key}`"
+                           delay="1000"
+                           triggers="hover"
+                >
+                  Download {{data.item.original_filename}}
+                </b-tooltip>
               </template>
             </b-table>
           </div>
