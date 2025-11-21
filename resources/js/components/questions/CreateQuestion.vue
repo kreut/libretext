@@ -1879,7 +1879,7 @@
                   </b-alert>
                   <b-container v-if="questionForm.technology === 'qti'" class="mt-2">
                     <b-row>
-                      <QuestionMediaUpload v-if="activeQuestionMediaUpload === 1"
+                      <QuestionMediaUpload v-if="activeTabIndex === 1"
                                            :key="`question-media-upload-key-${questionMediaUploadKey}`"
                                            :media-uploads="questionForm.media_uploads"
                                            :question-media-upload-id="questionMediaUploadId"
@@ -1954,7 +1954,7 @@
                         the comments will be deleted.
                       </b-alert>
                     </div>
-                    <QuestionMediaUpload v-if="activeQuestionMediaUpload === 1"
+                    <QuestionMediaUpload v-if="activeTabIndex === 1"
                                          :key="`question-media-upload-key-${questionMediaUploadKey}`"
                                          :media-uploads="questionForm.media_uploads"
                                          :qti-json="JSON.stringify(qtiJson)"
@@ -2160,7 +2160,7 @@
                   v-if="['drop_down_rationale_dyad','drop_down_rationale_triad','select_choice'].includes(qtiQuestionType)"
                 >
                   <div v-if="qtiQuestionType === 'select_choice'">
-                    <QuestionMediaUpload v-if="activeQuestionMediaUpload === 1"
+                    <QuestionMediaUpload v-if="activeTabIndex === 1"
                                          :key="`question-media-upload-key-${questionMediaUploadKey}`"
                                          :media-uploads="questionForm.media_uploads"
                                          :qti-json="JSON.stringify(qtiJson)"
