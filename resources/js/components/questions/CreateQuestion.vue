@@ -2826,7 +2826,7 @@ import {
   responseFormatOptions
 } from '~/helpers/Questions'
 import StructureImageUploader from '../StructureImageUploader.vue'
-import { capitalize, getQuestionSubjectIdOptions } from '../../helpers/Questions'
+import { capitalize, getQuestionChapterIdOptions, getQuestionSubjectIdOptions } from '../../helpers/Questions'
 
 const defaultQuestionForm = {
   question_type: 'assessment',
@@ -3406,6 +3406,7 @@ export default {
   methods: {
     capitalize,
     getQuestionSubjectIdOptions,
+    getQuestionChapterIdOptions,
     handleAddEditQuestionSubjectChapterSection,
     initAddEditDeleteQuestionSubjectChapterSection,
     canEdit,
