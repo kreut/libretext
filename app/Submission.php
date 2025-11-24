@@ -865,10 +865,17 @@ class Submission extends Model
 
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     public
-    function applyLatePenalyToScore($assignment, $score)
+    function applyLatePenalyToScore($assignment, $score, $user_id = null, $updated_at = null)
     {
-        $late_penalty_percent = $this->latePenaltyPercent($assignment, Carbon::now('UTC'));
+        if (!$updated_at) {
+            $updated_at = Carbon::now('UTC');
+        }
+        $late_penalty_percent = $this->latePenaltyPercent($assignment, $updated_at, $user_id);
         return Round($score * (100 - $late_penalty_percent) / 100, 4);
     }
 
@@ -914,12 +921,13 @@ class Submission extends Model
     /**
      * @param Assignment $assignment
      * @param Carbon $now
+     * @param null $user_id
      * @return float|int|mixed
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
     public
-    function latePenaltyPercent(Assignment $assignment, Carbon $now)
+    function latePenaltyPercent(Assignment $assignment, Carbon $now, $user_id = null)
     {
         if (session()->get('instructor_user_id')) {
             //logged in as student
@@ -927,7 +935,7 @@ class Submission extends Model
         }
         $late_deduction_percent = 0;
         if ($assignment->late_policy === 'deduction') {
-            $due = Carbon::parse($assignment->assignToTimingByUser('due'));
+            $due = Carbon::parse($assignment->assignToTimingByUser('due', $user_id));
             return $this->_computeLatePercent($assignment, $due, $now);
         }
 
@@ -2419,6 +2427,81 @@ class Submission extends Model
     function isLikelyLatex($string)
     {
         return preg_match('/(\\\\(?!text)[a-zA-Z]+|[a-zA-Z0-9]+_[a-zA-Z0-9]+|[a-zA-Z0-9]+\^[a-zA-Z0-9]+|[\^_]\{.*?\})/', $string);
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Score $score
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param $assignment_question
+     * @param $data
+     * @return array|float|int
+     * @throws Exception
+     */
+    public function computeScore(Assignment             $assignment,
+                                 Question               $question,
+                                 Score                  $score,
+                                 AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                        $assignment_question,
+                                                        $data)
+
+    {
+        switch ($data['technology']) {
+            case('h5p'):
+                $submission = json_decode($data['submission']);
+                $h5p_activity_set_max_score = DB::table('h5p_max_scores')
+                    ->where('question_id', $question->id)
+                    ->first();
+                if ($h5p_activity_set_max_score) {
+                    $h5pActivitySets = DB::table('h5p_activity_sets')
+                        ->where('user_id', $data['user_id'])
+                        ->where('assignment_id', $assignment->id)
+                        ->where('question_id', $question->id)
+                        ->get();
+
+                    $num_correct = 0;
+                    foreach ($h5pActivitySets as $h5pActivitySet) {
+                        $h5p_activity_set_submission = json_decode($h5pActivitySet->submission);
+                        $num_correct += $this->geth5pActivitySetNumCorrect($assignment, $h5p_activity_set_submission);
+                    }
+
+                    $proportion_correct = ($num_correct / $h5p_activity_set_max_score->max_score);
+                } else {
+                    $proportion_correct = $this->getProportionCorrect('h5p', $submission);
+                }
+                $data['score'] = $assignment->scoring_type === 'p'
+                    ? floatval($assignment_question->points) * $proportion_correct
+                    : $this->computeScoreForCompletion($assignment_question);
+                break;
+            case('imathas'):
+                $submission = json_decode($data['submission']);
+                $proportion_correct = $this->getProportionCorrect('imathas', $submission);
+                $data['score'] = $assignment->scoring_type === 'p'
+                    ? floatval($assignment_question->points) * $proportion_correct
+                    : $this->computeScoreForCompletion($assignment_question);
+                break;
+            case('webwork'):
+                $submission = json_decode($data['submission']);
+                $proportion_correct = $this->getProportionCorrect('webwork', $submission);//
+                $data['score'] = $assignment->scoring_type === 'p'
+                    ? floatval($assignment_question->points) * $proportion_correct
+                    : $this->computeScoreForCompletion($assignment_question);
+                break;
+            case('qti'):
+                $submission = new stdClass();
+                $submission->question = json_decode($question->qti_json);
+                $submission->student_response = json_decode($data['submission'])->student_response;
+                $proportion_correct = $this->getProportionCorrect('qti', $submission);
+                $submission->proportion_correct = $proportion_correct;
+                $data['score'] = $assignment->scoring_type === 'p'
+                    ? floatval($assignment_question->points) * $proportion_correct
+                    : $this->computeScoreForCompletion($assignment_question);
+                break;
+            default:
+                throw new Exception("{$data['technology']} is not a valid technology.");
+        }
+        return $data['score'];
     }
 }
 

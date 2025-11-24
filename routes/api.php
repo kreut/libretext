@@ -517,6 +517,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/scores/{assignment}/{question}/get-scores-by-assignment-and-question', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::put('/scores/{assignment}/upload-override-scores', 'ScoreController@uploadOverrideScores');
+    Route::get('/scores/{assignment}/recompute-by-assignment', 'ScoreController@recomputeScoresByAssignment');
     Route::post('/scores/over-total-points/{assignment}/{question}', 'ScoreController@overTotalPoints');
     Route::patch('/scores/override-scores/{assignment}', 'ScoreController@overrideScores');
     Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
