@@ -2385,11 +2385,10 @@ class AssignmentSyncQuestionController extends Controller
                                                 Extension              $Extension,
                                                 AssignmentSyncQuestion $assignmentSyncQuestion,
                                                 IMathAS                $IMathAS,
-                                                Webwork                $webwork,
-                                                DOMDocument            $DOMDocument): array
+                                                Webwork                $webwork): array
     {
         /**helper function to get the response info from server side technologies...*/
-
+        $DOMDocument = new DOMDocument();
         $submission = $Submission
             ->where('question_id', $question->id)
             ->where('assignment_id', $assignment->id)
