@@ -165,6 +165,7 @@ class StoreAssignmentProperties extends FormRequest
             }
             switch ($this->source) {
                 case('a'):
+                    $rules['assessment_type'] = ['required', Rule::in('real time', 'delayed', 'clicker', 'learning tree')];
                     $rules['algorithmic'] = ['required', Rule::in(0, 1)];
                     $rules['points_per_question'] = ['required', Rule::in('number of points', 'question weight')];
                     if ($this->points_per_question === 'number of points') {

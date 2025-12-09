@@ -175,10 +175,10 @@ class AutoRelease extends Model
      * @param array $data
      * @param string $type
      * @param int $type_id
-     * @param string $assessment_type
+     * @param string|null $assessment_type
      * @return array
      */
-    public function handleUpdateOrCreate(array $data, string $type, int $type_id, string $assessment_type): array
+    public function handleUpdateOrCreate(array $data, string $type, int $type_id, string $assessment_type = null): array
     {
         $auto_release_data = [];
         $auto_releases = ['auto_release_shown',

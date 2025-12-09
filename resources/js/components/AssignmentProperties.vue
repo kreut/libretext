@@ -223,6 +223,26 @@
           :disabled="isBetaAssignment"
         />
       </b-form-group>
+      <div v-show="form.source === 'a' && (!lms || lmsApi)" class="mb-3">
+        <b-form-row>
+          <CKEditorFileToLinkUploader :button-label="'Instructions'"
+                                      :upload-file-type="'assignment-instructions'"
+                                      :tutorial-video-src="'https://customer-9mlff0qha6p39qdq.cloudflarestream.com/42a374a283d79e8c7c9db3d35180d7d1/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F42a374a283d79e8c7c9db3d35180d7d1%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600'"
+                                      :modal-title="'Adding Files to Your Instructions'"
+          />
+        </b-form-row>
+        <ckeditor
+          id="instructions"
+          v-model="form.instructions"
+          tabindex="0"
+          rows="4"
+          :config="richEditorConfig"
+          max-rows="4"
+          :read-only="isBetaAssignment"
+          @namespaceloaded="onCKEditorNamespaceLoaded"
+          @ready="handleFixCKEditor()"
+        />
+      </div>
       <b-form-group
         v-show="!anonymousUsers && !isFormativeCourse"
         id="modality"
@@ -457,11 +477,9 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
-          <component
-            :is="form.scoring_type === 'c' ? 'b-card' : 'div'"
-            id="scoring-type-card"
-            :body-class="form.scoring_type === 'c' ? 'pb-0' : ''"
-            :class="form.scoring_type === 'c'? 'mb-3' : ''"
+          <b-card id="socring-type-card"
+                  body-class="pb-0"
+                  class="mb-3"
           >
             <b-card-text>
               <b-form-group
@@ -555,581 +573,633 @@
                 </b-form-radio-group>
                 <has-error :form="form" field="default_completion_scoring_mode"/>
               </b-form-group>
-            </b-card-text>
-          </component>
-          <!-- Must be number of points for alpha courses because changing weights or the total points with beta courses would be chaos -->
-          <component
-            :is="+!showDefaultPointsPerQuestion ? 'b-card' : 'div'"
-            id="points-per-question"
-            :body-class="+!showDefaultPointsPerQuestion ? 'pb-0' : ''"
-            :class="+!showDefaultPointsPerQuestion ? 'mb-3' : ''"
-          > <b-form-group
-            v-show="isAlphaCourse"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="alpha_scoring_type"
-          >
-            For non-alpha courses, you can specify whether you want points per question or weights per question.
-            For alpha courses, each question must be provided a number of points with the default provided below.
-          </b-form-group>
-
-          <b-form-group
-            v-show="!isAlphaCourse"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="scoring_type"
-          >
-            <template v-slot:label>
-              Points Per Question*
-            </template>
-            <b-form-radio-group id="points_per_question"
-                                v-model="form.points_per_question"
-                                stacked
-                                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                                required
-                                @change="initPointsPerQuestionSwitch($event)"
-            >
-              <b-form-radio
-                name="points_per_question"
-                value="number of points"
-                :class="{ 'is-invalid': form.errors.has('points_per_question') }"
-                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                @keydown="form.errors.clear('points_per_question')"
+              <!-- Must be number of points for alpha courses because changing weights or the total points with beta courses would be chaos -->
+              <b-form-group
+                v-show="isAlphaCourse"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="alpha_scoring_type"
               >
-                Specify the points for each question individually
-                <QuestionCircleTooltip :id="'points-per-question-specify-actual-values-tooltip'"/>
-                <b-tooltip target="points-per-question-specify-actual-values-tooltip"
-                           delay="250"
-                           triggers="hover focus"
+                For non-alpha courses, you can specify whether you want points per question or weights per question.
+                For alpha courses, each question must be provided a number of points with the default provided below.
+              </b-form-group>
+
+              <b-form-group
+                v-show="!isAlphaCourse && form.source === 'a'"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="scoring_type"
+              >
+                <template v-slot:label>
+                  Points Per Question*
+                </template>
+                <b-form-radio-group id="points_per_question"
+                                    v-model="form.points_per_question"
+                                    stacked
+                                    :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                                    required
+                                    @change="initPointsPerQuestionSwitch($event)"
                 >
-                  Specify the number of points at the question level.
-                </b-tooltip>
-              </b-form-radio>
-              <b-form-radio name="points_per_question" value="question weight">
-                Specify the points for assignment and use weights to vary individual question points
-                <QuestionCircleTooltip
-                  :id="'points-per-question-determine-by-weights-tooltip'"
-                />
-                <b-tooltip target="points-per-question-determine-by-weights-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Specify the total number of points for the assignment and ADAPT will compute the points per question
-                  based
-                  on the assigned weights.
-                  The weights can be customized at the question level.
-                </b-tooltip>
-              </b-form-radio>
-              <input type="hidden" class="form-control is-invalid">
-              <div class="help-block invalid-feedback">
-                {{ form.errors.get('points_per_question') }}
-              </div>
-            </b-form-radio-group>
-          </b-form-group>
-          <div v-show="form.source === 'a'">
-            <b-form-group
-              v-show="false"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="default_points_per_question"
-            >
-              <template v-slot:label>
-                Default Points/Question*
-              </template>
-              <b-form-row>
-                <b-col lg="3">
-                  <b-form-input
-                    id="default_points_per_question"
-                    v-model="form.default_points_per_question"
-                    type="text"
-                    placeholder=""
-                    required
-                    :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
+                  <b-form-radio
+                    name="points_per_question"
+                    value="number of points"
+                    :class="{ 'is-invalid': form.errors.has('points_per_question') }"
                     :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                    @keydown="form.errors.clear('default_points_per_question')"
-                  />
-                  <has-error :form="form" field="default_points_per_question"/>
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-            <b-form-group
-              v-show="!showDefaultPointsPerQuestion"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="total_points"
-              label="Total Assignment Points*"
-            >
-              <b-form-row>
-                <b-col lg="3">
-                  <b-form-input
-                    id="total_points"
-                    v-model="form.total_points"
-                    type="text"
-                    required
-                    :class="{ 'is-invalid': form.errors.has('total_points') }"
-                    :disabled="(isLocked(hasSubmissionsOrFileSubmissions) && !overallStatusIsNotOpen) || isBetaAssignment"
-                    @keydown="form.errors.clear('total_points')"
-                  />
-                  <has-error :form="form" field="total_points"/>
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-          </div>
-          </component>
-<b-card class="mb-3"
-body-class="pb-0"
-        v-show="form.source === 'a'">
-          <b-form-group
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="assessment_type"
+                    @keydown="form.errors.clear('points_per_question')"
+                  >
+                    Specify the points for each question individually
+                    <QuestionCircleTooltip :id="'points-per-question-specify-actual-values-tooltip'"/>
+                    <b-tooltip target="points-per-question-specify-actual-values-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Specify the number of points at the question level.
+                    </b-tooltip>
+                  </b-form-radio>
+                  <b-form-radio name="points_per_question" value="question weight">
+                    Specify the points for assignment and use weights to vary individual question points
+                    <QuestionCircleTooltip
+                      :id="'points-per-question-determine-by-weights-tooltip'"
+                    />
+                    <b-tooltip target="points-per-question-determine-by-weights-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Specify the total number of points for the assignment and ADAPT will compute the points per
+                      question
+                      based
+                      on the assigned weights.
+                      The weights can be customized at the question level.
+                    </b-tooltip>
+                  </b-form-radio>
+                  <input type="hidden" class="form-control is-invalid">
+                  <div class="help-block invalid-feedback">
+                    {{ form.errors.get('points_per_question') }}
+                  </div>
+                </b-form-radio-group>
+              </b-form-group>
+              <div v-show="form.source === 'a'">
+                <b-form-group
+                  v-show="false"
+                  label-cols-sm="4"
+                  label-cols-lg="3"
+                  label-for="default_points_per_question"
+                >
+                  <template v-slot:label>
+                    Default Points/Question*
+                  </template>
+                  <b-form-row>
+                    <b-col lg="3">
+                      <b-form-input
+                        id="default_points_per_question"
+                        v-model="form.default_points_per_question"
+                        type="text"
+                        placeholder=""
+                        required
+                        :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
+                        :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                        @keydown="form.errors.clear('default_points_per_question')"
+                      />
+                      <has-error :form="form" field="default_points_per_question"/>
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
+                <b-form-group
+                  v-show="!showDefaultPointsPerQuestion"
+                  label-cols-sm="4"
+                  label-cols-lg="3"
+                  label-for="total_points"
+                  label="Total Assignment Points*"
+                >
+                  <b-form-row>
+                    <b-col lg="3">
+                      <b-form-input
+                        id="total_points"
+                        v-model="form.total_points"
+                        type="text"
+                        required
+                        :class="{ 'is-invalid': form.errors.has('total_points') }"
+                        :disabled="(isLocked(hasSubmissionsOrFileSubmissions) && !overallStatusIsNotOpen) || isBetaAssignment"
+                        @keydown="form.errors.clear('total_points')"
+                      />
+                      <has-error :form="form" field="total_points"/>
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
+              </div>
+              <div v-if="!isFormativeCourse && form.formative !== '1'">
+                <b-form-group
+                  v-if="!lms"
+                  label-cols-sm="4"
+                  label-cols-lg="3"
+                  label-for="include_in_final_score"
+                >
+                  <template v-slot:label>
+                    Include In Final Score*
+                  </template>
+                  <b-form-radio-group id="include_in_final_score"
+                                      v-model="form.include_in_weighted_average"
+                                      required
+                                      stacked
+                  >
+                    <b-form-radio name="include_in_weighted_average" value="1">
+                      Include the assignment in computing a final
+                      weighted score
+                    </b-form-radio>
+                    <b-form-radio name="include_in_weighted_average" value="0">
+                      Do not include the assignment in computing a
+                      final weighted score
+                    </b-form-radio>
+                  </b-form-radio-group>
+                </b-form-group>
+                <b-form-group
+                  v-show="form.source === 'x'"
+                  label-cols-sm="4"
+                  label-cols-lg="3"
+                  label-for="external_source_points"
+                >
+                  <template v-slot:label>
+                    Total Points*
+                  </template>
+                  <b-form-row>
+                    <b-col lg="3">
+                      <b-form-input
+                        id="external_source_points"
+                        v-model="form.external_source_points"
+                        :disabled="isBetaAssignment"
+                        type="text"
+                        placeholder=""
+                        required
+                        :class="{ 'is-invalid': form.errors.has('external_source_points') }"
+                        @keydown="form.errors.clear('external_source_points')"
+                      />
+                      <has-error :form="form" field="external_source_points"/>
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
+              </div>
+            </b-card-text>
+          </b-card>
+          <b-card class="mb-3"
+                  body-class="pb-0"
+                  v-show="form.source === 'a'"
           >
-            <template v-slot:label>
-              Assessment Type*
-            </template>
-            <b-form-radio-group id="assessment_type"
-                                v-model="form.assessment_type"
-                                required
-                                stacked
-                                :disabled="isLocked(hasSubmissionsOrFileSubmissions || isBetaAssignment)"
-                                @change="initAssessmentTypeSwitch($event)"
-            >
-              <b-form-radio name="assessment_type" value="real time">
-                Real Time Graded Assessments
-                <QuestionCircleTooltip :id="'real_time'"/>
-                <b-tooltip target="real_time"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Scores and solutions are released in real time, providing students with immediate feedback.
-                </b-tooltip>
-              </b-form-radio>
-
-              <b-form-radio name="assessment_type" value="delayed">
-                Delayed Graded Assessments
-                <QuestionCircleTooltip :id="'delayed'"/>
-                <b-tooltip target="delayed"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Scores and solutions are not automatically released. This type of assessment works well
-                  for open-ended questions.
-                </b-tooltip>
-              </b-form-radio>
-
-              <b-form-radio name="assessment_type" value="learning tree">
-                Learning Tree Assessments
-                <QuestionCircleTooltip :id="'learning_tree'"/>
-                <b-tooltip target="learning_tree"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Students are provided with Learning Trees which consist of a root question node and remediation nodes.
-                  The remediation nodes provide the student with supplementary material to help them answer the initial
-                  question.
-                </b-tooltip>
-              </b-form-radio>
-
-              <b-form-radio name="assessment_type" value="clicker">
-                Clicker Assessments
-                <QuestionCircleTooltip :id="'clicker-tooltip'"/>
-                <b-tooltip target="clicker-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Instructors manually open and close these real-time graded assessments.
-                </b-tooltip>
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
-          <div v-if="form.assessment_type === 'learning tree'">
             <b-form-group
               label-cols-sm="4"
               label-cols-lg="3"
-              label-for="min_number_of_minutes_in_exposition_node"
+              label-for="assessment_type"
             >
               <template v-slot:label>
-                <b-icon
-                  icon="tree" variant="success"
-                />
-                Minimum Amount of Time in Exposition Nodes*
-                <QuestionCircleTooltip id="min_number_of_minutes_in_exposition_node_tooltip"/>
+                Assessment Type*
               </template>
-              <b-tooltip target="min_number_of_minutes_in_exposition_node_tooltip"
-                         delay="250"
-                         triggers="hover focus"
+              <b-form-radio-group id="assessment_type"
+                                  v-model="form.assessment_type"
+                                  required
+                                  stacked
+                                  :disabled="isLocked(hasSubmissionsOrFileSubmissions || isBetaAssignment)"
+                                  @change="initAssessmentTypeSwitch($event)"
               >
-                The minimum number of minutes that a student will need to spend in an exposition node to receive
-                completion credit
-                for that node in the Learning Tree.
-              </b-tooltip>
-              <b-form-row>
-                <b-input-group style="width:200px" append="minutes">
-                  <b-form-input
-                    id="min_number_of_minutes_in_exposition_node"
-                    v-model="form.min_number_of_minutes_in_exposition_node"
-                    required
-                    type="text"
-                    :disabled="isBetaAssignment"
-                    :class="{ 'is-invalid': form.errors.has('min_number_of_minutes_in_exposition_node') }"
-                    @keydown="form.errors.clear('min_number_of_minutes_in_exposition_node')"
-                  />
-                </b-input-group>
-              </b-form-row>
-              <ErrorMessage v-if="form.errors.has('min_number_of_minutes_in_exposition_node')"
-                            :message="form.errors.get('min_number_of_minutes_in_exposition_node')"
-              />
-            </b-form-group>
-            <b-form-group
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="reset_node_after_incorrect_attempt"
-            >
-              <template v-slot:label>
-                <b-icon
-                  icon="tree" variant="success"
-                />
-                Reset Node After Incorrect Attempt*
-                <QuestionCircleTooltip id="reset_node_after_incorrect_submission_tooltip"/>
-              </template>
-              <b-tooltip target="reset_node_after_incorrect_submission_tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                For non-root question nodes that are algorithmic, determine whether students should receive a new
-                version of the
-                question if they answer it incorrectly.
-              </b-tooltip>
-              <b-form-radio-group
-                id="reset_node_after_incorrect_attempt"
-                v-model="form.reset_node_after_incorrect_attempt"
-                stacked
-                required
-              >
-                <b-form-radio name="reset_node_after_incorrect_attempt" value="1">
-                  Yes
+                <b-form-radio name="assessment_type" value="real time">
+                  Real Time Graded Assessments
+                  <QuestionCircleTooltip :id="'real_time'"/>
+                  <b-tooltip target="real_time"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Scores and solutions are released in real time, providing students with immediate feedback.
+                  </b-tooltip>
                 </b-form-radio>
-                <b-form-radio name="reset_node_after_incorrect_attempt" value="0">
-                  No
+
+                <b-form-radio name="assessment_type" value="delayed">
+                  Delayed Graded Assessments
+                  <QuestionCircleTooltip :id="'delayed'"/>
+                  <b-tooltip target="delayed"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Scores and solutions are not automatically released. This type of assessment works well
+                    for open-ended questions.
+                  </b-tooltip>
+                </b-form-radio>
+
+                <b-form-radio name="assessment_type" value="learning tree">
+                  Learning Tree Assessments
+                  <QuestionCircleTooltip :id="'learning_tree'"/>
+                  <b-tooltip target="learning_tree"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Students are provided with Learning Trees which consist of a root question node and remediation
+                    nodes.
+                    The remediation nodes provide the student with supplementary material to help them answer the
+                    initial
+                    question.
+                  </b-tooltip>
+                </b-form-radio>
+
+                <b-form-radio name="assessment_type" value="clicker">
+                  Clicker Assessments
+                  <QuestionCircleTooltip :id="'clicker-tooltip'"/>
+                  <b-tooltip target="clicker-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Instructors manually open and close these real-time graded assessments.
+                  </b-tooltip>
                 </b-form-radio>
               </b-form-radio-group>
-              <ErrorMessage v-if="form.errors.has('reset_node_after_incorrect_attempt')"
-                            :message="form.errors.get('reset_node_after_incorrect_attempt')"
+              <ErrorMessage v-if="form.errors.has('assessment_type')"
+                            :message="form.errors.get('assessment_type')"
               />
             </b-form-group>
-            <b-form-group
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="number_of_successful_paths_for_a_reset"
-            >
-              <template v-slot:label>
-                <b-icon
-                  icon="tree" variant="success"
-                />
-                Number of successful paths for a reset*
-                <QuestionCircleTooltip id="number_of_successful_paths_for_a_reset_tooltip"/>
-              </template>
-              <b-tooltip target="number_of_successful_paths_for_a_reset_tooltip"
-                         delay="250"
-                         triggers="hover focus"
+            <div v-if="form.assessment_type === 'learning tree'">
+              <b-form-group
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="min_number_of_minutes_in_exposition_node"
               >
-                The number of successful branches a student must completed in order to
-                reset the
-                question in the root node of the learning tree.
-              </b-tooltip>
-              <b-form-row>
-                <b-col lg="2">
-                  <b-form-input
-                    id="number_of_successful_paths_for_a_reset"
-                    v-model="form.number_of_successful_paths_for_a_reset"
-                    required
-                    type="text"
-                    :disabled="isBetaAssignment"
-                    :class="{ 'is-invalid': form.errors.has('number_of_successful_paths_for_a_reset') }"
-                    @keydown="form.errors.clear('number_of_successful_paths_for_a_reset')"
+                <template v-slot:label>
+                  <b-icon
+                    icon="tree" variant="success"
                   />
-                  <has-error :form="form" field="number_of_successful_paths_for_a_reset"/>
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-          </div>
-
-          <div v-if="form.assessment_type === 'clicker' ||
-          (['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p')"
-          >
-            <b-form-group
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="number_of_allowed_attempts"
-            >
-              <template v-slot:label>
-                Number of Allowed Attempts*
-
-                <QuestionCircleTooltip :id="'number-of-allowed-attempts-tooltip'"/>
-                <b-tooltip target="number-of-allowed-attempts-tooltip"
+                  Minimum Amount of Time in Exposition Nodes*
+                  <QuestionCircleTooltip id="min_number_of_minutes_in_exposition_node_tooltip"/>
+                </template>
+                <b-tooltip target="min_number_of_minutes_in_exposition_node_tooltip"
                            delay="250"
                            triggers="hover focus"
                 >
-                  <span v-if="form.assessment_type === 'real time'">Optionally, you can let your students attempt real time assessments multiple times.</span>
-                  <span v-if="form.assessment_type === 'learning tree'">Students will always be allowed to re-attempt Learning Tree assessments.  However, you can dictate the number of attempts possible.</span>
-
-                  Please note that if you have any H5P questions in your assignment, then due to
-                  the nature of H5P, your students will see the answer
-                  after the first attempt regardless of how many attempts you allow.
+                  The minimum number of minutes that a student will need to spend in an exposition node to receive
+                  completion credit
+                  for that node in the Learning Tree.
                 </b-tooltip>
-              </template>
-              <b-form-select id="number_of_allowed_attempts"
-                             v-model="form.number_of_allowed_attempts"
-                             required
-                             class="mt-2"
-                             :options="['real time','clicker'].includes(form.assessment_type)
+                <b-form-row>
+                  <b-input-group style="width:200px" append="minutes">
+                    <b-form-input
+                      id="min_number_of_minutes_in_exposition_node"
+                      v-model="form.min_number_of_minutes_in_exposition_node"
+                      required
+                      type="text"
+                      :disabled="isBetaAssignment"
+                      :class="{ 'is-invalid': form.errors.has('min_number_of_minutes_in_exposition_node') }"
+                      @keydown="form.errors.clear('min_number_of_minutes_in_exposition_node')"
+                    />
+                  </b-input-group>
+                </b-form-row>
+                <ErrorMessage v-if="form.errors.has('min_number_of_minutes_in_exposition_node')"
+                              :message="form.errors.get('min_number_of_minutes_in_exposition_node')"
+                />
+              </b-form-group>
+              <b-form-group
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="reset_node_after_incorrect_attempt"
+              >
+                <template v-slot:label>
+                  <b-icon
+                    icon="tree" variant="success"
+                  />
+                  Reset Node After Incorrect Attempt*
+                  <QuestionCircleTooltip id="reset_node_after_incorrect_submission_tooltip"/>
+                </template>
+                <b-tooltip target="reset_node_after_incorrect_submission_tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  For non-root question nodes that are algorithmic, determine whether students should receive a new
+                  version of the
+                  question if they answer it incorrectly.
+                </b-tooltip>
+                <b-form-radio-group
+                  id="reset_node_after_incorrect_attempt"
+                  v-model="form.reset_node_after_incorrect_attempt"
+                  stacked
+                  required
+                >
+                  <b-form-radio name="reset_node_after_incorrect_attempt" value="1">
+                    Yes
+                  </b-form-radio>
+                  <b-form-radio name="reset_node_after_incorrect_attempt" value="0">
+                    No
+                  </b-form-radio>
+                </b-form-radio-group>
+                <ErrorMessage v-if="form.errors.has('reset_node_after_incorrect_attempt')"
+                              :message="form.errors.get('reset_node_after_incorrect_attempt')"
+                />
+              </b-form-group>
+              <b-form-group
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="number_of_successful_paths_for_a_reset"
+              >
+                <template v-slot:label>
+                  <b-icon
+                    icon="tree" variant="success"
+                  />
+                  Number of successful paths for a reset*
+                  <QuestionCircleTooltip id="number_of_successful_paths_for_a_reset_tooltip"/>
+                </template>
+                <b-tooltip target="number_of_successful_paths_for_a_reset_tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  The number of successful branches a student must completed in order to
+                  reset the
+                  question in the root node of the learning tree.
+                </b-tooltip>
+                <b-form-row>
+                  <b-col lg="2">
+                    <b-form-input
+                      id="number_of_successful_paths_for_a_reset"
+                      v-model="form.number_of_successful_paths_for_a_reset"
+                      required
+                      type="text"
+                      :disabled="isBetaAssignment"
+                      :class="{ 'is-invalid': form.errors.has('number_of_successful_paths_for_a_reset') }"
+                      @keydown="form.errors.clear('number_of_successful_paths_for_a_reset')"
+                    />
+                    <has-error :form="form" field="number_of_successful_paths_for_a_reset"/>
+                  </b-col>
+                </b-form-row>
+              </b-form-group>
+            </div>
+
+            <div v-if="form.assessment_type === 'clicker' ||
+          (['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p')"
+            >
+              <b-form-group
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="number_of_allowed_attempts"
+              >
+                <template v-slot:label>
+                  Number of Allowed Attempts*
+
+                  <QuestionCircleTooltip :id="'number-of-allowed-attempts-tooltip'"/>
+                  <b-tooltip target="number-of-allowed-attempts-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    <span v-if="form.assessment_type === 'real time'">Optionally, you can let your students attempt real time assessments multiple times.</span>
+                    <span v-if="form.assessment_type === 'learning tree'">Students will always be allowed to re-attempt Learning Tree assessments.  However, you can dictate the number of attempts possible.</span>
+
+                    Please note that if you have any H5P questions in your assignment, then due to
+                    the nature of H5P, your students will see the answer
+                    after the first attempt regardless of how many attempts you allow.
+                  </b-tooltip>
+                </template>
+                <b-form-select id="number_of_allowed_attempts"
+                               v-model="form.number_of_allowed_attempts"
+                               required
+                               class="mt-2"
+                               :options="['real time','clicker'].includes(form.assessment_type)
                                ? numberOfAllowedAttemptsOptions
                                : numberOfAllowedAttemptsOptions.filter(numberOfAttempts => parseInt(numberOfAttempts.value) !== 1)"
-                             :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
-                             :disabled="isBetaAssignment"
-                             :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts') }"
-                             @change="initChangeNumberOfAllowedAttempts(form.number_of_allowed_attempts)"
-              />
-              <has-error :form="form" field="number_of_allowed_attempts"/>
-            </b-form-group>
-            <b-form-group
-              v-if="form.number_of_allowed_attempts !== '1' && form.assessment_type !== 'clicker'"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="attempts_penalty"
-            >
-              <template v-slot:label>
-                Attempts Penalty*
-                <QuestionCircleTooltip :id="'attempts-penalty-tooltip'"/>
-                <b-tooltip target="attempts-penalty-tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  If you allow your students to attempt a question multiple times, you may provide a penalty to be
-                  applied
-                  for
-                  each attempt
-                  after the first. As an example, a
-                  correct answer on the second attempt with a penalty of 10% means that a student will receive 90% of
-                  the
-                  total score for the question.
-                </b-tooltip>
-              </template>
-              <b-form-row>
-                <b-col>
-                  <b-form-input
-                    id="number_of_allowed_attempts_penalty"
-                    v-model="form.number_of_allowed_attempts_penalty"
-                    type="text"
-                    required
-                    placeholder="0-100"
-                    style="width:100px"
-                    :disabled="isBetaAssignment"
-                    :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts_penalty') }"
-                    @keydown="form.errors.clear('number_of_allowed_attempts_penalty')"
-                    @blur="showNumberOfAllowedAttemptsPenaltyWarning"
-                  />
-                  <has-error :form="form" field="number_of_allowed_attempts_penalty"/>
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-          </div>
-          <div v-if="['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p'">
-            <b-form-group
-              v-if="form.assessment_type === 'real time'"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="solutions_availability"
-            >
-              <template v-slot:label>
-                Solutions Availability*
-                <b-icon icon="question-circle"
-                        class="text-primary"
-                        style="cursor: pointer;"
-                        @mouseover="delayedShowSolutionsAvailability"
+                               :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
+                               :disabled="isBetaAssignment"
+                               :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts') }"
+                               @change="initChangeNumberOfAllowedAttempts(form.number_of_allowed_attempts)"
                 />
+                <has-error :form="form" field="number_of_allowed_attempts"/>
+              </b-form-group>
+              <b-form-group
+                v-if="form.number_of_allowed_attempts !== '1' && form.assessment_type !== 'clicker'"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="attempts_penalty"
+              >
+                <template v-slot:label>
+                  Attempts Penalty*
+                  <QuestionCircleTooltip :id="'attempts-penalty-tooltip'"/>
+                  <b-tooltip target="attempts-penalty-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    If you allow your students to attempt a question multiple times, you may provide a penalty to be
+                    applied
+                    for
+                    each attempt
+                    after the first. As an example, a
+                    correct answer on the second attempt with a penalty of 10% means that a student will receive 90% of
+                    the
+                    total score for the question.
+                  </b-tooltip>
+                </template>
+                <b-form-row>
+                  <b-col>
+                    <b-form-input
+                      id="number_of_allowed_attempts_penalty"
+                      v-model="form.number_of_allowed_attempts_penalty"
+                      type="text"
+                      required
+                      placeholder="0-100"
+                      style="width:100px"
+                      :disabled="isBetaAssignment"
+                      :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts_penalty') }"
+                      @keydown="form.errors.clear('number_of_allowed_attempts_penalty')"
+                      @blur="showNumberOfAllowedAttemptsPenaltyWarning"
+                    />
+                    <has-error :form="form" field="number_of_allowed_attempts_penalty"/>
+                  </b-col>
+                </b-form-row>
+              </b-form-group>
+            </div>
+            <div v-if="['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p'">
+              <b-form-group
+                v-if="form.assessment_type === 'real time'"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="solutions_availability"
+              >
+                <template v-slot:label>
+                  Solutions Availability*
+                  <b-icon icon="question-circle"
+                          class="text-primary"
+                          style="cursor: pointer;"
+                          @mouseover="delayedShowSolutionsAvailability"
+                  />
+                </template>
+                <b-form-radio-group id="solutions_availability"
+                                    v-model="form.solutions_availability"
+                                    stacked
+                                    required
+                                    name="solutions_availability"
+                                    :class="{ 'is-invalid': form.errors.has('solutions_availability') }"
+                                    @keydown="form.errors.clear('solutions_availability')"
+                                    @input="updateAutoRelease()"
+                >
+                  <b-form-radio value="automatic">
+                    Automatic
+                  </b-form-radio>
+                  <b-form-radio value="manual">
+                    Manual
+                  </b-form-radio>
+                </b-form-radio-group>
+                <div v-if="form.errors.has('solutions_availability')" class="help-block invalid-feedback">
+                  Please choose one of the given options.
+                </div>
+              </b-form-group>
+            </div>
+            <div v-show="form.assessment_type === 'clicker'">
+              <b-form-group
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label-for="default_clicker_time_to_submit"
+              >
+                <template v-slot:label>
+                  Default Time To Submit*
+                  <QuestionCircleTooltip :id="'default_clicker_time_to_submit_tooltip'"/>
+                  <b-tooltip target="default_clicker_time_to_submit_tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    The amount of time (30 seconds, 2 minutes) your students will have to answer clicker
+                    questions. This can be changed at the question level within a given assignment.
+                  </b-tooltip>
+                </template>
+                <b-form-row>
+                  <b-col lg="3">
+                    <b-form-input
+                      id="default_clicker_time_to_submit"
+                      v-model="form.default_clicker_time_to_submit"
+                      type="text"
+                      placeholder=""
+                      required
+                      :class="{ 'is-invalid': form.errors.has('default_clicker_time_to_submit') }"
+                      :disabled="isBetaAssignment"
+                      @keydown="form.errors.clear('default_clicker_time_to_submit')"
+                    />
+                    <has-error :form="form" field="default_clicker_time_to_submit"/>
+                  </b-col>
+                </b-form-row>
+              </b-form-group>
+            </div>
+            <b-form-group
+              v-show="form.assessment_type === 'delayed' && form.source === 'a'"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label-for="file_upload_mode"
+            >
+              <template v-slot:label>
+                File Upload Mode*
               </template>
-              <b-form-radio-group id="solutions_availability"
-                                  v-model="form.solutions_availability"
+              <b-form-radio-group id="file_upload_mode"
+                                  v-model="form.file_upload_mode"
                                   stacked
                                   required
-                                  name="solutions_availability"
-                                  :class="{ 'is-invalid': form.errors.has('solutions_availability') }"
-                                  @keydown="form.errors.clear('solutions_availability')"
-                                  @input="updateAutoRelease()"
+                                  :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                                  name="file_upload_mode"
+                                  :class="{ 'is-invalid': form.errors.has('file_upload_mode') }"
+                                  @keydown="form.errors.clear('file_upload_mode')"
+                                  @change="initFileUploadModeSwitch($event);checkDefaultOpenEndedSubmissionType()"
               >
-                <b-form-radio value="automatic">
-                  Automatic
+                <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
+                <b-form-radio name="file_upload_mode" value="individual_assessment">
+                  Individual Assessment Upload
+                  <QuestionCircleTooltip :id="'individual_assessment_upload_tooltip'"/>
+                  <b-tooltip target="individual_assessment_upload_tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    <p>
+                      If you choose this option, your students will upload individual submissions at the question level.
+                      Use this option if you don't plan on having non-PDF uploads such as text, images, or audio or if
+                      there is only one PDF submission.
+                    </p>
+                  </b-tooltip>
                 </b-form-radio>
-                <b-form-radio value="manual">
-                  Manual
+                <b-form-radio name="file_upload_mode" value="compiled_pdf">
+                  Compiled Upload (PDFs only)
+                  <QuestionCircleTooltip :id="'compiled_pdf_tooltip'"/>
+                  <b-tooltip target="compiled_pdf_tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    <p>
+                      If you choose this option, your students will upload a single compiled PDF and let ADAPT know
+                      which
+                      pages
+                      are associated with which questions.
+                    </p>
+                  </b-tooltip>
+                </b-form-radio>
+                <b-form-radio name="file_upload_mode" value="both">
+                  Compiled Upload & Individual Assessment Upload
+                  <QuestionCircleTooltip :id="'both_upload_tooltip'"/>
+                  <b-tooltip target="both_upload_tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    <p>
+                      If you choose this option, your students will be able to upload either a compiled PDF or
+                      individual
+                      assessment uploads. Use this option if you have both several assessments which require a PDF
+                      submission
+                      and you also have non-PDF assessments such as text, images, or audio.
+                    </p>
+                  </b-tooltip>
                 </b-form-radio>
               </b-form-radio-group>
-              <div v-if="form.errors.has('solutions_availability')" class="help-block invalid-feedback">
+              <div v-if="form.errors.has('file_upload_mode')" class="help-block invalid-feedback">
                 Please choose one of the given options.
               </div>
             </b-form-group>
-          </div>
-          <div v-show="form.assessment_type === 'clicker'">
             <b-form-group
+              v-show="form.assessment_type === 'delayed' && form.source === 'a' && parseInt(form.file_upload_mode) !==1"
               label-cols-sm="4"
               label-cols-lg="3"
-              label-for="default_clicker_time_to_submit"
+              label-for="default_open_ended_submission_type"
             >
               <template v-slot:label>
-                Default Time To Submit*
-                <QuestionCircleTooltip :id="'default_clicker_time_to_submit_tooltip'"/>
-                <b-tooltip target="default_clicker_time_to_submit_tooltip"
+                Default Open-ended Submission Type*
+                <QuestionCircleTooltip :id="'default_open_ended_submission_type_tooltip'"/>
+                <b-tooltip target="default_open_ended_submission_type_tooltip"
                            delay="250"
                            triggers="hover focus"
                 >
-                  The amount of time (30 seconds, 2 minutes) your students will have to answer clicker
-                  questions. This can be changed at the question level within a given assignment.
+                  Adjust this option if your assignment consists of open-ended questions. This option can be changed on
+                  a
+                  per
+                  question basis once you start adding questions to the assignment.
                 </b-tooltip>
               </template>
-              <b-form-row>
-                <b-col lg="3">
-                  <b-form-input
-                    id="default_clicker_time_to_submit"
-                    v-model="form.default_clicker_time_to_submit"
-                    type="text"
-                    placeholder=""
-                    required
-                    :class="{ 'is-invalid': form.errors.has('default_clicker_time_to_submit') }"
-                    :disabled="isBetaAssignment"
-                    @keydown="form.errors.clear('default_clicker_time_to_submit')"
-                  />
-                  <has-error :form="form" field="default_clicker_time_to_submit"/>
-                </b-col>
-              </b-form-row>
+              <b-form-radio-group id="default_open_ended_submission_type"
+                                  v-model="form.default_open_ended_submission_type"
+                                  stacked
+                                  required
+                                  :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                                  name="default_open_ended_submission_type"
+                                  :class="{ 'is-invalid': form.errors.has('default_open_ended_submission_type') }"
+                                  @change="checkIfCompiledPdf()"
+                                  @keydown="form.errors.clear('default_open_ended_submission_type')"
+              >
+                <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
+                <b-form-radio name="default_open_ended_submission_type" value="file">
+                  File
+                </b-form-radio>
+                <b-form-radio name="default_open_ended_submission_type"
+                              value="rich text"
+                >
+                  Rich Text
+                </b-form-radio>
+                <b-form-radio name="default_open_ended_submission_type"
+                              value="audio"
+                >
+                  Audio
+                </b-form-radio>
+                <b-form-radio name="default_open_ended_submission_type" value="0">
+                  None
+                </b-form-radio>
+              </b-form-radio-group>
+              <div v-if="form.errors.has('default_open_ended_submission_type')" class="help-block invalid-feedback">
+                The selected default open ended submission type is invalid.
+              </div>
             </b-form-group>
-          </div>
-          <b-form-group
-            v-show="form.assessment_type === 'delayed' && form.source === 'a'"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="file_upload_mode"
-          >
-            <template v-slot:label>
-              File Upload Mode*
-            </template>
-            <b-form-radio-group id="file_upload_mode"
-                                v-model="form.file_upload_mode"
-                                stacked
-                                required
-                                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                                name="file_upload_mode"
-                                :class="{ 'is-invalid': form.errors.has('file_upload_mode') }"
-                                @keydown="form.errors.clear('file_upload_mode')"
-                                @change="initFileUploadModeSwitch($event);checkDefaultOpenEndedSubmissionType()"
-            >
-              <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-              <b-form-radio name="file_upload_mode" value="individual_assessment">
-                Individual Assessment Upload
-                <QuestionCircleTooltip :id="'individual_assessment_upload_tooltip'"/>
-                <b-tooltip target="individual_assessment_upload_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  <p>
-                    If you choose this option, your students will upload individual submissions at the question level.
-                    Use this option if you don't plan on having non-PDF uploads such as text, images, or audio or if
-                    there is only one PDF submission.
-                  </p>
-                </b-tooltip>
-              </b-form-radio>
-              <b-form-radio name="file_upload_mode" value="compiled_pdf">
-                Compiled Upload (PDFs only)
-                <QuestionCircleTooltip :id="'compiled_pdf_tooltip'"/>
-                <b-tooltip target="compiled_pdf_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  <p>
-                    If you choose this option, your students will upload a single compiled PDF and let ADAPT know
-                    which
-                    pages
-                    are associated with which questions.
-                  </p>
-                </b-tooltip>
-              </b-form-radio>
-              <b-form-radio name="file_upload_mode" value="both">
-                Compiled Upload & Individual Assessment Upload
-                <QuestionCircleTooltip :id="'both_upload_tooltip'"/>
-                <b-tooltip target="both_upload_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  <p>
-                    If you choose this option, your students will be able to upload either a compiled PDF or
-                    individual
-                    assessment uploads. Use this option if you have both several assessments which require a PDF
-                    submission
-                    and you also have non-PDF assessments such as text, images, or audio.
-                  </p>
-                </b-tooltip>
-              </b-form-radio>
-            </b-form-radio-group>
-            <div v-if="form.errors.has('file_upload_mode')" class="help-block invalid-feedback">
-              Please choose one of the given options.
-            </div>
-          </b-form-group>
-          <b-form-group
-            v-show="form.assessment_type === 'delayed' && form.source === 'a' && parseInt(form.file_upload_mode) !==1"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="default_open_ended_submission_type"
-          >
-            <template v-slot:label>
-              Default Open-ended Submission Type*
-              <QuestionCircleTooltip :id="'default_open_ended_submission_type_tooltip'"/>
-              <b-tooltip target="default_open_ended_submission_type_tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Adjust this option if your assignment consists of open-ended questions. This option can be changed on
-                a
-                per
-                question basis once you start adding questions to the assignment.
-              </b-tooltip>
-            </template>
-            <b-form-radio-group id="default_open_ended_submission_type"
-                                v-model="form.default_open_ended_submission_type"
-                                stacked
-                                required
-                                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                                name="default_open_ended_submission_type"
-                                :class="{ 'is-invalid': form.errors.has('default_open_ended_submission_type') }"
-                                @change="checkIfCompiledPdf()"
-                                @keydown="form.errors.clear('default_open_ended_submission_type')"
-            >
-              <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-              <b-form-radio name="default_open_ended_submission_type" value="file">
-                File
-              </b-form-radio>
-              <b-form-radio name="default_open_ended_submission_type"
-                            value="rich text"
-              >
-                Rich Text
-              </b-form-radio>
-              <b-form-radio name="default_open_ended_submission_type"
-                            value="audio"
-              >
-                Audio
-              </b-form-radio>
-              <b-form-radio name="default_open_ended_submission_type" value="0">
-                None
-              </b-form-radio>
-            </b-form-radio-group>
-            <div v-if="form.errors.has('default_open_ended_submission_type')" class="help-block invalid-feedback">
-              The selected default open ended submission type is invalid.
-            </div>
-          </b-form-group>
-</b-card>
+          </b-card>
         </div>
       </div>
       <component
-        v-show="form.assessment_type !== 'clicker'"
+        v-show="form.assessment_type !== 'clicker' && form.source === 'a' && !isFormativeCourse && +form.formative !== 1"
         :is="+form.can_submit_work ? 'b-card' : 'div'"
         id="submit-work-card"
         :body-class="+form.can_submit_work ? 'pb-0' : ''"
@@ -1175,7 +1245,7 @@ body-class="pb-0"
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
-            v-show="form.can_submit_work"
+            v-show="+form.can_submit_work"
             label-cols-sm="4"
             label-cols-lg="3"
             label-for="submitted_work_policy"
@@ -1223,11 +1293,11 @@ body-class="pb-0"
           </b-form-group>
         </b-card-text>
       </component>
-      <component
-        :is="+form.can_view_hint? 'b-card' : 'div'"
-        id="can-view-hint-card"
-        :body-class="+form.can_view_hint ? 'pb-0' : ''"
-        :class="+form.can_view_hint ? 'mb-3' : ''"
+      <b-card
+        v-show="!isFormativeCourse && +form.formative !== 1 && form.source === 'a'"
+        id="can-view-hint-rando-algo-card"
+        body-class="pb-0"
+        class="mb-3"
       >
         <b-form-group
           label-cols-sm="4"
@@ -1295,8 +1365,106 @@ body-class="pb-0"
             </b-col>
           </b-form-row>
         </b-form-group>
-      </component>
-      <div v-if="!isFormativeCourse && form.formative !== '1'">
+        <b-form-group
+          v-show="form.source === 'a' && form.assessment_type !== 'clicker'"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="randomizations"
+        >
+          <template v-slot:label>
+            Random sampling*
+            <QuestionCircleTooltip :id="'random-sampling-tooltip'"/>
+            <b-tooltip target="random-sampling-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              With random sampling enabled, your students will receive a random subset of questions from a
+              pool of questions.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group id="randomizations"
+                              v-model="form.randomizations"
+                              required
+                              stacked
+                              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                              @change="initRandomizationsSwitch($event)"
+          >
+            <b-form-radio value="0">
+              No
+            </b-form-radio>
+            <b-form-radio value="1">
+              Yes
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-show="form.source === 'a' && parseInt(form.randomizations) === 1"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="number_of_randomized_assessments"
+        >
+          <template v-slot:label>
+            Number of randomized assessments*
+            <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'"/>
+            <b-tooltip target="number_of_randomized_assessments_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              ADAPT will randomly choose a subset of assessments from the total that you provide
+            </b-tooltip>
+          </template>
+          <b-form-row>
+            <b-col lg="2">
+              <b-form-input
+                id="number_of_randomized_assessments"
+                v-model="form.number_of_randomized_assessments"
+                type="text"
+                required
+                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+                :class="{ 'is-invalid': form.errors.has('number_of_randomized_assessments') }"
+                @keydown="form.errors.clear('number_of_randomized_assessments')"
+              />
+              <has-error :form="form" field="number_of_randomized_assessments"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <div v-if="user.role ===2">
+          <b-form-group
+            v-show="form.source === 'a'"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="algorithmic"
+          >
+            <template v-slot:label>
+              Algorithmic*
+              <QuestionCircleTooltip :id="'algorithmic-tooltip'"/>
+              <b-tooltip target="algorithmic-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                WeBWork and IMathAS support algorithmic questions (H5P questions will be unaffected). If you choose this
+                option, students will receive slight variations of the original question assuming
+                that there is algorithmic functionality built into the questions.
+              </b-tooltip>
+            </template>
+            <b-form-radio-group id="algorithmic"
+                                v-model="form.algorithmic"
+                                required
+                                stacked
+                                :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
+            >
+              <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
+              <b-form-radio value="1">
+                Yes
+              </b-form-radio>
+              <b-form-radio value="0">
+                No
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+        </div>
+      </b-card>
+      <div v-if="!isFormativeCourse && +form.formative !== 1 && form.source === 'a'">
         <component
           :is="form.late_policy === 'deduction' ? 'b-card' : 'div'"
           id="late-policy-card"
@@ -1425,501 +1593,335 @@ body-class="pb-0"
           </b-card-text>
         </component>
       </div>
-      <div v-if="user.role ===2">
+      <div v-if="!isFormativeCourse && form.formative !== '1'">
         <b-form-group
-          v-show="form.source === 'a'"
           label-cols-sm="4"
           label-cols-lg="3"
-          label-for="algorithmic"
+          label-for="notifications"
         >
           <template v-slot:label>
-            Algorithmic*
-            <QuestionCircleTooltip :id="'algorithmic-tooltip'"/>
-            <b-tooltip target="algorithmic-tooltip"
+            Notifications*
+            <QuestionCircleTooltip :id="'notifications_tooltip'"/>
+            <b-tooltip target="notifications_tooltip"
                        delay="250"
                        triggers="hover focus"
             >
-              WeBWork and IMathAS support algorithmic questions (H5P questions will be unaffected). If you choose this
-              option, students will receive slight variations of the original question assuming
-              that there is algorithmic functionality built into the questions.
+              Students can optionally request to receive notifications for upcoming due dates. You may want to turn
+              this
+              option
+              off for Exams and Clicker assignments so your students don't receive unnecessary notifications.
             </b-tooltip>
           </template>
-          <b-form-radio-group id="algorithmic"
-                              v-model="form.algorithmic"
+          <b-form-radio-group id="notifications"
+                              v-model="form.notifications"
                               required
                               stacked
-                              :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
           >
-            <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
-            <b-form-radio value="1">
+            <b-form-radio name="notifications" value="1">
+              On
+            </b-form-radio>
+            <b-form-radio name="notifications" value="0">
+              Off
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-show="lms"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="lms_grade_passback"
+        >
+          <template v-slot:label>
+            LMS Grade Passback*
+            <QuestionCircleTooltip :id="'lms_grade_passback_tooltip'"/>
+            <b-tooltip target="lms_grade_passback_tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              With the automatic option, grades are passed back to your LMS each time that your one of your students
+              submits their response to a question.
+              For delayed grading, the manual option is recommended.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group
+            v-model="form.lms_grade_passback"
+            required
+            stacked
+          >
+            <b-form-radio name="lms" value="automatic">
+              Automatic
+            </b-form-radio>
+            <b-form-radio name="lms" value="manual">
+              Manual
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-if="!courseId"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="assign_to_everyone"
+        >
+          <template v-slot:label>
+            Assign to Everyone*
+          </template>
+          <b-form-radio-group id="assign_to_everyone"
+                              v-model="form.assign_to_everyone"
+                              required
+                              stacked
+          >
+            <b-form-radio name="assign_to_everyone" value="1">
               Yes
             </b-form-radio>
-            <b-form-radio value="0">
+            <b-form-radio name="assign_to_everyone" value="0">
               No
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-      </div>
-      <div v-if="!isFormativeCourse && form.formative !== '1'">
         <b-form-group
-          v-if="!lms"
+          v-if="lms"
           label-cols-sm="4"
           label-cols-lg="3"
-          label-for="include_in_final_score"
+          label-for="textbook_url"
         >
           <template v-slot:label>
-            Include In Final Score*
+            Textbook URL
+            <QuestionCircleTooltip :id="'textbook-url-tooltip'"/>
+            <b-tooltip target="textbook-url-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              If your assignment is integrated into a textbook, provide the URL for the start of the assignment. When
+              your
+              students open the assignment in your LMS, they will be re-directed to this URL.
+            </b-tooltip>
           </template>
-          <b-form-radio-group id="include_in_final_score"
-                              v-model="form.include_in_weighted_average"
-                              required
-                              stacked
-          >
-            <b-form-radio name="include_in_weighted_average" value="1">
-              Include the assignment in computing a final
-              weighted score
-            </b-form-radio>
-            <b-form-radio name="include_in_weighted_average" value="0">
-              Do not include the assignment in computing a
-              final weighted score
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
-        <b-form-group
-          v-show="form.source === 'x'"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="external_source_points"
-        >
-          <template v-slot:label>
-            Total Points*
-          </template>
-          <b-form-row>
-            <b-col lg="3">
-              <b-form-input
-                id="external_source_points"
-                v-model="form.external_source_points"
-                :disabled="isBetaAssignment"
-                type="text"
-                placeholder=""
-                required
-                :class="{ 'is-invalid': form.errors.has('external_source_points') }"
-                @keydown="form.errors.clear('external_source_points')"
-              />
-              <has-error :form="form" field="external_source_points"/>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-      <b-form-group
-        v-show="form.source === 'a' && (!lms || lmsApi)"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label="Instructions"
-        label-for="instructions"
-      >
-        <b-form-row>
-          <CKEditorFileToLinkUploader :upload-file-type="'assignment-instructions'"
-                                      :tutorial-video-src="'https://customer-9mlff0qha6p39qdq.cloudflarestream.com/42a374a283d79e8c7c9db3d35180d7d1/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F42a374a283d79e8c7c9db3d35180d7d1%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600'"
-                                      :modal-title="'Adding Files to Your Instructions'"
-          />
-          <ckeditor
-            id="instructions"
-            v-model="form.instructions"
-            tabindex="0"
+          <b-form-textarea
+            id="textbook_url"
+            v-model="form.textbook_url"
+            :class="{ 'is-invalid': form.errors.has('textbook_url') }"
             rows="4"
-            :config="richEditorConfig"
             max-rows="4"
-            :read-only="isBetaAssignment"
-            @namespaceloaded="onCKEditorNamespaceLoaded"
-            @ready="handleFixCKEditor()"
+            @keydown="form.errors.clear('textbook_url')"
           />
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        v-show="form.source === 'a' && form.assessment_type !== 'clicker'"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="randomizations"
-      >
-        <template v-slot:label>
-          Random sampling*
-          <QuestionCircleTooltip :id="'random-sampling-tooltip'"/>
-          <b-tooltip target="random-sampling-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            With random sampling enabled, your students will receive a random subset of questions from a
-            pool of questions.
-          </b-tooltip>
-        </template>
-        <b-form-radio-group id="randomizations"
-                            v-model="form.randomizations"
-                            required
-                            stacked
-                            :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                            @change="initRandomizationsSwitch($event)"
-        >
-          <b-form-radio value="0">
-            No
-          </b-form-radio>
-          <b-form-radio value="1">
-            Yes
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <b-form-group
-        v-show="form.source === 'a' && parseInt(form.randomizations) === 1"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="number_of_randomized_assessments"
-      >
-        <template v-slot:label>
-          Number of randomized assessments*
-          <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'"/>
-          <b-tooltip target="number_of_randomized_assessments_tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            ADAPT will randomly choose a subset of assessments from the total that you provide
-          </b-tooltip>
-        </template>
-        <b-form-row>
-          <b-col lg="2">
-            <b-form-input
-              id="number_of_randomized_assessments"
-              v-model="form.number_of_randomized_assessments"
-              type="text"
-              required
-              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-              :class="{ 'is-invalid': form.errors.has('number_of_randomized_assessments') }"
-              @keydown="form.errors.clear('number_of_randomized_assessments')"
-            />
-            <has-error :form="form" field="number_of_randomized_assessments"/>
-          </b-col>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="notifications"
-      >
-        <template v-slot:label>
-          Notifications*
-          <QuestionCircleTooltip :id="'notifications_tooltip'"/>
-          <b-tooltip target="notifications_tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            Students can optionally request to receive notifications for upcoming due dates. You may want to turn
-            this
-            option
-            off for Exams and Clicker assignments so your students don't receive unnecessary notifications.
-          </b-tooltip>
-        </template>
-        <b-form-radio-group id="notifications"
-                            v-model="form.notifications"
-                            required
-                            stacked
-        >
-          <b-form-radio name="notifications" value="1">
-            On
-          </b-form-radio>
-          <b-form-radio name="notifications" value="0">
-            Off
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <b-form-group
-        v-show="lms"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="lms_grade_passback"
-      >
-        <template v-slot:label>
-          LMS Grade Passback*
-          <QuestionCircleTooltip :id="'lms_grade_passback_tooltip'"/>
-          <b-tooltip target="lms_grade_passback_tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            With the automatic option, grades are passed back to your LMS each time that your one of your students
-            submits their response to a question.
-            For delayed grading, the manual option is recommended.
-          </b-tooltip>
-        </template>
-        <b-form-radio-group
-          v-model="form.lms_grade_passback"
-          required
-          stacked
-        >
-          <b-form-radio name="lms" value="automatic">
-            Automatic
-          </b-form-radio>
-          <b-form-radio name="lms" value="manual">
-            Manual
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <b-form-group
-        v-if="!courseId"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="assign_to_everyone"
-      >
-        <template v-slot:label>
-          Assign to Everyone*
-        </template>
-        <b-form-radio-group id="assign_to_everyone"
-                            v-model="form.assign_to_everyone"
-                            required
-                            stacked
-        >
-          <b-form-radio name="assign_to_everyone" value="1">
-            Yes
-          </b-form-radio>
-          <b-form-radio name="assign_to_everyone" value="0">
-            No
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <b-form-group
-        v-if="lms"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="textbook_url"
-      >
-        <template v-slot:label>
-          Textbook URL
-          <QuestionCircleTooltip :id="'textbook-url-tooltip'"/>
-          <b-tooltip target="textbook-url-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            If your assignment is integrated into a textbook, provide the URL for the start of the assignment. When
-            your
-            students open the assignment in your LMS, they will be re-directed to this URL.
-          </b-tooltip>
-        </template>
-        <b-form-textarea
-          id="textbook_url"
-          v-model="form.textbook_url"
-          :class="{ 'is-invalid': form.errors.has('textbook_url') }"
-          rows="4"
-          max-rows="4"
-          @keydown="form.errors.clear('textbook_url')"
-        />
-        <has-error :form="form" field="textbook_url"/>
-      </b-form-group>
-      <div v-show="form.assessment_type === 'clicker'">
-        <b-form-group
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="assign_to"
-          label="Assign To"
-        >
-          <div class="mt-2">
-            Clicker assignments are assigned to all students and manually opened by the instructor at the
-            start of the assignment.
-          </div>
+          <has-error :form="form" field="textbook_url"/>
         </b-form-group>
-      </div>
-      <div v-show="form.assessment_type !== 'clicker'">
-        <div v-for="(assignTo,index) in form.assign_tos"
-             :key="index"
-        >
+        <div v-show="form.assessment_type === 'clicker'">
           <b-form-group
             label-cols-sm="4"
             label-cols-lg="3"
             label-for="assign_to"
+            label="Assign To"
           >
-            <template v-slot:label>
-              Assign to*
-              <QuestionCircleTooltip :id="'assign_to_tooltip'"/>
-              <b-tooltip target="assign_to_tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                You can assign to Everybody, a particular section (search by name) or student (search by name or
-                email).
-              </b-tooltip>
-            </template>
-            <b-form-row>
-              <b-col lg="5">
-                <b-form-select id="assign_to"
-                               v-model="assignTo.selectedGroup"
-                               required
-                               :options="assignToGroups"
-                               :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
-                               @change="form.errors.clear(`groups_${index}`);updateAssignTos(assignTo)"
-                />
-                <has-error :form="form" :field="`groups_${index}`"/>
-              </b-col>
-              <b-col>
-                <ul
-                  v-for="(group,group_index) in assignTo.groups"
-                  :key="group_index"
-                  class="flex-column align-items-start"
-                >
-                  <li>
-                    {{ group.text }}
-                    <a href="" @click.prevent="removeAssignToGroup(assignTo, group)">
-                      <b-icon icon="trash"
-                              :aria-label="`Remove ${group.text} from this Assign To`"
-                              class="text-muted"
-                      />
-                    </a>
-                  </li>
-                </ul>
-              </b-col>
-            </b-form-row>
+            <div class="mt-2">
+              Clicker assignments are assigned to all students and manually opened by the instructor at the
+              start of the assignment.
+            </div>
           </b-form-group>
-          <b-form-group
-            label-cols-sm="4"
-            label-cols-lg="3"
-            :label-for="`available_from_${index}`"
-          >
-            <template v-slot:label>
-              Available on*
-            </template>
-            <b-form-row>
-              <b-col lg="7">
-                <b-form-datepicker
-                  :id="`available_from_${index}`"
-                  v-model="assignTo.available_from_date"
-                  required
-                  tabindex="0"
-                  :min="min"
-                  class="datepicker"
-                  :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
-                />
-                <has-error :form="form" :field="`available_from_date_${index}`"/>
-              </b-col>
-              <b-col>
-                <vue-timepicker :id="`available_from_time_${index}`"
-                                v-model="assignTo.available_from_time"
-                                format="h:mm A"
-                                manual-input
-                                drop-direction="up"
-                                :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
-                                input-class="custom-timepicker-class"
-                                @input="form.errors.clear(`available_from_time_${index}`)"
-                                @shown="form.errors.clear(`available_from_time_${index}`)"
-                >
-                  <template v-slot:icon>
-                    <b-icon-clock/>
-                  </template>
-                </vue-timepicker>
-                <ErrorMessage :message="form.errors.get(`available_from_time_${index}`)"/>
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-          <b-form-group
-            label-cols-sm="4"
-            label-cols-lg="3"
-            :label-for="`due_date_${index}`"
-          >
-            <template v-slot:label>
-              Due Date*
-            </template>
-            <b-form-row>
-              <b-col lg="7">
-                <b-form-datepicker
-                  :id="`due_date_${index}`"
-                  v-model="assignTo.due_date"
-                  required
-                  tabindex="0"
-                  :min="min"
-                  :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
-                  class="datepicker"
-                  @shown="form.errors.clear(`due_${index}`)"
-                />
-                <has-error :form="form" :field="`due_${index}`"/>
-              </b-col>
-              <b-col>
-                <vue-timepicker :id="`due_time_${index}`"
-                                v-model="assignTo.due_time"
-                                format="h:mm A"
-                                manual-input
-                                drop-direction="up"
-                                :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
-                                input-class="custom-timepicker-class"
-                                @input="form.errors.clear(`due_time_${index}`)"
-                                @shown="form.errors.clear(`due_time_${index}`)"
-                >
-                  <template v-slot:icon>
-                    <b-icon-clock/>
-                  </template>
-                </vue-timepicker>
-                <ErrorMessage :message="form.errors.get(`due_time_${index}`)"/>
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-          <b-form-group
-            v-show="form.late_policy !== 'not accepted'"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            :label-for="`final_submission_deadline_${index}`"
-          >
-            <template v-slot:label>
-              Final Submission Deadline*
-              <QuestionCircleTooltip :id="'final_submission_deadline_tooltip'"/>
-              <b-tooltip target="final_submission_deadline_tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                For assessments where you allow late submissions (either marked late or with penalty), this is the
-                latest
-                possible date for which you'll accept a submission. If your solutions are released, you will not be
-                able
-                to
-                change this field.
-              </b-tooltip>
-            </template>
-            <b-form-row>
-              <b-col lg="7">
-                <b-form-datepicker
-                  :id="`final_submission_deadline_${index}`"
-                  v-model="assignTo.final_submission_deadline_date"
-                  required
-                  tabindex="0"
-                  :min="min"
-                  :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
-                  class="datepicker"
-                  :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-                  @shown="form.errors.clear(`final_submission_deadline_${index}`)"
-                />
-                <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
-              </b-col>
-              <b-col>
-                <vue-timepicker :id="`final_submission_deadline_time_${index}`"
-                                v-model="assignTo.final_submission_deadline_time"
-                                format="h:mm A"
-                                manual-input
-                                drop-direction="up"
-                                :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
-                                input-class="custom-timepicker-class"
-                                @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
-                                @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
-                >
-                  <template v-slot:icon>
-                    <b-icon-clock/>
-                  </template>
-                </vue-timepicker>
-                <ErrorMessage :message="form.errors.get(`final_submission_deadline_time_${index}`)"/>
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-          <div v-if="form.assign_tos.length>1">
-            <b-row align-h="end">
-              <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">
-                Remove Assign
-                to
-              </b-button>
-            </b-row>
-            <hr>
-          </div>
         </div>
-        <span v-if="courseId">
+        <div v-show="form.assessment_type !== 'clicker'">
+          <b-card id="assign-to-card"
+                  class="mb-3"
+          >
+            <b-card-text>
+
+              <div v-for="(assignTo,index) in form.assign_tos"
+                   :key="index"
+              >
+                <b-form-group
+                  label-cols-sm="4"
+                  label-cols-lg="3"
+                  label-for="assign_to"
+                >
+                  <template v-slot:label>
+                    Assign to*
+                    <QuestionCircleTooltip :id="'assign_to_tooltip'"/>
+                    <b-tooltip target="assign_to_tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      You can assign to Everybody, a particular section (search by name) or student (search by name or
+                      email).
+                    </b-tooltip>
+                  </template>
+                  <b-form-row>
+                    <b-col lg="5">
+                      <b-form-select id="assign_to"
+                                     v-model="assignTo.selectedGroup"
+                                     required
+                                     :options="assignToGroups"
+                                     :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
+                                     @change="form.errors.clear(`groups_${index}`);updateAssignTos(assignTo)"
+                      />
+                      <has-error :form="form" :field="`groups_${index}`"/>
+                    </b-col>
+                    <b-col>
+                      <ul
+                        v-for="(group,group_index) in assignTo.groups"
+                        :key="group_index"
+                        class="flex-column align-items-start"
+                      >
+                        <li>
+                          {{ group.text }}
+                          <a href="" @click.prevent="removeAssignToGroup(assignTo, group)">
+                            <b-icon icon="trash"
+                                    :aria-label="`Remove ${group.text} from this Assign To`"
+                                    class="text-muted"
+                            />
+                          </a>
+                        </li>
+                      </ul>
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
+                <b-form-group
+                  label-cols-sm="4"
+                  label-cols-lg="3"
+                  :label-for="`available_from_${index}`"
+                >
+                  <template v-slot:label>
+                    Available on*
+                  </template>
+                  <b-form-row>
+                    <b-col lg="7">
+                      <b-form-datepicker
+                        :id="`available_from_${index}`"
+                        v-model="assignTo.available_from_date"
+                        required
+                        tabindex="0"
+                        :min="min"
+                        class="datepicker"
+                        :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
+                      />
+                      <has-error :form="form" :field="`available_from_date_${index}`"/>
+                    </b-col>
+                    <b-col>
+                      <vue-timepicker :id="`available_from_time_${index}`"
+                                      v-model="assignTo.available_from_time"
+                                      format="h:mm A"
+                                      manual-input
+                                      drop-direction="up"
+                                      :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
+                                      input-class="custom-timepicker-class"
+                                      @input="form.errors.clear(`available_from_time_${index}`)"
+                                      @shown="form.errors.clear(`available_from_time_${index}`)"
+                      >
+                        <template v-slot:icon>
+                          <b-icon-clock/>
+                        </template>
+                      </vue-timepicker>
+                      <ErrorMessage :message="form.errors.get(`available_from_time_${index}`)"/>
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
+                <b-form-group
+                  label-cols-sm="4"
+                  label-cols-lg="3"
+                  :label-for="`due_date_${index}`"
+                >
+                  <template v-slot:label>
+                    Due Date*
+                  </template>
+                  <b-form-row>
+                    <b-col lg="7">
+                      <b-form-datepicker
+                        :id="`due_date_${index}`"
+                        v-model="assignTo.due_date"
+                        required
+                        tabindex="0"
+                        :min="min"
+                        :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
+                        class="datepicker"
+                        @shown="form.errors.clear(`due_${index}`)"
+                      />
+                      <has-error :form="form" :field="`due_${index}`"/>
+                    </b-col>
+                    <b-col>
+                      <vue-timepicker :id="`due_time_${index}`"
+                                      v-model="assignTo.due_time"
+                                      format="h:mm A"
+                                      manual-input
+                                      drop-direction="up"
+                                      :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
+                                      input-class="custom-timepicker-class"
+                                      @input="form.errors.clear(`due_time_${index}`)"
+                                      @shown="form.errors.clear(`due_time_${index}`)"
+                      >
+                        <template v-slot:icon>
+                          <b-icon-clock/>
+                        </template>
+                      </vue-timepicker>
+                      <ErrorMessage :message="form.errors.get(`due_time_${index}`)"/>
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
+                <b-form-group
+                  v-show="form.late_policy !== 'not accepted'"
+                  label-cols-sm="4"
+                  label-cols-lg="3"
+                  :label-for="`final_submission_deadline_${index}`"
+                >
+                  <template v-slot:label>
+                    Final Submission Deadline*
+                    <QuestionCircleTooltip :id="'final_submission_deadline_tooltip'"/>
+                    <b-tooltip target="final_submission_deadline_tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      For assessments where you allow late submissions (either marked late or with penalty), this is the
+                      latest
+                      possible date for which you'll accept a submission. If your solutions are released, you will not
+                      be
+                      able
+                      to
+                      change this field.
+                    </b-tooltip>
+                  </template>
+                  <b-form-row>
+                    <b-col lg="7">
+                      <b-form-datepicker
+                        :id="`final_submission_deadline_${index}`"
+                        v-model="assignTo.final_submission_deadline_date"
+                        required
+                        tabindex="0"
+                        :min="min"
+                        :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
+                        class="datepicker"
+                        :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                        @shown="form.errors.clear(`final_submission_deadline_${index}`)"
+                      />
+                      <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
+                    </b-col>
+                    <b-col>
+                      <vue-timepicker :id="`final_submission_deadline_time_${index}`"
+                                      v-model="assignTo.final_submission_deadline_time"
+                                      format="h:mm A"
+                                      manual-input
+                                      drop-direction="up"
+                                      :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
+                                      input-class="custom-timepicker-class"
+                                      @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
+                                      @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
+                      >
+                        <template v-slot:icon>
+                          <b-icon-clock/>
+                        </template>
+                      </vue-timepicker>
+                      <ErrorMessage :message="form.errors.get(`final_submission_deadline_time_${index}`)"/>
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
+                <div v-if="form.assign_tos.length>1">
+                  <b-row align-h="end">
+                    <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">
+                      Remove Assign
+                      to
+                    </b-button>
+                  </b-row>
+                  <hr>
+                </div>
+              </div>
+              <span v-if="courseId">
             <b-button variant="outline-primary" size="sm" @click="addAssignTo">
               Add Assign to
             </b-button>
@@ -1934,20 +1936,22 @@ body-class="pb-0"
               the course level.
             </b-tooltip>
           </span>
+            </b-card-text>
+          </b-card>
+        </div>
       </div>
-  </div>
-  <div v-show="form.assessment_type !== 'clicker'">
-    <AutoRelease :key="`auto-release-${autoReleaseKey}`"
-                 :auto-release-form="form"
-                 :assignment-id="assignmentId"
-                 :num-assign-tos="form.assign_tos.length"
-                 :accept-late="form.late_policy !== 'not accepted'"
-                 :assessment-type="form.assessment_type"
-                 :course="course"
-                 @updateShowHideRelease="updateShowHideRelease"
-    />
-  </div>
-  </b-form>
+      <div v-show="form.assessment_type !== 'clicker'">
+        <AutoRelease :key="`auto-release-${autoReleaseKey}`"
+                     :auto-release-form="form"
+                     :assignment-id="assignmentId"
+                     :num-assign-tos="form.assign_tos.length"
+                     :accept-late="form.late_policy !== 'not accepted'"
+                     :assessment-type="form.assessment_type"
+                     :course="course"
+                     @updateShowHideRelease="updateShowHideRelease"
+        />
+      </div>
+    </b-form>
   </div>
 </template>
 
@@ -2257,6 +2261,7 @@ export default {
       this.form.errors.clear('hint_penalty')
     },
     initPointsPerQuestionSwitch (event) {
+      this.form.errors.clear('points_per_question')
       this.$nextTick(() => {
         this.showDefaultPointsPerQuestion = event === 'number of points'
         if (event === 'number of points') {
@@ -2422,6 +2427,7 @@ export default {
       }
     },
     async initAssessmentTypeSwitch (assessmentType) {
+      this.form.errors.clear('assessment_type')
       let originalAssessmentType = this.form.assessment_type
       if (!this.assignmentId) {
         this.switchAssessmentType(assessmentType, originalAssessmentType)

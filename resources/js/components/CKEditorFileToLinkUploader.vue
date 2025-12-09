@@ -29,7 +29,7 @@
           </b-button>
         </template>
       </b-modal>
-      <div>
+      <div>{{buttonLabel}}
         <file-upload
           ref="CKEditorFileToLinkUploader"
           v-model="files"
@@ -113,6 +113,10 @@ export default {
     AllFormErrors
   },
   props: {
+    buttonLabel: {
+      type: String,
+      default: ''
+    },
     uploadFileType: {
       type: String,
       default: ''
