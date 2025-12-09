@@ -677,9 +677,9 @@
           </div>
           </component>
 <b-card class="mb-3"
-body-class="pb-0">
+body-class="pb-0"
+        v-show="form.source === 'a'">
           <b-form-group
-            v-show="form.source === 'a'"
             label-cols-sm="4"
             label-cols-lg="3"
             label-for="assessment_type"
