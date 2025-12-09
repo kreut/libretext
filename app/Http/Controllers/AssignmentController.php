@@ -1005,11 +1005,6 @@ class AssignmentController extends Controller
                 ->first();
             $assessment_type = $request->assessment_type;
             $source = $request->source;
-            $response['open_ended_in_real_time'] = false;
-            if ($open_ended && $assessment_type !== 'delayed') {
-                $response['open_ended_in_real_time'] = true;
-                return $response;
-            }
             if ($source === 'x' && ($question || $learning_tree)) {
                 $response['message'] = "You can't switch to an external assignment until you remove all ADAPT questions from the assignment.";
                 return $response;

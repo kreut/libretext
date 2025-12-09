@@ -433,7 +433,6 @@
               stacked
               required
               :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-              @change="initInternalExternalSwitch()"
             >
               <b-form-radio name="source" value="a">
                 Internal
@@ -2054,6 +2053,32 @@ export default {
     user: 'auth/user'
   }),
   watch: {
+    'form.source': {
+      async handler (newValue, oldValue) {
+        if (!this.assignmentId) {
+          return false
+        }
+        if (newValue === 'a'){
+          return false
+        }
+        try {
+          const { data } = await axios.post(`/api/assignments/${this.assignmentId}/validate-assessment-type`,
+            { 'assessment_type': this.form.assessment_type, 'source': newValue })
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            this.form.source = oldValue
+            return false
+          }
+          if (newValue === 'a') {
+            this.resetOpenEndedResponsesAndPointsPerQuestion()
+          }
+        } catch (error) {
+          this.form.source = oldValue
+          this.$noty.error(error.message)
+        }
+      },
+      deep: true
+    },
     'form.assign_tos': {
       handler (newValue) {
         let allDueDatesInFuture = true
@@ -2407,31 +2432,6 @@ export default {
           this.form.can_view_hint = 0
           this.form.number_of_allowed_attempts = '1'
       }
-    },
-    async initInternalExternalSwitch () {
-      if (!this.assignmentId) {
-        return false
-      }
-      this.$nextTick(async function () {
-        try {
-          const { data } = await axios.post(`/api/assignments/${this.assignmentId}/validate-assessment-type`,
-            { 'assessment_type': this.form.assessment_type, 'source': this.form.source })
-          console.log(data)
-          console.log(this.form.source)
-          if (data.type === 'error') {
-            this.$noty.error(data.message)
-            this.form.source = this.originalAssignment.source
-            return false
-          }
-
-          if (this.form.source === 'a') {
-            this.resetOpenEndedResponsesAndPointsPerQuestion()
-          }
-        } catch (error) {
-          this.form.source = this.originalAssignment.source
-          this.$noty.error(error.message)
-        }
-      })
     },
     checkSourceAndLatePolicy () {
       if (this.form.source === 'x') {
