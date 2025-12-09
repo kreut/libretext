@@ -1122,6 +1122,10 @@ class AssignmentController extends Controller
             $imported_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($course, $assignment);
             $assignmentGroupWeight->importAssignmentGroupWeightToCourse($assignment->course, $course, $imported_assignment_group_id, true);
             $imported_assignment = $assignment->replicate();
+            $imported_assignment->show_scores = 0;
+            $imported_assignment->solutions_released = 0;
+            $imported_assignment->students_can_view_assignment_statistics = 0;
+
             $imported_assignment->name = "$imported_assignment->name Import";
             $imported_assignment->course_id = $course->id;
             $imported_assignment->assignment_group_id = $imported_assignment_group_id;
@@ -1299,6 +1303,9 @@ class AssignmentController extends Controller
                 }
             }
             $new_assignment = $assignment->replicate();
+            $new_assignment->show_scores = 0;
+            $new_assignment->solutions_released = 0;
+            $new_assignment->students_can_view_assignment_statistics = 0;
             $new_assignment->name = $new_assignment->name . " copy";
             $new_assignment->order++;
             $new_assignment->save();
