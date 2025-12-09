@@ -440,7 +440,6 @@ import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
 import { mapGetters } from 'vuex'
 import AssignmentOverrideScore from '~/components/AssignmentOverrideScore'
 import { ToggleButton } from 'vue-js-toggle-button'
-import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import Autocomplete from '@trevoreyre/autocomplete-vue'
 import '@trevoreyre/autocomplete-vue/dist/style.css'
 import $ from 'jquery'
@@ -925,12 +924,12 @@ export default {
             assignmentGroups.push(data.assignment_groups[i].assignments)
           }
           this.originalAssignmentGroupItems = this.assignmentGroupItems = data.score_info_by_assignment_group
-          for (let i = 2; i < this.fields.length - 4; i++) {
+          for (let i = 2; i < this.fields.length - 3; i++) {
             let key = this.fields[i]['key']
             this.fields[i]['thStyle'] = this.getHeaderColor(key, assignmentGroups)
           }
 
-          for (let i = this.fields.length - 4; i < this.fields.length; i++) {
+          for (let i = this.fields.length - 3; i < this.fields.length; i++) {
             this.fields[i]['thStyle'] = { 'align': 'center', 'min-width': '100px' }
           }
           this.originalFields = this.fields
