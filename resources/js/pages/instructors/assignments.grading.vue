@@ -654,21 +654,6 @@
                         @load="receiveMessage"
                       />
                     </div>
-                    <div v-if="canSubmitWork">
-                      <div v-if="submittedWork.url">
-                        <b-button @click="$bvModal.show('modal-submitted-work')"
-                                  variant="primary"
-                                  size="sm"
-                        >
-                          Submitted Work
-                        </b-button>
-                      </div>
-                      <div v-else>
-                        <b-alert variant="danger" show>
-                          There is no submitted work.
-                        </b-alert>
-                      </div>
-                    </div>
                   </b-card-text>
                 </b-card>
               </b-col>
@@ -720,28 +705,6 @@
                         </span>
                         <br>
                         <br>
-                        <div v-if="submittedWork.pending_score" class="mb-2">
-                          <strong>Pending auto-graded score</strong>: <span
-                          :class="{'text-success': submittedWork.submitted_work, 'text-danger': !submittedWork.submitted_work}"
-                        >{{ roundToDecimalSigFig(submittedWork.pending_score, 4) }}
-                          <span id="apply-pending-score-tooltip">
-                       <b-button
-                         :variant="submittedWork.submitted_work ? 'outline-success' : 'outline-danger'"
-                         size="sm"
-                         class="ml-1"
-                         @click="applyPendingScore()"
-                       >
-  Approve
-</b-button>
-                        </span>
-          <b-tooltip v-if="!submittedWork.submitted_work"
-                     target="apply-pending-score-tooltip"
-                     delay="500"
-                     triggers="hover focus"
-          >You will be applying the score even though this student has not submitted work.
-          </b-tooltip>
-</span>
-                        </div>
                         <b-form-group
                           v-if="!isDiscussIt"
                           label-cols-sm="5"
@@ -808,6 +771,38 @@
                             {{ questionSubmissionScoreErrorMessage }}
                           </div>
                         </b-form-group>
+                        <div v-if="canSubmitWork" class="mb-2">
+                        <span v-show="submittedWork.pending_score">
+                          <strong>Approve score</strong>: <span
+                          :class="{'text-success': submittedWork.url, 'text-danger': !submittedWork.url}"
+                        >{{ roundToDecimalSigFig(submittedWork.pending_score, 4) }}
+                          <span id="apply-pending-score-tooltip">
+                       <b-button
+                         :variant="submittedWork.url ? 'outline-success' : 'outline-danger'"
+                         size="sm"
+                         class="ml-1"
+                         @click="applyPendingScore()"
+                       >
+  Approve
+                       </b-button></span></span></span>
+                          <span v-if="submittedWork.url">
+                        <b-button @click="$bvModal.show('modal-submitted-work')"
+                                  variant="primary"
+                                  size="sm"
+                        >
+                          View Submitted Work
+                        </b-button>
+                      </span>
+                          <span v-if="!submittedWork.url" class="text-danger">There is no submitted work.</span>
+
+                          <b-tooltip v-if="!submittedWork.url"
+                                     target="apply-pending-score-tooltip"
+                                     delay="500"
+                                     triggers="hover focus"
+                          >You will be applying the score even though this student has not submitted work.
+                          </b-tooltip>
+                        </div>
+
                         <b-form-group
                           v-show="isOpenEnded || isDiscussIt"
                           label-cols-sm="5"
