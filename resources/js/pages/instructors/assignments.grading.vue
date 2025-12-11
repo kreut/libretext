@@ -678,6 +678,12 @@
                           Email: {{ grading[currentStudentPage - 1]['student']['email'] }}
                         </b-tooltip>
                       </h2>
+                      <div v-if="grading[currentStudentPage - 1]['last_graded']">
+                        <small>Updated {{ grading[currentStudentPage - 1]['last_graded'] }}</small>
+                      </div>
+                      <div v-else>
+                        <small>A score has yet to be entered for this student.</small>
+                      </div>
                     </template>
                     <b-card-text>
                       <b-form ref="form">
@@ -697,14 +703,6 @@
                           </b-button>
                           <hr>
                         </div>
-                        <span v-if="grading[currentStudentPage - 1]['last_graded']">
-                          This score was last updated on {{ grading[currentStudentPage - 1]['last_graded'] }}.
-                        </span>
-                        <span v-if="!grading[currentStudentPage - 1]['last_graded']">
-                          A score has yet to be entered for this student.
-                        </span>
-                        <br>
-                        <br>
                         <b-form-group
                           v-if="!isDiscussIt"
                           label-cols-sm="5"
