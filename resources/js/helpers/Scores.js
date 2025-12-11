@@ -19,6 +19,7 @@ export async function getScoresSummary (id, url) {
     if (!data.scores) {
       return false
     }
+    this.numberOfSubmissions = data.number_of_submissions
     this.scores = data.scores.map(score => parseFloat(score))
     this.scores = this.scores.filter(value => !Number.isNaN(value))// in case of nulls....
     console.log(this.scores)

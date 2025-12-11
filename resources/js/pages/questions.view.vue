@@ -3437,7 +3437,7 @@
                 >
                   <b-card-text>
                     <ul class="pl-1">
-                      <li>{{ scores.length }} student submissions</li>
+                      <li>{{ numberOfSubmissions }} student submissions</li>
                       <li v-if="scores.length">
                         Maximum score of {{ max }}
                       </li>
@@ -3811,6 +3811,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    numberOfSubmissions: 0,
     submittedWorkPolicy: '',
     submittedWorkFormatOptions: [],
     attachments: [],

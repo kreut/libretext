@@ -2396,7 +2396,7 @@ What assignment parameters??? */
       }
     },
     async initCreateAssignmentFromTemplate (assignmentId) {
-      //open_ended_questions_in_real_time_assignment_exists aaaaaaaaaa
+      //open_ended_questions_in_real_time_assignment_exists
       this.createAssignmentFromTemplateAssignmentId = assignmentId
       this.discussItQuestionsExist = false
       try {

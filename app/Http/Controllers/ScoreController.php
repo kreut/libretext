@@ -373,6 +373,15 @@ class ScoreController extends Controller
         $response['type'] = 'error';
         $authorized = Gate::inspect('getScoreByAssignmentAndQuestion', [$Score, $assignment]);
         $instructor_id = $assignment->course->user_id;
+        $fake_student_id = 0;
+        $fake_student = DB::table('enrollments')
+            ->join('users','user_id','=','users.id')
+            ->where('users.fake_student',1)
+            ->select("users.id")
+            ->first();
+        if ($fake_student){
+            $fake_student_id = $fake_student->id;
+        }
         if (!$authorized->allowed()) {
             $response['type'] = 'error';
             $response['message'] = $authorized->message();
@@ -384,27 +393,31 @@ class ScoreController extends Controller
 
             $submissionFiles = $submissionFile->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->where('user_id', '<>', $instructor_id)
+                ->whereNotIn('user_id', [$instructor_id, $fake_student_id])
                 ->get();
+            $unique_user_ids = collect(); // Track unique user IDs
             if ($submissionFiles->isNotEmpty()) {
                 foreach ($submissionFiles as $key => $submission_file) {
                     $scores[$submission_file->user_id] = $submission_file->score;
+                    $unique_user_ids->push($submission_file->user_id);
                 }
             }
 
             $submissions = $submission->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->where('user_id', '<>', $instructor_id)
+                ->whereNotIn('user_id', [$instructor_id, $fake_student_id])
                 ->get();
 
             if ($submissions->isNotEmpty()) {
                 foreach ($submissions as $key => $submission) {
                     $submission_file_score = $scores[$submission->user_id] ?? 0;
                     $scores[$submission->user_id] = $submission_file_score + $submission->score;
+                    $unique_user_ids->push($submission->user_id);
                 }
             }
-
+            $number_of_submissions = $unique_user_ids->unique()->count();
             $response['type'] = 'success';
+            $response['number_of_submissions'] = $number_of_submissions;
             $response['scores'] = array_values($scores);
             return $response;
 
