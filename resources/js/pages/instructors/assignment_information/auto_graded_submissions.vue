@@ -10,7 +10,11 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Auto-graded Submissions"/>
+        <h1 class="page-title mb-0 text-primary font-weight-normal" style="font-size: 26px; line-height: 1.1;">
+          Submissions
+        </h1>
+        <small>Auto-graded only</small>
+        <hr class="mt-1">
         <div v-if="items.length">
           <a class="float-right mb-2 btn-sm btn-primary link-outline-primary-btn" :href="`/api/auto-graded-submissions/${assignmentId}/get-auto-graded-submissions-by-assignment/1`">Download
             Submissions</a>

@@ -1,9 +1,10 @@
 <template>
   <div>
-    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
-                            :assignment-id="clickerAssignmentId"
-                            :question-id="clickerQuestionId"
-                            @resetClickerAssignmentIdClickerQuestionId="resetClickerAssignmentIdClickerQuestionId()"
+    <RedirectToClickerModal
+      :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
+      :assignment-id="clickerAssignmentId"
+      :question-id="clickerQuestionId"
+      @resetClickerAssignmentIdClickerQuestionId="resetClickerAssignmentIdClickerQuestionId()"
     />
     <b-modal
       id="modal-progress-report"
@@ -665,6 +666,10 @@ export default {
       // alert('reset modal')
     },
     getAssignmentSummaryView (assignment) {
+      if (assignment.textbook_url) {
+        window.open(assignment.textbook_url)
+        return false
+      }
       if (Boolean(assignment.lms) && !assignment.lms_only_entry && !assignment.lti_assignments_and_grades_url) {
         this.$noty.info('This assignment is not yet linked to your LMS.  Please ask your instructor to link it to ADAPT.')
         return false

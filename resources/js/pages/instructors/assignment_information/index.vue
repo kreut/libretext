@@ -13,34 +13,74 @@
       />
     </b-modal>
     <div v-if="[2, 4, 5].includes(user.role)">
-      <CannotAddAssessmentToBetaAssignmentModal />
+      <CannotAddAssessmentToBetaAssignmentModal/>
       <b-container>
         <hr>
       </b-container>
       <div v-show="showPanel" class="row">
         <div class="mt-2 mb-2">
-          <b-row class="ml-2">
+          <div class="mb-1">
             <b-button v-if="[2,5].includes(user.role)"
-                      size="sm"
-                      class="mr-2"
+                      class="btn-block text-left"
+                      style="background-color: #D35400 !important; color: white !important"
+                      @click="viewQuestions"
+            >
+              <b-icon-eye
+                scale="1.25"
+                class="pr-1"
+              />
+              View Questions
+            </b-button>
+          </div>
+          <div class="mb-1">
+            <b-button v-if="[2,5].includes(user.role)"
+                      class="btn-block text-left"
                       variant="primary"
                       @click="getAssessmentsForAssignment(assignmentId)"
             >
+              <b-icon-plus
+                scale="1.25"
+                class="pr-1"
+              />
               Add Questions
             </b-button>
+          </div>
+          <div>
             <b-button v-if="[2,5].includes(user.role)"
-                      size="sm"
+                      class="btn-block text-left"
                       variant="info"
                       @click="openQuestionEditor()"
             >
+              <b-icon-pencil-square
+                scale="1.25"
+                class="pr-1"
+              />
               New Question
             </b-button>
-          </b-row>
+          </div>
           <b-card v-show="showPanel" header-html="<h2 class=&quot;h7&quot;>Assignment Information</h2>"
-                  class="properties-card mt-3"
+                  class="properties-card mt-3 mb-2"
           >
             <ul class="nav flex-column nav-pills">
-              <li v-for="(tab,index) in tabs" :key="`tab-${index}`" class="nav-item">
+              <template v-for="(tab, index) in tabs1">
+                <li v-if="showTab(tab.name)" :key="`tab-${index}`" class="nav-item">
+                  <router-link
+                    v-if="showTab(tab.name)"
+                    :key="tab.route"
+                    :to="{ name: tab.route }"
+                    class="nav-link"
+                    active-class="active"
+                  >
+                    <span class="hover-underline"> {{ tab.name }}</span>
+                  </router-link>
+                </li>
+              </template>
+            </ul>
+          </b-card>
+          <b-card body-class="p-0" class="mb-2">
+          <ul class="nav flex-column nav-pills">
+            <template v-for="(tab, index) in tabs2">
+              <li v-if="showTab(tab.name)" :key="`tab-${index}`" class="nav-item">
                 <router-link
                   v-if="showTab(tab.name)"
                   :key="tab.route"
@@ -51,41 +91,56 @@
                   <span class="hover-underline"> {{ tab.name }}</span>
                 </router-link>
               </li>
-              <li>
+            </template>
+          </ul>
+          </b-card>
+          <b-card body-class="p-0">
+            <ul class="nav flex-column nav-pills">
+              <li v-if="showTab('Regrader')" class="nav-item">
                 <router-link
-                  :to="{ name: 'assignment.grading.index', params: {assignmentId: assignmentId}}"
+                  v-if="showTab('Regrader')"
+                  :to="{ name: 'assignment.mass_grading.index' }"
                   class="nav-link"
                   active-class="active"
                 >
-                  <span class="hover-underline"> Open Grader</span>
+                  <span class="hover-underline"> Regrader</span>
                 </router-link>
               </li>
-              <router-link v-if="user.role !== 5 && !isFormative"
-                           :to="{ name: 'instructors.assignments.gradebook' }"
-                           class="nav-link"
-                           active-class="active"
+            <li>
+              <router-link
+                :to="{ name: 'assignment.grading.index', params: {assignmentId: assignmentId}}"
+                class="nav-link"
+                active-class="active"
               >
-                <span class="hover-underline"> Assignment Gradebook</span>
+                <span class="hover-underline"> Open Grader</span>
               </router-link>
-              <li v-if="user.role !== 5 && !isFormative">
-                <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
-                  <span class="hover-underline">  Course Gradebook</span>
-                </a>
-              </li>
-              <router-link v-if="user.role !== 5 && isLms"
-                           :to="{ name: 'instructors.assignments.resend_grades_to_lms' }"
-                           class="nav-link"
-                           active-class="active"
-              >
-                <span class="hover-underline"> Resend Grades to LMS</span>
-              </router-link>
+            </li>
+            <router-link v-if="user.role !== 5 && !isFormative"
+                         :to="{ name: 'instructors.assignments.gradebook' }"
+                         class="nav-link"
+                         active-class="active"
+            >
+              <span class="hover-underline"> Assignment Gradebook</span>
+            </router-link>
+            <li v-if="user.role !== 5 && !isFormative">
+              <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
+                <span class="hover-underline">  Course Gradebook</span>
+              </a>
+            </li>
+            <router-link v-if="user.role !== 5 && isLms"
+                         :to="{ name: 'instructors.assignments.resend_grades_to_lms' }"
+                         class="nav-link"
+                         active-class="active"
+            >
+              <span class="hover-underline"> Resend Grades to LMS</span>
+            </router-link>
             </ul>
           </b-card>
         </div>
 
         <div class="col-md-9">
           <transition name="fade" mode="out-in">
-            <router-view :key="`router-view-${tabKey}`" />
+            <router-view :key="`router-view-${tabKey}`"/>
           </transition>
         </div>
       </div>
@@ -121,13 +176,8 @@ export default {
       user: 'auth/user'
     }),
     isAdmin: () => window.config.isAdmin,
-    tabs () {
+    tabs1 () {
       return [
-        {
-          icon: '',
-          name: 'Questions',
-          route: 'instructors.assignments.questions'
-        },
         {
           icon: '',
           name: 'Case Study Notes',
@@ -147,6 +197,15 @@ export default {
           icon: '',
           name: 'Control Panel',
           route: 'instructors.assignments.control_panel'
+        }
+      ]
+    },
+    tabs2 () {
+      return [
+        {
+          icon: '',
+          name: 'Grader Access',
+          route: 'instructors.assignments.grader_access'
         },
         {
           icon: '',
@@ -155,23 +214,13 @@ export default {
         },
         {
           icon: '',
-          name: 'Auto-Graded Submissions',
+          name: 'Submissions',
           route: 'instructors.assignments.auto_graded_submissions'
-        },
-        {
-          icon: '',
-          name: 'Grader Access',
-          route: 'instructors.assignments.grader_access'
         },
         {
           icon: '',
           name: 'Statistics',
           route: 'instructors.assignments.statistics'
-        },
-        {
-          icon: '',
-          name: 'Regrader',
-          route: 'assignment.mass_grading.index'
         }
       ]
     }
@@ -183,8 +232,12 @@ export default {
     }
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentSummary()
+    this.viewQuestions()
   },
   methods: {
+    viewQuestions () {
+      this.$router.push({ name: 'instructors.assignments.questions', params: { assignmentId: this.assignmentId } })
+    },
     reloadAssignmentQuestions () {
       this.$bvModal.hide('modal-question-editor')
       this.getAssignmentSummary()

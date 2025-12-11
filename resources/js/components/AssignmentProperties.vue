@@ -57,7 +57,11 @@
         </b-alert>
       </div>
       <RequiredText/>
-      <b-card v-if="!courseId" header="Template Information">
+      <b-card v-if="!courseId"
+              :header-html="getHeaderHtml('Template Information')"
+              body-class="pb-0 card-body-pl"
+              class="mb-3"
+      >
         <b-form-group
           label-cols-sm="4"
           label-cols-lg="3"
@@ -97,196 +101,270 @@
           </b-form-row>
         </b-form-group>
       </b-card>
-      <hr v-if="!courseId" class="pb-2">
-      <b-form-group
-        v-if="assignmentId && !lms"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="assignment-url"
+      <b-card v-if="assignmentId && !lms"
+              :header-html="getHeaderHtml('External Dissemination')"
+              body-class="pt-0 pb-0 card-body-pl"
+              class="mb-2"
       >
-        <template v-slot:label>
-          <span v-if="!isFormativeAssignment && !isFormativeCourse">Summative</span>
-          <span v-if="isFormativeAssignment || isFormativeCourse">Formative</span> URL
-          <QuestionCircleTooltip id="assignment-url-tooltip"/>
-          <b-tooltip target="assignment-url-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            <div v-if="!isFormativeAssignment && !isFormativeCourse">
-              Students will be able to access the assignment using this URL if they are logged in. This can be useful if
-              you provide your students with links to assignments in your syllabus.
-            </div>
-            <div v-else>
-              Anyone can access this assignment for formative purposes using this URL.
-            </div>
-          </b-tooltip>
-        </template>
-        <div class="mt-2">
-          <span id="assignment-url">{{ getAssignmentUrl() }}</span> <a
-          href=""
-          class="pr-1"
-          aria-label="Copy Direct Student Link"
-          @click.prevent="doCopy('assignment-url')"
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="assignment-url"
         >
-          <font-awesome-icon
-            :icon="copyIcon"
-          />
-        </a>
-        </div>
-      </b-form-group>
-      <b-form-group
-        v-if="assignmentId && !lms"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="qr_code"
-      >
-        <template v-slot:label>
-          QR Code
-          <QuestionCircleTooltip id="qr_code"/>
-          <b-tooltip target="qr_code"
-                     delay="250"
-                     triggers="hover focus"
+          <template v-slot:label>
+            <span v-if="!isFormativeAssignment && !isFormativeCourse">Summative</span>
+            <span v-if="isFormativeAssignment || isFormativeCourse">Formative</span> URL
+            <QuestionCircleTooltip id="assignment-url-tooltip"/>
+            <b-tooltip target="assignment-url-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              <div v-if="!isFormativeAssignment && !isFormativeCourse">
+                Students will be able to access the assignment using this URL if they are logged in. This can be useful
+                if
+                you provide your students with links to assignments in your syllabus.
+              </div>
+              <div v-else>
+                Anyone can access this assignment for formative purposes using this URL.
+              </div>
+            </b-tooltip>
+          </template>
+          <div class="mt-2">
+            <span id="assignment-url">{{ getAssignmentUrl() }}</span> <a
+            href=""
+            class="pr-1"
+            aria-label="Copy Direct Student Link"
+            @click.prevent="doCopy('assignment-url')"
           >
-            Optionally you can provide a QR code for your students to launch this assignment. You can copy the code by
-            right-clicking it.
-          </b-tooltip>
-        </template>
-        <div id="qrCodeCanvas" ref="qrCodeCanvas" class="ml-2"/>
-      </b-form-group>
-      <b-form-group
-        v-if="courseId"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="name"
-        label="Name*"
-      >
-        <b-form-row>
-          <b-col lg="10">
-            <b-form-input
-              id="name"
-              v-model="form.name"
-              :disabled="isBetaAssignment"
-              required
-              type="text"
-              :class="{ 'is-invalid': form.errors.has('name') }"
-              @keydown="form.errors.clear('name')"
+            <font-awesome-icon
+              :icon="copyIcon"
             />
-            <has-error :form="form" field="name"/>
-          </b-col>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="public_description"
-      >
-        <template v-slot:label>
-          Public Description
-          <QuestionCircleTooltip :id="'public-description-tooltip'"/>
-          <b-tooltip target="public-description-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            An optional description for the assignment. This description will be viewable by your students.
-          </b-tooltip>
-        </template>
-        <b-form-textarea
-          id="public_description"
-          v-model="form.public_description"
-          style="margin-bottom: 23px"
-          rows="2"
-          max-rows="2"
-          :disabled="isBetaAssignment"
-        />
-      </b-form-group>
-      <b-form-group
-        label-for="private_description"
-        label-cols-sm="4"
-        label-cols-lg="3"
-      >
-        <template v-slot:label>
-          Private Description
-          <QuestionCircleTooltip :id="'private-description-tooltip'"/>
-          <b-tooltip target="private-description-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            An optional description for the assignment. This description will only be viewable by you.
-          </b-tooltip>
-        </template>
-        <b-form-textarea
-          id="private_description"
-          v-model="form.private_description"
-          style="margin-bottom: 23px"
-          rows="2"
-          max-rows="2"
-          :disabled="isBetaAssignment"
-        />
-      </b-form-group>
-      <div v-show="form.source === 'a' && (!lms || lmsApi)" class="mb-3">
-        <b-form-row>
-          <CKEditorFileToLinkUploader :button-label="'Instructions'"
-                                      :upload-file-type="'assignment-instructions'"
-                                      :tutorial-video-src="'https://customer-9mlff0qha6p39qdq.cloudflarestream.com/42a374a283d79e8c7c9db3d35180d7d1/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F42a374a283d79e8c7c9db3d35180d7d1%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600'"
-                                      :modal-title="'Adding Files to Your Instructions'"
-          />
-        </b-form-row>
-        <ckeditor
-          id="instructions"
-          v-model="form.instructions"
-          tabindex="0"
-          rows="4"
-          :config="richEditorConfig"
-          max-rows="4"
-          :read-only="isBetaAssignment"
-          @namespaceloaded="onCKEditorNamespaceLoaded"
-          @ready="handleFixCKEditor()"
-        />
-      </div>
-      <b-form-group
-        v-show="!anonymousUsers && !isFormativeCourse"
-        id="modality"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="modality"
-        label="Modality*"
-      >
-        <div v-if="!courseId" class="mt-2">
-          Summative
-        </div>
-        <b-form-radio-group
-          v-show="courseId"
-          v-model="form.formative"
-          stacked
-          required
-          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-          @change="canChangeFromSummativeToFormative($event)"
+          </a>
+          </div>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="qr_code"
         >
-          <b-form-radio name="formative" value="0">
+          <template v-slot:label>
+            QR Code
+            <QuestionCircleTooltip id="qr_code"/>
+            <b-tooltip target="qr_code"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Optionally you can provide a QR code for your students to launch this assignment. You can copy the code by
+              right-clicking it.
+            </b-tooltip>
+          </template>
+          <div id="qrCodeCanvas" ref="qrCodeCanvas" class="ml-2"/>
+        </b-form-group>
+      </b-card>
+      <b-card :header-html="getHeaderHtml('Descriptions, Instructions, and Notifications')"
+              body-class="pb-0 card-body-pl"
+              class="mb-3"
+      >
+        <b-form-group
+          v-if="courseId"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="name"
+          label="Name*"
+        >
+          <b-form-row>
+            <b-col lg="10">
+              <b-form-input
+                id="name"
+                v-model="form.name"
+                :disabled="isBetaAssignment"
+                required
+                type="text"
+                :class="{ 'is-invalid': form.errors.has('name') }"
+                @keydown="form.errors.clear('name')"
+              />
+              <has-error :form="form" field="name"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="public_description"
+        >
+          <template v-slot:label>
+            Public Description
+            <QuestionCircleTooltip :id="'public-description-tooltip'"/>
+            <b-tooltip target="public-description-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              An optional description for the assignment. This description will be viewable by your students.
+            </b-tooltip>
+          </template>
+          <b-form-textarea
+            id="public_description"
+            v-model="form.public_description"
+            style="margin-bottom: 23px"
+            rows="2"
+            max-rows="2"
+            :disabled="isBetaAssignment"
+          />
+        </b-form-group>
+        <b-form-group
+          label-for="private_description"
+          label-cols-sm="4"
+          label-cols-lg="3"
+        >
+          <template v-slot:label>
+            Private Description
+            <QuestionCircleTooltip :id="'private-description-tooltip'"/>
+            <b-tooltip target="private-description-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              An optional description for the assignment. This description will only be viewable by you.
+            </b-tooltip>
+          </template>
+          <b-form-textarea
+            id="private_description"
+            v-model="form.private_description"
+            style="margin-bottom: 23px"
+            rows="2"
+            max-rows="2"
+            :disabled="isBetaAssignment"
+          />
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="textbook_url"
+        >
+          <template v-slot:label>
+            Textbook URL
+            <QuestionCircleTooltip :id="'textbook-url-tooltip'"/>
+            <b-tooltip target="textbook-url-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              If your assignment is integrated into a textbook, provide the URL for the start of the assignment. When
+              your
+              students open the assignment they will be re-directed to this URL.
+            </b-tooltip>
+          </template>
+          <b-form-textarea
+            id="textbook_url"
+            v-model="form.textbook_url"
+            :class="{ 'is-invalid': form.errors.has('textbook_url') }"
+            rows="2"
+            max-rows="2"
+            @keydown="form.errors.clear('textbook_url')"
+          />
+          <has-error :form="form" field="textbook_url"/>
+        </b-form-group>
+
+        <div v-show="form.source === 'a' && (!lms || lmsApi)" class="mb-3">
+          <b-form-row>
+            <CKEditorFileToLinkUploader :button-label="'Instructions'"
+                                        :upload-file-type="'assignment-instructions'"
+                                        :tutorial-video-src="'https://customer-9mlff0qha6p39qdq.cloudflarestream.com/42a374a283d79e8c7c9db3d35180d7d1/iframe?poster=https%3A%2F%2Fcustomer-9mlff0qha6p39qdq.cloudflarestream.com%2F42a374a283d79e8c7c9db3d35180d7d1%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600'"
+                                        :modal-title="'Adding Files to Your Instructions'"
+            />
+          </b-form-row>
+          <ckeditor
+            id="instructions"
+            v-model="form.instructions"
+            tabindex="0"
+            rows="4"
+            :config="richEditorConfig"
+            max-rows="4"
+            :read-only="isBetaAssignment"
+            @namespaceloaded="onCKEditorNamespaceLoaded"
+            @ready="handleFixCKEditor()"
+          />
+        </div>
+        <div v-if="!isFormativeCourse && form.formative !== '1'">
+          <b-form-group
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="notifications"
+          >
+            <template v-slot:label>
+              Notifications*
+              <QuestionCircleTooltip :id="'notifications_tooltip'"/>
+              <b-tooltip target="notifications_tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Students can optionally request to receive notifications for upcoming due dates. You may want to turn
+                this
+                option
+                off for Exams and Clicker assignments so your students don't receive unnecessary notifications.
+              </b-tooltip>
+            </template>
+            <b-form-radio-group id="notifications"
+                                v-model="form.notifications"
+                                required
+                                stacked
+            >
+              <b-form-radio name="notifications" value="1">
+                On
+              </b-form-radio>
+              <b-form-radio name="notifications" value="0">
+                Off
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+        </div>
+      </b-card>
+      <b-card v-if="!isFormativeCourse && form.formative !== '1'"
+              :header-html="getHeaderHtml('Modality')"
+              body-class="pb-0 card-body-pl"
+              class="mb-3"
+      >
+        <b-form-group
+          v-show="!anonymousUsers"
+          id="modality"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="modality"
+          label="Modality*"
+        >
+          <div v-if="!courseId" class="mt-2">
             Summative
-            <QuestionCircleTooltip id="summative"/>
-            <b-tooltip target="summative"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Questions in summative assignments can only be accessed by students enrolled in your course. Submissions
-              are saved and student scores are viewable in your gradebook.
-            </b-tooltip>
-          </b-form-radio>
-          <b-form-radio name="formative" value="1">
-            Formative
-            <QuestionCircleTooltip id="formative"/>
-            <b-tooltip target="formative"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Questions in formative assignments can be accessed by any student using a special link or QR code.
-              Submissions persist within a given session. Scores are not viewable in your gradebook.
-            </b-tooltip>
-          </b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <div v-if="!isFormativeCourse && form.formative !== '1'">
+          </div>
+          <b-form-radio-group
+            v-show="courseId"
+            v-model="form.formative"
+            stacked
+            required
+            :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+            @change="canChangeFromSummativeToFormative($event)"
+          >
+            <b-form-radio name="formative" value="0">
+              Summative
+              <QuestionCircleTooltip id="summative"/>
+              <b-tooltip target="summative"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Questions in summative assignments can only be accessed by students enrolled in your course. Submissions
+                are saved and student scores are viewable in your gradebook.
+              </b-tooltip>
+            </b-form-radio>
+            <b-form-radio name="formative" value="1">
+              Formative
+              <QuestionCircleTooltip id="formative"/>
+              <b-tooltip target="formative"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Questions in formative assignments can be accessed by any student using a special link or QR code.
+                Submissions persist within a given session. Scores are not viewable in your gradebook.
+              </b-tooltip>
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
         <div v-if="courseId && !assignmentId && assignmentTemplateOptions.length">
           <b-form-group
             label-for="assignment_template"
@@ -358,39 +436,41 @@
               </b-modal>
               <b-modal
                 id="modal-per-question-solutions-availability"
-                title="Solutions Availability"
+                :title="`Solutions Availability: ${delayedShowSolutionsAvailabilityType}`"
                 size="lg"
                 hide-footer
               >
-                <p>You can either choose to make solutions available on an automatic or manual basis.</p>
-                <p><span class="font-weight-bold">Automatic:</span></p>
-                <p>
-                  If you choose a finite number of attempts for your students, then students will see the solution if
-                  either
-                </p>
-                <ul>
-                  <li>They get the question completely correct.</li>
-                  <li>They cannot make any more attempts.</li>
-                </ul>
-                <p>If you choose an unlimited number of attempts, then students will see the solution if either</p>
-                <ul>
-                  <li>They get the question completely correct.</li>
-                  <li>
-                    They request to see the solution. After requesting to see the solution, they will not be allowed to
-                    resubmit.
-                  </li>
-                </ul>
-                <p>
-                  If at any point you would like all of your students to see all of the solutions, you can always
-                  override
-                  this option by releasing the solutions in the Control Panel.
-                </p>
-                <p><span class="font-weight-bold">Manual:</span></p>
-                <p>
-                  If you choose the manual option, then students will not see the solutions until you release the
-                  solutions
-                  in the Control Panel for this assignment.
-                </p>
+                <div v-if="delayedShowSolutionsAvailabilityType === 'Automatic'">
+                  <p>
+                    If you choose a finite number of attempts for your students, then students will see the solution if
+                    either
+                  </p>
+                  <ul>
+                    <li>They get the question completely correct.</li>
+                    <li>They cannot make any more attempts.</li>
+                  </ul>
+                  <p>If you choose an unlimited number of attempts, then students will see the solution if either</p>
+                  <ul>
+                    <li>They get the question completely correct.</li>
+                    <li>
+                      They request to see the solution. After requesting to see the solution, they will not be allowed
+                      to
+                      resubmit.
+                    </li>
+                  </ul>
+                  <p>
+                    If at any point you would like all of your students to see all of the solutions, you can always
+                    override
+                    this option by releasing the solutions in the Control Panel.
+                  </p>
+                </div>
+                <div v-if="delayedShowSolutionsAvailabilityType === 'Manual'">
+                  <p>
+                    If you choose the manual option, then students will not see the solutions until you release the
+                    solutions
+                    in the Control Panel for this assignment.
+                  </p>
+                </div>
               </b-modal>
               <b-modal
                 id="modal-create-assignment-group"
@@ -477,8 +557,13 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
-          <b-card id="socring-type-card"
-                  body-class="pb-0"
+        </div>
+      </b-card>
+      <div v-if="!isFormativeCourse && form.formative !== '1'">
+        <div v-if="user.role ===2">
+          <b-card id="scoring-type-card"
+                  :header-html="getHeaderHtml('Scoring')"
+                  body-class="pb-0 card-body-pl"
                   class="mb-3"
           >
             <b-card-text>
@@ -740,9 +825,11 @@
               </div>
             </b-card-text>
           </b-card>
-          <b-card class="mb-3"
-                  body-class="pb-0"
-                  v-show="form.source === 'a'"
+          <b-card v-show="form.source === 'a'"
+                  class="mb-3"
+                  body-class="pb-0 card-body-pl"
+                  :header-html="getHeaderHtml('Assignment Mode')"
+
           >
             <b-form-group
               label-cols-sm="4"
@@ -1013,11 +1100,6 @@
               >
                 <template v-slot:label>
                   Solutions Availability*
-                  <b-icon icon="question-circle"
-                          class="text-primary"
-                          style="cursor: pointer;"
-                          @mouseover="delayedShowSolutionsAvailability"
-                  />
                 </template>
                 <b-form-radio-group id="solutions_availability"
                                     v-model="form.solutions_availability"
@@ -1030,9 +1112,19 @@
                 >
                   <b-form-radio value="automatic">
                     Automatic
+                    <b-icon icon="question-circle"
+                            class="text-primary"
+                            style="cursor: pointer;"
+                            @mouseover="delayedShowSolutionsAvailability('Automatic')"
+                    />
                   </b-form-radio>
                   <b-form-radio value="manual">
                     Manual
+                    <b-icon icon="question-circle"
+                            class="text-primary"
+                            style="cursor: pointer;"
+                            @mouseover="delayedShowSolutionsAvailability('Manual')"
+                    />
                   </b-form-radio>
                 </b-form-radio-group>
                 <div v-if="form.errors.has('solutions_availability')" class="help-block invalid-feedback">
@@ -1198,12 +1290,52 @@
           </b-card>
         </div>
       </div>
-      <component
+      <b-card
+        v-if="lms"
+        id="lms-card"
+        :header-html="getHeaderHtml('LMS')"
+        body-class="pb-0 card-body-pl"
+        class="mb-3"
+      >
+        <div v-if="!isFormativeCourse && form.formative !== '1'">
+          <b-form-group
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="lms_grade_passback"
+          >
+            <template v-slot:label>
+              Grade Passback*
+              <QuestionCircleTooltip :id="'lms_grade_passback_tooltip'"/>
+              <b-tooltip target="lms_grade_passback_tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                With the automatic option, grades are passed back to your LMS each time that your one of your students
+                submits their response to a question.
+                For delayed grading, the manual option is recommended.
+              </b-tooltip>
+            </template>
+            <b-form-radio-group
+              v-model="form.lms_grade_passback"
+              required
+              stacked
+            >
+              <b-form-radio name="lms" value="automatic">
+                Automatic
+              </b-form-radio>
+              <b-form-radio name="lms" value="manual">
+                Manual
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+        </div>
+      </b-card>
+      <b-card
         v-show="form.assessment_type !== 'clicker' && form.source === 'a' && !isFormativeCourse && +form.formative !== 1"
-        :is="+form.can_submit_work ? 'b-card' : 'div'"
         id="submit-work-card"
-        :body-class="+form.can_submit_work ? 'pb-0' : ''"
-        :class="+form.can_submit_work ? 'mb-3' : ''"
+        :header-html="getHeaderHtml('Secondary Approval')"
+        body-class="pb-0 card-body-pl"
+        class="mb-3"
       >
         <b-card-text>
           <b-form-group
@@ -1292,18 +1424,17 @@
             <ErrorMessage :message="form.errors.get('submitted_work_policy')"/>
           </b-form-group>
         </b-card-text>
-      </component>
+      </b-card>
       <b-card
-        v-show="!isFormativeCourse && +form.formative !== 1 && form.source === 'a'"
-        id="can-view-hint-rando-algo-card"
-        body-class="pb-0"
+        :header-html="getHeaderHtml('Hints')"
+        body-class="pb-0 card-body-pl"
         class="mb-3"
+        v-show="form.assessment_type !== 'clicker'"
       >
         <b-form-group
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="hint"
-          v-show="form.assessment_type !== 'clicker'"
         >
           <template v-slot:label>
             Can View Hint*
@@ -1365,8 +1496,15 @@
             </b-col>
           </b-form-row>
         </b-form-group>
+      </b-card>
+      <b-card
+        :header-html="getHeaderHtml('Dynamic Questioning')"
+        body-class="pb-0 card-body-pl"
+        class="mb-3"
+        v-show="form.source === 'a'"
+      >
         <b-form-group
-          v-show="form.source === 'a' && form.assessment_type !== 'clicker'"
+          v-show="form.assessment_type !== 'clicker'"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="randomizations"
@@ -1430,7 +1568,6 @@
         </b-form-group>
         <div v-if="user.role ===2">
           <b-form-group
-            v-show="form.source === 'a'"
             label-cols-sm="4"
             label-cols-lg="3"
             label-for="algorithmic"
@@ -1464,45 +1601,43 @@
           </b-form-group>
         </div>
       </b-card>
-      <div v-if="!isFormativeCourse && +form.formative !== 1 && form.source === 'a'">
-        <component
-          :is="form.late_policy === 'deduction' ? 'b-card' : 'div'"
-          id="late-policy-card"
-          :body-class="form.late_policy === 'deduction' ? 'pb-0' : ''"
-          :class="form.late_policy === 'deduction' ? 'mb-3' : ''"
-        >
-          <b-card-text>
-            <b-form-group
-              v-show="form.source === 'a' && form.assessment_type !== 'clicker'"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="late_policy"
-            >
-              <template v-slot:label>
-                Late Policy*
-                <QuestionCircleTooltip :id="'change_late_policy_tooltip'"/>
-                <b-tooltip target="change_late_policy_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  You can change the late policy as long as the assignment is not past due for any students. If any are
-                  past
-                  due, please update the
-                  assignment with all due dates in the future to gain access to the Late Policy.
-                </b-tooltip>
-              </template>
-              <b-form-radio-group id="late_policy"
-                                  v-model="form.late_policy"
-                                  required
-                                  stacked
-                                  :disabled="form.can_change_late_policy === false"
-                                  @change="updateFinalSubmissionDate($event)"
+      <b-card
+        v-if="!isFormativeCourse && +form.formative !== 1 && form.source === 'a' && form.assessment_type !== 'clicker'"
+        :header-html="getHeaderHtml('Late Policy')"
+        body-class="pb-0 card-body-pl"
+        class="mb-3"
+      >
+        <b-card-text>
+          <b-form-group
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="late_policy"
+          >
+            <template v-slot:label>
+              Late Policy*
+              <QuestionCircleTooltip :id="'change_late_policy_tooltip'"/>
+              <b-tooltip target="change_late_policy_tooltip"
+                         delay="250"
+                         triggers="hover focus"
               >
-                <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
-                <b-form-radio value="not accepted">
-                  Do not accept late
-                </b-form-radio>
-                <span @click="initLateValues">
+                You can change the late policy as long as the assignment is not past due for any students. If any are
+                past
+                due, please update the
+                assignment with all due dates in the future to gain access to the Late Policy.
+              </b-tooltip>
+            </template>
+            <b-form-radio-group id="late_policy"
+                                v-model="form.late_policy"
+                                required
+                                stacked
+                                :disabled="form.can_change_late_policy === false"
+                                @change="updateFinalSubmissionDate($event)"
+            >
+              <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
+              <b-form-radio value="not accepted">
+                Do not accept late
+              </b-form-radio>
+              <span @click="initLateValues">
               <b-form-radio value="marked late">
                 Accept but mark late
               </b-form-radio>
@@ -1510,152 +1645,93 @@
                 Accept late with a deduction
               </b-form-radio>
             </span>
-              </b-form-radio-group>
+            </b-form-radio-group>
+          </b-form-group>
+          <div v-show="form.late_policy === 'deduction'">
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label="Late Deduction Percent"
+              label-for="late_deduction_percent"
+            >
+              <b-form-row>
+                <b-col lg="4">
+                  <b-form-input
+                    id="late_deduction_percent"
+                    v-model="form.late_deduction_percent"
+                    type="text"
+                    placeholder="Out of 100"
+                    required
+                    :class="{ 'is-invalid': form.errors.has('late_deduction_percent') }"
+                    @keydown="form.errors.clear('late_deduction_percent')"
+                  />
+                  <has-error :form="form" field="late_deduction_percent"/>
+                </b-col>
+              </b-form-row>
             </b-form-group>
-            <div v-show="form.late_policy === 'deduction'">
-              <b-form-group
-                label-cols-sm="4"
-                label-cols-lg="3"
-                label="Late Deduction Percent"
-                label-for="late_deduction_percent"
-              >
-                <b-form-row>
-                  <b-col lg="4">
-                    <b-form-input
-                      id="late_deduction_percent"
-                      v-model="form.late_deduction_percent"
-                      type="text"
-                      placeholder="Out of 100"
-                      required
-                      :class="{ 'is-invalid': form.errors.has('late_deduction_percent') }"
-                      @keydown="form.errors.clear('late_deduction_percent')"
-                    />
-                    <has-error :form="form" field="late_deduction_percent"/>
-                  </b-col>
-                </b-form-row>
-              </b-form-group>
 
-              <b-form-group
-                label-cols-sm="4"
-                label-cols-lg="3"
-                label-for="late_deduction_application_period"
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label-for="late_deduction_application_period"
+            >
+              <template v-slot:label>
+                Late Deduction Applied*
+              </template>
+              <b-form-radio-group v-model="form.late_deduction_applied_once"
+                                  stacked
+                                  required
+                                  :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
               >
-                <template v-slot:label>
-                  Late Deduction Applied*
-                </template>
-                <b-form-radio-group v-model="form.late_deduction_applied_once"
-                                    stacked
-                                    required
-                                    :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
-                >
               <span @click="form.late_deduction_application_period = ''">
                 <b-form-radio value="1">
                   Just once
                 </b-form-radio>
               </span>
-                  <b-form-radio class="mt-2" value="0">
-                    <b-row>
-                      <b-col lg="4" class="mt-1">
-                        Every
-                      </b-col>
-                      <b-col lg="6">
-                        <b-form-input
-                          id="late_deduction_application_period"
-                          v-model="form.late_deduction_application_period"
-                          :disabled="parseInt(form.late_deduction_applied_once) === 1"
-                          type="text"
-                          required
-                          :class="{ 'is-invalid': form.errors.has('late_deduction_application_period') }"
-                          @keydown="form.errors.clear('late_deduction_application_period')"
-                        />
-                        <has-error :form="form" field="late_deduction_application_period"/>
-                      </b-col>
-                      <QuestionCircleTooltip :id="'late_deduction_application_period_tooltip'"/>
-                      <b-tooltip target="late_deduction_application_period_tooltip"
-                                 delay="250"
-                                 triggers="hover focus"
-                      >
-                        Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late
-                        Deduction
-                        percent
-                        is 20%
-                        and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then
-                        the
-                        percent
-                        is applied twice
-                        and they'll have a 40% deduction when computing the score.
-                      </b-tooltip>
-                    </b-row>
-                  </b-form-radio>
-                </b-form-radio-group>
-              </b-form-group>
-            </div>
-          </b-card-text>
-        </component>
-      </div>
-      <div v-if="!isFormativeCourse && form.formative !== '1'">
-        <b-form-group
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="notifications"
-        >
-          <template v-slot:label>
-            Notifications*
-            <QuestionCircleTooltip :id="'notifications_tooltip'"/>
-            <b-tooltip target="notifications_tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Students can optionally request to receive notifications for upcoming due dates. You may want to turn
-              this
-              option
-              off for Exams and Clicker assignments so your students don't receive unnecessary notifications.
-            </b-tooltip>
-          </template>
-          <b-form-radio-group id="notifications"
-                              v-model="form.notifications"
-                              required
-                              stacked
-          >
-            <b-form-radio name="notifications" value="1">
-              On
-            </b-form-radio>
-            <b-form-radio name="notifications" value="0">
-              Off
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
-        <b-form-group
-          v-show="lms"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="lms_grade_passback"
-        >
-          <template v-slot:label>
-            LMS Grade Passback*
-            <QuestionCircleTooltip :id="'lms_grade_passback_tooltip'"/>
-            <b-tooltip target="lms_grade_passback_tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              With the automatic option, grades are passed back to your LMS each time that your one of your students
-              submits their response to a question.
-              For delayed grading, the manual option is recommended.
-            </b-tooltip>
-          </template>
-          <b-form-radio-group
-            v-model="form.lms_grade_passback"
-            required
-            stacked
-          >
-            <b-form-radio name="lms" value="automatic">
-              Automatic
-            </b-form-radio>
-            <b-form-radio name="lms" value="manual">
-              Manual
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
+                <b-form-radio class="mt-2" value="0">
+                  <b-row>
+                    <b-col lg="4" class="mt-1">
+                      Every
+                    </b-col>
+                    <b-col lg="6">
+                      <b-form-input
+                        id="late_deduction_application_period"
+                        v-model="form.late_deduction_application_period"
+                        :disabled="parseInt(form.late_deduction_applied_once) === 1"
+                        type="text"
+                        required
+                        :class="{ 'is-invalid': form.errors.has('late_deduction_application_period') }"
+                        @keydown="form.errors.clear('late_deduction_application_period')"
+                      />
+                      <has-error :form="form" field="late_deduction_application_period"/>
+                    </b-col>
+                    <QuestionCircleTooltip :id="'late_deduction_application_period_tooltip'"/>
+                    <b-tooltip target="late_deduction_application_period_tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late
+                      Deduction
+                      percent
+                      is 20%
+                      and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then
+                      the
+                      percent
+                      is applied twice
+                      and they'll have a 40% deduction when computing the score.
+                    </b-tooltip>
+                  </b-row>
+                </b-form-radio>
+              </b-form-radio-group>
+            </b-form-group>
+          </div>
+        </b-card-text>
+      </b-card>
+      <b-card
+        :header-html="getHeaderHtml('Deadlines')"
+        body-class="pb-3 card-body-pl"
+        class="mb-3"
+      >
         <b-form-group
           v-if="!courseId"
           label-cols-sm="4"
@@ -1678,34 +1754,6 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-        <b-form-group
-          v-if="lms"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="textbook_url"
-        >
-          <template v-slot:label>
-            Textbook URL
-            <QuestionCircleTooltip :id="'textbook-url-tooltip'"/>
-            <b-tooltip target="textbook-url-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              If your assignment is integrated into a textbook, provide the URL for the start of the assignment. When
-              your
-              students open the assignment in your LMS, they will be re-directed to this URL.
-            </b-tooltip>
-          </template>
-          <b-form-textarea
-            id="textbook_url"
-            v-model="form.textbook_url"
-            :class="{ 'is-invalid': form.errors.has('textbook_url') }"
-            rows="4"
-            max-rows="4"
-            @keydown="form.errors.clear('textbook_url')"
-          />
-          <has-error :form="form" field="textbook_url"/>
-        </b-form-group>
         <div v-show="form.assessment_type === 'clicker'">
           <b-form-group
             label-cols-sm="4"
@@ -1720,208 +1768,203 @@
           </b-form-group>
         </div>
         <div v-show="form.assessment_type !== 'clicker'">
-          <b-card id="assign-to-card"
-                  class="mb-3"
+          <div v-for="(assignTo,index) in form.assign_tos"
+               :key="index"
           >
-            <b-card-text>
-
-              <div v-for="(assignTo,index) in form.assign_tos"
-                   :key="index"
-              >
-                <b-form-group
-                  label-cols-sm="4"
-                  label-cols-lg="3"
-                  label-for="assign_to"
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label-for="assign_to"
+            >
+              <template v-slot:label>
+                Assign to*
+                <QuestionCircleTooltip :id="'assign_to_tooltip'"/>
+                <b-tooltip target="assign_to_tooltip"
+                           delay="250"
+                           triggers="hover focus"
                 >
-                  <template v-slot:label>
-                    Assign to*
-                    <QuestionCircleTooltip :id="'assign_to_tooltip'"/>
-                    <b-tooltip target="assign_to_tooltip"
-                               delay="250"
-                               triggers="hover focus"
-                    >
-                      You can assign to Everybody, a particular section (search by name) or student (search by name or
-                      email).
-                    </b-tooltip>
-                  </template>
-                  <b-form-row>
-                    <b-col lg="5">
-                      <b-form-select id="assign_to"
-                                     v-model="assignTo.selectedGroup"
-                                     required
-                                     :options="assignToGroups"
-                                     :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
-                                     @change="form.errors.clear(`groups_${index}`);updateAssignTos(assignTo)"
-                      />
-                      <has-error :form="form" :field="`groups_${index}`"/>
-                    </b-col>
-                    <b-col>
-                      <ul
-                        v-for="(group,group_index) in assignTo.groups"
-                        :key="group_index"
-                        class="flex-column align-items-start"
-                      >
-                        <li>
-                          {{ group.text }}
-                          <a href="" @click.prevent="removeAssignToGroup(assignTo, group)">
-                            <b-icon icon="trash"
-                                    :aria-label="`Remove ${group.text} from this Assign To`"
-                                    class="text-muted"
-                            />
-                          </a>
-                        </li>
-                      </ul>
-                    </b-col>
-                  </b-form-row>
-                </b-form-group>
-                <b-form-group
-                  label-cols-sm="4"
-                  label-cols-lg="3"
-                  :label-for="`available_from_${index}`"
+                  You can assign to Everybody, a particular section (search by name) or student (search by name or
+                  email).
+                </b-tooltip>
+              </template>
+              <b-form-row>
+                <b-col lg="5">
+                  <b-form-select id="assign_to"
+                                 v-model="assignTo.selectedGroup"
+                                 required
+                                 :options="assignToGroups"
+                                 :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
+                                 @change="form.errors.clear(`groups_${index}`);updateAssignTos(assignTo)"
+                  />
+                  <has-error :form="form" :field="`groups_${index}`"/>
+                </b-col>
+                <b-col>
+                  <ul
+                    v-for="(group,group_index) in assignTo.groups"
+                    :key="group_index"
+                    class="flex-column align-items-start"
+                  >
+                    <li>
+                      {{ group.text }}
+                      <a href="" @click.prevent="removeAssignToGroup(assignTo, group)">
+                        <b-icon icon="trash"
+                                :aria-label="`Remove ${group.text} from this Assign To`"
+                                class="text-muted"
+                        />
+                      </a>
+                    </li>
+                  </ul>
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3"
+              :label-for="`available_from_${index}`"
+            >
+              <template v-slot:label>
+                Available on*
+              </template>
+              <b-form-row>
+                <b-col lg="7">
+                  <b-form-datepicker
+                    :id="`available_from_${index}`"
+                    v-model="assignTo.available_from_date"
+                    required
+                    tabindex="0"
+                    :min="min"
+                    class="datepicker"
+                    :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
+                  />
+                  <has-error :form="form" :field="`available_from_date_${index}`"/>
+                </b-col>
+                <b-col>
+                  <vue-timepicker :id="`available_from_time_${index}`"
+                                  v-model="assignTo.available_from_time"
+                                  format="h:mm A"
+                                  manual-input
+                                  drop-direction="up"
+                                  :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
+                                  input-class="custom-timepicker-class"
+                                  @input="form.errors.clear(`available_from_time_${index}`)"
+                                  @shown="form.errors.clear(`available_from_time_${index}`)"
+                  >
+                    <template v-slot:icon>
+                      <b-icon-clock/>
+                    </template>
+                  </vue-timepicker>
+                  <ErrorMessage :message="form.errors.get(`available_from_time_${index}`)"/>
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              label-cols-sm="4"
+              label-cols-lg="3"
+              :label-for="`due_date_${index}`"
+            >
+              <template v-slot:label>
+                Due Date*
+              </template>
+              <b-form-row>
+                <b-col lg="7">
+                  <b-form-datepicker
+                    :id="`due_date_${index}`"
+                    v-model="assignTo.due_date"
+                    required
+                    tabindex="0"
+                    :min="min"
+                    :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
+                    class="datepicker"
+                    @shown="form.errors.clear(`due_${index}`)"
+                  />
+                  <has-error :form="form" :field="`due_${index}`"/>
+                </b-col>
+                <b-col>
+                  <vue-timepicker :id="`due_time_${index}`"
+                                  v-model="assignTo.due_time"
+                                  format="h:mm A"
+                                  manual-input
+                                  drop-direction="up"
+                                  :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
+                                  input-class="custom-timepicker-class"
+                                  @input="form.errors.clear(`due_time_${index}`)"
+                                  @shown="form.errors.clear(`due_time_${index}`)"
+                  >
+                    <template v-slot:icon>
+                      <b-icon-clock/>
+                    </template>
+                  </vue-timepicker>
+                  <ErrorMessage :message="form.errors.get(`due_time_${index}`)"/>
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              v-show="form.late_policy !== 'not accepted'"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              :label-for="`final_submission_deadline_${index}`"
+            >
+              <template v-slot:label>
+                Final Submission Deadline*
+                <QuestionCircleTooltip :id="'final_submission_deadline_tooltip'"/>
+                <b-tooltip target="final_submission_deadline_tooltip"
+                           delay="250"
+                           triggers="hover focus"
                 >
-                  <template v-slot:label>
-                    Available on*
-                  </template>
-                  <b-form-row>
-                    <b-col lg="7">
-                      <b-form-datepicker
-                        :id="`available_from_${index}`"
-                        v-model="assignTo.available_from_date"
-                        required
-                        tabindex="0"
-                        :min="min"
-                        class="datepicker"
-                        :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
-                      />
-                      <has-error :form="form" :field="`available_from_date_${index}`"/>
-                    </b-col>
-                    <b-col>
-                      <vue-timepicker :id="`available_from_time_${index}`"
-                                      v-model="assignTo.available_from_time"
-                                      format="h:mm A"
-                                      manual-input
-                                      drop-direction="up"
-                                      :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
-                                      input-class="custom-timepicker-class"
-                                      @input="form.errors.clear(`available_from_time_${index}`)"
-                                      @shown="form.errors.clear(`available_from_time_${index}`)"
-                      >
-                        <template v-slot:icon>
-                          <b-icon-clock/>
-                        </template>
-                      </vue-timepicker>
-                      <ErrorMessage :message="form.errors.get(`available_from_time_${index}`)"/>
-                    </b-col>
-                  </b-form-row>
-                </b-form-group>
-                <b-form-group
-                  label-cols-sm="4"
-                  label-cols-lg="3"
-                  :label-for="`due_date_${index}`"
-                >
-                  <template v-slot:label>
-                    Due Date*
-                  </template>
-                  <b-form-row>
-                    <b-col lg="7">
-                      <b-form-datepicker
-                        :id="`due_date_${index}`"
-                        v-model="assignTo.due_date"
-                        required
-                        tabindex="0"
-                        :min="min"
-                        :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
-                        class="datepicker"
-                        @shown="form.errors.clear(`due_${index}`)"
-                      />
-                      <has-error :form="form" :field="`due_${index}`"/>
-                    </b-col>
-                    <b-col>
-                      <vue-timepicker :id="`due_time_${index}`"
-                                      v-model="assignTo.due_time"
-                                      format="h:mm A"
-                                      manual-input
-                                      drop-direction="up"
-                                      :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
-                                      input-class="custom-timepicker-class"
-                                      @input="form.errors.clear(`due_time_${index}`)"
-                                      @shown="form.errors.clear(`due_time_${index}`)"
-                      >
-                        <template v-slot:icon>
-                          <b-icon-clock/>
-                        </template>
-                      </vue-timepicker>
-                      <ErrorMessage :message="form.errors.get(`due_time_${index}`)"/>
-                    </b-col>
-                  </b-form-row>
-                </b-form-group>
-                <b-form-group
-                  v-show="form.late_policy !== 'not accepted'"
-                  label-cols-sm="4"
-                  label-cols-lg="3"
-                  :label-for="`final_submission_deadline_${index}`"
-                >
-                  <template v-slot:label>
-                    Final Submission Deadline*
-                    <QuestionCircleTooltip :id="'final_submission_deadline_tooltip'"/>
-                    <b-tooltip target="final_submission_deadline_tooltip"
-                               delay="250"
-                               triggers="hover focus"
-                    >
-                      For assessments where you allow late submissions (either marked late or with penalty), this is the
-                      latest
-                      possible date for which you'll accept a submission. If your solutions are released, you will not
-                      be
-                      able
-                      to
-                      change this field.
-                    </b-tooltip>
-                  </template>
-                  <b-form-row>
-                    <b-col lg="7">
-                      <b-form-datepicker
-                        :id="`final_submission_deadline_${index}`"
-                        v-model="assignTo.final_submission_deadline_date"
-                        required
-                        tabindex="0"
-                        :min="min"
-                        :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
-                        class="datepicker"
-                        :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-                        @shown="form.errors.clear(`final_submission_deadline_${index}`)"
-                      />
-                      <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
-                    </b-col>
-                    <b-col>
-                      <vue-timepicker :id="`final_submission_deadline_time_${index}`"
-                                      v-model="assignTo.final_submission_deadline_time"
-                                      format="h:mm A"
-                                      manual-input
-                                      drop-direction="up"
-                                      :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
-                                      input-class="custom-timepicker-class"
-                                      @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
-                                      @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
-                      >
-                        <template v-slot:icon>
-                          <b-icon-clock/>
-                        </template>
-                      </vue-timepicker>
-                      <ErrorMessage :message="form.errors.get(`final_submission_deadline_time_${index}`)"/>
-                    </b-col>
-                  </b-form-row>
-                </b-form-group>
-                <div v-if="form.assign_tos.length>1">
-                  <b-row align-h="end">
-                    <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">
-                      Remove Assign
-                      to
-                    </b-button>
-                  </b-row>
-                  <hr>
-                </div>
-              </div>
-              <span v-if="courseId">
+                  For assessments where you allow late submissions (either marked late or with penalty), this is the
+                  latest
+                  possible date for which you'll accept a submission. If your solutions are released, you will not
+                  be
+                  able
+                  to
+                  change this field.
+                </b-tooltip>
+              </template>
+              <b-form-row>
+                <b-col lg="7">
+                  <b-form-datepicker
+                    :id="`final_submission_deadline_${index}`"
+                    v-model="assignTo.final_submission_deadline_date"
+                    required
+                    tabindex="0"
+                    :min="min"
+                    :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
+                    class="datepicker"
+                    :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                    @shown="form.errors.clear(`final_submission_deadline_${index}`)"
+                  />
+                  <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
+                </b-col>
+                <b-col>
+                  <vue-timepicker :id="`final_submission_deadline_time_${index}`"
+                                  v-model="assignTo.final_submission_deadline_time"
+                                  format="h:mm A"
+                                  manual-input
+                                  drop-direction="up"
+                                  :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
+                                  input-class="custom-timepicker-class"
+                                  @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
+                                  @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
+                  >
+                    <template v-slot:icon>
+                      <b-icon-clock/>
+                    </template>
+                  </vue-timepicker>
+                  <ErrorMessage :message="form.errors.get(`final_submission_deadline_time_${index}`)"/>
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+            <div v-if="form.assign_tos.length>1">
+              <b-row align-h="end">
+                <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">
+                  Remove Assign
+                  to
+                </b-button>
+              </b-row>
+              <hr>
+            </div>
+          </div>
+          <span v-if="courseId">
             <b-button variant="outline-primary" size="sm" @click="addAssignTo">
               Add Assign to
             </b-button>
@@ -1936,10 +1979,8 @@
               the course level.
             </b-tooltip>
           </span>
-            </b-card-text>
-          </b-card>
         </div>
-      </div>
+      </b-card>
       <div v-show="form.assessment_type !== 'clicker'">
         <AutoRelease :key="`auto-release-${autoReleaseKey}`"
                      :auto-release-form="form"
@@ -2025,6 +2066,7 @@ export default {
     anonymousUsers: { type: Boolean, default: false }
   },
   data: () => ({
+    delayedShowSolutionsAvailabilityType: '',
     submittedWorkFormat: [
       { item: 'file', name: 'File' },
       { item: 'audio', name: 'Audio' },
@@ -2173,6 +2215,9 @@ export default {
   },
   methods: {
     isLocked,
+    getHeaderHtml (title) {
+      return `<h2 class="h7 m-0">${title}</h2>`
+    },
     async handleActionToBeTakenForRealTimeQuestionsInDelayedAssignment () {
       if (this.actionToBeTakenForRealTimeQuestionsInDelayedAssignment === 'remove all open-ended questions') {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/remove-open-ended-questions`)
@@ -2185,7 +2230,8 @@ export default {
       }
       this.$bvModal.hide('modal-remove-delayed-questions-from-assignment')
     },
-    delayedShowSolutionsAvailability () {
+    delayedShowSolutionsAvailability (delayedShowSolutionsAvailabilityType) {
+      this.delayedShowSolutionsAvailabilityType = delayedShowSolutionsAvailabilityType
       setTimeout(() => {
         this.$bvModal.show('modal-per-question-solutions-availability')
       }, 1000)
@@ -2602,5 +2648,4 @@ export default {
 .time-input-group .time-input {
   border-right: none;
 }
-
 </style>

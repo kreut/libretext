@@ -456,8 +456,12 @@
                                   :h5p-questions-with-anonymous-users="h5pQuestionsWithAnonymousUsers"
           />
           <b-row align-h="end">
-            <b-button variant="primary" size="sm" @click="getStudentView(assignmentId)">
-              View Questions
+            <b-button
+              size="sm"
+              style="background-color: #D35400 !important; color: white !important"
+              @click="getStudentView(assignmentId)"
+            >
+              <b-icon-eye/> View Questions
             </b-button>
           </b-row>
           <hr>

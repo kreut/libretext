@@ -87,7 +87,7 @@
     <p v-show="courseId">
       Any of the course default options can be overridden at the assignment level within your assignment properties.
     </p>
-    <b-card :header-bg-variant="courseId ? '' :'info'">
+    <b-card body-class="card-body-pl">
       <template #header>
         <div class="flex d-inline-flex">
           <div v-html="headerHtml" />
