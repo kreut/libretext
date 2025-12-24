@@ -111,9 +111,15 @@
             </router-link>
           </span>
           <span v-if="user && [2, 4, 5].includes(user.role)">
-            <b-dropdown v-show="'instructors.learning_trees.editor' !== $route.name" id="dropdown-right" right
-                        text="Dashboard" variant="primary" class="m-2" size="sm"
-            >
+           <b-dropdown
+             v-show="'instructors.learning_trees.editor' !== $route.name"
+             id="dropdown-right"
+             :left="isPhone()"
+             :right="!isPhone()"
+             text="Dashboard"
+             variant="primary"
+             class="m-2"
+             size="sm">
               <b-dropdown-item v-for="location in dashboards" :key="location.text" href="#" :class="{
                 'border-bottom': location.text === 'My Rubric Templates',
                 'pb-2': location.text === 'My Rubric Templates',
@@ -243,6 +249,7 @@ import { faUsers } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import LibreOne from './LibreOne.vue'
 import { updateLibreOnePassword, updateLibreOneProfile } from '../helpers/LibreOne'
+import { isPhone } from '../helpers/isPhone'
 
 export default {
   components: {
@@ -364,6 +371,7 @@ export default {
     this.localEnvironment = window.config.environment === 'local'
   },
   methods: {
+    isPhone,
     updateLibreOnePassword,
     updateLibreOneProfile,
     beginLogin () {
@@ -533,4 +541,10 @@ export default {
   padding: 6px; /* Adequate spacing */
 }
 
+.navbar-float-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+}
 </style>
