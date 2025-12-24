@@ -45,6 +45,8 @@ class initProcessTranscription extends Command
         //staging: smaller mp4 --- init:ProcessTranscription c9eca2e0d6f1e127c0792ef8c6db6061.mp4 discussion_comment
         //staging init:ProcessTranscription cd4fa71c2d8fb7e4216ddffc3ed25437.webm discussion_comment
        // init:ProcessTranscription 91fe46a21ab6014f660c6427d0778890.mp3 question_media_upload
+
+        //init:ProcessTranscription c295e858f1b9862554142d1ce7645d5f.mp3 question_media_upload
         try {
             $s3_key = $this->argument('s3_key');
             $upload_type = $this->argument('upload_type');
