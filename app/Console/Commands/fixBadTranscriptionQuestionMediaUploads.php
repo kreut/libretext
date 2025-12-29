@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Console\Commands\OneTimers;
+namespace App\Console\Commands;
 
-use App\DiscussionComment;
 use App\Exceptions\Handler;
 use App\QuestionMediaUpload;
 use Exception;
@@ -49,7 +48,6 @@ class fixBadTranscriptionQuestionMediaUploads extends Command
                     now()->subDay()->endOfDay()
                 ])
                 ->orderBy('created_at', 'desc')
-                ->where()
                 ->limit(10)
                 ->get();
             foreach ($question_media_uploads as $question_media_upload) {
