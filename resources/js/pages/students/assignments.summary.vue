@@ -822,6 +822,13 @@ export default {
           console.log(question.technology_iframe)
           console.log(question.technology === 'webwork')
           console.log(this.solutionsReleased)
+          let solutionHtml
+          if (question.solution_type === 'html'){
+            solutionHtml = question.solution_html
+            if (!solutionHtml && question.answer_html){
+              solutionHtml = question.answer_html
+            }
+          }
           let questionInfo = {
             question_id: question.id,
             question_number: i + 1,
@@ -838,7 +845,7 @@ export default {
             submission_file_exists: question.submission_file_exists,
             submission_file_url: question.submission_file_url ? question.submission_file_url : null,
             solution_type: question.solution_type,
-            solution_html: question.solution_html,
+            solution_html: solutionHtml,
             solution_file_url: question.solution_file_url ? question.solution_file_url : null,
             solution: question.solution ? question.solution : null,
             points: question.points ? question.points : 'N/A',
