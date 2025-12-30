@@ -294,7 +294,7 @@ class AssignmentController extends Controller
                 ->whereIn('assignment_id', $course->assignments->pluck('id')->toArray())
                 ->select('assignments.id as id', 'assign_to_timings.*', 'assignments.name')
                 ->where('group', 'course')
-               ->where('assessment_type', '<>', 'clicker')
+                ->where('assessment_type', '<>', 'clicker')
                 ->get();
             foreach ($assignment_dates as &$assignment_date) {
                 foreach (['due', 'available_from', 'final_submission_deadline'] as $key) {
@@ -2002,8 +2002,7 @@ class AssignmentController extends Controller
                 'lti_launch_exists' => Auth::user()->role === 3 && !$is_fake_student && $assignment->ltiLaunchExists(Auth::user()),
                 'can_contact_grader' => !DB::table('contact_grader_overrides')
                     ->where('course_id', $assignment->course->id)
-                    ->where('user_id', -1)->first()];
-
+                    ->where('user_id', -1)->exists()];
             if (Auth::user()->role === 3) {
                 $response['assignment']['can_contact_instructor_auto_graded'] = $assignment->can_contact_instructor_auto_graded;
                 $response['assignment']['full_pdf_url'] = '';

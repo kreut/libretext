@@ -3365,7 +3365,7 @@
                       </b-tooltip>
                     </span>
                     <span class="float-right">
-                      <b-button v-show="showContactGrader() || showContactInstructorAutoGraded"
+                      <b-button v-show="showContactGrader() && showContactInstructorAutoGraded"
                                 size="sm"
                                 variant="outline-primary"
                                 @click="openContactGraderModal( 'auto-graded')"
