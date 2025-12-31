@@ -566,6 +566,61 @@ class Question extends Model
                  * $qti_array['media_uploads'][$key]['text'] = $question_media_upload->getText($this, $domDocument);
                  * }**/
                 break;
+            case('accounting_journal_entry'):
+                if ($student_response) {
+                    $studentSubmission = json_decode($student_response, true);
+                    $solution = $qti_array['entries'] ?? [];
+                    $submission = new Submission();
+                    $gradingResult = $submission->computeScoreForAccountingJournalEntry($solution, $studentSubmission);
+                    $qti_array['studentResponse'] = $gradingResult['results'];
+
+                    // Add the score/proportion for grading purposes
+                    $qti_array['score'] = $gradingResult['proportionCorrect'];
+                }
+
+                if (!$show_solution) {
+                    if (request()->user()->role === 3) {
+                        if (isset($qti_array['entries'])) {
+                            foreach ($qti_array['entries'] as &$entry) {
+                                unset($entry['solutionRows']);
+                            }
+                        }
+                    }
+                } else {
+                    if (!$student_response && $json_type === 'question_json') {
+                        if (request()->user()->role === 3) {
+                            if (isset($qti_array['entries'])) {
+                                foreach ($qti_array['entries'] as &$entry) {
+                                    unset($entry['solutionRows']);
+                                }
+                            }
+                        }
+                    }
+                }
+                if ($json_type === 'answer_json') {
+
+                    $solutionAsResponse = [];
+                    if (isset($qti_array['entries'])) {
+                        foreach ($qti_array['entries'] as $entryIndex => $entry) {
+                            $responseEntry = [
+                                'selectedEntryIndex' => $entryIndex,
+                                'rows' => []
+                            ];
+                            if (isset($entry['solutionRows'])) {
+                                foreach ($entry['solutionRows'] as $row) {
+                                    $responseEntry['rows'][] = [
+                                        'accountTitle' => $row['accountTitle'] ?? '',
+                                        'debit' => ($row['type'] ?? '') === 'debit' ? ($row['amount'] ?? '') : '',
+                                        'credit' => ($row['type'] ?? '') === 'credit' ? ($row['amount'] ?? '') : ''
+                                    ];
+                                }
+                            }
+                            $solutionAsResponse[] = $responseEntry;
+                        }
+                    }
+                    $qti_array['studentResponse'] = $solutionAsResponse;
+                }
+                break;
             case('three_d_model_multiple_choice'):
                 if ($student_response) {
                     $qti_array['studentResponse'] = json_decode($student_response, 1);
@@ -2752,7 +2807,8 @@ class Question extends Model
      * @param $like_question_prompt
      * @return bool
      */
-    public function imgsSame($prompt, $like_question_prompt): bool
+    public
+    function imgsSame($prompt, $like_question_prompt): bool
     {
         $dom = new DOMDocument();
         libxml_use_internal_errors(true); // For handling potential HTML parsing errors
@@ -3318,7 +3374,8 @@ class Question extends Model
     /**
      * @return string
      */
-    public function textFormattedType(): string
+    public
+    function textFormattedType(): string
     {
         return 'Open-ended';
     }
@@ -3326,7 +3383,8 @@ class Question extends Model
     /**
      * @return array
      */
-    public function webworkFormattedType(): array
+    public
+    function webworkFormattedType(): array
     {
         $question_types = [
             [
@@ -3411,7 +3469,8 @@ class Question extends Model
     /**
      * @return mixed|string
      */
-    public function h5pFormattedType()
+    public
+    function h5pFormattedType()
     {
         switch ($this->h5p_type) {
             case('Find Multiple Hotspots');
@@ -3449,7 +3508,8 @@ class Question extends Model
     /**
      * @return string
      */
-    public function nativeFormattedType(): string
+    public
+    function nativeFormattedType(): string
     {
         switch ($this->qti_json_type) {
             case('drag_and_drop'):
@@ -3490,7 +3550,8 @@ class Question extends Model
      * @param $formatted_question_type
      * @return string|null
      */
-    public function imathasFormattedType($formatted_question_type): ?string
+    public
+    function imathasFormattedType($formatted_question_type): ?string
     {
         switch ($formatted_question_type) {
             case('string'):
@@ -3556,7 +3617,8 @@ class Question extends Model
      * @return void
      * @throws Exception
      */
-    public function saveFormat()
+    public
+    function saveFormat()
     {
         $formatted_question_types = [];
         try {
@@ -3611,7 +3673,8 @@ class Question extends Model
      * @param $formatted_question_type
      * @return string|null
      */
-    public function initFormattedQuestionTypes($formatted_question_type = null): ?string
+    public
+    function initFormattedQuestionTypes($formatted_question_type = null): ?string
     {
         switch ($this->technology) {
             case('text'):
@@ -3636,7 +3699,8 @@ class Question extends Model
     /**
      * @return bool
      */
-    public function isDiscussIt(): bool
+    public
+    function isDiscussIt(): bool
     {
         $is_discuss_it = false;
         try {
@@ -3650,7 +3714,8 @@ class Question extends Model
      * @param array $solution_structure
      * @return array
      */
-    private function _removeMarkers(array $solution_structure): array
+    private
+    function _removeMarkers(array $solution_structure): array
     {
         foreach (['atoms', 'bonds'] as $item) {
             foreach ($solution_structure[$item] as $key => $value) {

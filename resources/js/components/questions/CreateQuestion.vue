@@ -8,9 +8,11 @@
     <b-modal id="modal-confirm-delete-attachment"
              title="Confirm Remove Attachment"
     >
-      <p>You are about to remove: <br><br><span class="text-center"><strong>{{
+      <p>
+        You are about to remove: <br><br><span class="text-center"><strong>{{
           attachmentToDelete.original_filename
-        }}</strong></span><br><br> Please save your question to make this change permanent.</p>
+        }}</strong></span><br><br> Please save your question to make this change permanent.
+      </p>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -1310,14 +1312,14 @@
                   Delete {{ data.item.original_filename }}
                 </b-tooltip>
                 <span :id="`download-question-attachment-tooltip-${data.item.s3_key}`">
-                <a class="text-muted"
-                   :href="`/api/questions/download-attachment/assignment/0/question/0/s3-key/${data.item.s3_key.split('/').pop()}`"
-                >
-                  <b-icon-download
-                    style="cursor: pointer;"
-                  />
-                </a>
-                  </span>
+                  <a class="text-muted"
+                     :href="`/api/questions/download-attachment/assignment/0/question/0/s3-key/${data.item.s3_key.split('/').pop()}`"
+                  >
+                    <b-icon-download
+                      style="cursor: pointer;"
+                    />
+                  </a>
+                </span>
                 <b-tooltip :target="`download-question-attachment-tooltip-${data.item.s3_key}`"
                            delay="1000"
                            triggers="hover"
@@ -1521,7 +1523,7 @@
                     <b-form-radio value="sketcher">
                       Sketcher
                     </b-form-radio>
-                    <b-form-radio value="3d_model" v-if="false">
+                    <b-form-radio v-if="false" value="3d_model">
                       3D Model
                     </b-form-radio>
                     <b-modal id="modal-discuss-it"
@@ -1556,8 +1558,10 @@
                                                   :color-class="'font-bold'"
                       />
                     </b-form-radio>
-                    <b-form-radio v-show="false" value="3D visualization">
-                      3D Visualization
+                    <b-form-radio value="accounting"
+                                  v-show="false && (isAdmin || [142886,11712].includes(user.id))"
+                    >
+                    Accounting
                     </b-form-radio>
                     <b-form-radio value="all">
                       All
@@ -1589,6 +1593,14 @@
                                   @change="initQTIQuestionType($event)"
                     >
                       Multiple Answer
+                    </b-form-radio>
+                  </div>
+                  <div v-if="nativeType === 'accounting'">
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                                  value="accounting_journal_entry"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Journal Entry
                     </b-form-radio>
                   </div>
                   <div v-if="['all','basic'].includes(nativeType)">
@@ -1987,6 +1999,13 @@
                     />
                   </div>
                 </div>
+                <div v-if="'accounting_journal_entry' === qtiQuestionType">
+                  <AccountingJournalEntry
+                    :qti-json="qtiJson"
+                    :question-form="questionForm"
+                    @updateQtiJson="updateQtiJson"
+                  />
+                </div>
                 <div v-if="['three_d_model_multiple_choice'].includes(qtiQuestionType)">
                   <ThreeDModel
                     :qti-json="qtiJson"
@@ -2292,7 +2311,7 @@
                   <b-card
                     v-if="['multiple_choice','numerical'].includes(qtiQuestionType)
                       || nursingQuestions.includes(qtiQuestionType)
-                      ||qtiQuestionType.includes('drop_down_rationale')
+                      || qtiQuestionType.includes('drop_down_rationale')
                       || (qtiQuestionType === 'select_choice' && nativeType === 'nursing')"
                     header="default"
                   >
@@ -2855,6 +2874,7 @@ import {
 import StructureImageUploader from '../StructureImageUploader.vue'
 import { capitalize, getQuestionChapterIdOptions, getQuestionSubjectIdOptions } from '../../helpers/Questions'
 import ThreeDModel from './ThreeDModel.vue'
+import AccountingJournalEntry from './accounting/AccountingJournalEntry.vue'
 
 const parameters3DModel = {
   modelID: '',
@@ -3015,6 +3035,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    AccountingJournalEntry,
     CKEditorFileToLinkUploader,
     ThreeDModel,
     StructureImageUploader,
@@ -3444,7 +3465,8 @@ export default {
     })
     if (!this.isEdit) {
       this.$nextTick(() => {
-        //this.setToQuestionType('three_d_model_multiple_choice')
+        // this.setToQuestionType('three_d_model_multiple_choice')
+        // this.setToQuestionType('accounting_journal_entry')
       })
     }
   },
@@ -3616,6 +3638,19 @@ export default {
     setToQuestionType (questionType) {
       document.getElementById('primary-content___BV_tab_button__').click()
       switch (questionType) {
+        case ('accounting_journal_entry'):
+          document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="native-question-type"][value="accounting"]').click()
+            }
+            , 250
+          )
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_journal_entry"]').click()
+            }
+            , 250
+          )
+          break
         case ('three_d_model_multiple_choice'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
@@ -4002,6 +4037,9 @@ export default {
         }
 
         switch (this.qtiQuestionType) {
+          case ('accounting_journal_entry'):
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('three_d_model_multiple_choice'):
             this.receivedModelStructureData = false
             document.getElementById('threeDModel').contentWindow.postMessage('save3DModel', '*')
@@ -4326,6 +4364,10 @@ export default {
         }
         console.log(this.qtiJson)
         switch (this.qtiJson.questionType) {
+          case ('accounting_journal_entry'):
+            this.qtiQuestionType = 'accounting_journal_entry'
+            this.nativeType = 'accounting'
+            break
           case ('discuss_it'):
             this.qtiPrompt = this.qtiJson['prompt']
             this.qtiQuestionType = this.qtiJson.questionType
@@ -4608,7 +4650,7 @@ export default {
       if (this.nativeType === 'discuss_it') {
         this.qtiQuestionType = 'discuss_it'
         this.initQTIQuestionType('discuss_it')
-      } else if (['nursing', 'sketcher'].includes(this.nativeType)) {
+      } else if (['nursing', 'sketcher', 'accounting'].includes(this.nativeType)) {
         this.initNonBasicQTIQuestion()
       } else {
         this.qtiQuestionType = 'multiple_choice'
@@ -4738,6 +4780,9 @@ export default {
           break
         case ('sketcher'):
           questionType = 'submit_molecule'
+          break
+        case ('accounting'):
+          questionType = 'accounting_journal_entry'
           break
       }
       this.qtiQuestionType = questionType
@@ -4936,13 +4981,19 @@ export default {
           }
           this.qtiQuestionType = 'discuss_it'
           break
+        case ('accounting_journal_entry'):
+          this.qtiJson = {
+            questionType: 'accounting_journal_entry',
+            entries: []
+          }
+          break
         case ('three_d_model_multiple_choice'):
           this.parameters3DModel.mode = 'selection'
           this.qtiJson = {
             questionType: 'three_d_model_multiple_choice',
             parameters: this.parameters3DModel,
             generalIncorrectFeedback: '',
-            feedbacks: { }
+            feedbacks: {}
           }
           break
         case ('three_d_model_multiple_answer'):
@@ -5585,6 +5636,11 @@ export default {
             console.error(errors[property])
             console.error(property)
             switch (property) {
+              case ('qti_json'):
+                if (this.qtiQuestionType === 'accounting_journal_entry') {
+                  formattedErrors.push('Please fix the errors associated with your journal entries')
+                }
+                break
               case ('parameters'):
                 formattedErrors.push('Please fix the errors associated with your 3D Model parameters')
                 this.threeDModelParameterErrors = errors['parameters']

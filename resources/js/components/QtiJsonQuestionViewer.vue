@@ -59,6 +59,12 @@
                             :qti-json="JSON.parse(qtiJson)"
                             :show-response-feedback="showResponseFeedback"
       />
+      <AccountingJournalEntryViewer v-if="questionType === 'accounting_journal_entry'"
+                                    ref="accountingJournalEntryViewer"
+                                    :key="`accounting-journal-${qtiJsonCacheKey}`"
+                                    :qti-json="JSON.parse(qtiJson)"
+
+      />
       <div
         v-if="['three_d_model_multiple_choice',
               'three_d_model_multiple_answer',
@@ -110,8 +116,9 @@
             :configuration="questionType === 'marker' ? 'marker-only' : 'default'"
           />
 
-          <ThreeDModelViewer v-if="['three_d_model_multiple_choice','three_d_model_multiple_answer'].includes(questionType)"
-                             :qti-json="JSON.parse(qtiJson)"
+          <ThreeDModelViewer
+            v-if="['three_d_model_multiple_choice','three_d_model_multiple_answer'].includes(questionType)"
+            :qti-json="JSON.parse(qtiJson)"
           />
           <DropDownTableViewer v-if="questionType === 'drop_down_table'"
                                ref="dropDownTableViewer"
@@ -280,11 +287,12 @@ import { formatQuestionMediaPlayer } from '~/helpers/Questions'
 import DiscussItViewer from './viewers/DiscussItViewer.vue'
 import StructureImageUploader from './StructureImageUploader.vue'
 import ThreeDModelViewer from './viewers/ThreeDModelViewer.vue'
-import { v4 as uuidv4 } from 'uuid'
+import AccountingJournalEntryViewer from './viewers/AccountingJournalEntryViewer.vue'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    AccountingJournalEntryViewer,
     StructureImageUploader,
     DiscussItViewer,
     SketcherViewer,
@@ -427,6 +435,7 @@ export default {
     }
     switch (this.questionType) {
       case ('discuss_it'):
+      case('accounting_journal_entry'):
         break
       case ('three_d_model_multiple_choice'):
       case ('submit_molecule'):
@@ -472,7 +481,6 @@ export default {
       default:
         alert(`${this.questionType} is not yet supported.`)
     }
-
     this.prompt = this.formatQuestionMediaPlayer(this.prompt)
     this.$forceUpdate()
     this.$nextTick(() => {
@@ -593,6 +601,9 @@ export default {
       let invalidResponse = false
       let submissionErrorMessage
       switch (this.questionType) {
+        case ('accounting_journal_entry'):
+          response = JSON.stringify(this.$refs.accountingJournalEntryViewer.studentEntries)
+          break
         case ('three_d_model_multiple_choice'):
           const markComponentiframe = document.querySelector('#question-to-view .threeDModelViewer')
           markComponentiframe.contentWindow.postMessage('save3DModel', '*')

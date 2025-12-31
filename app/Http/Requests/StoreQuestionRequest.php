@@ -16,6 +16,7 @@ use App\Rules\DragAndDropClozePrompt;
 use App\Rules\DropDownTableRows;
 use App\Rules\hasValid3DModelParameters;
 use App\Rules\hasValid3dModelSolutionStructure;
+use App\Rules\HasValidAccountingJournalEntries;
 use App\Rules\HighlightTableHeaders;
 use App\Rules\HighlightTableRows;
 use App\Rules\HighlightTextPrompt;
@@ -79,8 +80,8 @@ class StoreQuestionRequest extends FormRequest
             'title' => 'required|string',
             'description' => 'nullable',
             'question_subject_id' => new IsValidQuestionSubjectId(),
-            'question_chapter_id'=> new IsValidQuestionChapterId($this->question_subject_id),
-            'question_section_id'=> new IsValidQuestionSectionId($this->question_chapter_id),
+            'question_chapter_id' => new IsValidQuestionChapterId($this->question_subject_id),
+            'question_section_id' => new IsValidQuestionSectionId($this->question_chapter_id),
             'author' => 'required',
             'tags' => 'nullable',
             'open_ended_submission_type' => ['required', Rule::in('rich text', 'file', 'audio', '0', 'no submission, manual grading',)],
@@ -155,7 +156,11 @@ class StoreQuestionRequest extends FormRequest
                             break;
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
+
                             switch ($qti_array['questionType']) {
+                                case('accounting_journal_entry'):
+                                    $rules['qti_json'] = new HasValidAccountingJournalEntries();
+                                    break;
                                 case('three_d_model_multiple_choice'):
                                     $rules['qti_prompt'] = ['required'];
                                     $rules['parameters'] = new hasValid3DModelParameters();

@@ -101,7 +101,6 @@ class Submission extends Model
      */
     function getProportionCorrect(string $technology, $submission)
     {
-
         switch ($technology) {
             case('h5p'):
                 $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
@@ -132,6 +131,12 @@ class Submission extends Model
             case('qti'):
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
+                    case('accounting_journal_entry'):
+                        $studentSubmission = json_decode($submission->student_response, 1);
+                        $solution = $submission->question->entries;
+                        $proportion_correct_info = $this->computeScoreForAccountingJournalEntry($solution, $studentSubmission);
+                        $proportion_correct = $proportion_correct_info['proportionCorrect'];
+                        break;
                     case('three_d_model_multiple_choice'):
                         $student_selected_index = json_decode($submission->student_response)->selectedIndex;
                         if (!is_int($student_selected_index) || $student_selected_index < 0) {
@@ -2594,6 +2599,158 @@ class Submission extends Model
         $submission->save();
     }
 
+    public function computeScoreForAccountingJournalEntry($solution, $studentSubmission): array
+    {
+        $results = [];
+        $totalFields = 0;
+        $correctFields = 0;
+
+        // Iterate through each entry in the submission
+        foreach ($studentSubmission as $entryIndex => $studentEntry) {
+            $entryResult = [
+                'selectedEntryIndex' => $studentEntry['selectedEntryIndex'] ?? null,
+                'selectedEntryCorrect' => false,
+                'rows' => [],
+                'isCorrect' => false
+            ];
+
+            // Check if the student selected the correct entry
+            $correctEntryIndex = $entryIndex; // The submission order should match solution order
+            $entryResult['selectedEntryCorrect'] = $studentEntry['selectedEntryIndex'] === $correctEntryIndex;
+
+            if ($entryResult['selectedEntryCorrect']) {
+                $correctFields++;
+            }
+            $totalFields++;
+
+            // Get the corresponding solution entry (handle both array and object)
+            $solutionEntry = $solution[$entryIndex] ?? null;
+
+            // Convert to object if it's an array
+            if (is_array($solutionEntry)) {
+                $solutionEntry = (object) $solutionEntry;
+            }
+
+            // Check if solutionRows exists
+            $solutionRows = null;
+            if (is_object($solutionEntry) && isset($solutionEntry->solutionRows)) {
+                $solutionRows = $solutionEntry->solutionRows;
+            } elseif (is_array($solutionEntry) && isset($solutionEntry['solutionRows'])) {
+                $solutionRows = $solutionEntry['solutionRows'];
+            }
+
+            if (!$solutionRows) {
+                $results[$entryIndex] = $entryResult;
+                continue;
+            }
+
+            // Grade each row
+            $allRowsCorrect = true;
+            foreach ($studentEntry['rows'] as $rowIndex => $studentRow) {
+                $solutionRow = $solutionRows[$rowIndex] ?? null;
+
+                // Convert to object if it's an array
+                if (is_array($solutionRow)) {
+                    $solutionRow = (object) $solutionRow;
+                }
+
+                $rowResult = [
+                    'accountTitle' => $studentRow['accountTitle'] ?? '',
+                    'debit' => $studentRow['debit'] ?? '',
+                    'credit' => $studentRow['credit'] ?? '',
+                    'accountTitleCorrect' => false,
+                    'debitCorrect' => false,
+                    'creditCorrect' => false,
+                    'isCorrect' => false
+                ];
+
+                if ($solutionRow) {
+                    // Check account title
+                    $solutionAccountTitle = is_object($solutionRow) ? ($solutionRow->accountTitle ?? '') : ($solutionRow['accountTitle'] ?? '');
+                    $rowResult['accountTitleCorrect'] =
+                        trim($studentRow['accountTitle'] ?? '') === trim($solutionAccountTitle);
+
+                    if ($rowResult['accountTitleCorrect']) {
+                        $correctFields++;
+                    }
+                    $totalFields++;
+
+                    // Get student's debit and credit values
+                    $studentDebit = $studentRow['debit'] ?? '';
+                    $studentCredit = $studentRow['credit'] ?? '';
+
+                    // Get solution's debit and credit values based on type
+                    $solutionType = is_object($solutionRow) ? ($solutionRow->type ?? '') : ($solutionRow['type'] ?? '');
+                    $solutionAmount = is_object($solutionRow) ? ($solutionRow->amount ?? '') : ($solutionRow['amount'] ?? '');
+
+                    $solutionDebit = '';
+                    $solutionCredit = '';
+
+                    if ($solutionType === 'debit') {
+                        $solutionDebit = $solutionAmount;
+                    } else {
+                        $solutionCredit = $solutionAmount;
+                    }
+
+                    // Check if debit is correct (must match exactly - empty string vs number matters)
+                    if ($studentDebit === '' && $solutionDebit === '') {
+                        $rowResult['debitCorrect'] = true;
+                    } elseif ($studentDebit !== '' && $solutionDebit !== '') {
+                        // Compare as floats with tolerance
+                        $rowResult['debitCorrect'] = abs(floatval($studentDebit) - floatval($solutionDebit)) < 0.01;
+                    } else {
+                        $rowResult['debitCorrect'] = false;
+                    }
+
+                    if ($rowResult['debitCorrect']) {
+                        $correctFields++;
+                    }
+                    $totalFields++;
+
+                    // Check if credit is correct (must match exactly - empty string vs number matters)
+                    if ($studentCredit === '' && $solutionCredit === '') {
+                        $rowResult['creditCorrect'] = true;
+                    } elseif ($studentCredit !== '' && $solutionCredit !== '') {
+                        // Compare as floats with tolerance
+                        $rowResult['creditCorrect'] = abs(floatval($studentCredit) - floatval($solutionCredit)) < 0.01;
+                    } else {
+                        $rowResult['creditCorrect'] = false;
+                    }
+
+                    if ($rowResult['creditCorrect']) {
+                        $correctFields++;
+                    }
+                    $totalFields++;
+
+                    // Row is correct if all fields match
+                    $rowResult['isCorrect'] =
+                        $rowResult['accountTitleCorrect'] &&
+                        $rowResult['debitCorrect'] &&
+                        $rowResult['creditCorrect'];
+
+                    if (!$rowResult['isCorrect']) {
+                        $allRowsCorrect = false;
+                    }
+                }
+
+                $entryResult['rows'][] = $rowResult;
+            }
+
+            // Entry is correct if entry selection is correct AND all rows are correct
+            $entryResult['isCorrect'] = $entryResult['selectedEntryCorrect'] && $allRowsCorrect;
+
+            $results[$entryIndex] = $entryResult;
+        }
+
+        // Calculate proportion correct
+        $proportionCorrect = $totalFields > 0 ? round($correctFields / $totalFields, 4) : 0;
+
+        return [
+            'proportionCorrect' => $proportionCorrect,
+            'results' => $results,
+            'allCorrect' => $correctFields === $totalFields
+        ];
+    }
 }
 
 
