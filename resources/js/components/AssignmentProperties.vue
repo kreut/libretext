@@ -1527,11 +1527,11 @@
                               :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                               @change="initRandomizationsSwitch($event)"
           >
-            <b-form-radio value="0">
-              No
-            </b-form-radio>
             <b-form-radio value="1">
               Yes
+            </b-form-radio>
+            <b-form-radio value="0">
+              No
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>

@@ -49,7 +49,7 @@ class ThreeDModelTest extends TestCase
                 "autospin" => "",
                 "STLmatCol" => "wfewefwef",
                 "hideDistance" => ""],
-            "qti_json" => '{"questionType":"mark_component","parameters":{"modelID":"","mode":"","BGColor":"","piece":"","modelOffset":"","cameraOffset":"","selectionColor":"","panel":"","autospin":"","STLmatCol":"","hideDistance":""}}'
+            "qti_json" => '{"questionType":"three_d_model_multiple_choice","parameters":{"modelID":"","mode":"","BGColor":"","piece":"","modelOffset":"","cameraOffset":"","selectionColor":"","panel":"","autospin":"","STLmatCol":"","hideDistance":""}}'
         ];
     }
 
@@ -58,6 +58,7 @@ class ThreeDModelTest extends TestCase
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions", $this->qti_question_info)
             ->getContent();
+
         $errors = json_decode($response)->errors;
         $this->assertEquals('A prompt is required.', $errors->qti_prompt[0]);
         $parameter_errors = json_decode($errors->parameters[0]);
