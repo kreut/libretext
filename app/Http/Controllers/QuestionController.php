@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 
+use App\Forge;
+use App\ForgeAssignmentQuestion;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\AssignmentTemplate;
@@ -2278,6 +2280,7 @@ class QuestionController extends Controller
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Libretext $libretext
      * @param BetaCourseApproval $betaCourseApproval
+     * @param Forge $forge
      * @return array
      * @throws Exception
      */
@@ -2287,7 +2290,8 @@ class QuestionController extends Controller
                                   Assignment             $assignment,
                                   AssignmentSyncQuestion $assignmentSyncQuestion,
                                   Libretext              $libretext,
-                                  BetaCourseApproval     $betaCourseApproval): array
+                                  BetaCourseApproval     $betaCourseApproval,
+                                  Forge                  $forge): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $assignment);
@@ -2322,6 +2326,7 @@ class QuestionController extends Controller
                 $response['message'] = $question_to_add_info['message'];
                 return $response;
             }
+
             $question_id = $question_to_add_info['question_id'];
             $open_ended_submission_type = Question::find($question_id)->open_ended_submission_type;
             $direct_import_id = $question_to_add_info['direct_import_id'];

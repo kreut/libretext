@@ -66,7 +66,9 @@
 
       />
       <div
-        v-if="['three_d_model_multiple_choice',
+        v-if="['forge',
+               'forge_iteration',
+                'three_d_model_multiple_choice',
               'three_d_model_multiple_answer',
               'submit_molecule',
                'marker',
@@ -205,6 +207,13 @@
                        :previewing-question="previewingQuestion"
                        @openContactGraderModal="openContactGraderModal"
       />
+      <ForgeViewer v-if="(questionType === 'forge' || questionType === 'forge_iteration') && assignmentId"
+                   :key="`forge-viewer-${questionId}`"
+                   :user="user"
+                   :assignment-id="assignmentId"
+                   :question-id="questionId"
+      />
+
       <DragAndDropClozeViewer
         v-if="questionType === 'drag_and_drop_cloze'"
         ref="dragAndDropClozeViewer"
@@ -266,6 +275,7 @@
 <script>
 import $ from 'jquery'
 import { mapGetters } from 'vuex'
+import ForgeViewer from './viewers/ForgeViewer.vue'
 import SketcherViewer from './viewers/SketcherViewer.vue'
 import NumericalViewer from './viewers/NumericalViewer'
 import BowTieViewer from './viewers/BowTieViewer'
@@ -292,6 +302,7 @@ import AccountingJournalEntryViewer from './viewers/AccountingJournalEntryViewer
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    ForgeViewer,
     AccountingJournalEntryViewer,
     StructureImageUploader,
     DiscussItViewer,
@@ -435,8 +446,10 @@ export default {
     }
     switch (this.questionType) {
       case ('discuss_it'):
-      case('accounting_journal_entry'):
+      case ('accounting_journal_entry'):
         break
+      case ('forge'):
+      case ('forge_iteration'):
       case ('three_d_model_multiple_choice'):
       case ('submit_molecule'):
       case ('marker'):

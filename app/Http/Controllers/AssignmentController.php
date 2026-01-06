@@ -2243,7 +2243,7 @@ class AssignmentController extends Controller
      * @param AssignmentGroup $assignmentGroup
      * @param SubmissionFile $submissionFile
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
-     * @param PendingQuestionRevision $pendingQuestionRevision
+     * @param Question $question
      * @return array
      * @throws Exception
      */
@@ -2640,7 +2640,8 @@ class AssignmentController extends Controller
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
@@ -2821,6 +2822,5 @@ class AssignmentController extends Controller
         }
         return $assign_tos;
     }
-
 
 }

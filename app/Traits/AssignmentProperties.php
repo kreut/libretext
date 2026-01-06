@@ -365,5 +365,4 @@ trait AssignmentProperties
         return $this->convertLocalMysqlFormattedDateToUTC("$date $time", $user->time_zone);
     }
 
-
 }

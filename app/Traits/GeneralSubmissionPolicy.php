@@ -78,7 +78,7 @@ trait GeneralSubmissionPolicy
             return $response;
         }
 
-        $assign_to_timing = $assignment->assignToTimingByUser();
+        $assign_to_timing = $assignment->assignToTimingByUser('',$user->id);
         if (!$assign_to_timing) {
             $response['message'] = "No responses will be saved since you were not assigned to this assignment.";
             return $response;

@@ -123,6 +123,13 @@ class Assignment extends Model
         Storage::disk('s3')->delete($files);
 
 
+        DB::table('assignment_question_forge_draft')
+            ->whereIn('assignment_question_id', $assignment_question_ids)
+            ->delete();
+        DB::table('forge_assignment_questions')
+            ->where('adapt_assignment_id', $this->id)
+            ->delete();
+
         DB::table('assignment_question_learning_tree')
             ->whereIn('assignment_question_id', $assignment_question_ids)
             ->delete();
@@ -1310,7 +1317,7 @@ class Assignment extends Model
     {
         $questionFileSubmissions = DB::table('submission_files')
             ->leftJoin('users', 'grader_id', '=', 'users.id')
-            ->whereIn('type', ['q', 'text', 'audio', 'discuss_it', 'no upload'])
+            ->whereIn('type', ['q', 'text', 'audio', 'discuss_it', 'no upload', 'forge'])
             ->where('assignment_id', $this->id)
             ->select('submission_files.*', DB::raw('CONCAT(users.first_name," ", users.last_name) AS grader_name'))
             ->get();

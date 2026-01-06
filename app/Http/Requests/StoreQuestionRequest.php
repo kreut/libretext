@@ -158,6 +158,9 @@ class StoreQuestionRequest extends FormRequest
                             $qti_array = json_decode($this->qti_json, true);
 
                             switch ($qti_array['questionType']) {
+                                case('forge'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    break;
                                 case('accounting_journal_entry'):
                                     $rules['qti_json'] = new HasValidAccountingJournalEntries();
                                     break;

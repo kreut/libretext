@@ -606,6 +606,7 @@ class GradingController extends Controller
             $response['discussions'] = $discussions;
             $response['discussions_by_user_id'] = $discussions_by_user_id;
             $response['discuss_it'] = $question->isDiscussIt();
+            $response['forge_question_type'] = $question->forgeQuestionType();;
 
         } catch
         (Exception $e) {

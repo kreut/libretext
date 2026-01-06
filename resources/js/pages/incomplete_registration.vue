@@ -66,7 +66,7 @@ export default {
         }
         window.location.href = `/register/${this.registerAs}`
       } catch (error) {
-        this.$noty(error.message)
+        this.$noty.error(error.message)
       }
     }
   }

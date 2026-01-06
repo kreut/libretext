@@ -46,7 +46,7 @@
     <b-form v-if="!isLoading" ref="form">
       <div v-if="isLocked(hasSubmissionsOrFileSubmissions) && !isFormativeCourse">
         <b-alert variant="info" show>
-          <span class="font-weight-bold" v-html="isLockedMessage()"/>
+          <span class="font-weight-bold" v-html="isLockedMessage()" />
         </b-alert>
       </div>
       <div v-if="isBetaAssignment">
@@ -77,7 +77,7 @@
               :class="{ 'is-invalid': form.errors.has('template_name') }"
               @keydown="form.errors.clear('template_name')"
             />
-            <has-error :form="form" field="template_name"/>
+            <has-error :form="form" field="template_name" />
           </b-form-row>
         </b-form-group>
 
@@ -97,7 +97,7 @@
               :class="{ 'is-invalid': form.errors.has('template_description') }"
               @keydown="form.errors.clear('template_description')"
             />
-            <has-error :form="form" field="template_description"/>
+            <has-error :form="form" field="template_description" />
           </b-form-row>
         </b-form-group>
       </b-card>
@@ -398,7 +398,7 @@
                                :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
                                @change="checkGroupId(form.assignment_group_id)"
                 />
-                <has-error :form="form" field="assignment_group_id"/>
+                <has-error :form="form" field="assignment_group_id" />
               </b-col>
 
               <b-modal id="modal-number-of-allowed-attempts-penalty-warning"
@@ -477,7 +477,7 @@
                 ref="modal"
                 title="Create Assignment Group"
               >
-                <RequiredText/>
+                <RequiredText />
                 <b-form-row>
                   <b-form-group
                     label-cols-sm="5"
@@ -494,7 +494,7 @@
                       :class="{ 'is-invalid': assignmentGroupForm.errors.has('assignment_group') }"
                       @keydown="assignmentGroupForm.errors.clear('assignment_group')"
                     />
-                    <has-error :form="assignmentGroupForm" field="assignment_group"/>
+                    <has-error :form="assignmentGroupForm" field="assignment_group" />
                   </b-form-group>
                 </b-form-row>
                 <template #modal-footer>
@@ -536,7 +536,7 @@
             >
               <b-form-radio name="source" value="a">
                 Internal
-                <QuestionCircleTooltip :id="'internal'"/>
+                <QuestionCircleTooltip :id="'internal'" />
                 <b-tooltip target="internal"
                            delay="250"
                            triggers="hover focus"
@@ -547,7 +547,7 @@
 
               <b-form-radio name="source" value="x">
                 External
-                <QuestionCircleTooltip :id="'external'"/>
+                <QuestionCircleTooltip :id="'external'" />
                 <b-tooltip target="external"
                            delay="250"
                            triggers="hover focus"
@@ -582,7 +582,7 @@
                                     required
                 >
               <span @click="form.number_of_allowed_attempts=1">
-                <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'"/>
+                <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'" />
                   <b-tooltip target="performance"
                              delay="250"
                              triggers="hover focus"
@@ -592,7 +592,7 @@
               </span>
                   <span @click="canSwitchToCompleteIncomplete">
                 <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
-                  <b-form-radio value="c">Completion <QuestionCircleTooltip :id="'completion'"/>
+                  <b-form-radio value="c">Completion <QuestionCircleTooltip :id="'completion'" />
                     <b-tooltip target="completion"
                                delay="250"
                                triggers="hover focus"
@@ -1511,7 +1511,7 @@
         >
           <template v-slot:label>
             Random sampling*
-            <QuestionCircleTooltip :id="'random-sampling-tooltip'"/>
+            <QuestionCircleTooltip :id="'random-sampling-tooltip'" />
             <b-tooltip target="random-sampling-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -1543,7 +1543,7 @@
         >
           <template v-slot:label>
             Number of randomized assessments*
-            <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'"/>
+            <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'" />
             <b-tooltip target="number_of_randomized_assessments_tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -1562,7 +1562,7 @@
                 :class="{ 'is-invalid': form.errors.has('number_of_randomized_assessments') }"
                 @keydown="form.errors.clear('number_of_randomized_assessments')"
               />
-              <has-error :form="form" field="number_of_randomized_assessments"/>
+              <has-error :form="form" field="number_of_randomized_assessments" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -1968,7 +1968,7 @@
             <b-button variant="outline-primary" size="sm" @click="addAssignTo">
               Add Assign to
             </b-button>
-            <QuestionCircleTooltip :id="'add_assign_to_tooltip'"/>
+            <QuestionCircleTooltip :id="'add_assign_to_tooltip'" />
             <b-tooltip target="add_assign_to_tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -1992,6 +1992,7 @@
                      @updateShowHideRelease="updateShowHideRelease"
         />
       </div>
+
     </b-form>
   </div>
 </template>
@@ -2131,9 +2132,17 @@ export default {
     showNoAssignmentsAlert: false,
     assignToGroups: []
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    assignTosWithGroups () {
+      return this.form.assign_tos.filter(item => item.groups.length > 0)
+    },
+    assignTosSnapshot () {
+      return this.form.assign_tos.map(i => JSON.stringify(i))
+    }
+  },
   watch: {
     'form.source': {
       async handler (newValue, oldValue) {
@@ -2211,7 +2220,7 @@ export default {
     if (this.courseId) {
       await this.getAssignToGroups()
     }
-    this.fixDatePickerAccessibilitysForAssignTos()
+    this.fixDatePickerAccessibilityForDates()
   },
   methods: {
     isLocked,
@@ -2322,7 +2331,7 @@ export default {
     handleFixCKEditor () {
       fixCKEditor(this)
     },
-    fixDatePickerAccessibilitysForAssignTos () {
+    fixDatePickerAccessibilityForDates () {
       for (let i = 0; i < this.form.assign_tos.length; i++) {
         fixDatePicker(`available_from_${i}`, `selected_available_from_${i}`)
         fixDatePicker(`due_date_${i}`, `selected_due_date_${i}`)
@@ -2420,8 +2429,27 @@ export default {
       let newAssignTo = this.defaultAssignTos(this.$moment, this.courseStartDate, this.courseEndDate)
       this.form.assign_tos.push(newAssignTo)
       this.$nextTick(() => {
-        this.fixDatePickerAccessibilitysForAssignTos()
+        this.fixDatePickerAccessibilityForDates()
       })
+    },
+    initDraftAssignTos (index) {
+      // START: if the draft assign_to has no groups yet (or maybe if it's the same, then initialize it)
+      // Then for a given assign_to if the dates are changed, update that index (first and last)
+
+      //if (updateDrafts && this.form.drafts[index].assign_tos && !this.form.drafts.assign_tos[assignToIndex]) {
+        /* alert(assignToIndex)
+        const newAssignTo = newAssignTos[newAssignTos.length - 1]
+        for (let i = 0; i < this.form.drafts.length; i++) {
+          const draftAssignedToGroup = {
+            groups: newAssignTo.groups,
+            available_from_date: i === 0 ? moment(newAssignTo.available_from_date).format('YYYY-MM-DD') : '',
+            available_from_time: i === 0 ? newAssignTo.available_from_time : '',
+            due_date: i === this.form.drafts.length - 1 ? moment(newAssignTo.due_date).format('YYYY-MM-DD') : '',
+            due_time: i === this.form.drafts.length - 1 ? newAssignTo.due_time : ''
+          }
+          this.form.drafts[i].assign_tos.push(draftAssignedToGroup)
+        }
+      }*/
     },
     updateAssignTos (assignTo) {
       if (assignTo.selectedGroup.hasOwnProperty('user_id')) {
@@ -2519,6 +2547,7 @@ export default {
           this.form.notifications = 0
           this.form.can_view_hint = 0
           this.form.number_of_allowed_attempts = '1'
+          break
       }
     },
     checkSourceAndLatePolicy () {

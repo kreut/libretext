@@ -8,18 +8,20 @@ use App\DiscussionComment;
 use App\DiscussionGroup;
 use App\Enrollment;
 use App\Exceptions\Handler;
+use App\ForgeAssignmentQuestion;
+use App\ForgeSettings;
 use App\Helpers\Helper;
 use App\Http\Requests\CustomTimeToSubmitRequest;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateAssignmentQuestionWeightRequest;
 use App\Http\Requests\UpdateCompletionScoringModeRequest;
 use App\Http\Requests\UpdateDiscussItSettingsRequest;
+use App\Http\Requests\UpdateForgeSettings;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\IMathAS;
 use App\JWE;
 use App\LearningTree;
 use App\PendingQuestionRevision;
-use App\QuestionRevision;
 use App\RandomizedAssignmentQuestion;
 use App\ReportToggle;
 use App\RubricPointsBreakdown;
@@ -50,6 +52,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -59,13 +62,486 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
-use PhpParser\Node\Expr\Assign;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 
 class AssignmentSyncQuestionController extends Controller
 {
+    use DateFormatter;
+
+    /**
+     * Get the submission count for a forge draft from the 3rd party API
+     *
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     */
+    public function getForgeDraftSubmissions(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('getForgeDraftSubmissions', [$assignmentSyncQuestion, $assignment, $question]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            // Get the draft UUID from forge_settings
+            $assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->forge_source_id)
+                ->first();
+
+            if (!$assignment_question || !$assignment_question->forge_settings) {
+                $response['message'] = 'Forge settings not found.';
+                return $response;
+            }
+
+            $forge_settings = json_decode($assignment_question->forge_settings, true);
+            $drafts = $forge_settings['drafts'] ?? [];
+
+            // Find the draft with this question_id
+            $draft_uuid = null;
+            foreach ($drafts as $draft) {
+                if (isset($draft['question_id']) && $draft['question_id'] === $question->id) {
+                    $draft_uuid = $draft['uuid'];
+                    break;
+                }
+            }
+
+            if (!$draft_uuid) {
+                $response['message'] = 'Draft not found.';
+                return $response;
+            }
+
+            $api_url = config('services.antecedent.url') . "/api/adapt/draft/$draft_uuid/submissions";
+
+            $secret = DB::table('key_secrets')
+                ->where('key', 'forge')
+                ->first()
+                ->secret;
+            $api_response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => "Bearer $secret",
+            ])->get($api_url);
+
+            if (!$api_response->successful()) {
+                $response['message'] = 'Failed to retrieve submission count from external service.';
+                return $response;
+            }
+
+            $api_data = $api_response->json();
+            $response['type'] = 'success';
+            $response['submission_count'] = $api_data['data']['submissionCount'] ?? 0;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'There was an error checking for submissions. Please try again or contact us for assistance.';
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param UpdateForgeSettings $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param ForgeSettings $forgeSettings
+     * @return array
+     * @throws Exception
+     */
+    public function updateForgeSettings(
+        UpdateForgeSettings    $request,
+        Assignment             $assignment,
+        Question               $question,
+        AssignmentSyncQuestion $assignmentSyncQuestion,
+        ForgeSettings          $forgeSettings
+    ): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateForgeSettings', [$assignmentSyncQuestion, $assignment, $question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $data = $request->all();
+            $user_timezone = Auth::user()->time_zone;
+            $user_id = Auth::user()->id;
+
+            // Get the current order of the main forge question
+            $main_assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+
+            if (!$main_assignment_question) {
+                $response['message'] = "The main forge question is not associated with this assignment.";
+                return $response;
+            }
+
+            $main_question_points = $main_assignment_question->points;
+
+            // Get existing draft question IDs from current forge_settings
+            $existing_forge_settings = json_decode($main_assignment_question->forge_settings, true);
+            $existing_draft_question_ids = [];
+            if ($existing_forge_settings && isset($existing_forge_settings['drafts'])) {
+                foreach ($existing_forge_settings['drafts'] as $existing_draft) {
+                    if (!$existing_draft['isFinal'] && isset($existing_draft['question_id'])) {
+                        $existing_draft_question_ids[$existing_draft['uuid']] = $existing_draft['question_id'];
+                    }
+                }
+            }
+
+            // Build clean drafts array with only necessary fields, converting to UTC
+            $clean_drafts = [];
+            $draft_number = 1;
+            $new_draft_question_ids = []; // Track which draft question IDs are still in use
+
+            DB::beginTransaction();
+            if (isset($data['drafts']) && is_array($data['drafts'])) {
+                foreach ($data['drafts'] as $index => $draft) {
+                    // Auto-generate title if empty
+                    $title = trim($draft['title'] ?? '');
+                    if (empty($title)) {
+                        if ($draft['isFinal']) {
+                            $title = 'Final Submission';
+                        } else {
+                            $title = 'Draft ' . $draft_number;
+                            $draft_number++;
+                        }
+                    } else {
+                        if (!$draft['isFinal']) {
+                            $draft_number++;
+                        }
+                    }
+                    $clean_draft = [
+                        'uuid' => $draft['uuid'],
+                        'late_policy' => $draft['late_policy'],
+                        'title' => $title,
+                        'isFinal' => $draft['isFinal'],
+                        'assign_tos' => []
+                    ];
+
+                    if (isset($draft['assign_tos']) && is_array($draft['assign_tos'])) {
+                        foreach ($draft['assign_tos'] as $assign_to) {
+                            $clean_assign_to = [
+                                'groups' => $assign_to['groups'] ?? []
+                            ];
+
+                            // Convert available_from to UTC timestamp
+                            if (!empty($assign_to['available_from_date']) && !empty($assign_to['available_from_time'])) {
+                                $local_datetime = $assign_to['available_from_date'] . ' ' . $assign_to['available_from_time'];
+                                $clean_assign_to['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $user_timezone);
+                            }
+
+                            // Convert due to UTC timestamp
+                            if (!empty($assign_to['due_date']) && !empty($assign_to['due_time'])) {
+                                $local_datetime = $assign_to['due_date'] . ' ' . $assign_to['due_time'];
+                                $clean_assign_to['due'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $user_timezone);
+                            }
+
+                            $clean_draft['assign_tos'][] = $clean_assign_to;
+                        }
+                    }
+
+                    // Handle draft questions (non-final)
+                    if (!$draft['isFinal']) {
+                        $draft_question_id = null;
+
+                        // Build qti_json for the draft, based on parent's qti_json but with forge_iteration type
+                        $parent_qti_json = json_decode($question->qti_json, true);
+                        $draft_qti_json = null;
+                        if ($parent_qti_json) {
+                            $parent_qti_json['questionType'] = 'forge_iteration';
+                            $draft_qti_json = json_encode($parent_qti_json);
+                        }
+
+                        // Check if this draft already has a question
+                        if (isset($existing_draft_question_ids[$draft['uuid']])) {
+                            $draft_question_id = $existing_draft_question_ids[$draft['uuid']];
+
+                            // Update existing question title and qti_json if changed
+                            $update_data = ['title' => $title];
+                            if ($draft_qti_json) {
+                                $update_data['qti_json'] = $draft_qti_json;
+                            }
+                            Question::where('id', $draft_question_id)
+                                ->update($update_data);
+                        } else {
+                            // Create new question for this draft
+                            $draft_question = Question::create([
+                                'qti_json_type' => 'forge_iteration',
+                                'qti_json' => $draft_qti_json,
+                                'forge_source_id' => $question->id,
+                                'title' => $title,
+                                'library' => 'adapt',
+                                'technology' => 'qti',
+                                'technology_iframe' => '',
+                                'rubric' => $question->rubric,
+                                'question_editor_user_id' => $user_id,
+                                'page_id' => 0, // Will be updated below
+                                'public' => 0,
+                            ]);
+                            $draft_question->page_id = $draft_question->id;
+                            $draft_question->save();
+
+                            $draft_question_id = $draft_question->id;
+                        }
+
+                        $clean_draft['question_id'] = $draft_question_id;
+                        $new_draft_question_ids[] = $draft_question_id;
+                    } else {
+                        $assignment_question = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
+                            ->where('question_id', $question->id)
+                            ->first();
+                        DB::table('assignment_question_forge_draft')
+                            ->where('assignment_question_id', $assignment_question->id)
+                            ->delete();
+                        DB::table("assignment_question_forge_draft")->insert([
+                            'assignment_question_id' => $assignment_question->id,
+                            'forge_draft_id' => $draft['uuid'],
+                            'created_at' => now(),
+                            'updated_at' => now()]);
+                    }
+
+                    $clean_drafts[] = $clean_draft;
+                }
+            }
+
+            // Find draft questions that were removed and should be deleted
+            $removed_draft_question_ids = array_diff(
+                array_values($existing_draft_question_ids),
+                $new_draft_question_ids
+            );
+
+            // TODO: For now, just log removed drafts - implement actual deletion later
+            if (!empty($removed_draft_question_ids)) {
+                // Remove from assignment_question
+                DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->whereIn('question_id', $removed_draft_question_ids)
+                    ->delete();
+
+                // TODO: Delete the actual questions and handle any related data
+                // For now, we'll leave the questions in the database
+                // Question::whereIn('id', $removed_draft_question_ids)->delete();
+            }
+
+            // Update assignment_question order and add new draft questions
+            // First, shift all questions after the main forge question to make room for drafts
+
+
+            // Get all questions in this assignment ordered
+            $assignment_questions = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->orderBy('order')
+                ->get();
+
+            // Recalculate orders: drafts go right before the main forge question
+            $new_order = 1;
+            $draft_index = 0;
+
+            foreach ($assignment_questions as $aq) {
+                // When we reach the main forge question, insert drafts before it
+                if ($aq->question_id == $question->id) {
+                    // Add/update draft questions before the main question
+                    foreach ($clean_drafts as &$clean_draft) {
+                        if (!$clean_draft['isFinal'] && isset($clean_draft['question_id'])) {
+                            $existing_aq = DB::table('assignment_question')
+                                ->where('assignment_id', $assignment->id)
+                                ->where('question_id', $clean_draft['question_id'])
+                                ->first();
+                            if ($existing_aq) {
+                                // Update order
+                                DB::table('assignment_question')
+                                    ->where('id', $existing_aq->id)
+                                    ->update(['order' => $new_order]);
+                                if (!DB::table('assignment_question_forge_draft')
+                                    ->where('assignment_question_id', $existing_aq->id)
+                                    ->first()) {
+                                    DB::table('assignment_question_forge_draft')
+                                        ->insert(['assignment_question_id' => $existing_aq->id,
+                                            'forge_draft_id' => $clean_draft['uuid'],
+                                            'created_at' => now(),
+                                            'updated_at' => now()]);
+                                }
+                            } else {
+
+                                // Insert new assignment_question
+                                $assignment_question_id = DB::table('assignment_question')->insertGetId([
+                                    'assignment_id' => $assignment->id,
+                                    'question_id' => $clean_draft['question_id'],
+                                    'order' => $new_order,
+                                    'weight' => $assignment->points_per_question === 'question weight' ? 1 : null,
+                                    'points' => $main_question_points,
+                                    'open_ended_submission_type' => '0',
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                                DB::table('assignment_question_forge_draft')->insert([
+                                    'assignment_question_id' => $assignment_question_id,
+                                    'forge_draft_id' => $clean_draft['uuid'],
+                                    'created_at' => now(),
+                                    'updated_at' => now()]);
+                            }
+                            $new_order++;
+                        }
+                    }
+                    unset($clean_draft); // Break reference
+
+                    // Now set the main forge question order
+                    DB::table('assignment_question')
+                        ->where('id', $aq->id)
+                        ->update(['order' => $new_order]);
+                    $new_order++;
+                } else {
+                    // Skip draft questions we already handled
+                    if (in_array($aq->question_id, $new_draft_question_ids)) {
+                        continue;
+                    }
+                    // Update order for other questions
+                    DB::table('assignment_question')
+                        ->where('id', $aq->id)
+                        ->update(['order' => $new_order]);
+                    $new_order++;
+                }
+            }
+
+            $forge_settings = [
+                'drafts' => $clean_drafts,
+                'settings' => $data['settings'] ?? []
+            ];
+
+            $data_to_post_to_forge = $forge_settings;
+            foreach ($data_to_post_to_forge['drafts'] as &$draft) {
+                unset($draft['assign_tos']);
+            }
+            unset($draft); // Break reference
+
+            $forge_assignment_question = ForgeAssignmentQuestion::where('adapt_assignment_id', $assignment->id)
+                ->where('adapt_question_id', $question->id)
+                ->first();
+
+            if (!$forge_assignment_question) {
+                $response['message'] = "There is no associated Forge assignment question.";
+                DB::rollBack();
+                return $response;
+            }
+            $data_to_post_to_forge['forge_question_id'] = $forge_assignment_question->forge_question_id;
+            $data_to_post_to_forge['forge_class_id'] = $forge_assignment_question->forge_class_id;
+            $forge_response = $forgeSettings->store($data_to_post_to_forge);
+            if ($forge_response['type'] === 'error') {
+                throw new Exception($forge_response['message']);
+            }
+
+            // Store forge_settings only on the Final Submission (main forge question)
+            DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['forge_settings' => json_encode($forge_settings)]);
+            $assignmentSyncQuestion->updatePointsBasedOnWeights($assignment);
+            DB::commit();
+
+            $response['type'] = 'success';
+            $response['message'] = 'The Forge settings have been updated.';
+            $response['drafts'] = $clean_drafts; // Return drafts with question_ids
+        } catch (Exception $e) {
+            DB::rollBack();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the Forge settings: {$e->getMessage()}";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function getForgeSettings(
+        Request                $request,
+        Assignment             $assignment,
+        Question               $question,
+        AssignmentSyncQuestion $assignmentSyncQuestion
+    ): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('getForgeSettings', [$assignmentSyncQuestion, $assignment, $question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $user_timezone = Auth::user()->time_zone;
+
+            // Get assignment's assign_tos (same as assignment summary)
+            $assign_tos = $assignment->assignToGroups();
+
+            foreach ($assign_tos as $key => $assign_to) {
+                $available_from = $assign_to['available_from'];
+                $due = $assign_to['due'];
+                $assign_tos[$key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, $user_timezone);
+                $assign_tos[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, $user_timezone);
+                $assign_tos[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, $user_timezone);
+                $assign_tos[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, $user_timezone);
+            }
+
+            // Get existing forge settings from assignment_question table
+            $assignment_question = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+
+            $drafts = [];
+            $settings = [];
+
+            if ($assignment_question && $assignment_question->forge_settings) {
+                $forge_settings = json_decode($assignment_question->forge_settings, true);
+                $drafts = $forge_settings['drafts'] ?? [];
+                $settings = $forge_settings['settings'] ?? [];
+
+                // Convert draft timestamps from UTC to local date/time fields
+                foreach ($drafts as $draft_index => $draft) {
+                    if (isset($draft['assign_tos']) && is_array($draft['assign_tos'])) {
+                        foreach ($draft['assign_tos'] as $assign_to_index => $assign_to) {
+                            // Convert available_from UTC timestamp to local date/time
+                            if (!empty($assign_to['available_from'])) {
+                                $drafts[$draft_index]['assign_tos'][$assign_to_index]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($assign_to['available_from'], $user_timezone);
+                                $drafts[$draft_index]['assign_tos'][$assign_to_index]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($assign_to['available_from'], $user_timezone);
+                            }
+
+                            // Convert due UTC timestamp to local date/time
+                            if (!empty($assign_to['due'])) {
+                                $drafts[$draft_index]['assign_tos'][$assign_to_index]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($assign_to['due'], $user_timezone);
+                                $drafts[$draft_index]['assign_tos'][$assign_to_index]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($assign_to['due'], $user_timezone);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $response['type'] = 'success';
+            $response['assign_tos'] = $assign_tos;
+            $response['drafts'] = $drafts;
+            $response['settings'] = $settings;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the Forge settings. Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
      * @param Assignment $assignment
@@ -1716,6 +2192,7 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.library',
                     'questions.qti_json',
                     'questions.qti_json_type',
+                    'questions.forge_source_id',
                     'questions.question_editor_user_id',
                     'questions.answer_html',
                     'questions.solution_html',
@@ -1758,6 +2235,14 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $columns['submission'] = Helper::getSubmissionType($value);
+
+                // Format forge submission types
+                if ($value->qti_json_type === 'forge') {
+                    $columns['submission'] = 'forge (final)';
+                } elseif ($value->qti_json_type === 'forge_iteration') {
+                    $columns['submission'] = 'forge (draft)';
+                }
+
                 $columns['license'] = $value->license;
                 $columns['public'] = $value->public;
                 $columns['pending_question_revision'] = isset($pending_question_revisions[$value->question_id]);
@@ -1783,6 +2268,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['solution'] = $uploaded_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
                 $columns['qti_json'] = $value->qti_json;
                 $columns['qti_json_type'] = $value->qti_json_type;
+                $columns['forge_source_id'] = $value->forge_source_id;
                 $columns['h5p_non_adapt'] = $h5p_non_adapts_by_question_id[$value->question_id] ?? null;
                 $columns['imathas_solution'] = $IMathAS->solutionExists($value);
                 $columns['solution_file_url'] = $uploaded_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
@@ -1835,7 +2321,11 @@ class AssignmentSyncQuestionController extends Controller
                 if ($value->technology === 'h5p') {
                     $h5p_questions_exists = true;
                 }
-                $columns['assignment_id_question_id'] = "{$assignment->id}-{$value->question_id}";
+
+                // For forge_iteration (draft) questions, use the forge_source_id for the ADAPT ID
+                $question_id_for_adapt_id = $value->forge_source_id ?? $value->question_id;
+                $columns['assignment_id_question_id'] = "{$assignment->id}-{$question_id_for_adapt_id}";
+
                 $columns['library'] = $value->library;
                 $columns['question_editor_user_id'] = $value->question_editor_user_id;
                 $columns['mindtouch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
@@ -2327,9 +2817,47 @@ class AssignmentSyncQuestionController extends Controller
             DB::table('assignment_question_learning_tree')
                 ->where('assignment_question_id', $assignment_question_id)
                 ->delete();
+            if ($question->forge_source_id) {
+                $assignment_question = DB::table('assignment_question')->where('question_id', $question->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->first();
+                $assignment_question_id = $assignment_question->id;
+                $assignment_question_forge_draft = DB::table('assignment_question_forge_draft')
+                    ->where('assignment_question_id', $assignment_question_id)
+                    ->first();
+
+                $parent_question = Question::find($question->forge_source_id);
+                $parent_assignment_question = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
+                    ->where('question_id', $parent_question->id)
+                    ->first();
+                $forgeSettings = json_decode($parent_assignment_question->forge_settings, true);
+                $forgeSettings['drafts'] = array_values(
+                    array_filter($forgeSettings['drafts'], function ($draft) use ($assignment_question_forge_draft) {
+                        return $draft['uuid'] !== $assignment_question_forge_draft->forge_draft_id;
+                    })
+                );
+                $parent_assignment_question->forge_settings = json_encode($forgeSettings);
+                $parent_assignment_question->save();
+                DB::table('assignment_question_forge_draft')
+                    ->where('assignment_question_id', $assignment_question_id)
+                    ->delete();
+            } else {
+                if ($question->qti_json_type === 'forge') {
+                    $parent_assignment_question = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
+                        ->where('question_id', $question->id)
+                        ->first();
+                    DB::table('assignment_question_forge_draft')
+                        ->where('assignment_question_id', $assignment_question_id)
+                        ->delete();
+                    ForgeAssignmentQuestion::where('adapt_assignment_id', $assignment->id)
+                        ->where('adapt_question_id', $question->id)
+                        ->delete();
+                }
+            }
             DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
                 ->delete();
+
             DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->delete();
@@ -3009,8 +3537,8 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->can_submit_work &&
                     isset($assignment_questions_by_question_id[$question->id]->can_submit_work_override) &&
                     $assignment_questions_by_question_id[$question->id]->can_submit_work_override !== null
-                    ? $assignment_questions_by_question_id[$question->id]->can_submit_work_override
-                    : $assignment->can_submit_work;
+                        ? $assignment_questions_by_question_id[$question->id]->can_submit_work_override
+                        : $assignment->can_submit_work;
                 $assignment->questions[$key]['question_revision_id'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->id : null;
                 $assignment->questions[$key]['question_revision_number'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->revision_number : null;
                 $assignment->questions[$key]['question_revision_id_latest'] = $latest_question_revisions_by_question_id[$question->id] ?? null;

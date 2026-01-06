@@ -125,7 +125,28 @@ class SubmissionFilePolicy
         return $assignment->course->enrollments->contains('user_id', $student_user_id) && ((int)$assignment->course->user_id === $instructor_user_id);
     }
 
-    public function storeGrading(User $user, SubmissionFile $submissionFile, User $student_user, Assignment $assignment)
+    /**
+     * @param User $user
+     * @param SubmissionFile $submissionFile
+     * @return Response
+     */
+    public function allowResubmission(User $user, SubmissionFile $submissionFile): Response
+    {
+        $assignment = Assignment::find($submissionFile->assignment_id);
+        return $this->canProvideFeedback($assignment, $submissionFile->user_id, $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to allow a resubmission for this student.');
+
+    }
+
+    /**
+     * @param User $user
+     * @param SubmissionFile $submissionFile
+     * @param User $student_user
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function storeGrading(User $user, SubmissionFile $submissionFile, User $student_user, Assignment $assignment): Response
     {
 
         return $this->canProvideFeedback($assignment, $student_user->id, $user->id)

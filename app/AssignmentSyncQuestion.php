@@ -526,7 +526,7 @@ class AssignmentSyncQuestion extends Model
         $question_revision_id = Question::find($question_id)->latestQuestionRevision('id');
         $question = Question::find($question_id);
         DB::table('assignment_question')
-            ->insert([
+            ->insertGetId([
                 'assignment_id' => $assignment->id,
                 'question_id' => $question_id,
                 'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
@@ -778,7 +778,6 @@ class AssignmentSyncQuestion extends Model
             ->where('assignment_id', $from_assignment_id)
             ->get();
         $from_assignment = Assignment::find($from_assignment_id);
-        Log::info($remove_open_ended_questions_in_real_time_assignment);
         if ($from_assignment->assessment_type === 'real time' && $remove_open_ended_questions_in_real_time_assignment) {
             foreach ($assignment_questions as $key => $assignment_question) {
                 if ($assignment_question->open_ended_submission_type !== '0') {
@@ -790,10 +789,16 @@ class AssignmentSyncQuestion extends Model
         foreach ($assignment_questions as $assignment_question) {
             $question_ids[] = $assignment_question->question_id;
         }
+        $draft_question_ids = Question::whereIn('id', $question_ids)->whereNotNull('forge_source_id')->pluck('id')->toArray();
+
         $question_revision_ids_by_question_ids = $this->getLatestQuestionRevisionsByAssignment($question_ids);
         foreach ($assignment_questions as $assignment_question) {
+            if (in_array($assignment_question->question_id, $draft_question_ids)) {
+                continue;
+            }
             $assignment_question->assignment_id = $to_assignment_id;
             $assignment_question->question_revision_id = $question_revision_ids_by_question_ids[$assignment_question->question_id] ?? null;
+            $assignment_question->forge_settings = null;
             $assignment_question->clicker_start = null;
             $assignment_question->clicker_end = null;
             if ($assignment_question->discuss_it_settings) {

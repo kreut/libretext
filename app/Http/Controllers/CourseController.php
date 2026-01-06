@@ -19,7 +19,6 @@ use App\Course;
 use App\CourseOrder;
 use App\Custom\LTIDatabase;
 use App\Discussion;
-use App\DiscussionComment;
 use App\Enrollment;
 use App\Exceptions\Handler;
 use App\FinalGrade;
@@ -33,10 +32,7 @@ use App\Jobs\DeleteAssignmentDirectoryFromS3;
 use App\Jobs\ProcessImportCourse;
 use App\Jobs\ProcessResetCourse;
 use App\LmsAPI;
-use App\LtiNamesAndRoles;
 use App\LtiNamesAndRolesUrl;
-use App\QuestionMediaUpload;
-use App\Rules\atLeastOneSelectChoice;
 use App\Section;
 use App\Traits\DateFormatter;
 use App\User;
@@ -2110,6 +2106,11 @@ class CourseController extends Controller
                 ->whereIn('assignment_question_id', $assignment_question_ids)
                 ->delete();
 
+            DB::table('assignment_question_forge_draft')
+                ->whereIn('assignment_question_id', $assignment_question_ids)
+                ->delete();
+
+
             $tables = ['assignment_question',
                 'submissions',
                 'submission_files',
@@ -2148,7 +2149,9 @@ class CourseController extends Controller
             foreach ($tables as $table) {
                 DB::table($table)->whereIn('assignment_id', $assignment_ids)->delete();
             }
-
+            DB::table('forge_assignment_questions')
+                ->whereIn('adapt_assignment_id', $assignment_ids)
+                ->delete();
 
             $assign_to_timing_ids = AssignToTiming::whereIn('assignment_id', $assignment_ids)->get()->pluck('id')->toArray();
 

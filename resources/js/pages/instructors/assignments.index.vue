@@ -2272,8 +2272,8 @@ What assignment parameters??? */
           : await this.form.patch(`/api/assignments/${this.assignmentId}`)
         let timeout = data.timeout ? data.timeout : 4000
         this.$noty[data.type](data.message, { timeout: timeout })
+        this.savingAssignment = false
         if (data.type === 'success') {
-          this.savingAssignment = false
           this.$bvModal.hide('modal-assignment-properties')
           await this.getAssignments()
         }
