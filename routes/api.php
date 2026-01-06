@@ -23,7 +23,13 @@ Route::get('/lti/public-key/{lms}', 'LTIController@publicKey');
 Route::get('/php-info', 'QuestionMediaController@phpInfo');
 Route::get('/generate-jwk', 'LTIController@generateJWK');
 Route::get('/courses/commons-courses-and-assignments-by-course', 'CourseController@getCommonsCoursesAndAssignmentsByCourse');
+Route::get('/forge/assign-tos/forge-question-id/{forge_question_id}/user/{central_identity_id}', 'ForgeController@getAssignTosByAssignmentQuestionUser');
+Route::get('/forge/assign-tos/forge-draft-id/{forge_draft_id}/user/{central_identity_id}', 'ForgeController@getAssignTosByForgeDraftIdUser');
+Route::post('/forge/submissions/forge-draft-id/{forge_draft_id}/user/{central_identity_id}', 'ForgeController@storeSubmission');
 
+
+Route::get('/forge/user/{central_identity_id}', 'ForgeController@user');
+Route::get('/forge/course/{course}', 'ForgeController@course');
 Route::get('/auto-provision', 'OIDCController@autoProvision');
 Route::post('/question-media/init-transcribe', 'QuestionMediaController@initTranscribe');
 Route::post('/discussion-comment/convert-to-mp4', 'DiscussionCommentController@initConvertToMp4');
@@ -139,6 +145,13 @@ Route::get('/users/auto-login', 'Auth\UserController@autoLogin');
 Route::get('/courses/mini-summary', 'CourseController@showMiniSummary');
 
 Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], function () {
+
+    Route::post('/forge/assignment/{assignment}/question/{question}/initialize', 'ForgeController@initialize');
+    Route::get('/forge/assignments/{assignment}/questions/{parent_question}/current-question/{current_question}', 'ForgeController@getAssignTosByAssignmentQuestionLoggedInUser');
+    Route::post('/forge/submissions/assignment/{assignment}/question/{question}/student/{student}/allow-resubmission', 'ForgeController@allowResubmission');
+
+    Route::get('/forge/submissions/assignment/{assignment}/question/{question}/student/{student}', 'ForgeController@getSubmissionByAssignmentQuestionStudent');
+
 
     Route::get('/updated-information-first-application/{assignment}', 'UpdatedInformationFirstApplicationController@index');
     Route::patch('/updated-information-first-application', 'UpdatedInformationFirstApplicationController@update');
@@ -622,6 +635,11 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
     Route::get('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@getDiscussItSettings');
     Route::patch('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@updateDiscussItSettings');
+    Route::get('/assignments/{assignment}/question/{question}/forge-settings', 'AssignmentSyncQuestionController@getForgeSettings');
+    Route::patch('/assignments/{assignment}/question/{question}/forge-settings', 'AssignmentSyncQuestionController@updateForgeSettings');
+    Route::get('/assignments/{assignment}/questions/{question}/forge-draft-submissions', 'AssignmentSyncQuestionController@getForgeDraftSubmissions');
+    Route::delete('/assignments/{assignment}/questions/{question}/forge-draft', 'AssignmentSyncQuestionController@destroyForgeDraft');
+
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::get('/questions/{question}/assignment-status', 'QuestionController@getAssignmentStatus');
     Route::get('/questions/{question}/question-revision/{questionRevisionId}/rubric-categories', 'QuestionController@getRubricCategories');
@@ -825,7 +843,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::delete('/enrollments/{section}/{user}', 'EnrollmentController@destroy');
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 
-    Route::get('/submissions/can-submit/assignment/{assignment}/question/{question}', 'SubmissionController@canSubmit');
+    Route::get('/submissions/can-submit/assignment/{assignment}/question/{question}/is-forge/{is_forge}', 'SubmissionController@canSubmit');
     Route::post('/submissions/submission-array/assignment/{assignment}/question/{question}', 'SubmissionController@submissionArray');
     Route::get('/submissions/exists-in-current-owner-course-by-question/{question}', 'SubmissionController@submissionExistsInCurrentCourseByOwnerAndQuestion');
     Route::post('/submission-history/assignment/{assignment}/question/{question}', 'SubmissionHistoryController@getByAssignmentAndQuestion');

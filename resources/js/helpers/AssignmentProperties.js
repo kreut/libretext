@@ -106,16 +106,17 @@ export function prepareForm (form) {
   let assignTos = JSON.parse(JSON.stringify(form.assign_tos))
   this.$forceUpdate()
   for (let i = 0; i < form.assign_tos.length; i++) {
-    form[`groups_${i}`] = assignTos[i].groups
-    form[`available_from_date_${i}`] = assignTos[i].available_from_date
-    form[`available_from_time_${i}`] = assignTos[i].available_from_time
-    form[`available_from_${i}`] = assignTos[i].available_from_date + ' ' + assignTos[i].available_from_time
-    form[`final_submission_deadline_date_${i}`] = assignTos[i].final_submission_deadline_date
-    form[`final_submission_deadline_time_${i}`] = assignTos[i].final_submission_deadline_time
-    form[`final_submission_deadline_${i}`] = assignTos[i].final_submission_deadline_date + ' ' + assignTos[i].final_submission_deadline_time
-    form[`due_date_${i}`] = assignTos[i].due_date
-    form[`due_time_${i}`] = assignTos[i].due_time
-    form[`due_${i}`] = assignTos[i].due_date + ' ' + assignTos[i].due_time
+    const assignTo = assignTos[i]
+    form[`groups_${i}`] = assignTo.groups
+    form[`available_from_date_${i}`] = assignTo.available_from_date
+    form[`available_from_time_${i}`] = assignTo.available_from_time
+    form[`available_from_${i}`] = assignTo.available_from_date + ' ' + assignTo.available_from_time
+    form[`final_submission_deadline_date_${i}`] = assignTo.final_submission_deadline_date
+    form[`final_submission_deadline_time_${i}`] = assignTo.final_submission_deadline_time
+    form[`final_submission_deadline_${i}`] = assignTo.final_submission_deadline_date + ' ' + assignTo.final_submission_deadline_time
+    form[`due_date_${i}`] = assignTo.due_date
+    form[`due_time_${i}`] = assignTo.due_time
+    form[`due_${i}`] = assignTo.due_date + ' ' + assignTo.due_time
   }
 }
 

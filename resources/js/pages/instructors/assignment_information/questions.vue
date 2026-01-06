@@ -510,11 +510,17 @@
               />
             </td>
             <td v-if="user.role === 2">
+
               <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
                          delay="500"
                          triggers="hover focus"
               >
-                Edit question source
+  <span v-if="item.forge_source_id">
+    Edit the main Forge question ({{ item.forge_source_id }}). To edit draft-specific settings (title, due dates), you can do so at the usage level.
+  </span>
+                <span v-else>
+    Edit question source
+  </span>
               </b-tooltip>
               <span v-if="assessmentType === 'learning tree'">
                   <b-tooltip :target="getTooltipTarget('learningTreeProperties',item.learning_tree_id)"
@@ -568,7 +574,9 @@
               <CloneQuestion
                 v-if="assessmentType !== 'learning tree'"
                 :key="`copy-question-${item.question_id}`"
-                :question-id="item.question_id"
+                :question-id="item.forge_source_id || item.question_id"
+                :is-forge-draft="!!item.forge_source_id"
+                :element-id="item.question_id"
                 :question-editor-user-id="item.question_editor_user_id"
                 :title="item.title"
                 :license="item.license"
@@ -582,12 +590,22 @@
                          delay="500"
                          triggers="hover focus"
               >
-                Remove the {{ assessmentType === 'learning tree' ? 'learning tree' : 'question' }} from the assignment
+                <div v-if="['forge','forge_iteration'].includes(item.qti_json_type)">
+                <span v-if="item.forge_source_id">
+                 Drafts can be removed in the Forge Settings in the questions view
+                </span>
+                  <span v-else>
+                   {{ getRemoveForgeQuestionMessage(item) }}
+                  </span>
+                </div>
+                <div v-else>
+                  Remove the {{ assessmentType === 'learning tree' ? 'learning tree' : 'question' }} from the assignment
+                </div>
               </b-tooltip>
               <a :id="getTooltipTarget('remove',item.question_id)"
                  href=""
                  class="pr-1"
-                 @click.prevent="initRemoveQuestionFromAssignment(item.question_id)"
+                 @click.prevent="initRemoveQuestionFromAssignment(item)"
               >
                 <b-icon class="text-muted"
                         icon="trash"
@@ -754,6 +772,15 @@ export default {
     getTooltipTarget,
     isMobile,
     editQuestionSource,
+    getRemoveForgeQuestionMessage (question) {
+      return this.forgeDraftExists(question) ? 'Please first remove all drafts from the Forge Settings within the assignment.' : 'Remove question from assignment.'
+    },
+    forgeDraftExists (question) {
+      const parentForgeQuestionId = question.id
+      return this.items.filter(
+        question => question.forge_source_id === parentForgeQuestionId
+      ).length > 0
+    },
     uniqueId,
     async removeOpenEndedComponents () {
       for (let i = 0; i < this.openEndedComponentsToRemove.length; i++) {
@@ -834,7 +861,16 @@ export default {
       }
       this.$forceUpdate()
     },
-    initRemoveQuestionFromAssignment (questionId) {
+    initRemoveQuestionFromAssignment (question) {
+      if (this.forgeDraftExists(question)) {
+        this.$noty.info('Please first remove all drafts by opening the Forge Settings within the assignment.')
+        return
+      }
+      if (question.forge_source_id) {
+        this.$noty.info('You can delete this draft by opening up the Forge Settings in the questions view.')
+        return
+      }
+      const questionId = question.id
       this.submissionsExist && this.isQuestionWeight
         ? this.$noty.info('You cannot remove this question since there are already submissions and this assignment computes points using question weights.')
         : this.openRemoveQuestionModal(questionId)

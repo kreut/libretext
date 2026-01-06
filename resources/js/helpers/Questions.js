@@ -329,6 +329,12 @@ export function canEdit (isAdmin, user, question) {
 }
 
 export async function editQuestionSource (question) {
+
+
+  if (question.forge_source_id) {
+    question = { ...question, question_id: question.forge_source_id, id: question.forge_source_id }
+  }
+
   if (this.isBetaAssignment) {
     this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
     return false

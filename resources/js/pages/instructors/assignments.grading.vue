@@ -503,64 +503,63 @@
                         frameborder="0"
                       />
                     </div>
-                    <div v-if="grading[currentStudentPage - 1]['qti_json']">
-                      <div v-if="isDiscussIt">
-                        <div v-show="showDiscussIt">
-                          <ul v-show="discussItCompletionCriteria" style="list-style: none;">
-                            <li>
-                              <CompletedIcon
-                                :completed="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement"
-                              />
-                              <span
-                                :class="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement ? 'text-success' : 'text-danger'"
-                              >
+                    <div v-if="isDiscussIt">
+                      <div v-show="showDiscussIt">
+                        <ul v-show="discussItCompletionCriteria" style="list-style: none;">
+                          <li>
+                            <CompletedIcon
+                              :completed="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement"
+                            />
+                            <span
+                              :class="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement ? 'text-success' : 'text-danger'"
+                            >
                                 Initiated {{ discussItRequirementsInfo.number_of_initiated_discussion_threads }} discussion thread<span
-                                v-if="+discussItRequirementsInfo.number_of_initiated_discussion_threads !== 1"
-                              >s</span>,
+                              v-if="+discussItRequirementsInfo.number_of_initiated_discussion_threads !== 1"
+                            >s</span>,
                                 with {{ discussItRequirementsInfo.min_number_of_initiated_discussion_threads }} required.
                               </span>
-                            </li>
-                            <li>
-                              <CompletedIcon
-                                :completed="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement"
-                              />
-                              <span
-                                :class="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement ? 'text-success' : 'text-danger'"
-                              >
+                          </li>
+                          <li>
+                            <CompletedIcon
+                              :completed="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement"
+                            />
+                            <span
+                              :class="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement ? 'text-success' : 'text-danger'"
+                            >
                                 Submitted {{
-                                  discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements
-                                }}
+                                discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements
+                              }}
                                 {{
-                                  +discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements !== 1 ? 'replies' : 'reply'
-                                }},
+                                +discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements !== 1 ? 'replies' : 'reply'
+                              }},
                                 with {{ discussItRequirementsInfo.min_number_of_replies }} required.
                               </span>
-                            </li>
-                            <li v-show="discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads > 0">
-                              <CompletedIcon
-                                :completed="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement"
-                              />
-                              <span
-                                :class="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement ? 'text-success' : 'text-danger'"
-                              >
+                          </li>
+                          <li v-show="discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads > 0">
+                            <CompletedIcon
+                              :completed="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement"
+                            />
+                            <span
+                              :class="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement ? 'text-success' : 'text-danger'"
+                            >
                                 Initiated or replied to {{
-                                  discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements
-                                }} discussion thread<span
-                                v-if="+discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements !== 1"
-                              >s</span>,
+                                discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements
+                              }} discussion thread<span
+                              v-if="+discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements !== 1"
+                            >s</span>,
                                 with {{ discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads }} required.
                               </span>
-                            </li>
+                          </li>
 
-                          </ul>
+                        </ul>
 
+                        <div
+                          v-if="discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
+                        >
                           <div
-                            v-if="discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
+                            v-for="(comment,commentIndex) in discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
+                            :key="`comments-${commentIndex}`"
                           >
-                            <div
-                              v-for="(comment,commentIndex) in discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
-                              :key="`comments-${commentIndex}`"
-                            >
                               <span v-show="discussItCompletionCriteria">
                                 <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
                                       :title="satisfiedRequirement(comment.discussion_comment_id)
@@ -572,76 +571,76 @@
                                   />
                                 </span>
                               </span>
-                              <a href=""
-                                 @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
-                              >{{ comment.created_at }}:</a>
-                              <b-alert :show="comment.pasted_comment === 1">
-                                This comment was pasted in by the student.
-                                <QuestionCircleTooltip :id="`pasted-comment-${comment.id}`"/>
-                                <b-tooltip :target="`pasted-comment-${comment.id}`"
-                                           delay="250"
-                                           width="600"
-                                           triggers="hover focus"
-                                           custom-class="custom-tooltip"
-                                >
-                                  If a student pastes in a comment, they are informed that you will be notified.<br><br>Comments
-                                  that were
-                                  pasted in may have first been written by the student in an application such as
-                                  Microsoft Word or the
-                                  student may have used ChatGPT to generate the comment.
-                                </b-tooltip>
-                              </b-alert>
-                              <div v-if="comment.text" v-html="comment.text"/>
-
-                              <b-tooltip :target="`view-in-new-tab-${comment.discussion_comment_id}`"
-                                         triggers="hover focus" delay="500"
+                            <a href=""
+                               @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
+                            >{{ comment.created_at }}:</a>
+                            <b-alert :show="comment.pasted_comment === 1">
+                              This comment was pasted in by the student.
+                              <QuestionCircleTooltip :id="`pasted-comment-${comment.id}`"/>
+                              <b-tooltip :target="`pasted-comment-${comment.id}`"
+                                         delay="250"
+                                         width="600"
+                                         triggers="hover focus"
+                                         custom-class="custom-tooltip"
                               >
-                                View in New Tab
+                                If a student pastes in a comment, they are informed that you will be notified.<br><br>Comments
+                                that were
+                                pasted in may have first been written by the student in an application such as
+                                Microsoft Word or the
+                                student may have used ChatGPT to generate the comment.
                               </b-tooltip>
-                              <span
-                                v-show="comment.file"
-                                :id="`view-in-new-tab-${comment.discussion_comment_id}`"
-                                class="float-right primary"
-                                style="cursor: pointer"
-                                @click="viewInNewTab(`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`)"
-                              >
+                            </b-alert>
+                            <div v-if="comment.text" v-html="comment.text"/>
+
+                            <b-tooltip :target="`view-in-new-tab-${comment.discussion_comment_id}`"
+                                       triggers="hover focus" delay="500"
+                            >
+                              View in New Tab
+                            </b-tooltip>
+                            <span
+                              v-show="comment.file"
+                              :id="`view-in-new-tab-${comment.discussion_comment_id}`"
+                              class="float-right primary"
+                              style="cursor: pointer"
+                              @click="viewInNewTab(`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`)"
+                            >
                                 <font-awesome-icon :icon="externalLink"/>
                               </span>
-                              <iframe
-                                v-if="comment.file"
-                                v-resize="{ log: false }"
-                                :src="`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`"
-                                width="100%"
-                                frameborder="0"
-                                allowfullscreen=""
-                              />
-                            </div>
-                          </div>
-                          <div v-else>
-                            No comments have been submitted by this student.
+                            <iframe
+                              v-if="comment.file"
+                              v-resize="{ log: false }"
+                              :src="`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`"
+                              width="100%"
+                              frameborder="0"
+                              allowfullscreen=""
+                            />
                           </div>
                         </div>
-                      </div>
-                      <div v-else>
-                        <b-button
-                          v-show="grading[currentStudentPage - 1].auto_graded_submission
-                          && grading[currentStudentPage - 1].auto_graded_submission.submission
-                          && grading[currentStudentPage - 1].auto_graded_submission.submission.includes('structure_s3_key')"
-                          variant="primary"
-                          size="sm"
-                          @click="viewStructureImage(grading[currentStudentPage - 1])"
-                        >
-                          View Scanned Image
-                        </b-button>
-                        <QtiJsonQuestionViewer :key="`qti-json-${currentStudentPage}`"
-                                               :qti-json="grading[currentStudentPage - 1]['qti_json']"
-                                               :show-qti-answer="true"
-                                               :show-submit="false"
-                                               :show-response-feedback="false"
-                                               :student-response="getStudentResponse(grading[currentStudentPage - 1])"
-                        />
+                        <div v-else>
+                          No comments have been submitted by this student.
+                        </div>
                       </div>
                     </div>
+                    <div v-else>
+                      <b-button
+                        v-show="grading[currentStudentPage - 1].auto_graded_submission
+                          && grading[currentStudentPage - 1].auto_graded_submission.submission
+                          && grading[currentStudentPage - 1].auto_graded_submission.submission.includes('structure_s3_key')"
+                        variant="primary"
+                        size="sm"
+                        @click="viewStructureImage(grading[currentStudentPage - 1])"
+                      >
+                        View Scanned Image
+                      </b-button>
+                      <QtiJsonQuestionViewer :key="`qti-json-${currentStudentPage}`"
+                                             :qti-json="grading[currentStudentPage - 1]['qti_json']"
+                                             :show-qti-answer="true"
+                                             :show-submit="false"
+                                             :show-response-feedback="false"
+                                             :student-response="getStudentResponse(grading[currentStudentPage - 1])"
+                      />
+                    </div>
+
                     <div v-if="grading[currentStudentPage - 1]['technology_iframe']">
                       <iframe
                         :key="`technology-iframe-${currentStudentPage}`"
@@ -656,6 +655,25 @@
                     </div>
                   </b-card-text>
                 </b-card>
+                <div
+                  v-if="isForge"
+                  class="mt-2"
+                >
+                  <b-card header="default"
+                          :header-html="getForgeSubmissionHeader()"
+                  >
+                    <ForgeViewer
+                      :key="`forge-viewer-${grading[currentStudentPage - 1]['open_ended_submission']['question_id']}-${grading[currentStudentPage - 1].student.user_id}`"
+                      :type="'submissionViewer'"
+                      :resubmission-enabled="+grading[currentStudentPage - 1]['open_ended_submission']['upload_count'] === 0"
+                      :assignment-id="+assignmentId"
+                      :show-forge-button="grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] !== null"
+                      :question-id="grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
+                      :student-id="grading[currentStudentPage - 1].student.user_id"
+                      @updateUploadCount="updateUploadCount"
+                    />
+                  </b-card>
+                </div>
               </b-col>
 
               <b-col>
@@ -704,7 +722,7 @@
                           <hr>
                         </div>
                         <b-form-group
-                          v-if="!isDiscussIt"
+                          v-if="!isDiscussIt && !isForge"
                           label-cols-sm="5"
                           label-cols-lg="4"
                           label-for="auto_graded_score"
@@ -802,18 +820,21 @@
                         </div>
 
                         <b-form-group
-                          v-show="isOpenEnded || isDiscussIt"
+                          v-show="isOpenEnded || isDiscussIt || isForge"
                           label-cols-sm="5"
                           label-cols-lg="4"
                           label-for="open_ended_score"
                         >
                           <template v-slot:label>
-                            <span class="font-weight-bold">{{ isOpenEnded ? 'Open-ended' : 'Discuss-it' }} score:</span>
+                            <span class="font-weight-bold">{{
+                                getScoreLabel()
+                              }} score:</span>
                           </template>
-                          <div v-show="isOpenEnded || isDiscussIt" class="pt-1">
+                          <div class="pt-1">
                             <div class="d-flex">
                               <b-form-input
                                 v-show="isOpenEnded
+                                || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
                                   || discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments"
                                 id="open_ended_score"
                                 v-model="gradingForm.file_submission_score"
@@ -826,6 +847,7 @@
                               />
                               <span
                                 v-if="(isOpenEnded && !isAutoGraded)
+                                || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
                                   || (isDiscussIt && discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
                               >
                                 <b-button size="sm"
@@ -858,7 +880,7 @@
                               No comments submitted
                             </div>
                           </div>
-                          <div v-show="!isOpenEnded && !isDiscussIt" class="pt-2">
+                          <div v-show="!isOpenEnded && !isDiscussIt && !isForge" class="pt-2">
                             <span>Not applicable</span>
                           </div>
                           <div v-if="fileSubmissionScoreErrorMessage"
@@ -900,7 +922,7 @@
                         </b-form-group>
                         <br>
                         <div
-                          v-if="rubric && (isOpenEnded || isDiscussIt)"
+                          v-if="rubric && (isOpenEnded || isDiscussIt || isForge)"
                         >
                           <RubricPointsBreakdown
                             :key="`rubric-points-breakdown-${rubricPointsBreakdownIndex}-${grading[currentStudentPage - 1]['open_ended_submission']['user_id']}-${grading[currentStudentPage - 1]['open_ended_submission']['question_id']}`"
@@ -937,8 +959,8 @@
                           :header-html="getGraderFeedbackTitle()"
                   >
                     <b-card-text align="center">
-                      <div v-show="isOpenEnded || isDiscussIt">
-                        <div v-show="(isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
+                      <div v-show="isOpenEnded || isDiscussIt || isForge">
+                        <div v-show="(isForge && grading[currentStudentPage-1]['open_ended_submission']['date_submitted']) || (isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
                           ||(isDiscussIt && discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
                         >
                           <b-row class="mb-2">
@@ -1015,7 +1037,8 @@
                           </b-form>
                         </div>
                         <div
-                          v-show="isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                          v-show="(isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission'])
+                           || (isForge && !grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'])"
                         >
                           <h4 class="pt-2">
                             <span class="text-muted">
@@ -1033,7 +1056,7 @@
                           </h4>
                         </div>
                       </div>
-                      <div v-show="!isOpenEnded && !isDiscussIt">
+                      <div v-show="!isOpenEnded && !isDiscussIt && !isForge">
                         <h4 class="pt-5">
                           <span class="text-muted">
                             This panel is applicable to open-ended assessments.
@@ -1221,7 +1244,6 @@
       </div>
     </div>
   </div>
-  </div>
 </template>
 
 <script>
@@ -1255,11 +1277,13 @@ import QtiJsonAnswerViewer from '../../components/QtiJsonAnswerViewer.vue'
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { roundToDecimalSigFig } from '../../helpers/Math'
+import ForgeViewer from '../../components/viewers/ForgeViewer.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    ForgeViewer,
     FontAwesomeIcon,
     QtiJsonAnswerViewer,
     ConsultInsight,
@@ -1280,6 +1304,8 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    formattedForgeQuestionType: '',
+    isForge: false,
     canSubmitWork: false,
     submittedWork: {},
     externalLink: faExternalLinkAlt,
@@ -1451,7 +1477,25 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    getScoreLabel () {
+      if (this.isOpenEnded) {
+        return 'Open-ended'
+      }
+      if (this.isDiscussIt) {
+        return 'Discuss-it'
+      }
+      if (this.isForge) {
+        return this.formattedForgeQuestionType
+      }
+      return ''
+    },
+    getForgeSubmissionHeader () {
+      return `<h2 class="h7 mb-0">${this.formattedForgeQuestionType} Submission</span></h2>`
+    },
     roundToDecimalSigFig,
+    updateUploadCount () {
+      this.grading[this.currentStudentPage - 1]['open_ended_submission']['upload_count'] = 0
+    },
     async applyPendingScore () {
       this.gradingForm.question_submission_score = this.roundToDecimalSigFig(this.submittedWork.pending_score)
       this.gradingForm.submitted_work_pending_score = true
@@ -1507,7 +1551,7 @@ export default {
       if (currentGrading.student_response) {
         return currentGrading.student_response
       }
-      if (['submit_molecule', 'marker'].includes(JSON.parse(currentGrading['qti_json']).questionType)) {
+      if (JSON.parse(currentGrading['qti_json']) && ['submit_molecule', 'marker'].includes(JSON.parse(currentGrading['qti_json']).questionType)) {
         return currentGrading.auto_graded_submission.submission
       }
       return ''
@@ -2332,6 +2376,10 @@ export default {
         console.log(this.grading)
         this.technology = data.technology
         this.isDiscussIt = data.discuss_it
+        this.isForge = data.forge_question_type !== null
+        if (this.isForge) {
+          this.formattedForgeQuestionType = data.forge_question_type === 'forge' ? 'Final' : 'Draft'
+        }
         this.qtiAnswerJson = data.qti_answer_json
         if (this.isDiscussIt) {
           await this.getDiscussItRequirementInfo()

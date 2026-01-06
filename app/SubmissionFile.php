@@ -262,9 +262,11 @@ class SubmissionFile extends Model
                 $file_submission_score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
                 $question_submission_score = $question_submission_scores[$question->question_id][$user->id] ?? 0;
                 $all_info = $this->getAllInfo($user, $assignment, $solution, $open_ended_submission_type, $submission, $page, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
+
                 $all_info['grader_id'] = $grader_id;
                 $all_info['text_feedback_editor'] = $text_feedback_editor;
                 $all_info['open_ended_submission_type'] = $open_ended_submission_type;
+                $all_info['upload_count'] = $questionFilesByUser[$question->question_id][$user->id]->upload_count ?? 0;
                 $all_info['grader_name'] = $grader_name;
                 $all_info['late_file_submission'] = $late_file_submission ?? false;
                 $all_info['late_penalty_percent'] = $late_penalty_percent ?? null;

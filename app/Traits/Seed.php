@@ -23,10 +23,15 @@ trait Seed
                 $seed = $assignment->algorithmic || $reset_node_after_incorrect_attempt ? rand(1, 99999) : config('myconfig.imathas_seed');
                 break;
             case('qti'):
+                $seed = '';
+                if ($question->qti_json_type === 'forge_iteration'){
+                    return $seed;
+                }
                 $qti_array = json_decode($question->qti_json, true);
                 $question_type = $qti_array['questionType'];
-                $seed = '';
+
                 if (in_array($question_type, [
+                    'forge',
                     'accounting_journal_entry',
                     'three_d_model_multiple_choice',
                     'discuss_it',

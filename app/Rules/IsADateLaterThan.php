@@ -18,12 +18,12 @@ class IsADateLaterThan implements Rule
      *
      * @return void
      */
-    public function __construct($earlier_date, $earlier_date_name, $later_date_name)
+    public function __construct($earlier_date, $earlier_date_name, $later_date_name, $prefix = '')
     {
         $this->earlier_date = $earlier_date;
         $this->earlier_date_name = $earlier_date_name;
         $this->later_date_name = $later_date_name;
-
+        $this->prefix = $prefix;
     }
 
     /**
@@ -50,6 +50,13 @@ class IsADateLaterThan implements Rule
      */
     public function message()
     {
-        return "The {$this->later_date_name} should be a valid date/time and should come after the {$this->earlier_date_name} date/time.";
+        $message = "Due date/time must be after the available on date/time.";
+
+        if ($this->prefix) {
+            return $this->prefix . ': ' . $message;
+        }
+
+
+        return $message;
     }
 }

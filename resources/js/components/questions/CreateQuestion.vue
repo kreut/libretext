@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-discuss-it-text-form"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-discuss-it-text-form" />
     <AllFormErrors :all-form-errors="allFormErrors"
                    modal-id="modal-form-errors-question-subject-chapter-section-errors"
     />
@@ -71,7 +71,7 @@
                       :class="{ 'is-invalid': questionSubjectChapterSectionForm.errors.has('name')}"
                       @keydown="questionSubjectChapterSectionForm.errors.clear('name')"
         />
-        <has-error :form="questionSubjectChapterSectionForm" field="name"/>
+        <has-error :form="questionSubjectChapterSectionForm" field="name" />
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -152,7 +152,7 @@
       >
         <template v-slot:label>
           Description
-          <QuestionCircleTooltip :id="'discuss-it-description-tooltip'"/>
+          <QuestionCircleTooltip :id="'discuss-it-description-tooltip'" />
           <b-tooltip target="discuss-it-description-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -169,7 +169,7 @@
                       :class="{ 'is-invalid': discussItTextForm.errors.has('description')}"
                       @keydown="discussItTextForm.errors.clear('description')"
         />
-        <has-error :form="discussItTextForm" field="description"/>
+        <has-error :form="discussItTextForm" field="description" />
       </b-form-group>
       <ckeditor
         id="discuss_it_text"
@@ -185,7 +185,7 @@
         @focus="ckeditorKeyDown=true"
         @keydown="discussItTextForm.errors.clear('text')"
       />
-      <has-error :form="discussItTextForm" field="text"/>
+      <has-error :form="discussItTextForm" field="text" />
       <template #modal-footer>
         <b-button
           variant="secondary"
@@ -314,7 +314,7 @@
                     :class="{ 'is-invalid': questionForm.errors.has('reason_for_edit')}"
                     @keydown="questionForm.errors.clear('reason_for_edit')"
         />
-        <has-error :form="questionForm" field="reason_for_edit"/>
+        <has-error :form="questionForm" field="reason_for_edit" />
 
         <hr class="pt-2 pb-2">
       </div>
@@ -339,7 +339,7 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-row>
-          <ErrorMessage :message="questionForm.errors.get('automatically_update_revision')"/>
+          <ErrorMessage :message="questionForm.errors.get('automatically_update_revision')" />
         </b-form-group>
       </div>
       <div v-if="revisionAction === 'propagate'">
@@ -359,7 +359,7 @@
           >
             The changes I made are topical in nature.
           </b-form-checkbox>
-          <ErrorMessage :message="questionForm.errors.get('changes_are_topical')"/>
+          <ErrorMessage :message="questionForm.errors.get('changes_are_topical')" />
         </div>
       </div>
       <template #modal-footer>
@@ -416,8 +416,8 @@
     >
       <p>
         ADAPT can automatically create the necessary WeBWork to create <a
-        href="https://webwork.maa.org/wiki/StaticImages" target="_blank"
-      >static images</a>. All parameters are optional.
+          href="https://webwork.maa.org/wiki/StaticImages" target="_blank"
+        >static images</a>. All parameters are optional.
       </p>
       <b-card header-html="<h5>Resize Image</h5>" class="mb-2">
         <template #header>
@@ -638,9 +638,10 @@
         :modal-id="'preview-question'"
         :is-preview-solution-html="true"
       />
+
       <div v-if="questionForm.technology === 'qti'">
         <b-button
-          v-if="questionForm.technology === 'qti' && qtiQuestionType !== 'discuss_it'"
+          v-if="questionForm.technology === 'qti' && !['discuss_it','forge'].includes(qtiQuestionType)"
           size="sm"
           variant="primary"
           @click="getQtiAnswerJson()"
@@ -656,7 +657,7 @@
           :preview-or-solution="showQtiAnswer"
           :previewing-question="previewingQuestion"
         />
-        <div v-if="showQtiAnswer && questionForm.solution_html" v-html="questionForm.solution_html"/>
+        <div v-if="showQtiAnswer && questionForm.solution_html" v-html="questionForm.solution_html" />
       </div>
       <ViewQuestions v-if="questionForm.technology !== 'qti'"
                      :key="questionToViewKey"
@@ -673,7 +674,7 @@
         </b-button>
       </template>
     </b-modal>
-    <span ref="top-of-form"/>
+    <span ref="top-of-form" />
     <div v-if="fullyMounted" v-show="false" id="from-sketcher-component">
       <Sketcher :error-message="questionForm.errors.get(`solution_structure`)"
                 :solution-structure="solutionStructure"
@@ -702,7 +703,7 @@
             addition, you may export
             the webWork code, which can be found under the <a style="cursor: pointer;"
                                                               @click.prevent="activeTabIndex=1"
-          >Primary Content</a> tab.
+            >Primary Content</a> tab.
           </b-alert>
           <p>
             The question properties help us to organize the
@@ -710,7 +711,7 @@
             us to provide accurate authorship and license information.
           </p>
           <p>
-            <RequiredText/>
+            <RequiredText />
           </p>
           <b-form-group
             v-if="questionForm.clone_history && questionForm.clone_history.length"
@@ -719,7 +720,7 @@
           >
             <template v-slot:label>
               Clone History
-              <QuestionCircleTooltip :id="'clone-history-tooltip'"/>
+              <QuestionCircleTooltip :id="'clone-history-tooltip'" />
               <b-tooltip target="clone-history-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -734,10 +735,9 @@
                     :key="`view-clone-history-${index}`"
               >
                 <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-clone-history')">{{
-                    questionId
-                  }}</a>
-                <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1"
-                >-></span>
+                  questionId
+                }}</a>
+                <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1">-></span>
               </span>
             </b-form-row>
           </b-form-group>
@@ -805,7 +805,7 @@
                 class="mt-2"
                 @keydown="questionForm.errors.clear('title')"
               />
-              <has-error :form="questionForm" field="title"/>
+              <has-error :form="questionForm" field="title" />
             </b-form-row>
           </b-form-group>
           <b-form-group
@@ -815,7 +815,7 @@
           >
             <template v-slot:label>
               Description
-              <QuestionCircleTooltip :id="'description-tooltip'"/>
+              <QuestionCircleTooltip :id="'description-tooltip'" />
               <b-tooltip target="description-tooltip"
                          delay="250"
                          triggers="hover focus"
@@ -854,7 +854,7 @@
                 >
                   <b-form-radio name="question_type" value="assessment">
                     Question
-                    <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
+                    <QuestionCircleTooltip :id="'assessment-question-type-tooltip'" />
                     <b-tooltip target="assessment-question-type-tooltip"
                                delay="250"
                                triggers="hover focus"
@@ -867,7 +867,7 @@
                   </b-form-radio>
                   <b-form-radio name="question_type" value="exposition">
                     Exposition (use in Learning Trees only)
-                    <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
+                    <QuestionCircleTooltip :id="'exposition-question-type-tooltip'" />
                     <b-tooltip target="exposition-question-type-tooltip"
                                delay="250"
                                triggers="hover focus"
@@ -891,7 +891,7 @@
             >
               <template v-slot:label>
                 Public*
-                <QuestionCircleTooltip :id="'public-question-tooltip'"/>
+                <QuestionCircleTooltip :id="'public-question-tooltip'" />
                 <b-tooltip target="public-question-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -962,7 +962,7 @@
                   class="mt-2"
                   @keydown="questionForm.errors.clear('author')"
                 />
-                <has-error :form="questionForm" field="author"/>
+                <has-error :form="questionForm" field="author" />
               </b-form-row>
             </b-form-group>
           </div>
@@ -983,7 +983,7 @@
                                :options="licenseOptions"
                                @change="questionForm.errors.clear('license');questionForm.license_version = updateLicenseVersions(questionForm.license)"
                 />
-                <has-error :form="questionForm" field="license"/>
+                <has-error :form="questionForm" field="license" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -1014,7 +1014,7 @@
             >
               <template v-slot:label>
                 Source URL*
-                <QuestionCircleTooltip id="source_url-tooltip"/>
+                <QuestionCircleTooltip id="source_url-tooltip" />
                 <b-tooltip target="source_url-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -1032,7 +1032,7 @@
                   class="mt-2"
                   @keydown="questionForm.errors.clear('source_url')"
                 />
-                <has-error :form="questionForm" field="source_url"/>
+                <has-error :form="questionForm" field="source_url" />
               </b-form-row>
             </b-form-group>
             <b-form-group
@@ -1061,7 +1061,7 @@
                             class="mr-2"
                             style="line-height:.8"
                             @click="removeTag(chosenTag)"
-                  ><span v-html="chosenTag"/> x</b-button>
+                  ><span v-html="chosenTag" /> x</b-button>
                 </span>
               </div>
             </b-form-group>
@@ -1087,8 +1087,8 @@
                           style="line-height:.8"
                           @click="removeFrameworkItemSyncQuestion('descriptors',descriptor.id)"
                 >{{
-                    descriptor.text
-                  }} x
+                  descriptor.text
+                }} x
                 </b-button>
               </span>
             </span>
@@ -1102,8 +1102,8 @@
                           style="line-height:.8"
                           @click="removeFrameworkItemSyncQuestion('levels',level.id)"
                 >{{
-                    level.text
-                  }} x
+                  level.text
+                }} x
                 </b-button>
               </span>
             </span>
@@ -1116,7 +1116,7 @@
             >
               <template v-slot:label>
                 Learning Outcome
-                <QuestionCircleTooltip :id="'learning-outcome-tooltip'"/>
+                <QuestionCircleTooltip :id="'learning-outcome-tooltip'" />
                 <b-tooltip target="learning-outcome-tooltip"
                            delay="250"
                            triggers="hover focus"
@@ -1157,7 +1157,7 @@
                   {{
                     //labels are brought in if it's an edited question otherwise it's done on the fly
                     chosenLearningOutcome.label ? chosenLearningOutcome.label :
-                      getLearningOutcomeLabel(chosenLearningOutcome)
+                    getLearningOutcomeLabel(chosenLearningOutcome)
                   }} x
                 </b-button>
               </div>
@@ -1270,7 +1270,7 @@
             >
               Upload Attachment
             </b-button>
-            <QuestionCircleTooltip :id="'attachments-tooltip'"/>
+            <QuestionCircleTooltip :id="'attachments-tooltip'" />
             <b-tooltip target="attachments-tooltip"
                        delay="250"
                        triggers="hover focus"
@@ -1339,7 +1339,7 @@
               >
                 <template v-if="questionForm.question_type === 'assessment'" v-slot:label>
                   <span style="cursor: pointer;" @click="toggleExpanded ('non_technology_text')">
-                    HTML Block   <QuestionCircleTooltip id="open-ended-content-tooltip"/>
+                    HTML Block   <QuestionCircleTooltip id="open-ended-content-tooltip" />
                     <b-tooltip target="open-ended-content-tooltip"
                                delay="250"
                                triggers="hover focus"
@@ -1387,7 +1387,7 @@
                   @ready="handleFixCKEditor()"
                   @focus="ckeditorKeyDown=true;questionForm.errors.clear('non_technology_text');"
                 />
-                <has-error :form="questionForm" field="non_technology_text"/>
+                <has-error :form="questionForm" field="non_technology_text" />
               </div>
             </div>
           </b-card>
@@ -1401,7 +1401,7 @@
               >
                 <template #label>
                   Open-Ended Submission Type
-                  <QuestionCircleTooltip id="open-ended-submission-type-tooltip"/>
+                  <QuestionCircleTooltip id="open-ended-submission-type-tooltip" />
                   <b-tooltip target="open-ended-submission-type-tooltip"
                              delay="250"
                              triggers="hover focus"
@@ -1432,7 +1432,7 @@
               >
                 <template #label>
                   Auto-Grade Tech Block
-                  <QuestionCircleTooltip id="new-question-tooltip"/>
+                  <QuestionCircleTooltip id="new-question-tooltip" />
                   <b-tooltip target="new-question-tooltip"
                              delay="250"
                              triggers="hover focus"
@@ -1495,7 +1495,7 @@
                   >
                     <b-form-radio value="basic">
                       Basic (QTI)
-                      <QuestionCircleTooltip id="basic-questions-tooltip"/>
+                      <QuestionCircleTooltip id="basic-questions-tooltip" />
                       <b-tooltip target="basic-questions-tooltip"
                                  delay="250"
                                  triggers="hover focus"
@@ -1510,7 +1510,7 @@
                     </b-form-radio>
                     <b-form-radio value="nursing">
                       Nursing
-                      <QuestionCircleTooltip id="nursing-questions-tooltip"/>
+                      <QuestionCircleTooltip id="nursing-questions-tooltip" />
                       <b-tooltip target="nursing-questions-tooltip"
                                  delay="250"
                                  triggers="hover focus"
@@ -1561,7 +1561,10 @@
                     <b-form-radio value="accounting"
                                   v-show="(isAdmin || [142886,11712].includes(user.id))"
                     >
-                    Accounting
+                      Accounting
+                    </b-form-radio>
+                    <b-form-radio value="forge">
+                      Forge
                     </b-form-radio>
                     <b-form-radio value="all">
                       All
@@ -1922,7 +1925,8 @@
                   </b-container>
                 </div>
                 <div
-                  v-if="['matching',
+                  v-if="['forge',
+                         'matching',
                          'multiple_answers',
                          'true_false',
                          'multiple_choice',
@@ -2044,7 +2048,7 @@
                       <template v-slot:label>
                         SMILES
 
-                        <QuestionCircleTooltip id="smiles-tooltip"/>
+                        <QuestionCircleTooltip id="smiles-tooltip" />
                         <b-tooltip target="smiles-tooltip"
                                    delay="250"
                                    triggers="hover focus"
@@ -2066,9 +2070,9 @@
                         </b-button>
                       </b-form-row>
                     </b-form-group>
-                    <StructureImageUploader/>
+                    <StructureImageUploader />
                   </div>
-                  <div id="to-sketcher-component" @click="handleSketcherClick"/>
+                  <div id="to-sketcher-component" @click="handleSketcherClick" />
                   <div v-show="qtiQuestionType ==='marker'" class="mb-2">
                     <div v-if="!qtiJson.solutionStructure">
                       <b-button
@@ -2099,7 +2103,7 @@
                   <div v-if="qtiQuestionType === 'marker'" class="d-inline-flex">
                     <label class="mr-2">
                       Scoring
-                      <QuestionCircleTooltip id="marker-scoring-tooltip"/>
+                      <QuestionCircleTooltip id="marker-scoring-tooltip" />
                     </label>
                     <b-tooltip target="marker-scoring-tooltip" delay="250" triggers="hover focus">
                       With exclusive scoring, the student will receive no partial credit; they will receive partial
@@ -2124,7 +2128,7 @@
                       class="custom-checkbox"
                     >
                       100% override
-                      <QuestionCircleTooltip id="100-percent-override-tooltip"/>
+                      <QuestionCircleTooltip id="100-percent-override-tooltip" />
                       <b-tooltip target="100-percent-override-tooltip"
                                  delay="250"
                                  triggers="hover focus"
@@ -2132,7 +2136,7 @@
                         If checked, students will not be able to guess by simply marking all atoms/bonds.
                       </b-tooltip>
                     </b-form-checkbox>
-                    <div/>
+                    <div />
                   </div>
                   <MultipleAnswersAdvanced
                     v-if="qtiQuestionType === 'marker' && qtiJson.solutionStructure.atoms && qtiJson.solutionStructure.bonds"
@@ -2231,7 +2235,7 @@
                     @focus="ckeditorKeyDown=true;questionForm.errors.clear('qti_item_body')"
                     @keydown="questionForm.errors.clear('qti_item_body')"
                   />
-                  <has-error :form="questionForm" field="qti_item_body"/>
+                  <has-error :form="questionForm" field="qti_item_body" />
                 </div>
                 <SelectChoiceDropDownRationale
                   v-if="['select_choice','drop_down_rationale_dyad'].includes(qtiQuestionType)"
@@ -2280,7 +2284,7 @@
                     header="default"
                   >
                     <template #header>
-                      <span class="ml-2 h7">Checkmark Feedback   <QuestionCircleTooltip id="checkmarks-tooltip"/>
+                      <span class="ml-2 h7">Checkmark Feedback   <QuestionCircleTooltip id="checkmarks-tooltip" />
                         <b-tooltip target="checkmarks-tooltip"
                                    delay="250"
                                    triggers="hover focus"
@@ -2358,7 +2362,7 @@
                             </div>
                           </div>
                           <div v-if="qtiJson.feedback && !generalFeedback.editorShown">
-                            <span v-html="qtiJson.feedback[generalFeedback.key]"/>
+                            <span v-html="qtiJson.feedback[generalFeedback.key]" />
                           </div>
                         </b-form-group>
                         <hr
@@ -2388,7 +2392,7 @@
                             @click="updateTemplateWithPreexistingWebworkFilePath(preExistingWebworkFilePath)"
                   >
                     <span v-if="!updatingTempalteWithPreexistingWebworkFilePath">Update template</span>
-                    <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow"/>
+                    <span v-if="updatingTempalteWithPreexistingWebworkFilePath"><b-spinner small type="grow" />
                       Updating...
                     </span>
                   </b-button>
@@ -2400,8 +2404,8 @@
                   you
                   will need to visit
                   {{ getTextFromTechnology(questionForm.technology) }}'s <a
-                  :href="questionForm.technology === 'h5p' ? h5pUrl : imathASUrl" target="_blank"
-                >question editor</a>. Please note that you must have
+                    :href="questionForm.technology === 'h5p' ? h5pUrl : imathASUrl" target="_blank"
+                  >question editor</a>. Please note that you must have
                   access to the editor.
                 </p>
               </div>
@@ -2421,7 +2425,7 @@
                       :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
                       @keydown="questionForm.errors.clear('technology_id')"
                     />
-                    <has-error :form="questionForm" field="technology_id"/>
+                    <has-error :form="questionForm" field="technology_id" />
                   </div>
                   <div class="mt-1 ml-3">
                     <b-button v-if="questionForm.technology === 'h5p' && questionForm.technology_id" size="sm"
@@ -2443,7 +2447,7 @@
                   />
                   or visit <a href="https://webwork.maa.org/wiki/Authors"
                               target="_blank"
-                >https://webwork.maa.org/wiki/Authors</a>.
+                  >https://webwork.maa.org/wiki/Authors</a>.
                 </div>
                 <b-row>
                   <b-col cols="6">
@@ -2455,13 +2459,13 @@
                       drop-placeholder="Drop Image here..."
                     />
                     <div v-if="uploading">
-                      <b-spinner small type="grow"/>
+                      <b-spinner small type="grow" />
                       Uploading file...
                     </div>
                     <div v-for="(errorMessage, errorMessageIndex) in errorMessages"
                          :key="`error-message-${errorMessageIndex}`"
                     >
-                      <ErrorMessage :message="errorMessage"/>
+                      <ErrorMessage :message="errorMessage" />
                     </div>
                   </b-col>
                   <b-col>
@@ -2491,7 +2495,7 @@
                       ><font-awesome-icon
                         :icon="copyIcon"
                       /></span>
-                      <b-icon-trash @click="confirmDeleteWebworkAttachment(webworkAttachment)"/>
+                      <b-icon-trash @click="confirmDeleteWebworkAttachment(webworkAttachment)" />
                     </li>
                   </ul>
                 </b-row>
@@ -2501,7 +2505,7 @@
                             rows="20"
                             @keydown="questionForm.errors.clear('webwork_code')"
                 />
-                <has-error :form="questionForm" field="webwork_code"/>
+                <has-error :form="questionForm" field="webwork_code" />
               </div>
             </div>
           </b-card>
@@ -2532,7 +2536,7 @@
                   <span style="cursor: pointer;" @click="toggleExpanded ('text_question')">
                     HTML Block Alternative
 
-                    <QuestionCircleTooltip id="text-question-tooltip"/>
+                    <QuestionCircleTooltip id="text-question-tooltip" />
                     <b-tooltip target="text-question-tooltip"
                                delay="250"
                                triggers="hover focus"
@@ -2569,7 +2573,7 @@
               >
                 <template v-slot:label>
                   Auto-Graded Alternative
-                  <QuestionCircleTooltip id="a11y-auto-graded-tooltip"/>
+                  <QuestionCircleTooltip id="a11y-auto-graded-tooltip" />
                   <b-tooltip target="a11y-auto-graded-tooltip"
                              delay="250"
                              triggers="hover focus"
@@ -2610,7 +2614,7 @@
                     :class="{ 'is-invalid': questionForm.errors.has('a11y_auto_graded_question_id')}"
                     @keydown="questionForm.errors.clear('a11y_auto_graded_question_id')"
                   />
-                  <has-error :form="questionForm" field="a11y_auto_graded_question_id"/>
+                  <has-error :form="questionForm" field="a11y_auto_graded_question_id" />
                   <b-button size="sm"
                             class="ml-2"
                             variant="primary"
@@ -2661,7 +2665,7 @@
               <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
                 {{ editorGroup.label }}
                 <span v-if="editorGroup.label === 'Answer'">
-                  <span v-if="questionForm.technology !== 'qti'"> <QuestionCircleTooltip id="answer-tooltip"/>
+                  <span v-if="questionForm.technology !== 'qti'"> <QuestionCircleTooltip id="answer-tooltip" />
                     <b-tooltip target="answer-tooltip"
                                delay="250"
                                triggers="hover focus"
@@ -2670,7 +2674,7 @@
                     </b-tooltip>
                   </span>
                 </span>
-                <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
+                <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip" />
                   <b-tooltip target="solution-tooltip"
                              delay="250"
                              triggers="hover focus"
@@ -2678,7 +2682,7 @@
                     A more detailed solution to the question. Solutions are optional.
                   </b-tooltip>
                 </span>
-                <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"/>
+                <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip" />
                   <b-tooltip target="hint-tooltip"
                              delay="250"
                              triggers="hover focus"
@@ -2792,7 +2796,7 @@
                 variant="info"
                 @click="previewQuestion"
       >
-        <span v-if="processingPreview"><b-spinner small type="grow"/> </span>
+        <span v-if="processingPreview"><b-spinner small type="grow" /> </span>
         Preview
       </b-button>
 
@@ -2805,7 +2809,7 @@
       >Save</b-button>
     </span>
     <span v-if="savingQuestion">
-      <b-spinner small type="grow"/>
+      <b-spinner small type="grow" />
       Saving...
     </span>
     <b-container v-if="jsonShown" class="pt-4 mt-4">
@@ -3244,18 +3248,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-      {
-        key: 'incorrect',
-        id: 'incorrect-response-feedback',
-        label: 'Incorrect Response',
-        editorShown: false
-      },
-      {
-        key: 'any',
-        id: 'any-response-feedback',
-        label: 'Any Response',
-        editorShown: false
-      }
+    {
+      key: 'incorrect',
+      id: 'incorrect-response-feedback',
+      label: 'Incorrect Response',
+      editorShown: false
+    },
+    {
+      key: 'any',
+      id: 'any-response-feedback',
+      label: 'Any Response',
+      editorShown: false
+    }
     ],
     webworkTemplate: null,
     webworkTemplateOptions: [],
@@ -3267,18 +3271,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-      {
-        key: 'incorrect',
-        id: 'incorrect-response-feedback',
-        label: 'Incorrect Response',
-        editorShown: false
-      },
-      {
-        key: 'any',
-        id: 'any-response-feedback',
-        label: 'Any Response',
-        editorShown: false
-      }
+    {
+      key: 'incorrect',
+      id: 'incorrect-response-feedback',
+      label: 'Incorrect Response',
+      editorShown: false
+    },
+    {
+      key: 'any',
+      id: 'any-response-feedback',
+      label: 'Any Response',
+      editorShown: false
+    }
     ],
     simpleChoiceFeedbackConfig: simpleChoiceFeedbackConfig,
     jsonShown: false,
@@ -3641,40 +3645,40 @@ export default {
         case ('accounting_journal_entry'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-              document.querySelector('input[type="radio"][name="native-question-type"][value="accounting"]').click()
-            }
-            , 250
+            document.querySelector('input[type="radio"][name="native-question-type"][value="accounting"]').click()
+          }
+          , 250
           )
           window.setTimeout(() => {
-              document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_journal_entry"]').click()
-            }
-            , 250
+            document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_journal_entry"]').click()
+          }
+          , 250
           )
           break
         case ('three_d_model_multiple_choice'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-              document.querySelector('input[type="radio"][name="native-question-type"][value="3d_model"]').click()
-            }
-            , 250
+            document.querySelector('input[type="radio"][name="native-question-type"][value="3d_model"]').click()
+          }
+          , 250
           )
           window.setTimeout(() => {
-              document.querySelector('input[type="radio"][name="qti-question-type"][value="three_d_model_multiple_choice"]').click()
-            }
-            , 250
+            document.querySelector('input[type="radio"][name="qti-question-type"][value="three_d_model_multiple_choice"]').click()
+          }
+          , 250
           )
           break
         case ('marker'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-              document.querySelector('input[type="radio"][name="native-question-type"][value="sketcher"]').click()
-            }
-            , 250
+            document.querySelector('input[type="radio"][name="native-question-type"][value="sketcher"]').click()
+          }
+          , 250
           )
           window.setTimeout(() => {
-              document.querySelector('input[type="radio"][name="qti-question-type"][value="marker"]').click()
-            }
-            , 250
+            document.querySelector('input[type="radio"][name="qti-question-type"][value="marker"]').click()
+          }
+          , 250
           )
           break
       }
@@ -4037,6 +4041,10 @@ export default {
         }
 
         switch (this.qtiQuestionType) {
+          case ('forge'):
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            break
           case ('accounting_journal_entry'):
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
@@ -4364,6 +4372,11 @@ export default {
         }
         console.log(this.qtiJson)
         switch (this.qtiJson.questionType) {
+          case ('forge'):
+            this.qtiQuestionType = 'forge'
+            this.nativeType = 'forge'
+            this.qtiPrompt = this.qtiJson['prompt']
+            break
           case ('accounting_journal_entry'):
             this.qtiQuestionType = 'accounting_journal_entry'
             this.nativeType = 'accounting'
@@ -4647,7 +4660,9 @@ export default {
       }
     },
     initNativeType () {
-      if (this.nativeType === 'discuss_it') {
+      if (this.nativeType === 'forge') {
+        this.initQTIQuestionType('forge')
+      } else if (this.nativeType === 'discuss_it') {
         this.qtiQuestionType = 'discuss_it'
         this.initQTIQuestionType('discuss_it')
       } else if (['nursing', 'sketcher', 'accounting'].includes(this.nativeType)) {
@@ -4973,6 +4988,13 @@ export default {
         this.generalFeedbacks[i].editorShown = false
       }
       switch (questionType) {
+        case ('forge'):
+          this.qtiJson = {
+            questionType: 'forge',
+            prompt: ''
+          }
+          this.qtiQuestionType = 'forge'
+          break
         case ('discuss_it'):
           this.questionForm.open_ended_component = '1'
           this.qtiJson = {

@@ -9,6 +9,7 @@ use App\DataShop;
 use App\Discussion;
 use App\DiscussionComment;
 use App\Exceptions\Handler;
+use App\Forge;
 use App\Helpers\Helper;
 use App\Http\Requests\UpdateScoresRequest;
 use App\LearningTree;
@@ -37,11 +38,18 @@ class SubmissionController extends Controller
 {
     use GeneralSubmissionPolicy;
 
-
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Submission $submission
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
     public function deleteByAssignmentAndQuestion(Assignment             $assignment,
                                                   Question               $question,
                                                   Submission             $submission,
-                                                  AssignmentSyncQuestion $assignmentSyncQuestion)
+                                                  AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         /**
@@ -204,25 +212,29 @@ class SubmissionController extends Controller
      * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
+     * @param int $is_forge
      * @param Submission $submission
      * @param AssignmentLevelOverride $assignmentLevelOverride
      * @param QuestionLevelOverride $questionLevelOverride
+     * @param Forge $forge
      * @return array|void
      * @throws Exception
      */
     public function canSubmit(Request                 $request,
                               Assignment              $assignment,
                               Question                $question,
+                              int                     $is_forge,
                               Submission              $submission,
                               AssignmentLevelOverride $assignmentLevelOverride,
-                              QuestionLevelOverride   $questionLevelOverride)
+                              QuestionLevelOverride   $questionLevelOverride,
+                              Forge                   $forge)
     {
         try {
             $submission = $submission->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->where('user_id', $request->user()->id)
                 ->first();
-
+            $user = $request->user();
             if ($submission && $assignment->number_of_allowed_attempts !== 'unlimited'
                 && (int)$submission->submission_count === (int)$assignment->number_of_allowed_attempts) {
                 $response['type'] = 'error';
@@ -234,7 +246,31 @@ class SubmissionController extends Controller
                 $response['type'] = 'success';
                 return $response;
             }
-            return $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id);
+            if (!$is_forge) {
+                return $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment->id, $question->id);
+            } else {
+                $assignment_question_forge_draft = DB::table('assignment_question')
+                    ->join('assignment_question_forge_draft', 'assignment_question.id', '=', 'assignment_question_forge_draft.assignment_question_id')
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->first();
+                if (!$assignment_question_forge_draft) {
+                    $response['type'] = 'error';
+                    $response['message'] = "No assignment question fore draft with assignment ID $assignment->id and question Id $question->id.";
+                    return $response;
+                }
+                $forge_draft_id = $assignment_question_forge_draft->forge_draft_id;
+                $validation = $forge->validateForgeQuestionAccess($forge_draft_id, $user->central_identity_id);
+                if ($validation['type'] === 'error') {
+                    return $validation;
+                }
+                $result = $forge->getAssignToDataForForge($validation, $forge_draft_id, $user->central_identity_id, $forge);
+                if ($result['type'] === 'error') {
+                    return $result;
+                }
+                $response['type'] = $result['can_submit']['type'] === 'success' ? 'success' : 'error';
+            }
+            return $response;
 
         } catch (Exception $e) {
             $h = new Handler(app());
