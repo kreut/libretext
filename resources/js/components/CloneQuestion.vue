@@ -91,14 +91,14 @@
         </div>
       </template>
     </b-modal>
-    <a :id="`clone-${questionId}`"
+    <a :id="`clone-${questionId}-${elementId}`"
        href=""
        style="text-decoration: none"
        @click.prevent="openModalCopyQuestion()"
     ><span class="alignMiddle">
       <b-button v-if="asButton" size="sm" variant="outline-secondary">
         <font-awesome-icon
-          :id="`clone-${questionId}`"
+          :id="`clone-${questionId}-${elementId}`"
           :class="canClone ? 'text-muted' : 'text-danger'"
           :icon="copyIcon"
         />
@@ -106,7 +106,7 @@
       <span v-if="!asButton">
         <font-awesome-icon
           v-if="bigIcon"
-          :id="`clone-${questionId}`"
+          :id="`clone-${questionId}-${elementId}`"
           :class="canClone ? 'text-muted' : 'text-danger'"
           :icon="copyIcon"
           style="font-size:18px;"
@@ -117,24 +117,33 @@
         :class="canClone ? 'text-muted' : 'text-danger'"
         :icon="copyIcon"
       /> </span></a>
-    <b-tooltip :target="`clone-${questionId}`"
-               triggers="hover"
-               delay="750"
-    > <span v-if="canClone">
-        <span v-if="isAdmin">Make a clone of question {{
-            questionId
-          }} to your account or that of another instructor's.</span>
-        <span v-if="!isAdmin">Clone {{ title }}.</span>
-      </span>
-      <span v-if="!canClone">
-        <span v-if="['ccbyncnd', 'ccbynd', 'arr'].includes(license)">
-          Due to licensing restrictions, this question cannot be cloned.
-        </span>
-        <span v-if="!this.public">
-          Since this question is not public, it cannot be cloned.
-        </span>
-      </span>
-    </b-tooltip>
+<b-tooltip :target="`clone-${questionId}-${elementId}`"
+           triggers="hover"
+           delay="750"
+>
+  <span v-if="canClone">
+    <span v-if="isForgeDraft && isAdmin">
+      Clone the main Forge question ({{ questionId }}) to your account or that of another instructor's. Drafts cannot be cloned individually.
+    </span>
+    <span v-else-if="isForgeDraft">
+      Clone the main Forge question ({{ questionId }}). Drafts cannot be cloned individually.
+    </span>
+    <span v-else-if="isAdmin">
+      Make a clone of question {{ questionId }} to your account or that of another instructor's.
+    </span>
+    <span v-else>
+      Clone {{ title }}.
+    </span>
+  </span>
+  <span v-if="!canClone">
+    <span v-if="['ccbyncnd', 'ccbynd', 'arr'].includes(license)">
+      Due to licensing restrictions, this question cannot be cloned.
+    </span>
+    <span v-if="!this.public">
+      Since this question is not public, it cannot be cloned.
+    </span>
+  </span>
+</b-tooltip>
   </span>
 </template>
 
@@ -155,6 +164,10 @@ export default {
     ToggleButton
   },
   props: {
+    isForgeDraft: {
+      type: Boolean,
+      default: false
+    },
     asButton: {
       type: Boolean,
       default: false
@@ -192,6 +205,10 @@ export default {
       default: 1
     },
     nonTechnology: {
+      type: Number,
+      default: 0
+    },
+    elementId: {
       type: Number,
       default: 0
     }

@@ -162,24 +162,60 @@ class AssignmentSyncQuestionPolicy
             : Response::deny('You are not allowed to update the custom rubric for that question.');
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return bool
+     */
+    private function _questionInAssignment(Assignment $assignment, Question $question): bool
+    {
+        return in_array($question->id, $assignment->questions->pluck('id')->toArray());
+    }
+
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return bool
+     */
+    private function _canAccessQuestionSettings(User $user, Assignment $assignment, Question $question): bool
+    {
+        $is_instructor = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
+        $is_student = in_array($user->id, $assignment->course->enrolledUsers->pluck('id')->toArray())
+            || $user->fake_student
+            || ($assignment->formative && $user->formative_student);
+
+        return $this->_questionInAssignment($assignment, $question) && ($is_instructor || $is_student);
+    }
+
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return bool
+     */
+    private function _canUpdateQuestionSettings(User $user, Assignment $assignment, Question $question): bool
+    {
+        return $assignment->course->ownsCourseOrIsCoInstructor($user->id)
+            && $this->_questionInAssignment($assignment, $question);
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
     public function getDiscussItSettings(User                   $user,
                                          AssignmentSyncQuestion $assignmentSyncQuestion,
                                          Assignment             $assignment,
                                          Question               $question): Response
     {
-        $question_in_assignment = in_array($question->id, $assignment->questions->pluck('id')->toArray());
-
-        $is_instructor = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
-        $is_student = in_array($user->id, $assignment->course->enrolledUsers->pluck('id')->toArray())
-            || $user->fake_student
-            || ($assignment->formative && $user->formative_student);
-        return $question_in_assignment && ($is_instructor || $is_student)
+        return $this->_canAccessQuestionSettings($user, $assignment, $question)
             ? Response::allow()
             : Response::deny('You are not allowed to get the discuss-it settings for that question.');
-
-
     }
-
 
     /**
      * @param User $user
@@ -193,12 +229,43 @@ class AssignmentSyncQuestionPolicy
                                             Assignment             $assignment,
                                             Question               $question): Response
     {
-
-        return $assignment->course->ownsCourseOrIsCoInstructor($user->id) && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+        return $this->_canUpdateQuestionSettings($user, $assignment, $question)
             ? Response::allow()
             : Response::deny('You are not allowed to update the discuss-it settings for that question.');
+    }
 
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function getForgeSettings(User                   $user,
+                                     AssignmentSyncQuestion $assignmentSyncQuestion,
+                                     Assignment             $assignment,
+                                     Question               $question): Response
+    {
+        return $this->_canAccessQuestionSettings($user, $assignment, $question)
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the Forge settings for that question.');
+    }
 
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function updateForgeSettings(User                   $user,
+                                        AssignmentSyncQuestion $assignmentSyncQuestion,
+                                        Assignment             $assignment,
+                                        Question               $question): Response
+    {
+        return $this->_canUpdateQuestionSettings($user, $assignment, $question)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the Forge settings for that question.');
     }
 
 
@@ -622,6 +689,50 @@ class AssignmentSyncQuestionPolicy
             : Response::deny("You are not allowed to get the rubric categories for that question in that assignment.");
 
 
+    }
+
+    // Add these methods to your AssignmentSyncQuestionPolicy
+
+    /**
+     * Determine if the user can get forge draft submissions
+     *
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function getForgeDraftSubmissions(User                   $user,
+                                             AssignmentSyncQuestion $assignmentSyncQuestion,
+                                             Assignment             $assignment,
+                                             Question               $question): Response
+    {
+        $is_instructor = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
+
+        return $is_instructor && $this->_questionInAssignment($assignment, $question)
+            ? Response::allow()
+            : Response::deny('You are not allowed to view submissions for this draft.');
+    }
+
+    /**
+     * Determine if the user can delete a forge draft
+     *
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function destroyForgeDraft(User                   $user,
+                                      AssignmentSyncQuestion $assignmentSyncQuestion,
+                                      Assignment             $assignment,
+                                      Question               $question): Response
+    {
+        $is_instructor = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
+
+        return $is_instructor && $this->_questionInAssignment($assignment, $question)
+            ? Response::allow()
+            : Response::deny('You are not allowed to delete this draft.');
     }
 
 

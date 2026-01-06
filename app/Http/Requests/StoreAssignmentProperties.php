@@ -165,7 +165,7 @@ class StoreAssignmentProperties extends FormRequest
             }
             switch ($this->source) {
                 case('a'):
-                    $rules['assessment_type'] = ['required', Rule::in('real time', 'delayed', 'clicker', 'learning tree')];
+                    $rules['assessment_type'] = ['required', Rule::in('real time', 'delayed', 'clicker', 'learning tree', 'forge')];
                     $rules['algorithmic'] = ['required', Rule::in(0, 1)];
                     $rules['points_per_question'] = ['required', Rule::in('number of points', 'question weight')];
                     if ($this->points_per_question === 'number of points') {
@@ -232,20 +232,20 @@ class StoreAssignmentProperties extends FormRequest
     /**
      * @return array
      */
-    public function messages(): array
+    public
+    function messages(): array
     {
         $autoRelease = new AutoRelease();
         $messages = $autoRelease->requestMessages();
         if (!$this->is_template) {
             foreach ($this->assign_tos as $key => $assign_to) {
-                $index = $key + 1;
                 $messages["groups_$key.required"] = 'The assign to field is required.';
                 $messages["available_from_date_$key.required"] = 'This date is required.';
-                $messages["available_from_time_$key.required"] = $this->getTimeFormatErrorMessage('available on', $index);
-                $messages["available_from_time_$key.date_format"] = $this->getTimeFormatErrorMessage('available on', $index);
-                $messages["due_time_$key.required"] = $this->getTimeFormatErrorMessage('due time', $index);
-                $messages["due_time_$key.date_format"] = $this->getTimeFormatErrorMessage('due time', $index);
-                $messages["final_submission_deadline_time_$key.date_format"] = $this->getTimeFormatErrorMessage('final submission deadline time', $index);
+                $messages["available_from_time_$key.required"] = $this->getTimeFormatErrorMessage('available on');
+                $messages["available_from_time_$key.date_format"] = $this->getTimeFormatErrorMessage('available on');
+                $messages["due_time_$key.required"] = $this->getTimeFormatErrorMessage('due time');
+                $messages["due_time_$key.date_format"] = $this->getTimeFormatErrorMessage('due time');
+                $messages["final_submission_deadline_time_$key.date_format"] = $this->getTimeFormatErrorMessage('final submission deadline time');
             }
             $messages['name.unique'] = "Assignment names must be unique with a course.";
         } else {
@@ -257,11 +257,11 @@ class StoreAssignmentProperties extends FormRequest
 
     /**
      * @param string $field
-     * @param int $index
      * @return string
      */
-    public function getTimeFormatErrorMessage(string $field, int $index): string
+    public
+    function getTimeFormatErrorMessage(string $field): string
     {
-        return "Time for $field $index needs a valid time such as 9:00 AM.";
+        return "Time for $field needs a valid time such as 9:00 AM.";
     }
 }

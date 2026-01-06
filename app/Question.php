@@ -374,6 +374,9 @@ class Question extends Model
         return false;
     }
 
+    /**
+     * @throws Exception
+     */
     public
     function getTechnologySrcAndProblemJWT(Request     $request,
                                            Assignment  $assignment,
@@ -521,8 +524,7 @@ class Question extends Model
             case('text'):
                 break;
             default:
-                $response['message'] = "Question id {$question->id} uses the technology '{$question->technology}' which is currently not supported by ADAPT.";
-                echo json_encode($response);
+                throw new Exception("Question id {$question->id} uses the technology '{$question->technology}' which is currently not supported by ADAPT.");
                 exit;
 
         }
@@ -560,6 +562,9 @@ class Question extends Model
             }
         }
         switch ($question_type) {
+            case('forge'):
+            case('forge_iteration'):
+                break;
             case('discuss_it'):
                 /**  $qti_array['media_uploads'] = QuestionMediaUpload::where('question_id', $this->id)->get();
                  * foreach ($qti_array['media_uploads'] as $key => $question_media_upload) {
@@ -2493,7 +2498,10 @@ class Question extends Model
             }
             $question_id = $question->id;
         }
-
+        $question = Question::find($question_id);
+        $response['question_type'] = $question->qti_json_type;
+        $response['title'] = $question->title;
+        $response['description'] = $question->description;
         $response['question_id'] = $question_id;
         $response['assignment_question'] = $assignment_question;
         $response['direct_import_id'] = $adapt_id;
@@ -3708,6 +3716,22 @@ class Question extends Model
         } catch (Exception $e) {
         }
         return $is_discuss_it;
+    }
+
+    /**
+     * @return null|string
+     */
+    public
+    function forgeQuestionType(): ?string
+    {
+        $forge_question_type = null;
+        try {
+            if (in_array(json_decode($this->qti_json)->questionType, ['forge', 'forge_iteration'])) {
+                $forge_question_type = json_decode($this->qti_json)->questionType;
+            }
+        } catch (Exception $e) {
+        }
+        return $forge_question_type;
     }
 
     /**

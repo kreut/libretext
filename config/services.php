@@ -53,4 +53,7 @@ return [
         'client_id' => env('LIBRETEXTS_CLIENT_ID'),
         'client_secret' => env('LIBRETEXTS_CLIENT_SECRET'),
     ],
+    'antecedent' => [
+        'url' => 'https://local.antecedentwriting.com'
+    ]
 ];
