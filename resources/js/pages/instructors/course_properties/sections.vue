@@ -130,6 +130,18 @@
                   <a href="" @click.prevent="$router.push({name: 'course_properties.general_info'})">here</a>.
                 </p>
                 <b-table striped hover :fields="fields" :items="sections" title="Sections">
+                  <template v-slot:head(access_code)>
+                    Access Code  <QuestionCircleTooltip id="access_code_for_non_lms_entry_tooltip"
+                                                        v-show="isLMS && !isLmsOnlyEntry && sections.length === 1"/>
+                      <b-tooltip target="access_code_for_non_lms_entry_tooltip"
+                                 delay="500"
+                                 triggers="hover focus"
+                      >
+                       Your students can either use your school's LMS or use the ADAPT website directly to access their homework.  If they enter through your school's LMS, they
+                        will be enrolled automatically in your course upon entering the first assignment and won't need an access code.<br><br>However, if they
+                        enroll in the course through the ADAPT website, they will need to enter this access code in order to complete their enrollment.
+                      </b-tooltip>
+                  </template>
                   <template v-slot:head(crn)>
                     CRN
                     <QuestionCircleTooltip :id="'crn-tooltip'"/>
@@ -152,18 +164,6 @@
                         >
                           <font-awesome-icon :icon="copyIcon"/>
                         </a>
-
-                          <QuestionCircleTooltip id="access_code_for_non_lms_entry_tooltip"/>
-                        <span v-show="isLMS && !isLmsOnlyEntry && sections.length === 1">
-                      <b-tooltip target="access_code_for_non_lms_entry_tooltip"
-                                 delay="500"
-                                 triggers="hover focus"
-                      >
-                       Your students can either use your school's LMS or use the ADAPT website directly to access their homework.  If they enter through your school's LMS, they
-                        will be enrolled automatically in your course upon entering the first assignment and won't need an access code.<br><br>However, if they
-                        enroll in the course through the ADAPT website, they will need to enter this access code in order to complete their enrollment.
-                      </b-tooltip>
-                      </span>
                         </span>
                     </div>
                     <div v-else>
