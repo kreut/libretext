@@ -49,6 +49,7 @@ export function create3DModelSrc (parameters) {
   if (parameters.hideDistance) {
     src += '&hideDistance=' + parameters.hideDistance
   }
+  src += '&v=' + Date.now()
   return src
 }
 

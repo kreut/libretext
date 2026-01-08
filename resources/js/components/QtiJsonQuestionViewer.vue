@@ -147,6 +147,7 @@
           <ThreeDModelViewer
             v-if="['three_d_model_multiple_choice','three_d_model_multiple_answer'].includes(questionType)"
             :qti-json="JSON.parse(qtiJson)"
+            :submit-button-active="submitButtonActive"
           />
           <AccountingReportViewer v-if="questionType === 'accounting_report'"
                                   ref="accountingReportViewer"

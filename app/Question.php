@@ -790,14 +790,21 @@ class Question extends Model
                 }
                 break;
             case('three_d_model_multiple_choice'):
+                $is_correct = false;
+                $selected_index = null;
                 if ($student_response) {
                     $qti_array['studentResponse'] = json_decode($student_response, 1);
                     if (isset($qti_array['studentResponse']['selectedIndex'])) {
                         $selected_index = $qti_array['studentResponse']['selectedIndex'];
-                        if ($qti_array['solutionStructure']['selectedIndex'] !== $selected_index
-                            && isset($qti_array['generalIncorrectFeedback'])
-                            && $qti_array['generalIncorrectFeedback']) {
-                            $qti_array['feedback'] = $qti_array['generalIncorrectFeedback'];
+
+                        if ($show_solution) {
+                            $is_correct = $qti_array['solutionStructure']['selectedIndex'] === $selected_index;
+                        }
+
+                        if (isset($qti_array['generalIncorrectFeedback']) && $qti_array['generalIncorrectFeedback']) {
+                            if ($qti_array['solutionStructure']['selectedIndex'] !== $selected_index) {
+                                $qti_array['feedback'] = $qti_array['generalIncorrectFeedback'];
+                            }
                         }
                         if (isset($qti_array['feedbacks'][$selected_index]) && $qti_array['feedbacks'][$selected_index]) {
                             $qti_array['feedback'] = $qti_array['feedbacks'][$selected_index];
@@ -808,14 +815,18 @@ class Question extends Model
                     if (request()->user()->role === 3) {
                         unset($qti_array['feedbacks']);
                         unset($qti_array['feedback']);
-                        $qti_array['solutionStructure'] = [];
+                        unset($qti_array['generalIncorrectFeedback']);
+                        unset($qti_array['solutionStructure']);
+                        // No isCorrect here — solutions not shown yet
                     }
                 } else {
                     if (!$student_response && $json_type === 'question_json') {
                         if (request()->user()->role === 3) {
-                            unset($qti_array['feedback']);
+                            // CHANGED: also strip feedbacks when no response yet
                             unset($qti_array['feedbacks']);
-                            $qti_array['solutionStructure'] = [];
+                            unset($qti_array['feedback']);
+                            unset($qti_array['generalIncorrectFeedback']);
+                            unset($qti_array['solutionStructure']);
                         }
                     }
                     if ($json_type === 'answer_json') {
@@ -823,8 +834,21 @@ class Question extends Model
                         if (request()->user()->role === 3) {
                             unset($qti_array['feedbacks']);
                             unset($qti_array['feedback']);
+                            unset($qti_array['solutionStructure']);
                         }
-
+                    }
+                    // solutions shown + student response — send isCorrect, strip other feedbacks
+                    if ($student_response && $json_type === 'question_json' && request()->user()->role === 3) {
+                        unset($qti_array['solutionStructure']);
+                        $qti_array['isCorrect'] = $is_correct;
+                        if (isset($qti_array['feedbacks'])) {
+                            foreach ($qti_array['feedbacks'] as $index => $feedback) {
+                                if ($index !== $selected_index) {
+                                    $qti_array['feedbacks'][$index] = '';
+                                }
+                            }
+                        }
+                        unset($qti_array['generalIncorrectFeedback']);
                     }
                 }
                 break;

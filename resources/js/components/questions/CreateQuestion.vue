@@ -1564,7 +1564,7 @@
                     <b-form-radio value="sketcher">
                       Sketcher
                     </b-form-radio>
-                    <b-form-radio v-if="false" value="3d_model">
+                    <b-form-radio value="3d_model">
                       3D Model
                     </b-form-radio>
                     <b-modal id="modal-discuss-it"
@@ -1629,7 +1629,7 @@
                       Marker
                     </b-form-radio>
                   </div>
-                  <div v-if="nativeType === '3d_model'">
+                  <div v-if="nativeType === '3d_model'" v-show="false">
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
                                   value="three_d_model_multiple_choice"
                                   @change="initQTIQuestionType($event)"
@@ -4185,13 +4185,18 @@ export default {
       switch (this.nativeType) {
         case ('3d_model'):
           if (event.data.modelStructureData) {
-            this.receivedModelStructureData = true
-            this.qtiJson.solutionStructure = event.data.modelStructureData
-            this.questionForm.solution_structure = JSON.stringify(this.qtiJson.solutionStructure)
-            console.error(this.qtiJson.solutionStructure)
-            this.$forceUpdate()
+            if (event.data.modelStructureData.selectedIndex >= 0) {
+              this.receivedModelStructureData = true
+              this.qtiJson.solutionStructure = event.data.modelStructureData
+              this.questionForm.solution_structure = JSON.stringify(this.qtiJson.solutionStructure)
+              console.error(this.qtiJson.solutionStructure)
+              this.$forceUpdate()
+            } else if (this.qtiJson.solutionStructure && this.qtiJson.solutionStructure.selectedIndex >= 0) {
+              this.receivedModelStructureData = true
+            }
           }
           break
+
         case ('sketcher'):
           if (event.data.structure) {
             this.receivedStructure = true
@@ -4430,7 +4435,7 @@ export default {
             break
           case ('three_d_model_multiple_choice'):
             this.receivedModelStructureData = false
-            document.getElementById('threeDModel').contentWindow.postMessage('save3DModel', '*')
+            document.getElementById('threeDModel-create-question').contentWindow.postMessage('save3DModel', '*')
             await this.handleGet3DModel()
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']
@@ -5110,8 +5115,12 @@ export default {
       } else if (type === 'discuss_it') {
         this.qtiQuestionType = 'discuss_it'
         this.initQTIQuestionType('discuss_it')
+      } else if (type === '3d_model') {
+        // CHANGED: auto-select multiple choice, only one option implemented
+        this.qtiQuestionType = 'three_d_model_multiple_choice'
+        this.initQTIQuestionType('three_d_model_multiple_choice')
       } else if (['nursing', 'sketcher', 'accounting'].includes(type)) {
-        this.nativeType = type // ensure it's set
+        this.nativeType = type
         this.initNonBasicQTIQuestion()
       } else {
         this.qtiQuestionType = 'multiple_choice'
@@ -6128,6 +6137,12 @@ export default {
           this.questionToView = data.question
         } else {
           switch (this.qtiQuestionType) {
+            case ('three_d_model_multiple_choice'):
+              this.receivedModelStructureData = false
+              document.getElementById('threeDModel-create-question').contentWindow.postMessage('save3DModel', '*')
+              await this.handleGet3DModel()
+              this.$forceUpdate()
+              break
             case ('flashcard'):
               const cardData = this.$refs.flashcard.getCardData()
               const frontType = String(cardData.frontType)

@@ -2,18 +2,28 @@
   <div>
     <b-modal id="modal-3d-modal"
              :title="`ID ${activeIndex}`"
+             no-close-on-esc
+             no-close-on-backdrop
              size="xl"
     >
       <iframe
         :id="`threeDModel-feedback-${activeIndex}`"
         v-resize="{ log: false }"
         width="100%"
-        height="500px"
+        height="600px"
         allowtransparency="true"
         :src="feedbackSrc"
         frameborder="0"
         @load="init3DModel(`threeDModel-feedback-${activeIndex}`)"
       />
+      <template #modal-footer="{  ok }">
+        <b-button size="sm"
+                  variant="primary"
+                  @click="$bvModal.hide(`threeDModel-feedback-${activeIndex}`)"
+        >
+          OK
+        </b-button>
+      </template>
     </b-modal>
     <b-card
       border-variant="primary"
@@ -130,7 +140,7 @@
               BGColor
               <QuestionCircleTooltip id="BGColor-tooltip"/>
               <b-tooltip target="BGColor-tooltip" delay="250" triggers="hover focus">
-                Expects a hex value without the leading “#”.
+                Expects a hex value without the leading "#".
               </b-tooltip>
             </template>
             <b-form-row>
@@ -196,7 +206,7 @@
               selectionColor
               <QuestionCircleTooltip id="selectionColor-tooltip"/>
               <b-tooltip target="selectionColor-tooltip" delay="250" triggers="hover focus">
-                Hex color(s) for selected pieces, omit leading “#”.
+                Hex color(s) for selected pieces, omit leading "#".
               </b-tooltip>
             </template>
             <b-form-row>
@@ -257,15 +267,19 @@
         </b-col>
       </b-row>
     </b-card>
-    <iframe
-      id="threeDModel"
-      v-resize="{ log: false }"
-      width="100%"
-      allowtransparency="true"
-      :src="src"
-      frameborder="0"
-      @load="init3DModel('threeDModel')"
-    />
+    <div style="height: 600px; overflow: hidden;">
+      <iframe
+        id="threeDModel-create-question"
+        v-resize="{ log: false }"
+        width="100%"
+        height="600px"
+        allowtransparency="true"
+        :src="src"
+        frameborder="0"
+        style="display: block;"
+        @load="init3DModel('threeDModel-create-question')"
+      />
+    </div>
     <ErrorMessage v-if="threeDModelSolutionStructureErrors" :message="threeDModelSolutionStructureErrors"/>
     <b-card v-if="feedbacks.length"
             header-html="<h2 class=&quot;h5&quot;>Feedback</h2>"
@@ -293,24 +307,25 @@
             @ready="handleFixCKEditor()"
           />
         </b-form-group>
-        <b-row v-for="(feedback,index) in feedbacks" :key="`feedback-${index}`">
+        <b-row v-for="(feedback, index) in feedbacks" :key="`feedback-${feedback.originalIndex}`">
           <b-col cols="auto" class="d-flex justify-content-center align-items-center flex-shrink-0"
                  style="width: 100px; max-width: 100px;"
           >
-            <b-button @click="show3DModelModal(index)"
-                      :variant="typeof qtiJson.solutionStructure !== 'undefined' && qtiJson.solutionStructure.selectedIndex === index ? 'success' : ''"
+            <b-button @click="show3DModelModal(feedback.originalIndex)"
+                      :variant="(lastClickedIndex !== null || (qtiJson.solutionStructure && qtiJson.solutionStructure.selectedIndex >= 0)) ? (index === 0 ? 'success' : 'danger') : ''"
             >
-              ID {{ index }}
+              ID {{ feedback.originalIndex }}
             </b-button>
           </b-col>
           <b-col>
             <b-form-group
-              :label-for="`feedback_${index}`"
+              :label-for="`feedback_${feedback.originalIndex}`"
               label="Feedback (Optional)"
             >
               <ckeditor
-                :id="`feedback_${index}`"
-                v-model="feedbacks[index]"
+                :id="`feedback_${feedback.originalIndex}`"
+                :key="`ckeditor-${feedback.originalIndex}-${reorderKey}`"
+                v-model="feedbacks[index].value"
                 tabindex="0"
                 :config="threeDModelRichEditorConfig"
                 @namespaceloaded="onCKEditorNamespaceLoaded"
@@ -360,6 +375,9 @@ export default {
   },
   data: () => ({
     activeIndex: 0,
+    reorderKey: 0,
+    correctIndex: null,
+    lastClickedIndex: null,
     feedbacks: [],
     generalIncorrectFeedback: '',
     numPieces: 0,
@@ -371,7 +389,10 @@ export default {
   watch: {
     'feedbacks': {
       handler (newValue) {
-        this.$emit('updateQtiJson', 'feedbacks', newValue)
+        const sorted = [...newValue]
+          .sort((a, b) => a.originalIndex - b.originalIndex)
+          .map(f => f.value)
+        this.$emit('updateQtiJson', 'feedbacks', sorted)
       },
       deep: true
     },
@@ -401,44 +422,83 @@ export default {
   },
   created () {
     window.addEventListener('message', this.receiveMessage, false)
-  }
-  ,
+  },
   destroyed () {
     window.removeEventListener('message', this.receiveMessage)
   },
   mounted () {
     this.parametersForm = new Form(this.qtiJson.parameters)
+    if (this.qtiJson.solutionStructure !== undefined) {
+      this.correctIndex = this.qtiJson.solutionStructure.selectedIndex
+    }
+    // CHANGED: load existing general incorrect feedback when editing a saved question
+    if (this.qtiJson.generalIncorrectFeedback) {
+      this.generalIncorrectFeedback = this.qtiJson.generalIncorrectFeedback
+    }
   },
   methods: {
     create3DModelSrc,
+    isCorrectAnswer (index) {
+      return this.correctIndex === index
+    },
     show3DModelModal (index) {
       this.activeIndex = index
+      const isFirst = this.feedbacks.length > 0 && this.feedbacks[0].originalIndex === index
+      const selectionColor = isFirst ? '008600' : 'dc3545'
+      this.feedbackSrc = `https://devapp02.libretexts.org/?modelID=${this.parametersForm.modelID}&mode=selection&panel=hide&autospin=no&hideControlsButton=true&allowSelection=false&selectionColor=${selectionColor}` + '&v=' + Date.now()
       this.$bvModal.show('modal-3d-modal')
     },
     receiveMessage (event) {
-      console.error(event)
+      console.error(event.data)
       if (event.data.info === 'count') {
         console.error('getting the count')
         if (this.feedbacks.length !== event.data.num && event.data.num >= 0) {
           const feedbacks = this.qtiJson.feedbacks
           if (Array.isArray(feedbacks)) {
-            for (let i = 0; i < feedbacks.length; i++) {
-              this.feedbacks[i] = feedbacks[i]
-            }
+            this.feedbacks = Array.from({ length: event.data.num }, (_, i) => ({
+              originalIndex: i,
+              value: feedbacks[i] || ''
+            }))
           } else {
-            this.feedbacks = Array(event.data.num).fill('')
+            this.feedbacks = Array.from({ length: event.data.num }, (_, i) => ({
+              originalIndex: i,
+              value: ''
+            }))
           }
-
-          this.feedbackSrc = `https://devapp02.libretexts.org/?modelID=${this.parametersForm.modelID}&mode=selection&panel=hide&autospin=no`
+          // On load, move the correct answer to the top
+          const correctIdx = this.qtiJson.solutionStructure && this.qtiJson.solutionStructure.selectedIndex >= 0
+            ? this.qtiJson.solutionStructure.selectedIndex
+            : null
+          if (correctIdx !== null) {
+            const correct = this.feedbacks.find(f => f.originalIndex === correctIdx)
+            const rest = this.feedbacks
+              .filter(f => f.originalIndex !== correctIdx)
+              .sort((a, b) => a.originalIndex - b.originalIndex)
+            this.feedbacks = [correct, ...rest]
+            this.reorderKey++
+          }
         }
         console.error(event.data.num)
+      }
+      if (event.data.info === 'selectedPiece') {
+        const creationIframe = document.getElementById('threeDModel-create-question')
+        if (creationIframe && event.source === creationIframe.contentWindow) {
+          const selected = event.data.selected
+          this.lastClickedIndex = selected
+          const clicked = this.feedbacks.find(f => f.originalIndex === selected)
+          const rest = this.feedbacks
+            .filter(f => f.originalIndex !== selected)
+            .sort((a, b) => a.originalIndex - b.originalIndex)
+          this.feedbacks = [clicked, ...rest]
+          this.reorderKey++
+        }
       }
       if (event.data.info === 'isReady') {
         const id = event.data.id
         const threeDModelView = document.getElementById(id)
         if (event.data.status === true) {
           this.isReady[id] = true
-          if (id === 'threeDModel') {
+          if (id === 'threeDModel-create-question') {
             if (this.qtiJson && this.qtiJson.solutionStructure) {
               const response = {
                 type: 'load3DModel',
@@ -476,13 +536,13 @@ export default {
       }, 50)
     },
     updateSrc () {
-      this.src = this.create3DModelSrc(this.parametersForm)
-    }
-    ,
+      const base = this.create3DModelSrc(this.parametersForm)
+      this.src = base.replace(/selectionColor=[^&]*/g, 'selectionColor=008600')
+        + (base.includes('selectionColor') ? '' : '&selectionColor=008600')
+    },
     handleFixCKEditor () {
       fixCKEditor(this)
-    }
-    ,
+    },
     onCKEditorNamespaceLoaded (CKEDITOR) {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
     }
