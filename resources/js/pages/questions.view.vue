@@ -2236,6 +2236,7 @@
                   && !isOpenEnded
                   && !isFormative
                   && !isDiscussIt()
+                  && assignmentCanSubmitWork
                   && ['real time', 'delayed'].includes(assessmentType)"
               >
                 <label for="can_submit_work_override" class="pl-3 mr-2">Can submit work</label>
@@ -3811,6 +3812,7 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    assignmentCanSubmitWork: false,
     numberOfSubmissions: 0,
     submittedWorkPolicy: '',
     submittedWorkFormatOptions: [],
@@ -6846,6 +6848,7 @@ export default {
           $('#skip-link').remove()
         }
         let assignment = data.assignment
+        this.assignmentCanSubmitWork = assignment.can_submit_work
         this.canContactInstructorAutoGraded = assignment.can_contact_instructor_auto_graded
         this.algorithmicAssignment = Boolean(assignment.algorithmic)
         this.canContactGrader = assignment.can_contact_grader

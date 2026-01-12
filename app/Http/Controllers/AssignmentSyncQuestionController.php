@@ -3005,7 +3005,10 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['question_editor_name'] = $question_editor_names_by_question_editor_user_id[$question->question_editor_user_id] ?? 'None provided';
 
-                $assignment->questions[$key]['can_submit_work'] = isset($assignment_questions_by_question_id[$question->id]->can_submit_work_override) && $assignment_questions_by_question_id[$question->id]->can_submit_work_override !== null
+                $assignment->questions[$key]['can_submit_work'] =
+                    $assignment->can_submit_work &&
+                    isset($assignment_questions_by_question_id[$question->id]->can_submit_work_override) &&
+                    $assignment_questions_by_question_id[$question->id]->can_submit_work_override !== null
                     ? $assignment_questions_by_question_id[$question->id]->can_submit_work_override
                     : $assignment->can_submit_work;
                 $assignment->questions[$key]['question_revision_id'] = isset($question_revisions_by_question_id[$question->id]) ? $question_revisions_by_question_id[$question->id]->id : null;
