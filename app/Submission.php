@@ -2605,7 +2605,6 @@ class Submission extends Model
         $totalFields = 0;
         $correctFields = 0;
 
-        // Iterate through each entry in the submission
         foreach ($studentSubmission as $entryIndex => $studentEntry) {
             $entryResult = [
                 'selectedEntryIndex' => $studentEntry['selectedEntryIndex'] ?? null,
@@ -2614,8 +2613,7 @@ class Submission extends Model
                 'isCorrect' => false
             ];
 
-            // Check if the student selected the correct entry
-            $correctEntryIndex = $entryIndex; // The submission order should match solution order
+            $correctEntryIndex = $entryIndex;
             $entryResult['selectedEntryCorrect'] = $studentEntry['selectedEntryIndex'] === $correctEntryIndex;
 
             if ($entryResult['selectedEntryCorrect']) {
@@ -2623,15 +2621,12 @@ class Submission extends Model
             }
             $totalFields++;
 
-            // Get the corresponding solution entry (handle both array and object)
             $solutionEntry = $solution[$entryIndex] ?? null;
 
-            // Convert to object if it's an array
             if (is_array($solutionEntry)) {
                 $solutionEntry = (object) $solutionEntry;
             }
 
-            // Check if solutionRows exists
             $solutionRows = null;
             if (is_object($solutionEntry) && isset($solutionEntry->solutionRows)) {
                 $solutionRows = $solutionEntry->solutionRows;
@@ -2644,12 +2639,13 @@ class Submission extends Model
                 continue;
             }
 
-            // Grade each row
+            // Find order violation (credit followed by debit)
+            $orderViolationRowIndex = $this->findOrderViolationIndex($studentEntry['rows']);
+
             $allRowsCorrect = true;
             foreach ($studentEntry['rows'] as $rowIndex => $studentRow) {
                 $solutionRow = $solutionRows[$rowIndex] ?? null;
 
-                // Convert to object if it's an array
                 if (is_array($solutionRow)) {
                     $solutionRow = (object) $solutionRow;
                 }
@@ -2664,65 +2660,60 @@ class Submission extends Model
                     'isCorrect' => false
                 ];
 
-                if ($solutionRow) {
-                    // Check account title
-                    $solutionAccountTitle = is_object($solutionRow) ? ($solutionRow->accountTitle ?? '') : ($solutionRow['accountTitle'] ?? '');
-                    $rowResult['accountTitleCorrect'] =
-                        trim($studentRow['accountTitle'] ?? '') === trim($solutionAccountTitle);
+                $forceIncorrect = ($orderViolationRowIndex !== null && $rowIndex >= $orderViolationRowIndex);
 
+                if ($solutionRow) {
+                    $solutionAccountTitle = $solutionRow->accountTitle ?? '';
+                    $solutionType = $solutionRow->type ?? '';
+                    $solutionAmount = $solutionRow->amount ?? '';
+
+                    $solutionDebit = ($solutionType === 'debit') ? $solutionAmount : '';
+                    $solutionCredit = ($solutionType === 'credit') ? $solutionAmount : '';
+
+                    $studentDebit = $studentRow['debit'] ?? '';
+                    $studentCredit = $studentRow['credit'] ?? '';
+
+                    // Account title
+                    if ($forceIncorrect) {
+                        $rowResult['accountTitleCorrect'] = false;
+                    } else {
+                        $rowResult['accountTitleCorrect'] = trim($studentRow['accountTitle'] ?? '') === trim($solutionAccountTitle);
+                    }
                     if ($rowResult['accountTitleCorrect']) {
                         $correctFields++;
                     }
                     $totalFields++;
 
-                    // Get student's debit and credit values
-                    $studentDebit = $studentRow['debit'] ?? '';
-                    $studentCredit = $studentRow['credit'] ?? '';
-
-                    // Get solution's debit and credit values based on type
-                    $solutionType = is_object($solutionRow) ? ($solutionRow->type ?? '') : ($solutionRow['type'] ?? '');
-                    $solutionAmount = is_object($solutionRow) ? ($solutionRow->amount ?? '') : ($solutionRow['amount'] ?? '');
-
-                    $solutionDebit = '';
-                    $solutionCredit = '';
-
-                    if ($solutionType === 'debit') {
-                        $solutionDebit = $solutionAmount;
-                    } else {
-                        $solutionCredit = $solutionAmount;
-                    }
-
-                    // Check if debit is correct (must match exactly - empty string vs number matters)
-                    if ($studentDebit === '' && $solutionDebit === '') {
+                    // Debit
+                    if ($forceIncorrect) {
+                        $rowResult['debitCorrect'] = false;
+                    } elseif ($studentDebit === '' && $solutionDebit === '') {
                         $rowResult['debitCorrect'] = true;
                     } elseif ($studentDebit !== '' && $solutionDebit !== '') {
-                        // Compare as floats with tolerance
                         $rowResult['debitCorrect'] = abs(floatval($studentDebit) - floatval($solutionDebit)) < 0.01;
                     } else {
                         $rowResult['debitCorrect'] = false;
                     }
-
                     if ($rowResult['debitCorrect']) {
                         $correctFields++;
                     }
                     $totalFields++;
 
-                    // Check if credit is correct (must match exactly - empty string vs number matters)
-                    if ($studentCredit === '' && $solutionCredit === '') {
+                    // Credit
+                    if ($forceIncorrect) {
+                        $rowResult['creditCorrect'] = false;
+                    } elseif ($studentCredit === '' && $solutionCredit === '') {
                         $rowResult['creditCorrect'] = true;
                     } elseif ($studentCredit !== '' && $solutionCredit !== '') {
-                        // Compare as floats with tolerance
                         $rowResult['creditCorrect'] = abs(floatval($studentCredit) - floatval($solutionCredit)) < 0.01;
                     } else {
                         $rowResult['creditCorrect'] = false;
                     }
-
                     if ($rowResult['creditCorrect']) {
                         $correctFields++;
                     }
                     $totalFields++;
 
-                    // Row is correct if all fields match
                     $rowResult['isCorrect'] =
                         $rowResult['accountTitleCorrect'] &&
                         $rowResult['debitCorrect'] &&
@@ -2736,13 +2727,10 @@ class Submission extends Model
                 $entryResult['rows'][] = $rowResult;
             }
 
-            // Entry is correct if entry selection is correct AND all rows are correct
             $entryResult['isCorrect'] = $entryResult['selectedEntryCorrect'] && $allRowsCorrect;
-
             $results[$entryIndex] = $entryResult;
         }
 
-        // Calculate proportion correct
         $proportionCorrect = $totalFields > 0 ? round($correctFields / $totalFields, 4) : 0;
 
         return [
@@ -2750,6 +2738,38 @@ class Submission extends Model
             'results' => $results,
             'allCorrect' => $correctFields === $totalFields
         ];
+    }
+
+    private function findOrderViolationIndex(array $rows): ?int
+    {
+        $creditRowIndices = [];
+        $debitRowIndices = [];
+
+        foreach ($rows as $rowIndex => $row) {
+            $hasDebit = isset($row['debit']) && $row['debit'] !== '';
+            $hasCredit = isset($row['credit']) && $row['credit'] !== '';
+
+            if ($hasDebit) {
+                $debitRowIndices[] = $rowIndex;
+            }
+            if ($hasCredit) {
+                $creditRowIndices[] = $rowIndex;
+            }
+        }
+
+        if (empty($creditRowIndices) || empty($debitRowIndices)) {
+            return null;
+        }
+
+        foreach ($creditRowIndices as $creditIndex) {
+            foreach ($debitRowIndices as $debitIndex) {
+                if ($debitIndex > $creditIndex) {
+                    return $creditIndex;
+                }
+            }
+        }
+
+        return null;
     }
 }
 

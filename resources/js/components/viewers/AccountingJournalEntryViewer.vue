@@ -36,7 +36,7 @@
             >
               <b-form-select
                 v-model="entry.selectedEntryIndex"
-                :options="entryOptions"
+                :options="getEntryOptionsFor(entryIndex)"
                 size="sm"
                 :class="[getEntryCellClass(entryIndex), {'is-incomplete': isIncomplete(entryIndex, null, 'entry')}]"
                 @change="clearEntryColor(entryIndex)"
@@ -278,6 +278,28 @@ export default {
     this.loadStudentResponse()
   },
   methods: {
+    getEntryOptionsFor (entryIndex) {
+      // Get all selected entry indices EXCEPT the current row's selection
+      const selectedByOthers = this.studentEntries
+        .map((entry, idx) => idx === entryIndex ? null : entry.selectedEntryIndex)
+        .filter(val => val !== null)
+
+      const options = [{ value: null, text: 'Select an entry...' }]
+
+      if (this.qtiJson.entries) {
+        this.qtiJson.entries.forEach((entry, index) => {
+          // Include if not selected by another row
+          if (!selectedByOthers.includes(index)) {
+            options.push({
+              value: index,
+              text: entry.entryText
+            })
+          }
+        })
+      }
+
+      return options
+    },
     initializeStudentEntries () {
       if (!this.qtiJson.entries) return
 
