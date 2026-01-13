@@ -1912,7 +1912,7 @@
                 v-if="isInstructor() && !isInstructorWithAnonymousView && assessmentType !== 'clicker' && !inIFrame"
                 class="mb-2"
               >
-                <span class="font-weight-bold">Question Attributes:</span>
+                <span class="font-weight-bold">Usage Settings:</span>
                 <toggle-button
                   :width="83"
                   class="mt-2"
