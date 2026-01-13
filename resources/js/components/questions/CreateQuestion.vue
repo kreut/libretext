@@ -1559,7 +1559,7 @@
                       />
                     </b-form-radio>
                     <b-form-radio value="accounting"
-                                  v-show="false && (isAdmin || [142886,11712].includes(user.id))"
+                                  v-show="(isAdmin || [142886,11712].includes(user.id))"
                     >
                     Accounting
                     </b-form-radio>
