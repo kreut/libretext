@@ -2095,7 +2095,7 @@ class CourseController extends Controller
         try {
             DB::beginTransaction();
             $assignment_ids = $course->assignments->pluck('id')->toArray();
-            foreach ($assignment_ids as $assignment_id){
+            foreach ($assignment_ids as $assignment_id) {
                 $folderPath = "submitted-work/$assignment_id";
                 $files = Storage::disk('s3')->files($folderPath);
                 Storage::disk('s3')->delete($files);
@@ -2143,7 +2143,8 @@ class CourseController extends Controller
                 'rubric_points_breakdowns',
                 'maximum_number_of_allowed_attempts_notifications',
                 'submitted_works',
-                'submitted_work_pending_scores'];
+                'submitted_work_pending_scores',
+                'h5p_activity_sets'];
             foreach ($tables as $table) {
                 DB::table($table)->whereIn('assignment_id', $assignment_ids)->delete();
             }
