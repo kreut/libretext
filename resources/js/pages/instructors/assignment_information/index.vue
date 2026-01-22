@@ -232,7 +232,6 @@ export default {
     }
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentSummary()
-    this.viewQuestions()
   },
   methods: {
     viewQuestions () {
