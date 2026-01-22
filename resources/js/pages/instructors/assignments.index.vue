@@ -467,7 +467,16 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-
+        <b-alert
+          v-if="createAssignmentFromTemplateForm.level === 'properties_and_questions'"
+          show
+          variant="info"
+          class="mt-2"
+        >
+          <small>
+            <strong>Note:</strong> Questions will be linked to the source assignment's questions, not cloned as independent copies.
+          </small>
+        </b-alert>
         <b-form-group
           id="create_assignment_from_template_assign_to_groups"
           label-cols-sm="3"
