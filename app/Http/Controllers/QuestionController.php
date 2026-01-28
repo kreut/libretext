@@ -12,6 +12,7 @@ use App\AssignmentTopic;
 use App\BetaCourseApproval;
 use App\Course;
 use App\Helpers\Helper;
+use App\Helpers\Accounting;
 use App\Http\Requests\StoreQuestionRequest;
 use App\IMathAS;
 use App\Jobs\InitProcessTranscribe;
@@ -154,6 +155,10 @@ class QuestionController extends Controller
 
     }
 
+    public function validAccountingJournalEntries(): array
+    {
+        return Accounting::validAccountingJournalEntries();
+    }
     /**
      * @param Request $request
      * @param Question $question

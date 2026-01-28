@@ -15,19 +15,23 @@
                       class="p-0 mr-2"
                       @click="handleCollapseToggle(entryIndex)"
                     >
-                      <b-icon-chevron-down class="when-open" />
-                      <b-icon-chevron-right class="when-closed" />
+                      <b-icon-chevron-down class="when-open"/>
+                      <b-icon-chevron-right class="when-closed"/>
                     </b-button>
                     <div class="flex-grow-1">
                       <div><strong>Entry {{ entryIndex + 1 }}</strong></div>
                       <div v-if="entry.entryText || entry.entryDescription" class="text-muted small">
                         <span v-if="entry.entryText">{{ entry.entryText }}</span>
                         <span v-if="entry.entryText && entry.entryDescription"> - </span>
-                        <span v-if="entry.entryDescription" style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom;">
+                        <span v-if="entry.entryDescription"
+                              style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom;"
+                        >
                           {{ entry.entryDescription }}
                         </span>
                       </div>
-                      <div v-show="hasBeenCollapsed[entryIndex] && getEntryErrors(entryIndex).length > 0" class="collapsed-errors">
+                      <div v-show="hasBeenCollapsed[entryIndex] && getEntryErrors(entryIndex).length > 0"
+                           class="collapsed-errors"
+                      >
                         <small class="text-danger">{{ getEntryErrors(entryIndex).join(', ') }}</small>
                       </div>
                     </div>
@@ -37,7 +41,8 @@
                     size="sm"
                     @click="removeEntry(entryIndex)"
                   >
-                    <b-icon-trash /> Remove Entry
+                    <b-icon-trash/>
+                    Remove Entry
                   </b-button>
                 </div>
               </template>
@@ -92,7 +97,9 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr v-for="(row, rowIndex) in (entry.solutionRows || [])" :key="`entry-${entryIndex}-row-${rowIndex}`">
+                    <tr v-for="(row, rowIndex) in (entry.solutionRows || [])"
+                        :key="`entry-${entryIndex}-row-${rowIndex}`"
+                    >
                       <td>
                         <b-form-input
                           v-model="row.accountTitle"
@@ -103,7 +110,7 @@
                           @input="clearErrors('entries', entryIndex, rowIndex, 'accountTitle'); handleInput()"
                         />
                         <datalist id="account-titles-list">
-                          <option v-for="account in accountTitles" :key="account" :value="account" />
+                          <option v-for="account in accountTitles" :key="account" :value="account"/>
                         </datalist>
                         <ErrorMessage
                           v-if="errorKey && questionForm.errors.get(errorKey)
@@ -155,7 +162,7 @@
                           size="sm"
                           @click="deleteRow(entryIndex, rowIndex)"
                         >
-                          <b-icon-trash />
+                          <b-icon-trash/>
                         </b-button>
                       </td>
                     </tr>
@@ -232,6 +239,7 @@
 <script>
 import { v4 as uuidv4 } from 'uuid'
 import ErrorMessage from '~/components/ErrorMessage'
+import axios from 'axios'
 
 export default {
   name: 'JournalEntry',
@@ -255,118 +263,7 @@ export default {
       ],
       collapsedStates: {},
       hasBeenCollapsed: {}, // Track which entries have been collapsed at least once
-      accountTitles: [
-        'Accounts Payable',
-        'Accounts Receivable',
-        'Accrued Pension Liability',
-        'Accumulated Depreciation-Buildings',
-        'Accumulated Depreciation-Equipment',
-        'Accumulated Depreciation- Plant Assets',
-        'Accumulated Other Comprehensive Income',
-        'Accumulated Other Comprehensive Loss',
-        'Additional Paid-in Capital, Common Stock',
-        'Additional Paid-in Capital, Preferred Stock',
-        'Administrative Expenses',
-        'Advertising Expense',
-        'Allowance for Doubtful Accounts',
-        'Amortization Expense',
-        'Bad Debt Expense',
-        'Bank Charges Expense',
-        'Bonds Payable',
-        'Buildings',
-        'Cash',
-        'Common Stock',
-        'Common Stock Dividends Distributable',
-        'Copyrights',
-        'Cost of Goods Sold',
-        'Current Portion of Long-Term Debt',
-        'Deferred Revenue',
-        'Delivery Expense',
-        'Depreciation Expense',
-        'Discount on Bonds Payable',
-        'Dividends',
-        'Dividends Payable',
-        'Entertainment Expense',
-        'Equipment',
-        'Federal Income Taxes Payable',
-        'Federal Unemployment Taxes Payable',
-        'FICA Taxes Payable',
-        'Franchise',
-        'Freight-In',
-        'Freight-Out',
-        'Gain on Bond Redemption',
-        'Gain on Disposal of Plant Assets',
-        'Gain on Sale of Investments',
-        'Goodwill',
-        'Impairment Loss',
-        'Income Summary',
-        'Income Tax Expense',
-        'Income Taxes Payable',
-        'Insurance Expense',
-        'Intangible Assets',
-        'Interest Expense',
-        'Interest Income',
-        'Interest Payable',
-        'Interest Receivable',
-        'Interest Revenue',
-        'Inventory',
-        'Land',
-        'Land Improvements',
-        'Loss on Disposal of Plant Assets',
-        'Loss on Sale of Equipment',
-        'Maintenance and Repairs Expense',
-        'Miscellaneous Expense',
-        'Mortgage Payable',
-        'No Entry',
-        'Notes Payable',
-        'Notes Receivable',
-        'Operating Expenses',
-        'Other Operating Expenses',
-        'Other Receivables',
-        'Patents',
-        'Payroll Tax Expense',
-        'Petty Cash',
-        'Plant Assets',
-        'Postage Expense',
-        'Preferred Stock',
-        'Premium on Bonds Payable',
-        'Prepaid Advertising',
-        'Prepaid Expenses',
-        'Prepaid Insurance',
-        'Prepaid Rent',
-        'Property Tax Expense',
-        'Property Taxes Payable',
-        'Purchase Discounts',
-        'Purchase Returns and Allowances',
-        'Purchases',
-        'Rent Expense',
-        'Rent Revenue',
-        'Repairs Expense',
-        'Research and Development Expense',
-        'Retained Earnings',
-        'Salaries and Wages Expense',
-        'Salaries and Wages Payable',
-        'Sales Discounts',
-        'Sales Returns and Allowances',
-        'Sales Revenue',
-        'Sales Taxes Payable',
-        'Selling Expense',
-        'Service Charge Expense',
-        'Service Revenue',
-        'State Income Taxes Payable',
-        'State Unemployment Taxes Payable',
-        'Stock Dividends',
-        'Supplies',
-        'Supplies Expense',
-        'Travel Expense',
-        'Treasury Stock',
-        'Unearned Rent Revenue',
-        'Unearned Sales Revenue',
-        'Unearned Service Revenue',
-        'Union Dues Payable',
-        'Utilities Expense',
-        'Warranty Liability'
-      ]
+      accountTitles: []
     }
   },
   computed: {
@@ -384,6 +281,7 @@ export default {
     }
   },
   mounted () {
+    this.getAccountTitles()
     // Initialize qtiJson with default values if not provided
     if (!this.qtiJson.entries || this.qtiJson.entries.length === 0) {
       this.$set(this.qtiJson, 'entries', [
@@ -405,6 +303,27 @@ export default {
     })
   },
   methods: {
+    /**
+     * Helper method to parse amount strings that may contain commas
+     * @param {string|number} value - The amount value to parse
+     * @returns {number} - The parsed numeric value, or 0 if invalid
+     */
+    parseAmount (value) {
+      if (value === null || value === undefined || value === '') {
+        return 0
+      }
+      // Convert to string, remove commas, then parse as float
+      return parseFloat(value.toString().replace(/,/g, '')) || 0
+    },
+    async getAccountTitles () {
+      try {
+        const { data } = await axios.get('/api/questions/valid-accounting-journal-entries')
+        this.accountTitles = data
+        console.error(data)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     clearErrors (key, entryIndex = null, rowIndexOrField = null, field = null) {
       if (!this.questionForm || !this.questionForm.errors || !this.questionForm.errors.get) {
         return
@@ -528,7 +447,8 @@ export default {
           if (!row.type) {
             rowHasError = true
           }
-          if (!row.amount || row.amount === '' || parseFloat(row.amount) <= 0) {
+          // Use parseAmount helper to handle commas
+          if (!row.amount || row.amount === '' || this.parseAmount(row.amount) <= 0) {
             rowHasError = true
           }
 
@@ -567,7 +487,8 @@ export default {
       }
 
       entry.solutionRows.forEach((row) => {
-        const amount = parseFloat(row.amount) || 0
+        // Use parseAmount helper to handle commas in amount values
+        const amount = this.parseAmount(row.amount)
 
         if (amount > 0 && row.type) {
           hasAnyValues = true

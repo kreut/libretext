@@ -2639,8 +2639,8 @@ class Submission extends Model
                 continue;
             }
 
-            // Find order violation (credit followed by debit)
-            $orderViolationRowIndex = $this->findOrderViolationIndex($studentEntry['rows']);
+            // Find which specific rows are out of order (returns array of indices)
+            $outOfOrderRows = $this->findOutOfOrderRows($studentEntry['rows']);
 
             $allRowsCorrect = true;
             foreach ($studentEntry['rows'] as $rowIndex => $studentRow) {
@@ -2660,7 +2660,8 @@ class Submission extends Model
                     'isCorrect' => false
                 ];
 
-                $forceIncorrect = ($orderViolationRowIndex !== null && $rowIndex >= $orderViolationRowIndex);
+                // Only force incorrect for rows that are actually out of order
+                $forceIncorrect = in_array($rowIndex, $outOfOrderRows);
 
                 if ($solutionRow) {
                     $solutionAccountTitle = $solutionRow->accountTitle ?? '';
@@ -2690,7 +2691,7 @@ class Submission extends Model
                     } elseif ($studentDebit === '' && $solutionDebit === '') {
                         $rowResult['debitCorrect'] = true;
                     } elseif ($studentDebit !== '' && $solutionDebit !== '') {
-                        $rowResult['debitCorrect'] = abs(floatval($studentDebit) - floatval($solutionDebit)) < 0.01;
+                        $rowResult['debitCorrect'] = abs($this->parseAmount($studentDebit) - $this->parseAmount($solutionDebit)) < 0.01;
                     } else {
                         $rowResult['debitCorrect'] = false;
                     }
@@ -2705,7 +2706,7 @@ class Submission extends Model
                     } elseif ($studentCredit === '' && $solutionCredit === '') {
                         $rowResult['creditCorrect'] = true;
                     } elseif ($studentCredit !== '' && $solutionCredit !== '') {
-                        $rowResult['creditCorrect'] = abs(floatval($studentCredit) - floatval($solutionCredit)) < 0.01;
+                        $rowResult['creditCorrect'] = abs($this->parseAmount($studentCredit) - $this->parseAmount($solutionCredit)) < 0.01;
                     } else {
                         $rowResult['creditCorrect'] = false;
                     }
@@ -2740,36 +2741,78 @@ class Submission extends Model
         ];
     }
 
-    private function findOrderViolationIndex(array $rows): ?int
+    /**
+     * Find which rows are out of order based on debit/credit sequencing.
+     * Rule: All debits must come before all credits.
+     *
+     * Returns an array of row indices that are out of order:
+     * - Credits that appear before the last debit (they're too early)
+     * - Debits that appear after the first credit (they're too late)
+     *
+     * @param array $rows
+     * @return array Array of row indices that are out of order
+     */
+    private function findOutOfOrderRows(array $rows): array
     {
-        $creditRowIndices = [];
-        $debitRowIndices = [];
+        $outOfOrderRows = [];
 
-        foreach ($rows as $rowIndex => $row) {
+        // Find the index of the first credit and last debit
+        $firstCreditIndex = null;
+        $lastDebitIndex = null;
+
+        foreach ($rows as $index => $row) {
             $hasDebit = isset($row['debit']) && $row['debit'] !== '';
             $hasCredit = isset($row['credit']) && $row['credit'] !== '';
 
             if ($hasDebit) {
-                $debitRowIndices[] = $rowIndex;
+                $lastDebitIndex = $index;
             }
-            if ($hasCredit) {
-                $creditRowIndices[] = $rowIndex;
-            }
-        }
-
-        if (empty($creditRowIndices) || empty($debitRowIndices)) {
-            return null;
-        }
-
-        foreach ($creditRowIndices as $creditIndex) {
-            foreach ($debitRowIndices as $debitIndex) {
-                if ($debitIndex > $creditIndex) {
-                    return $creditIndex;
-                }
+            if ($hasCredit && $firstCreditIndex === null) {
+                $firstCreditIndex = $index;
             }
         }
 
-        return null;
+        // If there's no mixing (all debits before all credits), no rows are out of order
+        if ($firstCreditIndex === null || $lastDebitIndex === null || $lastDebitIndex < $firstCreditIndex) {
+            return [];
+        }
+
+        // There's an order violation: some debit comes after some credit
+        // Mark the specific rows that are out of order
+        foreach ($rows as $index => $row) {
+            $hasDebit = isset($row['debit']) && $row['debit'] !== '';
+            $hasCredit = isset($row['credit']) && $row['credit'] !== '';
+
+            // A credit is out of order if it appears before the last debit
+            if ($hasCredit && $index < $lastDebitIndex) {
+                $outOfOrderRows[] = $index;
+            }
+
+            // A debit is out of order if it appears after the first credit
+            if ($hasDebit && $index > $firstCreditIndex) {
+                $outOfOrderRows[] = $index;
+            }
+        }
+
+        return array_unique($outOfOrderRows);
+    }
+
+    /**
+     * Helper method to parse amount strings that may contain commas
+     *
+     * @param mixed $value
+     * @return float
+     */
+    private function parseAmount($value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        // Convert to string and remove commas
+        $sanitized = str_replace(',', '', (string) $value);
+
+        return floatval($sanitized);
     }
 }
 

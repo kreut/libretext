@@ -661,6 +661,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('questions/get-question-to-edit/{question}', 'QuestionController@getQuestionToEdit');
     Route::post('/questions/get-webwork-code-from-file-path', 'QuestionController@getWebworkCodeFromFilePath');
     Route::post('/questions/clone', 'QuestionController@clone');
+    Route::get('/questions/valid-accounting-journal-entries', 'QuestionController@validAccountingJournalEntries');
 
     Route::post('/questions/qti-answer-json', 'QuestionController@getQtiAnswerJson');
 

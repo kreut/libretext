@@ -89,6 +89,8 @@
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
   name: 'AccountingJournalEntryViewer',
   props: {
@@ -105,118 +107,7 @@ export default {
     return {
       studentEntries: [],
       hasStartedEditing: false, // Track if user has started editing - clears all grading colors
-      accountTitles: [
-        'Accounts Payable',
-        'Accounts Receivable',
-        'Accrued Pension Liability',
-        'Accumulated Depreciation-Buildings',
-        'Accumulated Depreciation-Equipment',
-        'Accumulated Depreciation- Plant Assets',
-        'Accumulated Other Comprehensive Income',
-        'Accumulated Other Comprehensive Loss',
-        'Additional Paid-in Capital, Common Stock',
-        'Additional Paid-in Capital, Preferred Stock',
-        'Administrative Expenses',
-        'Advertising Expense',
-        'Allowance for Doubtful Accounts',
-        'Amortization Expense',
-        'Bad Debt Expense',
-        'Bank Charges Expense',
-        'Bonds Payable',
-        'Buildings',
-        'Cash',
-        'Common Stock',
-        'Common Stock Dividends Distributable',
-        'Copyrights',
-        'Cost of Goods Sold',
-        'Current Portion of Long-Term Debt',
-        'Deferred Revenue',
-        'Delivery Expense',
-        'Depreciation Expense',
-        'Discount on Bonds Payable',
-        'Dividends',
-        'Dividends Payable',
-        'Entertainment Expense',
-        'Equipment',
-        'Federal Income Taxes Payable',
-        'Federal Unemployment Taxes Payable',
-        'FICA Taxes Payable',
-        'Franchise',
-        'Freight-In',
-        'Freight-Out',
-        'Gain on Bond Redemption',
-        'Gain on Disposal of Plant Assets',
-        'Gain on Sale of Investments',
-        'Goodwill',
-        'Impairment Loss',
-        'Income Summary',
-        'Income Tax Expense',
-        'Income Taxes Payable',
-        'Insurance Expense',
-        'Intangible Assets',
-        'Interest Expense',
-        'Interest Income',
-        'Interest Payable',
-        'Interest Receivable',
-        'Interest Revenue',
-        'Inventory',
-        'Land',
-        'Land Improvements',
-        'Loss on Disposal of Plant Assets',
-        'Loss on Sale of Equipment',
-        'Maintenance and Repairs Expense',
-        'Miscellaneous Expense',
-        'Mortgage Payable',
-        'No Entry',
-        'Notes Payable',
-        'Notes Receivable',
-        'Operating Expenses',
-        'Other Operating Expenses',
-        'Other Receivables',
-        'Patents',
-        'Payroll Tax Expense',
-        'Petty Cash',
-        'Plant Assets',
-        'Postage Expense',
-        'Preferred Stock',
-        'Premium on Bonds Payable',
-        'Prepaid Advertising',
-        'Prepaid Expenses',
-        'Prepaid Insurance',
-        'Prepaid Rent',
-        'Property Tax Expense',
-        'Property Taxes Payable',
-        'Purchase Discounts',
-        'Purchase Returns and Allowances',
-        'Purchases',
-        'Rent Expense',
-        'Rent Revenue',
-        'Repairs Expense',
-        'Research and Development Expense',
-        'Retained Earnings',
-        'Salaries and Wages Expense',
-        'Salaries and Wages Payable',
-        'Sales Discounts',
-        'Sales Returns and Allowances',
-        'Sales Revenue',
-        'Sales Taxes Payable',
-        'Selling Expense',
-        'Service Charge Expense',
-        'Service Revenue',
-        'State Income Taxes Payable',
-        'State Unemployment Taxes Payable',
-        'Stock Dividends',
-        'Supplies',
-        'Supplies Expense',
-        'Travel Expense',
-        'Treasury Stock',
-        'Unearned Rent Revenue',
-        'Unearned Sales Revenue',
-        'Unearned Service Revenue',
-        'Union Dues Payable',
-        'Utilities Expense',
-        'Warranty Liability'
-      ]
+      accountTitles: []
     }
   },
   computed: {
@@ -274,10 +165,20 @@ export default {
     }
   },
   mounted () {
+    this.getAccountTitles()
     this.initializeStudentEntries()
     this.loadStudentResponse()
   },
   methods: {
+    async getAccountTitles () {
+      try {
+        const { data } = await axios.get('/api/questions/valid-accounting-journal-entries')
+        this.accountTitles = data
+        console.error(data)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     getEntryOptionsFor (entryIndex) {
       // Get all selected entry indices EXCEPT the current row's selection
       const selectedByOthers = this.studentEntries

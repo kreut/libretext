@@ -2,131 +2,43 @@
 
 namespace App\Rules;
 
+use App\Helpers\Accounting;
 use Illuminate\Contracts\Validation\Rule;
+
 
 class HasValidAccountingJournalEntries implements Rule
 {
+
     protected $errors = [];
 
-    // Valid account titles list
-    protected $validAccountTitles = [
-        'Accounts Payable',
-        'Accounts Receivable',
-        'Accrued Pension Liability',
-        'Accumulated Depreciation-Buildings',
-        'Accumulated Depreciation-Equipment',
-        'Accumulated Depreciation- Plant Assets',
-        'Accumulated Other Comprehensive Income',
-        'Accumulated Other Comprehensive Loss',
-        'Additional Paid-in Capital, Common Stock',
-        'Additional Paid-in Capital, Preferred Stock',
-        'Administrative Expenses',
-        'Advertising Expense',
-        'Allowance for Doubtful Accounts',
-        'Amortization Expense',
-        'Bad Debt Expense',
-        'Bank Charges Expense',
-        'Bonds Payable',
-        'Buildings',
-        'Cash',
-        'Common Stock',
-        'Common Stock Dividends Distributable',
-        'Copyrights',
-        'Cost of Goods Sold',
-        'Current Portion of Long-Term Debt',
-        'Deferred Revenue',
-        'Delivery Expense',
-        'Depreciation Expense',
-        'Discount on Bonds Payable',
-        'Dividends',
-        'Dividends Payable',
-        'Entertainment Expense',
-        'Equipment',
-        'Federal Income Taxes Payable',
-        'Federal Unemployment Taxes Payable',
-        'FICA Taxes Payable',
-        'Franchise',
-        'Freight-In',
-        'Freight-Out',
-        'Gain on Bond Redemption',
-        'Gain on Disposal of Plant Assets',
-        'Gain on Sale of Investments',
-        'Goodwill',
-        'Impairment Loss',
-        'Income Summary',
-        'Income Tax Expense',
-        'Income Taxes Payable',
-        'Insurance Expense',
-        'Intangible Assets',
-        'Interest Expense',
-        'Interest Income',
-        'Interest Payable',
-        'Interest Receivable',
-        'Interest Revenue',
-        'Inventory',
-        'Land',
-        'Land Improvements',
-        'Loss on Disposal of Plant Assets',
-        'Loss on Sale of Equipment',
-        'Maintenance and Repairs Expense',
-        'Miscellaneous Expense',
-        'Mortgage Payable',
-        'No Entry',
-        'Notes Payable',
-        'Notes Receivable',
-        'Operating Expenses',
-        'Other Operating Expenses',
-        'Other Receivables',
-        'Patents',
-        'Payroll Tax Expense',
-        'Petty Cash',
-        'Plant Assets',
-        'Postage Expense',
-        'Preferred Stock',
-        'Premium on Bonds Payable',
-        'Prepaid Advertising',
-        'Prepaid Expenses',
-        'Prepaid Insurance',
-        'Prepaid Rent',
-        'Property Tax Expense',
-        'Property Taxes Payable',
-        'Purchase Discounts',
-        'Purchase Returns and Allowances',
-        'Purchases',
-        'Rent Expense',
-        'Rent Revenue',
-        'Repairs Expense',
-        'Research and Development Expense',
-        'Retained Earnings',
-        'Salaries and Wages Expense',
-        'Salaries and Wages Payable',
-        'Sales Discounts',
-        'Sales Returns and Allowances',
-        'Sales Revenue',
-        'Sales Taxes Payable',
-        'Selling Expense',
-        'Service Charge Expense',
-        'Service Revenue',
-        'State Income Taxes Payable',
-        'State Unemployment Taxes Payable',
-        'Stock Dividends',
-        'Supplies',
-        'Supplies Expense',
-        'Travel Expense',
-        'Treasury Stock',
-        'Unearned Rent Revenue',
-        'Unearned Sales Revenue',
-        'Unearned Service Revenue',
-        'Union Dues Payable',
-        'Utilities Expense',
-        'Warranty Liability'
-    ];
+    /**
+     * Helper method to parse amount strings that may contain commas
+     *
+     * @param mixed $value
+     * @return float|null
+     */
+    protected function parseAmount($value)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        // Convert to string and remove commas
+        $sanitized = str_replace(',', '', (string) $value);
+
+        // Check if the sanitized value is numeric
+        if (!is_numeric($sanitized)) {
+            return null;
+        }
+
+        return floatval($sanitized);
+    }
 
     /**
      * Determine if the validation passes.
      *
-     * @param  string  $attribute
-     * @param  mixed  $value
+     * @param string $attribute
+     * @param mixed $value
      * @return bool
      */
     public function passes($attribute, $value)
@@ -195,7 +107,7 @@ class HasValidAccountingJournalEntries implements Rule
 
                 $totalDebits = 0;
                 $totalCredits = 0;
-
+                $validAccountTitles = Accounting::validAccountingJournalEntries();
                 foreach ($solutionRows as $rowIndex => $row) {
                     $rowFieldErrors = [];
 
@@ -203,7 +115,7 @@ class HasValidAccountingJournalEntries implements Rule
                     if (empty($row['accountTitle']) || trim($row['accountTitle']) === '') {
                         $rowFieldErrors['accountTitle'] = 'Account title is required.';
                         $hasErrors = true;
-                    } elseif (!in_array($row['accountTitle'], $this->validAccountTitles)) {
+                    } elseif (!in_array($row['accountTitle'], $validAccountTitles)) {
                         $rowFieldErrors['accountTitle'] = 'Account title must be from the valid list of accounts.';
                         $hasErrors = true;
                     }
@@ -214,21 +126,26 @@ class HasValidAccountingJournalEntries implements Rule
                         $hasErrors = true;
                     }
 
-                    // Validate amount
-                    if (!isset($row['amount']) || $row['amount'] === '' || $row['amount'] === null) {
-                        $rowFieldErrors['amount'] = 'Amount is required.';
+                    // Validate amount - use parseAmount to handle commas
+                    $parsedAmount = $this->parseAmount($row['amount'] ?? null);
+
+                    if ($parsedAmount === null) {
+                        if (!isset($row['amount']) || $row['amount'] === '' || $row['amount'] === null) {
+                            $rowFieldErrors['amount'] = 'Amount is required.';
+                        } else {
+                            $rowFieldErrors['amount'] = 'Amount must be a valid number.';
+                        }
                         $hasErrors = true;
-                    } elseif (!is_numeric($row['amount']) || floatval($row['amount']) <= 0) {
+                    } elseif ($parsedAmount <= 0) {
                         $rowFieldErrors['amount'] = 'Amount must be greater than 0.';
                         $hasErrors = true;
                     } else {
                         // Calculate totals
-                        $amount = floatval($row['amount']);
                         if (isset($row['type'])) {
                             if ($row['type'] === 'debit') {
-                                $totalDebits += $amount;
+                                $totalDebits += $parsedAmount;
                             } elseif ($row['type'] === 'credit') {
-                                $totalCredits += $amount;
+                                $totalCredits += $parsedAmount;
                             }
                         }
                     }

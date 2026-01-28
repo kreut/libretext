@@ -659,45 +659,6 @@ class AccountingJournalEntryTest extends TestCase
         $this->assertFalse($result['allCorrect']);
     }
 
-    /** @test */
-    public function marks_all_rows_incorrect_when_credit_comes_first_followed_by_debit()
-    {
-        $submission = new Submission();
-
-        $solution = [
-            (object)[
-                'identifier' => 'entry-1',
-                'entryText' => 'Jan 1',
-                'entryDescription' => 'Test entry',
-                'solutionRows' => [
-                    (object)['accountTitle' => 'Equipment', 'type' => 'debit', 'amount' => '5000'],
-                    (object)['accountTitle' => 'Cash', 'type' => 'credit', 'amount' => '2500'],
-                    (object)['accountTitle' => 'Notes Payable', 'type' => 'credit', 'amount' => '2500']
-                ]
-            ]
-        ];
-
-        // Student enters: Credit, Debit, Credit (credit first, then debit)
-        $studentSubmission = [
-            [
-                'selectedEntryIndex' => 0,
-                'rows' => [
-                    ['accountTitle' => 'Equipment', 'debit' => '', 'credit' => '2500'],     // Row 0: Credit - VIOLATION (debit follows at row 1)
-                    ['accountTitle' => 'Cash', 'debit' => '5000', 'credit' => ''],          // Row 1: Debit after credit
-                    ['accountTitle' => 'Notes Payable', 'debit' => '', 'credit' => '2500']  // Row 2: Credit
-                ]
-            ]
-        ];
-
-        $result = $submission->computeScoreForAccountingJournalEntry($solution, $studentSubmission);
-
-        // All rows should be forced incorrect since violation starts at row 0
-        $this->assertFalse($result['results'][0]['rows'][0]['isCorrect']);
-        $this->assertFalse($result['results'][0]['rows'][1]['isCorrect']);
-        $this->assertFalse($result['results'][0]['rows'][2]['isCorrect']);
-
-        $this->assertFalse($result['allCorrect']);
-    }
 
     /** @test */
     public function allows_correct_order_debits_then_credits()
