@@ -159,6 +159,7 @@ class QuestionController extends Controller
     {
         return Accounting::validAccountingJournalEntries();
     }
+
     /**
      * @param Request $request
      * @param Question $question
@@ -1448,7 +1449,7 @@ class QuestionController extends Controller
 
                 switch ($question_type) {
                     case('three_d_model_multiple_choice'):
-                        $unsets = ['parameters','solution_structure'];
+                        $unsets = ['parameters', 'solution_structure'];
                         $parameters = ["modelID", "BGImage", "annotations", "mode", "BGColor", "piece", "modelOffset", "cameraOffset", "selectionColor", "panel", "autospin", "STLmatCol", "hideDistance"];
 
                         $all_parameter_info = json_decode($request->qti_json, 1)['parameters'];
@@ -2678,6 +2679,17 @@ class QuestionController extends Controller
             $render_webwork_solution = $webwork->algorithmicSolution($question_info);
             $question_revision_id = $question_info->question_revision_id;
             $question = $Question->formatQuestionFromDatabase($request, $question_info);
+            if ($question_info->qti_json_type === 'forge') {
+                $solution_html = null;
+                if ($question_info->solution_html) {
+                    $solution_html = $question_info->solution_html;
+                } else if ($question_info->answer_html) {
+                    $solution_html = $question_info->answer_html;
+                }
+                $qti_answer_json = json_decode($question['qti_answer_json'], 1);
+                $qti_answer_json['solution_html'] = $solution_html;
+                $question['qti_answer_json'] = json_encode($qti_answer_json);
+            }
             if ($question_info->isDiscussIt()) {
                 $qti_json = json_decode($question['qti_json'], 1);
                 $qti_json['media_uploads'] = $question['media_uploads'];

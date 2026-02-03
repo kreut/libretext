@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\AssignmentSyncQuestion;
+use App\Enrollment;
 use App\Forge;
 use App\ForgeAssignmentQuestion;
 use App\ForgeEnrollment;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class ForgeController extends Controller
 {
@@ -39,6 +41,96 @@ class ForgeController extends Controller
             ->where('key', 'forge')
             ->first()
             ->secret;
+    }
+
+    /**
+     * @param Request $request
+     * @param string $forge_draft_id
+     * @param string $grader_central_identity_id
+     * @param string $student_central_identity_id
+     * @return array
+     * @throws Exception
+     */
+    public function graderHasAccess(Request $request,
+                                    string  $forge_draft_id,
+                                    string  $grader_central_identity_id,
+                                    string  $student_central_identity_id): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            if ($request->bearerToken() !== $this->secret) {
+                throw new Exception("Invalid Bearer token");
+            }
+
+            $forge_assignment_question = DB::table('assignment_question_forge_draft')
+                ->join('assignment_question', 'assignment_question_forge_draft.assignment_question_id', '=', 'assignment_question.id')
+                ->where('forge_draft_id', $forge_draft_id)
+                ->first();
+            if (!$forge_assignment_question) {
+                $response['message'] = "There is no Forge assignment question with Forge draft ID $forge_draft_id.";
+                return $response;
+            }
+            $student = User::where('central_identity_id', $student_central_identity_id)->first();
+            if (!$student) {
+                $response['message'] = "There is no student with UUID $student_central_identity_id.";
+                return $response;
+            }
+            $grader = User::where('central_identity_id', $grader_central_identity_id)->first();
+            if (!$grader) {
+                $response['message'] = "There is no grader with UUID $grader_central_identity_id.";
+                return $response;
+            }
+
+            $assignment = Assignment::find($forge_assignment_question->assignment_id);
+            $course = $assignment->course;
+            $enrollment = Enrollment::where('user_id', $student->id)
+                ->where('course_id', $course->id)
+                ->first();
+
+            if (!DB::table('graders')->where('user_id', $grader->id)
+                ->where('section_id', $enrollment->section_id)
+                ->first()) {
+                $response['message'] = "The grader with UUID $grader_central_identity_id is not a grader for the student's section.";
+                return $response;
+            }
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to validate whether the grader with UUID $grader_central_identity_id has access to the forge draft with draft ID $forge_draft_id submitted by the student with UUID $student_central_identity_id: {$e->getMessage()}.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param string $token
+     * @return array
+     * @throws Exception
+     */
+    public function getUserFromToken(Request $request, string $token): array
+    {
+        try {
+            $response['type'] = 'error';
+            if ($request->bearerToken() !== $this->secret) {
+                throw new Exception("Invalid Bearer token");
+            }
+            $forge_user_token = DB::table('forge_user_tokens')->where('token', $token)->first();
+            if (!$forge_user_token) {
+                $response['message'] = "No user exists with the token $token.";
+                return $response;
+            }
+            $user = User::find($forge_user_token->user_id);
+            $response['uuid'] = $user->fake_student ? $user->id : $user->central_identity_id;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to retrieve the user from the token: {$e->getMessage()}.";
+        }
+        return $response;
     }
 
     /**
@@ -83,22 +175,37 @@ class ForgeController extends Controller
      * @param Question $question
      * @param User $student
      * @param ForgeAssignmentQuestion $forgeAssignmentQuestion
+     * @param ForgeEnrollment $forgeEnrollment
      * @return array
      * @throws Exception
      */
-    public function getSubmissionByAssignmentQuestionStudent(Assignment              $assignment,
+    public function getSubmissionByAssignmentQuestionStudent(Request                 $request,
+                                                             Assignment              $assignment,
                                                              Question                $question,
                                                              User                    $student,
-                                                             ForgeAssignmentQuestion $forgeAssignmentQuestion): array
+                                                             ForgeAssignmentQuestion $forgeAssignmentQuestion,
+                                                             ForgeEnrollment         $forgeEnrollment): array
     {
         try {
             $response['type'] = 'error';
+
             $authorized = Gate::inspect('getSubmissionByAssignmentQuestionStudent',
                 [$forgeAssignmentQuestion, $assignment, $student->central_identity_id]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
                 return $response;
             }
+
+
+            if (!DB::table('submission_files')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->where('user_id', $student->id)
+                ->first()) {
+                $response['submission_id'] = null;
+                $response['type'] = 'success';
+                return $response;
+            }
+
             $parent_question_id = $question->forge_source_id ?: $question->id;
             $forge_assignment_question = $forgeAssignmentQuestion->where('adapt_assignment_id', $assignment->id)
                 ->where('adapt_question_id', $parent_question_id)
@@ -108,6 +215,7 @@ class ForgeController extends Controller
                 $response['message'] = "There is no Forge assignment question associated with assignment-parent question ID $assignment->id-$parent_question_id.";
                 return $response;
             }
+
             $assignment_question_forge_draft = DB::table('assignment_question')
                 ->join('assignment_question_forge_draft', 'assignment_question.id', 'assignment_question_forge_draft.assignment_question_id')
                 ->where('assignment_question.assignment_id', $assignment->id)
@@ -119,6 +227,33 @@ class ForgeController extends Controller
                 return $response;
             }
 
+            if ($request->user()->role === 4) {
+                if (!$forgeEnrollment->where('user_id', $request->user()->id)
+                    ->where('course_id', $assignment->course_id)
+                    ->first()) {
+                    $data = [
+                        'assistantId' => $request->user()->central_identity_id,
+                        'courseId' => strval($assignment->course->id),
+                    ];
+                    $http_response = $forgeEnrollment->store($data, 4);
+                    if ($http_response->successful()) {
+                        $json_response = $http_response->json();
+                        if ($json_response['type'] === 'success') {
+                            $forgeEnrollment = new ForgeEnrollment();
+                            $forgeEnrollment->user_id = $request->user()->id;
+                            $forgeEnrollment->course_id = $assignment->course_id;
+                            $forgeEnrollment->save();
+                        } else {
+                            $response['message'] = "Could not enroll TA in Forge course: " . $json_response['message'];
+                            return $response;
+                        }
+                    } else {
+                        $response['message'] = "Could not enroll TA in Forge course: " . $http_response->json()['message'];
+                        return $response;
+                    }
+                }
+            }
+
             $http_response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'Authorization' => "Bearer $this->secret",
@@ -126,7 +261,6 @@ class ForgeController extends Controller
                 'studentId' => $student->central_identity_id,
                 'forgeQuestionId' => $forge_assignment_question->forge_question_id,
             ]);
-
 
             if ($http_response->successful()) {
                 $json_response = $http_response->json();
@@ -137,7 +271,12 @@ class ForgeController extends Controller
                     $response['type'] = 'success';
                 }
             } else {
-                $response['message'] = "Forge Error for studentId $student->central_identity_id, forgeQuestionId $forge_assignment_question->forge_question_id: " . $http_response->json()['message'];
+                if ($http_response->json()['message'] === "Failed to get submission ID.") {
+                    $response['submission_id'] = null;
+                    $response['type'] = 'success';
+                } else {
+                    $response['message'] = "Forge Error for studentId $student->central_identity_id, forgeQuestionId $forge_assignment_question->forge_question_id: " . $http_response->json()['message'];
+                }
             }
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -151,6 +290,7 @@ class ForgeController extends Controller
      * @param Request $request
      * @param string $forge_draft_id
      * @param string $central_identity_id
+     * @param Forge $forge
      * @return array
      * @throws Exception
      */
@@ -185,7 +325,10 @@ class ForgeController extends Controller
             }
             $user = User::where('central_identity_id', $central_identity_id)->first();
             if (!$user) {
-                throw new Exception("No user exists with UUID $central_identity_id.  Cannot save Forge submission.");
+                $user = User::where('id', $central_identity_id)->where('fake_student', 1)->first();
+                if (!$user) {
+                    throw new Exception("No user exists with UUID $central_identity_id.  Cannot save Forge submission.");
+                }
             }
             if (SubmissionFile::where('assignment_id', $assignment_question->assignment_id)
                 ->where('question_id', $assignment_question->question_id)
@@ -243,8 +386,11 @@ class ForgeController extends Controller
 
             $user = User::where('central_identity_id', $central_identity_id)->first();
             if (!$user) {
-                $response['message'] = "No user exists with UUID $central_identity_id.";
-                return $response;
+                $user = User::where('id', $central_identity_id)->where('fake_student', 1)->first();
+                if (!$user) {
+                    $response['message'] = "No user exists with UUID $central_identity_id.";
+                    return $response;
+                }
             }
             $forge_assignment_question = ForgeAssignmentQuestion::where('forge_question_id', $forge_question_id)->first();
             if (!$forge_assignment_question) {
@@ -454,7 +600,7 @@ class ForgeController extends Controller
                 $data = [
                     'instructorId' => $central_identity_id,
                     'courseId' => strval($assignment->course->id),
-                    'questionTitle' => $question->title,
+                    'questionTitle' => "$question->title-$assignment->name",
                     'questionDescription' => $question->description
                 ];
 
@@ -493,7 +639,7 @@ class ForgeController extends Controller
                     $data = ['studentId' => $student_id,
                         'fakeStudent' => (boolean)$fake_student,
                         'forgeQuestionId' => strval($forge_assignment_question->forge_question_id)];
-                    $forge_response = json_decode($forgeEnrollment->store($data));
+                    $forge_response = $forgeEnrollment->store($data, 3)->json();
                     if ($forge_response->type === 'success') {
                         $forgeEnrollment = new ForgeEnrollment();
                         $forgeEnrollment->user_id = $request->user()->id;
@@ -517,7 +663,12 @@ class ForgeController extends Controller
             $assignment_question_forge_draft = DB::table('assignment_question_forge_draft')
                 ->where('assignment_question_id', $assignment_question->id)
                 ->first();
-
+            $token = Str::random(32);
+            DB::table('forge_user_tokens')->insert(['user_id' => $request->user()->id,
+                'token' => $token,
+                'created_at' => now(),
+                'updated_at' => now()]);
+            $response['token'] = $token;
             $response['type'] = 'success';
             $response['domain'] = config('services.antecedent.url');
             $response['forge_class_id'] = $forge_assignment_question->forge_class_id;
@@ -525,6 +676,7 @@ class ForgeController extends Controller
             $response['forge_question_id'] = $forge_assignment_question->forge_question_id;
 
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = $e->getMessage();
@@ -558,12 +710,30 @@ class ForgeController extends Controller
                 return $response;
             }
             if (!$user) {
-                $response['message'] = "There is no instructor with that Central Identity ID";
-                return $response;
+                $user = User::where('id', $central_identity_id)->where('fake_student', 1)->first();
+                if (!$user) {
+                    $response['message'] = "No user exists with UUID $central_identity_id.";
+                    return $response;
+                }
+            }
+            switch ($user->role) {
+                case(2):
+                    $user_type = 'instructor';
+                    break;
+                case(3):
+                    $user_type = 'student';
+                    break;
+                case(4):
+                    $user_type = 'TA';
+                    break;
+                default:
+                    $user_type = "No role defined.";
             }
             $response['firstName'] = $user->first_name;
             $response['lastName'] = $user->last_name;
             $response['email'] = $user->email;
+            $response['userType'] = $user_type;
+            $response['fakeStudent'] = $user->fake_student;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $response['message'] = $e->getMessage();

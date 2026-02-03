@@ -26,7 +26,8 @@ Route::get('/courses/commons-courses-and-assignments-by-course', 'CourseControll
 Route::get('/forge/assign-tos/forge-question-id/{forge_question_id}/user/{central_identity_id}', 'ForgeController@getAssignTosByAssignmentQuestionUser');
 Route::get('/forge/assign-tos/forge-draft-id/{forge_draft_id}/user/{central_identity_id}', 'ForgeController@getAssignTosByForgeDraftIdUser');
 Route::post('/forge/submissions/forge-draft-id/{forge_draft_id}/user/{central_identity_id}', 'ForgeController@storeSubmission');
-
+Route::get('/forge/user-from-token/{token}', 'ForgeController@getUserFromToken');
+Route::get('/forge/grader-has-access/forge-draft-id/{forge_draft_id}/grader/{grader_central_identity_id}/student/{student_central_identity_id}', 'ForgeController@graderHasAccess');
 
 Route::get('/forge/user/{central_identity_id}', 'ForgeController@user');
 Route::get('/forge/course/{course}', 'ForgeController@course');
@@ -149,7 +150,6 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::post('/forge/assignment/{assignment}/question/{question}/initialize', 'ForgeController@initialize');
     Route::get('/forge/assignments/{assignment}/questions/{parent_question}/current-question/{current_question}', 'ForgeController@getAssignTosByAssignmentQuestionLoggedInUser');
     Route::post('/forge/submissions/assignment/{assignment}/question/{question}/student/{student}/allow-resubmission', 'ForgeController@allowResubmission');
-
     Route::get('/forge/submissions/assignment/{assignment}/question/{question}/student/{student}', 'ForgeController@getSubmissionByAssignmentQuestionStudent');
 
 

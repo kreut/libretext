@@ -9,9 +9,11 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Traits\GeneralSubmissionPolicy;
+
 class Forge extends Model
 {
     use GeneralSubmissionPolicy;
+
     private $secret;
 
     public function __construct()
@@ -29,14 +31,14 @@ class Forge extends Model
     public function store(array $data): Response
     {
         /**$url = config('services.antecedent.url') . '/api/adapt/assignment';
-        $jsonData = json_encode($data);
-
-        $curl = "curl -X POST '{$url}' \\\n"
-            . "  -H 'Content-Type: application/json' \\\n"
-            . "  -H 'Authorization: Bearer {$this->secret}' \\\n"
-            . "  -d '{$jsonData}'";
-
-        dd($curl);**/
+         * $jsonData = json_encode($data);
+         *
+         * $curl = "curl -X POST '{$url}' \\\n"
+         * . "  -H 'Content-Type: application/json' \\\n"
+         * . "  -H 'Authorization: Bearer {$this->secret}' \\\n"
+         * . "  -d '{$jsonData}'";
+         *
+         * dd($curl);**/
 
 
         return Http::withHeaders([
@@ -133,10 +135,10 @@ class Forge extends Model
     }
 
     public function getAssignToDataForForge(
-        array $validation,
+        array  $validation,
         string $forge_draft_id,
         string $central_identity_id,
-        Forge $forge
+        Forge  $forge
     ): array
     {
         $response = ['type' => 'error'];
@@ -208,8 +210,13 @@ class Forge extends Model
 
         $user = User::where('central_identity_id', $central_identity_id)->first();
         if (!$user) {
-            $response['message'] = "No user exists with UUID $central_identity_id.";
-            return $response;
+            $fake_user = User::where('id', $central_identity_id)->where('fake_student', 1)->first();
+            if (!$fake_user) {
+                $response['message'] = "No user exists with UUID $central_identity_id.";
+                return $response;
+            } else {
+                $user = $fake_user;
+            }
         }
 
         $assignment_question_forge_draft = DB::table('assignment_question_forge_draft')
@@ -228,7 +235,7 @@ class Forge extends Model
 
         $assignment = Assignment::find($assignment_question->assignment_id);
         $course = $assignment->course;
-        $enrolled_user_ids = $course->enrolledUsers->pluck('id')->toArray();
+        $enrolled_user_ids = Enrollment::where('course_id', $course->id)->get('user_id')->pluck('user_id')->toArray();
 
         if (!in_array($user->id, $enrolled_user_ids)) {
             $response['message'] = "The student with UUID $user->central_identity_id is not enrolled in this course.";

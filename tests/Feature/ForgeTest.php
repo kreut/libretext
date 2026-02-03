@@ -123,6 +123,79 @@ class ForgeTest extends TestCase
     }
 
     /** @test */
+    public function need_valid_bearer_token_to_check_grader_access()
+    {
+        $this->getJson("/api/forge/grader-has-access/forge-draft-id/test-draft-uuid/grader/some-grader-uuid/student/some-student-uuid")
+            ->assertJson(['message' => 'We were unable to validate whether the grader with UUID some-grader-uuid has access to the forge draft with draft ID test-draft-uuid submitted by the student with UUID some-student-uuid: Invalid Bearer token.']);
+    }
+
+    /** @test */
+    public function grader_access_fails_with_invalid_forge_draft_id()
+    {
+        $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
+
+        $this->withHeaders(['Authorization' => "Bearer $secret"])
+            ->getJson("/api/forge/grader-has-access/forge-draft-id/nonexistent-draft-id/grader/{$this->user->central_identity_id}/student/{$this->student_user->central_identity_id}")
+            ->assertJson(['message' => 'There is no Forge assignment question with Forge draft ID nonexistent-draft-id.']);
+    }
+
+    /** @test */
+    public function grader_access_fails_with_nonexistent_student()
+    {
+        $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
+
+        $this->withHeaders(['Authorization' => "Bearer $secret"])
+            ->getJson("/api/forge/grader-has-access/forge-draft-id/test-draft-uuid/grader/{$this->user->central_identity_id}/student/nonexistent-student-uuid")
+            ->assertJson(['message' => 'There is no student with UUID nonexistent-student-uuid.']);
+    }
+
+    /** @test */
+    public function grader_access_fails_with_nonexistent_grader()
+    {
+        $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
+
+        $this->withHeaders(['Authorization' => "Bearer $secret"])
+            ->getJson("/api/forge/grader-has-access/forge-draft-id/test-draft-uuid/grader/nonexistent-grader-uuid/student/{$this->student_user->central_identity_id}")
+            ->assertJson(['message' => 'There is no grader with UUID nonexistent-grader-uuid.']);
+    }
+
+    /** @test */
+    public function grader_access_fails_when_grader_not_assigned_to_student_section()
+    {
+        $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
+
+        $grader_user = factory(User::class)->create(['role' => 4]);
+        $grader_user->central_identity_id = 'test-uuid-grader-no-section';
+        $grader_user->save();
+
+        $this->withHeaders(['Authorization' => "Bearer $secret"])
+            ->getJson("/api/forge/grader-has-access/forge-draft-id/test-draft-uuid/grader/{$grader_user->central_identity_id}/student/{$this->student_user->central_identity_id}")
+            ->assertJson(['message' => "The grader with UUID {$grader_user->central_identity_id} is not a grader for the student's section."]);
+    }
+
+    /** @test */
+    public function grader_with_section_access_can_access_forge_draft()
+    {
+        $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
+
+        $grader_user = factory(User::class)->create(['role' => 4]);
+        $grader_user->central_identity_id = 'test-uuid-valid-grader';
+        $grader_user->save();
+
+        DB::table('graders')->insert([
+            'user_id' => $grader_user->id,
+            'section_id' => $this->section->id,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        $this->withHeaders(['Authorization' => "Bearer $secret"])
+            ->getJson("/api/forge/grader-has-access/forge-draft-id/test-draft-uuid/grader/{$grader_user->central_identity_id}/student/{$this->student_user->central_identity_id}")
+            ->assertJson(['type' => 'success']);
+    }
+
+
+    /** @test */
     public function bearer_token_must_be_valid()
     {
 
@@ -230,7 +303,7 @@ class ForgeTest extends TestCase
     {
         $this->actingAs($this->non_owner_user)
             ->getJson("/api/forge/submissions/assignment/{$this->assignment->id}/question/{$this->question->id}/student/{$this->student_user->id}")
-            ->assertJson(['message' => 'You do not own that course so cannot get submissions by assignment-question-student.']);
+            ->assertJson(['message' => 'You are not a grader and do not own that course so cannot get submissions by assignment-question-student.']);
     }
 
 

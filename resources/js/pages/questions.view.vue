@@ -106,7 +106,7 @@
         >
           <b-card-text>
             <ul style="list-style-type:none" class="pl-0">
-              <li v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
+              <li v-if="!isForge() && (isOpenEndedFileSubmission || isOpenEndedAudioSubmission)">
                 <strong> Uploaded file:
                   <span v-if="questions[currentPage-1].submission_file_exists">
                     <a
@@ -2285,7 +2285,7 @@
               </b-row>
             </div>
             <b-form-row
-              v-if="instructorInNonBasicView() && (openEndedSubmissionTypeAllowed || questions[currentPage-1].technology === 'text') && !isDiscussIt()"
+              v-if="!isForge() && instructorInNonBasicView() && (openEndedSubmissionTypeAllowed || questions[currentPage-1].technology === 'text') && !isDiscussIt()"
               style="margin-left:0"
             >
               <span class="pr-2">
@@ -2431,7 +2431,7 @@
               @click.prevent="editQuestionSource(questions[currentPage-1])"
             >
               Edit Question
-            </b-button>
+            </b-button>aaaa
             <SolutionFileHtml v-if="showSolutionFileHTML"
                               :key="`instructor-solution-file-html-${cacheKey}`"
                               :questions="questions"
@@ -2440,7 +2440,7 @@
                               :assignment-name="name"
                               :use-view-solution-as-text="true"
             />
-            <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt()">
+            <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt() && isQtiOrForgeWithQtiAnswerSolution(questions[currentPage-1])">
               <QtiJsonAnswerViewer
                 :modal-id="questions[currentPage-1].id"
                 :qti-json="questions[currentPage-1].qti_answer_json"
@@ -2710,7 +2710,7 @@
                             :assignment-name="name"
                             :use-view-solution-as-text="true"
           />
-          <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt()">
+          <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt() && !isQtiOrForgeWithQtiAnswerSolution(questions[currentPage-1])">
             <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
                                  :key="`modal-answer-${questions[currentPage-1].id}`"
                                  :modal-id="questions[currentPage-1].id"
@@ -3011,7 +3011,7 @@
                                       :use-view-solution-as-text="true"
                                       :show-button="assessmentType !== 'clicker'"
                     />
-                    <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt()">
+                    <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt() && isQtiOrForgeWithQtiAnswerSolution(questions[currentPage-1])">
                       <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
                                            :key="`modal-answer-${questions[currentPage-1].id}`"
                                            :modal-id="questions[currentPage-1].id"
@@ -3186,7 +3186,7 @@
                         </div>
                       </div>
                     </div>
-                    <div v-if="isOpenEndedFileSubmission && user.role === 3">
+                    <div v-if="!isForge() && isOpenEndedFileSubmission && user.role === 3">
                       <div class="mt-2 ml-1">
                         <b-button variant="primary"
                                   size="sm"
@@ -3811,7 +3811,7 @@ import DefaultSubmissionResultsViewer from '../components/viewers/DefaultSubmiss
 import { formatFileSize, inputFile, inputFilter } from '../helpers/UploadFiles'
 import { isPhone } from '../helpers/isPhone'
 import NativeAudioVideoRecorder from '../components/NativeAudioVideoRecorder.vue'
-import { openEndedSubmissionTypeOptions } from '../helpers/Questions'
+import { isQtiOrForgeWithQtiAnswerSolution, openEndedSubmissionTypeOptions } from '../helpers/Questions'
 import { handleFixCKEditorWithPasteWarning } from '../helpers/ckeditor'
 import ForgeSettings from '../components/ForgeSettings.vue'
 import ForgeDueDates from '../components/ForgeDueDates.vue'
@@ -4464,6 +4464,7 @@ export default {
     }
   },
   methods: {
+    isQtiOrForgeWithQtiAnswerSolution,
     handleFixCKEditorWithPasteWarning,
     formatFileSize,
     inputFilter,

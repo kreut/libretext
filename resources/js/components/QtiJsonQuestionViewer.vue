@@ -37,7 +37,7 @@
       </b-alert>
     </div>
     <b-alert v-if="user.role === 2
-              && ['multiple_choice','select_choice'].includes(questionType)
+               && ['multiple_choice','select_choice'].includes(questionType)
                && JSON.parse(qtiJson).randomizeOrder === 'no'"
              show
              variant="info"
@@ -63,14 +63,13 @@
                                     ref="accountingJournalEntryViewer"
                                     :key="`accounting-journal-${qtiJsonCacheKey}`"
                                     :qti-json="JSON.parse(qtiJson)"
-
       />
       <div
         v-if="['forge',
                'forge_iteration',
-                'three_d_model_multiple_choice',
-              'three_d_model_multiple_answer',
-              'submit_molecule',
+               'three_d_model_multiple_choice',
+               'three_d_model_multiple_answer',
+               'submit_molecule',
                'marker',
                'matching',
                'true_false',

@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Assignment;
 use App\Course;
+use App\Enrollment;
 use App\Forge;
 use App\ForgeAssignmentQuestion;
 use App\User;
@@ -24,7 +25,10 @@ class ForgePolicy
      */
     public function getAssignTosByAssignmentQuestionLoggedInUser(User $user, Forge $forge, Assignment $assignment): Response
     {
-        $enrolled_user_ids = $assignment->course->enrolledUsers->pluck('id')->toArray();
+        $enrolled_user_ids = Enrollment::where('course_id', $assignment->course->id)
+            ->get('user_id')
+            ->pluck('user_id')
+            ->toArray();
         $has_access = in_array($user->id, $enrolled_user_ids);
         return $has_access
             ? Response::allow()
@@ -80,7 +84,10 @@ class ForgePolicy
                 }
                 break;
             case(3);
-                $enrolled_user_ids = $course->enrolledUsers->pluck('id')->toArray();
+                $enrolled_user_ids = Enrollment::where('course_id', $course->id)
+                    ->get('user_id')
+                    ->pluck('user_id')
+                    ->toArray();
                 if (!in_array($user->id, $enrolled_user_ids)) {
                     $has_access = false;
                     $message = "You are not enrolled in this course so you cannot initialize the Forge settings.";

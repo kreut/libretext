@@ -4,7 +4,7 @@
       <div v-if="!isLoading">
         <div v-if="forgeURL">
           <b-button variant="info" @click="openForgeWindow">
-            Open Forge
+            <HammerIcon/> Open Forge
           </b-button>
         </div>
         <div v-else>
@@ -49,7 +49,7 @@
     </div>
     <div v-if="!showForgeButton && type === 'submissionViewer'">
       <b-alert type="info" show>
-        There is no submission.
+        There is no Forge submission.
       </b-alert>
     </div>
   </div>
@@ -57,9 +57,11 @@
 
 <script>
 import axios from 'axios'
+import HammerIcon from '../HammerIcon.vue'
 
 export default {
   name: 'ForgeViewer',
+  components: { HammerIcon },
   props: {
     showForgeButton: {
       type: Boolean,
@@ -100,7 +102,8 @@ export default {
     this.initForge(this.type)
   },
   methods: {
-    openForgeWindow () {
+    async openForgeWindow () {
+      await this.initForge(this.type)
       window.open(this.forgeURL, '_blank')
     },
     async initForge (type) {
@@ -117,7 +120,7 @@ export default {
             if (data.forge_draft_id) {
               this.forgeURL = this.user.role === 2
                 ? `${data.domain}/classdetail/${data.forge_class_id}`
-                : `${data.domain}/assignment/${data.forge_question_id}?draftId=${data.forge_draft_id}`
+                : `${data.domain}/assignment/${data.forge_question_id}?draftId=${data.forge_draft_id}&userId=${data.token}`
             }
           } catch (error) {
             this.$noty.error(error.message)

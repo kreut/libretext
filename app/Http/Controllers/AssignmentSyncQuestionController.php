@@ -2222,8 +2222,20 @@ class AssignmentSyncQuestionController extends Controller
             $pending_question_revisions = $pendingQuestionRevision->getCurrentOrUpcomingByAssignment($assignment);
             $questions_by_question_id = [];
             $questions = Question::whereIn('id', $question_ids)->get();
-            foreach ($questions as $question) {
-                $questions_by_question_id[$question->id] = $question;
+            $forge_solutions_by_parent_question_id = [];
+            foreach ($questions as $value) {
+                $questions_by_question_id[$value->id] = $value;
+                if ($value->qti_json_type === 'forge' && ($value->answer_html || $value->solution_html)) {
+                    $forge_solutions_by_parent_question_id[$value->id] = [
+                        'solution_html' => $value->solution_html,
+                        'answer_html' => $value->answer_html];
+                }
+            }
+            foreach ($assignment_questions as $key => $value) {
+                if (isset($forge_solutions_by_parent_question_id[$value->forge_source_id])) {
+                    $assignment_questions[$key]->solution_html = $forge_solutions_by_parent_question_id[$value->forge_source_id]['solution_html'];
+                    $assignment_questions[$key]->answer_html = $forge_solutions_by_parent_question_id[$value->forge_source_id]['answer_html'];
+                }
             }
             $show_reset_open_ended_button = false;
             $has_open_ended_questions = false;
@@ -3276,6 +3288,21 @@ class AssignmentSyncQuestionController extends Controller
                     $question_editor_user_ids[] = $question->question_editor_user_id;
                 }
             }
+            $forge_solutions_by_parent_question_id = [];
+            foreach ($question_info as $value) {
+                if ($value->qti_json_type === 'forge' && ($value->answer_html || $value->solution_html)) {
+                    $forge_solutions_by_parent_question_id[$value->id] = [
+                        'solution_html' => $value->solution_html,
+                        'answer_html' => $value->answer_html];
+                }
+            }
+            foreach ($assignment->questions as $key => $value) {
+                if (isset($forge_solutions_by_parent_question_id[$value->forge_source_id])) {
+                    $assignment->questions[$key]->solution_html = $forge_solutions_by_parent_question_id[$value->forge_source_id]['solution_html'];
+                    $assignment->questions[$key]->answer_html = $forge_solutions_by_parent_question_id[$value->forge_source_id]['answer_html'];
+                }
+            }
+
 
             $question_editor_names_by_question_editor_user_id = [];
             if ($request->user()->role !== 3) {
@@ -3778,6 +3805,13 @@ class AssignmentSyncQuestionController extends Controller
                         $assignment->questions[$key]['solution_type'] = 'html';
                     }
                     $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson('answer_json', $question->qti_json, $seed, true) : null;
+                    if ($assignment->questions[$key]['answer_html']) {
+                        $qti_answer_json = json_decode($assignment->questions[$key]['qti_answer_json'], 1);
+                        $qti_answer_json['solution_html'] = $assignment->questions[$key]['answer_html'];
+                        $assignment->questions[$key]['qti_answer_json'] = json_encode($qti_answer_json);
+
+
+                    }
                 }
                 if ($show_solution
                     && request()->user()->role === 3

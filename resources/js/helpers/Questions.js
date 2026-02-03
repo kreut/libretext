@@ -2,6 +2,17 @@ import axios from 'axios'
 import { updateModalToggleIndex } from './accessibility/fixCKEditor'
 import Form from 'vform/src'
 
+export function isQtiOrForgeWithQtiAnswerSolution (item) {
+  try {
+    return !['forge', 'forge_iteration'].includes(JSON.parse(item.qti_answer_json).questionType) ||
+        (['forge', 'forge_iteration'].includes(JSON.parse(item.qti_answer_json).questionType) &&
+      typeof JSON.parse(item.qti_answer_json).solution_html !== 'undefined' &&
+    JSON.parse(item.qti_answer_json).solution_html !== null)
+  } catch {
+    return false
+  }
+}
+
 export function create3DModelSrc (parameters) {
 
   //No model url then add hideModel
@@ -329,7 +340,6 @@ export function canEdit (isAdmin, user, question) {
 }
 
 export async function editQuestionSource (question) {
-
 
   if (question.forge_source_id) {
     question = { ...question, question_id: question.forge_source_id, id: question.forge_source_id }

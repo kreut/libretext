@@ -27,14 +27,14 @@ class ForgeAssignmentQuestionPolicy
     {
         $has_access = true;
         $message = '';
-        $owns_course = $assignment->course->user_id === $user->id;
-        if (!$owns_course) {
+        $course = $assignment->course;
+        if (!$course->isGrader() && !$course->ownsCourseOrIsCoInstructor($user->id)) {
             $has_access = false;
-            $message = "You do not own that course so cannot get submissions by assignment-question-student.";
+            $message = "You are not a grader and do not own that course so cannot get submissions by assignment-question-student.";
         }
         $student = User::where('central_identity_id', $central_identity_id)->first();
         $enrolled_in_course = DB::table('enrollments')
-            ->where('course_id', $assignment->course->id)
+            ->where('course_id', $course->id)
             ->where('user_id', $student->id)
             ->exists();
         if (!$enrolled_in_course) {

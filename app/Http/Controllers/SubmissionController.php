@@ -260,11 +260,12 @@ class SubmissionController extends Controller
                     return $response;
                 }
                 $forge_draft_id = $assignment_question_forge_draft->forge_draft_id;
-                $validation = $forge->validateForgeQuestionAccess($forge_draft_id, $user->central_identity_id);
+                $central_identity_id = $user->fake_student ? (string)$user->id : $user->central_identity_id;
+                $validation = $forge->validateForgeQuestionAccess($forge_draft_id, $central_identity_id);
                 if ($validation['type'] === 'error') {
                     return $validation;
                 }
-                $result = $forge->getAssignToDataForForge($validation, $forge_draft_id, $user->central_identity_id, $forge);
+                $result = $forge->getAssignToDataForForge($validation, $forge_draft_id, $central_identity_id, $forge);
                 if ($result['type'] === 'error') {
                     return $result;
                 }
@@ -328,6 +329,7 @@ class SubmissionController extends Controller
      * @param Assignment $assignment
      * @param Question $question
      * @param Submission $submission
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */

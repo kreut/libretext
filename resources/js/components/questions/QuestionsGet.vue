@@ -273,7 +273,9 @@
       </template>
 
       <div class="pb-2">
-        <b-button v-if="questionToView.qti_json && !isDiscussIt(questionToView)"
+        <b-button v-if="questionToView.qti_json
+        && !isDiscussIt(questionToView)
+        && isQtiOrForgeWithQtiAnswerSolution(questionToView, 'qti_json')"
                   size="sm"
                   variant="outline-info"
                   @click="$bvModal.show(`qti-answer-${questionToView.id}`)"
@@ -1480,7 +1482,6 @@ import libraries from '~/helpers/Libraries'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 import ViewQuestions from '~/components/ViewQuestions'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
-import CloneQuestion from '~/components/CloneQuestion'
 import $ from 'jquery'
 
 import {
@@ -1504,6 +1505,7 @@ import QtiJsonAnswerViewer from '../QtiJsonAnswerViewer'
 import FormativeWarning from '../FormativeWarning.vue'
 import { initCentrifuge } from '~/helpers/Centrifuge'
 import FormattedQuestionTypeRadio from '../FormattedQuestionTypeRadio.vue'
+import { isQtiOrForgeWithQtiAnswerSolution } from '../../helpers/Questions'
 
 export default {
   components: {
@@ -1519,8 +1521,7 @@ export default {
     RemoveQuestion,
     FontAwesomeIcon,
     ViewQuestions,
-    draggable,
-    CloneQuestion
+    draggable
   },
   middleware: 'auth',
   props: {
@@ -1843,6 +1844,7 @@ export default {
     await this.getSubjectsByTechnology()
   },
   methods: {
+    isQtiOrForgeWithQtiAnswerSolution,
     doCopy,
     initCentrifuge,
     getQuestionChapterIdOptions,

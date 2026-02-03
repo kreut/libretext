@@ -482,8 +482,10 @@
               {{ item.points }}
             </td>
             <td v-if="assessmentType !== 'learning tree'">
-                <span v-if="item.qti_answer_json">
-                  <span v-if="!isDiscussIt(item)">
+                <span v-if="item.qti_answer_json && !isDiscussIt(item) ">
+                  <span
+                    v-if="isQtiOrForgeWithQtiAnswerSolution(item)"
+                  >
                     <QtiJsonAnswerViewer
                       :modal-id="item.id"
                       :qti-json="item.qti_answer_json"
@@ -496,11 +498,16 @@
                       View Correct Answer
                     </b-button>
                   </span>
+                   <span
+                     v-if="!isQtiOrForgeWithQtiAnswerSolution(item)"
+                   >N/A
+                   </span>
                 </span>
-              <span v-if="isDiscussIt(item)">
+              <span
+                v-if="isDiscussIt(item)"
+              >
                   N/A
                 </span>
-
               <SolutionFileHtml v-if="!item.qti_answer_json"
                                 :key="`solution-file-html-${item.question_id}`"
                                 :questions="items"
@@ -670,6 +677,7 @@ import LearningTreeProperties from '~/components/LearningTreeProperties.vue'
 import AllFormErrors from '~/components/AllFormErrors.vue'
 import { isMobile } from '~/helpers/mobileCheck'
 import AlgorithmicIcon from '~/components/AlgorithmicIcon.vue'
+import { isQtiOrForgeWithQtiAnswerSolution } from '../../../helpers/Questions'
 
 export default {
   middleware: 'auth',
@@ -772,6 +780,7 @@ export default {
     getTooltipTarget,
     isMobile,
     editQuestionSource,
+    isQtiOrForgeWithQtiAnswerSolution,
     getRemoveForgeQuestionMessage (question) {
       return this.forgeDraftExists(question) ? 'Please first remove all drafts from the Forge Settings within the assignment.' : 'Remove question from assignment.'
     },
