@@ -2466,7 +2466,7 @@
           />
           <!-- Button to open the modal -->
           <div class="mb-2">
-            <b-button v-show="user.role === 2"
+            <b-button v-show="user.role === 2 && isForge()"
                       size="sm"
                       variant="outline-info"
                       @click="$bvModal.show('modal-forge-settings')"
