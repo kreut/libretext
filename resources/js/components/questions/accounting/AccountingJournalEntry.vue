@@ -319,7 +319,6 @@ export default {
       try {
         const { data } = await axios.get('/api/questions/valid-accounting-journal-entries')
         this.accountTitles = data
-        console.error(data)
       } catch (error) {
         this.$noty.error(error.message)
       }

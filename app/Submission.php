@@ -37,6 +37,212 @@ class Submission extends Model
 
     protected $guarded = [];
 
+    public function computeScoreForAccountingReport(array $qtiArray, array $studentSubmission): array
+    {
+        $results = [];
+        $totalAnswerCells = 0;
+        $correctCells = 0;
+
+        $rows = $qtiArray['rows'] ?? [];
+        $columns = $qtiArray['columns'] ?? [];
+        $orderMode = $qtiArray['orderMode'] ?? 'exact';
+
+        if ($orderMode === 'exact') {
+            // Exact mode: compare position by position
+            foreach ($rows as $ri => $row) {
+                if ($row['isHeader'] ?? false) {
+                    continue;
+                }
+                if (!isset($row['cells'])) {
+                    continue;
+                }
+                foreach ($row['cells'] as $ci => $cell) {
+                    if (($cell['mode'] ?? '') !== 'answer') {
+                        continue;
+                    }
+                    $totalAnswerCells++;
+                    $expectedValue = $cell['value'] ?? '';
+                    $colType = $columns[$ci]['type'] ?? 'text';
+
+                    if ($colType === 'numeric') {
+                        $studentValue = str_replace(['$', ',', ' '], '', $studentSubmission[$ri][$ci] ?? '');
+                        $cleanExpected = str_replace(['$', ',', ' '], '', $expectedValue);
+                        $isCorrect = $studentValue !== '' && abs((float)$cleanExpected - (float)$studentValue) < 0.01;
+                    } else {
+                        $studentValue = $studentSubmission[$ri][$ci] ?? '';
+                        $isCorrect = strtolower(trim($expectedValue)) === strtolower(trim($studentValue));
+                    }
+
+                    $results[$ri][$ci] = [
+                        'studentValue' => $studentSubmission[$ri][$ci] ?? '',
+                        'expectedValue' => $expectedValue,
+                        'isCorrect' => $isCorrect
+                    ];
+
+                    if ($isCorrect) {
+                        $correctCells++;
+                    }
+                }
+            }
+        } else {
+            // Flexible mode: within each section, find best row match
+            $sections = $this->_getAccountingReportSections($rows);
+
+            foreach ($sections as $section) {
+                $sectionRows = $section['rows'];
+
+                // Collect expected rows and student rows for this section
+                $expectedRows = [];
+                $studentRows = [];
+
+                foreach ($sectionRows as $entry) {
+                    $ri = $entry['ri'];
+                    $row = $entry['row'];
+                    if (!isset($row['cells'])) {
+                        continue;
+                    }
+
+                    // Build expected row values (answer cells only)
+                    $expectedCells = [];
+                    foreach ($row['cells'] as $ci => $cell) {
+                        if (($cell['mode'] ?? '') === 'answer') {
+                            $expectedCells[$ci] = $cell['value'] ?? '';
+                        }
+                    }
+                    if (!empty($expectedCells)) {
+                        $expectedRows[] = ['ri' => $ri, 'cells' => $expectedCells, 'row' => $row];
+                    }
+
+                    // Build student row values (clean numeric values only)
+                    $studentCells = [];
+                    foreach ($row['cells'] as $ci => $cell) {
+                        if (($cell['mode'] ?? '') === 'answer') {
+                            $colType = $columns[$ci]['type'] ?? 'text';
+                            $rawValue = $studentSubmission[$ri][$ci] ?? '';
+                            if ($colType === 'numeric') {
+                                $studentCells[$ci] = str_replace(['$', ',', ' '], '', $rawValue);
+                            } else {
+                                $studentCells[$ci] = $rawValue;
+                            }
+                        }
+                    }
+                    if (!empty($studentCells)) {
+                        $studentRows[] = ['ri' => $ri, 'cells' => $studentCells];
+                    }
+                }
+
+                // Match each expected row to the best student row
+                $usedStudentIndices = [];
+
+                foreach ($expectedRows as $expectedIndex => $expected) {
+                    $bestStudentIndex = null;
+                    $bestMatchCount = -1;
+
+                    foreach ($studentRows as $studentIndex => $student) {
+                        if (in_array($studentIndex, $usedStudentIndices)) {
+                            continue;
+                        }
+
+                        $matchCount = 0;
+                        foreach ($expected['cells'] as $ci => $expectedValue) {
+                            $studentValue = $student['cells'][$ci] ?? '';
+                            $colType = $columns[$ci]['type'] ?? 'text';
+
+                            if ($colType === 'numeric') {
+                                $cleanExpected = str_replace(['$', ',', ' '], '', $expectedValue);
+                                if ($studentValue !== '' && abs((float)$cleanExpected - (float)$studentValue) < 0.01) {
+                                    $matchCount++;
+                                }
+                            } else {
+                                if (strtolower(trim($expectedValue)) === strtolower(trim($studentValue))) {
+                                    $matchCount++;
+                                }
+                            }
+                        }
+
+                        if ($matchCount > $bestMatchCount) {
+                            $bestMatchCount = $matchCount;
+                            $bestStudentIndex = $studentIndex;
+                        }
+                    }
+
+                    // Grade the best-matched student row against this expected row
+                    $studentRi = $bestStudentIndex !== null ? $studentRows[$bestStudentIndex]['ri'] : null;
+                    if ($bestStudentIndex !== null) {
+                        $usedStudentIndices[] = $bestStudentIndex;
+                    }
+
+                    foreach ($expected['cells'] as $ci => $expectedValue) {
+                        $totalAnswerCells++;
+                        $studentValue = '';
+                        $rawStudentValue = '';
+                        $colType = $columns[$ci]['type'] ?? 'text';
+
+                        if ($studentRi !== null) {
+                            $rawStudentValue = $studentSubmission[$studentRi][$ci] ?? '';
+                            if ($colType === 'numeric') {
+                                $studentValue = str_replace(['$', ',', ' '], '', $rawStudentValue);
+                            } else {
+                                $studentValue = $rawStudentValue;
+                            }
+                        }
+
+                        if ($colType === 'numeric') {
+                            $cleanExpected = str_replace(['$', ',', ' '], '', $expectedValue);
+                            $isCorrect = $studentValue !== '' && abs((float)$cleanExpected - (float)$studentValue) < 0.01;
+                        } else {
+                            $isCorrect = strtolower(trim($expectedValue)) === strtolower(trim($studentValue));
+                        }
+
+                        // Store result against the student's row index so feedback appears on the right input
+                        $resultRi = $studentRi ?? $expected['ri'];
+                        $results[$resultRi][$ci] = [
+                            'studentValue' => $rawStudentValue,
+                            'expectedValue' => $expectedValue,
+                            'isCorrect' => $isCorrect
+                        ];
+
+                        if ($isCorrect) {
+                            $correctCells++;
+                        }
+                    }
+                }
+            }
+        }
+
+        return [
+            'results' => $results,
+            'proportionCorrect' => $totalAnswerCells > 0 ? round($correctCells / $totalAnswerCells, 4) : 0
+        ];
+    }
+    /**
+     * Split rows into sections based on section headers.
+     * Each section contains the data rows between headers.
+     */
+    private function _getAccountingReportSections(array $rows): array
+    {
+        $sections = [];
+        $currentSection = ['rows' => []];
+
+        foreach ($rows as $ri => $row) {
+            if ($row['isHeader'] ?? false) {
+                // Save previous section if it has rows
+                if (!empty($currentSection['rows'])) {
+                    $sections[] = $currentSection;
+                }
+                $currentSection = ['headerRi' => $ri, 'rows' => []];
+            } else {
+                $currentSection['rows'][] = ['ri' => $ri, 'row' => $row];
+            }
+        }
+
+        // Don't forget the last section
+        if (!empty($currentSection['rows'])) {
+            $sections[] = $currentSection;
+        }
+
+        return $sections;
+    }
     public function updateScoresWithNewTotalWeight($assignment_id, $old_total_points, $new_total_points)
     {
         $factor = $new_total_points / $old_total_points;
@@ -131,6 +337,12 @@ class Submission extends Model
             case('qti'):
                 $question_type = $submission->question->questionType;
                 switch ($question_type) {
+                    case('accounting_report'):
+                        $studentSubmission = json_decode($submission->student_response, 1);
+                        $qtiArray = json_decode(json_encode($submission->question), true);
+                        $proportion_correct_info = $this->computeScoreForAccountingReport($qtiArray, $studentSubmission);
+                        $proportion_correct = $proportion_correct_info['proportionCorrect'];
+                        break;
                     case('accounting_journal_entry'):
                         $studentSubmission = json_decode($submission->student_response, 1);
                         $solution = $submission->question->entries;

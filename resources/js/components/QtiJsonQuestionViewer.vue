@@ -65,7 +65,8 @@
                                     :qti-json="JSON.parse(qtiJson)"
       />
       <div
-        v-if="['forge',
+        v-if="['accounting_report',
+             'forge',
                'forge_iteration',
                'three_d_model_multiple_choice',
                'three_d_model_multiple_answer',
@@ -120,6 +121,12 @@
           <ThreeDModelViewer
             v-if="['three_d_model_multiple_choice','three_d_model_multiple_answer'].includes(questionType)"
             :qti-json="JSON.parse(qtiJson)"
+          />
+          <AccountingReportViewer v-if="questionType === 'accounting_report'"
+                                  ref="accountingReportViewer"
+                                  :key="`accounting-report-${qtiJsonCacheKey}`"
+                                  :qti-json="JSON.parse(qtiJson)"
+                                  :show-answer="showQtiAnswer"
           />
           <DropDownTableViewer v-if="questionType === 'drop_down_table'"
                                ref="dropDownTableViewer"
@@ -297,10 +304,12 @@ import DiscussItViewer from './viewers/DiscussItViewer.vue'
 import StructureImageUploader from './StructureImageUploader.vue'
 import ThreeDModelViewer from './viewers/ThreeDModelViewer.vue'
 import AccountingJournalEntryViewer from './viewers/AccountingJournalEntryViewer.vue'
+import AccountingReportViewer from './viewers/AccountingReportViewer.vue'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    AccountingReportViewer,
     ForgeViewer,
     AccountingJournalEntryViewer,
     StructureImageUploader,
@@ -447,6 +456,7 @@ export default {
       case ('discuss_it'):
       case ('accounting_journal_entry'):
         break
+      case('accounting_report'):
       case ('forge'):
       case ('forge_iteration'):
       case ('three_d_model_multiple_choice'):
@@ -613,6 +623,9 @@ export default {
       let invalidResponse = false
       let submissionErrorMessage
       switch (this.questionType) {
+        case ('accounting_report'):
+          response = JSON.stringify(this.$refs.accountingReportViewer.studentResponses)
+          break
         case ('accounting_journal_entry'):
           response = JSON.stringify(this.$refs.accountingJournalEntryViewer.studentEntries)
           break

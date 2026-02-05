@@ -32,6 +32,7 @@ trait Seed
 
                 if (in_array($question_type, [
                     'forge',
+                    'accounting_report',
                     'accounting_journal_entry',
                     'three_d_model_multiple_choice',
                     'discuss_it',

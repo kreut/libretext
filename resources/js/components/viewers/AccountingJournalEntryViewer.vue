@@ -51,7 +51,7 @@
                 placeholder="Start typing account title..."
                 autocomplete="off"
                 size="sm"
-                :class="[getFieldClass(entryIndex, rowIndex, 'accountTitle'), {'account-indent': row.credit && row.credit !== ''}, {'is-incomplete': isIncomplete(entryIndex, rowIndex, 'accountTitle')}]"
+                :class="[getFieldClass(entryIndex, rowIndex, 'accountTitle'), {'account-indent': isCreditRow(entryIndex, rowIndex)}, {'is-incomplete': isIncomplete(entryIndex, rowIndex, 'accountTitle')}]"
                 @input="clearFieldColor(entryIndex, rowIndex, 'accountTitle')"
               />
               <datalist id="account-titles-list">
@@ -65,8 +65,9 @@
                 inputmode="decimal"
                 placeholder=""
                 size="sm"
+                class="amount-input"
                 :class="[getFieldClass(entryIndex, rowIndex, 'debit'), {'is-incomplete': isIncomplete(entryIndex, rowIndex, 'debit')}]"
-                @input="clearFieldColor(entryIndex, rowIndex, 'debit')"
+                @input="onAmountInput(entryIndex, rowIndex, 'debit')"
               />
             </td>
             <td>
@@ -76,8 +77,9 @@
                 inputmode="decimal"
                 placeholder=""
                 size="sm"
+                class="amount-input"
                 :class="[getFieldClass(entryIndex, rowIndex, 'credit'), {'is-incomplete': isIncomplete(entryIndex, rowIndex, 'credit')}]"
-                @input="clearFieldColor(entryIndex, rowIndex, 'credit')"
+                @input="onAmountInput(entryIndex, rowIndex, 'credit')"
               />
             </td>
           </tr>
@@ -107,7 +109,8 @@ export default {
     return {
       studentEntries: [],
       hasStartedEditing: false, // Track if user has started editing - clears all grading colors
-      accountTitles: []
+      accountTitles: [],
+      indentTracker: 0 // Reactivity trigger for indent recalculation
     }
   },
   computed: {
@@ -174,7 +177,6 @@ export default {
       try {
         const { data } = await axios.get('/api/questions/valid-accounting-journal-entries')
         this.accountTitles = data
-        console.error(data)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -251,6 +253,19 @@ export default {
           }
         })
       }
+    },
+    isCreditRow (entryIndex, rowIndex) {
+      // Depend on indentTracker for reactivity
+      // eslint-disable-next-line no-unused-expressions
+      this.indentTracker
+      const row = this.studentEntries[entryIndex]?.rows[rowIndex]
+      if (!row) return false
+      return row.credit && row.credit.trim() !== ''
+    },
+    onAmountInput (entryIndex, rowIndex, field) {
+      this.clearFieldColor(entryIndex, rowIndex, field)
+      // Bump the tracker to force indent class recalculation
+      this.indentTracker++
     },
     clearEntryColor (entryIndex) {
       // Mark that user has started editing - clear all grading colors
@@ -383,6 +398,11 @@ export default {
   padding-left: 2rem !important;
 }
 
+/* Right-align debit/credit inputs via class */
+.amount-input {
+  text-align: right;
+}
+
 /* Apply thin border colors directly to form controls only */
 /* Using darker colors for WCAG AA accessibility */
 select.border-success,
@@ -402,11 +422,5 @@ select.is-incomplete,
 input.is-incomplete {
   border: 2px solid #997404 !important;
   background-color: #fff9e6 !important;
-}
-
-/* Right-align debit/credit inputs */
-td:nth-child(3) input,
-td:nth-child(4) input {
-  text-align: right;
 }
 </style>

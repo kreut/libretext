@@ -1564,8 +1564,8 @@
                                                   :color-class="'font-bold'"
                       />
                     </b-form-radio>
-                    <b-form-radio value="accounting"
-                                  v-show="(isAdmin || [142886,11712].includes(user.id))"
+                    <b-form-radio v-show="(isAdmin || [142886,11712].includes(user.id))"
+                                  value="accounting"
                     >
                       Accounting
                     </b-form-radio>
@@ -1607,6 +1607,12 @@
                                   @change="initQTIQuestionType($event)"
                     >
                       Journal Entry
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
+                                  value="accounting_report"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Report
                     </b-form-radio>
                   </div>
                   <div v-if="['all','basic'].includes(nativeType)">
@@ -1934,7 +1940,8 @@
                   </b-container>
                 </div>
                 <div
-                  v-if="['forge',
+                  v-if="['accounting_report',
+                          'forge',
                          'matching',
                          'multiple_answers',
                          'true_false',
@@ -2011,6 +2018,13 @@
                                          @initDiscussItText="initDiscussItText"
                     />
                   </div>
+                </div>
+                <div v-if="'accounting_report' === qtiQuestionType">
+                  <AccountingReport
+                    :qti-json="qtiJson"
+                    :question-form="questionForm"
+                    @updateQtiJson="updateQtiJson"
+                  />
                 </div>
                 <div v-if="'accounting_journal_entry' === qtiQuestionType">
                   <AccountingJournalEntry
@@ -2888,6 +2902,7 @@ import StructureImageUploader from '../StructureImageUploader.vue'
 import { capitalize, getQuestionChapterIdOptions, getQuestionSubjectIdOptions } from '../../helpers/Questions'
 import ThreeDModel from './ThreeDModel.vue'
 import AccountingJournalEntry from './accounting/AccountingJournalEntry.vue'
+import AccountingReport from './accounting/AccountingReport.vue'
 
 const parameters3DModel = {
   modelID: '',
@@ -3048,6 +3063,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    AccountingReport,
     AccountingJournalEntry,
     CKEditorFileToLinkUploader,
     ThreeDModel,
@@ -3481,6 +3497,7 @@ export default {
       this.$nextTick(() => {
         // this.setToQuestionType('three_d_model_multiple_choice')
         // this.setToQuestionType('accounting_journal_entry')
+        //this.setToQuestionType('accounting_report')
       })
     }
   },
@@ -3660,6 +3677,19 @@ export default {
     setToQuestionType (questionType) {
       document.getElementById('primary-content___BV_tab_button__').click()
       switch (questionType) {
+        case ('accounting_report'):
+          document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="native-question-type"][value="accounting"]').click()
+            }
+            , 250
+          )
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_report"]').click()
+            }
+            , 250
+          )
+          break
         case ('accounting_journal_entry'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
@@ -4063,6 +4093,10 @@ export default {
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             this.questionForm.qti_prompt = this.qtiJson['prompt']
             break
+          case ('accounting_report'):
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('accounting_journal_entry'):
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
@@ -4401,6 +4435,10 @@ export default {
             this.qtiQuestionType = 'accounting_journal_entry'
             this.nativeType = 'accounting'
             break
+          case ('accounting_report'):
+            this.qtiQuestionType = 'accounting_report'
+            this.nativeType = 'accounting'
+            break
           case ('discuss_it'):
             this.qtiPrompt = this.qtiJson['prompt']
             this.qtiQuestionType = this.qtiJson.questionType
@@ -4684,7 +4722,7 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    initNativeType(selectedType) {
+    initNativeType (selectedType) {
       const type = selectedType || this.nativeType
       if (this.isLoadingEdit) {
         return
@@ -5041,6 +5079,31 @@ export default {
           this.qtiJson = {
             questionType: 'accounting_journal_entry',
             entries: []
+          }
+          break
+        case ('accounting_report'):
+          this.qtiJson = {
+            questionType: 'accounting_report',
+            prompt: '',
+            reportHeading: ['', '', ''],
+            orderMode: 'exact',
+            columns: [
+              {
+                identifier: uuidv4(),
+                header: '',
+                type: 'text',
+                textInputMode: 'text',
+                dropdownOptions: []
+              },
+              {
+                identifier: uuidv4(),
+                header: '',
+                type: 'numeric',
+                textInputMode: 'text',
+                dropdownOptions: []
+              }
+            ],
+            rows: []
           }
           break
         case ('three_d_model_multiple_choice'):
@@ -5589,6 +5652,10 @@ export default {
           this.questionToView = data.question
         } else {
           switch (this.qtiQuestionType) {
+            case ('accounting_report'):
+            case ('accounting_journal_entry'):
+              this.$forceUpdate()
+              break
             case ('discuss_it'):
               this.qtiJson.media_uploads = this.questionForm.media_uploads
               this.previewingQuestion = true
@@ -5707,11 +5774,13 @@ export default {
             switch (property) {
               case ('qti_json'):
                 if (this.qtiQuestionType === 'accounting_journal_entry') {
-                  formattedErrors.push('Please fix the errors associated with your journal entries')
+                  formattedErrors.push('Please fix the errors associated with your journal entries.')
+                } else if (this.qtiQuestionType === 'accounting_report') {
+                  formattedErrors.push('Please fix the errors associated with your accounting report.')
                 }
                 break
               case ('parameters'):
-                formattedErrors.push('Please fix the errors associated with your 3D Model parameters')
+                formattedErrors.push('Please fix the errors associated with your 3D Model parameters.')
                 this.threeDModelParameterErrors = errors['parameters']
                 break
               case ('solution_structure'):

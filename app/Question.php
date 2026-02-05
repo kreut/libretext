@@ -571,59 +571,128 @@ class Question extends Model
                  * $qti_array['media_uploads'][$key]['text'] = $question_media_upload->getText($this, $domDocument);
                  * }**/
                 break;
-            case('accounting_journal_entry'):
+            case('accounting_report'):
                 if ($student_response) {
                     $studentSubmission = json_decode($student_response, true);
-                    $solution = $qti_array['entries'] ?? [];
-                    $submission = new Submission();
-                    $gradingResult = $submission->computeScoreForAccountingJournalEntry($solution, $studentSubmission);
-                    $qti_array['studentResponse'] = $gradingResult['results'];
+                    if ($show_solution) {
+                        $submission = new Submission();
+                        $gradingResult = $submission->computeScoreForAccountingReport($qti_array, $studentSubmission);
+                        $qti_array['studentResponse'] = $gradingResult['results'];
+                        $qti_array['score'] = $gradingResult['proportionCorrect'];
 
-                    // Add the score/proportion for grading purposes
-                    $qti_array['score'] = $gradingResult['proportionCorrect'];
+                        // Always strip expectedValue from grading results for students
+                        if (request()->user()->role === 3 && isset($qti_array['studentResponse'])) {
+                            $cleaned = [];
+                            foreach ($qti_array['studentResponse'] as $ri => $rowResults) {
+                                $cleaned[$ri] = [];
+                                foreach ($rowResults as $ci => $cellResult) {
+                                    if (is_array($cellResult)) {
+                                        $cleaned[$ri][$ci] = [
+                                            'studentValue' => $cellResult['studentValue'] ?? '',
+                                            'isCorrect' => $cellResult['isCorrect'] ?? false
+                                        ];
+                                    } else {
+                                        $cleaned[$ri][$ci] = $cellResult;
+                                    }
+                                }
+                            }
+                            $qti_array['studentResponse'] = $cleaned;
+                        }
+                    } else {
+                        // Store raw student values without grading so the viewer can repopulate
+                        $rawResponse = [];
+                        if (isset($qti_array['rows'])) {
+                            foreach ($qti_array['rows'] as $ri => $row) {
+                                if (!($row['isHeader'] ?? false) && isset($row['cells'])) {
+                                    foreach ($row['cells'] as $ci => $cell) {
+                                        if (($cell['mode'] ?? '') === 'answer') {
+                                            $rawResponse[$ri][$ci] = [
+                                                'studentValue' => $studentSubmission[$ri][$ci] ?? '',
+                                                'isCorrect' => null
+                                            ];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        $qti_array['studentResponse'] = $rawResponse;
+                    }
                 }
 
                 if (!$show_solution) {
                     if (request()->user()->role === 3) {
-                        if (isset($qti_array['entries'])) {
-                            foreach ($qti_array['entries'] as &$entry) {
-                                unset($entry['solutionRows']);
+                        if (isset($qti_array['rows'])) {
+                            foreach ($qti_array['rows'] as &$row) {
+                                if (!($row['isHeader'] ?? false) && isset($row['cells'])) {
+                                    foreach ($row['cells'] as &$cell) {
+                                        if (($cell['mode'] ?? '') === 'answer') {
+                                            unset($cell['value']);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 } else {
                     if (!$student_response && $json_type === 'question_json') {
                         if (request()->user()->role === 3) {
-                            if (isset($qti_array['entries'])) {
-                                foreach ($qti_array['entries'] as &$entry) {
-                                    unset($entry['solutionRows']);
+                            if (isset($qti_array['rows'])) {
+                                foreach ($qti_array['rows'] as &$row) {
+                                    if (!($row['isHeader'] ?? false) && isset($row['cells'])) {
+                                        foreach ($row['cells'] as &$cell) {
+                                            if (($cell['mode'] ?? '') === 'answer') {
+                                                unset($cell['value']);
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
+                    }
+                    if ($json_type === 'answer_json') {
+                        $solutionResponse = [];
+                        if (isset($qti_array['rows'])) {
+                            foreach ($qti_array['rows'] as $ri => $row) {
+                                if (!($row['isHeader'] ?? false) && isset($row['cells'])) {
+                                    foreach ($row['cells'] as $ci => $cell) {
+                                        if (($cell['mode'] ?? '') === 'answer') {
+                                            $solutionResponse[$ri][$ci] = $cell['value'] ?? '';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        $qti_array['studentResponse'] = $solutionResponse;
                     }
                 }
-                if ($json_type === 'answer_json') {
+                break;
+            case('accounting_journal_entry'):
+                if ($student_response && $show_solution) {
+                    $submission = new Submission();
+                    $gradingResult = $submission->computeScoreForAccountingJournalEntry(
+                        $qti_array['entries'] ?? [], json_decode($student_response, true)
+                    );
+                    $qti_array['studentResponse'] = $gradingResult['results'];
+                    $qti_array['score'] = $gradingResult['proportionCorrect'];
+                } elseif ($student_response) {
+                    $qti_array['studentResponse'] = json_decode($student_response, true);
+                } elseif ($json_type === 'answer_json' && isset($qti_array['entries'])) {
+                    $qti_array['studentResponse'] = array_map(function ($i, $entry) {
+                        return [
+                            'selectedEntryIndex' => $i,
+                            'rows' => array_map(fn($row) => [
+                                'accountTitle' => $row['accountTitle'] ?? '',
+                                'debit' => ($row['type'] ?? '') === 'debit' ? ($row['amount'] ?? '') : '',
+                                'credit' => ($row['type'] ?? '') === 'credit' ? ($row['amount'] ?? '') : '',
+                            ], $entry['solutionRows'] ?? [])
+                        ];
+                    }, array_keys($qti_array['entries']), $qti_array['entries']);
+                }
 
-                    $solutionAsResponse = [];
-                    if (isset($qti_array['entries'])) {
-                        foreach ($qti_array['entries'] as $entryIndex => $entry) {
-                            $responseEntry = [
-                                'selectedEntryIndex' => $entryIndex,
-                                'rows' => []
-                            ];
-                            if (isset($entry['solutionRows'])) {
-                                foreach ($entry['solutionRows'] as $row) {
-                                    $responseEntry['rows'][] = [
-                                        'accountTitle' => $row['accountTitle'] ?? '',
-                                        'debit' => ($row['type'] ?? '') === 'debit' ? ($row['amount'] ?? '') : '',
-                                        'credit' => ($row['type'] ?? '') === 'credit' ? ($row['amount'] ?? '') : ''
-                                    ];
-                                }
-                            }
-                            $solutionAsResponse[] = $responseEntry;
-                        }
+                if (request()->user()->role === 3 && isset($qti_array['entries'])) {
+                    foreach ($qti_array['entries'] as &$entry) {
+                        unset($entry['solutionRows']);
                     }
-                    $qti_array['studentResponse'] = $solutionAsResponse;
                 }
                 break;
             case('three_d_model_multiple_choice'):

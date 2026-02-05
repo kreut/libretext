@@ -17,6 +17,7 @@ use App\Rules\DropDownTableRows;
 use App\Rules\hasValid3DModelParameters;
 use App\Rules\hasValid3dModelSolutionStructure;
 use App\Rules\HasValidAccountingJournalEntries;
+use App\Rules\HasValidAccountingReport;
 use App\Rules\HighlightTableHeaders;
 use App\Rules\HighlightTableRows;
 use App\Rules\HighlightTextPrompt;
@@ -156,10 +157,13 @@ class StoreQuestionRequest extends FormRequest
                             break;
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
-
                             switch ($qti_array['questionType']) {
                                 case('forge'):
                                     $rules['qti_prompt'] = ['required'];
+                                    break;
+                                case('accounting_report'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['qti_json'] = new HasValidAccountingReport();
                                     break;
                                 case('accounting_journal_entry'):
                                     $rules['qti_json'] = new HasValidAccountingJournalEntries();
