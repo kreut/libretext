@@ -4043,21 +4043,26 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->update(['custom_question_title' => $custom_question_title]);
-            $forge_assignment_question = ForgeAssignmentQuestion::where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
+            $forge_assignment_question = ForgeAssignmentQuestion::where('adapt_assignment_id', $assignment->id)
+                ->where('adapt_question_id', $question->id)
                 ->first();
-            /**  if ($forge_assignment_question) {
-             * $data = [
-             * 'forgeQuestionId' => $forge_assignment_question->forge_question_id,
-             * 'questionTitle' => "$custom_question_title-$assignment->name"
-             * ];
-             * $http_response = $forge->updateQuestionTitle($data);
-             * if (!$http_response->successful()) {
-             * $response['message'] = "Forge error updating question title: " . $http_response->json()['message'];
-             * return $response;
-             * }
-             * }
-             **/
+            if ($forge_assignment_question) {
+                $secret = DB::table('key_secrets')
+                    ->where('key', 'forge')
+                    ->first()
+                    ->secret;
+                $central_identity_id = $request->user()->central_identity_id;
+                $http_response = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                    'Authorization' => "Bearer $secret",
+                ])->withBody("$custom_question_title-$assignment->name", 'application/json')
+                    ->post(config('services.antecedent.url') . "/api/adapt/question/$forge_assignment_question->forge_question_id/user/$central_identity_id/title");
+                if (!$http_response->successful()) {
+                    DB::rollback();
+                    $response['message'] = "Forge error updating question title: " . $http_response->json()['message'];
+                    return $response;
+                }
+            }
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The question title has been updated for this assignment.";
