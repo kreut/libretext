@@ -21,8 +21,8 @@
         <div class="mt-2 mb-2">
           <div class="mb-1">
             <b-button v-if="[2,5].includes(user.role)"
-                      class="btn-block text-left"
-                      style="background-color: #D35400 !important; color: white !important"
+                      class="btn-block text-left view-questions-btn"
+                      variant="link"
                       @click="viewQuestions"
             >
               <b-icon-eye

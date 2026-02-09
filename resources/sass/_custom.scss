@@ -474,5 +474,24 @@ div#discuss-it-recorder .ar-records__record {
 .card-body-pl {
   padding-left: 2.2rem !important;
 }
+.view-questions-btn {
+  background-color: #D35400 !important;
+  color: white !important;
+  border: 1px solid #D35400 !important;
+  text-decoration: none !important;
+  padding: 0.25rem 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.view-questions-btn:hover,
+.view-questions-btn:focus,
+.view-questions-btn:active {
+  background-color: transparent !important;
+  color: #D35400 !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+
 
 

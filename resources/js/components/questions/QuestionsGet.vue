@@ -460,10 +460,11 @@
           <b-row align-h="end">
             <b-button
               size="sm"
-              style="background-color: #D35400 !important; color: white !important"
+              variant="link"
+              class="view-questions-btn"
               @click="getStudentView(assignmentId)"
             >
-              <b-icon-eye/> View Questions
+              <b-icon-eye /> View Questions
             </b-button>
           </b-row>
           <hr>
