@@ -28,6 +28,16 @@ class Forge extends Model
      * @param array $data
      * @return Response
      */
+    public function updateQuestionTitle(array $data): Response {
+        return Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => "Bearer $this->secret",
+        ])->patch(config('services.antecedent.url') . '/api/adapt/assignment', $data);
+    }
+    /**
+     * @param array $data
+     * @return Response
+     */
     public function store(array $data): Response
     {
         /**$url = config('services.antecedent.url') . '/api/adapt/assignment';

@@ -8,6 +8,7 @@ use App\DiscussionComment;
 use App\DiscussionGroup;
 use App\Enrollment;
 use App\Exceptions\Handler;
+use App\Forge;
 use App\ForgeAssignmentQuestion;
 use App\ForgeSettings;
 use App\Helpers\Helper;
@@ -4027,7 +4028,8 @@ class AssignmentSyncQuestionController extends Controller
     function updateCustomTitle(Request                $request,
                                Assignment             $assignment,
                                Question               $question,
-                               AssignmentSyncQuestion $assignmentSyncQuestion): array
+                               AssignmentSyncQuestion $assignmentSyncQuestion,
+                               Forge                  $forge): array
     {
 
         $response['type'] = 'error';
@@ -4038,10 +4040,27 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             $custom_question_title = $request->custom_question_title ? $request->custom_question_title : null;
+            DB::beginTransaction();
             DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->update(['custom_question_title' => $custom_question_title]);
+            $forge_assignment_question = ForgeAssignmentQuestion::where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            /**  if ($forge_assignment_question) {
+             * $data = [
+             * 'forgeQuestionId' => $forge_assignment_question->forge_question_id,
+             * 'questionTitle' => "$custom_question_title-$assignment->name"
+             * ];
+             * $http_response = $forge->updateQuestionTitle($data);
+             * if (!$http_response->successful()) {
+             * $response['message'] = "Forge error updating question title: " . $http_response->json()['message'];
+             * return $response;
+             * }
+             * }
+             **/
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The question title has been updated for this assignment.";
             $response['original_question_title'] = $question->title;
@@ -4156,7 +4175,8 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    private function _rubricsAreTheSame(array $array1, array $array2): bool
+    private
+    function _rubricsAreTheSame(array $array1, array $array2): bool
     {
         if (count($array1) !== count($array2)) {
             return false;
@@ -4183,7 +4203,8 @@ class AssignmentSyncQuestionController extends Controller
         return true;
     }
 
-    private function _normalize($value): string
+    private
+    function _normalize($value): string
     {
         return $value === null ? '' : (string)$value;
     }
