@@ -3806,12 +3806,10 @@ class AssignmentSyncQuestionController extends Controller
                         $assignment->questions[$key]['solution_type'] = 'html';
                     }
                     $assignment->questions[$key]['qti_answer_json'] = $question->qti_json ? $question->formatQtiJson('answer_json', $question->qti_json, $seed, true) : null;
-                    if ($assignment->questions[$key]['answer_html']) {
+                    if (in_array($question->qti_json_type, ['forge', 'forge_iteration']) && $assignment->questions[$key]['answer_html']) {
                         $qti_answer_json = json_decode($assignment->questions[$key]['qti_answer_json'], 1);
                         $qti_answer_json['solution_html'] = $assignment->questions[$key]['answer_html'];
                         $assignment->questions[$key]['qti_answer_json'] = json_encode($qti_answer_json);
-
-
                     }
                 }
                 if ($show_solution
