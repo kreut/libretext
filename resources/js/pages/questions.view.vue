@@ -1793,7 +1793,7 @@
                   style="font-size: 16px;"
                 >
                   <span
-                    v-if="(questions[currentPage - 1].last_submitted === 'N/A' && isNaN(questions[currentPage - 1].submission_file_score))
+                    v-if="!showScores || (questions[currentPage - 1].last_submitted === 'N/A' && isNaN(questions[currentPage - 1].submission_file_score))
                       || typeof(questions[currentPage - 1].total_score) === 'undefined'"
                   >-/</span>
                   <span v-else>{{
@@ -1805,7 +1805,7 @@
                 <small v-if="assessmentType === 'delayed' || (studentNonClicker() && assessmentType === 'real time')"
                        :class="getQuestionStatusClass()"
                 >
-                  <span v-show="numberOfAllowedAttempts !== 'unlimited'
+                  <span v-show="assessmentType !== 'delayed' && numberOfAllowedAttempts !== 'unlimited'
                     && scoringType === 'p'"
                   >{{ numberOfRemainingAttempts }}</span>
                   <span v-show="(numberOfAllowedAttempts === 'unlimited'
