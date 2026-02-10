@@ -3250,6 +3250,7 @@ class AssignmentSyncQuestionController extends Controller
             if (in_array($request->user()->role, [2, 5])) {
                 $formative_questions = $Question->formativeQuestions($assignment->questions->pluck('id')->toArray());
             }
+
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
@@ -3276,7 +3277,6 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
             }
-
             $question_info = DB::table('questions')
                 ->select('*')
                 ->whereIn('questions.id', $question_ids)
@@ -3717,7 +3717,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $assignment->questions[$key]['last_submitted'] = ($last_submitted !== 'N/A')
-                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone, 'M d, Y g:i:s a')
+                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone, 'n/j/y g:ia')
                     : $last_submitted;
 
                 $assignment->questions[$key]['late_penalty_percent'] = ($last_submitted !== 'N/A')

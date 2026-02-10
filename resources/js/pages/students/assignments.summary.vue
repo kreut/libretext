@@ -263,14 +263,14 @@
               aria-label="Summary of questions and submissions"
               striped
               hover
+              table-class="'table-layout-fixed'"
               :no-border-collapse="true"
               :fields="shownFields"
               :items="items"
             >
               <template #cell(question_number)="data">
-                <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)"><span style="font-size:large">&nbsp;{{
-                    data.item.question_number
-                  }}&nbsp;</span></a>
+                <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)">&nbsp;
+                    {{ data.item.question_number }}. {{ data.item.title }}</a>
               </template>
               <template v-slot:head(last_question_submission)="data">
                 Last Auto-Graded Submission
@@ -762,8 +762,10 @@ export default {
           {
             key: 'question_number',
             label: 'Question',
-            shown: true,
-            isRowHeader: true
+            thStyle: { minWidth: '200px', maxWidth: '350px' },
+            tdAttr: { style: 'max-width: 350px; word-wrap: break-word' },
+            isRowHeader: true,
+            shown: true
           },
           {
             key: 'last_question_submission',
@@ -771,7 +773,7 @@ export default {
           },
           {
             key: 'last_open_ended_submission',
-            shown: true
+            shown: true,
           },
           {
             key: 'page',
@@ -864,6 +866,7 @@ export default {
             submission_file_exists: question.submission_file_exists,
             submission_file_url: question.submission_file_url ? question.submission_file_url : null,
             solution_type: question.solution_type,
+            title: question.title,
             solution_html: solutionHtml,
             solution_file_url: question.solution_file_url ? question.solution_file_url : null,
             solution: question.solution ? question.solution : null,
@@ -891,3 +894,8 @@ export default {
   }
 }
 </script>
+<style>
+.table-layout-fixed {
+  table-layout: fixed;
+}
+</style>
