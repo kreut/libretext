@@ -7,8 +7,10 @@
         </b-col>
         <b-col sm="12" md="8" lg="6" class="align-self-center mt-4 mt-md-0">
           <h1>Welcome to ADAPT</h1>
-          <p class="lead">ADAPT provides a unique blend of pre-built, high-quality assessments alongside personalized learning models, offering limitless customization options to ensure that your content aligns perfectly with your curriculum needs.</p>
-          <b-button size="lg" variant="info" @click="$router.push({ path: '/open-courses/commons' })">
+          <p class="lead">ADAPT provides a unique blend of pre-built, high-quality assessments alongside personalized
+            learning models, offering limitless customization options to ensure that your content aligns perfectly with
+            your curriculum needs.</p>
+          <b-button size="lg" variant="info" @click="openCommons">
             Browse Open Courses
           </b-button>
           <b-link href="https://libretexts.org/platforms/adapt" class="btn btn-lg btn-outline-light" target="_blank">
@@ -56,7 +58,7 @@ import { mapGetters } from 'vuex'
 
 export default {
 
-  metaInfo() {
+  metaInfo () {
     return { title: 'Home' }
   },
 
@@ -68,18 +70,21 @@ export default {
     authenticated: 'auth/check',
     user: 'auth/user'
   }),
-  mounted() {
+  mounted () {
     if (this.authenticated && this.user.is_tester_student) {
       this.$router.push({ name: 'cannot.view.as.testing.student' })
     }
     this.resizeHandler()
     window.addEventListener('resize', this.resizeHandler)
   },
-  beforeDestroy() {
+  beforeDestroy () {
     window.removeEventListener('resize', this.resizeHandler)
   },
   methods: {
-    resizeHandler() {
+    openCommons () {
+      window.location.href = '/open-courses/commons'
+    },
+    resizeHandler () {
       let basicLayout = document.getElementsByClassName('basic-layout')
       if (basicLayout.length) {
         this.zoomGreaterThan(1.5)
@@ -118,7 +123,7 @@ export default {
   position: relative;
   padding-top: 100px;
 
-  .links>a {
+  .links > a {
     color: #636b6f;
     padding: 0 25px;
     font-size: 12px;

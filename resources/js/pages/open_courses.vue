@@ -116,7 +116,7 @@
         <b-button
           size="sm"
           class="float-right"
-          @click="user ? logout(): $router.push({name: 'login'})"
+          @click="user ? logout(): beginLogin"
         >
           Log In
         </b-button>
@@ -352,6 +352,7 @@ import {
   deleteDiscipline, resetDiscipline
 } from '../helpers/Disciplines'
 
+
 export default {
   components: {
     DisciplineSelect,
@@ -420,12 +421,16 @@ export default {
     window.removeEventListener('resize', this.resizeHandler)
   },
   methods: {
+    logout,
     initEditDiscipline,
     initDeleteDiscipline,
     saveDiscipline,
     deleteDiscipline,
     getDisciplines,
     resetDiscipline,
+    beginLogin () {
+      window.location.href = '/api/oidc/initiate-login/web'
+    },
     reload () {
       this.getOpenCourses()
       this.getDisciplines()

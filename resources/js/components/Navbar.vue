@@ -375,7 +375,7 @@ export default {
     updateLibreOnePassword,
     updateLibreOneProfile,
     beginLogin () {
-      window.location.href = 'api/oidc/initiate-login/web'
+      window.location.href = '/api/oidc/initiate-login/web'
     },
     registerWithLibreOne () {
       window.location.href = this.environment === 'production'
