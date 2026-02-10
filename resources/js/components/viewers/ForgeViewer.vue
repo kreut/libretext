@@ -3,9 +3,13 @@
     <div v-if="type !== 'submissionViewer' || showForgeButton" class="d-flex align-items-center">
       <div v-if="!isLoading">
         <div v-if="forgeURL">
+          <span v-if="linkText">
+            <a :href="forgeURL" target="_blank">{{ linkText }}</a>
+          </span><span v-else>
           <b-button variant="info" @click="openForgeWindow">
             <HammerIcon/> Open Forge
           </b-button>
+          </span>
         </div>
         <div v-else>
           <b-alert type="warning" show>
@@ -63,6 +67,10 @@ export default {
   name: 'ForgeViewer',
   components: { HammerIcon },
   props: {
+    linkText: {
+      type: String,
+      default: ''
+    },
     showForgeButton: {
       type: Boolean,
       default: true

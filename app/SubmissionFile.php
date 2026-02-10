@@ -143,7 +143,6 @@ class SubmissionFile extends Model
             $question_submission_scores[$submission->question_id][$submission->user_id] = $submission->score;
         }
 
-
         foreach ($assignment->submissions as $submission) {
             $question_submission_scores[$submission->question_id][$submission->user_id] = $submission->score;
         }
@@ -153,15 +152,20 @@ class SubmissionFile extends Model
             $questionFilesByUser[$question_file->question_id][$question_file->user_id] = $question_file;
         }
         $no_uploads_question_ids = [];
+        $forge_question_ids = [];
         foreach ($questionFilesByUser as $question_file_by_user) {
             foreach ($question_file_by_user as $value) {
                 if ($value->type === 'no upload') {
                     $no_uploads_question_ids[] = $value->question_id;
                 }
-
+                if ($value->type === 'forge') {
+                    $forge_question_ids[] = $value->question_id;
+                }
             }
         }
+
         $no_uploads_question_id = array_unique($no_uploads_question_ids);
+        $forge_question_ids = array_unique($forge_question_ids);
         $user_and_submission_file_info = [];
 
         $assignment_questions_where_student_can_upload_file = $question_id
@@ -171,8 +175,9 @@ class SubmissionFile extends Model
                 ->get()
             : DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
-                ->where(function ($query) use ($no_uploads_question_id) {
+                ->where(function ($query) use ($no_uploads_question_id, $forge_question_ids) {
                     $query->whereIn('question_id', $no_uploads_question_id)
+                        ->orWhereIn('question_id', $forge_question_ids)
                         ->orWhereIn('open_ended_submission_type', ['file', 'text', 'audio']);
                 })
                 ->orderBy('order')

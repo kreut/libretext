@@ -1,17 +1,18 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
-    <RedirectToClickerModal :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
-                            :assignment-id="clickerAssignmentId"
-                            :question-id="clickerQuestionId"
-                            @resetClickerAssignmentIdClickerQuestionId="resetClickerAssignmentIdClickerQuestionId()"
+    <RedirectToClickerModal
+      :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
+      :assignment-id="clickerAssignmentId"
+      :question-id="clickerQuestionId"
+      @resetClickerAssignmentIdClickerQuestionId="resetClickerAssignmentIdClickerQuestionId()"
     />
     <b-modal id="modal-last-open-ended-submission"
              title="Last Open-Ended Submission"
              hide-footer
     >
       Open-ended questions are questions which will require a grader. Some examples are file uploads, text
-      based responses, and audio uploads.
+      based responses, audio uploads, and submissions through Forge.
     </b-modal>
     <b-modal id="modal-last-auto-graded-submission"
              title="Last Auto-graded Submission"
@@ -296,14 +297,29 @@
                       data.item.last_open_ended_submission
                     }}</span>
                   <span v-if="data.item.showThumbsUpForOpenEndedSubmission">
-                    <a :href="data.item.submission_file_url" target="_blank">{{
-                        data.item.last_open_ended_submission
-                      }}</a>
+                    <span v-if="data.item.is_forge" class="d-flex align-items-center">
+                      <ForgeViewer
+                        :key="`forge-viewer-${data.item.question_id}`"
+                        :link-text="data.item.last_open_ended_submission "
+                        :user="user"
+                        :assignment-id="1*assignmentId"
+                        :question-id="data.item.question_id"
+                      />
+                       <font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission"
+                                          class="text-success ml-1"
+                                          :icon="checkIcon"
+                       />
+                    </span>
+                    <span v-else>
+                      <a :href="data.item.submission_file_url" target="_blank">{{
+                          data.item.last_open_ended_submission
+                        }}</a><font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission"
+                                                 class="text-success ml-1"
+                                          :icon="checkIcon"
+                       />
+                    </span>
                   </span>
                 </span>
-                <font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission" class="text-success"
-                                   :icon="checkIcon"
-                />
               </template>
 
               <template v-slot:head(last_open_ended_submission)="data">
@@ -382,18 +398,19 @@ import AllFormErrors from '~/components/AllFormErrors'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
 import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
-import { initCentrifuge } from '~/helpers/Centrifuge'
 import RedirectToClickerModal from '../../components/RedirectToClickerModal.vue'
 import {
   initClickerAssignmentsForEnrolledAndOpenCourses,
   resetClickerAssignmentIdClickerQuestionId
 } from '../../helpers/clicker'
+import ForgeViewer from '~/components/viewers/ForgeViewer.vue'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
 
 export default {
   components: {
+    ForgeViewer,
     RedirectToClickerModal,
     AssignmentStatistics,
     Loading,
@@ -801,20 +818,21 @@ export default {
           let showThumbsUpForOpenEndedSubmission = false
           let questionSubmissionRequired = false
           let showThumbsUpForQuestionSubmission = false
-          if (question.open_ended_submission_type !== '0') {
+          if (question.open_ended_submission_type !== '0' || (question.qti_json && ['forge', 'forge_iteration'].includes(question.qti_json_type))) {
             openEndedSubmissionRequired = true
-            lastOpenEndedSubmission = question.date_submitted === 'N/A'
+            const questionSubmitted = question.date_submitted !== 'N/A' && typeof question.date_submitted !== 'undefined'
+            lastOpenEndedSubmission = !questionSubmitted
               ? 'Nothing submitted yet.'
               : question.date_submitted
-            showThumbsUpForOpenEndedSubmission = question.date_submitted !== 'N/A'
+            showThumbsUpForOpenEndedSubmission = questionSubmitted
             this.openEndedSubmissionQuestionOptions.push({ value: question.id, text: i + 1 })
           }
           if (question.open_ended_submission_type === 'file') {
             this.hasAtLeastOneFileUpload = true
           }
-          if (question.technology_iframe || question.qti_json) {
+          if (question.technology_iframe || (question.qti_json && !['forge', 'forge_iteration'].includes(question.qti_json_type))) {
             questionSubmissionRequired = true
-            lastSubmitted = question.last_submitted === 'N/A'
+            lastSubmitted = question.last_submitted === 'N/A' && typeof question.last_submitted !== 'undefined'
               ? 'Nothing submitted yet.'
               : question.last_submitted
             showThumbsUpForQuestionSubmission = question.last_submitted !== 'N/A'
@@ -823,15 +841,16 @@ export default {
           console.log(question.technology === 'webwork')
           console.log(this.solutionsReleased)
           let solutionHtml
-          if (question.solution_type === 'html'){
+          if (question.solution_type === 'html') {
             solutionHtml = question.solution_html
-            if (!solutionHtml && question.answer_html){
+            if (!solutionHtml && question.answer_html) {
               solutionHtml = question.answer_html
             }
           }
           let questionInfo = {
             question_id: question.id,
             question_number: i + 1,
+            is_forge: question.qti_json && ['forge', 'forge_iteration'].includes(question.qti_json_type),
             last_question_submission: lastSubmitted,
             questionSubmissionRequired: questionSubmissionRequired,
             technology_iframe_src: question.technology_iframe,
