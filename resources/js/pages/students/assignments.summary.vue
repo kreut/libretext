@@ -270,7 +270,7 @@
             >
               <template #cell(question_number)="data">
                 <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)">&nbsp;
-                    {{ data.item.question_number }}. {{ data.item.title }}</a>
+                  {{ data.item.question_number }}. {{ data.item.title }}</a>
               </template>
               <template v-slot:head(last_question_submission)="data">
                 Last Auto-Graded Submission
@@ -298,13 +298,7 @@
                     }}</span>
                   <span v-if="data.item.showThumbsUpForOpenEndedSubmission">
                     <span v-if="data.item.is_forge" class="d-flex align-items-center">
-                      <ForgeViewer
-                        :key="`forge-viewer-${data.item.question_id}`"
-                        :link-text="data.item.last_open_ended_submission "
-                        :user="user"
-                        :assignment-id="1*assignmentId"
-                        :question-id="data.item.question_id"
-                      />
+                    {{ data.item.last_open_ended_submission }}
                        <font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission"
                                           class="text-success ml-1"
                                           :icon="checkIcon"
@@ -315,8 +309,8 @@
                           data.item.last_open_ended_submission
                         }}</a><font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission"
                                                  class="text-success ml-1"
-                                          :icon="checkIcon"
-                       />
+                                                 :icon="checkIcon"
+                    />
                     </span>
                   </span>
                 </span>
