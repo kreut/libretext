@@ -640,7 +640,7 @@ class ForgeController extends Controller
                         'fakeStudent' => (boolean)$fake_student,
                         'forgeQuestionId' => strval($forge_assignment_question->forge_question_id)];
                     $forge_response = $forgeEnrollment->store($data, 3)->json();
-                    if ($forge_response->type === 'success') {
+                    if ($forge_response['type'] === 'success') {
                         $forgeEnrollment = new ForgeEnrollment();
                         $forgeEnrollment->user_id = $request->user()->id;
                         $forgeEnrollment->course_id = $assignment->course->id;
