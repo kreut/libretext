@@ -723,15 +723,15 @@
                         </div>
                         <b-form-group
                           v-if="!isDiscussIt && !isForge"
-                          label-cols-sm="5"
-                          label-cols-lg="4"
+                          label-cols-sm="4"
+                          label-cols-lg="3"
                           label-for="auto_graded_score"
                         >
                           <template v-slot:label>
-                            <span class="font-weight-bold">Auto-graded score:</span>
+                            <span class="font-weight-bold">Auto-graded<br/>score:</span>
                           </template>
                           <div v-show="isAutoGraded" class="pt-1">
-                            <div class="d-flex">
+                            <div class="d-flex align-items-center">
                               <b-form-input v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
                                             id="auto_graded_score"
                                             v-model="gradingForm.question_submission_score"
@@ -743,31 +743,34 @@
                                             @keydown="questionSubmissionScoreErrorMessage = ''"
                               />
                               <span v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
-                                    style="color: gray; font-size: 0.9em;padding-top:5px;padding-left:2px;padding-right:2px"
+                                    class="text-muted ml-2 mr-3"
+                                    style="font-size: 0.9em; white-space: nowrap;"
                               >(Max: {{
                                   grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
                                 }})</span>
                               <span
                                 v-if="isAutoGraded && !isOpenEnded && grading[currentStudentPage - 1]['auto_graded_submission']"
+                                class="d-inline-flex"
                               >
-                                <b-button size="sm"
-                                          variant="outline-success"
-                                          @click="submitGradingForm(true,
-                                                                    {
-                                                                      scoreType: 'question_submission_score',
-                                                                      score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
-                                                                    })"
-                                >Full Score</b-button>
-                                <b-button size="sm"
-                                          variant="outline-danger"
-                                          @click="submitGradingForm(true,
-                                                                    {
-                                                                      scoreType: 'question_submission_score',
-                                                                      score: 0
-                                                                    })"
-                                >
-                                  Zero Score</b-button>
-                              </span>
+    <b-button size="sm"
+              variant="outline-success"
+              class="mr-2"
+              @click="submitGradingForm(true,
+                                        {
+                                          scoreType: 'question_submission_score',
+                                          score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
+                                        })"
+    >Full Score</b-button>
+    <b-button size="sm"
+              variant="outline-danger"
+              @click="submitGradingForm(true,
+                                        {
+                                          scoreType: 'question_submission_score',
+                                          score: 0
+                                        })"
+    >
+      Zero Score</b-button>
+  </span>
                             </div>
 
                             <div v-if="!grading[currentStudentPage - 1]['auto_graded_submission']"
@@ -828,14 +831,14 @@
                           <template v-slot:label>
                             <span class="font-weight-bold">{{
                                 getScoreLabel()
-                              }} score:</span>
+                              }}<br/>score:</span>
                           </template>
                           <div class="pt-1">
-                            <div class="d-flex">
+                            <div class="d-flex align-items-center">
                               <b-form-input
                                 v-show="isOpenEnded
-                                || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
-                                  || discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments"
+    || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
+      || discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments"
                                 id="open_ended_score"
                                 v-model="gradingForm.file_submission_score"
                                 type="text"
@@ -845,33 +848,39 @@
                                 :class="{ 'is-invalid': fileSubmissionScoreErrorMessage.length }"
                                 @keydown="fileSubmissionScoreErrorMessage=''"
                               />
+                              <span v-show="grading[currentStudentPage - 1]['open_ended_submission']"
+                                    class="text-muted ml-2 mr-3"
+                                    style="font-size: 0.9em; white-space: nowrap;"
+                              >(Max: {{
+                                  grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
+                                }})</span>
                               <span
                                 v-if="(isOpenEnded && !isAutoGraded)
-                                || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
-                                  || (isDiscussIt && discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
+    || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
+      || (isDiscussIt && discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
+                                class="d-inline-flex"
                               >
-                                <b-button size="sm"
-                                          class="ml-2"
-                                          variant="outline-success"
-                                          @click="submitGradingForm(true,
-                                                                    {
-                                                                      specialScore: 'full score',
-                                                                      scoreType: 'file_submission_score',
-                                                                      score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
-                                                                    })"
-                                >Full Score</b-button>
-                                <b-button size="sm"
-                                          class="ml-2"
-                                          variant="outline-danger"
-                                          @click="submitGradingForm(true,
-                                                                    {
-                                                                      specialScore: 'zero score',
-                                                                      scoreType: 'file_submission_score',
-                                                                      score: 0
-                                                                    })"
-                                >
-                                  Zero Score</b-button>
-                              </span>
+    <b-button size="sm"
+              class="mr-2"
+              variant="outline-success"
+              @click="submitGradingForm(true,
+                                        {
+                                          specialScore: 'full score',
+                                          scoreType: 'file_submission_score',
+                                          score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
+                                        })"
+    >Full Score</b-button>
+    <b-button size="sm"
+              variant="outline-danger"
+              @click="submitGradingForm(true,
+                                        {
+                                          specialScore: 'zero score',
+                                          scoreType: 'file_submission_score',
+                                          score: 0
+                                        })"
+    >
+      Zero Score</b-button>
+  </span>
                             </div>
                             <div
                               v-show="(isDiscussIt && !discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
