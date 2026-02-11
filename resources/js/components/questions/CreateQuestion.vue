@@ -1497,7 +1497,7 @@
                     inline
                     name="native-question-type"
                     class="pt-2"
-                    @input="initNativeType()"
+                    @change="initNativeType()"
                   >
                     <b-form-radio value="basic">
                       Basic (QTI)
@@ -3118,6 +3118,7 @@ export default {
     }
   },
   data: () => ({
+    isLoadingEdit: false,
     attachmentToDelete: {},
     attachmentsFields: [
       {
@@ -3497,9 +3498,13 @@ export default {
     initAddEditDeleteQuestionSubjectChapterSection,
     canEdit,
     getQuestionSectionIdOptions,
-    isNativeQti() {
-      return this.questionForm.technology === 'qti'
-        && JSON.parse(this.questionForm.qti_json).questionType !== 'forge'
+    isNativeQti () {
+      try {
+        return this.questionForm.technology === 'qti' &&
+          JSON.parse(this.questionForm.qti_json).questionType !== 'forge'
+      } catch {
+        return false
+      }
     },
     initDeleteAttachment (attachment) {
       this.attachmentToDelete = attachment
@@ -4342,6 +4347,7 @@ export default {
       this.$emit('setQuestionRevision', revision)
     },
     async setQuestionToEdit () {
+      this.isLoadingEdit = true
       if (this.user.role === 5) {
         await this.getCurrentQuestionEditor()
         await this.updateCurrentQuestionEditor()
@@ -4566,6 +4572,9 @@ export default {
       if (this.isWebworkDownloadOnly) {
         this.disableTabs()
       }
+      setTimeout(() => {
+        this.isLoadingEdit = false
+      }, 2000)
     },
     disableTabs () {
       this.$nextTick(() => {
@@ -4676,6 +4685,9 @@ export default {
       }
     },
     initNativeType () {
+      if (this.isLoadingEdit) {
+        return
+      }
       if (this.nativeType === 'forge') {
         this.initQTIQuestionType('forge')
       } else if (this.nativeType === 'discuss_it') {
@@ -4997,6 +5009,9 @@ export default {
       }
     },
     initQTIQuestionType (questionType) {
+      if (this.isLoadingEdit) {
+        return
+      }
       this.questionForm.errors.clear()
       this.qtiJson = {}
       this.simpleChoices = []
@@ -5381,6 +5396,9 @@ export default {
       this.editorGroups.find(group => group.id === id).expanded = !editorGroup.expanded
     },
     openCreateAutoGradedTechnologyCode (value) {
+      if (this.isLoadingEdit) {
+        return
+      }
       this.questionForm.new_auto_graded_code = false
       this.webworkEditorShown = false
       this.questionForm.a11y_auto_graded_question_id = null
