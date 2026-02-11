@@ -271,10 +271,10 @@ class ForgeController extends Controller
                     $response['type'] = 'success';
                 }
             } else {
-                if ($http_response->json()['message'] === "Failed to get submission ID.") {
-                    $response['submission_id'] = null;
-                    $response['type'] = 'success';
-                } else {
+                if (in_array($http_response->json()['message'], ["Failed to get submission ID.", "Submission not found for this assignment associated with the student."])){
+                $response['submission_id'] = null;
+                $response['type'] = 'success';
+            } else {
                     $response['message'] = "Forge Error for studentId $student->central_identity_id, forgeQuestionId $forge_assignment_question->forge_question_id: " . $http_response->json()['message'];
                 }
             }

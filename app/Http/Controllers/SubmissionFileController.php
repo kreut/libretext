@@ -275,7 +275,7 @@ class SubmissionFileController extends Controller
                     $response['files']['submission_url'] = null;
                 } else {
 
-                    $response['files']['submission_url'] = $this->getTemporaryUrl($assignment->id, $submission);
+                    $response['files']['submission_url'] = $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null;
                     $response['files']['submission_text'] = null;
 
 
