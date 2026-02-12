@@ -698,25 +698,6 @@
         </b-button>
       </template>
     </b-modal>
-    <b-modal
-      id="modal-save-questions-from-open-course"
-      title="Saving Questions"
-    >
-      <p>
-        You can save questions from this open course to one of your Favorites folders and then import them to any
-        of your assignments.
-      </p>
-      <template #modal-footer>
-        <b-button
-          variant="primary"
-          size="sm"
-          class="float-right"
-          @click="$bvModal.hide('modal-save-questions-from-open-course')"
-        >
-          Got it!
-        </b-button>
-      </template>
-    </b-modal>
     <b-modal v-if="questions[currentPage - 1] && questions[currentPage - 1].has_h5p_activity_set_submissions"
              id="modal-h5p-activity-set-submissions"
              title="Partial Submissions"
@@ -4422,9 +4403,6 @@ export default {
       sub2.on('publication', async function (ctx) {
         await viewClickerSubmissionsUpdated(ctx)
       }).subscribe()
-    }
-    if (this.isInstructorWithAnonymousView && this.questions.length && !this.isLoading) {
-      this.$bvModal.show('modal-save-questions-from-open-course')
     }
     if (this.inIFrame) {
       this.$refs['questionContainer'].classList.remove('container')
