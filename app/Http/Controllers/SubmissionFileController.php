@@ -257,7 +257,6 @@ class SubmissionFileController extends Controller
                 'submission_url' => null,
                 'submission' => null];
             $file_feedback = null;
-
             if ($submission_file_info) {
                 $submission = $submission_file_info['submission'];
                 $response['files']['submission'] = $submission;
@@ -274,11 +273,8 @@ class SubmissionFileController extends Controller
                     $response['files']['submission_text'] = $submission_text;
                     $response['files']['submission_url'] = null;
                 } else {
-
                     $response['files']['submission_url'] = $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null;
                     $response['files']['submission_text'] = null;
-
-
                 }
             }
             $response['files']['file_feedback_url'] = $file_feedback ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null;

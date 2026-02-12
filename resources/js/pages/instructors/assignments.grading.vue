@@ -670,7 +670,7 @@
                       :show-forge-button="grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] !== null"
                       :question-id="grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
                       :student-id="grading[currentStudentPage - 1].student.user_id"
-                      @updateUploadCount="updateUploadCount"
+                      @submissionExists="updateSubmissionExists"
                     />
                   </b-card>
                 </div>
@@ -950,7 +950,7 @@
                           <b-row>
                             <b-col v-if="isOpenEndedFileSubmission">
                               <b-button variant="outline-primary"
-                                        :disabled="grading[currentStudentPage - 1]['open_ended_submission']['submission'] === null"
+                                        :disabled="grading[currentStudentPage - 1]['open_ended_submission']['submission_url'] === null"
                                         size="sm"
                                         @click="openInNewTab(getFullPdfUrlAtPage(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'],grading[currentStudentPage - 1]['page']) )"
                               >
@@ -2226,7 +2226,7 @@ export default {
       this.showAudioFeedbackMessage = false
       this.cardBorderColor = ''
       if (this.isOpenEnded) {
-        this.cardBorderColor = this.hasMaxScore() || (!this.grading[this.currentStudentPage - 1]['open_ended_submission']['submission'] || this.grading[this.currentStudentPage - 1]['submission_status'] === 'gradedOpenEndedSubmissions')
+        this.cardBorderColor = this.hasMaxScore() || (!this.grading[this.currentStudentPage - 1]['open_ended_submission']['date_submitted'] || this.grading[this.currentStudentPage - 1]['submission_status'] === 'gradedOpenEndedSubmissions')
           ? 'green'
           : 'red'
       }

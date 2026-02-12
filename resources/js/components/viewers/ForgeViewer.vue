@@ -1,24 +1,28 @@
 <template>
   <div>
     <div v-if="type !== 'submissionViewer' || showForgeButton" class="d-flex align-items-center">
-      <div v-if="!isLoading">
+      <div v-if="isLoading" class="d-flex align-items-center text-muted" style="font-size: 0.85em;">
+        <b-spinner small variant="info" class="mr-2"/>
+        Initializing...
+      </div>
+      <div v-if="!isLoading" :class="!forgeURL ? 'w-100' : ''">
         <div v-if="forgeURL">
-          <span v-if="linkText">
-            <a :href="forgeURL" target="_blank">{{ linkText }}</a>
-          </span><span v-else>
           <b-button variant="info" @click="openForgeWindow">
-            <HammerIcon/> Open Forge
+            <HammerIcon/>
+            Open Forge
           </b-button>
-          </span>
         </div>
         <div v-else>
-          <b-alert type="warning" show>
+          <b-alert v-if="type === 'submissionViewer'" type="info" show>
+            There is no Forge submission.
+          </b-alert>
+          <b-alert v-if="type === 'questionViewer'" type="warning" show>
             To enable this question please first initially save the Settings.
           </b-alert>
         </div>
       </div>
       <span
-        v-if="type === 'submissionViewer'"
+        v-if="type === 'submissionViewer' && forgeURL"
         class="ml-3 d-flex align-items-center text-muted"
         style="font-size: 0.85em;"
       >
