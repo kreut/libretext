@@ -132,7 +132,8 @@ const defaultUserRoleOptions = [
   { text: 'Instructor', value: 2 },
   { text: 'Student', value: 3 },
   { text: 'TA', value: 4 },
-  { text: 'Non-instructor editor', value: 5 }
+  { text: 'Non-instructor editor', value: 5 },
+  { text: 'Tester', value: 6 }
 ]
 export default {
   components: {
