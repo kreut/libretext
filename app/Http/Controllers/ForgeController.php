@@ -10,6 +10,7 @@ use App\ForgeEnrollment;
 use App\Assignment;
 use App\Course;
 use App\Exceptions\Handler;
+use App\ForgeUserToken;
 use App\Question;
 use App\SubmissionFile;
 use App\User;
@@ -176,6 +177,7 @@ class ForgeController extends Controller
      * @param User $student
      * @param ForgeAssignmentQuestion $forgeAssignmentQuestion
      * @param ForgeEnrollment $forgeEnrollment
+     * @param ForgeUserToken $forgeUserToken
      * @return array
      * @throws Exception
      */
@@ -184,7 +186,8 @@ class ForgeController extends Controller
                                                              Question                $question,
                                                              User                    $student,
                                                              ForgeAssignmentQuestion $forgeAssignmentQuestion,
-                                                             ForgeEnrollment         $forgeEnrollment): array
+                                                             ForgeEnrollment         $forgeEnrollment,
+                                                             ForgeUserToken          $forgeUserToken): array
     {
         try {
             $response['type'] = 'error';
@@ -269,12 +272,13 @@ class ForgeController extends Controller
                     $response['submission_id'] = $json_response['data']['submissionId'];
                     $response['domain'] = config('services.antecedent.url');
                     $response['type'] = 'success';
+                    $response['token'] = $forgeUserToken->create($request->user());
                 }
             } else {
-                if (in_array($http_response->json()['message'], ["Failed to get submission ID.", "Submission not found for this assignment associated with the student."])){
-                $response['submission_id'] = null;
-                $response['type'] = 'success';
-            } else {
+                if (in_array($http_response->json()['message'], ["Failed to get submission ID.", "Submission not found for this assignment associated with the student."])) {
+                    $response['submission_id'] = null;
+                    $response['type'] = 'success';
+                } else {
                     $response['message'] = "Forge Error for studentId $student->central_identity_id, forgeQuestionId $forge_assignment_question->forge_question_id: " . $http_response->json()['message'];
                 }
             }
@@ -563,6 +567,7 @@ class ForgeController extends Controller
      * @param Forge $forge
      * @param ForgeAssignmentQuestion $forgeAssignmentQuestion
      * @param ForgeEnrollment $forgeEnrollment
+     * @param ForgeUserToken $forgeUserToken
      * @return array
      * @throws Exception
      */
@@ -571,7 +576,8 @@ class ForgeController extends Controller
                                Question                $question,
                                Forge                   $forge,
                                ForgeAssignmentQuestion $forgeAssignmentQuestion,
-                               ForgeEnrollment         $forgeEnrollment): array
+                               ForgeEnrollment         $forgeEnrollment,
+                               ForgeUserToken          $forgeUserToken): array
     {
         try {
             $response['type'] = 'error';
@@ -663,12 +669,8 @@ class ForgeController extends Controller
             $assignment_question_forge_draft = DB::table('assignment_question_forge_draft')
                 ->where('assignment_question_id', $assignment_question->id)
                 ->first();
-            $token = Str::random(32);
-            DB::table('forge_user_tokens')->insert(['user_id' => $request->user()->id,
-                'token' => $token,
-                'created_at' => now(),
-                'updated_at' => now()]);
-            $response['token'] = $token;
+
+            $response['token'] = $forgeUserToken->create($request->user());
             $response['type'] = 'success';
             $response['domain'] = config('services.antecedent.url');
             $response['forge_class_id'] = $forge_assignment_question->forge_class_id;
