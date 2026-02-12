@@ -215,7 +215,12 @@ class CanvasAPI extends Model
     {
         $lms_access_token = $this->_updateAccessToken();
         $url = "/api/v1/courses?enrollment_type=teacher&per_page=100";
-        return $this->_doCurl($lms_access_token->access_token, 'GET', $url);
+       $courses = $this->_doCurl($lms_access_token->access_token, 'GET', $url);
+        usort($courses, function($a, $b) {
+            return strtotime($b->start_at) - strtotime($a->start_at);
+        });
+
+        return array_slice($courses, 0, 12);
     }
 
     /**
