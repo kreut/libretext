@@ -115,8 +115,35 @@ export default {
   },
   methods: {
     async openForgeWindow () {
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+
+      if (isSafari) {
+        await this.initForge(this.type)
+        if (this.forgeURL) {
+          window.location.href = this.forgeURL
+        }
+        return
+      }
+
+      const newWindow = window.open('about:blank', '_blank')
+
+      if (!newWindow) {
+        await this.initForge(this.type)
+        if (this.forgeURL) {
+          window.location.href = this.forgeURL
+        }
+        return
+      }
+
+      newWindow.document.write('<html><body><p>Loading Forge...</p></body></html>')
+
       await this.initForge(this.type)
-      window.open(this.forgeURL, '_blank')
+
+      if (this.forgeURL) {
+        newWindow.location.href = this.forgeURL
+      } else {
+        newWindow.close()
+      }
     },
     async initForge (type) {
       switch (type) {
