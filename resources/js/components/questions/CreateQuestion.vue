@@ -1497,7 +1497,7 @@
                     inline
                     name="native-question-type"
                     class="pt-2"
-                    @change="initNativeType()"
+                    @change="initNativeType($event)"
                   >
                     <b-form-radio value="basic">
                       Basic (QTI)
@@ -4684,16 +4684,18 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    initNativeType () {
+    initNativeType(selectedType) {
+      const type = selectedType || this.nativeType
       if (this.isLoadingEdit) {
         return
       }
-      if (this.nativeType === 'forge') {
+      if (type === 'forge') {
         this.initQTIQuestionType('forge')
-      } else if (this.nativeType === 'discuss_it') {
+      } else if (type === 'discuss_it') {
         this.qtiQuestionType = 'discuss_it'
         this.initQTIQuestionType('discuss_it')
-      } else if (['nursing', 'sketcher', 'accounting'].includes(this.nativeType)) {
+      } else if (['nursing', 'sketcher', 'accounting'].includes(type)) {
+        this.nativeType = type  // ensure it's set
         this.initNonBasicQTIQuestion()
       } else {
         this.qtiQuestionType = 'multiple_choice'
