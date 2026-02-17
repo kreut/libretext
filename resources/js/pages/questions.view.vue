@@ -2412,7 +2412,7 @@
               @click.prevent="editQuestionSource(questions[currentPage-1])"
             >
               Edit Question
-            </b-button>aaaa
+            </b-button>
             <SolutionFileHtml v-if="showSolutionFileHTML"
                               :key="`instructor-solution-file-html-${cacheKey}`"
                               :questions="questions"
