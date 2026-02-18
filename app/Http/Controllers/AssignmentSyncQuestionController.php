@@ -252,6 +252,11 @@ class AssignmentSyncQuestionController extends Controller
                                 $clean_assign_to['due'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $user_timezone);
                             }
 
+                            if (!empty($assign_to['final_submission_deadline_date']) && !empty($assign_to['final_submission_deadline_time'])) {
+                                $local_datetime = $assign_to['final_submission_deadline_date'] . ' ' . $assign_to['final_submission_deadline_time'];
+                                $clean_assign_to['final_submission_deadline'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $user_timezone);
+                            }
+
                             $clean_draft['assign_tos'][] = $clean_assign_to;
                         }
                     }
@@ -499,10 +504,16 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assign_tos as $key => $assign_to) {
                 $available_from = $assign_to['available_from'];
                 $due = $assign_to['due'];
+                $final_submission_deadline = $assign_to['final_submission_deadline'];
                 $assign_tos[$key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, $user_timezone);
                 $assign_tos[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, $user_timezone);
                 $assign_tos[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, $user_timezone);
                 $assign_tos[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, $user_timezone);
+                if ($final_submission_deadline) {
+                    $assign_tos[$key]['final_submission_deadline_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, $user_timezone);
+                    $assign_tos[$key]['final_submission_deadline_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($final_submission_deadline, $user_timezone);
+                }
+
             }
 
             // Get existing forge settings from assignment_question table
@@ -532,6 +543,11 @@ class AssignmentSyncQuestionController extends Controller
                             if (!empty($assign_to['due'])) {
                                 $drafts[$draft_index]['assign_tos'][$assign_to_index]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($assign_to['due'], $user_timezone);
                                 $drafts[$draft_index]['assign_tos'][$assign_to_index]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($assign_to['due'], $user_timezone);
+                            }
+
+                            if (!empty($assign_to['final_submission_deadline'])) {
+                                $drafts[$draft_index]['assign_tos'][$assign_to_index]['final_submission_deadline_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($assign_to['final_submission_deadline'], $user_timezone);
+                                $drafts[$draft_index]['assign_tos'][$assign_to_index]['final_submission_deadline_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($assign_to['final_submission_deadline'], $user_timezone);
                             }
                         }
                     }
