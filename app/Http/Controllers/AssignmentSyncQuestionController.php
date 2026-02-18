@@ -222,10 +222,14 @@ class AssignmentSyncQuestionController extends Controller
                             $draft_number++;
                         }
                     }
+
                     $clean_draft = [
                         'uuid' => $draft['uuid'],
-                        'late_policy' => $draft['late_policy'],
                         'title' => $title,
+                        'late_policy' => $draft['late_policy'],
+                        "late_deduction_percent" => $draft['late_deduction_percent'],
+                        "late_deduction_applied_once" => $draft['late_deduction_applied_once'],
+                        "late_deduction_application_period" => $draft["late_deduction_application_period"],
                         'isFinal' => $draft['isFinal'],
                         'assign_tos' => []
                     ];
@@ -437,11 +441,13 @@ class AssignmentSyncQuestionController extends Controller
             }
             $data_to_post_to_forge['forge_question_id'] = $forge_assignment_question->forge_question_id;
             $data_to_post_to_forge['forge_class_id'] = $forge_assignment_question->forge_class_id;
-            $forge_response = $forgeSettings->store($data_to_post_to_forge);
-            if ($forge_response['type'] === 'error') {
-                throw new Exception($forge_response['message']);
-            }
+            if (!app()->environment('local')) {
+                $forge_response = $forgeSettings->store($data_to_post_to_forge);
 
+                if ($forge_response['type'] === 'error') {
+                    throw new Exception($forge_response['message']);
+                }
+            }
             // Store forge_settings only on the Final Submission (main forge question)
             DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
