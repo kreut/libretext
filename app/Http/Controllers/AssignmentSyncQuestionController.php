@@ -117,7 +117,11 @@ class AssignmentSyncQuestionController extends Controller
                 $response['message'] = 'Draft not found.';
                 return $response;
             }
-
+            if (app()->environment('local')) {
+                $response['type'] = 'success';
+                $response['submission_count'] = 0;
+                return $response;
+            }
             $api_url = config('services.antecedent.url') . "/api/adapt/draft/$draft_uuid/submissions";
 
             $secret = DB::table('key_secrets')
@@ -236,28 +240,7 @@ class AssignmentSyncQuestionController extends Controller
 
                     if (isset($draft['assign_tos']) && is_array($draft['assign_tos'])) {
                         foreach ($draft['assign_tos'] as $assign_to) {
-                            $clean_assign_to = [
-                                'groups' => $assign_to['groups'] ?? []
-                            ];
-
-                            // Convert available_from to UTC timestamp
-                            if (!empty($assign_to['available_from_date']) && !empty($assign_to['available_from_time'])) {
-                                $local_datetime = $assign_to['available_from_date'] . ' ' . $assign_to['available_from_time'];
-                                $clean_assign_to['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $user_timezone);
-                            }
-
-                            // Convert due to UTC timestamp
-                            if (!empty($assign_to['due_date']) && !empty($assign_to['due_time'])) {
-                                $local_datetime = $assign_to['due_date'] . ' ' . $assign_to['due_time'];
-                                $clean_assign_to['due'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $user_timezone);
-                            }
-
-                            if (!empty($assign_to['final_submission_deadline_date']) && !empty($assign_to['final_submission_deadline_time'])) {
-                                $local_datetime = $assign_to['final_submission_deadline_date'] . ' ' . $assign_to['final_submission_deadline_time'];
-                                $clean_assign_to['final_submission_deadline'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $user_timezone);
-                            }
-
-                            $clean_draft['assign_tos'][] = $clean_assign_to;
+                            $clean_draft['assign_tos'][] = $assignmentSyncQuestion->draftAssignTo($assign_to, $user_timezone);
                         }
                     }
 
@@ -425,6 +408,7 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             $forge_settings = [
+                'final_submission_locked' => $request->final_submission_locked ? $request->final_submission_locked : false,
                 'drafts' => $clean_drafts,
                 'settings' => $data['settings'] ?? []
             ];
@@ -516,6 +500,7 @@ class AssignmentSyncQuestionController extends Controller
 
             }
 
+
             // Get existing forge settings from assignment_question table
             $assignment_question = AssignmentSyncQuestion::where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
@@ -523,12 +508,12 @@ class AssignmentSyncQuestionController extends Controller
 
             $drafts = [];
             $settings = [];
-
+            $final_submission_locked = false;
             if ($assignment_question && $assignment_question->forge_settings) {
                 $forge_settings = json_decode($assignment_question->forge_settings, true);
                 $drafts = $forge_settings['drafts'] ?? [];
                 $settings = $forge_settings['settings'] ?? [];
-
+                $final_submission_locked = $forge_settings['final_submission_locked'] ?? false;
                 // Convert draft timestamps from UTC to local date/time fields
                 foreach ($drafts as $draft_index => $draft) {
                     if (isset($draft['assign_tos']) && is_array($draft['assign_tos'])) {
@@ -555,8 +540,13 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             $response['type'] = 'success';
+            $response['late_policy'] = $assignment->late_policy;
+            $response['late_deduction_percent'] = $assignment->late_deduction_percent;
+            $response['late_deduction_application_period'] = $assignment->late_deduction_application_period;
+            $response['late_deduction_applied_once'] = $assignment->late_deduction_application_period === 'once';
             $response['assign_tos'] = $assign_tos;
             $response['drafts'] = $drafts;
+            $response['final_submission_locked'] = $final_submission_locked;
             $response['settings'] = $settings;
         } catch (Exception $e) {
             $h = new Handler(app());

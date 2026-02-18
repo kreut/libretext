@@ -26,6 +26,26 @@
       </template>
     </b-modal>
 
+    <!-- Re-lock Final Submission Confirmation Modal -->
+    <b-modal
+      id="modal-confirm-relock"
+      title="Lock Final Submission"
+      @ok="confirmRelock"
+    >
+      <p>
+        Locking the Final Submission will replace its current dates and late policy with the assignment-level values.
+        Any changes you've made will be lost.
+      </p>
+      <template #modal-footer="{ cancel, ok }">
+        <b-button size="sm" @click="cancel()">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary" @click="ok()">
+          Lock
+        </b-button>
+      </template>
+    </b-modal>
+
     <b-modal
       id="modal-forge-settings"
       title="Forge Settings"
@@ -96,6 +116,37 @@
                   />
                   <b-icon :icon="collapsedDrafts.includes(draftIndex) ? 'chevron-right' : 'chevron-down'" class="mr-2"/>
                   <strong>{{ getDraftTitle(draft, draftIndex) }}</strong>
+
+                  <!-- Lock Toggle for Final Submission -->
+                  <span v-if="draft.isFinal" class="ml-2" @click.stop>
+                    <span :id="`lock-toggle-${draft.uuid}`">
+                      <b-icon
+                        :icon="finalSubmissionLocked ? 'lock-fill' : 'unlock-fill'"
+                        :class="[
+                          'lock-icon',
+                          canToggleLock ? 'lock-icon-enabled' : 'lock-icon-disabled',
+                          finalSubmissionLocked ? 'text-primary' : 'text-secondary'
+                        ]"
+                        :style="{ cursor: canToggleLock ? 'pointer' : 'not-allowed', opacity: canToggleLock ? 1 : 0.5 }"
+                        @click="canToggleLock ? toggleFinalSubmissionLock() : null"
+                      />
+                    </span>
+                    <b-tooltip :target="`lock-toggle-${draft.uuid}`" delay="250" triggers="hover focus">
+                      <template v-if="!canToggleLock">
+                        Lock is only available when there are no other drafts.
+                        Remove all drafts to enable locking to assignment-level values.
+                      </template>
+                      <template v-else-if="finalSubmissionLocked">
+                        Dates and late policy are locked to assignment-level values.
+                        Click to unlock and customize.
+                      </template>
+                      <template v-else>
+                        Dates and late policy are unlocked.
+                        Click to lock to assignment-level values.
+                      </template>
+                    </b-tooltip>
+                  </span>
+
                   <span v-if="draft.assign_tos && draft.assign_tos.length" class="ml-2 font-weight-normal">
                     <small v-for="(assignTo, idx) in draft.assign_tos" :key="`header-${draft.uuid}-${idx}`">
                       <span v-if="assignTo.due_date">
@@ -120,7 +171,7 @@
 
               <!-- Draft Content - Collapsible -->
               <b-collapse :visible="!collapsedDrafts.includes(draftIndex)">
-                <div :key="`draft-content-${draft.uuid}-${draft.late_policy}-${draftsKey}`"
+                <div :key="`draft-content-${draft.uuid}-${draft.late_policy}-${draftsKey}-${draft.isFinal ? finalSubmissionLocked : ''}`"
                      class="border border-top-0 rounded-bottom p-3"
                 >
                   <b-form-group
@@ -150,26 +201,30 @@
                       :id="`draft_late_policy_${draftIndex}`"
                       v-model="drafts[draftIndex].late_policy"
                       stacked
+                      :disabled="draft.isFinal && finalSubmissionLocked"
                       :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.late_policy`) }"
                     >
                       <b-form-radio
                         :name="`draft_late_policy_${draftIndex}`"
                         value="not accepted"
-                        @click.native="setLatePolicy(draftIndex, 'not accepted')"
+                        :disabled="draft.isFinal && finalSubmissionLocked"
+                        @click.native="!(draft.isFinal && finalSubmissionLocked) && setLatePolicy(draftIndex, 'not accepted')"
                       >
                         Do not accept late
                       </b-form-radio>
                       <b-form-radio
                         :name="`draft_late_policy_${draftIndex}`"
                         value="marked late"
-                        @click.native="setLatePolicy(draftIndex, 'marked late')"
+                        :disabled="draft.isFinal && finalSubmissionLocked"
+                        @click.native="!(draft.isFinal && finalSubmissionLocked) && setLatePolicy(draftIndex, 'marked late')"
                       >
                         Accept but mark late
                       </b-form-radio>
                       <b-form-radio
                         :name="`draft_late_policy_${draftIndex}`"
                         value="deduction"
-                        @click.native="setLatePolicy(draftIndex, 'deduction')"
+                        :disabled="draft.isFinal && finalSubmissionLocked"
+                        @click.native="!(draft.isFinal && finalSubmissionLocked) && setLatePolicy(draftIndex, 'deduction')"
                       >
                         Accept late with a deduction
                       </b-form-radio>
@@ -178,7 +233,7 @@
                       {{ getError(`drafts.${draftIndex}.late_policy`) }}
                     </div>
                     <a
-                      v-if="drafts[draftIndex].late_policy && drafts.length > 1"
+                      v-if="drafts[draftIndex].late_policy && drafts.length > 1 && !(draft.isFinal && finalSubmissionLocked)"
                       href=""
                       class="small"
                       @click.prevent="applyLatePolicyToAllDrafts(draftIndex)"
@@ -202,6 +257,7 @@
                           v-model="drafts[draftIndex].late_deduction_percent"
                           type="text"
                           placeholder="0-100"
+                          :disabled="draft.isFinal && finalSubmissionLocked"
                           :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.late_deduction_percent`) }"
                           @input="clearError(`drafts.${draftIndex}.late_deduction_percent`)"
                         />
@@ -228,15 +284,27 @@
                       :id="`draft_late_deduction_applied_${draftIndex}`"
                       v-model="drafts[draftIndex].late_deduction_applied_once"
                       stacked
+                      :disabled="draft.isFinal && finalSubmissionLocked"
                       :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.late_deduction_applied_once`) }"
                       @change="onLateDeductionAppliedChange(draftIndex, $event)"
                     >
-                      <span @click="drafts[draftIndex].late_deduction_application_period = ''">
-                        <b-form-radio :name="`draft_late_deduction_applied_${draftIndex}`" :value="true">
+                      <span
+                        @click="!(draft.isFinal && finalSubmissionLocked) && (drafts[draftIndex].late_deduction_application_period = '')"
+                      >
+                        <b-form-radio
+                          :name="`draft_late_deduction_applied_${draftIndex}`"
+                          :value="true"
+                          :disabled="draft.isFinal && finalSubmissionLocked"
+                        >
                           Just once
                         </b-form-radio>
                       </span>
-                      <b-form-radio :name="`draft_late_deduction_applied_${draftIndex}`" :value="false" class="mt-2">
+                      <b-form-radio
+                        :name="`draft_late_deduction_applied_${draftIndex}`"
+                        :value="false"
+                        class="mt-2"
+                        :disabled="draft.isFinal && finalSubmissionLocked"
+                      >
                         <b-row class="align-items-center">
                           <b-col cols="auto" class="pr-1">
                             Every
@@ -248,9 +316,9 @@
                               type="text"
                               placeholder="e.g., 1 hour"
                               style="width: 120px"
-                              :disabled="drafts[draftIndex].late_deduction_applied_once !== false"
+                              :disabled="drafts[draftIndex].late_deduction_applied_once !== false || (draft.isFinal && finalSubmissionLocked)"
                               :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.late_deduction_application_period`) }"
-                              @click="drafts[draftIndex].late_deduction_applied_once = false"
+                              @click="!(draft.isFinal && finalSubmissionLocked) && (drafts[draftIndex].late_deduction_applied_once = false)"
                               @input="clearError(`drafts.${draftIndex}.late_deduction_application_period`)"
                             />
                           </b-col>
@@ -295,6 +363,7 @@
                             required
                             tabindex="0"
                             :min="min"
+                            :disabled="draft.isFinal && finalSubmissionLocked"
                             class="datepicker"
                             :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.available_from_date`) }"
                             @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.available_from_date`)"
@@ -312,6 +381,7 @@
                             format="h:mm A"
                             manual-input
                             drop-direction="up"
+                            :disabled="draft.isFinal && finalSubmissionLocked"
                             :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.available_from_time`) }"
                             input-class="custom-timepicker-class"
                             @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.available_from_time`)"
@@ -346,6 +416,7 @@
                             required
                             tabindex="0"
                             :min="min"
+                            :disabled="draft.isFinal && finalSubmissionLocked"
                             :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.due_date`) }"
                             class="datepicker"
                             @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.due_date`); clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.due`)"
@@ -363,6 +434,7 @@
                             format="h:mm A"
                             manual-input
                             drop-direction="up"
+                            :disabled="draft.isFinal && finalSubmissionLocked"
                             :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.due_time`) }"
                             input-class="custom-timepicker-class"
                             @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.due_time`); clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.due`)"
@@ -398,6 +470,7 @@
                             required
                             tabindex="0"
                             :min="min"
+                            :disabled="draft.isFinal && finalSubmissionLocked"
                             :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.final_submission_deadline_date`) }"
                             class="datepicker"
                             @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.final_submission_deadline_date`); clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.final_submission_deadline`)"
@@ -418,6 +491,7 @@
                             format="h:mm A"
                             manual-input
                             drop-direction="up"
+                            :disabled="draft.isFinal && finalSubmissionLocked"
                             :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.final_submission_deadline_time`) }"
                             input-class="custom-timepicker-class"
                             @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.final_submission_deadline_time`); clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.final_submission_deadline`)"
@@ -832,6 +906,13 @@ export default {
       previousLatePolicies: {},
       // Extensions
       enrollments: [],
+      // Assignment-level late policy (from API)
+      assignmentLatePolicy: '',
+      assignmentLateDeductionPercent: null,
+      assignmentLateDeductionAppliedOnce: null,
+      assignmentLateDeductionApplicationPeriod: null,
+      // Final Submission lock
+      finalSubmissionLocked: true,
       settings: {
         // Submission settings
         autoSubmission: false,
@@ -868,6 +949,22 @@ export default {
     hasFilesTabErrors () {
       const fields = ['mainFileType', 'allowImport', 'additionalFiles', 'uploadFile']
       return fields.some(field => this.errors[`settings.${field}`])
+    },
+    hasOtherDrafts () {
+      return this.drafts.some(d => !d.isFinal)
+    },
+    canToggleLock () {
+      return !this.hasOtherDrafts
+    }
+  },
+  watch: {
+    hasOtherDrafts (newVal) {
+      if (newVal && this.finalSubmissionLocked) {
+        const finalDraft = this.drafts.find(d => d.isFinal)
+        console.error('Before unlock - final late_policy:', finalDraft?.late_policy, 'late_deduction_applied_once:', finalDraft?.late_deduction_applied_once)
+        this.finalSubmissionLocked = false
+        console.error('After unlock - final late_policy:', finalDraft?.late_policy, 'late_deduction_applied_once:', finalDraft?.late_deduction_applied_once)
+      }
     }
   },
   mounted () {
@@ -883,10 +980,10 @@ export default {
         uuid: this.generateUuid(),
         title: '',
         isFinal: true,
-        late_policy: '',
-        late_deduction_percent: null,
-        late_deduction_applied_once: null,
-        late_deduction_application_period: null,
+        late_policy: this.finalSubmissionLocked ? this.assignmentLatePolicy : '',
+        late_deduction_percent: this.finalSubmissionLocked ? this.assignmentLateDeductionPercent : null,
+        late_deduction_applied_once: this.finalSubmissionLocked ? this.assignmentLateDeductionAppliedOnce : null,
+        late_deduction_application_period: this.finalSubmissionLocked ? this.assignmentLateDeductionApplicationPeriod : null,
         assign_tos: []
       }
 
@@ -900,8 +997,8 @@ export default {
           available_from_time: assignTo.available_from_time || '',
           due_date: assignTo.due_date || '',
           due_time: assignTo.due_time || '',
-          final_submission_deadline_date: assignTo.due_date || '',
-          final_submission_deadline_time: assignTo.due_time || '',
+          final_submission_deadline_date: assignTo.final_submission_deadline_date || '',
+          final_submission_deadline_time: assignTo.final_submission_deadline_time || '',
           extensions: []
         })
       }
@@ -926,7 +1023,16 @@ export default {
           await this.loadEnrollments()
         }
 
+        // Store assignment-level late policy from API
+        this.assignmentLatePolicy = data.late_policy || ''
+        this.assignmentLateDeductionPercent = data.late_deduction_percent || null
+       this.assignmentLateDeductionAppliedOnce = typeof data.late_deduction_applied_once !== 'undefined'
+          ? (data.late_deduction_applied_once !== null ? !!data.late_deduction_applied_once : null)
+          : null
+        this.assignmentLateDeductionApplicationPeriod = data.late_deduction_application_period || null
+
         // Store assign_tos from assignment
+
         this.assignTos = data.assign_tos || []
 
         // Format assign_tos
@@ -938,7 +1044,14 @@ export default {
           if (this.assignTos[i].due_time) {
             this.assignTos[i].due_time = this.reformatTime(this.assignTos[i].due_time)
           }
+          console.error(this.assignTos[i])
+          if (this.assignTos[i].final_submission_deadline_time) {
+            this.assignTos[i].final_submission_deadline_time = this.reformatTime(this.assignTos[i].final_submission_deadline_time)
+          }
+
         }
+
+        console.error(data.assign_tos)
 
         // Load existing drafts or create default Final Submission
         if (data.drafts && data.drafts.length) {
@@ -962,6 +1075,8 @@ export default {
             }
             if (typeof draft.late_deduction_applied_once === 'undefined') {
               draft.late_deduction_applied_once = null
+            } else if (draft.late_deduction_applied_once !== null) {
+              draft.late_deduction_applied_once = !!draft.late_deduction_applied_once
             }
             if (typeof draft.late_deduction_application_period === 'undefined') {
               draft.late_deduction_application_period = null
@@ -1004,6 +1119,22 @@ export default {
             this.drafts.push(this.createFinalSubmission())
           }
 
+          // Determine lock state: locked by default only if no other drafts
+          const hasNonFinal = this.drafts.some(d => !d.isFinal)
+          if (hasNonFinal) {
+            this.finalSubmissionLocked = false
+          } else {
+            // Load lock state from server if available, default to locked
+            this.finalSubmissionLocked = typeof data.final_submission_locked !== 'undefined'
+              ? data.final_submission_locked
+              : true
+          }
+
+          // If locked, apply assignment-level values to Final Submission
+          if (this.finalSubmissionLocked) {
+            this.applyAssignmentLevelToFinalSubmission()
+          }
+
           // Find the index of the current draft to expand
           let expandIndex = 0 // Default to first draft
           if (this.currentDraftQuestionId) {
@@ -1025,7 +1156,8 @@ export default {
             .filter(index => index !== expandIndex)
           this.allDraftsCollapsed = false
         } else {
-          // No drafts exist - create default Final Submission
+          // No drafts exist - create default Final Submission (locked by default)
+          this.finalSubmissionLocked = true
           this.drafts = [this.createFinalSubmission()]
         }
 
@@ -1062,6 +1194,11 @@ export default {
       this.draftsKey = 0
       this.previousLatePolicies = {}
       this.enrollments = []
+      this.assignmentLatePolicy = ''
+      this.assignmentLateDeductionPercent = null
+      this.assignmentLateDeductionAppliedOnce = null
+      this.assignmentLateDeductionApplicationPeriod = null
+      this.finalSubmissionLocked = true
       this.settings = {
         autoSubmission: false,
         preventAfterDueDate: false,
@@ -1089,7 +1226,60 @@ export default {
       this.resetState()
     },
 
-    // Late policy change handler
+    // --- Final Submission Lock ---
+
+    toggleFinalSubmissionLock () {
+      if (!this.canToggleLock) {
+        return
+      }
+
+      if (this.finalSubmissionLocked) {
+        // Unlocking - just unlock, no confirmation needed
+        this.finalSubmissionLocked = false
+      } else {
+        // Re-locking - show confirmation since user may have made edits
+        this.$bvModal.show('modal-confirm-relock')
+      }
+    },
+
+    confirmRelock () {
+      this.finalSubmissionLocked = true
+      this.applyAssignmentLevelToFinalSubmission()
+      this.draftsKey++
+      this.$bvModal.hide('modal-confirm-relock')
+    },
+
+    applyAssignmentLevelToFinalSubmission () {
+      const finalDraft = this.drafts.find(d => d.isFinal)
+      if (!finalDraft) {
+        return
+      }
+
+      // Apply assignment-level late policy
+      this.$set(finalDraft, 'late_policy', this.assignmentLatePolicy)
+      this.$set(finalDraft, 'late_deduction_percent', this.assignmentLateDeductionPercent)
+      this.$set(finalDraft, 'late_deduction_applied_once', this.assignmentLateDeductionAppliedOnce !== null ? !!this.assignmentLateDeductionAppliedOnce : null)
+      this.$set(finalDraft, 'late_deduction_application_period', this.assignmentLateDeductionApplicationPeriod)
+      console.error('late_deduction_applied_once:', this.assignmentLateDeductionAppliedOnce)
+      // Apply assignment-level assign_to dates (but preserve extensions)
+      if (finalDraft.assign_tos) {
+        for (let i = 0; i < finalDraft.assign_tos.length; i++) {
+          if (i < this.assignTos.length) {
+            const assignTo = this.assignTos[i]
+            this.$set(finalDraft.assign_tos[i], 'available_from_date', assignTo.available_from_date || '')
+            this.$set(finalDraft.assign_tos[i], 'available_from_time', assignTo.available_from_time || '')
+            this.$set(finalDraft.assign_tos[i], 'due_date', assignTo.due_date || '')
+            this.$set(finalDraft.assign_tos[i], 'due_time', assignTo.due_time || '')
+            this.$set(finalDraft.assign_tos[i], 'final_submission_deadline_date', assignTo.final_submission_deadline_date || '')
+            this.$set(finalDraft.assign_tos[i], 'final_submission_deadline_time', assignTo.final_submission_deadline_time || '')
+            // Extensions are NOT overwritten
+          }
+        }
+      }
+    },
+
+    // --- Late Policy ---
+
     // Store previous late policy before change
     storePreviousLatePolicy (draftIndex) {
       this.previousLatePolicies[draftIndex] = this.drafts[draftIndex].late_policy
@@ -1135,9 +1325,9 @@ export default {
         // Auto-populate final submission deadline with due date if empty
         if (draft.assign_tos) {
           for (let i = 0; i < draft.assign_tos.length; i++) {
-            if (!draft.assign_tos[i].final_submission_deadline_date && draft.assign_tos[i].due_date) {
-              this.$set(draft.assign_tos[i], 'final_submission_deadline_date', draft.assign_tos[i].due_date)
-              this.$set(draft.assign_tos[i], 'final_submission_deadline_time', draft.assign_tos[i].due_time)
+            if (!draft.assign_tos[i].final_submission_deadline_date) {
+              this.$set(draft.assign_tos[i], 'final_submission_deadline_date', draft.assign_tos[i].final_submission_deadline_date)
+              this.$set(draft.assign_tos[i], 'final_submission_deadline_time', draft.assign_tos[i].final_submission_deadline_time)
             }
           }
         }
@@ -1149,9 +1339,9 @@ export default {
         // Auto-populate final submission deadline with due date if empty
         if (draft.assign_tos) {
           for (let i = 0; i < draft.assign_tos.length; i++) {
-            if (!draft.assign_tos[i].final_submission_deadline_date && draft.assign_tos[i].due_date) {
-              this.$set(draft.assign_tos[i], 'final_submission_deadline_date', draft.assign_tos[i].due_date)
-              this.$set(draft.assign_tos[i], 'final_submission_deadline_time', draft.assign_tos[i].due_time)
+            if (!draft.assign_tos[i].final_submission_deadline_date) {
+              this.$set(draft.assign_tos[i], 'final_submission_deadline_date', draft.assign_tos[i].final_submission_deadline_date)
+              this.$set(draft.assign_tos[i], 'final_submission_deadline_time', draft.assign_tos[i].final_submission_deadline_time)
             }
           }
         }
@@ -1174,6 +1364,11 @@ export default {
 
       const updatedDrafts = this.drafts.map((draft, i) => {
         if (i === sourceDraftIndex) {
+          return draft
+        }
+
+        // Skip locked Final Submission
+        if (draft.isFinal && this.finalSubmissionLocked) {
           return draft
         }
 
@@ -1398,10 +1593,10 @@ export default {
         uuid: this.generateUuid(),
         title: '',
         isFinal: false,
-        late_policy: '',
-        late_deduction_percent: null,
-        late_deduction_applied_once: null,
-        late_deduction_application_period: null,
+        late_policy: this.assignmentLatePolicy || '',
+        late_deduction_percent: this.assignmentLateDeductionPercent || null,
+        late_deduction_applied_once: this.assignmentLateDeductionAppliedOnce !== null ? this.assignmentLateDeductionAppliedOnce : null,
+        late_deduction_application_period: this.assignmentLateDeductionApplicationPeriod || null,
         assign_tos: []
       }
 
@@ -1439,6 +1634,8 @@ export default {
           this.collapsedDrafts.push(i)
         }
       }
+
+      // Adding a draft auto-unlocks the Final Submission (handled by watcher)
     },
 
     // Remove a draft (cannot remove Final Submission)
@@ -1536,7 +1733,8 @@ export default {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/question/${this.questionId}/forge-settings`, {
           drafts: this.drafts,
-          settings: this.settings
+          settings: this.settings,
+          final_submission_locked: this.finalSubmissionLocked
         })
 
         if (data.type === 'error') {
@@ -1601,7 +1799,6 @@ export default {
         }
       } finally {
         this.isSaving = false
-
       }
     },
 
@@ -1783,6 +1980,19 @@ export default {
 
 .sortable-drag {
   opacity: 1;
+}
+
+.lock-icon {
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.lock-icon-enabled:hover {
+  color: #0056b3 !important;
+}
+
+.lock-icon-disabled {
+  cursor: not-allowed;
 }
 </style>
 

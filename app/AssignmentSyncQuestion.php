@@ -3,27 +3,51 @@
 namespace App;
 
 use App\Custom\FCMNotification;
-use App\Exceptions\Handler;
 use App\Helpers\Helper;
-use App\Jobs\ProcessPassBackByUserIdAndAssignment;
+use App\Traits\DateFormatter;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use DateTime;
 use DateTimeZone;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
+
 
 class AssignmentSyncQuestion extends Model
 {
+    use DateFormatter;
     protected $table = 'assignment_question';
     protected $guarded = [];
 
+    /**
+     * @throws Exception
+     */
+    public function draftAssignTo(array $assign_to, string $timezone): array
+    {
+        $clean_assign_to = [
+            'groups' => $assign_to['groups'] ?? []
+        ];
+        if (strtotime($assign_to['available_from_date'] ?? '') !== false && strtotime($assign_to['available_from_time'] ?? '') !== false) {
+            $local_datetime = $assign_to['available_from_date'] . ' ' . $assign_to['available_from_time'];
+            $clean_assign_to['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $timezone);
+        }
+
+// Convert due to UTC timestamp
+        if (strtotime($assign_to['due_date'] ?? '') !== false && strtotime($assign_to['due_time'] ?? '') !== false) {
+            $local_datetime = $assign_to['due_date'] . ' ' . $assign_to['due_time'];
+            $clean_assign_to['due'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $timezone);
+        }
+
+        if (strtotime($assign_to['final_submission_deadline_date'] ?? '') !== false && strtotime($assign_to['final_submission_deadline_time'] ?? '') !== false) {
+            $local_datetime = $assign_to['final_submission_deadline_date'] . ' ' . $assign_to['final_submission_deadline_time'];
+            $clean_assign_to['final_submission_deadline'] = $this->convertLocalMysqlFormattedDateToUTC($local_datetime, $timezone);
+        }
+
+        return $clean_assign_to;
+    }
     /**
      * @throws Exception
      */

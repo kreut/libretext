@@ -2508,7 +2508,29 @@ class AssignmentController extends Controller
                         ->where('assignment_id', $assignment->id)
                         ->update(['completion_scoring_mode' => Helper::getCompletionScoringMode('c', $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage)]);
                 }
+                $assignment_questions = $assignmentSyncQuestion->where('assignment_id', $assignment->id)
+                    ->whereNotNull('forge_settings')
+                    ->get();
+                foreach ($assignment_questions as $assignment_question) {
+                    $forge_settings = json_decode($assignment_question->forge_settings, true);
+                    foreach ($forge_settings['drafts'] as $key => $draft) {
+                        if ($draft['isFinal'] && $forge_settings['final_submission_locked']) {
+                            $clean_assign_tos = [];
+                            foreach ($assign_tos as $assign_to) {
+                                $clean_assign_tos[] = $assignmentSyncQuestion->draftAssignTo($assign_to, request()->user()->time_zone);
+                            }
+                            $forge_settings['drafts'][$key]['assign_tos'] = $clean_assign_tos;
+                            $forge_settings['drafts'][$key]['late_policy'] = $request->late_policy;
+                            $forge_settings['drafts'][$key]['late_deduction_percent'] = $request->late_deduction_percent;
+                            $forge_settings['drafts'][$key]['late_deduction_applied_once'] = $request->late_deduction_applied_once;
+                            $forge_settings['drafts'][$key]['late_deduction_application_period'] = $request->late_deduction_period;
+                        }
+                    }
+                    $forge_settings = json_encode($forge_settings);
 
+                    $assignment_question->forge_settings = $forge_settings;
+                    $assignment_question->save();
+                }
                 if ($request->scoring_type === 'p' && $assignment->scoring_type === 'c') {
                     DB::table('assignment_question')
                         ->where('assignment_id', $assignment->id)

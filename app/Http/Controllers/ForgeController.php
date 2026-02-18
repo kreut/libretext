@@ -609,21 +609,21 @@ class ForgeController extends Controller
                     'questionTitle' => "$question->title-$assignment->name",
                     'questionDescription' => $question->description
                 ];
-
-                $http_response = $forge->store($data);
-                if ($http_response->successful()) {
-                    $forge_response = $http_response->json();
-                } else {
-                    $response['message'] = "Forge error initializing question: " . $http_response->json()['message'];
-                    return $response;
+                $forge_response['type'] = 'error';
+                if (!app()->environment('local')) {
+                    $http_response = $forge->store($data);
+                    if ($http_response->successful()) {
+                        $forge_response = $http_response->json();
+                    } else {
+                        $response['message'] = "Forge error initializing question: " . $http_response->json()['message'];
+                        return $response;
+                    }
                 }
 
                 if (app()->environment('local')) {
-
-                    $forge_response = new \stdClass();
-                    $forge_response->questionId = '69651fcc319cfd49976c380c';
-                    $forge_response->classId = '6964fe39319cfd49976c37ed';
-                    $forge_response->type = 'success';
+                    $forge_response['questionId'] = '69651fcc319cfd49976c380c';
+                    $forge_response['classId'] = '6964fe39319cfd49976c37ed';
+                    $forge_response['type'] = 'success';
                 }
                 if ($forge_response['type'] === 'success') {
                     $forge_assignment_question = new ForgeAssignmentQuestion();
