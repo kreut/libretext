@@ -1386,7 +1386,7 @@ class Submission extends Model
         $results = DB::table('submission_files')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
-            ->whereIn('type', ['q', 'text', 'discuss_it'])
+            ->whereIn('type', ['q', 'text', 'discuss_it','forge'])
             ->select('question_id', 'assignment_id')
             ->get();
 
