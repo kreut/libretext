@@ -165,8 +165,13 @@
                 </li>
                 <li class="mb-2">
                   <span class="font-weight-bold">Due Date: </span>
-                  <span>This assignment is due {{ formattedDue }}.</span>
-                  <span v-if="extension">(You have an extension until {{ extension }}).</span>
+                  <span v-if="hasDifferentForgeDueDates">
+    This assignment has questions with multiple distinct due dates. Please review them in the table below.
+  </span>
+                  <span v-else>
+    This assignment is due {{ formattedDue }}.
+    <span v-if="extension">(You have an extension until {{ extension }}).</span>
+  </span>
                 </li>
                 <li class="mb-2">
                   <span class="font-weight-bold">Late Policy: </span>
@@ -249,122 +254,146 @@
                   header="default"
                   header-html="<h2 class=&quot;h5&quot;>Questions</h2>"
           >
-            <b-alert variant="success" :show="completedAllAssignmentQuestions">
-              <span class="font-weight-bold">You have completed all assessments on this assignment!</span>
-            </b-alert>
-            <div v-if="!setAllPages && fullPdfUrl">
-              <b-alert show variant="info">
-                Please remember to set the Initial Pages for each of the questions below.
-              </b-alert>
-            </div>
-            <b-table
-              v-show="items.length && assessmentType !== 'clicker'"
-              id="summary_of_questions_and_submissions"
-              aria-label="Summary of questions and submissions"
-              striped
-              hover
-              table-class="'table-layout-fixed'"
-              :no-border-collapse="true"
-              :fields="shownFields"
-              :items="items"
-            >
-              <template #cell(question_number)="data">
-                <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)">&nbsp;
-                  {{ data.item.question_number }}. {{ data.item.title }}</a>
-              </template>
-              <template v-slot:head(last_question_submission)="data">
-                Last Auto-Graded Submission
-                <QuestionCircleTooltipModal :aria-label="'Last Auto-Graded Submission'"
-                                            :modal-id="'modal-last-auto-graded-submission'"
-                />
-              </template>
-              <template #cell(last_question_submission)="data">
-                <span
-                  :class="{ 'table-text-danger': data.item.questionSubmissionRequired && !data.item.showThumbsUpForQuestionSubmission }"
+            <div class="vld-parent" style="min-height: 100px;">
+              <loading :active.sync="questionsLoading"
+                       :can-cancel="false"
+                       :is-full-page="false"
+                       :width="64"
+                       :height="64"
+                       color="#007BFF"
+                       background="#FFFFFF"
+              />
+              <div v-show="!questionsLoading">
+                <b-alert variant="success" :show="completedAllAssignmentQuestions">
+                  <span class="font-weight-bold">You have completed all assessments on this assignment!</span>
+                </b-alert>
+                <div v-if="!setAllPages && fullPdfUrl">
+                  <b-alert show variant="info">
+                    Please remember to set the Initial Pages for each of the questions below.
+                  </b-alert>
+                </div>
+                <b-table
+                  id="summary_of_questions_and_submissions"
+                  aria-label="Summary of questions and submissions"
+                  striped
+                  hover
+                  table-class="'table-layout-fixed'"
+                  :no-border-collapse="true"
+                  :fields="shownFields"
+                  :items="items"
                 >
-                  {{ data.item.last_question_submission }}
-                </span>
-                <font-awesome-icon v-show="data.item.showThumbsUpForQuestionSubmission" class="text-success"
-                                   :icon="checkIcon"
-                />
-              </template>
-
-              <template #cell(last_open_ended_submission)="data">
-                <span
-                  :class="{ 'table-text-danger': data.item.openEndedSubmissionRequired && !data.item.showThumbsUpForOpenEndedSubmission }"
-                >
-                  <span v-if="!data.item.showThumbsUpForOpenEndedSubmission">{{
-                      data.item.last_open_ended_submission
-                    }}</span>
-                  <span v-if="data.item.showThumbsUpForOpenEndedSubmission">
-                    <span v-if="data.item.is_forge" class="d-flex align-items-center">
-                    {{ data.item.last_open_ended_submission }}
-                       <font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission"
-                                          class="text-success ml-1"
-                                          :icon="checkIcon"
-                       />
-                    </span>
-                    <span v-else>
-                      <a :href="data.item.submission_file_url" target="_blank">{{
-                          data.item.last_open_ended_submission
-                        }}</a><font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission"
-                                                 class="text-success ml-1"
-                                                 :icon="checkIcon"
+                  <template #cell(question_number)="data">
+                    <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)">&nbsp;
+                      {{ data.item.question_number }}. {{ data.item.title }}</a>
+                  </template>
+                  <template v-slot:head(last_question_submission)="data">
+                    Last Auto-Graded Submission
+                    <QuestionCircleTooltipModal :aria-label="'Last Auto-Graded Submission'"
+                                                :modal-id="'modal-last-auto-graded-submission'"
                     />
-                    </span>
-                  </span>
-                </span>
-              </template>
-
-              <template v-slot:head(last_open_ended_submission)="data">
-                Last Open-Ended Submission
-                <QuestionCircleTooltipModal :aria-label="'Last Open-Ended Submission'"
-                                            :modal-id="'modal-last-open-ended-submission'"
-                />
-              </template>
-              <template #cell(solution_file_url)="data">
-                <SolutionFileHtml :questions="items"
-                                  :modal-id="`solution-${data.item.question_number}`"
-                                  :current-page="data.item.question_number"
-                                  assignment-name="Question"
-                />
-              </template>
-              <template #cell(page)="data">
-                <div v-if="data.item.isOpenEndedFileSubmission">
-                  <b-input-group>
-                    <div class="d-flex">
-                      <b-form-input :id="`set_page_for_question_${data.item.question_number}`"
-                                    v-model="data.item.page"
-                                    type="text"
-                                    style="width: 60px"
-                                    placeholder=""
-                                    :class="{ 'is-invalid': data.item.question_id === questionSubmissionPageForm.questionId && questionSubmissionPageForm.errors.has('page') }"
-                                    @keydown="questionSubmissionPageForm.errors.clear('page')"
-                      />
-
-                      <b-button variant="primary"
-                                size="sm"
-                                class="ml-1"
-                                :disabled="!fullPdfUrl"
-                                @click="confirmSetPageAsSubmission(data.item.question_number, data.item.question_id, data.item.page)"
-                      >
-                        <label :for="`set_page_for_question_${data.item.question_number}`" style="margin-bottom:0">Set
-                          Page</label>
-                      </b-button>
-                      <has-error v-show="data.item.question_id === questionSubmissionPageForm.questionId"
-                                 :form="questionSubmissionPageForm" field="page"
-                      />
+                  </template>
+                  <template #cell(last_question_submission)="data">
+          <span
+            :class="{ 'table-text-danger': data.item.questionSubmissionRequired && !data.item.showThumbsUpForQuestionSubmission }"
+          >
+            {{ data.item.last_question_submission }}
+          </span>
+                    <font-awesome-icon v-show="data.item.showThumbsUpForQuestionSubmission" class="text-success"
+                                       :icon="checkIcon"
+                    />
+                  </template>
+                  <template #cell(last_open_ended_submission)="data">
+          <span
+            :class="{ 'table-text-danger': data.item.openEndedSubmissionRequired && !data.item.showThumbsUpForOpenEndedSubmission }"
+          >
+            <span v-if="!data.item.showThumbsUpForOpenEndedSubmission">{{
+                data.item.last_open_ended_submission
+              }}</span>
+            <span v-if="data.item.showThumbsUpForOpenEndedSubmission">
+              <span v-if="data.item.is_forge" class="d-flex align-items-center">
+              {{ data.item.last_open_ended_submission }}
+                 <font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission"
+                                    class="text-success ml-1"
+                                    :icon="checkIcon"
+                 />
+              </span>
+              <span v-else>
+                <a :href="data.item.submission_file_url" target="_blank">{{
+                    data.item.last_open_ended_submission
+                  }}</a><font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission"
+                                           class="text-success ml-1"
+                                           :icon="checkIcon"
+              />
+              </span>
+            </span>
+          </span>
+                  </template>
+                  <template v-slot:head(last_open_ended_submission)="data">
+                    Last Open-Ended Submission
+                    <QuestionCircleTooltipModal :aria-label="'Last Open-Ended Submission'"
+                                                :modal-id="'modal-last-open-ended-submission'"
+                    />
+                  </template>
+                  <template #cell(solution_file_url)="data">
+                    <SolutionFileHtml :questions="items"
+                                      :modal-id="`solution-${data.item.question_number}`"
+                                      :current-page="data.item.question_number"
+                                      assignment-name="Question"
+                    />
+                  </template>
+                  <template #cell(forge_due_dates)="data">
+                    <ForgeDueDates
+                      v-if="data.item.is_forge"
+                      class="mr-2"
+                      :question-title="data.item.title"
+                      :assignment-id="+assignmentId"
+                      :key="`forge-due-dates-${data.item.question_id}`"
+                      :parent-question-id="data.item.forge_source_id || data.item.question_id"
+                      :current-draft-question-id="data.item.question_id"
+                      :color-coded-due-date="true"
+                      @due-date-loaded="checkForgeDueDate"
+                    />
+                    <span v-else :class="assignmentDueDateClass()">
+  {{ formattedDue }}
+</span>
+                  </template>
+                  <template #cell(page)="data">
+                    <div v-if="data.item.isOpenEndedFileSubmission">
+                      <b-input-group>
+                        <div class="d-flex">
+                          <b-form-input :id="`set_page_for_question_${data.item.question_number}`"
+                                        v-model="data.item.page"
+                                        type="text"
+                                        style="width: 60px"
+                                        placeholder=""
+                                        :class="{ 'is-invalid': data.item.question_id === questionSubmissionPageForm.questionId && questionSubmissionPageForm.errors.has('page') }"
+                                        @keydown="questionSubmissionPageForm.errors.clear('page')"
+                          />
+                          <b-button variant="primary"
+                                    size="sm"
+                                    class="ml-1"
+                                    :disabled="!fullPdfUrl"
+                                    @click="confirmSetPageAsSubmission(data.item.question_number, data.item.question_id, data.item.page)"
+                          >
+                            <label :for="`set_page_for_question_${data.item.question_number}`" style="margin-bottom:0">Set
+                              Page</label>
+                          </b-button>
+                          <has-error v-show="data.item.question_id === questionSubmissionPageForm.questionId"
+                                     :form="questionSubmissionPageForm" field="page"
+                          />
+                        </div>
+                      </b-input-group>
                     </div>
-                  </b-input-group>
-                </div>
-                <div v-else>
-                  N/A
-                </div>
-              </template>
-            </b-table>
+                    <div v-else>
+                      N/A
+                    </div>
+                  </template>
+                </b-table>
+              </div>
+            </div>
           </b-card>
 
-          <b-card v-if="canViewAssignmentStatistics" class="mb-5" header="default"
+          <b-card v-if="canViewAssignmentStatistics && !questionsLoading" class="mb-5" header="default"
                   header-html="<h2 class=&quot;h5&quot;>Statistics</h2>"
           >
             <AssignmentStatistics/>
@@ -398,12 +427,14 @@ import {
   resetClickerAssignmentIdClickerQuestionId
 } from '../../helpers/clicker'
 import ForgeViewer from '~/components/viewers/ForgeViewer.vue'
+import ForgeDueDates from '../../components/ForgeDueDates.vue'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
 
 export default {
   components: {
+    ForgeDueDates,
     ForgeViewer,
     RedirectToClickerModal,
     AssignmentStatistics,
@@ -419,6 +450,11 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    finalSubmissionDeadline: '',
+    questionsLoading: true,
+    hasDifferentForgeDueDates: false,
+    forgeDueDatesChecked: 0,
+    forgeQuestionCount: 0,
     redirectToClickerModalKey: 0,
     clickerAssignmentId: 0,
     clickerQuestionId: 0,
@@ -476,7 +512,13 @@ export default {
       user: 'auth/user'
     }),
     shownFields () {
-      return this.fields.filter(field => field.shown)
+      return this.fields.filter(field => {
+        if (field.key === 'forge_due_dates') {
+          if (this.questionsLoading) return true
+          return this.hasDifferentForgeDueDates
+        }
+        return field.shown
+      })
     }
   },
   created () {
@@ -514,6 +556,51 @@ export default {
   methods: {
     resetClickerAssignmentIdClickerQuestionId,
     initClickerAssignmentsForEnrolledAndOpenCourses,
+    formatDate (dateString) {
+      if (!dateString) return ''
+      const d = new Date(dateString.replace(' at ', ' '))
+      const month = d.getMonth() + 1
+      const day = d.getDate()
+      const year = String(d.getFullYear()).slice(-2)
+      let hours = d.getHours()
+      const minutes = String(d.getMinutes()).padStart(2, '0')
+      const ampm = hours >= 12 ? 'pm' : 'am'
+      hours = hours % 12 || 12
+      return `${month}/${day}/${year} ${hours}:${minutes}${ampm}`
+    },
+    parseFormattedDate (dateStr) {
+      if (!dateStr) return null
+      const parts = dateStr.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)(am|pm)/i)
+      if (!parts) return null
+      let [, month, day, year, hours, minutes, ampm] = parts
+      hours = parseInt(hours)
+      if (ampm.toLowerCase() === 'pm' && hours !== 12) hours += 12
+      if (ampm.toLowerCase() === 'am' && hours === 12) hours = 0
+      return new Date(2000 + parseInt(year), parseInt(month) - 1, parseInt(day), hours, parseInt(minutes))
+    },
+    assignmentDueDateClass () {
+      const due = this.parseFormattedDate(this.formattedDue)
+      if (!due) return 'dark-red'
+      const now = new Date()
+      if (now <= due) return 'text-success'
+      if (this.finalSubmissionDeadline) {
+        const finalDeadline = this.parseFormattedDate(this.finalSubmissionDeadline)
+        if (finalDeadline && now <= finalDeadline) return 'text-warning'
+      }
+      return 'dark-red'
+    },
+    checkForgeDueDate (forgeDueDate) {
+      this.forgeDueDatesChecked++
+      const normalize = (s) => s ? s.replace(/\s+(am|pm)/i, '$1').trim() : ''
+      const normalizedForgeDue = normalize(this.formatDate(forgeDueDate))
+      const normalizedAssignmentDue = normalize(this.formattedDue)
+      if (normalizedForgeDue !== normalizedAssignmentDue) {
+        this.hasDifferentForgeDueDates = true
+      }
+      if (this.forgeDueDatesChecked >= this.forgeQuestionCount) {
+        this.questionsLoading = false
+      }
+    },
     async getDiscussItQuestions (assignmentId) {
       try {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/questions/discuss-it`)
@@ -590,10 +677,7 @@ export default {
     },
     inputFile (newFile, oldFile) {
       if (newFile && oldFile && !newFile.active && oldFile.active) {
-        // Get response data
-
         if (newFile.xhr) {
-          //  Get the response status code
           console.log('status', newFile.xhr.status)
           if (newFile.xhr.status === 200) {
             if (!this.handledOK) {
@@ -613,8 +697,6 @@ export default {
       this.submissionFileForm.uploadLevel = 'assignment'
       this.submissionFileForm.s3_key = this.s3Key
       this.submissionFileForm.original_filename = this.originalFilename
-      // Prevent modal from closing
-      // Trigger submit handler
       if (this.uploading) {
         this.$noty.info('Please be patient while the file is uploading.')
         return false
@@ -622,7 +704,6 @@ export default {
       this.processingFile = true
 
       try {
-        // https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
         let formData = new FormData()
         formData.append('submission', this.submissionFileForm)
         formData.append('assignmentId', this.assignmentId)
@@ -630,8 +711,8 @@ export default {
         formData.append('type', 'submission')
         formData.append('s3_key', this.submissionFileForm.s3_key)
         formData.append('original_filename', this.submissionFileForm.original_filename)
-        formData.append('uploadLevel', this.submissionFileForm.uploadLevel)// at the assignment or question level; used for cutups
-        formData.append('_method', 'put') // add this
+        formData.append('uploadLevel', this.submissionFileForm.uploadLevel)
+        formData.append('_method', 'put')
 
         const { data } = await axios.post('/api/submission-files', formData)
         this.$noty[data.type](data.message)
@@ -654,7 +735,6 @@ export default {
     async inputFilter (newFile, oldFile, prevent) {
       this.submissionFileForm.errors.clear()
       if (newFile && !oldFile) {
-        // Filter non-image file
         if (parseInt(newFile.size) > 20000000) {
           let message = '20 MB max allowed.  Your file is too large.  '
           if (/\.(pdf)$/i.test(newFile.name)) {
@@ -666,14 +746,12 @@ export default {
           return prevent()
         }
         let validUploadTypesMessage = `The file type must be .pdf`
-
         let validExtension = /\.(pdf)$/i.test(newFile.name)
 
         if (!validExtension) {
           this.submissionFileForm.errors.set('submission', validUploadTypesMessage)
           this.allFormErrors = this.submissionFileForm.errors.flatten()
           this.$bvModal.show('modal-form-errors-file-upload')
-
           return prevent()
         } else {
           try {
@@ -700,7 +778,6 @@ export default {
         }
       }
 
-      // Create a blob field
       newFile.blob = ''
       let URL = window.URL || window.webkitURL
       if (URL && URL.createObjectURL) {
@@ -731,6 +808,7 @@ export default {
           return false
         }
         let assignment = data.assignment
+        this.finalSubmissionDeadline = assignment.final_submission_deadline
         this.isInstructorLoggedInAsStudent = assignment.is_instructor_logged_in_as_student
         this.public_description = assignment.public_description
         this.instructions = assignment.instructions
@@ -767,7 +845,13 @@ export default {
           },
           {
             key: 'last_open_ended_submission',
-            shown: true,
+            shown: true
+          },
+          {
+            key: 'forge_due_dates',
+            label: 'Due Dates',
+            thStyle: { minWidth: '165px' },
+            shown: true
           },
           {
             key: 'page',
@@ -847,6 +931,7 @@ export default {
             question_id: question.id,
             question_number: i + 1,
             is_forge: question.qti_json && ['forge', 'forge_iteration'].includes(question.qti_json_type),
+            forge_source_id: question.forge_source_id,
             last_question_submission: lastSubmitted,
             questionSubmissionRequired: questionSubmissionRequired,
             technology_iframe_src: question.technology_iframe,
@@ -874,6 +959,11 @@ export default {
             questionInfo.total_score = discussItQuestion.total_score
           }
           this.items.push(questionInfo)
+        }
+
+        this.forgeQuestionCount = this.items.filter(item => item.is_forge).length
+        if (this.forgeQuestionCount === 0) {
+          this.questionsLoading = false
         }
       } catch (error) {
         this.$noty.error(error.message)
