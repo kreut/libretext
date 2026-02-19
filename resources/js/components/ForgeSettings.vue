@@ -171,8 +171,9 @@
 
               <!-- Draft Content - Collapsible -->
               <b-collapse :visible="!collapsedDrafts.includes(draftIndex)">
-                <div :key="`draft-content-${draft.uuid}-${draft.late_policy}-${draftsKey}-${draft.isFinal ? finalSubmissionLocked : ''}`"
-                     class="border border-top-0 rounded-bottom p-3"
+                <div
+                  :key="`draft-content-${draft.uuid}-${draft.late_policy}-${draftsKey}-${draft.isFinal ? finalSubmissionLocked : ''}`"
+                  class="border border-top-0 rounded-bottom p-3"
                 >
                   <b-form-group
                     label-cols-sm="4"
@@ -511,188 +512,183 @@
                         </b-col>
                       </b-form-row>
                     </b-form-group>
+                  </div>
 
-                    <!-- Extensions -->
-                    <b-form-group
-                      label-cols-sm="4"
-                      label-cols-lg="3"
-                    >
-                      <template v-slot:label>
-                        Extensions
+                  <!-- Extensions (at draft/question level) -->
+                  <div class="extensions-section mt-4 p-3 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <div>
+                        <b-icon icon="person-plus" class="mr-1"/>
+                        <strong>Extensions</strong>
                         <b-badge variant="secondary" class="ml-1">
-                          {{ getExtensionCount(draftIndex, assignToIndex) }}
+                          {{ getExtensionCount(draftIndex) }}
                         </b-badge>
-                      </template>
-
-                      <!-- Extensions List (Editable) -->
-                      <div v-if="getExtensions(draftIndex, assignToIndex).length" class="mb-2">
-                        <div
-                          v-for="(extension, extIndex) in getExtensions(draftIndex, assignToIndex)"
-                          :key="`ext-${draftIndex}-${assignToIndex}-${extIndex}`"
-                          class="border rounded p-3 mb-2"
-                          :class="{ 'border-danger': hasExtensionErrors(draftIndex, assignToIndex, extIndex) }"
-                        >
-                          <div class="d-flex justify-content-between align-items-start mb-2">
-                            <strong>Extension {{ extIndex + 1 }}</strong>
-                            <b-button
-                              variant="outline-danger"
-                              size="sm"
-                              @click="removeExtension(draftIndex, assignToIndex, extIndex)"
-                            >
-                              <b-icon icon="trash"/>
-                            </b-button>
-                          </div>
-
-                          <b-form-group label="Student" label-cols-sm="3" class="mb-2">
-                            <select
-                              class="form-control"
-                              :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.user_id`) }"
-                              :value="drafts[draftIndex].assign_tos[assignToIndex].extensions[extIndex].user_id"
-                              @change="onExtensionStudentSelect(draftIndex, assignToIndex, extIndex, $event)"
-                            >
-                              <option :value="null" disabled selected>Select a student...</option>
-                              <option
-                                v-for="student in getAvailableStudentsForExtension(draftIndex, assignToIndex, extIndex)"
-                                :key="student.user_id"
-                                :value="student.user_id"
-                              >
-                                {{ student.name }}
-                              </option>
-                            </select>
-                            <div
-                              v-if="hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.user_id`)"
-                              class="invalid-feedback d-block"
-                            >
-                              {{
-                                getError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.user_id`)
-                              }}
-                            </div>
-                          </b-form-group>
-
-                          <b-form-group label="Due Date" label-cols-sm="3" class="mb-2">
-                            <b-form-row>
-                              <b-col cols="7">
-                                <b-form-datepicker
-                                  v-model="drafts[draftIndex].assign_tos[assignToIndex].extensions[extIndex].due_date"
-                                  :min="min"
-                                  class="datepicker"
-                                  :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due_date`) }"
-                                  @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due_date`); clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due`)"
-                                />
-                                <div
-                                  v-if="hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due_date`)"
-                                  class="invalid-feedback d-block"
-                                >
-                                  {{
-                                    getError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due_date`)
-                                  }}
-                                </div>
-                              </b-col>
-                              <b-col cols="5">
-                                <vue-timepicker
-                                  v-model="drafts[draftIndex].assign_tos[assignToIndex].extensions[extIndex].due_time"
-                                  format="h:mm A"
-                                  manual-input
-                                  drop-direction="up"
-                                  input-class="custom-timepicker-class"
-                                  :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due_time`) }"
-                                  @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due_time`); clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due`)"
-                                >
-                                  <template v-slot:icon>
-                                    <b-icon-clock/>
-                                  </template>
-                                </vue-timepicker>
-                                <div
-                                  v-if="hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due_time`)"
-                                  class="invalid-feedback d-block"
-                                >
-                                  {{
-                                    getError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due_time`)
-                                  }}
-                                </div>
-                              </b-col>
-                            </b-form-row>
-                            <div
-                              v-if="hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due`)"
-                              class="invalid-feedback d-block"
-                            >
-                              {{
-                                getError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.due`)
-                              }}
-                            </div>
-                          </b-form-group>
-
-                          <b-form-group
-                            v-if="drafts[draftIndex].late_policy === 'marked late' || drafts[draftIndex].late_policy === 'deduction'"
-                            label="Final Deadline"
-                            label-cols-sm="3"
-                            class="mb-0"
-                          >
-                            <b-form-row>
-                              <b-col cols="7">
-                                <b-form-datepicker
-                                  v-model="drafts[draftIndex].assign_tos[assignToIndex].extensions[extIndex].final_submission_deadline_date"
-                                  :min="min"
-                                  class="datepicker"
-                                  :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline_date`) }"
-                                  @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline_date`); clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline`)"
-                                />
-                                <div
-                                  v-if="hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline_date`)"
-                                  class="invalid-feedback d-block"
-                                >
-                                  {{
-                                    getError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline_date`)
-                                  }}
-                                </div>
-                              </b-col>
-                              <b-col cols="5">
-                                <vue-timepicker
-                                  v-model="drafts[draftIndex].assign_tos[assignToIndex].extensions[extIndex].final_submission_deadline_time"
-                                  format="h:mm A"
-                                  manual-input
-                                  drop-direction="up"
-                                  input-class="custom-timepicker-class"
-                                  :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline_time`) }"
-                                  @input="clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline_time`); clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline`)"
-                                >
-                                  <template v-slot:icon>
-                                    <b-icon-clock/>
-                                  </template>
-                                </vue-timepicker>
-                                <div
-                                  v-if="hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline_time`)"
-                                  class="invalid-feedback d-block"
-                                >
-                                  {{
-                                    getError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline_time`)
-                                  }}
-                                </div>
-                              </b-col>
-                            </b-form-row>
-                            <div
-                              v-if="hasError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline`)"
-                              class="invalid-feedback d-block"
-                            >
-                              {{
-                                getError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.final_submission_deadline`)
-                              }}
-                            </div>
-                          </b-form-group>
-                        </div>
                       </div>
-
-                      <!-- Add Extension Button -->
                       <b-button
                         variant="outline-secondary"
                         size="sm"
-                        @click="addExtension(draftIndex, assignToIndex)"
+                        @click="addExtension(draftIndex)"
                       >
                         <b-icon icon="plus"/>
                         Add Extension
                       </b-button>
-                    </b-form-group>
+                    </div>
+
+                    <p v-if="!getExtensions(draftIndex).length" class="text-muted small mb-0">
+                      No extensions have been added for this draft.
+                    </p>
+
+                    <!-- Extensions List (Editable) -->
+                    <div v-if="getExtensions(draftIndex).length">
+                      <div
+                        v-for="(extension, extIndex) in getExtensions(draftIndex)"
+                        :key="`ext-${draftIndex}-${extIndex}`"
+                        class="border rounded p-3 mb-2"
+                        :class="{ 'border-danger': hasExtensionErrors(draftIndex, extIndex) }"
+                      >
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                          <strong>Extension {{ extIndex + 1 }}</strong>
+                          <b-button
+                            variant="outline-danger"
+                            size="sm"
+                            @click="removeExtension(draftIndex, extIndex)"
+                          >
+                            <b-icon icon="trash"/>
+                          </b-button>
+                        </div>
+
+                        <b-form-group label="Student*"
+                                      label-cols-sm="4"
+                                      label-cols-lg="3"
+                                      class="mb-2"
+                        >
+                          <select
+                            class="form-control"
+                            :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.extensions.${extIndex}.user_id`) }"
+                            :value="drafts[draftIndex].extensions[extIndex].user_id"
+                            @change="onExtensionStudentSelect(draftIndex, extIndex, $event)"
+                          >
+                            <option :value="null" disabled selected>Select a student...</option>
+                            <option
+                              v-for="student in getAvailableStudentsForExtension(draftIndex, extIndex)"
+                              :key="student.user_id"
+                              :value="student.user_id"
+                            >
+                              {{ student.name }}
+                            </option>
+                          </select>
+                          <div
+                            v-if="hasError(`drafts.${draftIndex}.extensions.${extIndex}.user_id`)"
+                            class="invalid-feedback d-block"
+                          >
+                            {{ getError(`drafts.${draftIndex}.extensions.${extIndex}.user_id`) }}
+                          </div>
+                        </b-form-group>
+
+                        <b-form-group label="Due Date*"  label-cols-sm="4"
+                                      label-cols-lg="3"
+                                      class="mb-2">
+                          <b-form-row>
+                            <b-col lg="8">
+                              <b-form-datepicker
+                                v-model="drafts[draftIndex].extensions[extIndex].due_date"
+                                :min="min"
+                                class="datepicker"
+                                :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.extensions.${extIndex}.due_date`) }"
+                                @input="clearError(`drafts.${draftIndex}.extensions.${extIndex}.due_date`); clearError(`drafts.${draftIndex}.extensions.${extIndex}.due`)"
+                              />
+                              <div
+                                v-if="hasError(`drafts.${draftIndex}.extensions.${extIndex}.due_date`)"
+                                class="invalid-feedback d-block"
+                              >
+                                {{ getError(`drafts.${draftIndex}.extensions.${extIndex}.due_date`) }}
+                              </div>
+                            </b-col>
+                              <vue-timepicker
+                                v-model="drafts[draftIndex].extensions[extIndex].due_time"
+                                format="h:mm A"
+                                manual-input
+                                drop-direction="up"
+                                input-class="custom-timepicker-class"
+                                :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.extensions.${extIndex}.due_time`) }"
+                                @input="clearError(`drafts.${draftIndex}.extensions.${extIndex}.due_time`); clearError(`drafts.${draftIndex}.extensions.${extIndex}.due`)"
+                              >
+                                <template v-slot:icon>
+                                  <b-icon-clock/>
+                                </template>
+                              </vue-timepicker>
+                              <div
+                                v-if="hasError(`drafts.${draftIndex}.extensions.${extIndex}.due_time`)"
+                                class="invalid-feedback d-block"
+                              >
+                                {{ getError(`drafts.${draftIndex}.extensions.${extIndex}.due_time`) }}
+                              </div>
+                          </b-form-row>
+                          <div
+                            v-if="hasError(`drafts.${draftIndex}.extensions.${extIndex}.due`)"
+                            class="invalid-feedback d-block"
+                          >
+                            {{ getError(`drafts.${draftIndex}.extensions.${extIndex}.due`) }}
+                          </div>
+                        </b-form-group>
+
+                        <b-form-group
+                          v-if="drafts[draftIndex].late_policy === 'marked late' || drafts[draftIndex].late_policy === 'deduction'"
+                          label="Final Submission Deadline*"
+                          label-cols-sm="3"
+                          class="mb-0"
+                        >
+                          <b-form-row>
+                            <b-col lg="8">
+                              <b-form-datepicker
+                                v-model="drafts[draftIndex].extensions[extIndex].final_submission_deadline_date"
+                                :min="min"
+                                class="datepicker"
+                                :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline_date`) }"
+                                @input="clearError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline_date`); clearError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline`)"
+                              />
+                              <div
+                                v-if="hasError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline_date`)"
+                                class="invalid-feedback d-block"
+                              >
+                                {{
+                                  getError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline_date`)
+                                }}
+                              </div>
+                            </b-col>
+                              <vue-timepicker
+                                v-model="drafts[draftIndex].extensions[extIndex].final_submission_deadline_time"
+                                format="h:mm A"
+                                manual-input
+                                drop-direction="up"
+                                input-class="custom-timepicker-class"
+                                :class="{ 'is-invalid': hasError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline_time`) }"
+                                @input="clearError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline_time`); clearError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline`)"
+                              >
+                                <template v-slot:icon>
+                                  <b-icon-clock/>
+                                </template>
+                              </vue-timepicker>
+                              <div
+                                v-if="hasError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline_time`)"
+                                class="invalid-feedback d-block"
+                              >
+                                {{
+                                  getError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline_time`)
+                                }}
+                              </div>
+                          </b-form-row>
+                          <div
+                            v-if="hasError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline`)"
+                            class="invalid-feedback d-block"
+                          >
+                            {{ getError(`drafts.${draftIndex}.extensions.${extIndex}.final_submission_deadline`) }}
+                          </div>
+                        </b-form-group>
+                      </div>
+                    </div>
                   </div>
+                  <!-- End Extensions Section -->
                 </div>
               </b-collapse>
             </div>
@@ -960,10 +956,7 @@ export default {
   watch: {
     hasOtherDrafts (newVal) {
       if (newVal && this.finalSubmissionLocked) {
-        const finalDraft = this.drafts.find(d => d.isFinal)
-        console.error('Before unlock - final late_policy:', finalDraft?.late_policy, 'late_deduction_applied_once:', finalDraft?.late_deduction_applied_once)
         this.finalSubmissionLocked = false
-        console.error('After unlock - final late_policy:', finalDraft?.late_policy, 'late_deduction_applied_once:', finalDraft?.late_deduction_applied_once)
       }
     }
   },
@@ -984,6 +977,7 @@ export default {
         late_deduction_percent: this.finalSubmissionLocked ? this.assignmentLateDeductionPercent : null,
         late_deduction_applied_once: this.finalSubmissionLocked ? this.assignmentLateDeductionAppliedOnce : null,
         late_deduction_application_period: this.finalSubmissionLocked ? this.assignmentLateDeductionApplicationPeriod : null,
+        extensions: [],
         assign_tos: []
       }
 
@@ -998,8 +992,7 @@ export default {
           due_date: assignTo.due_date || '',
           due_time: assignTo.due_time || '',
           final_submission_deadline_date: assignTo.final_submission_deadline_date || '',
-          final_submission_deadline_time: assignTo.final_submission_deadline_time || '',
-          extensions: []
+          final_submission_deadline_time: assignTo.final_submission_deadline_time || ''
         })
       }
 
@@ -1026,13 +1019,12 @@ export default {
         // Store assignment-level late policy from API
         this.assignmentLatePolicy = data.late_policy || ''
         this.assignmentLateDeductionPercent = data.late_deduction_percent || null
-       this.assignmentLateDeductionAppliedOnce = typeof data.late_deduction_applied_once !== 'undefined'
+        this.assignmentLateDeductionAppliedOnce = typeof data.late_deduction_applied_once !== 'undefined'
           ? (data.late_deduction_applied_once !== null ? !!data.late_deduction_applied_once : null)
           : null
         this.assignmentLateDeductionApplicationPeriod = data.late_deduction_application_period || null
 
         // Store assign_tos from assignment
-
         this.assignTos = data.assign_tos || []
 
         // Format assign_tos
@@ -1044,20 +1036,16 @@ export default {
           if (this.assignTos[i].due_time) {
             this.assignTos[i].due_time = this.reformatTime(this.assignTos[i].due_time)
           }
-          console.error(this.assignTos[i])
           if (this.assignTos[i].final_submission_deadline_time) {
             this.assignTos[i].final_submission_deadline_time = this.reformatTime(this.assignTos[i].final_submission_deadline_time)
           }
-
         }
-
-        console.error(data.assign_tos)
 
         // Load existing drafts or create default Final Submission
         if (data.drafts && data.drafts.length) {
           this.drafts = data.drafts
 
-          // Ensure all drafts have UUIDs, isFinal flag, and late policy fields
+          // Ensure all drafts have UUIDs, isFinal flag, late policy fields, and extensions
           for (let i = 0; i < this.drafts.length; i++) {
             const draft = this.drafts[i]
             if (!draft.uuid) {
@@ -1080,6 +1068,10 @@ export default {
             }
             if (typeof draft.late_deduction_application_period === 'undefined') {
               draft.late_deduction_application_period = null
+            }
+            // Initialize extensions array at draft level if missing
+            if (!draft.extensions) {
+              draft.extensions = []
             }
             // Store initial late policy for revert functionality
             this.previousLatePolicies[i] = draft.late_policy
@@ -1106,6 +1098,18 @@ export default {
                 }
                 if (typeof assignTo.final_submission_deadline_time === 'undefined') {
                   assignTo.final_submission_deadline_time = ''
+                }
+              }
+            }
+            // Format extension times
+            if (draft.extensions) {
+              for (let j = 0; j < draft.extensions.length; j++) {
+                const ext = draft.extensions[j]
+                if (ext.due_time && ext.due_time.includes(':') && !ext.due_time.includes('AM') && !ext.due_time.includes('PM')) {
+                  ext.due_time = this.reformatTime(ext.due_time)
+                }
+                if (ext.final_submission_deadline_time && ext.final_submission_deadline_time.includes(':') && !ext.final_submission_deadline_time.includes('AM') && !ext.final_submission_deadline_time.includes('PM')) {
+                  ext.final_submission_deadline_time = this.reformatTime(ext.final_submission_deadline_time)
                 }
               }
             }
@@ -1260,8 +1264,7 @@ export default {
       this.$set(finalDraft, 'late_deduction_percent', this.assignmentLateDeductionPercent)
       this.$set(finalDraft, 'late_deduction_applied_once', this.assignmentLateDeductionAppliedOnce !== null ? !!this.assignmentLateDeductionAppliedOnce : null)
       this.$set(finalDraft, 'late_deduction_application_period', this.assignmentLateDeductionApplicationPeriod)
-      console.error('late_deduction_applied_once:', this.assignmentLateDeductionAppliedOnce)
-      // Apply assignment-level assign_to dates (but preserve extensions)
+      // Apply assignment-level assign_to dates (but preserve extensions at draft level)
       if (finalDraft.assign_tos) {
         for (let i = 0; i < finalDraft.assign_tos.length; i++) {
           if (i < this.assignTos.length) {
@@ -1272,7 +1275,6 @@ export default {
             this.$set(finalDraft.assign_tos[i], 'due_time', assignTo.due_time || '')
             this.$set(finalDraft.assign_tos[i], 'final_submission_deadline_date', assignTo.final_submission_deadline_date || '')
             this.$set(finalDraft.assign_tos[i], 'final_submission_deadline_time', assignTo.final_submission_deadline_time || '')
-            // Extensions are NOT overwritten
           }
         }
       }
@@ -1287,7 +1289,6 @@ export default {
 
     // Set late policy with click handler
     setLatePolicy (draftIndex, value) {
-      console.log('setLatePolicy called', draftIndex, value)
       this.$set(this.drafts[draftIndex], 'late_policy', value)
       this.onLatePolicyChange(draftIndex, value)
       this.$forceUpdate()
@@ -1322,28 +1323,10 @@ export default {
         this.$set(draft, 'late_deduction_percent', null)
         this.$set(draft, 'late_deduction_applied_once', null)
         this.$set(draft, 'late_deduction_application_period', null)
-        // Auto-populate final submission deadline with due date if empty
-        if (draft.assign_tos) {
-          for (let i = 0; i < draft.assign_tos.length; i++) {
-            if (!draft.assign_tos[i].final_submission_deadline_date) {
-              this.$set(draft.assign_tos[i], 'final_submission_deadline_date', draft.assign_tos[i].final_submission_deadline_date)
-              this.$set(draft.assign_tos[i], 'final_submission_deadline_time', draft.assign_tos[i].final_submission_deadline_time)
-            }
-          }
-        }
       } else if (newValue === 'deduction') {
         // Initialize deduction fields
         if (draft.late_deduction_applied_once === null) {
           this.$set(draft, 'late_deduction_applied_once', true)
-        }
-        // Auto-populate final submission deadline with due date if empty
-        if (draft.assign_tos) {
-          for (let i = 0; i < draft.assign_tos.length; i++) {
-            if (!draft.assign_tos[i].final_submission_deadline_date) {
-              this.$set(draft.assign_tos[i], 'final_submission_deadline_date', draft.assign_tos[i].final_submission_deadline_date)
-              this.$set(draft.assign_tos[i], 'final_submission_deadline_time', draft.assign_tos[i].final_submission_deadline_time)
-            }
-          }
         }
       }
     },
@@ -1547,6 +1530,11 @@ export default {
           draft.assign_tos = []
         }
 
+        // Ensure draft has extensions array
+        if (!draft.extensions) {
+          draft.extensions = []
+        }
+
         // Add missing assign_tos if assignment has more (no auto-populated dates)
         while (draft.assign_tos.length < this.assignTos.length) {
           const assignToIndex = draft.assign_tos.length
@@ -1559,8 +1547,7 @@ export default {
             due_date: '',
             due_time: '',
             final_submission_deadline_date: '',
-            final_submission_deadline_time: '',
-            extensions: []
+            final_submission_deadline_time: ''
           })
         }
 
@@ -1579,10 +1566,6 @@ export default {
           if (typeof draft.assign_tos[i].final_submission_deadline_time === 'undefined') {
             draft.assign_tos[i].final_submission_deadline_time = ''
           }
-          // Initialize extensions array if missing
-          if (!draft.assign_tos[i].extensions) {
-            draft.assign_tos[i].extensions = []
-          }
         }
       }
     },
@@ -1597,6 +1580,7 @@ export default {
         late_deduction_percent: this.assignmentLateDeductionPercent || null,
         late_deduction_applied_once: this.assignmentLateDeductionAppliedOnce !== null ? this.assignmentLateDeductionAppliedOnce : null,
         late_deduction_application_period: this.assignmentLateDeductionApplicationPeriod || null,
+        extensions: [],
         assign_tos: []
       }
 
@@ -1610,8 +1594,7 @@ export default {
           due_date: '',
           due_time: '',
           final_submission_deadline_date: '',
-          final_submission_deadline_time: '',
-          extensions: []
+          final_submission_deadline_time: ''
         })
       }
 
@@ -1756,7 +1739,9 @@ export default {
               ...localDraft,
               ...serverDraft,
               // Restore assign_tos with local date/time format if needed
-              assign_tos: localDraft ? localDraft.assign_tos : serverDraft.assign_tos
+              assign_tos: localDraft ? localDraft.assign_tos : serverDraft.assign_tos,
+              // Preserve extensions
+              extensions: localDraft ? localDraft.extensions : (serverDraft.extensions || [])
             }
           })
         }
@@ -1831,17 +1816,16 @@ export default {
       }
     },
 
-    getExtensions (draftIndex, assignToIndex) {
-      const assignTo = this.drafts[draftIndex]?.assign_tos?.[assignToIndex]
-      return assignTo?.extensions || []
+    getExtensions (draftIndex) {
+      return this.drafts[draftIndex]?.extensions || []
     },
 
-    getExtensionCount (draftIndex, assignToIndex) {
-      return this.getExtensions(draftIndex, assignToIndex).length
+    getExtensionCount (draftIndex) {
+      return this.getExtensions(draftIndex).length
     },
 
-    getAvailableStudentsForExtension (draftIndex, assignToIndex, currentExtIndex = null) {
-      const existingExtensions = this.getExtensions(draftIndex, assignToIndex)
+    getAvailableStudentsForExtension (draftIndex, currentExtIndex = null) {
+      const existingExtensions = this.getExtensions(draftIndex)
       const existingUserIds = existingExtensions
         .map((ext, idx) => idx !== currentExtIndex ? ext.user_id : null)
         .filter(id => id !== null)
@@ -1854,45 +1838,41 @@ export default {
         }))
     },
 
-    addExtension (draftIndex, assignToIndex) {
-      console.log('addExtension called', draftIndex, assignToIndex)
+    addExtension (draftIndex) {
       const draft = this.drafts[draftIndex]
-      const assignTo = draft.assign_tos[assignToIndex]
 
       // Initialize extensions array if not present
-      if (!assignTo.extensions) {
-        this.$set(assignTo, 'extensions', [])
+      if (!draft.extensions) {
+        this.$set(draft, 'extensions', [])
       }
 
-      // Create new extension with pre-populated dates from the assign_to
+      // Pre-populate dates from the first assign_to if available
+      const firstAssignTo = draft.assign_tos && draft.assign_tos.length ? draft.assign_tos[0] : null
+
+      // Create new extension with pre-populated dates
       const newExtension = {
         user_id: null,
         student_name: '',
-        due_date: assignTo.due_date || '',
-        due_time: assignTo.due_time || '',
-        final_submission_deadline_date: assignTo.final_submission_deadline_date || '',
-        final_submission_deadline_time: assignTo.final_submission_deadline_time || ''
+        due_date: firstAssignTo ? (firstAssignTo.due_date || '') : '',
+        due_time: firstAssignTo ? (firstAssignTo.due_time || '') : '',
+        final_submission_deadline_date: firstAssignTo ? (firstAssignTo.final_submission_deadline_date || '') : '',
+        final_submission_deadline_time: firstAssignTo ? (firstAssignTo.final_submission_deadline_time || '') : ''
       }
 
       // Push to array and force update
-      assignTo.extensions.push(newExtension)
+      draft.extensions.push(newExtension)
       this.$forceUpdate()
-      console.log('extensions after add', assignTo.extensions)
     },
 
-    onExtensionStudentSelect (draftIndex, assignToIndex, extIndex, event) {
-      console.log('event.target.value:', event.target.value, typeof event.target.value)
-
+    onExtensionStudentSelect (draftIndex, extIndex, event) {
       const userId = parseInt(event.target.value, 10)
-      console.log('onExtensionStudentSelect', draftIndex, assignToIndex, extIndex, userId)
 
       if (isNaN(userId)) {
-        console.log('userId is NaN, returning')
         return
       }
 
       // Set the user_id
-      this.$set(this.drafts[draftIndex].assign_tos[assignToIndex].extensions[extIndex], 'user_id', userId)
+      this.$set(this.drafts[draftIndex].extensions[extIndex], 'user_id', userId)
 
       // Update the student_name (enrollment uses 'id' not 'user_id')
       const enrollment = this.enrollments.find(e => e.id === userId)
@@ -1900,38 +1880,23 @@ export default {
       if (enrollment) {
         studentName = enrollment.name || `${enrollment.first_name || ''} ${enrollment.last_name || ''}`.trim()
       }
-      this.$set(this.drafts[draftIndex].assign_tos[assignToIndex].extensions[extIndex], 'student_name', studentName)
-      this.clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.user_id`)
-
-      console.log('extension after:', JSON.stringify(this.drafts[draftIndex].assign_tos[assignToIndex].extensions[extIndex]))
+      this.$set(this.drafts[draftIndex].extensions[extIndex], 'student_name', studentName)
+      this.clearError(`drafts.${draftIndex}.extensions.${extIndex}.user_id`)
     },
 
-    onExtensionStudentChange (draftIndex, assignToIndex, extIndex, userId) {
-      console.log('onExtensionStudentChange', draftIndex, assignToIndex, extIndex, userId)
-
-      // Update the student_name when user_id changes (enrollment uses 'id' not 'user_id')
-      const enrollment = this.enrollments.find(e => e.id === userId)
-      let studentName = ''
-      if (enrollment) {
-        studentName = enrollment.name || `${enrollment.first_name || ''} ${enrollment.last_name || ''}`.trim()
-      }
-      this.$set(this.drafts[draftIndex].assign_tos[assignToIndex].extensions[extIndex], 'student_name', studentName)
-      this.clearError(`drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}.user_id`)
-    },
-
-    removeExtension (draftIndex, assignToIndex, extIndex) {
-      this.drafts[draftIndex].assign_tos[assignToIndex].extensions.splice(extIndex, 1)
+    removeExtension (draftIndex, extIndex) {
+      this.drafts[draftIndex].extensions.splice(extIndex, 1)
       // Clear any errors for this extension
-      this.clearExtensionErrors(draftIndex, assignToIndex, extIndex)
+      this.clearExtensionErrors(draftIndex, extIndex)
     },
 
-    hasExtensionErrors (draftIndex, assignToIndex, extIndex) {
-      const prefix = `drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}`
+    hasExtensionErrors (draftIndex, extIndex) {
+      const prefix = `drafts.${draftIndex}.extensions.${extIndex}`
       return Object.keys(this.errors).some(key => key.startsWith(prefix))
     },
 
-    getExtensionErrors (draftIndex, assignToIndex, extIndex) {
-      const prefix = `drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}`
+    getExtensionErrors (draftIndex, extIndex) {
+      const prefix = `drafts.${draftIndex}.extensions.${extIndex}`
       const errors = []
       for (const key in this.errors) {
         if (key.startsWith(prefix)) {
@@ -1941,8 +1906,8 @@ export default {
       return errors
     },
 
-    clearExtensionErrors (draftIndex, assignToIndex, extIndex) {
-      const prefix = `drafts.${draftIndex}.assign_tos.${assignToIndex}.extensions.${extIndex}`
+    clearExtensionErrors (draftIndex, extIndex) {
+      const prefix = `drafts.${draftIndex}.extensions.${extIndex}`
       const newErrors = {}
       for (const key in this.errors) {
         if (!key.startsWith(prefix)) {
@@ -1993,6 +1958,10 @@ export default {
 
 .lock-icon-disabled {
   cursor: not-allowed;
+}
+
+.extensions-section {
+  border-left: 3px solid #007bff !important;
 }
 </style>
 

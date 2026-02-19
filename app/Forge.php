@@ -81,7 +81,6 @@ class Forge extends Model
         return $assign_tos;
     }
 
-
     /**
      * @param AssignmentSyncQuestion $assignment_question
      * @param int $user_id
@@ -106,9 +105,38 @@ class Forge extends Model
                 if (isset($draft['assign_tos'][$assign_to_index]['final_submission_deadline'])) {
                     $assign_tos['final_submission_deadline'] = $draft['assign_tos'][$assign_to_index]['final_submission_deadline'];
                 }
+
+                // Check for a user-specific extension at the draft level
+                $extension = $this->getExtensionForUser($draft, $user_id);
+                if ($extension) {
+                    if (!empty($extension['due'])) {
+                        $assign_tos['due'] = $extension['due'];
+                    }
+                    if (!empty($extension['final_submission_deadline'])) {
+                        $assign_tos['final_submission_deadline'] = $extension['final_submission_deadline'];
+                    }
+                }
             }
         }
         return $assign_tos;
+    }
+
+    /**
+     * Get an extension for a specific user from a draft's extensions array.
+     *
+     * @param array $draft
+     * @param int $user_id
+     * @return array|null
+     */
+    public function getExtensionForUser(array $draft, int $user_id): ?array
+    {
+        $extensions = $draft['extensions'] ?? [];
+        foreach ($extensions as $extension) {
+            if (isset($extension['user_id']) && +$extension['user_id'] === $user_id) {
+                return $extension;
+            }
+        }
+        return null;
     }
 
     public function getAssignToIndexByDraft(array $assign_tos, int $user_id)
@@ -160,7 +188,7 @@ class Forge extends Model
         $forge_assignment_question = $validation['forge_assignment_question'];
 
         $assign_tos = $forge->getAssignToTimingsByAssignmentAndQuestionAndDraftId($parent_assignment_question, $user->id, $forge_draft_id);
-        if (!$assign_tos) {
+       if (!$assign_tos) {
             $response['message'] = "We could not find the draft assign tos for draft with UUID $forge_draft_id and ADAPT user with UUID $central_identity_id.";
             return $response;
         }
@@ -186,7 +214,6 @@ class Forge extends Model
                 }
             }
         }
-
         if ($can_submit['type'] === 'success') {
             if (SubmissionFile::where('assignment_id', $assignment_question->assignment_id)
                 ->where('question_id', $assignment_question->question_id)

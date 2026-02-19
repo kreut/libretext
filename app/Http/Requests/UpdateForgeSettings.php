@@ -96,39 +96,47 @@ class UpdateForgeSettings extends FormRequest
                         $prefix
                     );
                 }
+            }
 
-                // Extension validation
-                $extensions = $assign_to['extensions'] ?? [];
-                foreach ($extensions as $ext_index => $extension) {
-                    $studentName = !empty($extension['student_name']) ? $extension['student_name'] : 'Extension ' . ($ext_index + 1);
-                    $extPrefix = "{$prefix} - {$studentName}";
+            // Extension validation (at draft level)
+            $extensions = $draft['extensions'] ?? [];
+            foreach ($extensions as $ext_index => $extension) {
+                $studentName = !empty($extension['student_name']) ? $extension['student_name'] : 'Extension ' . ($ext_index + 1);
+                $extPrefix = "{$draftName} - {$studentName}";
 
-                    $rules["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.user_id"] = 'required|integer';
-                    $rules["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.due_date"] = 'required|date';
-                    $rules["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.due_time"] = 'required|date_format:g:i A';
+                $rules["drafts.{$draft_index}.extensions.{$ext_index}.user_id"] = 'required|integer';
+                $rules["drafts.{$draft_index}.extensions.{$ext_index}.due_date"] = 'required|date';
+                $rules["drafts.{$draft_index}.extensions.{$ext_index}.due_time"] = 'required|date_format:g:i A';
 
-                    // Extension due must be after available_from
-                    $extDue = ($extension['due_date'] ?? '') . ' ' . ($extension['due_time'] ?? '');
-                    $rules["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.due"] = new IsADateLaterThan(
-                        $availableFrom,
-                        'available on',
+                // Use the first assign_to's available_from for comparison
+                $firstAvailableFrom = '';
+                if (!empty($assign_tos)) {
+                    $firstAvailableFrom = $this->input("drafts.{$draft_index}.assign_tos.0.available_from_date")
+                        . ' '
+                        . $this->input("drafts.{$draft_index}.assign_tos.0.available_from_time");
+                }
+
+                // Extension due must be after available_from
+                $extDue = ($extension['due_date'] ?? '') . ' ' . ($extension['due_time'] ?? '');
+                $rules["drafts.{$draft_index}.extensions.{$ext_index}.due"] = new IsADateLaterThan(
+                    $firstAvailableFrom,
+                    'available on',
+                    'extension due',
+                    $extPrefix
+                );
+
+                // Final submission deadline validation for extensions (only if late_policy is not 'not accepted')
+                if (in_array($latePolicy, ['marked late', 'deduction'])) {
+                    $rules["drafts.{$draft_index}.extensions.{$ext_index}.final_submission_deadline_date"] = 'required|date';
+                    $rules["drafts.{$draft_index}.extensions.{$ext_index}.final_submission_deadline_time"] = 'required|date_format:g:i A';
+
+                    // Extension final submission deadline must be after extension due date
+                    $rules["drafts.{$draft_index}.extensions.{$ext_index}.final_submission_deadline"] = new IsADateLaterThan(
+                        $extDue,
                         'extension due',
+                        'extension final submission deadline',
                         $extPrefix
                     );
-
-                    // Final submission deadline validation for extensions (only if late_policy is not 'not accepted')
-                    if (in_array($latePolicy, ['marked late', 'deduction'])) {
-                        $rules["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.final_submission_deadline_date"] = 'required|date';
-                        $rules["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.final_submission_deadline_time"] = 'required|date_format:g:i A';
-
-                        // Extension final submission deadline must be after extension due date
-                        $rules["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.final_submission_deadline"] = new IsADateLaterThan(
-                            $extDue,
-                            'extension due',
-                            'extension final submission deadline',
-                            $extPrefix
-                        );
-                    }
                 }
             }
         }
@@ -205,18 +213,18 @@ class UpdateForgeSettings extends FormRequest
                 $drafts[$draft_index]['assign_tos'][$assign_to_index]['available_from'] = "{$availableFromDate} {$availableFromTime}";
                 $drafts[$draft_index]['assign_tos'][$assign_to_index]['due'] = "{$dueDate} {$dueTime}";
                 $drafts[$draft_index]['assign_tos'][$assign_to_index]['final_submission_deadline'] = "{$finalDeadlineDate} {$finalDeadlineTime}";
+            }
 
-                // Prepare extension datetime fields
-                $extensions = $assign_to['extensions'] ?? [];
-                foreach ($extensions as $ext_index => $extension) {
-                    $extDueDate = $extension['due_date'] ?? '';
-                    $extDueTime = $extension['due_time'] ?? '';
-                    $extFinalDate = $extension['final_submission_deadline_date'] ?? '';
-                    $extFinalTime = $extension['final_submission_deadline_time'] ?? '';
+            // Prepare extension datetime fields (at draft level)
+            $extensions = $draft['extensions'] ?? [];
+            foreach ($extensions as $ext_index => $extension) {
+                $extDueDate = $extension['due_date'] ?? '';
+                $extDueTime = $extension['due_time'] ?? '';
+                $extFinalDate = $extension['final_submission_deadline_date'] ?? '';
+                $extFinalTime = $extension['final_submission_deadline_time'] ?? '';
 
-                    $drafts[$draft_index]['assign_tos'][$assign_to_index]['extensions'][$ext_index]['due'] = "{$extDueDate} {$extDueTime}";
-                    $drafts[$draft_index]['assign_tos'][$assign_to_index]['extensions'][$ext_index]['final_submission_deadline'] = "{$extFinalDate} {$extFinalTime}";
-                }
+                $drafts[$draft_index]['extensions'][$ext_index]['due'] = "{$extDueDate} {$extDueTime}";
+                $drafts[$draft_index]['extensions'][$ext_index]['final_submission_deadline'] = "{$extFinalDate} {$extFinalTime}";
             }
         }
 
@@ -288,24 +296,24 @@ class UpdateForgeSettings extends FormRequest
                 $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.final_submission_deadline_date.date"] = "{$prefix}: Final submission deadline date must be a valid date.";
                 $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.final_submission_deadline_time.required"] = "{$prefix}: " . $this->getTimeFormatErrorMessage('final submission deadline');
                 $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.final_submission_deadline_time.date_format"] = "{$prefix}: " . $this->getTimeFormatErrorMessage('final submission deadline');
+            }
 
-                // Extension messages
-                $extensions = $assign_to['extensions'] ?? [];
-                foreach ($extensions as $ext_index => $extension) {
-                    $studentName = !empty($extension['student_name']) ? $extension['student_name'] : 'Extension ' . ($ext_index + 1);
-                    $extPrefix = "{$prefix} - {$studentName}";
+            // Extension messages (at draft level)
+            $extensions = $draft['extensions'] ?? [];
+            foreach ($extensions as $ext_index => $extension) {
+                $studentName = !empty($extension['student_name']) ? $extension['student_name'] : 'Extension ' . ($ext_index + 1);
+                $extPrefix = "{$draftName} - {$studentName}";
 
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.user_id.required"] = "{$extPrefix}: Student is required.";
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.user_id.integer"] = "{$extPrefix}: Student must be valid.";
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.due_date.required"] = "{$extPrefix}: Due date is required.";
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.due_date.date"] = "{$extPrefix}: Due date must be a valid date.";
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.due_time.required"] = "{$extPrefix}: " . $this->getTimeFormatErrorMessage('due');
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.due_time.date_format"] = "{$extPrefix}: " . $this->getTimeFormatErrorMessage('due');
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.final_submission_deadline_date.required"] = "{$extPrefix}: Final submission deadline date is required.";
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.final_submission_deadline_date.date"] = "{$extPrefix}: Final submission deadline date must be a valid date.";
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.final_submission_deadline_time.required"] = "{$extPrefix}: " . $this->getTimeFormatErrorMessage('final submission deadline');
-                    $messages["drafts.{$draft_index}.assign_tos.{$assign_to_index}.extensions.{$ext_index}.final_submission_deadline_time.date_format"] = "{$extPrefix}: " . $this->getTimeFormatErrorMessage('final submission deadline');
-                }
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.user_id.required"] = "{$extPrefix}: Student is required.";
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.user_id.integer"] = "{$extPrefix}: Student must be valid.";
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.due_date.required"] = "{$extPrefix}: Due date is required.";
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.due_date.date"] = "{$extPrefix}: Due date must be a valid date.";
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.due_time.required"] = "{$extPrefix}: " . $this->getTimeFormatErrorMessage('due');
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.due_time.date_format"] = "{$extPrefix}: " . $this->getTimeFormatErrorMessage('due');
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.final_submission_deadline_date.required"] = "{$extPrefix}: Final submission deadline date is required.";
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.final_submission_deadline_date.date"] = "{$extPrefix}: Final submission deadline date must be a valid date.";
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.final_submission_deadline_time.required"] = "{$extPrefix}: " . $this->getTimeFormatErrorMessage('final submission deadline');
+                $messages["drafts.{$draft_index}.extensions.{$ext_index}.final_submission_deadline_time.date_format"] = "{$extPrefix}: " . $this->getTimeFormatErrorMessage('final submission deadline');
             }
         }
 

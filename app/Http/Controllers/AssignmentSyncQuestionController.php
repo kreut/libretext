@@ -235,12 +235,44 @@ class AssignmentSyncQuestionController extends Controller
                         "late_deduction_applied_once" => $draft['late_deduction_applied_once'],
                         "late_deduction_application_period" => $draft["late_deduction_application_period"],
                         'isFinal' => $draft['isFinal'],
-                        'assign_tos' => []
+                        'assign_tos' => [],
+                        'extensions' => []
                     ];
 
                     if (isset($draft['assign_tos']) && is_array($draft['assign_tos'])) {
                         foreach ($draft['assign_tos'] as $assign_to) {
                             $clean_draft['assign_tos'][] = $assignmentSyncQuestion->draftAssignTo($assign_to, $user_timezone);
+                        }
+                    }
+
+                    // Process extensions at draft level
+                    if (isset($draft['extensions']) && is_array($draft['extensions'])) {
+                        foreach ($draft['extensions'] as $extension) {
+                            $timezone = request()->user()->time_zone;
+
+                            $clean_extension = [
+                                'user_id' => $extension['user_id'],
+                                'student_name' => $extension['student_name'],
+                                'due_date' => $extension['due_date'],
+                                'due_time' => $extension['due_time'],
+                                'final_submission_deadline_date' => $extension['final_submission_deadline_date'] ?? '',
+                                'final_submission_deadline_time' => $extension['final_submission_deadline_time'] ?? '',
+                            ];
+                            // Convert extension times to UTC
+
+                                $clean_extension['due'] = $this->convertLocalMysqlFormattedDateToUTC(
+                                    $clean_extension['due_date'] . ' ' . $clean_extension['due_time'],
+                                    $timezone
+                                );
+
+                            if (!empty($clean_extension['final_submission_deadline_date']) && !empty($clean_extension['final_submission_deadline_time'])) {
+                                $clean_extension['final_submission_deadline'] = $this->convertLocalMysqlFormattedDateToUTC(
+                                    $clean_extension['final_submission_deadline_date'] . ' ' . $clean_extension['final_submission_deadline_time'],
+                                    $timezone
+                                );
+                            }
+
+                            $clean_draft['extensions'][] = $clean_extension;
                         }
                     }
 
@@ -456,7 +488,6 @@ class AssignmentSyncQuestionController extends Controller
         }
         return $response;
     }
-
     /**
      * @param Request $request
      * @param Assignment $assignment
