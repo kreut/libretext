@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\AssignToTiming;
 use App\Course;
+use App\CourseOrder;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\MyFavorite;
@@ -76,7 +77,7 @@ class QuestionEditorController extends Controller
                      Question             $question,
                      MyFavorite           $myFavorite,
                      SavedQuestionsFolder $savedQuestionsFolder,
-                     AssignToTiming       $assignToTiming): array
+                     CourseOrder          $courseOrder): array
     {
 
         $response['type'] = 'error';
@@ -106,6 +107,7 @@ class QuestionEditorController extends Controller
             $courses = Course::where('user_id', $questionEditorUser->id)->get();
             foreach ($courses as $course) {
                 $course->user_id = $default_question_editor_user->id;
+                $courseOrder->where('course_id', $course->id)->update(['user_id' => $default_question_editor_user->id]);
                 $course->name = "$course->name ( $questionEditorUser->first_name  $questionEditorUser->last_name)";
                 $course->save();
                 foreach ($course->assignments as $assignment) {
@@ -115,9 +117,9 @@ class QuestionEditorController extends Controller
                         ->delete();
                 }
             }
-
-            $questionEditorUser->delete();
-            $response['message'] = "$questionEditorUser->first_name $questionEditorUser->last_name has been removed and all of their questions and courses have been moved to the Default Question Editor.";
+            $questionEditorUser->role = 3;
+            $questionEditorUser->save();
+            $response['message'] = "$questionEditorUser->first_name $questionEditorUser->last_name has been removed as a question editor and all of their questions and courses have been moved to the Default Question Editor.";
             $response['type'] = 'success';
             DB::commit();
         } catch (Exception $e) {

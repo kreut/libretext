@@ -996,7 +996,7 @@ EOT;
     public function admin_can_delete_question_editors()
     {
         $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->question_editor_user->id}")
-            ->assertJson(['message' => "{$this->question_editor_user->first_name} {$this->question_editor_user->last_name} has been removed and all of their questions and courses have been moved to the Default Question Editor."]);
+            ->assertJson(['message' => "{$this->question_editor_user->first_name} {$this->question_editor_user->last_name} has been removed as a question editor and all of their questions and courses have been moved to the Default Question Editor."]);
 
     }
 
