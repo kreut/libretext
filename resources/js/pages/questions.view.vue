@@ -3189,25 +3189,6 @@
                         />
                       </div>
                     </div>
-                    <div
-                      v-if="questions[currentPage-1].can_submit_work"
-                      class="pl-1"
-                    >
-                      <SubmitWork :key="`submit-work-${submitWorkKey}-${questions[currentPage-1].id}`"
-                                  style="margin-top: 3px"
-                                  :disabled="false"
-                                  :submitted-work-format-options="submittedWorkFormatOptions"
-                                  :submit-button-active="true"
-                                  :user-id="questions[currentPage-1].user_id"
-                                  :assignment-id="+assignmentId"
-                                  :question-id="+questions[currentPage-1].id"
-                                  :submitted-work="questions[currentPage-1].submitted_work"
-                                  :submitted-work-at="questions[currentPage-1].submitted_work_at"
-                                  :optional="submittedWorkPolicy === 'optional'"
-                                  :time-left-to-submit="timeLeft>0"
-                                  @updateSubmittedWork="updateSubmittedWork"
-                      />
-                    </div>
                   </b-card>
                   <div v-if="assessmentType === 'clicker'
                          && user.role=== 3"
@@ -3315,7 +3296,25 @@
                         While in Student View, you can reset the submission which may aid in testing questions.
                       </b-tooltip>
                     </span>
-                    <span class="float-right">
+                    <span class="float-right d-flex align-items-center">
+  <span
+    v-if="questions[currentPage-1].can_submit_work"
+    class="pr-1"
+  >
+    <SubmitWork :key="`submit-work-${submitWorkKey}-${questions[currentPage-1].id}`"
+                :disabled="false"
+                :submitted-work-format-options="submittedWorkFormatOptions"
+                :submit-button-active="true"
+                :user-id="questions[currentPage-1].user_id"
+                :assignment-id="+assignmentId"
+                :question-id="+questions[currentPage-1].id"
+                :submitted-work="questions[currentPage-1].submitted_work"
+                :submitted-work-at="questions[currentPage-1].submitted_work_at"
+                :optional="submittedWorkPolicy === 'optional'"
+                :time-left-to-submit="timeLeft>0"
+                @updateSubmittedWork="updateSubmittedWork"
+    />
+  </span>
                       <b-button v-show="showContactGrader() && showContactInstructorAutoGraded"
                                 size="sm"
                                 variant="outline-primary"
