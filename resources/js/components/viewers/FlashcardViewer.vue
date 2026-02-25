@@ -932,7 +932,6 @@ export default {
     console.error(this.flashcardSettings)
     window.addEventListener('keydown', this.handleKeyNav)
     console.error(this.effectiveCards)
-    console.error('b')
     if (typeof this.effectiveCards[0] === 'undefined') {
       return
     }

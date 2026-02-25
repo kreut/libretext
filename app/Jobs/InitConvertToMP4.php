@@ -15,7 +15,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
@@ -49,7 +48,7 @@ class InitConvertToMP4 implements ShouldQueue
      * @return void
      */
     public function __construct(int $discussion_comment_id,
-                                int    $assignment_id)
+                                int $assignment_id)
     {
         $this->discussion_comment_id = $discussion_comment_id;
         $this->assignment_id = $assignment_id;
@@ -69,7 +68,7 @@ class InitConvertToMP4 implements ShouldQueue
             $filename = $discussionComment->file;
             $questionMediaUpload = new QuestionMediaUpload();
             $question_media_dir = $questionMediaUpload->getDir();
-            $s3_key = $question_media_dir . $this->filename;
+            $s3_key = "$question_media_dir/$filename";
 
             if (!Storage::disk('s3')->exists($s3_key)) {
                 $message = "$s3_key does not exist when converting to MP4.";
@@ -91,22 +90,28 @@ class InitConvertToMP4 implements ShouldQueue
 
             $jwt = $generator->generate(['convert_to_mp4' => 1]);
 
+            $endpoint = app()->environment('local') ? 'https://local.adapt:8891' : 'https://dev.adapt.libretexts.org';
 
-            $response = Http::withToken($jwt) // Add the Bearer token here
-            ->timeout(360) // Set the timeout
-            ->withHeaders([
-                'Content-Type' => 'application/json', // Set the content type to JSON
-            ])
-                ->post("https://dev.adapt.libretexts.org/api/discussion-comment/process-convert-to-mp4", [
-                    'filename' => $filename,
-                    'environment' => app()->environment(),
+            $http = Http::withToken($jwt)
+                ->timeout(360)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
                 ]);
 
+                if (app()->environment('local')) {
+                    $http = $http->withOptions(['verify' => '/Applications/MAMP/Library/OpenSSL/cert.pem']);
+                }
+
+            $response = $http->post("$endpoint/api/discussion-comment/process-convert-to-mp4", [
+                'filename' => $filename,
+                'environment' => app()->environment(),
+            ]);
             if (!$response->successful()) {
                 throw new Exception("Request failed with status: " . $response->status() . " and message: " . $response->body());
             }
 
         } catch (RequestException $e) {
+
             $h = new Handler(app());
             $h->report($e);
             if ($e->hasResponse()) {
@@ -125,7 +130,7 @@ class InitConvertToMP4 implements ShouldQueue
             $h->report($e);
             $discussionComment = DiscussionComment::find($this->discussion_comment_id);
             $discussionComment->mp4_message = $e->getMessage();
-            $discussionComment->mp4_status= "error";
+            $discussionComment->mp4_status = "error";
             $discussionComment->save();
         }
 

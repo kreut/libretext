@@ -7,13 +7,13 @@ use App\DiscussionComment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\StoreQuestionMediaTextRequest;
-use App\Jobs\HandleProcessTranscription;
 use App\Jobs\InitProcessTranscribe;
 use App\Question;
 use App\QuestionMediaUpload;
 use Carbon\Carbon;
 use DOMDocument;
 use Exception;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
@@ -24,10 +24,15 @@ use Illuminate\View\View;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
 use MiladRahimi\Jwt\Parser;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Traits\CloudflareStreamable;
 
 class QuestionMediaController extends Controller
 {
+    use CloudflareStreamable;
+
     /**
      * @return array|void
      */
@@ -53,8 +58,26 @@ class QuestionMediaController extends Controller
      */
     public function flashcardMedia(Request $request)
     {
-        $url  = $request->query('url');
-        $type = $request->query('type', 'video'); // 'video' | 'audio'
+        $url = $request->query('url');
+        $type = $request->query('type', 'video');
+        $stream_hls_url = '';
+        if ($type === 'video') {
+            $parsed = parse_url($url);
+            $host = $parsed['host'];
+            $path = ltrim($parsed['path'], '/');
+            $bucket = Storage::disk('s3')->getDriver()->getAdapter()->getBucket();
+
+            if (str_starts_with($host, 's3.')) {
+                $s3_path = preg_replace('#^' . preg_quote($bucket, '#') . '/#', '', $path);
+            } else {
+                $s3_path = $path;
+            }
+
+            $cloudflare_uid = $this->getCloudflareStreamUid($s3_path);
+            if ($cloudflare_uid) {
+                $stream_hls_url = "https://videodelivery.net/{$cloudflare_uid}/manifest/video.m3u8";
+            }
+        }
 
         if (!$url) {
             abort(400, 'Missing url parameter');
@@ -81,18 +104,19 @@ class QuestionMediaController extends Controller
         }
 
         // For VTT: the card JSON may include a separate vttUrl field
-        $vtt_file   = $request->query('vtt_url', '');
-        $start_time = (int) $request->query('start_time', 0);
-        $is_phone   = 0;
+        $vtt_file = $request->query('vtt_url', '');
+        $start_time = (int)$request->query('start_time', 0);
+        $is_phone = 0;
 
         return view('media_player', [
-            'type'            => $type,
-            'temporary_url'   => $url,
-            'mp4_temporary_url' => $type === 'video' ? $url : '',
-            'vtt_file'        => $vtt_file,
-            'start_time'      => $start_time,
-            'is_phone'        => $is_phone,
-            'show_buttons'    => false,
+            'type' => $type,
+            'temporary_url' => $url,
+            'mp4_temporary_url' => $type === 'video' && !$stream_hls_url ? $url : '',
+            'vtt_file' => $vtt_file,
+            'start_time' => $start_time,
+            'is_phone' => $is_phone,
+            'stream_hls_url' => $stream_hls_url,
+            'show_buttons' => false,
         ]);
     }
 
@@ -466,15 +490,19 @@ class QuestionMediaController extends Controller
     }
 
     /**
+     * @param string $media
+     * @param int $start_time
+     * @return Application|Factory|View
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface|FileNotFoundException
      * @throws Exception
      */
-    public
-    function index(string $media, int $start_time = 0)
+    public function index(string $media, int $start_time = 0)
     {
         $questionMediaUpload = new QuestionMediaUpload();
         $show_captions_session = session()->get('show_captions');
 
-        $show_captions = !(in_array($media, array_keys($show_captions_session)) && $show_captions_session[$media] === 0);
+        $show_captions = is_array($show_captions_session) && !(in_array($media, array_keys($show_captions_session)) && $show_captions_session[$media] === 0);
 
         $vtt_file = $questionMediaUpload->getVttFileNameFromS3Key($media);
         $type = strpos($media, '.mp3') !== false ? 'audio' : 'video';
@@ -483,13 +511,23 @@ class QuestionMediaController extends Controller
         $vtt_file = $show_captions ? Storage::disk('s3')->temporaryUrl("{$questionMediaUpload->getDir()}/$vtt_file", Carbon::now()->addDays(7)) : '';
         $is_phone = 0;
 
+        $stream_hls_url = null;
+        if ($type === 'video') {
+            $s3_path = "{$questionMediaUpload->getDir()}/$media";
+            $cloudflare_uid = $this->getCloudflareStreamUid($s3_path);
+            if ($cloudflare_uid) {
+                $stream_hls_url = "https://videodelivery.net/{$cloudflare_uid}/manifest/video.m3u8";
+            }
+        }
+
         return view('media_player', ['type' => $type,
             'temporary_url' => $temporary_url,
             'mp4_temporary_url' => $mp4_temporary_url,
             'vtt_file' => $vtt_file,
             'start_time' => $start_time,
             'is_phone' => $is_phone,
-            'show_buttons' => false]);
+            'show_buttons' => false,
+            'stream_hls_url' => $stream_hls_url]);
     }
 
     /**

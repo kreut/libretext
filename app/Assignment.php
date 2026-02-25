@@ -120,8 +120,11 @@ class Assignment extends Model
 
         $folderPath = "submitted-work/$this->id";
         $files = Storage::disk('s3')->files($folderPath);
-        Storage::disk('s3')->delete($files);
+        DB::table('cloudflare_stream_videos')
+            ->whereIn('s3_path', $files)
+            ->update(['marked_for_deletion' => 1]);
 
+        Storage::disk('s3')->delete($files);
 
         DB::table('assignment_question_forge_draft')
             ->whereIn('assignment_question_id', $assignment_question_ids)

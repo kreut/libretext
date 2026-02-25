@@ -7,9 +7,11 @@
   <script type="text/javascript"
           src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.2.11/iframeResizer.contentWindow.min.js"
   ></script>
-  <stream src="{{$src}}"></stream>
-<script data-cfasync="false" defer type="text/javascript" src="https://embed.videodelivery.net/embed/r4xu.fla9.latest.js?video={{$src}}">
-</script>
 </head>
+<body>
+  <stream src="{{ $src }}" controls preload="auto"></stream>
+  <script data-cfasync="false" defer type="text/javascript"
+          src="https://embed.videodelivery.net/embed/r4xu.fla9.latest.js?video={{ $src }}">
+  </script>
+</body>
 </html>
-

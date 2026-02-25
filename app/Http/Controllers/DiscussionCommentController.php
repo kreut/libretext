@@ -8,7 +8,6 @@ use App\Discussion;
 use App\DiscussionComment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
-use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateDiscussionRequest;
 use App\Jobs\InitConvertToMP4;
 use App\Jobs\InitProcessTranscribe;
@@ -27,16 +26,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
 use MiladRahimi\Jwt\Generator;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Traits\CloudflareStreamable;
 
 class DiscussionCommentController extends Controller
 {
+
+    use CloudflareStreamable;
 
     /**
      * @param Request $request
@@ -80,6 +81,7 @@ class DiscussionCommentController extends Controller
                 case('staging'):
                     $disk = 'staging_s3';
                     break;
+                case('local');
                 case('dev'):
                     $disk = 's3';
                     break;
@@ -128,10 +130,6 @@ class DiscussionCommentController extends Controller
             } elseif ($rotation === 270) {
                 $videoFilter = '-vf "transpose=2"';
                 $shouldRotate = true;
-            } elseif ($rotation === 0 && $width !== null && $height !== null && $width > $height) {
-                // No rotate tag, but landscape pixels – likely needs to be rotated
-                $videoFilter = '-vf "transpose=1"';
-                $shouldRotate = true;
             }
 
 // Step 4: Build ffmpeg command
@@ -171,6 +169,7 @@ class DiscussionCommentController extends Controller
                                                    string $status,
                                                    string $message)
     {
+
         try {
             $response = null;
             switch ($environment) {
@@ -182,6 +181,9 @@ class DiscussionCommentController extends Controller
                     break;
                 case('dev'):
                     $domain = "dev.adapt.libretexts.org";
+                    break;
+                case('local'):
+                    $domain = "local.adapt:8891";
                     break;
                 default:
                     throw new Exception ("There is no domain for $environment so cannot update the transcription status.");
@@ -204,7 +206,18 @@ class DiscussionCommentController extends Controller
                 ->update(['status' => $status,
                     'message' => $message,
                     'updated_at' => now()]);
-            $response = Http::patch("https://$domain/api/discussion-comment/mp4-conversion-status", [
+
+            $http = Http::withToken($jwt)
+                ->timeout(360)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                ]);
+
+            if (app()->environment('local')) {
+                $http = $http->withOptions(['verify' => '/Applications/MAMP/Library/OpenSSL/cert.pem']);
+            }
+
+            $response = $http->patch("https://$domain/api/discussion-comment/mp4-conversion-status", [
                 'filename' => $filename,
                 'mp4_status' => $status,
                 'mp4_message' => $message
@@ -221,7 +234,7 @@ class DiscussionCommentController extends Controller
                 ->where('filename', $filename)
                 ->where('filename', $filename)
                 ->update(
-                    ['status' => 'error',
+                    ['status' => 'errorsss',
                         'message' => $message,
                         'updated_at' => now()]
                 );
@@ -603,7 +616,7 @@ class DiscussionCommentController extends Controller
                 $discussionComment->file = $request->file;
                 $discussionComment->save();
             }
-            if ($type === 'file' && !app()->environment('local')) {
+            if ($type === 'file') {
                 InitProcessTranscribe::dispatch($request->file, 'discussion_comment');
             }
 
@@ -645,12 +658,11 @@ class DiscussionCommentController extends Controller
      * @return Application|Factory|View
      * @throws Exception
      */
-    public
-    function mediaPlayer(Request             $request,
-                         string              $key,
-                         string              $key_id,
-                         int                 $is_phone,
-                         QuestionMediaUpload $questionMediaUpload)
+    public function mediaPlayer(Request             $request,
+                                string              $key,
+                                string              $key_id,
+                                int                 $is_phone,
+                                QuestionMediaUpload $questionMediaUpload)
     {
 
         switch ($key) {
@@ -716,12 +728,24 @@ class DiscussionCommentController extends Controller
                 $h->report($e);
             }
         }
+
+        $stream_hls_url = null;
+        if ($type === 'video') {
+            $s3_path = "{$questionMediaUpload->getDir()}/$file";
+            $cloudflare_uid = $this->getCloudflareStreamUid($s3_path);
+            if ($cloudflare_uid) {
+                $stream_hls_url = "https://videodelivery.net/{$cloudflare_uid}/manifest/video.m3u8";
+            }
+        }
+
         return view('media_player', ['type' => $type,
             'temporary_url' => $temporary_url,
             'mp4_temporary_url' => $mp4_temporary_url,
             'vtt_file' => $vtt_file,
             'start_time' => 0,
             'show_buttons' => true,
-            'is_phone' => $is_phone]);
+            'is_phone' => $is_phone,
+            'in_modal' => true,
+            'stream_hls_url' => $stream_hls_url]);
     }
 }

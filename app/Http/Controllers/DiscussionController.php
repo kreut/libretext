@@ -95,7 +95,7 @@ class DiscussionController extends Controller
 
             $discussionComment->satisfied_requirement = $satisfied_requirement;
             $discussionComment->save();
-            if ($type === 'file' && !app()->environment('local')) {
+            if ($type === 'file') {
                 InitProcessTranscribe::dispatch($data['file'], 'discussion_comment');
             }
             if ($recording_type === 'video' && str_contains($data['file'], '.webm')) {

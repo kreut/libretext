@@ -46,16 +46,6 @@
         </b-form-row>
       </b-form-group>
     </div>
-    <div v-else>
-      <b-alert info show>
-        <span v-if="model === 'QuestionMediaUpload'">
-          After saving this question, you will be notified by email when the editable transcript is ready for viewing.
-        </span>
-        <span v-if="model === 'DiscussionComment'">
-          The transcript has not been processed yet.  Please give it a minute or so for the transcript to be completed.
-        </span>
-      </b-alert>
-    </div>
     <div v-if="transcriptTiming && activeTranscriptTiming.start">
       <b-form-group
         label-cols-sm="2"

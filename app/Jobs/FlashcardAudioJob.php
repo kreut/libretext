@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 abstract class FlashcardAudioJob implements ShouldQueue
@@ -55,13 +56,11 @@ abstract class FlashcardAudioJob implements ShouldQueue
 
         $qti = json_decode($qtiJson, true);
         $card = $qti['card'] ?? [];
-
         $sides = $this->getSidesToProcess($card);
 
         if (empty($sides)) {
             return;
         }
-
         foreach ($sides as $side => $payload) {
             $s3Key = $this->processForSide($side, $payload);
             if ($s3Key) {
@@ -84,8 +83,8 @@ abstract class FlashcardAudioJob implements ShouldQueue
      * Perform the actual AI call for one side and store the result on S3.
      * Returns the S3 key on success, or null on failure.
      *
-     * @param string $side    'front' or 'back'
-     * @param mixed  $payload Whatever getSidesToProcess() put in the array
+     * @param string $side 'front' or 'back'
+     * @param mixed $payload Whatever getSidesToProcess() put in the array
      * @return string|null
      */
     abstract protected function processForSide(string $side, $payload): ?string;
@@ -98,25 +97,25 @@ abstract class FlashcardAudioJob implements ShouldQueue
     /**
      * Write an S3 key back into qti_json on both the question and revision rows.
      *
-     * @param Question              $question
+     * @param Question $question
      * @param QuestionRevision|null $revision
-     * @param string                $side     'front' or 'back'
-     * @param string                $s3Key
+     * @param string $side 'front' or 'back'
+     * @param string $s3Key
      */
     protected function writeS3KeyToQtiJson(Question $question, ?QuestionRevision $revision, string $side, string $s3Key): void
     {
         $jsonKey = $this->s3JsonKey($side);
 
-        $qti = json_decode($question->qti_json, true);
-        $qti['card'][$jsonKey] = $s3Key;
-        $question->qti_json = json_encode($qti);
-        $question->save();
+        DB::statement(
+            "UPDATE questions SET qti_json = JSON_SET(qti_json, '$.card.{$jsonKey}', ?) WHERE id = ?",
+            [$s3Key, $question->id]
+        );
 
         if ($revision) {
-            $revQti = json_decode($revision->qti_json, true);
-            $revQti['card'][$jsonKey] = $s3Key;
-            $revision->qti_json = json_encode($revQti);
-            $revision->save();
+            DB::statement(
+                "UPDATE question_revisions SET qti_json = JSON_SET(qti_json, '$.card.{$jsonKey}', ?) WHERE id = ?",
+                [$s3Key, $revision->id]
+            );
         }
     }
 
@@ -141,20 +140,20 @@ abstract class FlashcardAudioJob implements ShouldQueue
     {
         DB::table('flashcard_ai_audio_logs')->updateOrInsert(
             [
-                'question_id'          => $this->questionId,
+                'question_id' => $this->questionId,
                 'question_revision_id' => $this->questionRevisionId,
-                'side'                 => $side,
-                'job_type'             => $this->jobType(),
+                'side' => $side,
+                'job_type' => $this->jobType(),
             ],
             [
-                'status'        => $status,
-                's3_key'        => $s3Key,
+                'status' => $status,
+                's3_key' => $s3Key,
                 'error_message' => $errorMessage,
-                'duration_ms'   => $durationMs,
-                'model'         => $model,
-                'voice'         => $voice,
-                'updated_at'    => now(),
-                'created_at'    => now(),
+                'duration_ms' => $durationMs,
+                'model' => $model,
+                'voice' => $voice,
+                'updated_at' => now(),
+                'created_at' => now(),
             ]
         );
     }

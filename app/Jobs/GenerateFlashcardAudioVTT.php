@@ -5,7 +5,9 @@ namespace App\Jobs;
 use App\Exceptions\Handler;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Orhanerday\OpenAi\OpenAi;
 
 class GenerateFlashcardAudioVTT extends FlashcardAudioJob
 {
@@ -32,15 +34,14 @@ class GenerateFlashcardAudioVTT extends FlashcardAudioJob
         $sides = [];
 
         foreach (['front', 'back'] as $side) {
-            $mediaType  = $card["{$side}MediaType"] ?? '';
             $mediaS3Key = trim($card["{$side}MediaS3Key"] ?? '');
-
-            if ($mediaType !== 'audio' || $mediaS3Key === '') {
+            $caption_language = $card["{$side}CaptionLanguage"] ?? false;
+            if (!$caption_language || $mediaS3Key === '') {
                 continue;
             }
 
             $sides[$side] = [
-                's3Key'    => $mediaS3Key,
+                's3Key' => $mediaS3Key,
                 'language' => $card["{$side}CaptionLanguage"] ?? null,
             ];
         }
@@ -51,62 +52,68 @@ class GenerateFlashcardAudioVTT extends FlashcardAudioJob
     /**
      * Download audio from S3, send to OpenAI Whisper, store returned VTT on S3.
      *
-     * @param string $side    'front' or 'back'
-     * @param array  $payload ['s3Key' => '...', 'language' => 'es'|null]
+     * @param string $side 'front' or 'back'
+     * @param array $payload ['s3Key' => '...', 'language' => 'es'|null]
+     * @throws Exception
      */
     protected function processForSide(string $side, $payload): ?string
     {
         $audioS3Key = $payload['s3Key'];
-        $language   = $payload['language'] ?? null;
+        $language = $payload['language'] ?? null;
 
-        $model    = 'whisper-1';
+        $model = 'whisper-1';
         $vttS3Key = "uploads/flashcard-vtt/{$this->questionId}/{$this->questionRevisionId}/{$side}.vtt";
 
         $this->upsertLog($side, 'processing', null, null, null, $model);
 
         $startMs = (int)round(microtime(true) * 1000);
 
-        // Use /tmp on Vapor/Lambda and Linux/Mac; fall back to sys_get_temp_dir() on Windows
-        $tmpDir  = (is_dir('/tmp') && is_writable('/tmp')) ? '/tmp' : sys_get_temp_dir();
-        $tmpPath = $tmpDir . '/fc_audio_' . $this->questionId . '_' . $this->questionRevisionId . '_' . $side . '.mp3';
+        $efs_dir = "/mnt/local/";
+        $is_efs = is_dir($efs_dir);
+        $storage_path = $is_efs
+            ? $efs_dir
+            : Storage::disk('local')->getAdapter()->getPathPrefix();
+
+        $full_dir = rtrim($storage_path, '/') . '/whisper-files';
+        if (!is_dir($full_dir)) {
+            mkdir($full_dir, 0755, true);
+        }
+
+        $local_filename = $this->questionId . '_' . $this->questionRevisionId . '_' . $side . '_' . basename($audioS3Key);
+        $full_path = $full_dir . '/' . $local_filename;
+
+
 
         try {
             if (!Storage::disk('s3')->exists($audioS3Key)) {
                 throw new Exception("Audio file not found on S3: {$audioS3Key}");
             }
 
-            file_put_contents($tmpPath, Storage::disk('s3')->get($audioS3Key));
+            $cFile = curl_file_create($full_path);
 
             $whisperParams = [
-                'model'           => $model,
+                'model' => $model,
+                'file'  => $cFile,
                 'response_format' => 'vtt',
             ];
 
-            // Passing the language improves Whisper accuracy and avoids
-            // language auto-detection overhead
             if ($language) {
                 $whisperParams['language'] = $language;
             }
 
-            try {
-                $httpResponse = Http::withToken(config('myconfig.openai_api_key'))
-                    ->attach('file', file_get_contents($tmpPath), basename($tmpPath))
-                    ->post('https://api.openai.com/v1/audio/transcriptions', $whisperParams);
-            } finally {
-                if (file_exists($tmpPath)) {
-                    unlink($tmpPath);
-                }
+            $openai = new OpenAi(config('myconfig.openai_api_key'));
+            $response = $openai->transcribe($whisperParams);
+
+            if (file_exists($full_path)) {
+                unlink($full_path);
             }
 
-            if (!$httpResponse->successful()) {
-                $json  = $httpResponse->json();
-                $error = is_array($json) && isset($json['error']['message'])
-                    ? $json['error']['message']
-                    : $httpResponse->body();
-                throw new Exception("OpenAI Whisper error: {$error}");
+            $json_response = json_decode($response);
+            if ($json_response && isset($json_response->error)) {
+                throw new Exception("OpenAI Whisper error: {$json_response->error->message}");
             }
 
-            $vttContents = $httpResponse->body();
+            $vttContents = $response;
 
             if (!$vttContents) {
                 throw new Exception("Empty VTT response from OpenAI Whisper for question {$this->questionId} side={$side}");
@@ -123,8 +130,8 @@ class GenerateFlashcardAudioVTT extends FlashcardAudioJob
         } catch (Exception $e) {
             $durationMs = (int)round(microtime(true) * 1000) - $startMs;
 
-            if (file_exists($tmpPath)) {
-                unlink($tmpPath);
+            if (file_exists($full_path)) {
+                unlink($full_path);
             }
 
             $h = new Handler(app());

@@ -85,6 +85,9 @@ class QuestionMediaUpload extends Model
                 case('dev'):
                     $domain = "dev.adapt.libretexts.org";
                     break;
+                case('local'):
+                    $domain = "local.adapt:8891";
+                    break;
                 default:
                     throw new Exception ("There is no domain for $environment so cannot update the transcription status.");
             }
@@ -100,9 +103,18 @@ class QuestionMediaUpload extends Model
 
             $jwt = $generator->generate(['transcribe' => 1]);
             $this->_logInfo('sending update info to ' . $domain);
-            Log::info($status);
             DB::table('pending_transcriptions')->where('filename', $filename)->update(['status' => $status, 'message' => $message]);
-            $response = Http::patch("https://$domain/api/question-media/transcribe-status", [
+
+            $http = Http::withToken($jwt)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                ]);
+
+            if (app()->environment('local')) {
+                $http = $http->withOptions(['verify' => '/Applications/MAMP/Library/OpenSSL/cert.pem']);
+            }
+
+            $response = $http->patch("https://$domain/api/question-media/transcribe-status", [
                 'filename' => $filename,
                 'upload_type' => $upload_type,
                 'status' => $status,
@@ -159,6 +171,9 @@ class QuestionMediaUpload extends Model
 
         $s3_key = $filename ? $this->getDir() . "/" . $filename : false;
         if ($s3_key && (Storage::disk('s3')->exists($s3_key))) {
+            DB::table('cloudflare_stream_videos')
+                ->where('s3_path', $s3_key)
+                ->update(['marked_for_deletion' => 1]);
             Storage::disk('s3')->delete($s3_key);
         }
 
@@ -297,6 +312,7 @@ class QuestionMediaUpload extends Model
      */
     public function processTranscribe(string $filename)
     {
+
         $pending_transcription = null;
         try {
             $pending_transcription = DB::table('pending_transcriptions')->where('filename', $filename)->first();
@@ -310,6 +326,7 @@ class QuestionMediaUpload extends Model
                 case('staging'):
                     $disk = 'staging_s3';
                     break;
+                case('local'):
                 case('dev'):
                     $disk = 's3';
                     break;
@@ -382,7 +399,6 @@ class QuestionMediaUpload extends Model
         $path_info = pathinfo($path_on_transcribe_server);
 
         $new_path_on_transcribe_server = $path_info['dirname'] . '/' . $path_info['filename'] . '.' . $file_extension;
-
 
         if ($file_extension === 'mp4') {
             $new_path_on_transcribe_server = $path_info['dirname'] . '/temp-' . $path_info['filename'] . '.' . $file_extension;

@@ -2085,6 +2085,7 @@ class QuestionController extends Controller
                 GenerateFlashcardTTS::dispatch($question->id, $new_question_revision_id);
                 GenerateFlashcardAudioVTT::dispatch($question->id, $new_question_revision_id);
             }
+
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";
             $action = $is_update ? 'updated' : 'created';

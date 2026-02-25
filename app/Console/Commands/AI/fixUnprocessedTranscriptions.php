@@ -53,12 +53,12 @@ class fixUnprocessedTranscriptions extends Command
                 ->where('message', '')
                 ->where('filename', 'NOT LIKE', '%.webm')
                 ->get();
-            $pending_transcriptions = DB::table('pending_transcriptions')        
+            $pending_transcriptions = DB::table('pending_transcriptions')
                 ->where('message', '')
-			    ->where('environment', 'production')
-                ->limit(1)
+                ->whereIn('environment', ['staging', 'production','local'])
+                ->limit(2)
+                ->orderBy('id', 'desc')
                 ->get();
-
 
             echo count($pending_transcriptions) . "\r\n";
             foreach ($pending_transcriptions as $pending_transcription) {

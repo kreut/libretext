@@ -15,6 +15,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
@@ -54,7 +55,7 @@ class InitProcessTranscribe implements ShouldQueue
      */
     public function handle()
     {
-        $upload_type_model = (new QuestionMediaUpload())->getUploadTypeModel($this->upload_type,$this->filename);
+        $upload_type_model = (new QuestionMediaUpload())->getUploadTypeModel($this->upload_type, $this->filename);
 
         $supportedFormats = ['flac', 'm4a', 'mp3', 'mp4', 'mpeg', 'mpga', 'oga', 'ogg', 'wav', 'webm'];
         $file_extension = pathinfo($this->filename, PATHINFO_EXTENSION);
@@ -125,25 +126,31 @@ class InitProcessTranscribe implements ShouldQueue
 
             $jwt = $generator->generate(['transcribe' => 1]);
 
+            $endpoint = app()->environment('local') ? 'https://local.adapt:8891' : 'https://dev.adapt.libretexts.org';
 
-            $response = Http::withToken($jwt) // Add the Bearer token here
-            ->timeout(360) // Set the timeout
-            ->withHeaders([
-                'Content-Type' => 'application/json', // Set the content type to JSON
-            ])
-                ->post("https://dev.adapt.libretexts.org/api/question-media/init-transcribe", [
-                    'upload_type' => $this->upload_type,
-                    'filename' => basename($media_upload_path),
-                    'language' => $language,
-                    'environment' => app()->environment(),
+            $http = Http::withToken($jwt)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
                 ]);
+
+            if (app()->environment('local')) {
+                $http = $http->withOptions(['verify' => '/Applications/MAMP/Library/OpenSSL/cert.pem']);
+            }
+
+            $response = $http->post("$endpoint/api/question-media/init-transcribe", [
+                'upload_type' => $this->upload_type,
+                'filename' => basename($media_upload_path),
+                'language' => $language,
+                'environment' => app()->environment(),
+            ]);
 
             if (!$response->successful()) {
                 throw new Exception("Request failed with status: " . $response->status() . " and message: " . $response->body());
             }
 
+            Log::info($response->body());
             $upload_type_model->status = $response->status();
-            $upload_type_model->message =  $response->body();
+            $upload_type_model->message = $response->body();
             $upload_type_model->save();
 
         } catch (RequestException $e) {
