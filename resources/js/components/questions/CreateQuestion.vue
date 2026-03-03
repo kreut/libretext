@@ -641,7 +641,7 @@
 
       <div v-if="questionForm.technology === 'qti'">
         <b-button
-          v-if="questionForm.technology === 'qti' && !['discuss_it','forge'].includes(qtiQuestionType)"
+          v-if="questionForm.technology === 'qti' && !['discuss_it','forge','flashcard'].includes(qtiQuestionType)"
           size="sm"
           variant="primary"
           @click="getQtiAnswerJson()"
@@ -1254,6 +1254,7 @@
         <b-card border-variant="primary"
                 class="mb-3"
         >
+
           <p>
             Questions can consist of either pure HTML (text-based question), an auto-graded technology for automatic
             scoring, or
@@ -1652,6 +1653,13 @@
                                   @change="initQTIQuestionType($event)"
                     >
                       Matching
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType"
+                                  name="qti-question-type"
+                                  value="flashcard"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Flashcard
                     </b-form-radio>
                   </div>
                   <div v-if="['all','nursing'].includes(nativeType)">
@@ -2279,6 +2287,13 @@
                           :question-form="questionForm"
                           :matching-rich-editor-config="matchingRichEditorConfig"
                 />
+                <Flashcard
+                  v-if="qtiQuestionType === 'flashcard'"
+                  ref="flashcard"
+                  :initial-card="qtiJson.card || null"
+                  :rich-editor-config="richEditorConfig"
+                  @file-selected="handleFlashcardFileUpload"
+                />
 
                 <MultipleAnswers v-if="qtiQuestionType === 'multiple_answers'"
                                  ref="multipleAnswers"
@@ -2903,6 +2918,7 @@ import { capitalize, getQuestionChapterIdOptions, getQuestionSubjectIdOptions } 
 import ThreeDModel from './ThreeDModel.vue'
 import AccountingJournalEntry from './accounting/AccountingJournalEntry.vue'
 import AccountingReport from './accounting/AccountingReport.vue'
+import Flashcard from './Flashcard.vue'
 
 const parameters3DModel = {
   modelID: '',
@@ -3063,6 +3079,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    Flashcard,
     AccountingReport,
     AccountingJournalEntry,
     CKEditorFileToLinkUploader,
@@ -3498,6 +3515,7 @@ export default {
         // this.setToQuestionType('three_d_model_multiple_choice')
         // this.setToQuestionType('accounting_journal_entry')
         //this.setToQuestionType('accounting_report')
+        this.setToQuestionType('flashcard')
       })
     }
   },
@@ -3515,6 +3533,22 @@ export default {
     initAddEditDeleteQuestionSubjectChapterSection,
     canEdit,
     getQuestionSectionIdOptions,
+    async handleFlashcardFileUpload ({ side, mediaType, file }) {
+      try {
+        const { data } = await axios.post('/api/s3/pre-signed-url', {
+          upload_file_type: 'question-attachment',
+          file_name: file.name
+        })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return
+        }
+        await this.uploadWithProgress(file, data.preSignedURL, { skipAttachment: true })
+        this.$refs.flashcard.updateMediaUrl(side, mediaType, data.s3_key, data.temporary_url)
+      } catch (err) {
+        this.$noty.error('File upload failed: ' + err.message)
+      }
+    },
     isNativeQti () {
       try {
         return this.questionForm.technology === 'qti' &&
@@ -3577,11 +3611,10 @@ export default {
         console.error('Upload failed:', err)
       }
     },
-    async uploadWithProgress (file, url) {
+    async uploadWithProgress (file, url, options = {}) {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest()
 
-        // progress event
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
             this.uploadProgress = Math.round((e.loaded / e.total) * 100)
@@ -3591,25 +3624,22 @@ export default {
           }
         })
 
-        // success
         xhr.onload = () => {
           if (xhr.status === 200) {
-            resolve()
-            if (!Array.isArray(this.questionForm.attachments)) {
-              this.questionForm.attachments = []
+            if (!options.skipAttachment) {
+              if (!Array.isArray(this.questionForm.attachments)) {
+                this.questionForm.attachments = []
+              }
+              this.questionForm.attachments.push({ original_filename: this.fileName, s3_key: this.s3_key })
+              this.$forceUpdate()
             }
-            console.error(this.questionForm.attachments)
-            this.questionForm.attachments.push({ original_filename: this.fileName, s3_key: this.s3_key })
-            this.$forceUpdate()
+            resolve()
           } else {
             reject(new Error('Upload failed with status ' + xhr.status))
           }
         }
 
-        // error
         xhr.onerror = () => reject(new Error('XHR network error'))
-
-        // PUT request to the presigned URL
         xhr.open('PUT', url)
         xhr.send(file)
       })
@@ -3712,6 +3742,19 @@ export default {
           )
           window.setTimeout(() => {
               document.querySelector('input[type="radio"][name="qti-question-type"][value="three_d_model_multiple_choice"]').click()
+            }
+            , 250
+          )
+          break
+        case ('flashcard'):
+          document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="native-question-type"][value="basic"]').click()
+            }
+            , 250
+          )
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="flashcard"]').click()
             }
             , 250
           )
@@ -4089,6 +4132,16 @@ export default {
         }
 
         switch (this.qtiQuestionType) {
+          case ('flashcard'):
+            this.$forceUpdate()
+            const cardData = this.$refs.flashcard.getCardData()
+            if (!cardData) return false
+            this.qtiJson = {
+              questionType: 'flashcard',
+              card: cardData
+            }
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
           case ('forge'):
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             this.questionForm.qti_prompt = this.qtiJson['prompt']
@@ -4425,6 +4478,9 @@ export default {
         }
         console.log(this.qtiJson)
         switch (this.qtiJson.questionType) {
+          case ('flashcard'):
+            this.qtiQuestionType = 'flashcard'
+            break
           case ('forge'):
             this.qtiPrompt = this.qtiJson['prompt']
             this.qtiQuestionType = 'forge'
@@ -5059,6 +5115,10 @@ export default {
         this.generalFeedbacks[i].editorShown = false
       }
       switch (questionType) {
+        case ('flashcard'):
+          this.qtiJson = { questionType: 'flashcard', card: null }
+          this.qtiQuestionType = 'flashcard'
+          break
         case ('forge'):
           this.qtiJson = {
             questionType: 'forge',
@@ -5652,6 +5712,22 @@ export default {
           this.questionToView = data.question
         } else {
           switch (this.qtiQuestionType) {
+            case ('flashcard'):
+              const cardData = this.$refs.flashcard.getCardData()
+              const frontType = String(cardData.frontType)
+              const backType = String(cardData.backType)
+              if (frontType === 'text_media' || frontType === 'media') {
+                cardData.frontMediaUrl = this.$refs.flashcard.form.frontMediaUrl
+              }
+              if (backType === 'text_media' || backType === 'media') {
+                cardData.backMediaUrl = this.$refs.flashcard.form.backMediaUrl
+              }
+              this.qtiJson = {
+                questionType: 'flashcard',
+                card: cardData
+              }
+              this.$forceUpdate()
+              break
             case ('accounting_report'):
             case ('accounting_journal_entry'):
               this.$forceUpdate()
@@ -5773,6 +5849,11 @@ export default {
             console.error(property)
             switch (property) {
               case ('qti_json'):
+                if (this.qtiQuestionType === 'flashcard') {
+                  const flashcardErrors = JSON.parse(errors[property])
+                  this.$refs.flashcard.setErrors(flashcardErrors)
+                  formattedErrors.push('Please fix the flashcard errors.')
+                }
                 if (this.qtiQuestionType === 'accounting_journal_entry') {
                   formattedErrors.push('Please fix the errors associated with your journal entries.')
                 } else if (this.qtiQuestionType === 'accounting_report') {

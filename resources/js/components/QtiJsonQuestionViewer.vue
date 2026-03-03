@@ -64,6 +64,11 @@
                                     :key="`accounting-journal-${qtiJsonCacheKey}`"
                                     :qti-json="JSON.parse(qtiJson)"
       />
+      <FlashcardViewer
+        v-if="questionType === 'flashcard'"
+        :key="`flashcard-${qtiJsonCacheKey}`"
+        :card="JSON.parse(qtiJson).card"
+      />
       <div
         v-if="['accounting_report',
              'forge',
@@ -305,10 +310,12 @@ import StructureImageUploader from './StructureImageUploader.vue'
 import ThreeDModelViewer from './viewers/ThreeDModelViewer.vue'
 import AccountingJournalEntryViewer from './viewers/AccountingJournalEntryViewer.vue'
 import AccountingReportViewer from './viewers/AccountingReportViewer.vue'
+import FlashcardViewer from './viewers/FlashcardViewer.vue'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    FlashcardViewer,
     AccountingReportViewer,
     ForgeViewer,
     AccountingJournalEntryViewer,
@@ -453,10 +460,11 @@ export default {
       }
     }
     switch (this.questionType) {
+      case ('flashcard'):
       case ('discuss_it'):
       case ('accounting_journal_entry'):
         break
-      case('accounting_report'):
+      case ('accounting_report'):
       case ('forge'):
       case ('forge_iteration'):
       case ('three_d_model_multiple_choice'):
