@@ -43,6 +43,60 @@ class QuestionMediaController extends Controller
     }
 
     /**
+     * Render the AblePlayer media_player blade for a flashcard media URL.
+     * The pre-signed URL comes directly from the card's qti_json — no DB lookup needed.
+     *
+     * Route (add to web.php):
+     *   Route::get('/flashcard-media', 'MediaController@flashcardMedia');
+     *
+     * @throws Exception
+     */
+    public function flashcardMedia(Request $request)
+    {
+        $url  = $request->query('url');
+        $type = $request->query('type', 'video'); // 'video' | 'audio'
+
+        if (!$url) {
+            abort(400, 'Missing url parameter');
+        }
+
+        // Validate the URL is a signed S3 URL from our own bucket to prevent open-redirect abuse
+        $bucket = config('filesystems.disks.s3.bucket');
+        $region = config('filesystems.disks.s3.region');
+
+        $allowed_hosts = [
+            "{$bucket}.s3.amazonaws.com",
+            "{$bucket}.s3.{$region}.amazonaws.com",
+            "s3.amazonaws.com",
+            "s3.{$region}.amazonaws.com",
+        ];
+
+        $host = parse_url($url, PHP_URL_HOST);
+        $valid = collect($allowed_hosts)->contains(function ($h) use ($host) {
+            return str_ends_with($host, $h);
+        });
+
+        if (!$valid) {
+            abort(403, 'Invalid media URL');
+        }
+
+        // For VTT: the card JSON may include a separate vttUrl field
+        $vtt_file   = $request->query('vtt_url', '');
+        $start_time = (int) $request->query('start_time', 0);
+        $is_phone   = 0;
+
+        return view('media_player', [
+            'type'            => $type,
+            'temporary_url'   => $url,
+            'mp4_temporary_url' => $type === 'video' ? $url : '',
+            'vtt_file'        => $vtt_file,
+            'start_time'      => $start_time,
+            'is_phone'        => $is_phone,
+            'show_buttons'    => false,
+        ]);
+    }
+
+    /**
      * @param Request $request
      * @return array
      */

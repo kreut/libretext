@@ -660,7 +660,6 @@
                 </b-form-radio-group>
                 <has-error :form="form" field="default_completion_scoring_mode"/>
               </b-form-group>
-              <!-- Must be number of points for alpha courses because changing weights or the total points with beta courses would be chaos -->
               <b-form-group
                 v-show="isAlphaCourse"
                 label-cols-sm="4"
@@ -831,7 +830,6 @@
                   class="mb-3"
                   body-class="pb-0 card-body-pl"
                   :header-html="getHeaderHtml('Assignment Mode')"
-
           >
             <b-form-group
               label-cols-sm="4"
@@ -894,6 +892,18 @@
                              triggers="hover focus"
                   >
                     Instructors manually open and close these real-time graded assessments.
+                  </b-tooltip>
+                </b-form-radio>
+
+                <b-form-radio name="assessment_type" value="flashcard">
+                  Flashcard Assessments
+                  <QuestionCircleTooltip :id="'flashcard-tooltip'"/>
+                  <b-tooltip target="flashcard-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Students review flashcards with configurable autoplay, shuffle, and hint options.
+                    Attempts are unlimited.
                   </b-tooltip>
                 </b-form-radio>
               </b-form-radio-group>
@@ -1013,8 +1023,9 @@
               </b-form-group>
             </div>
 
-            <div v-if="form.assessment_type === 'clicker' ||
-          (['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p')"
+            <!-- Number of Allowed Attempts: hidden for flashcard (forced unlimited) -->
+            <div v-if="form.assessment_type !== 'flashcard' && (form.assessment_type === 'clicker' ||
+          (['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p'))"
             >
               <b-form-group
                 label-cols-sm="4"
@@ -1023,7 +1034,6 @@
               >
                 <template v-slot:label>
                   Number of Allowed Attempts*
-
                   <QuestionCircleTooltip :id="'number-of-allowed-attempts-tooltip'"/>
                   <b-tooltip target="number-of-allowed-attempts-tooltip"
                              delay="250"
@@ -1031,7 +1041,6 @@
                   >
                     <span v-if="form.assessment_type === 'real time'">Optionally, you can let your students attempt real time assessments multiple times.</span>
                     <span v-if="form.assessment_type === 'learning tree'">Students will always be allowed to re-attempt Learning Tree assessments.  However, you can dictate the number of attempts possible.</span>
-
                     Please note that if you have any H5P questions in your assignment, then due to
                     the nature of H5P, your students will see the answer
                     after the first attempt regardless of how many attempts you allow.
@@ -1065,13 +1074,7 @@
                              triggers="hover focus"
                   >
                     If you allow your students to attempt a question multiple times, you may provide a penalty to be
-                    applied
-                    for
-                    each attempt
-                    after the first. As an example, a
-                    correct answer on the second attempt with a penalty of 10% means that a student will receive 90% of
-                    the
-                    total score for the question.
+                    applied for each attempt after the first.
                   </b-tooltip>
                 </template>
                 <b-form-row>
@@ -1093,6 +1096,7 @@
                 </b-form-row>
               </b-form-group>
             </div>
+
             <div v-if="['real time','learning tree'].includes(form.assessment_type) && form.scoring_type === 'p'">
               <b-form-group
                 v-if="form.assessment_type === 'real time'"
@@ -1187,50 +1191,25 @@
                                   @keydown="form.errors.clear('file_upload_mode')"
                                   @change="initFileUploadModeSwitch($event);checkDefaultOpenEndedSubmissionType()"
               >
-                <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
                 <b-form-radio name="file_upload_mode" value="individual_assessment">
                   Individual Assessment Upload
                   <QuestionCircleTooltip :id="'individual_assessment_upload_tooltip'"/>
-                  <b-tooltip target="individual_assessment_upload_tooltip"
-                             delay="250"
-                             triggers="hover focus"
-                  >
-                    <p>
-                      If you choose this option, your students will upload individual submissions at the question level.
-                      Use this option if you don't plan on having non-PDF uploads such as text, images, or audio or if
-                      there is only one PDF submission.
-                    </p>
+                  <b-tooltip target="individual_assessment_upload_tooltip" delay="250" triggers="hover focus">
+                    <p>If you choose this option, your students will upload individual submissions at the question level.</p>
                   </b-tooltip>
                 </b-form-radio>
                 <b-form-radio name="file_upload_mode" value="compiled_pdf">
                   Compiled Upload (PDFs only)
                   <QuestionCircleTooltip :id="'compiled_pdf_tooltip'"/>
-                  <b-tooltip target="compiled_pdf_tooltip"
-                             delay="250"
-                             triggers="hover focus"
-                  >
-                    <p>
-                      If you choose this option, your students will upload a single compiled PDF and let ADAPT know
-                      which
-                      pages
-                      are associated with which questions.
-                    </p>
+                  <b-tooltip target="compiled_pdf_tooltip" delay="250" triggers="hover focus">
+                    <p>If you choose this option, your students will upload a single compiled PDF.</p>
                   </b-tooltip>
                 </b-form-radio>
                 <b-form-radio name="file_upload_mode" value="both">
-                  Compiled Upload & Individual Assessment Upload
+                  Compiled Upload &amp; Individual Assessment Upload
                   <QuestionCircleTooltip :id="'both_upload_tooltip'"/>
-                  <b-tooltip target="both_upload_tooltip"
-                             delay="250"
-                             triggers="hover focus"
-                  >
-                    <p>
-                      If you choose this option, your students will be able to upload either a compiled PDF or
-                      individual
-                      assessment uploads. Use this option if you have both several assessments which require a PDF
-                      submission
-                      and you also have non-PDF assessments such as text, images, or audio.
-                    </p>
+                  <b-tooltip target="both_upload_tooltip" delay="250" triggers="hover focus">
+                    <p>Students will be able to upload either a compiled PDF or individual assessment uploads.</p>
                   </b-tooltip>
                 </b-form-radio>
               </b-form-radio-group>
@@ -1247,14 +1226,8 @@
               <template v-slot:label>
                 Default Open-ended Submission Type*
                 <QuestionCircleTooltip :id="'default_open_ended_submission_type_tooltip'"/>
-                <b-tooltip target="default_open_ended_submission_type_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Adjust this option if your assignment consists of open-ended questions. This option can be changed on
-                  a
-                  per
-                  question basis once you start adding questions to the assignment.
+                <b-tooltip target="default_open_ended_submission_type_tooltip" delay="250" triggers="hover focus">
+                  Adjust this option if your assignment consists of open-ended questions.
                 </b-tooltip>
               </template>
               <b-form-radio-group id="default_open_ended_submission_type"
@@ -1267,23 +1240,10 @@
                                   @change="checkIfCompiledPdf()"
                                   @keydown="form.errors.clear('default_open_ended_submission_type')"
               >
-                <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-                <b-form-radio name="default_open_ended_submission_type" value="file">
-                  File
-                </b-form-radio>
-                <b-form-radio name="default_open_ended_submission_type"
-                              value="rich text"
-                >
-                  Rich Text
-                </b-form-radio>
-                <b-form-radio name="default_open_ended_submission_type"
-                              value="audio"
-                >
-                  Audio
-                </b-form-radio>
-                <b-form-radio name="default_open_ended_submission_type" value="0">
-                  None
-                </b-form-radio>
+                <b-form-radio name="default_open_ended_submission_type" value="file">File</b-form-radio>
+                <b-form-radio name="default_open_ended_submission_type" value="rich text">Rich Text</b-form-radio>
+                <b-form-radio name="default_open_ended_submission_type" value="audio">Audio</b-form-radio>
+                <b-form-radio name="default_open_ended_submission_type" value="0">None</b-form-radio>
               </b-form-radio-group>
               <div v-if="form.errors.has('default_open_ended_submission_type')" class="help-block invalid-feedback">
                 The selected default open ended submission type is invalid.
@@ -1308,32 +1268,21 @@
             <template v-slot:label>
               Grade Passback*
               <QuestionCircleTooltip :id="'lms_grade_passback_tooltip'"/>
-              <b-tooltip target="lms_grade_passback_tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                With the automatic option, grades are passed back to your LMS each time that your one of your students
-                submits their response to a question.
-                For delayed grading, the manual option is recommended.
+              <b-tooltip target="lms_grade_passback_tooltip" delay="250" triggers="hover focus">
+                With the automatic option, grades are passed back to your LMS each time a student submits.
               </b-tooltip>
             </template>
-            <b-form-radio-group
-              v-model="form.lms_grade_passback"
-              required
-              stacked
-            >
-              <b-form-radio name="lms" value="automatic">
-                Automatic
-              </b-form-radio>
-              <b-form-radio name="lms" value="manual">
-                Manual
-              </b-form-radio>
+            <b-form-radio-group v-model="form.lms_grade_passback" required stacked>
+              <b-form-radio name="lms" value="automatic">Automatic</b-form-radio>
+              <b-form-radio name="lms" value="manual">Manual</b-form-radio>
             </b-form-radio-group>
           </b-form-group>
         </div>
       </b-card>
+
+      <!-- Secondary Approval: hidden for flashcard -->
       <b-card
-        v-show="form.assessment_type !== 'clicker' && form.source === 'a' && !isFormativeCourse && +form.formative !== 1"
+        v-show="form.assessment_type !== 'flashcard' && form.assessment_type !== 'clicker' && form.source === 'a' && !isFormativeCourse && +form.formative !== 1"
         id="submit-work-card"
         :header-html="getHeaderHtml('Secondary Approval')"
         body-class="pb-0 card-body-pl"
@@ -1349,33 +1298,24 @@
               Can Submit Work*
               <CanSubmitWorkTooltip/>
             </template>
-            <b-form-radio-group
-              id="can_submit_work"
-              v-model="form.can_submit_work"
-              required
-              stacked
-            >
+            <b-form-radio-group id="can_submit_work" v-model="form.can_submit_work" required stacked>
               <div>
-                <b-form-radio name="can_submit_work" value="1" class="d-inline-block">
-                  Yes
-                </b-form-radio>
+                <b-form-radio name="can_submit_work" value="1" class="d-inline-block">Yes</b-form-radio>
                 <span v-if="+form.can_submit_work === 1" class="ml-3 d-inline-block">
-      <b-form-checkbox-group
-        id="submitted_work_format"
-        v-model="form.submitted_work_format"
-        name="submitted_work_format"
-        @change="form.errors.clear('submitted_work_format')"
-      >
-        <b-form-checkbox value="file">File</b-form-checkbox>
-        <b-form-checkbox value="audio">Audio</b-form-checkbox>
-        <b-form-checkbox value="video">Video</b-form-checkbox>
-      </b-form-checkbox-group>
-      </span>
+                  <b-form-checkbox-group
+                    id="submitted_work_format"
+                    v-model="form.submitted_work_format"
+                    name="submitted_work_format"
+                    @change="form.errors.clear('submitted_work_format')"
+                  >
+                    <b-form-checkbox value="file">File</b-form-checkbox>
+                    <b-form-checkbox value="audio">Audio</b-form-checkbox>
+                    <b-form-checkbox value="video">Video</b-form-checkbox>
+                  </b-form-checkbox-group>
+                </span>
                 <ErrorMessage :message="form.errors.get('submitted_work_format')"/>
               </div>
-              <b-form-radio name="can_submit_work" value="0">
-                No
-              </b-form-radio>
+              <b-form-radio name="can_submit_work" value="0">No</b-form-radio>
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
@@ -1395,30 +1335,21 @@
               <b-form-radio name="submitted_work_policy" value="optional">
                 Optional
                 <QuestionCircleTooltip id="optional_tooltip"/>
-                <b-tooltip target="optional_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
+                <b-tooltip target="optional_tooltip" delay="250" triggers="hover focus">
                   Students may submit work to request regrades if needed.
                 </b-tooltip>
               </b-form-radio>
               <b-form-radio name="submitted_work_policy" value="required with auto-approval">
                 Required with auto-approval
                 <QuestionCircleTooltip id="required_with_auto_graded_submission_tooltip"/>
-                <b-tooltip target="required_with_auto_graded_submission_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
+                <b-tooltip target="required_with_auto_graded_submission_tooltip" delay="250" triggers="hover focus">
                   Students must submit work to receive points; work quality reviewed separately in the Open Grader.
                 </b-tooltip>
               </b-form-radio>
               <b-form-radio name="submitted_work_policy" value="required with manual approval">
                 Required with manual approval
                 <QuestionCircleTooltip id="required_with_manually_graded_submission_tooltip"/>
-                <b-tooltip target="required_with_manually_graded_submission_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
+                <b-tooltip target="required_with_manually_graded_submission_tooltip" delay="250" triggers="hover focus">
                   Students must submit work; grade based on both answer correctness and work quality
                 </b-tooltip>
               </b-form-radio>
@@ -1427,24 +1358,19 @@
           </b-form-group>
         </b-card-text>
       </b-card>
+
+      <!-- Hints: hidden for flashcard (flashcard has its own hint setting below) -->
       <b-card
+        v-show="form.assessment_type !== 'flashcard' && form.assessment_type !== 'clicker'"
         :header-html="getHeaderHtml('Hints')"
         body-class="pb-0 card-body-pl"
         class="mb-3"
-        v-show="form.assessment_type !== 'clicker'"
       >
-        <b-form-group
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="hint"
-        >
+        <b-form-group label-cols-sm="4" label-cols-lg="3" label-for="hint">
           <template v-slot:label>
             Can View Hint*
             <QuestionCircleTooltip :id="'hint-tooltip'"/>
-            <b-tooltip target="hint-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
+            <b-tooltip target="hint-tooltip" delay="250" triggers="hover focus">
               Allow your students to see a hint for the solution if a hint exists.
             </b-tooltip>
           </template>
@@ -1455,30 +1381,21 @@
                               stacked
                               @change="updateHintPenaltyView($event)"
           >
-            <b-form-radio value="1">
-              Yes
-            </b-form-radio>
-            <b-form-radio value="0">
-              No
-            </b-form-radio>
+            <b-form-radio value="1">Yes</b-form-radio>
+            <b-form-radio value="0">No</b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-
         <b-form-group
           v-if="showHintPenalty"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="hint_penalty"
-          v-show="form.assessment_type !== 'clicker'"
         >
           <template v-slot:label>
             Hint Penalty*
             <QuestionCircleTooltip :id="'hint-penalty-tooltip'"/>
-            <b-tooltip target="hint-penalty-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Penalty applied if a student decides to chooses to view the hint.
+            <b-tooltip target="hint-penalty-tooltip" delay="250" triggers="hover focus">
+              Penalty applied if a student decides to view the hint.
             </b-tooltip>
           </template>
           <b-form-row>
@@ -1499,11 +1416,13 @@
           </b-form-row>
         </b-form-group>
       </b-card>
+
+      <!-- Dynamic Questioning: hidden for flashcard -->
       <b-card
+        v-show="form.assessment_type !== 'flashcard' && form.source === 'a'"
         :header-html="getHeaderHtml('Dynamic Questioning')"
         body-class="pb-0 card-body-pl"
         class="mb-3"
-        v-show="form.source === 'a'"
       >
         <b-form-group
           v-show="form.assessment_type !== 'clicker'"
@@ -1514,12 +1433,8 @@
           <template v-slot:label>
             Random sampling*
             <QuestionCircleTooltip :id="'random-sampling-tooltip'" />
-            <b-tooltip target="random-sampling-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              With random sampling enabled, your students will receive a random subset of questions from a
-              pool of questions.
+            <b-tooltip target="random-sampling-tooltip" delay="250" triggers="hover focus">
+              With random sampling enabled, your students will receive a random subset of questions from a pool.
             </b-tooltip>
           </template>
           <b-form-radio-group id="randomizations"
@@ -1529,12 +1444,8 @@
                               :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                               @change="initRandomizationsSwitch($event)"
           >
-            <b-form-radio value="1">
-              Yes
-            </b-form-radio>
-            <b-form-radio value="0">
-              No
-            </b-form-radio>
+            <b-form-radio value="1">Yes</b-form-radio>
+            <b-form-radio value="0">No</b-form-radio>
           </b-form-radio-group>
         </b-form-group>
         <b-form-group
@@ -1546,10 +1457,7 @@
           <template v-slot:label>
             Number of randomized assessments*
             <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'" />
-            <b-tooltip target="number_of_randomized_assessments_tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
+            <b-tooltip target="number_of_randomized_assessments_tooltip" delay="250" triggers="hover focus">
               ADAPT will randomly choose a subset of assessments from the total that you provide
             </b-tooltip>
           </template>
@@ -1569,21 +1477,12 @@
           </b-form-row>
         </b-form-group>
         <div v-if="user.role ===2">
-          <b-form-group
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="algorithmic"
-          >
+          <b-form-group label-cols-sm="4" label-cols-lg="3" label-for="algorithmic">
             <template v-slot:label>
               Algorithmic*
               <QuestionCircleTooltip :id="'algorithmic-tooltip'"/>
-              <b-tooltip target="algorithmic-tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                WeBWork and IMathAS support algorithmic questions (H5P questions will be unaffected). If you choose this
-                option, students will receive slight variations of the original question assuming
-                that there is algorithmic functionality built into the questions.
+              <b-tooltip target="algorithmic-tooltip" delay="250" triggers="hover focus">
+                WeBWork and IMathAS support algorithmic questions. Students will receive slight variations of the original question.
               </b-tooltip>
             </template>
             <b-form-radio-group id="algorithmic"
@@ -1592,40 +1491,202 @@
                                 stacked
                                 :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
             >
-              <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
-              <b-form-radio value="1">
-                Yes
-              </b-form-radio>
-              <b-form-radio value="0">
-                No
-              </b-form-radio>
+              <b-form-radio value="1">Yes</b-form-radio>
+              <b-form-radio value="0">No</b-form-radio>
             </b-form-radio-group>
           </b-form-group>
         </div>
       </b-card>
+
+      <!-- Flashcard Settings: only shown when assessment_type === 'flashcard' -->
       <b-card
-        v-if="!isFormativeCourse && +form.formative !== 1 && form.source === 'a' && form.assessment_type !== 'clicker'"
+        v-if="form.assessment_type === 'flashcard'"
+        :header-html="getHeaderHtml('Flashcard Settings')"
+        body-class="pb-0 card-body-pl"
+        class="mb-3"
+      >
+        <!-- Autoplay -->
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="flashcard_autoplay"
+        >
+          <template v-slot:label>
+            Autoplay
+            <QuestionCircleTooltip :id="'autoplay-tooltip'"/>
+            <b-tooltip target="autoplay-tooltip" delay="250" triggers="hover focus">
+              When enabled, flashcards will automatically advance to the next card. Each side of the card is shown for this many seconds before advancing.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group
+            id="flashcard_autoplay"
+            v-model="form.flashcard_settings.autoplay.enabled"
+            name="autoplay_enabled"
+            class="d-inline-flex align-items-center mr-4"
+          >
+            <b-form-radio :value="true">On</b-form-radio>
+            <b-form-radio :value="false">Off</b-form-radio>
+          </b-form-radio-group>
+          <span v-if="form.flashcard_settings.autoplay.enabled" class="d-inline-flex align-items-center mr-4">
+            <b-form-input
+              v-model="form.flashcard_settings.autoplay.seconds"
+              type="text"
+              style="width: 44px"
+              class="mr-1 no-spinner"
+            />
+            <span class="text-muted small">seconds per side</span>
+          </span>
+          <b-form-checkbox
+            v-model="form.flashcard_settings.autoplay.student_override"
+            :disabled="!form.flashcard_settings.autoplay.enabled"
+            class="d-inline-flex align-items-center"
+          >
+            Allow student override
+          </b-form-checkbox>
+        </b-form-group>
+
+        <!-- Random Shuffle -->
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="flashcard_random_shuffle"
+        >
+          <template v-slot:label>
+            Random Shuffle
+            <QuestionCircleTooltip :id="'random-shuffle-tooltip'"/>
+            <b-tooltip target="random-shuffle-tooltip" delay="250" triggers="hover focus">
+              When enabled, flashcards will be presented in a random order each session.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group
+            id="flashcard_random_shuffle"
+            v-model="form.flashcard_settings.random_shuffle.enabled"
+            name="random_shuffle_enabled"
+            class="d-inline-flex align-items-center mr-4"
+          >
+            <b-form-radio :value="true">On</b-form-radio>
+            <b-form-radio :value="false">Off</b-form-radio>
+          </b-form-radio-group>
+          <b-form-checkbox
+            v-model="form.flashcard_settings.random_shuffle.student_override"
+            :disabled="!form.flashcard_settings.random_shuffle.enabled"
+            class="d-inline-flex align-items-center"
+          >
+            Allow student override
+          </b-form-checkbox>
+        </b-form-group>
+
+        <!-- Show Hint -->
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="flashcard_show_hint"
+        >
+          <template v-slot:label>
+            Show Hint <sup class="text-muted">†</sup>
+            <QuestionCircleTooltip :id="'flashcard-hint-tooltip'"/>
+            <b-tooltip target="flashcard-hint-tooltip" delay="250" triggers="hover focus">
+              When enabled, students will be able to view a hint before flipping the card.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group
+            id="flashcard_show_hint"
+            v-model="form.flashcard_settings.show_hint.enabled"
+            name="show_hint_enabled"
+            class="d-inline-flex align-items-center mr-4"
+          >
+            <b-form-radio :value="true">On</b-form-radio>
+            <b-form-radio :value="false">Off</b-form-radio>
+          </b-form-radio-group>
+          <b-form-checkbox
+            v-model="form.flashcard_settings.show_hint.student_override"
+            :disabled="!form.flashcard_settings.show_hint.enabled"
+            class="d-inline-flex align-items-center"
+          >
+            Allow student override
+          </b-form-checkbox>
+        </b-form-group>
+
+        <!-- Text-to-Speech -->
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="flashcard_tts"
+        >
+          <template v-slot:label>
+            Text-to-Speech <sup class="text-muted">†</sup>
+            <QuestionCircleTooltip :id="'flashcard-tts-tooltip'"/>
+            <b-tooltip target="flashcard-tts-tooltip" delay="250" triggers="hover focus">
+              When enabled, students will see a speaker icon on text-only cards that reads the content aloud using AI-generated audio.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group
+            id="flashcard_tts"
+            v-model="form.flashcard_settings.text_to_speech.enabled"
+            name="text_to_speech_enabled"
+            class="d-inline-flex align-items-center mr-4"
+          >
+            <b-form-radio :value="true">On</b-form-radio>
+            <b-form-radio :value="false">Off</b-form-radio>
+          </b-form-radio-group>
+          <b-form-checkbox
+            v-model="form.flashcard_settings.text_to_speech.student_override"
+            :disabled="!form.flashcard_settings.text_to_speech.enabled"
+            class="d-inline-flex align-items-center"
+          >
+            Allow student override
+          </b-form-checkbox>
+        </b-form-group>
+
+        <!-- Captions -->
+        <b-form-group
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="flashcard_captions"
+        >
+          <template v-slot:label>
+            Captions <sup class="text-muted">†</sup>
+            <QuestionCircleTooltip :id="'flashcard-captions-tooltip'"/>
+            <b-tooltip target="flashcard-captions-tooltip" delay="250" triggers="hover focus">
+              When enabled, students will see AI-generated captions displayed alongside text-to-speech audio on text-only cards.
+            </b-tooltip>
+          </template>
+          <b-form-radio-group
+            id="flashcard_captions"
+            v-model="form.flashcard_settings.captions.enabled"
+            name="captions_enabled"
+            class="d-inline-flex align-items-center mr-4"
+          >
+            <b-form-radio :value="true">On</b-form-radio>
+            <b-form-radio :value="false">Off</b-form-radio>
+          </b-form-radio-group>
+          <b-form-checkbox
+            v-model="form.flashcard_settings.captions.student_override"
+            :disabled="!form.flashcard_settings.captions.enabled"
+            class="d-inline-flex align-items-center"
+          >
+            Allow student override
+          </b-form-checkbox>
+        </b-form-group>
+
+        <p class="text-muted small mt-2 mb-0">
+          <sup>†</sup> These settings can also be configured at the question usage level.
+        </p>
+      </b-card>
+
+      <b-card
+        v-if="!isFormativeCourse && +form.formative !== 1 && form.source === 'a' && form.assessment_type !== 'clicker' && form.assessment_type !== 'flashcard'"
         :header-html="getHeaderHtml('Late Policy')"
         body-class="pb-0 card-body-pl"
         class="mb-3"
       >
         <b-card-text>
-          <b-form-group
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="late_policy"
-          >
+          <b-form-group label-cols-sm="4" label-cols-lg="3" label-for="late_policy">
             <template v-slot:label>
               Late Policy*
               <QuestionCircleTooltip :id="'change_late_policy_tooltip'"/>
-              <b-tooltip target="change_late_policy_tooltip"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                You can change the late policy as long as the assignment is not past due for any students. If any are
-                past
-                due, please update the
-                assignment with all due dates in the future to gain access to the Late Policy.
+              <b-tooltip target="change_late_policy_tooltip" delay="250" triggers="hover focus">
+                You can change the late policy as long as the assignment is not past due for any students.
               </b-tooltip>
             </template>
             <b-form-radio-group id="late_policy"
@@ -1635,27 +1696,15 @@
                                 :disabled="form.can_change_late_policy === false"
                                 @change="updateFinalSubmissionDate($event)"
             >
-              <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
-              <b-form-radio value="not accepted">
-                Do not accept late
-              </b-form-radio>
+              <b-form-radio value="not accepted">Do not accept late</b-form-radio>
               <span @click="initLateValues">
-              <b-form-radio value="marked late">
-                Accept but mark late
-              </b-form-radio>
-              <b-form-radio value="deduction">
-                Accept late with a deduction
-              </b-form-radio>
-            </span>
+                <b-form-radio value="marked late">Accept but mark late</b-form-radio>
+                <b-form-radio value="deduction">Accept late with a deduction</b-form-radio>
+              </span>
             </b-form-radio-group>
           </b-form-group>
           <div v-show="form.late_policy === 'deduction'">
-            <b-form-group
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label="Late Deduction Percent"
-              label-for="late_deduction_percent"
-            >
+            <b-form-group label-cols-sm="4" label-cols-lg="3" label="Late Deduction Percent" label-for="late_deduction_percent">
               <b-form-row>
                 <b-col lg="4">
                   <b-form-input
@@ -1671,30 +1720,15 @@
                 </b-col>
               </b-form-row>
             </b-form-group>
-
-            <b-form-group
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="late_deduction_application_period"
-            >
-              <template v-slot:label>
-                Late Deduction Applied*
-              </template>
-              <b-form-radio-group v-model="form.late_deduction_applied_once"
-                                  stacked
-                                  required
-                                  :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
-              >
-              <span @click="form.late_deduction_application_period = ''">
-                <b-form-radio value="1">
-                  Just once
-                </b-form-radio>
-              </span>
+            <b-form-group label-cols-sm="4" label-cols-lg="3" label-for="late_deduction_application_period">
+              <template v-slot:label>Late Deduction Applied*</template>
+              <b-form-radio-group v-model="form.late_deduction_applied_once" stacked required :disabled="isLocked(hasSubmissionsOrFileSubmissions)">
+                <span @click="form.late_deduction_application_period = ''">
+                  <b-form-radio value="1">Just once</b-form-radio>
+                </span>
                 <b-form-radio class="mt-2" value="0">
                   <b-row>
-                    <b-col lg="4" class="mt-1">
-                      Every
-                    </b-col>
+                    <b-col lg="4" class="mt-1">Every</b-col>
                     <b-col lg="6">
                       <b-form-input
                         id="late_deduction_application_period"
@@ -1708,19 +1742,8 @@
                       <has-error :form="form" field="late_deduction_application_period"/>
                     </b-col>
                     <QuestionCircleTooltip :id="'late_deduction_application_period_tooltip'"/>
-                    <b-tooltip target="late_deduction_application_period_tooltip"
-                               delay="250"
-                               triggers="hover focus"
-                    >
-                      Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late
-                      Deduction
-                      percent
-                      is 20%
-                      and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then
-                      the
-                      percent
-                      is applied twice
-                      and they'll have a 40% deduction when computing the score.
+                    <b-tooltip target="late_deduction_application_period_tooltip" delay="250" triggers="hover focus">
+                      Enter a timeframe such as 5 minutes, 3 hours, or 1 day.
                     </b-tooltip>
                   </b-row>
                 </b-form-radio>
@@ -1740,53 +1763,27 @@
           label-cols-lg="3"
           label-for="assign_to_everyone"
         >
-          <template v-slot:label>
-            Assign to Everyone*
-          </template>
-          <b-form-radio-group id="assign_to_everyone"
-                              v-model="form.assign_to_everyone"
-                              required
-                              stacked
-          >
-            <b-form-radio name="assign_to_everyone" value="1">
-              Yes
-            </b-form-radio>
-            <b-form-radio name="assign_to_everyone" value="0">
-              No
-            </b-form-radio>
+          <template v-slot:label>Assign to Everyone*</template>
+          <b-form-radio-group id="assign_to_everyone" v-model="form.assign_to_everyone" required stacked>
+            <b-form-radio name="assign_to_everyone" value="1">Yes</b-form-radio>
+            <b-form-radio name="assign_to_everyone" value="0">No</b-form-radio>
           </b-form-radio-group>
         </b-form-group>
         <div v-show="form.assessment_type === 'clicker'">
-          <b-form-group
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="assign_to"
-            label="Assign To"
-          >
+          <b-form-group label-cols-sm="4" label-cols-lg="3" label-for="assign_to" label="Assign To">
             <div class="mt-2">
-              Clicker assignments are assigned to all students and manually opened by the instructor at the
-              start of the assignment.
+              Clicker assignments are assigned to all students and manually opened by the instructor at the start of the assignment.
             </div>
           </b-form-group>
         </div>
         <div v-show="form.assessment_type !== 'clicker'">
-          <div v-for="(assignTo,index) in form.assign_tos"
-               :key="index"
-          >
-            <b-form-group
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label-for="assign_to"
-            >
+          <div v-for="(assignTo,index) in form.assign_tos" :key="index">
+            <b-form-group label-cols-sm="4" label-cols-lg="3" label-for="assign_to">
               <template v-slot:label>
                 Assign to*
                 <QuestionCircleTooltip :id="'assign_to_tooltip'"/>
-                <b-tooltip target="assign_to_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  You can assign to Everybody, a particular section (search by name) or student (search by name or
-                  email).
+                <b-tooltip target="assign_to_tooltip" delay="250" triggers="hover focus">
+                  You can assign to Everybody, a particular section (search by name) or student (search by name or email).
                 </b-tooltip>
               </template>
               <b-form-row>
@@ -1801,32 +1798,19 @@
                   <has-error :form="form" :field="`groups_${index}`"/>
                 </b-col>
                 <b-col>
-                  <ul
-                    v-for="(group,group_index) in assignTo.groups"
-                    :key="group_index"
-                    class="flex-column align-items-start"
-                  >
+                  <ul v-for="(group,group_index) in assignTo.groups" :key="group_index" class="flex-column align-items-start">
                     <li>
                       {{ group.text }}
                       <a href="" @click.prevent="removeAssignToGroup(assignTo, group)">
-                        <b-icon icon="trash"
-                                :aria-label="`Remove ${group.text} from this Assign To`"
-                                class="text-muted"
-                        />
+                        <b-icon icon="trash" :aria-label="`Remove ${group.text} from this Assign To`" class="text-muted"/>
                       </a>
                     </li>
                   </ul>
                 </b-col>
               </b-form-row>
             </b-form-group>
-            <b-form-group
-              label-cols-sm="4"
-              label-cols-lg="3"
-              :label-for="`available_from_${index}`"
-            >
-              <template v-slot:label>
-                Available on*
-              </template>
+            <b-form-group label-cols-sm="4" label-cols-lg="3" :label-for="`available_from_${index}`">
+              <template v-slot:label>Available on*</template>
               <b-form-row>
                 <b-col lg="7">
                   <b-form-datepicker
@@ -1851,22 +1835,14 @@
                                   @input="form.errors.clear(`available_from_time_${index}`)"
                                   @shown="form.errors.clear(`available_from_time_${index}`)"
                   >
-                    <template v-slot:icon>
-                      <b-icon-clock/>
-                    </template>
+                    <template v-slot:icon><b-icon-clock/></template>
                   </vue-timepicker>
                   <ErrorMessage :message="form.errors.get(`available_from_time_${index}`)"/>
                 </b-col>
               </b-form-row>
             </b-form-group>
-            <b-form-group
-              label-cols-sm="4"
-              label-cols-lg="3"
-              :label-for="`due_date_${index}`"
-            >
-              <template v-slot:label>
-                Due Date*
-              </template>
+            <b-form-group label-cols-sm="4" label-cols-lg="3" :label-for="`due_date_${index}`">
+              <template v-slot:label>Due Date*</template>
               <b-form-row>
                 <b-col lg="7">
                   <b-form-datepicker
@@ -1892,9 +1868,7 @@
                                   @input="form.errors.clear(`due_time_${index}`)"
                                   @shown="form.errors.clear(`due_time_${index}`)"
                   >
-                    <template v-slot:icon>
-                      <b-icon-clock/>
-                    </template>
+                    <template v-slot:icon><b-icon-clock/></template>
                   </vue-timepicker>
                   <ErrorMessage :message="form.errors.get(`due_time_${index}`)"/>
                 </b-col>
@@ -1909,17 +1883,8 @@
               <template v-slot:label>
                 Final Submission Deadline*
                 <QuestionCircleTooltip :id="'final_submission_deadline_tooltip'"/>
-                <b-tooltip target="final_submission_deadline_tooltip"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  For assessments where you allow late submissions (either marked late or with penalty), this is the
-                  latest
-                  possible date for which you'll accept a submission. If your solutions are released, you will not
-                  be
-                  able
-                  to
-                  change this field.
+                <b-tooltip target="final_submission_deadline_tooltip" delay="250" triggers="hover focus">
+                  For assessments where you allow late submissions, this is the latest possible date for which you'll accept a submission.
                 </b-tooltip>
               </template>
               <b-form-row>
@@ -1948,9 +1913,7 @@
                                   @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
                                   @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
                   >
-                    <template v-slot:icon>
-                      <b-icon-clock/>
-                    </template>
+                    <template v-slot:icon><b-icon-clock/></template>
                   </vue-timepicker>
                   <ErrorMessage :message="form.errors.get(`final_submission_deadline_time_${index}`)"/>
                 </b-col>
@@ -1959,26 +1922,17 @@
             <div v-if="form.assign_tos.length>1">
               <b-row align-h="end">
                 <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">
-                  Remove Assign
-                  to
+                  Remove Assign to
                 </b-button>
               </b-row>
               <hr>
             </div>
           </div>
           <span v-if="courseId">
-            <b-button variant="outline-primary" size="sm" @click="addAssignTo">
-              Add Assign to
-            </b-button>
+            <b-button variant="outline-primary" size="sm" @click="addAssignTo">Add Assign to</b-button>
             <QuestionCircleTooltip :id="'add_assign_to_tooltip'" />
-            <b-tooltip target="add_assign_to_tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              When adding new "assign tos", we first assign at the user level, then section level, and finally at the course
-              level. So, if you
-              assign one set of dates to everybody and another to a specific user, that user's dates will override those at
-              the course level.
+            <b-tooltip target="add_assign_to_tooltip" delay="250" triggers="hover focus">
+              When adding new "assign tos", we first assign at the user level, then section level, and finally at the course level.
             </b-tooltip>
           </span>
         </div>
@@ -2015,7 +1969,6 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 import CKEditorFileToLinkUploader from './CKEditorFileToLinkUploader.vue'
-
 import { doCopy } from '~/helpers/Copy'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -2024,6 +1977,14 @@ import QRCodeStyling from 'qr-code-styling'
 import VueTimepicker from 'vue2-timepicker/src/vue-timepicker.vue'
 import ErrorMessage from './ErrorMessage.vue'
 import CanSubmitWorkTooltip from './CanSubmitWorkTooltip.vue'
+
+const defaultFlashcardSettings = {
+  autoplay: { enabled: true, student_override: false, seconds: 4 },
+  random_shuffle: { enabled: true, student_override: false },
+  show_hint: { enabled: true, student_override: false },
+  text_to_speech: { enabled: true, student_override: false },
+  captions: { enabled: true, student_override: false }
+}
 
 export default {
   components: {
@@ -2040,18 +2001,15 @@ export default {
   props: {
     form: {
       type: Object,
-      default: function () {
-      }
+      default: function () {}
     },
     course: {
       type: Object,
-      default: function () {
-      }
+      default: function () {}
     },
     assignmentGroups: {
       type: Array,
-      default: function () {
-      }
+      default: function () {}
     },
     isBetaAssignment: { type: Boolean, default: false },
     lms: { type: Boolean, default: false },
@@ -2073,7 +2031,8 @@ export default {
     submittedWorkFormat: [
       { item: 'file', name: 'File' },
       { item: 'audio', name: 'Audio' },
-      { item: 'video', name: 'Video' }],
+      { item: 'video', name: 'Video' }
+    ],
     actionToBeTakenForRealTimeQuestionsInDelayedAssignment: 'leave open-ended questions',
     autoReleaseKey: 0,
     initNumberOfAllowedAttemptsPenalty: 0,
@@ -2094,14 +2053,8 @@ export default {
     richEditorConfig: {
       toolbar: [
         { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo'] },
-        {
-          name: 'basicstyles',
-          items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat']
-        },
-        {
-          name: 'paragraph',
-          items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']
-        },
+        { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat'] },
+        { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
         '/',
         { name: 'links', items: ['Link', 'Unlink'] },
         { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },
@@ -2148,12 +2101,8 @@ export default {
   watch: {
     'form.source': {
       async handler (newValue, oldValue) {
-        if (!this.assignmentId) {
-          return false
-        }
-        if (newValue === 'a') {
-          return false
-        }
+        if (!this.assignmentId) return false
+        if (newValue === 'a') return false
         try {
           const { data } = await axios.post(`/api/assignments/${this.assignmentId}/validate-assessment-type`,
             { 'assessment_type': this.form.assessment_type, 'source': newValue })
@@ -2162,9 +2111,7 @@ export default {
             this.form.source = oldValue
             return false
           }
-          if (newValue === 'a') {
-            this.resetOpenEndedResponsesAndPointsPerQuestion()
-          }
+          if (newValue === 'a') this.resetOpenEndedResponsesAndPointsPerQuestion()
         } catch (error) {
           this.form.source = oldValue
           this.$noty.error(error.message)
@@ -2180,9 +2127,7 @@ export default {
           const item = newValue[i]
           const combinedDateTime = `${item.due_date} ${item.due_time}`
           const formattedDue = moment.tz(combinedDateTime, 'YYYY-MM-DD h:mm A', this.user.time_zone)
-          if (formattedDue.isBefore(currentDateTime)) {
-            allDueDatesInFuture = false
-          }
+          if (formattedDue.isBefore(currentDateTime)) allDueDatesInFuture = false
         }
         this.form.can_change_late_policy = allDueDatesInFuture
       },
@@ -2233,9 +2178,7 @@ export default {
       if (this.actionToBeTakenForRealTimeQuestionsInDelayedAssignment === 'remove all open-ended questions') {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/remove-open-ended-questions`)
         this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return
-        }
+        if (data.type === 'error') return
       } else {
         this.$noty.info('The open-ended questions have not been removed from the assignment.')
       }
@@ -2297,15 +2240,11 @@ export default {
         : window.location.origin + `/students/assignments/${this.assignmentId}/summary`
     },
     async getAssignmentTemplate (assignmentTemplateId) {
-      if (!assignmentTemplateId) {
-        return
-      }
+      if (!assignmentTemplateId) return
       try {
         const { data } = await axios.get(`/api/assignment-templates/${assignmentTemplateId}`)
         this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
+        if (data.type === 'error') return false
         this.autoReleaseKey++
         this.$emit('populateFormWithAssignmentTemplate', data.assignment_template)
       } catch (error) {
@@ -2327,9 +2266,6 @@ export default {
         this.form.total_points = ''
       })
     },
-    toggleDefaultPointsPerQuestion (clicked) {
-      alert(clicked)
-    },
     handleFixCKEditor () {
       fixCKEditor(this)
     },
@@ -2346,9 +2282,7 @@ export default {
         if (this.form.file_upload_mode === 'compiled_pdf' &&
           !['0', 'file'].includes(this.form.default_open_ended_submission_type)) {
           this.form.file_upload_mode = originalFileUploadMode
-          this.$noty.info('You cannot choose a File Upload Mode of Compiled PDF\'s unless your Default Open-Ended Submission Type is File or None'
-            ,
-            { timeout: 9000 })
+          this.$noty.info('You cannot choose a File Upload Mode of Compiled PDF\'s unless your Default Open-Ended Submission Type is File or None', { timeout: 9000 })
         }
       })
     },
@@ -2358,8 +2292,7 @@ export default {
         if (this.form.file_upload_mode === 'compiled_pdf' &&
           !['0', 'file'].includes(this.form.default_open_ended_submission_type)) {
           this.form.default_open_ended_submission_type = originalDefaultOpenEndedSubmissionType
-          this.$noty.info('Since you have chosen a File Upload Mode of Compiled Upload, your Default Open-ended Submission Type can only be File or None.',
-            { timeout: 9000 })
+          this.$noty.info('Since you have chosen a File Upload Mode of Compiled Upload, your Default Open-ended Submission Type can only be File or None.', { timeout: 9000 })
         }
       })
     },
@@ -2395,10 +2328,9 @@ export default {
     initRandomizationsSwitch (event) {
       if (this.form.points_per_question === 'question weight' && +event === 1) {
         this.$noty.info('In Points Per Question above, please choose "Specify number of points" if you would like to use Randomizations.')
-        this.$nextTick(
-          () => {
-            this.form.randomizations = '0'
-          })
+        this.$nextTick(() => {
+          this.form.randomizations = '0'
+        })
         return false
       }
       if (+event === 0) {
@@ -2413,19 +2345,11 @@ export default {
     },
     addAssignTo () {
       let releasedToUnset = []
-      console.log(this.form)
-      if (this.form.show_scores && this.form.assessment_type === 'delayed') {
-        releasedToUnset.push('"scores"')
-      }
-      if (this.form.solutions_released) {
-        releasedToUnset.push('"solutions"')
-      }
-      if (this.form.students_can_view_assignment_statistics) {
-        releasedToUnset.push('"statistics"')
-      }
+      if (this.form.show_scores && this.form.assessment_type === 'delayed') releasedToUnset.push('"scores"')
+      if (this.form.solutions_released) releasedToUnset.push('"solutions"')
+      if (this.form.students_can_view_assignment_statistics) releasedToUnset.push('"statistics"')
       if (releasedToUnset.length) {
-        const message = `Please un-release ${releasedToUnset.join(', ')} before adding another assign to.`
-        this.$noty.error(message)
+        this.$noty.error(`Please un-release ${releasedToUnset.join(', ')} before adding another assign to.`)
         return false
       }
       let newAssignTo = this.defaultAssignTos(this.$moment, this.courseStartDate, this.courseEndDate)
@@ -2433,25 +2357,6 @@ export default {
       this.$nextTick(() => {
         this.fixDatePickerAccessibilityForDates()
       })
-    },
-    initDraftAssignTos (index) {
-      // START: if the draft assign_to has no groups yet (or maybe if it's the same, then initialize it)
-      // Then for a given assign_to if the dates are changed, update that index (first and last)
-
-      //if (updateDrafts && this.form.drafts[index].assign_tos && !this.form.drafts.assign_tos[assignToIndex]) {
-        /* alert(assignToIndex)
-        const newAssignTo = newAssignTos[newAssignTos.length - 1]
-        for (let i = 0; i < this.form.drafts.length; i++) {
-          const draftAssignedToGroup = {
-            groups: newAssignTo.groups,
-            available_from_date: i === 0 ? moment(newAssignTo.available_from_date).format('YYYY-MM-DD') : '',
-            available_from_time: i === 0 ? newAssignTo.available_from_time : '',
-            due_date: i === this.form.drafts.length - 1 ? moment(newAssignTo.due_date).format('YYYY-MM-DD') : '',
-            due_time: i === this.form.drafts.length - 1 ? newAssignTo.due_time : ''
-          }
-          this.form.drafts[i].assign_tos.push(draftAssignedToGroup)
-        }
-      }*/
     },
     updateAssignTos (assignTo) {
       if (assignTo.selectedGroup.hasOwnProperty('user_id')) {
@@ -2468,7 +2373,6 @@ export default {
           }
         }
       }
-
       if (assignTo.selectedGroup.hasOwnProperty('course_id')) {
         assignTo.groups.push(this.assignToCourse)
       }
@@ -2477,8 +2381,6 @@ export default {
     removeAssignToGroup (assignTo, group) {
       for (let i = 0; i < assignTo.groups.length; i++) {
         if (assignTo.groups[i].text === group.text) {
-          console.log(assignTo.groups[i].text)
-          console.log(group.text)
           assignTo.groups.splice(i, 1)
           return
         }
@@ -2490,14 +2392,12 @@ export default {
         this.assignToSections = data.sections
         this.assignToUsers = data.users
         this.assignToCourse = data.course
-        console.log(data)
         this.assignToGroups = [{ value: null, text: 'Please select a group' }]
         this.assignToGroups.push(data.course)
         this.assignToGroups.push({ label: 'Sections', options: data.sections })
         if (data.users.length) {
           this.assignToGroups.push({ label: 'Students', options: data.users })
         }
-        console.log(this.assignToGroups)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -2550,15 +2450,20 @@ export default {
           this.form.can_view_hint = 0
           this.form.number_of_allowed_attempts = '1'
           break
+        case ('flashcard'):
+          this.form.number_of_allowed_attempts = 'unlimited'
+          this.form.can_view_hint = 0
+          this.form.randomizations = 0
+          this.form.can_submit_work = 0
+          if (!this.form.flashcard_settings) {
+            this.form.flashcard_settings = JSON.parse(JSON.stringify(defaultFlashcardSettings))
+          }
+          break
       }
     },
     checkSourceAndLatePolicy () {
-      if (this.form.source === 'x') {
-        this.$noty.info('Clicker assessments must have a Source of "Internal".')
-      }
-      if (this.form.late_policy !== 'not accepted') {
-        this.$noty.info('Clicker assessments must have a Late Policy of "Do not accept late".')
-      }
+      if (this.form.source === 'x') this.$noty.info('Clicker assessments must have a Source of "Internal".')
+      if (this.form.late_policy !== 'not accepted') this.$noty.info('Clicker assessments must have a Late Policy of "Do not accept late".')
       if (this.form.number_of_randomized_assessments) {
         this.$noty.info('Clicker assessments can\'t be randomized.')
         this.form.number_of_randomized_assessments = null
@@ -2604,21 +2509,16 @@ export default {
         return 'You have already released the solutions to this assignment, so you won\'t be able to add or remove questions.'
       }
     },
-
     async handleCreateAssignmentGroup (bvModalEvt) {
       bvModalEvt.preventDefault()
       try {
         const { data } = await this.assignmentGroupForm.post(`/api/assignmentGroups/${this.courseId}`)
-        console.log(data)
         this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
+        if (data.type === 'error') return false
         let newAssignmentGroup = {
           value: data.assignment_group_info.assignment_group_id,
           text: data.assignment_group_info.assignment_group
         }
-
         this.assignmentGroups.splice(this.assignmentGroups.length - 1, 0, newAssignmentGroup)
         this.form.assignment_group_id = data.assignment_group_info.assignment_group_id
         this.$bvModal.hide('modal-create-assignment-group')
@@ -2636,7 +2536,6 @@ export default {
       if (groupId === -1) {
         this.$bvModal.show('modal-create-assignment-group')
       }
-      // don't notify students for exams
       for (let i = 0; i < this.assignmentGroups.length; i++) {
         if (this.assignmentGroups[i].value === groupId) {
           if (['exam', 'midterm', 'quiz', 'final'].includes(this.assignmentGroups[i].text.toLowerCase())) {
@@ -2645,7 +2544,6 @@ export default {
         }
       }
     },
-
     resetOpenEndedResponsesAndPointsPerQuestion () {
       this.form.default_points_per_question = 10
       this.form.default_open_ended_submission_type = 'file'
@@ -2678,5 +2576,28 @@ export default {
 
 .time-input-group .time-input {
   border-right: none;
+}
+
+.flashcard-settings-table th {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.flashcard-settings-table td {
+  vertical-align: middle;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield;
 }
 </style>

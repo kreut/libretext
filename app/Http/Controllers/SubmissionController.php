@@ -415,6 +415,12 @@ class SubmissionController extends Controller
                     ->where('question_id', $question->id)
                     ->delete();
             }
+            if ($assignment->assessment_type === 'flashcard' && app()->environment('local')){
+                DB::table('submissions')
+                    ->where('user_id', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->delete();
+            }
             $discussion_comments = DB::table('discussions')
                 ->join('discussion_comments', 'discussion_comments.discussion_id', '=', 'discussions.id')
                 ->where('discussion_comments.user_id', $request->user()->id)

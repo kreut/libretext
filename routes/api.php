@@ -633,6 +633,8 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::patch('/assignments/{assignment}/questions/{question}/update-custom-rubric', 'AssignmentSyncQuestionController@updateCustomRubric');
     Route::patch('/assignments/{assignment}/questions/{question}/use-existing-rubric', 'AssignmentSyncQuestionController@updateUseExistingRubric');
 
+    Route::get('/assignments/{assignment}/questions/{question}/flashcard-card-settings', 'AssignmentSyncQuestionController@getFlashcardCardSettings');
+    Route::patch('/assignments/{assignment}/question/{question}/flashcard-card-settings', 'AssignmentSyncQuestionController@updateFlashcardCardSettings');
     Route::get('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@getDiscussItSettings');
     Route::patch('/assignments/{assignment}/question/{question}/discuss-it-settings', 'AssignmentSyncQuestionController@updateDiscussItSettings');
     Route::get('/assignments/{assignment}/question/{question}/forge-settings', 'AssignmentSyncQuestionController@getForgeSettings');

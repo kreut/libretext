@@ -275,6 +275,7 @@
       <div class="pb-2">
         <b-button v-if="questionToView.qti_json
         && !isDiscussIt(questionToView)
+        && !isFlashcard(questionToView)
         && isQtiOrForgeWithQtiAnswerSolution(questionToView, 'qti_json')"
                   size="sm"
                   variant="outline-info"
@@ -464,7 +465,8 @@
               class="view-questions-btn"
               @click="getStudentView(assignmentId)"
             >
-              <b-icon-eye /> View Questions
+              <b-icon-eye/>
+              View Questions
             </b-button>
           </b-row>
           <hr>
@@ -1886,6 +1888,13 @@ export default {
         return JSON.parse(question.qti_json).questionType === 'discuss_it'
       } catch (error) {
 
+      }
+      return false
+    },
+    isFlashcard (question) {
+      try {
+        return JSON.parse(question.qti_json).questionType === 'flashcard'
+      } catch (e) {
       }
       return false
     },

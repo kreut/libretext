@@ -482,7 +482,7 @@
               {{ item.points }}
             </td>
             <td v-if="assessmentType !== 'learning tree'">
-                <span v-if="item.qti_answer_json && !isDiscussIt(item) ">
+                <span v-if="item.qti_answer_json && !isDiscussIt(item) && !isFlashcard(item)">
                   <span
                     v-if="isQtiOrForgeWithQtiAnswerSolution(item)"
                   >
@@ -504,7 +504,7 @@
                    </span>
                 </span>
               <span
-                v-if="isDiscussIt(item)"
+                v-if="isDiscussIt(item) || isFlashcard(item)"
               >
                   N/A
                 </span>
@@ -814,6 +814,14 @@ export default {
     isDiscussIt (question) {
       try {
         return JSON.parse(question.qti_answer_json).questionType === 'discuss_it'
+      } catch (error) {
+
+      }
+      return false
+    },
+    isFlashcard (question) {
+      try {
+        return JSON.parse(question.qti_answer_json).questionType === 'flashcard'
       } catch (error) {
 
       }

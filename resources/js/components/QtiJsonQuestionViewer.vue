@@ -64,9 +64,24 @@
                                     :key="`accounting-journal-${qtiJsonCacheKey}`"
                                     :qti-json="JSON.parse(qtiJson)"
       />
+      <FlashcardViewer
+        v-if="questionType === 'flashcard'"
+        ref="flashcardViewer"
+        :key="`flashcard-${qtiJsonCacheKey}-${parsedQtiJson}`"
+        :cards="allFlashcards.length ? allFlashcards : (questionType === 'flashcard' ? [parsedQtiJson.card] : [])"
+        :assignment-id="assignmentId"
+        :question-id="questionId"
+        :initial-question-id="initialQuestionId"
+        :previewing-question="previewingQuestion"
+        :flashcard-settings="flashcardSettings"
+        @selfReported="onSelfReported"
+        @controlsStateChanged="$emit('flashcardControlsChanged', $event)"
+        @cardChanged="allFlashcards.length > 1 ? $emit('cardChanged', $event) : null"
+        @reorderQuestions="$emit('reorderQuestions',$event)"
+      />
       <div
         v-if="['accounting_report',
-             'forge',
+               'forge',
                'forge_iteration',
                'three_d_model_multiple_choice',
                'three_d_model_multiple_answer',
@@ -87,7 +102,7 @@
                'bow_tie'].includes(questionType)"
       >
         <div style="font-family: Sans-Serif,serif;" :style="presentationMode ? 'font-size:20px' : 'font-size:16px'">
-          <span v-html="prompt"/>
+          <span v-html="prompt" />
         </div>
         <b-form-group>
           <div>
@@ -287,7 +302,7 @@ import NumericalViewer from './viewers/NumericalViewer'
 import BowTieViewer from './viewers/BowTieViewer'
 import MatrixMultipleChoiceViewer from './viewers/MatrixMultipleChoiceViewer'
 import MultipleResponseSelectAllThatApplyOrSelectNViewer
-  from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
+from './viewers/MultipleResponseSelectAllThatApplyOrSelectNViewer'
 import MultipleResponseGroupingViewer from './viewers/MultipleResponseGroupingViewer'
 import DropDownTableViewer from './viewers/DropDownTableViewer'
 import DragAndDropClozeViewer from './viewers/DragAndDropClozeViewer'
@@ -305,10 +320,12 @@ import StructureImageUploader from './StructureImageUploader.vue'
 import ThreeDModelViewer from './viewers/ThreeDModelViewer.vue'
 import AccountingJournalEntryViewer from './viewers/AccountingJournalEntryViewer.vue'
 import AccountingReportViewer from './viewers/AccountingReportViewer.vue'
+import FlashcardViewer from './viewers/FlashcardViewer.vue'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    FlashcardViewer,
     AccountingReportViewer,
     ForgeViewer,
     AccountingJournalEntryViewer,
@@ -333,6 +350,21 @@ export default {
     DragAndDropClozeViewer
   },
   props: {
+    initialQuestionId: { type: Number, default: 0 },
+    allFlashcards: {
+      type: Array,
+      default: () => []
+    },
+    flashcardSettings: {
+      type: Object,
+      default: () => ({
+        autoplay: { enabled: false, seconds: 4, student_override: false },
+        random_shuffle: { enabled: false, student_override: false },
+        show_hint: { enabled: true, student_override: false },
+        text_to_speech: { enabled: false, student_override: false },
+        captions: { enabled: false, student_override: false }
+      })
+    },
     qtiJson: {
       type: String,
       default: ''
@@ -384,35 +416,44 @@ export default {
 
   },
   data: () => ({
-      receivedModelStructureData: false,
-      structureImageUploaderKey: 0,
-      confirmedStructure: false,
-      structureS3Key: '',
-      solutionStructure: '',
-      response: '',
-      receivedStructure: false,
-      clickerApp: window.config.clickerApp,
-      qtiJsonCacheKey: 0,
-      matchingFeedback: '',
-      termsToMatch: [],
-      possibleMatches: [],
-      jsonShown: false,
-      submissionErrorMessage: '',
-      questionType: '',
-      selectChoices: [],
-      question: {},
-      prompt: '',
-      simpleChoice: []
-    }
+    receivedModelStructureData: false,
+    structureImageUploaderKey: 0,
+    confirmedStructure: false,
+    structureS3Key: '',
+    solutionStructure: '',
+    response: '',
+    receivedStructure: false,
+    clickerApp: window.config.clickerApp,
+    qtiJsonCacheKey: 0,
+    matchingFeedback: '',
+    termsToMatch: [],
+    possibleMatches: [],
+    jsonShown: false,
+    submissionErrorMessage: '',
+    questionType: '',
+    selectChoices: [],
+    question: {},
+    prompt: '',
+    simpleChoice: [],
+    flashcardSubmitQuestionId: null // tracks which card's question_id to submit against
+  }
   ),
   computed: {
     isLocalMe: () => window.config.isAdmin && window.location.hostname === 'local.adapt',
     ...mapGetters({
       user: 'auth/user'
-    })
+    }),
+    parsedQtiJson () {
+      try {
+        return JSON.parse(this.qtiJson)
+      } catch (e) {
+        return {}
+      }
+    }
   },
   watch: {
     qtiJson (newValue, oldValue) {
+      if (this.questionType === 'flashcard') return
       this.qtiJsonCacheKey++
     }
   },
@@ -453,10 +494,11 @@ export default {
       }
     }
     switch (this.questionType) {
+      case ('flashcard'):
       case ('discuss_it'):
       case ('accounting_journal_entry'):
         break
-      case('accounting_report'):
+      case ('accounting_report'):
       case ('forge'):
       case ('forge_iteration'):
       case ('three_d_model_multiple_choice'):
@@ -509,6 +551,8 @@ export default {
       MathJax.Hub.Queue(['Typeset', MathJax.Hub])
       iFrameResize({ log: true }, '.question-media-player')
     })
+
+    console.error('flashcard cards:', this.allFlashcards, JSON.parse(this.qtiJson))
   },
   methods: {
     formatQuestionMediaPlayer,
@@ -557,6 +601,16 @@ export default {
         this.receivedStructure = true
         this.$forceUpdate()
       }
+    },
+    // Called when a student clicks Correct/Incorrect on a flashcard.
+    // Stashes the card's question_id so submitResponse() targets the right question,
+    // then immediately triggers the normal submit flow.
+    onSelfReported ({ result, questionId }) {
+      // Sync parent's currentPage to this card's question before submitting,
+      // so score updates land on the right question in questions_view.
+      this.$emit('cardChanged', questionId)
+      this.flashcardSubmitQuestionId = questionId
+      this.submitResponse()
     },
     showRandomizedMessage () {
       if (this.presentationMode) {
@@ -623,6 +677,13 @@ export default {
       let invalidResponse = false
       let submissionErrorMessage
       switch (this.questionType) {
+        case ('flashcard'):
+          response = this.$refs.flashcardViewer.getStudentResponse()
+          if (!response) {
+            // Shouldn't happen since onSelfReported sets it first, but guard anyway
+            return false
+          }
+          break
         case ('accounting_report'):
           response = JSON.stringify(this.$refs.accountingReportViewer.studentResponses)
           break
@@ -830,7 +891,13 @@ export default {
         return false
       }
       console.error(response)
-      this.$emit('submitResponse', { data: response, origin: 'qti' })
+      // For flashcards, emit with the specific card's question_id so the parent
+      // can target the correct question in its questions array, then reset the stash.
+      const emitData = this.questionType === 'flashcard' && this.flashcardSubmitQuestionId
+        ? { data: response, origin: 'qti', question_id: this.flashcardSubmitQuestionId }
+        : { data: response, origin: 'qti' }
+      this.flashcardSubmitQuestionId = null
+      this.$emit('submitResponse', emitData)
     }
 
   }

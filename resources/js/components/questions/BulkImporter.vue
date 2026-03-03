@@ -47,6 +47,26 @@
         > categorize by topic</a> or create new topics as you import your questions.
         </li>
       </ol>
+      <ol v-if="importTemplate === 'flashcard'">
+        <li>Starred fields are required.</li>
+        <li><strong>Front*</strong> is the question or term shown on the front of the card.</li>
+        <li><strong>Back*</strong> is the answer or definition shown on the back of the card.</li>
+        <li><strong>Hint</strong> and <strong>Tags</strong> are optional and may be left blank.</li>
+        <li>Tags should be a comma separated list: tag 1, tag 2, tag 3.</li>
+        <li>Please enter 1 for yes and 0 for no in the Public* column.</li>
+        <li>Accepted licenses are {{ validLicenses }}.</li>
+        <li>
+          Folders can be chosen from your existing
+          <a href="" @click.prevent="$bvModal.show('modal-my-questions-folders')">My Questions folders</a>
+          or a new folder will be created automatically if the name you enter does not yet exist.
+        </li>
+        <li>
+          If a card with the same Front and Back already exists in ADAPT it will be reused rather than duplicated.
+        </li>
+        <li>
+          To add imported cards directly to an assignment, select a course and assignment before uploading.
+        </li>
+      </ol>
     </b-modal>
     <b-modal id="modal-my-assignments-and-topics"
              title="Assignments and Topics"
@@ -141,6 +161,9 @@
             <b-form-radio name="import_template" value="qti">
               Canvas QTI
             </b-form-radio>
+            <b-form-radio name="import_template" value="flashcard">
+              Flashcard
+            </b-form-radio>
             <b-form-radio v-show="user.id === 3280" name="import_template" value="bow_tie">
               Bowtie
             </b-form-radio>
@@ -148,7 +171,134 @@
         </b-form-row>
       </b-form-group>
     </b-container>
-    <div v-show="importTemplate !== 'case_study_notes'">
+
+    <!-- ─── Flashcard Importer ──────────────────────────────────────────────── -->
+    <div v-if="importTemplate === 'flashcard'">
+      <b-card
+        header-html="<h2 class=&quot;h7&quot;>Flashcard Importer</h2>"
+        class="mb-4"
+      >
+        <p>
+          Import text-only flashcards from a CSV file. Each row becomes one flashcard question.
+          Download the template below to get started.
+        </p>
+
+        <b-button variant="secondary" size="sm" class="mb-3 mr-2" @click="$bvModal.show('modal-bulk-upload-instructions')">
+          Instructions
+        </b-button>
+        <b-button variant="success" size="sm" class="mb-3" @click="downloadCSVStructure">
+          Download Flashcard Import Template
+        </b-button>
+
+        <!-- Import to assignment (optional) -->
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Import to Assignment"
+        >
+          <b-form-row>
+            <b-col cols="5">
+              <b-form-select
+                v-model="flashcardImportCourseId"
+                size="sm"
+                class="mt-1"
+                :options="flashcardCourseOptions"
+                @change="onFlashcardCourseChange"
+              />
+            </b-col>
+            <b-col v-if="flashcardImportCourseId" cols="5">
+              <b-form-select
+                v-model="flashcardImportAssignmentId"
+                size="sm"
+                class="mt-1"
+                :options="flashcardAssignmentOptions"
+              />
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+
+        <!-- File upload -->
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="CSV File*"
+        >
+          <b-form-file
+            v-model="flashcardImportFile"
+            class="mb-2"
+            accept=".csv"
+            placeholder="Choose a CSV file or drop it here..."
+            drop-placeholder="Drop file here..."
+          />
+          <div v-if="flashcardUploading">
+            <b-spinner small type="grow"/>
+            Uploading...
+          </div>
+        </b-form-group>
+
+        <b-button
+          variant="info"
+          :disabled="!flashcardImportFile || flashcardUploading"
+          @click="uploadFlashcardImportFile"
+        >
+          Import
+        </b-button>
+      </b-card>
+
+      <!-- Error messages -->
+      <div v-if="errorMessages.length" class="text-danger mb-3">
+        Please fix the following errors:
+        <ul>
+          <li v-for="errorMessage in errorMessages" :key="errorMessage">
+            {{ errorMessage }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Import summary + results table -->
+      <div v-if="questionsToImport.length" style="min-height:200px">
+        <b-container fluid>
+          <h2 class="h5">Import Summary</h2>
+          <table class="table table-striped pb-3" style="width:auto">
+            <thead>
+            <tr>
+              <th scope="col" style="width:200px">Import Status</th>
+              <th scope="col" style="width:200px">Count</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="item in questionsToImportSummary" :key="item.key">
+              <td>
+                <span v-if="parseInt(item.total) > 0">
+                  <a href="" @click.prevent="filter = item.key">{{ item.key }}</a>
+                </span>
+                <span v-else>{{ item.key }}</span>
+              </td>
+              <td>{{ item.total }}</td>
+            </tr>
+            </tbody>
+          </table>
+
+          <h2 class="h5">Cards to Import</h2>
+          <b-table
+            striped
+            hover
+            responsive
+            :filter="filter"
+            :no-border-collapse="true"
+            :fields="flashcardTableFields"
+            :items="questionsToImport"
+          >
+            <template v-slot:cell(import_status)="data">
+              <span v-html="data.item.import_status"/>
+            </template>
+          </b-table>
+        </b-container>
+      </div>
+    </div>
+    <!-- ─── End Flashcard Importer ──────────────────────────────────────────── -->
+
+    <div v-show="importTemplate !== 'case_study_notes' && importTemplate !== 'flashcard'">
       <b-card
         v-if="importTemplate === 'h5p'"
         header-html="<h2 class=&quot;h7&quot;>H5P Importer</h2>"
@@ -336,16 +486,16 @@
         class="mb-4"
       >
         <div>
-        <b-button v-if="['advanced','webwork'].includes(importTemplate)"
-                  variant="secondary"
-                  size="sm"
-                  @click="$bvModal.show('modal-bulk-upload-instructions')"
-        >
-          Instructions
-        </b-button>
-        <ConsultInsight v-show="importTemplate === 'advanced'"
-                        :url="'https://commons.libretexts.org/insight/mom-to-adapt'"
-        />
+          <b-button v-if="['advanced','webwork'].includes(importTemplate)"
+                    variant="secondary"
+                    size="sm"
+                    @click="$bvModal.show('modal-bulk-upload-instructions')"
+          >
+            Instructions
+          </b-button>
+          <ConsultInsight v-show="importTemplate === 'advanced'"
+                          :url="'https://commons.libretexts.org/insight/mom-to-adapt'"
+          />
         </div>
         <div v-if="importTemplate === 'qti' && qtiSource === 'canvas'">
           <p>Using the QTI importer, you can import questions directly from Canvas. We currently support:</p>
@@ -705,7 +855,7 @@
       </div>
     </div>
 
-    <div style="min-height:200px">
+    <div v-if="!['flashcard'].includes(importTemplate)" style="min-height:200px">
       <b-container v-if="questionsToImport.length" fluid>
         <h2 class="h5">
           Import Summary
@@ -846,6 +996,22 @@ export default {
     }
   },
   data: () => ({
+    // ── Flashcard-specific ────────────────────────────────────────────────
+    flashcardImportFile: null,
+    flashcardUploading: false,
+    flashcardImportCourseId: null,
+    flashcardImportAssignmentId: null,
+    flashcardCourseOptions: [{ value: null, text: 'No specific course; import only to My Questions' }],
+    flashcardAssignmentOptions: [{ value: null, text: 'Please choose an assignment' }],
+    flashcardTableFields: [
+      { key: 'Title*', label: 'Title' },
+      { key: 'Front*', label: 'Front' },
+      { key: 'Back*', label: 'Back' },
+      { key: 'Hint', label: 'Hint' },
+      { key: 'Tags', label: 'Tags' },
+      'import_status'
+    ],
+    // ─────────────────────────────────────────────────────────────────────
     h5pCollectionOptions: [],
     h5pImportLevel: 'question',
     h5pImportCollectionForm: new Form({
@@ -944,8 +1110,164 @@ export default {
     this.getMyCourses()
     this.getH5PCollections()
     this.getAssignmentTemplateOptions()
+    this.getFlashcardCourses()
   },
   methods: {
+    // ── Flashcard import methods ──────────────────────────────────────────
+
+    async getFlashcardCourses () {
+      try {
+        const { data } = await axios.get('/api/courses')
+        if (data.type !== 'success') return
+        if (data.courses) {
+          for (const course of data.courses) {
+            this.flashcardCourseOptions.push({ value: course.id, text: course.name })
+          }
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+
+    async onFlashcardCourseChange (courseId) {
+      this.flashcardImportAssignmentId = null
+      this.flashcardAssignmentOptions = [{ value: null, text: 'Please choose an assignment' }]
+      if (!courseId) return
+      try {
+        const { data } = await axios.get(`/api/assignments/courses/${courseId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return
+        }
+        for (const assignment of data.assignments) {
+          this.flashcardAssignmentOptions.push({ value: assignment.id, text: assignment.name })
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+
+    async uploadFlashcardImportFile () {
+      if (!this.flashcardImportFile) {
+        this.$noty.info('Please select a CSV file.')
+        return
+      }
+      this.flashcardUploading = true
+      this.errorMessages = []
+      this.questionsToImport = []
+      this.questionsToImportSummary = []
+
+      try {
+        // Step 1: validate the CSV server-side
+        const formData = new FormData()
+        formData.append('bulk_import_file', this.flashcardImportFile)
+        formData.append('_method', 'put')
+        formData.append('import_template', 'flashcard')
+        formData.append('course_id', '')
+
+        const { data } = await axios.post('/api/questions/validate-bulk-import', formData)
+
+        if (data.type !== 'success') {
+          this.errorMessages = Array.isArray(data.message) ? data.message : [data.message]
+          this.flashcardUploading = false
+          return
+        }
+
+        // Step 2: import row by row
+        await this.importFlashcardQuestions(data.items_to_import)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
+      this.flashcardUploading = false
+      this.flashcardImportFile = null
+    },
+
+    async importFlashcardQuestions (itemsToImport) {
+      this.questionsToImport = itemsToImport
+      this.questionsToImportSummary = [
+        { key: 'Pending', total: itemsToImport.length },
+        { key: 'Success', total: 0 },
+        { key: 'Error', total: 0 }
+      ]
+
+      for (let i = 0; i < this.questionsToImport.length; i++) {
+        const row = this.questionsToImport[i]
+
+        // Build qti_json for this card
+        const card = {
+          frontType: 'text_only',
+          backType: 'text_only',
+          term: row['Front*'],
+          answer: row['Back*']
+        }
+        const hint = row['Hint'] ? row['Hint'].trim() : null
+        if (hint) {
+          card.hint = hint
+        }
+        const qtiJson = JSON.stringify({
+          questionType: 'flashcard',
+          card
+        })
+
+        try {
+          const payload = {
+            title: row['Title*'],
+            technology: 'qti',
+            question_type: 'assessment',
+            qti_json: qtiJson,
+            public: row['Public*'],
+            author: row['Author*'],
+            license: row['License*'],
+            license_version: '',
+            folder_id: row['folder_id'],
+            tags: row['Tags'] ? row['Tags'] : [],
+            open_ended_submission_type: '0',
+            source_url_required: false,
+            bulk_upload_into_assignment: true,
+            hint: hint,
+            text_question: null,
+            answer_html: null,
+            solution_html: null,
+            notes: null,
+            non_technology_text: null,
+            technology_id: null
+          }
+
+          // Optionally attach to an assignment
+          if (this.flashcardImportAssignmentId) {
+            payload.assignment_id = this.flashcardImportAssignmentId
+          }
+
+          const { data } = await axios.post('/api/questions', payload)
+
+          if (data.type === 'success') {
+            row.import_status = '<span class="text-success">Success</span>'
+            this.questionsToImportSummary.find(s => s.key === 'Success').total++
+          } else {
+            row.import_status = `<span class="text-danger">Error: ${data.message}</span>`
+            this.questionsToImportSummary.find(s => s.key === 'Error').total++
+          }
+        } catch (error) {
+          let msg = error.message
+          if (error.response && error.response.status === 422) {
+            const errors = Object.values(error.response.data.errors).flat()
+            msg = errors.join('; ')
+          }
+          row.import_status = `<span class="text-danger">Error: ${msg}</span>`
+          this.questionsToImportSummary.find(s => s.key === 'Error').total++
+        }
+
+        this.questionsToImportSummary.find(s => s.key === 'Pending').total--
+        // Force Vue reactivity on the row
+        this.$set(this.questionsToImport, i, { ...row })
+      }
+
+      this.$noty.info('Flashcard import complete.')
+    },
+
+    // ── Existing methods (unchanged) ─────────────────────────────────────
+
     getImportTemplateName () {
       switch (this.importTemplate) {
         case ('webwork'):
@@ -1268,9 +1590,13 @@ export default {
     },
     setQuestionsToImport (type) {
       this.questionsToImport = []
+      this.errorMessages = []
       switch (type) {
         case ('h5p'):
           this.fields = h5pFields
+          break
+        case ('flashcard'):
+          // fields handled by flashcardTableFields
           break
         case ('webwork'):
           this.fields = [
@@ -1716,5 +2042,4 @@ export default {
 </script>
 
 <style scoped>
-
 </style>

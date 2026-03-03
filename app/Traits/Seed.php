@@ -31,6 +31,7 @@ trait Seed
                 $question_type = $qti_array['questionType'];
 
                 if (in_array($question_type, [
+                    'flashcard',
                     'forge',
                     'accounting_report',
                     'accounting_journal_entry',

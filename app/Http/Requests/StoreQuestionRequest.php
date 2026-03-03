@@ -18,6 +18,7 @@ use App\Rules\hasValid3DModelParameters;
 use App\Rules\hasValid3dModelSolutionStructure;
 use App\Rules\HasValidAccountingJournalEntries;
 use App\Rules\HasValidAccountingReport;
+use App\Rules\HasValidFlashcard;
 use App\Rules\HighlightTableHeaders;
 use App\Rules\HighlightTableRows;
 use App\Rules\HighlightTextPrompt;
@@ -158,6 +159,9 @@ class StoreQuestionRequest extends FormRequest
                         case('qti'):
                             $qti_array = json_decode($this->qti_json, true);
                             switch ($qti_array['questionType']) {
+                                case('flashcard'):
+                                    $rules['qti_json'] = new HasValidFlashcard();
+                                    break;
                                 case('forge'):
                                     $rules['qti_prompt'] = ['required'];
                                     break;

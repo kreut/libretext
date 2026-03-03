@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 
 use App\Forge;
-use App\ForgeAssignmentQuestion;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\AssignmentTemplate;
@@ -15,6 +14,7 @@ use App\Helpers\Helper;
 use App\Helpers\Accounting;
 use App\Http\Requests\StoreQuestionRequest;
 use App\IMathAS;
+use App\Jobs\GenerateFlashcardTts;
 use App\Jobs\InitProcessTranscribe;
 use App\Jobs\ProcessValidateQtiFile;
 use App\JWE;
@@ -39,7 +39,6 @@ use Carbon\Carbon;
 use DOMDocument;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Traits\IframeFormatter;
@@ -51,10 +50,8 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-use setasign\Fpdi\Fpdi;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
@@ -65,6 +62,17 @@ class QuestionController extends Controller
     use DateFormatter;
     use AssignmentProperties;
 
+    protected $flashcard_keys = [
+        'Title*',
+        'Front*',
+        'Back*',
+        'Hint',
+        'Tags',
+        'Folder*',
+        'Public*',
+        'Author*',
+        'License*',
+    ];
     /**
      * @var string[]
      */
@@ -795,6 +803,9 @@ class QuestionController extends Controller
             $handle = fopen($csv_file, 'r');
             $header = fgetcsv($handle);
             switch ($import_template) {
+                case('flashcard'):
+                    $correct_keys = $this->flashcard_keys;
+                    break;
                 case('webwork'):
                     $correct_keys = $this->webwork_keys;
                     break;
@@ -835,6 +846,9 @@ class QuestionController extends Controller
             return $response;
         }
         switch ($import_template) {
+            case('flashcard'):
+                $keys = $this->flashcard_keys;
+                break;
             case('webwork'):
                 $keys = $this->webwork_keys;
                 break;
@@ -1026,6 +1040,7 @@ class QuestionController extends Controller
                     case('webwork'):
                         $technology_id = $question['File Path*'];
                         break;
+                    case('flashcard'):
                     case('bow_tie'):
                         break;
                     default:
@@ -1074,6 +1089,14 @@ class QuestionController extends Controller
                         $messages[] = "Row $row_num needs at least 3 Parameters to Monitor.";
                     }
                 }
+                if ($import_template === 'flashcard') {
+                    if (!$question['Front*']) {
+                        $messages[] = "Row $row_num is missing a Front (term).";
+                    }
+                    if (!$question['Back*']) {
+                        $messages[] = "Row $row_num is missing a Back (definition).";
+                    }
+                }
                 if (!$question['License*']) {
                     $messages[] = "Row $row_num is missing a license.";
                 } else {
@@ -1105,11 +1128,10 @@ class QuestionController extends Controller
      * @param Request $request
      * @param string $import_template
      * @param Course|null $course
-     * @return array|string|StreamedResponse
+     * @return array|string
      * @throws Exception
      */
-    public
-    function getBulkUploadTemplate(Request $request, string $import_template, Course $course = null)
+    public function getBulkUploadTemplate(Request $request, string $import_template, Course $course = null)
     {
         try {
             switch ($import_template) {
@@ -1126,20 +1148,28 @@ class QuestionController extends Controller
                 case('advanced'):
                     $list = $this->advanced_keys;
                     break;
+                case('flashcard'):
+                    $list = $this->flashcard_keys;
+                    break;
                 default:
                     throw new Exception("Cannot get the CSV bulk upload template for $import_template.");
-
             }
+
+            // Flashcard has no course-specific columns, but _removeCourseInfo
+            // is harmless here (array_diff finds nothing to remove).
             if (!$course) {
                 $list = $this->_removeCourseInfo($list);
             }
+
             $efs_dir = '/mnt/local/';
             $is_efs = is_dir($efs_dir);
             $storage_path = $is_efs
                 ? $efs_dir
                 : Storage::disk('local')->getAdapter()->getPathPrefix();
+
             $file = "$storage_path$import_template-bulk-question-import-template.csv";
             $fp = fopen($file, 'w');
+
             if ($import_template === 'webwork-def-file') {
                 $contents = file($request->file);
                 $new_list[0] = $list;
@@ -1159,23 +1189,42 @@ class QuestionController extends Controller
                 foreach ($list as $fields) {
                     fputcsv($fp, $fields);
                 }
+            } elseif ($import_template === 'flashcard') {
+                // Write header row + one example row so instructors know the format
+                fputcsv($fp, $list);
+                fputcsv($fp, [
+                    'Cell Membrane',                                  // Title*
+                    'What controls what enters and exits the cell?',  // Front*
+                    'The cell membrane',                              // Back*
+                    'Think about a cell\'s boundary',                 // Hint
+                    'biology, cell',                                  // Tags
+                    'My Biology Questions',                           // Folder*
+                    '0',                                              // Public* (0 = no, 1 = yes)
+                    'Jane Smith',                                     // Author*
+                    'ccby',                                           // License*
+                ]);
             } else {
                 fputcsv($fp, $list);
             }
 
             fclose($fp);
 
-            Storage::disk('s3')->put("$import_template-bulk-question-import-template.csv", file_get_contents($file));
+            Storage::disk('s3')->delete("$import_template-bulk-question-import-template.csv");
+            Storage::disk('s3')->put(
+                "$import_template-bulk-question-import-template.csv",
+                file_get_contents($file)
+            );
+
             return $import_template === 'webwork-def-file'
                 ? Storage::disk('s3')->get("$import_template-bulk-question-import-template.csv")
                 : Storage::disk('s3')->download("$import_template-bulk-question-import-template.csv");
 
         } catch (Exception $e) {
-
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to download the file.  Please try again or contact us for assistance.";
         }
+
         return $response;
     }
 
@@ -1821,14 +1870,33 @@ class QuestionController extends Controller
                 if ($request->bulk_upload_into_assignment
                     && $data['technology'] !== 'text'
                     && !$request->nursing_question) {
-                    $question = Question::where('technology', $data['technology'])
-                        ->where('technology_id', $data['technology_id'])
-                        ->where('version', 1)
-                        ->first();
-                    if (!$question) {
-                        $question = Question::create($data);
-                        $question->page_id = $question->id;
-                        $question->save();
+
+                    if ($data['technology'] === 'qti'
+                        && isset($data['qti_json_type'])
+                        && $data['qti_json_type'] === 'flashcard') {
+                        // Deduplicate flashcards by term (front) and answer (back)
+                        // using the indexed qti_json_type column + JSON extract.
+                        $card = json_decode($request->qti_json, true)['card'];
+                        $question = Question::where('qti_json_type', 'flashcard')
+                            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(qti_json, '$.card.term')) = ?", [$card['term']])
+                            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(qti_json, '$.card.answer')) = ?", [$card['answer']])
+                            ->first();
+                        if (!$question) {
+                            $question = Question::create($data);
+                            $question->page_id = $question->id;
+                            $question->save();
+                        }
+                    } else {
+                        // Original deduplication path for webwork/h5p/imathas
+                        $question = Question::where('technology', $data['technology'])
+                            ->where('technology_id', $data['technology_id'] ?? null)
+                            ->where('version', 1)
+                            ->first();
+                        if (!$question) {
+                            $question = Question::create($data);
+                            $question->page_id = $question->id;
+                            $question->save();
+                        }
                     }
                 } else {
                     $question = Question::create($data);
@@ -2017,6 +2085,14 @@ class QuestionController extends Controller
             DB::table('empty_learning_tree_nodes')->where('question_id', $question->id)->delete();
 
             DB::commit();
+            // Dispatch TTS generation for flashcard questions (text-based sides only).
+            // $new_question_revision_id is 0 for brand-new questions (no revision row yet).
+            if (($data['qti_json_type'] ?? '') === 'flashcard' && !app()->environment('testing')) {
+                GenerateFlashcardTts::dispatch($question->id, $new_question_revision_id);
+            }
+
+            $action = $is_update ? 'updated' : 'created';
+            $response['message'] = "The question has been $action.";
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";
             $response['question_id'] = $question->id;

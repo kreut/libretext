@@ -1965,6 +1965,7 @@ class AssignmentController extends Controller
                 'is_anonymous_user' => $request->user()->email === 'anonymous' && $assignment->course->user_id !== $request->user()->id,
                 'assessment_type' => $assignment->assessment_type,
                 'formative' => $assignment->formative,
+                'flashcard_settings' => json_decode($assignment->flashcard_settings),
                 'number_of_allowed_attempts' => $assignment->number_of_allowed_attempts,
                 'number_of_allowed_attempts_penalty' => $assignment->number_of_allowed_attempts_penalty,
                 'can_view_hint' => $assignment->can_view_hint,
@@ -2166,7 +2167,7 @@ class AssignmentController extends Controller
                 if ($in_code_solution = $webwork->inCodeSolution($questions_by_id[$question_id])) {
                     $questions_by_id[$question_id]->solution_html = $in_code_solution;
                 }
-                $solution['solution_html'] = $Question->addTimeToS3IFiles($questions_by_id[$question_id]->solution_html, $dom);
+                $solution['solution_html'] = $Question->addTimeToS3Files($questions_by_id[$question_id]->solution_html, $dom);
                 if (!$solution['solution_html']) {
                     $solution['solution_html'] = $questions_by_id[$question_id]->answer_html;
                 }
@@ -2268,7 +2269,7 @@ class AssignmentController extends Controller
             $can_view_assignment_statistics = in_array($role, [2, 4])
                 || ($role === 3 && $assignment->students_can_view_assignment_statistics);
             $response['assignment'] = $assignment->attributesToArray();
-            $response['assignment']['instructions'] = $response['assignment']['instructions'] ? $question->addTimeToS3IFiles($response['assignment']['instructions'], new DOMDocument(), false) : '';
+            $response['assignment']['instructions'] = $response['assignment']['instructions'] ? $question->addTimeToS3Files($response['assignment']['instructions'], new DOMDocument(), false) : '';
             $formatted_items = [
                 'assignment_groups' => $assignmentGroup->assignmentGroupsByCourse($assignment->course->id),
                 'total_points' => Helper::removeZerosAfterDecimal(round($this->getTotalPoints($assignment), 2)),

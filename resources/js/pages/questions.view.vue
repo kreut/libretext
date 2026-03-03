@@ -1731,20 +1731,21 @@
       <div
         v-if="questions !==['init'] && !inIFrame && !cannotViewAssessmentMessage && !presentationMode && !clickerApp"
       >
-        <PageTitle v-if="user.role !== 3"
-                   :title="getTitle(currentPage)"
-                   :adapt-id="getAdaptId()"
-                   :learning-tree-id="getLearningTreeId()"
-                   :show-formative-warning="questions[currentPage - 1] && questions[currentPage - 1].is_formative_question"
-                   :show-pencil="user && user.role===2"
-                   :assignment-id="+assignmentId"
-                   :algorithmic-question="questions[currentPage -1] && questions[currentPage - 1].algorithmic"
-                   :algorithmic-assignment="algorithmicAssignment"
-                   :question-id="questions.length && questions[currentPage-1].id"
-                   :is-instructor-with-anonymous-view="isInstructorWithAnonymousView"
-                   :clone-source-id="+(user && user.role===2 && questions[currentPage - 1] && questions[currentPage - 1].clone_source_id)"
-                   :open-ended-question-in-real-time-assignment="user && user.role === 2 && isOpenEnded && assessmentType === 'real time'"
-                   @updateCustomQuestionTitle="updateCustomQuestionTitle"
+        <PageTitle
+          v-if="(assessmentType === 'flashcard' && user.role === 2) || (user.role !== 3 && assessmentType !== 'flashcard')"
+          :title="getTitle(currentPage)"
+          :adapt-id="getAdaptId()"
+          :learning-tree-id="getLearningTreeId()"
+          :show-formative-warning="questions[currentPage - 1] && questions[currentPage - 1].is_formative_question"
+          :show-pencil="user && user.role===2"
+          :assignment-id="+assignmentId"
+          :algorithmic-question="questions[currentPage -1] && questions[currentPage - 1].algorithmic"
+          :algorithmic-assignment="algorithmicAssignment"
+          :question-id="questions.length && questions[currentPage-1].id"
+          :is-instructor-with-anonymous-view="isInstructorWithAnonymousView"
+          :clone-source-id="+(user && user.role===2 && questions[currentPage - 1] && questions[currentPage - 1].clone_source_id)"
+          :open-ended-question-in-real-time-assignment="user && user.role === 2 && isOpenEnded && assessmentType === 'real time'"
+          @updateCustomQuestionTitle="updateCustomQuestionTitle"
         />
         <div v-if="user.role === 3">
           <b-container fluid class="pt-2 pb-1 border-bottom">
@@ -1774,8 +1775,8 @@
                   style="font-size: 16px;"
                 >
                   <span
-                    v-if="!showScores || (questions[currentPage - 1].last_submitted === 'N/A' && isNaN(questions[currentPage - 1].submission_file_score))
-                      || typeof(questions[currentPage - 1].total_score) === 'undefined'"
+                    v-if="(isFlashcard() && (questions[currentPage - 1].last_submitted === 'N/A'))  || (!isFlashcard() && (!showScores || (questions[currentPage - 1].last_submitted === 'N/A' && isNaN(questions[currentPage - 1].submission_file_score))
+                      || typeof(questions[currentPage - 1].total_score) === 'undefined'))"
                   >-/</span>
                   <span v-else>{{
                       questions[currentPage - 1].total_score * 1
@@ -2382,8 +2383,7 @@
                :class="{ 'clicker-pagination': assessmentType === 'clicker' }"
           >
             <b-pagination
-              v-if="(assessmentType === 'clicker' && user.role === 2) || (assessmentType !== 'clicker' && ((inIFrame && questionNumbersShownInIframe)
-                || (!inIFrame && questionNumbersShownOutOfIframe && (assessmentType !== 'clicker' || isInstructor() || pastDue))))"
+              v-if="assessmentType !== 'flashcard' && ((assessmentType === 'clicker' && user.role === 2) || (assessmentType !== 'clicker' && ((inIFrame && questionNumbersShownInIframe) || (!inIFrame && questionNumbersShownOutOfIframe && (assessmentType !== 'clicker' || isInstructor() || pastDue)))))"
               v-model="currentPage"
               :total-rows="questions.length"
               :per-page="perPage"
@@ -2421,7 +2421,9 @@
                               :assignment-name="name"
                               :use-view-solution-as-text="true"
             />
-            <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt() && isQtiOrForgeWithQtiAnswerSolution(questions[currentPage-1])">
+            <span
+              v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt() && !isFlashcard() && isQtiOrForgeWithQtiAnswerSolution(questions[currentPage-1])"
+            >
               <QtiJsonAnswerViewer
                 :modal-id="questions[currentPage-1].id"
                 :qti-json="questions[currentPage-1].qti_answer_json"
@@ -2609,7 +2611,9 @@
                             :assignment-name="name"
                             :use-view-solution-as-text="true"
           />
-          <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt() && !isQtiOrForgeWithQtiAnswerSolution(questions[currentPage-1])">
+          <span
+            v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt() && !isQtiOrForgeWithQtiAnswerSolution(questions[currentPage-1])"
+          >
             <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
                                  :key="`modal-answer-${questions[currentPage-1].id}`"
                                  :modal-id="questions[currentPage-1].id"
@@ -2846,9 +2850,34 @@
                     :parent-question-id="questions[currentPage-1].forge_source_id || questions[currentPage-1].id"
                     :current-draft-question-id="questions[currentPage-1].id"
                   />
+                    <!-- Flashcard controls (Play/Pause / Shuffle / Settings) -->
+                  <span v-if="assessmentType === 'flashcard'" class="pb-2">
+                    <b-button
+                      v-if="fcControls.autoplayEnabled"
+                      size="sm"
+                      :variant="fcControls.autoplayActive ? 'info' : 'outline-secondary'"
+                      class="mr-1"
+                      @click="$refs.qtiViewer.$refs.flashcardViewer.externalToggleAutoplay()"
+                    >
+                      <b-icon :icon="fcControls.autoplayActive ? 'pause-fill' : 'play-fill'" aria-hidden="true"/>
+                      {{ fcControls.autoplayActive ? 'Pause' : 'Play' }}
+                      <span v-if="fcControls.autoplayActive" class="ml-1">{{ fcControls.autoplayCountdown }}s</span>
+                    </b-button>
+                    <b-button
+                      v-if="fcControls.showSettings"
+                      size="sm"
+                      variant="outline-secondary"
+                      @click="$refs.qtiViewer.$refs.flashcardViewer.externalOpenSettings()"
+                    >
+                      <b-icon icon="gear-fill" aria-hidden="true"/>
+                      Settings
+                    </b-button>
+                  </span>
+
                   <span v-if="!isDiscussIt()
                          && showSubmissionInformation
                          && showQuestion
+                         && assessmentType !== 'flashcard'
                          && !['learning tree','clicker'].includes(assessmentType)
                          && !isFormative"
                         class="pb-2"
@@ -2910,7 +2939,9 @@
                                       :use-view-solution-as-text="true"
                                       :show-button="assessmentType !== 'clicker'"
                     />
-                    <span v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt() && isQtiOrForgeWithQtiAnswerSolution(questions[currentPage-1])">
+                    <span
+                      v-if="questions[currentPage-1].qti_answer_json && !isDiscussIt() && isQtiOrForgeWithQtiAnswerSolution(questions[currentPage-1])"
+                    >
                       <QtiJsonAnswerViewer v-if="questions[currentPage-1].qti_answer_json"
                                            :key="`modal-answer-${questions[currentPage-1].id}`"
                                            :modal-id="questions[currentPage-1].id"
@@ -3026,17 +3057,24 @@
                           >
                             <span v-show="false" id="discussion-it-qti-json-question-viewer"/>
                             <QtiJsonQuestionViewer
-                              :key="`qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
+                              ref="qtiViewer"
+                              :key="assessmentType === 'flashcard' ? 'flashcard' : `qti-json-${currentPage}-${cacheIndex}-${questions[currentPage - 1].student_response}`"
                               :qti-json="getQtiJson()['qtiJson']"
                               :student-response="questions[currentPage - 1].student_response"
-                              :show-submit="[2,3,5].includes(user.role) && !isDiscussIt() && !isForge() && (assessmentType !== 'clicker' || timeLeft>0)"
+                              :show-submit="[2,3,5].includes(user.role) && !isDiscussIt() && !isForge() && !isFlashcard() && (assessmentType !== 'clicker' || timeLeft>0)"
                               :submit-button-active="getQtiJson()['submitButtonActive']"
                               :show-reset-response="Boolean(user.formative_student) && !isForge()"
+                              :all-flashcards="allFlashcards"
+                              :flashcard-settings="flashcardSettings"
                               :assignment-id="+assignmentId"
                               :question-id="+questions[currentPage-1].id"
+                              :initial-question-id="+questionId"
                               @submitResponse="receiveMessage"
                               @resetResponse="resetSubmission"
                               @openContactGraderModal="openContactGraderModal"
+                              @flashcardControlsChanged="onFlashcardControlsChanged"
+                              @cardChanged="cardChanged"
+                              @reorderQuestions="reorderQuestions"
                             />
                             <b-alert :show="!submitButtonActive && assessmentType !== 'clicker'" variant="info">
                               No additional submissions will be accepted.
@@ -3315,10 +3353,11 @@
                 @updateSubmittedWork="updateSubmittedWork"
     />
   </span>
-                      <b-button v-show="showContactGrader() && showContactInstructorAutoGraded"
-                                size="sm"
-                                variant="outline-primary"
-                                @click="openContactGraderModal( 'auto-graded')"
+                      <b-button
+                        v-show="showContactGrader() && showContactInstructorAutoGraded && assessmentType !== 'flashcard'"
+                        size="sm"
+                        variant="outline-primary"
+                        @click="openContactGraderModal( 'auto-graded')"
                       >
                         Contact Grader
                       </b-button>
@@ -3418,11 +3457,12 @@
 
             <b-col
               v-if="extraWaitForRenderComplete
-                && !isLoading
-                && showRightColumn
-                && (user.role === 3)
-                && (assessmentType !== 'clicker')
-                && (showSubmissionInformation || openEndedSubmissionType === 'file')"
+              && !isLoading
+              && showRightColumn
+              && (user.role === 3)
+              && (assessmentType !== 'clicker')
+              && assessmentType !== 'flashcard'
+              && (showSubmissionInformation || openEndedSubmissionType === 'file')"
               :class="isPhone() ? 'mx-auto p-4' : ''"
             >
               <div v-show="showScores && questions[currentPage-1].submission_score_override">
@@ -3857,6 +3897,15 @@ export default {
     hintPenaltyIfShownHint: 0,
     questionNumbersShownInIframe: false,
     hintPenalty: 0,
+    flashcardSettings: {},
+    fcControls: {
+      autoplayEnabled: false,
+      autoplayActive: false,
+      autoplayCountdown: 0,
+      shuffleOn: false,
+      showShuffle: false,
+      showSettings: false
+    },
     canViewHintAtAssignmentLevel: false,
     canViewHint: false,
     isFormative: false,
@@ -4127,6 +4176,23 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
+    allFlashcards () {
+      if (this.assessmentType !== 'flashcard') return []
+      return this.questions
+        .map(q => {
+          try {
+            const parsed = JSON.parse(q.qti_json)
+            const card = parsed.card
+            const settings_override = q.flashcard_card_settings ? JSON.parse(q.flashcard_card_settings) : null
+            // hint lives at the question level (q.hint), but also check inside card for bulk-imported cards
+            const hint = q.hint || card.hint || null
+            return { ...card, hint, question_id: q.id, student_response: q.student_response || null, settings_override }
+          } catch (e) {
+            return null
+          }
+        })
+        .filter(Boolean)
+    },
     isAdmin: () => window.config.isAdmin,
     isLocalMe: () => window.config.isAdmin && window.location.hostname === 'local.adapt',
     showAutoGradedSubmissionInformation () {
@@ -4370,6 +4436,25 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    reorderQuestions(newCards) {
+      const idOrder = newCards.map(c => c.question_id)
+      const questionMap = Object.fromEntries(this.questions.map(q => [q.id, q]))
+      this.questions = idOrder.map((id, index) => ({ ...questionMap[id], order: index + 1 }))
+    },
+    cardChanged (questionId) {
+      if (this.assessmentType !== 'flashcard' || !questionId) return
+      this.currentPage = this.getInitialCurrentPage(questionId)
+      this.questionId = +questionId
+    },
+    isFlashcard () {
+      const question = this.questions[this.currentPage - 1]
+      try {
+        return question.technology === 'qti' &&
+          JSON.parse(question.qti_json).questionType === 'flashcard'
+      } catch (e) {
+      }
+      return false
+    },
     getRemoveForgeQuestionMessage (question) {
       return this.forgeDraftExists(question) ? 'Please first remove all drafts from the Forge Settings.' : 'Remove question from assignment.'
     },
@@ -5553,7 +5638,7 @@ export default {
       }
     },
     setQuestionCol () {
-      this.questionCol = (this.isDiscussIt() || ['clicker', 'real time', 'delayed'].includes(this.assessmentType) ||
+      this.questionCol = (this.isDiscussIt() || this.assessmentType === 'flashcard' || ['clicker', 'real time', 'delayed'].includes(this.assessmentType) ||
         !this.showSubmissionInformation) && (!this.caseStudyNotesByQuestion.length) ? 12 : 8
       if (this.clickerApp || this.isPhone()) {
         this.questionCol = 12
@@ -5688,6 +5773,21 @@ export default {
       this.$noty.success(message)
     },
     async reloadSingleQuestion () {
+      // Flashcard manages its own state — reloading would destroy FlashcardViewer and reset the deck
+      if (this.assessmentType === 'flashcard') {
+        const questionId = this.questions[this.currentPage - 1].id
+        try {
+          const { data } = await axios.get(`/api/questions/${questionId}`)
+          if (data.type === 'success') {
+            this.$set(this.questions[this.currentPage - 1], 'qti_json', data.question.qti_json)
+            this.$set(this.questions[this.currentPage - 1], 'hint', data.question.hint)
+            this.$set(this.questions[this.currentPage - 1], 'title', data.question.title)
+          }
+        } catch (error) {
+          this.$noty.error(`Could not refresh flashcard: ${error.message}`)
+        }
+        return
+      }
       this.questionId = this.questions[this.currentPage - 1].id
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       this.currentPage = this.getInitialCurrentPage(this.questionId)
@@ -5789,6 +5889,7 @@ export default {
       }
     },
     hotKeys (event) {
+      if (this.isFlashcard()) return
       let target = $(event.target)
       if (target.parents('div#question-to-view').length) {
         // don't want any right or left arrow while within the question context
@@ -6408,6 +6509,21 @@ export default {
       this.showSubmissionMessage = false
     },
     async showResponse (data) {
+      if (this.assessmentType === 'flashcard') {
+        const success = data && data.type === 'success'
+        try {
+          this.$refs.qtiViewer.$refs.flashcardViewer.onSubmitResult(success)
+          console.error('aaaaa')
+          console.error(data)
+          this.questions.find(q => q.question_id === data.question_id).total_score = data.score
+          this.questions.find(q => q.question_id === data.question_id).last_submitted = data.last_submitted
+          if (success && this.assessmentType !== 'flashcard') {
+            this.$nextTick(() => this.nextQuestion())
+          }
+        } catch (e) { /* viewer may not be mounted */
+        }
+        return
+      }
       console.log(data)
       this.cacheKey++
       this.questions[this.currentPage - 1].submissions_array = []
@@ -6433,7 +6549,7 @@ export default {
                 let submissionDataMessage = data.message.replace('"', '\'\'')
                 let type = data.type
                 window.parent.postMessage(`{"source": "app_clicker","message": "${submissionDataMessage}","type":"${type}"}`, '*')
-              } else {
+              } else if (this.assessmentType !== 'flashcard') {
                 this.showSubmitMoleculeSubmission = false
                 this.$bvModal.show('modal-submission-accepted')
                 this.completedAllAssignmentQuestions = data.completed_all_assignment_questions && this.user.role === 3
@@ -6441,7 +6557,9 @@ export default {
             }
           }
         }
-        await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
+        if (this.assessmentType !== 'flashcard') {
+          await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
+        }
         this.showSubmitMoleculeSubmission = true
         this.renderMathJax()
       } else {
@@ -6595,10 +6713,9 @@ export default {
       this.iframeLoaded = true
     },
     getTitle (currentPage) {
-      if (!this.questions[currentPage - 1]) {
-        return ''
-      }
-      return `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
+      if (!this.questions[currentPage - 1]) return ''
+      if (this.assessmentType === 'flashcard' && this.user.role !== 2) return ''
+      return this.questions[currentPage - 1].title || `Question #${currentPage - 1}`
     },
     getQtiJson () {
       let qtiJson
@@ -6956,6 +7073,13 @@ export default {
         this.showPointsPerQuestion = assignment.show_points_per_question
         this.showUpdatePointsPerQuestion = assignment.points_per_question === 'number of points'
         this.canViewHintAtAssignmentLevel = assignment.can_view_hint
+        this.flashcardSettings = assignment.flashcard_settings || (assignment.assessment_type === 'flashcard' ? {
+          autoplay: { enabled: true, seconds: 4, student_override: true },
+          random_shuffle: { enabled: true, student_override: true },
+          show_hint: { enabled: true, student_override: true },
+          text_to_speech: { enabled: false, student_override: true },
+          captions: { enabled: false, student_override: true }
+        } : null)
       } catch (error) {
         if (error.message.includes('status code 404')) {
           this.showInvalidAssignmentMessage = true
@@ -7044,6 +7168,13 @@ export default {
       this.$nextTick(() => {
         this.showIframe(this.questions[this.currentPage - 1].iframe_id)
       })
+    },
+    syncFlashcardPage (questionId) {
+      const idx = this.questions.findIndex(q => parseInt(q.id) === parseInt(questionId))
+      if (idx !== -1) this.currentPage = idx + 1
+    },
+    onFlashcardControlsChanged (state) {
+      this.fcControls = { ...this.fcControls, ...state }
     },
     initCurrentPage () {
       let questionExistsInAssignment = false
