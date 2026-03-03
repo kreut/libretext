@@ -70,6 +70,104 @@ use Psr\Container\NotFoundExceptionInterface;
 class AssignmentSyncQuestionController extends Controller
 {
     use DateFormatter;
+    use IframeFormatter;
+    use DateFormatter;
+    use GeneralSubmissionPolicy;
+    use S3;
+    use SubmissionFiles;
+    use JWT;
+    use LibretextFiles;
+    use LatePolicy;
+    use Statistics;
+    use Seed;
+
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function getFlashcardCardSettings(Assignment             $assignment,
+                                             Question               $question,
+                                             AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('getFlashcardCardSettings', [$assignmentSyncQuestion, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->whereNotNull('flashcard_card_settings')
+                ->select('flashcard_card_settings')
+                ->first();
+
+            $response['type'] = 'success';
+            $flashcard_card_settings = null;
+            if ($assignment_question) {
+                $flashcard_card_settings = json_decode($assignment_question->flashcard_card_settings);
+            } else {
+                if (request()->user()->role === 2) {
+                    $flashcard_card_settings = json_decode($assignment->flashcard_settings);
+                    $flashcard_card_settings = ['captions' => $flashcard_card_settings->captions->enabled,
+                        'text_to_speech' => $flashcard_card_settings->text_to_speech->enabled,
+                        'show_hint' => $flashcard_card_settings->show_hint->enabled];
+                }
+            }
+            $response['flashcard_card_settings'] = $flashcard_card_settings;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'There was an error getting the flashcard card settings. Please try again or contact us for assistance.';
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public
+    function updateFlashcardCardSettings(Request                $request,
+                                         Assignment             $assignment,
+                                         Question               $question,
+                                         AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateFlashcardCardSettings', [$assignmentSyncQuestion, $assignment, $question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $settings = $request->all();
+
+            DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['flashcard_card_settings' => json_encode($settings)]);
+
+            $response['type'] = 'success';
+            $response['message'] = 'The card settings have been updated.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'There was an error updating the flashcard card settings. Please try again or contact us for assistance.';
+        }
+        return $response;
+    }
 
     /**
      * Get the submission count for a forge draft from the 3rd party API
@@ -78,8 +176,10 @@ class AssignmentSyncQuestionController extends Controller
      * @param Question $question
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
+     * @throws Exception
      */
-    public function getForgeDraftSubmissions(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function getForgeDraftSubmissions(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
 
@@ -160,7 +260,8 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateForgeSettings(
+    public
+    function updateForgeSettings(
         UpdateForgeSettings    $request,
         Assignment             $assignment,
         Question               $question,
@@ -260,10 +361,10 @@ class AssignmentSyncQuestionController extends Controller
                             ];
                             // Convert extension times to UTC
 
-                                $clean_extension['due'] = $this->convertLocalMysqlFormattedDateToUTC(
-                                    $clean_extension['due_date'] . ' ' . $clean_extension['due_time'],
-                                    $timezone
-                                );
+                            $clean_extension['due'] = $this->convertLocalMysqlFormattedDateToUTC(
+                                $clean_extension['due_date'] . ' ' . $clean_extension['due_time'],
+                                $timezone
+                            );
 
                             if (!empty($clean_extension['final_submission_deadline_date']) && !empty($clean_extension['final_submission_deadline_time'])) {
                                 $clean_extension['final_submission_deadline'] = $this->convertLocalMysqlFormattedDateToUTC(
@@ -488,6 +589,7 @@ class AssignmentSyncQuestionController extends Controller
         }
         return $response;
     }
+
     /**
      * @param Request $request
      * @param Assignment $assignment
@@ -496,7 +598,8 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getForgeSettings(
+    public
+    function getForgeSettings(
         Request                $request,
         Assignment             $assignment,
         Question               $question,
@@ -594,9 +697,10 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function removeOpenEndedQuestions(Assignment             $assignment,
-                                             AssignmentSyncQuestion $assignmentSyncQuestion,
-                                             BetaCourseApproval     $betaCourseApproval): array
+    public
+    function removeOpenEndedQuestions(Assignment             $assignment,
+                                      AssignmentSyncQuestion $assignmentSyncQuestion,
+                                      BetaCourseApproval     $betaCourseApproval): array
     {
 
         try {
@@ -679,8 +783,9 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function allSolutionsReleasedWhenClosed(Assignment             $assignment,
-                                                   AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function allSolutionsReleasedWhenClosed(Assignment             $assignment,
+                                            AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         try {
             $response['type'] = 'error';
@@ -720,10 +825,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function deleteCustomRubric(Assignment             $assignment,
-                                       Question               $question,
-                                       RubricPointsBreakdown  $rubricPointsBreakdown,
-                                       AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function deleteCustomRubric(Assignment             $assignment,
+                                Question               $question,
+                                RubricPointsBreakdown  $rubricPointsBreakdown,
+                                AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         try {
@@ -763,10 +869,11 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateUseExistingRubric(Assignment             $assignment,
-                                            Question               $question,
-                                            RubricPointsBreakdown  $rubricPointsBreakdown,
-                                            AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function updateUseExistingRubric(Assignment             $assignment,
+                                     Question               $question,
+                                     RubricPointsBreakdown  $rubricPointsBreakdown,
+                                     AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         try {
             $response['type'] = 'error';
@@ -808,11 +915,12 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateCustomRubric(Assignment             $assignment,
-                                       Question               $question,
-                                       RubricPointsBreakdown  $rubricPointsBreakdown,
-                                       AssignmentSyncQuestion $assignmentSyncQuestion,
-                                       Request                $request): array
+    public
+    function updateCustomRubric(Assignment             $assignment,
+                                Question               $question,
+                                RubricPointsBreakdown  $rubricPointsBreakdown,
+                                AssignmentSyncQuestion $assignmentSyncQuestion,
+                                Request                $request): array
     {
         try {
             $response['type'] = 'error';
@@ -874,8 +982,9 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function checkForDiscussItQuestionsOverMultipleAssignmentQuestions(Request                $request,
-                                                                              AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function checkForDiscussItQuestionsOverMultipleAssignmentQuestions(Request                $request,
+                                                                       AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         try {
@@ -915,9 +1024,10 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function checkForDiscussitClickerOrOpenEndedQuestionsByCourseOrAssignment(string                 $level,
-                                                                                     int                    $id,
-                                                                                     AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function checkForDiscussitClickerOrOpenEndedQuestionsByCourseOrAssignment(string                 $level,
+                                                                              int                    $id,
+                                                                              AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         try {
             $response['type'] = 'error';
@@ -1203,17 +1313,6 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
 
     }
-
-    use IframeFormatter;
-    use DateFormatter;
-    use GeneralSubmissionPolicy;
-    use S3;
-    use SubmissionFiles;
-    use JWT;
-    use LibretextFiles;
-    use LatePolicy;
-    use Statistics;
-    use Seed;
 
     public
     function updateIFrameProperties(Request                $request,
@@ -2355,9 +2454,9 @@ class AssignmentSyncQuestionController extends Controller
                     $columns['solution_type'] = 'html';
                     $columns['problem_jwt'] = $technology_src_and_problemJWT['problemJWT'];
                 } else {
-                    $columns['solution_html'] = $question->addTimeToS3IFiles($value->solution_html, $dom);
+                    $columns['solution_html'] = $question->addTimeToS3Files($value->solution_html, $dom);
                     if (!$columns['solution_html']) {
-                        $columns['solution_html'] = $question->addTimeToS3IFiles($value->answer_html, $dom);
+                        $columns['solution_html'] = $question->addTimeToS3Files($value->answer_html, $dom);
                     }
                 }
                 if ($columns['solution_html']) {
@@ -3041,8 +3140,8 @@ class AssignmentSyncQuestionController extends Controller
             }
             if (($question->solution_html || $question->answer_html) && !$solution) {
                 $solution_type = 'html';
-                $solution_html = $question->addTimeToS3IFiles($question->solution_html, $DOMDocument, false);
-                $answer_html = $question->addTimeToS3IFiles($question->answer_html, $DOMDocument, false);
+                $solution_html = $question->addTimeToS3Files($question->solution_html, $DOMDocument, false);
+                $answer_html = $question->addTimeToS3Files($question->answer_html, $DOMDocument, false);
 
             }
             if ($question->technology === 'webwork') {
@@ -3830,12 +3929,12 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['submission_score_override'] = $submission_score_overrides_by_question_id[$question->id] ?? null;
                 }
                 $local_solution_exists = isset($uploaded_solutions_by_question_id[$question->id]['solution_file_url']);
-                $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3IFiles($assignment->questions[$key]->answer_html, $domd) : null;
+                $assignment->questions[$key]['answer_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Files($assignment->questions[$key]->answer_html, $domd) : null;
 
                 if ($webwork->inCodeSolution($assignment->questions[$key])) {
                     $assignment->questions[$key]->solution_html = $webwork->inCodeSolution($assignment->questions[$key]);
                 }
-                $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3IFiles($assignment->questions[$key]->solution_html, $domd) : null;
+                $assignment->questions[$key]['solution_html'] = !$local_solution_exists && (in_array(request()->user()->role, [2, 5]) || $show_solution) ? $question->addTimeToS3Files($assignment->questions[$key]->solution_html, $domd) : null;
                 $seed = in_array($question->technology, ['webwork', 'imathas', 'qti'])
                     ? $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id)
                     : '';
@@ -3866,16 +3965,16 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['qti_json'] = $question->qti_json ? $question->formatQtiJson('question_json', $question->qti_json, $seed, $assignment->assessment_type === 'real time' || $request->user()->role === 2, $student_response) : null;
 
                 $assignment->questions[$key]['text_question'] = Auth::user()->role === 2 || (Auth::user()->role === 3 && $a11y_redirect === 'text_question')
-                    ? $question->addTimeToS3IFiles($assignment->questions[$key]->text_question, $domd)
+                    ? $question->addTimeToS3Files($assignment->questions[$key]->text_question, $domd)
                     : null;
                 $shown_hint = $assignment->can_view_hint && (Auth::user()->role === 2 || (Auth::user()->role === 3 && in_array($question->id, $shown_hints)));
                 $assignment->questions[$key]['shown_hint'] = $shown_hint;
                 $assignment->questions[$key]['hint_exists'] = $assignment->questions[$key]->hint !== null && $assignment->questions[$key]->hint !== '';
                 $assignment->questions[$key]['hint'] = $shown_hint
-                    ? $question->addTimeToS3IFiles($assignment->questions[$key]->hint, $domd)
+                    ? $question->addTimeToS3Files($assignment->questions[$key]->hint, $domd)
                     : null;
 
-                $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3IFiles($assignment->questions[$key]->notes, $domd) : null;
+                $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $question->addTimeToS3Files($assignment->questions[$key]->notes, $domd) : null;
 
                 $custom_claims = [];
                 if ($question->technology === 'imathas' && isset($submissions_by_question_id[$question->id])) {

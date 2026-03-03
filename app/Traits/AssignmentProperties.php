@@ -194,6 +194,7 @@ trait AssignmentProperties
             'hint_penalty' => $this->getHintPenalty($request),
             'algorithmic' => $this->getAlgorithmic($request),
             'solutions_availability' => $this->getSolutionsAvailability($request),
+            'flashcard_settings' => $request->assessment_type === 'flashcard' ? json_encode($request->flashcard_settings) : null,
             // learning tree
             'min_number_of_minutes_in_exposition_node' => $request->min_number_of_minutes_in_exposition_node,
             'reset_node_after_incorrect_attempt' => $request->reset_node_after_incorrect_attempt,

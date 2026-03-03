@@ -5,6 +5,14 @@ function reformatTime (vm, time) {
   return vm.$moment(time, 'HH:mm:ss').format('h:mm A')
 }
 
+export const defaultFlashcardSettings = {
+  autoplay: { enabled: true, student_override: true, seconds: 2 },
+  random_shuffle: { enabled: true, student_override: true },
+  show_hint: { enabled: true, student_override: true },
+  text_to_speech: { enabled: true, student_override: true },
+  captions: { enabled: true, student_override: true }
+}
+
 export const assignmentForm = new Form({
   name: '',
   assign_tos: [],
@@ -36,7 +44,9 @@ export const assignmentForm = new Form({
   default_points_per_question: 10,
   external_source_points: 100,
   instructions: '',
-  notifications: 1
+  notifications: 1,
+  // flashcard
+  flashcard_settings: { ...defaultFlashcardSettings }
 })
 
 export async function getAssignmentGroups (courseId, noty, vm) {
@@ -135,6 +145,7 @@ export function resetAssignmentForm (form, assignmentId) {
   form.scoring_type = 'p'
   form.default_completion_scoring_mode = '100% for either'
   form.lms_grade_passback = 'automatic'
+  form.flashcard_settings = { ...defaultFlashcardSettings }
 
   assignmentId = 0
   form.errors.clear()
@@ -187,6 +198,10 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.submission_count_percent_decrease = null
   form.notifications = 1
   form.assign_tos.selectedGroup = null
+
+  // flashcard
+  form.flashcard_settings = { ...defaultFlashcardSettings }
+
   if (!form.is_template) {
     bvModal.show('modal-assignment-properties')
   }
@@ -226,7 +241,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
       } else {
         vm.form.assign_tos[0].groups = []
       }
-      vm.form.assign_tos.length = 1 // just keep the first one in case there were other updates using new templates
+      vm.form.assign_tos.length = 1
       vm.$forceUpdate()
     }
   } else {
@@ -283,6 +298,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.form.min_number_of_minutes_in_exposition_node = assignmentProperties.min_number_of_minutes_in_exposition_node
   vm.form.reset_node_after_incorrect_attempt = assignmentProperties.reset_node_after_incorrect_attempt
   // end learning tree
+
   vm.form.late_policy = assignmentProperties.late_policy
   vm.form.can_change_late_policy = assignmentProperties.can_change_late_policy
   vm.form.late_deduction_applied_once = +(assignmentProperties.late_deduction_application_period === 'once')
@@ -318,6 +334,15 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   vm.form.external_source_points = assignmentProperties.source === 'x' ? assignmentProperties.external_source_points : ''
   vm.form.textbook_url = assignmentProperties.textbook_url
   vm.form.notifications = assignmentProperties.notifications
+
+  // flashcard
+  vm.form.flashcard_settings = assignmentProperties.flashcard_settings
+    ? (typeof assignmentProperties.flashcard_settings === 'string'
+      ? JSON.parse(assignmentProperties.flashcard_settings)
+      : assignmentProperties.flashcard_settings)
+    : {
+      ...defaultFlashcardSettings
+    }
 
   if (!assignmentProperties.modal_already_shown) {
     assignmentProperties.is_template

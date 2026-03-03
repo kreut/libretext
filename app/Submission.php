@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\TextUI\Help;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use stdClass;
@@ -215,6 +216,7 @@ class Submission extends Model
             'proportionCorrect' => $totalAnswerCells > 0 ? round($correctCells / $totalAnswerCells, 4) : 0
         ];
     }
+
     /**
      * Split rows into sections based on section headers.
      * Each section contains the data rows between headers.
@@ -243,6 +245,7 @@ class Submission extends Model
 
         return $sections;
     }
+
     public function updateScoresWithNewTotalWeight($assignment_id, $old_total_points, $new_total_points)
     {
         $factor = $new_total_points / $old_total_points;
@@ -696,6 +699,9 @@ class Submission extends Model
                         $proportion_correct = floatval($num_correct / $num_fill_in_the_blanks);
 
                         break;
+                    case('flashcard'):
+                        $proportion_correct = $submission->student_response === 'correct' ? 1.0 : 0.0;
+                        break;
                     default:
                         throw new Exception("$question_type is not yet available for scoring.");
 
@@ -996,7 +1002,6 @@ class Submission extends Model
                 $submission->score = request()->user()->role === 3 ? $this->applyLatePenalyToScore($assignment, $data['score']) : $data['score'];
                 $submission->submission_count = $submission->submission_count + 1;
                 $submission->save();
-
             } else {
                 $proportion_of_score_received = 1 - ($hint_penalty / 100);
                 $data['score'] = $data['score'] * $proportion_of_score_received;
@@ -1117,6 +1122,11 @@ class Submission extends Model
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['message'] = $message;
             $response['learning_tree_message'] = !$data['all_correct'];
+            if ($assignment->assessment_type === 'flashcard') {
+                $response['score'] = Helper::removeZerosAfterDecimal($submission->score);
+                $response['question_id'] = $question->id;
+                $response['last_submitted'] = now();
+            }
             //don't really care if this gets messed up from the user perspective
             if (User::find($data['user_id'])->role === 3) {
                 try {
@@ -1598,7 +1608,7 @@ class Submission extends Model
         $results = DB::table('submission_files')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
-            ->whereIn('type', ['q', 'text', 'discuss_it','forge'])
+            ->whereIn('type', ['q', 'text', 'discuss_it', 'forge'])
             ->select('question_id', 'assignment_id')
             ->get();
 
@@ -2836,7 +2846,7 @@ class Submission extends Model
             $solutionEntry = $solution[$entryIndex] ?? null;
 
             if (is_array($solutionEntry)) {
-                $solutionEntry = (object) $solutionEntry;
+                $solutionEntry = (object)$solutionEntry;
             }
 
             $solutionRows = null;
@@ -2859,7 +2869,7 @@ class Submission extends Model
                 $solutionRow = $solutionRows[$rowIndex] ?? null;
 
                 if (is_array($solutionRow)) {
-                    $solutionRow = (object) $solutionRow;
+                    $solutionRow = (object)$solutionRow;
                 }
 
                 $rowResult = [
@@ -3022,10 +3032,8 @@ class Submission extends Model
         }
 
         // Convert to string and remove commas
-        $sanitized = str_replace(',', '', (string) $value);
+        $sanitized = str_replace(',', '', (string)$value);
 
         return floatval($sanitized);
     }
 }
-
-

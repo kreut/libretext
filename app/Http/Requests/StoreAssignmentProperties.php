@@ -11,6 +11,7 @@ use App\Rules\IsNotClickerAssessment;
 use App\Rules\IsNotOpenOrNoSubmissions;
 use App\Rules\IsPositiveInteger;
 use App\Rules\isValidDefaultCompletionScoringType;
+use App\Rules\IsValidFlashcardSettings;
 use App\Rules\IsValidHintPenalty;
 use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
 use App\Rules\IsValidPeriodOfTime;
@@ -38,6 +39,16 @@ class StoreAssignmentProperties extends FormRequest
     public function authorize()
     {
         return true;
+    }
+
+    /**
+     * Clear flashcard_settings when the assessment type is not flashcard.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->assessment_type !== 'flashcard') {
+            $this->merge(['flashcard_settings' => null]);
+        }
     }
 
     /**
@@ -165,7 +176,7 @@ class StoreAssignmentProperties extends FormRequest
             }
             switch ($this->source) {
                 case('a'):
-                    $rules['assessment_type'] = ['required', Rule::in('real time', 'delayed', 'clicker', 'learning tree', 'forge')];
+                    $rules['assessment_type'] = ['required', Rule::in('real time', 'delayed', 'clicker', 'learning tree', 'forge', 'flashcard')];
                     $rules['algorithmic'] = ['required', Rule::in(0, 1)];
                     $rules['points_per_question'] = ['required', Rule::in('number of points', 'question weight')];
                     if ($this->points_per_question === 'number of points') {
@@ -224,6 +235,9 @@ class StoreAssignmentProperties extends FormRequest
                 $rules['scoring_type'] = ['required', new isValidAssesmentTypeForScoringType($this->assessment_type)];
                 $rules['default_completion_scoring_mode'] = ['required', new isValidDefaultCompletionScoringType($this->completion_split_auto_graded_percentage)];
 
+            }
+            if ($this->assessment_type === 'flashcard') {
+                $rules['flashcard_settings'] = ['required', new IsValidFlashcardSettings()];
             }
         }
         return $rules;

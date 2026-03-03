@@ -221,6 +221,26 @@ class AssignmentSyncQuestionPolicy
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Assignment $assignment
+     * @return Response
+     */
+    public function getFlashcardCardSettings(User                   $user,
+                                             AssignmentSyncQuestion $assignmentSyncQuestion,
+                                             Assignment             $assignment): Response
+    {
+        $is_instructor = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
+        $is_student = in_array($user->id, $assignment->course->enrolledUsers->pluck('id')->toArray())
+            || $user->fake_student
+            || ($assignment->formative && $user->formative_student);
+
+        return $is_instructor || $is_student
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the flashcard settings for that question.');
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
      * @param Question $question
      * @return Response
      */
@@ -232,6 +252,23 @@ class AssignmentSyncQuestionPolicy
         return $this->_canUpdateQuestionSettings($user, $assignment, $question)
             ? Response::allow()
             : Response::deny('You are not allowed to update the discuss-it settings for that question.');
+    }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function updateFlashcardCardSettings(User                   $user,
+                                                AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                Assignment             $assignment,
+                                                Question               $question): Response
+    {
+        return $this->_canUpdateQuestionSettings($user, $assignment, $question)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the flashcard settings for that question.');
     }
 
     /**
