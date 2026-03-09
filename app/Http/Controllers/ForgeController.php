@@ -124,7 +124,7 @@ class ForgeController extends Controller
                 return $response;
             }
             $user = User::find($forge_user_token->user_id);
-            $response['uuid'] = $user->fake_student ? $user->id : $user->central_identity_id;
+            $response['uuid'] = $user->fake_student || $user->formative_student ? $user->id : $user->central_identity_id;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -329,7 +329,12 @@ class ForgeController extends Controller
             }
             $user = User::where('central_identity_id', $central_identity_id)->first();
             if (!$user) {
-                $user = User::where('id', $central_identity_id)->where('fake_student', 1)->first();
+                $user = User::where('id', $central_identity_id)
+                    ->where(function ($query) {
+                        $query->where('fake_student', 1)
+                            ->orWhere('formative_student', 1);
+                    })
+                    ->first();
                 if (!$user) {
                     throw new Exception("No user exists with UUID $central_identity_id.  Cannot save Forge submission.");
                 }
@@ -390,7 +395,12 @@ class ForgeController extends Controller
 
             $user = User::where('central_identity_id', $central_identity_id)->first();
             if (!$user) {
-                $user = User::where('id', $central_identity_id)->where('fake_student', 1)->first();
+                $user = User::where('id', $central_identity_id)
+                    ->where(function ($query) {
+                        $query->where('fake_student', 1)
+                            ->orWhere('formative_student', 1);
+                    })
+                    ->first();
                 if (!$user) {
                     $response['message'] = "No user exists with UUID $central_identity_id.";
                     return $response;
@@ -641,7 +651,8 @@ class ForgeController extends Controller
                     ->where('course_id', $assignment->course->id)
                     ->first()) {
                     $fake_student = $request->user()->fake_student;
-                    $student_id = $fake_student ? strval($request->user()->id) : strval($request->user()->central_identity_id);
+                    $formative_student = $request->user()->formative_student;
+                    $student_id = $fake_student || $formative_student ? strval($request->user()->id) : strval($request->user()->central_identity_id);
                     $data = ['studentId' => $student_id,
                         'fakeStudent' => (boolean)$fake_student,
                         'forgeQuestionId' => strval($forge_assignment_question->forge_question_id)];
@@ -712,7 +723,12 @@ class ForgeController extends Controller
                 return $response;
             }
             if (!$user) {
-                $user = User::where('id', $central_identity_id)->where('fake_student', 1)->first();
+                $user = User::where('id', $central_identity_id)
+                    ->where(function ($query) {
+                        $query->where('fake_student', 1)
+                            ->orWhere('formative_student', 1);
+                    })
+                    ->first();
                 if (!$user) {
                     $response['message'] = "No user exists with UUID $central_identity_id.";
                     return $response;

@@ -3,11 +3,12 @@
     <span v-if="colorCodedDueDate && assignTos.due" :class="dueDateClass">
   {{ formatDate(assignTos.due) }}
 </span>
-
     <template v-else-if="!colorCodedDueDate">
+      <div class="mb-2">
       <b-button variant="outline-primary" size="sm" @click="$bvModal.show('modal-due-dates')">
         View Due Dates
       </b-button>
+     </div>
       <b-modal
         id="modal-due-dates"
         :title="`Due Dates for ${questionTitle}`"

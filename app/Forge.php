@@ -28,12 +28,14 @@ class Forge extends Model
      * @param array $data
      * @return Response
      */
-    public function updateQuestionTitle(array $data): Response {
+    public function updateQuestionTitle(array $data): Response
+    {
         return Http::withHeaders([
             'Content-Type' => 'application/json',
             'Authorization' => "Bearer $this->secret",
         ])->patch(config('services.antecedent.url') . '/api/adapt/assignment', $data);
     }
+
     /**
      * @param array $data
      * @return Response
@@ -188,7 +190,7 @@ class Forge extends Model
         $forge_assignment_question = $validation['forge_assignment_question'];
 
         $assign_tos = $forge->getAssignToTimingsByAssignmentAndQuestionAndDraftId($parent_assignment_question, $user->id, $forge_draft_id);
-       if (!$assign_tos) {
+        if (!$assign_tos) {
             $response['message'] = "We could not find the draft assign tos for draft with UUID $forge_draft_id and ADAPT user with UUID $central_identity_id.";
             return $response;
         }
@@ -246,13 +248,18 @@ class Forge extends Model
         $response = ['type' => 'error'];
 
         $user = User::where('central_identity_id', $central_identity_id)->first();
+
         if (!$user) {
-            $fake_user = User::where('id', $central_identity_id)->where('fake_student', 1)->first();
-            if (!$fake_user) {
+            $user = User::where('id', $central_identity_id)
+                ->where(function ($query) {
+                    $query->where('fake_student', 1)
+                        ->orWhere('formative_student', 1);
+                })
+                ->first();
+
+            if (!$user) {
                 $response['message'] = "No user exists with UUID $central_identity_id.";
                 return $response;
-            } else {
-                $user = $fake_user;
             }
         }
 

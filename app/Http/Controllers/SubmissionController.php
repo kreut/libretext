@@ -260,7 +260,7 @@ class SubmissionController extends Controller
                     return $response;
                 }
                 $forge_draft_id = $assignment_question_forge_draft->forge_draft_id;
-                $central_identity_id = $user->fake_student ? (string)$user->id : $user->central_identity_id;
+                $central_identity_id = $user->fake_student || $user->formative_student ? (string)$user->id : $user->central_identity_id;
                 $validation = $forge->validateForgeQuestionAccess($forge_draft_id, $central_identity_id);
                 if ($validation['type'] === 'error') {
                     return $validation;

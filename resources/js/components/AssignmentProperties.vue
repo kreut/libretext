@@ -317,7 +317,7 @@
           </b-form-group>
         </div>
       </b-card>
-      <b-card v-if="!isFormativeCourse && form.formative !== '1'"
+      <b-card
               :header-html="getHeaderHtml('Modality')"
               body-class="pb-0 card-body-pl"
               class="mb-3"
@@ -382,6 +382,7 @@
             </b-form-row>
           </b-form-group>
         </div>
+        <div v-if="!isFormativeCourse && form.formative !== '1'">
         <div v-if="user.role ===2">
           <b-form-group
             label-for="assignment_group"
@@ -557,6 +558,7 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
+        </div>
         </div>
       </b-card>
       <div v-if="!isFormativeCourse && form.formative !== '1'">
