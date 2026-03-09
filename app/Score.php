@@ -131,7 +131,7 @@ class Score extends Model
         }
         $submission_files = DB::table('submission_files')
             ->where('assignment_id', $assignment_id)
-            ->whereIn('type', ['q', 'text', 'audio', 'discuss_it', 'no upload']) //'q', 'a', or 0
+            ->whereIn('type', ['q', 'text', 'audio', 'discuss_it', 'no upload', 'forge']) //'q', 'a', or 0
             ->whereIn('question_id', $question_ids)
             ->where('user_id', $student_user_id)
             ->get();
