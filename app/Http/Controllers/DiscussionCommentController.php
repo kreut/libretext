@@ -721,6 +721,7 @@ class DiscussionCommentController extends Controller
             'mp4_temporary_url' => $mp4_temporary_url,
             'vtt_file' => $vtt_file,
             'start_time' => 0,
+            'show_buttons' => true,
             'is_phone' => $is_phone]);
     }
 }
