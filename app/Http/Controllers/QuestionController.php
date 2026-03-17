@@ -14,7 +14,8 @@ use App\Helpers\Helper;
 use App\Helpers\Accounting;
 use App\Http\Requests\StoreQuestionRequest;
 use App\IMathAS;
-use App\Jobs\GenerateFlashcardTts;
+use App\Jobs\GenerateFlashcardAudioVTT;
+use App\Jobs\GenerateFlashcardTTS;
 use App\Jobs\InitProcessTranscribe;
 use App\Jobs\ProcessValidateQtiFile;
 use App\JWE;
@@ -795,6 +796,13 @@ class QuestionController extends Controller
             }
             $bulk_import_file = $request->file('bulk_import_file')->store("override-scores/" . Auth()->user()->id, 'local');
             $csv_file = Storage::disk('local')->path($bulk_import_file);
+
+            $content = Storage::disk('local')->get($bulk_import_file);
+            if (!preg_match('//u', $content)) {
+                $response['message'] = ['The file must be saved as UTF-8. In Excel, use "Save As" → "CSV UTF-8 (Comma delimited)".'];
+                return $response;
+            }
+
 
             if (!in_array($request->file('bulk_import_file')->getMimetype(), ['application/x-tex', 'application/csv', 'text/plain', 'text/x-tex'])) {
                 $response['message'] = ["This is not a .csv file: {$request->file('bulk_import_file')->getMimetype()} is not a valid MIME type."];
@@ -2074,9 +2082,9 @@ class QuestionController extends Controller
             // Dispatch TTS generation for flashcard questions (text-based sides only).
             // $new_question_revision_id is 0 for brand-new questions (no revision row yet).
             if (($data['qti_json_type'] ?? '') === 'flashcard' && !app()->environment('testing')) {
-                GenerateFlashcardTts::dispatch($question->id, $new_question_revision_id);
+                GenerateFlashcardTTS::dispatch($question->id, $new_question_revision_id);
+                GenerateFlashcardAudioVTT::dispatch($question->id, $new_question_revision_id);
             }
-
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";
             $action = $is_update ? 'updated' : 'created';

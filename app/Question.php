@@ -592,6 +592,15 @@ class Question extends Model
                         );
                     }
                 }
+                foreach (['front', 'back'] as $vttSide) {
+                    $vttKeyField = "{$vttSide}MediaVttS3Key";
+                    if (!empty($card[$vttKeyField])) {
+                        $qti_array['card']["{$vttSide}MediaVttUrl"] = Storage::disk('s3')->temporaryUrl(
+                            $card[$vttKeyField],
+                            Carbon::now()->addDays(7)
+                        );
+                    }
+                }
                 break;
             case('forge'):
             case('forge_iteration'):

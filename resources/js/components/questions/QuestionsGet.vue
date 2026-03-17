@@ -992,7 +992,7 @@
                         @change="formattedQuestionType = null"
                       >
                         <b-form-radio value="basic">
-                          Basic (QTI)
+                          Basic
                         </b-form-radio>
                         <b-form-radio value="nursing">
                           Nursing

@@ -1501,18 +1501,21 @@
                     @change="initNativeType($event)"
                   >
                     <b-form-radio value="basic">
-                      Basic (QTI)
+                      Basic
                       <QuestionCircleTooltip id="basic-questions-tooltip"/>
                       <b-tooltip target="basic-questions-tooltip"
                                  delay="250"
                                  triggers="hover focus"
                       >
-                        You can export questions in QTI format from your LMS and import them through the Bulk Import
-                        tab
-                        and
-                        then
-                        edit them in ADAPT.
-                        <br><br>Alternatively, you can create new questions directly using the editor below.
+                        <div style="max-width: 320px; font-size: 13px; line-height: 1.6;">
+                          <p style="margin: 0 0 10px;">Questions can be added in two ways:</p>
+
+                          <p style="margin: 0 0 4px;"><strong style="font-weight: 500;">Bulk Import</strong></p>
+                          <p style="margin: 0 0 10px;">Export questions in QTI format from your LMS and import them via the <strong style="font-weight: 500;">Bulk Import</strong> tab. Both QTI questions and flashcards (which are not in QTI format) are supported. You can edit them in ADAPT after importing.</p>
+
+                          <p style="margin: 0 0 4px;"><strong style="font-weight: 500;">Manual Creation</strong></p>
+                          <p style="margin: 0;">Use the question editor below to build new questions directly.</p>
+                        </div>
                       </b-tooltip>
                     </b-form-radio>
                     <b-form-radio value="nursing">

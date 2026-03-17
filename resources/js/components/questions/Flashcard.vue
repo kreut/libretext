@@ -72,7 +72,7 @@
               <div class="flashcard-editor-media">
                 <div
                   class="flashcard-drop-zone"
-                  :class="{ 'drop-zone-active': isDraggingFront, 'drop-zone-has-file': !!(form.frontImageUrl || form.frontVideoUrl) }"
+                  :class="{ 'drop-zone-active': isDraggingFront, 'drop-zone-has-file': !!(form.frontImageUrl || form.frontVideoUrl || form.frontAudioUrl) }"
                   @dragenter.prevent="isDraggingFront = true"
                   @dragover.prevent="isDraggingFront = true"
                   @dragleave.prevent="isDraggingFront = false"
@@ -83,18 +83,22 @@
                     <img :src="form.frontImageUrl" alt="Uploaded image" class="preview-img"/>
                     <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
                   </div>
+                  <div v-else-if="form.frontAudioUrl" class="drop-zone-preview">
+                    <audio :src="form.frontAudioUrl" controls class="preview-audio" @click.stop/>
+                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
+                  </div>
                   <div v-else-if="form.frontVideoUrl" class="drop-zone-preview">
                     <video :src="form.frontVideoUrl" controls class="preview-video" @click.stop/>
                     <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
                   </div>
                   <div v-else class="drop-zone-placeholder">
-                    <div>Drag &amp; drop an image or video here</div>
+                    <div>Drag &amp; drop an image, audio, or video here</div>
                     <div class="drop-zone-or">or</div>
                     <b-button size="sm" variant="outline-secondary" @click.stop="$refs.frontMediaInput.click()">Browse Files</b-button>
-                    <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP4, MOV, WebM</div>
+                    <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP3, MP4, MOV, WebM</div>
                   </div>
                 </div>
-                <input ref="frontMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'front')"/>
+                <input ref="frontMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'front')"/>
                 <!-- Alt text / decorative (images only) -->
                 <div v-if="form.frontImageUrl" class="mt-2">
                   <b-form-checkbox
@@ -168,13 +172,13 @@
                     </div>
                   </template>
                 </div>
-                <!-- Caption language (videos only) -->
-                <div v-if="form.frontVideoUrl" class="mt-2 d-flex align-items-center">
+                <!-- Caption language (audio/video only) -->
+                <div v-if="form.frontAudioUrl || form.frontVideoUrl" class="mt-2 d-flex align-items-center">
                   <label class="mb-0 mr-2 small text-muted" :for="'front-caption-lang-text-media'">
-                    Video Caption Language*
+                    {{ form.frontMediaType === 'audio' ? 'Audio' : 'Video' }} Caption Language*
                     <b-icon id="front-caption-lang-text-media-tooltip" icon="question-circle" class="text-primary" style="cursor:pointer"/>
                     <b-tooltip target="front-caption-lang-text-media-tooltip" delay="250" triggers="hover focus">
-                      Captions will be automatically generated from the video audio using AI. Select the language spoken in the video.
+                      Captions will be automatically generated from the {{ form.frontMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken in the {{ form.frontMediaType === 'audio' ? 'file' : 'video' }}.
                     </b-tooltip>
                   </label>
                   <b-form-select
@@ -195,7 +199,7 @@
             <div class="flashcard-media-only">
               <div
                 class="flashcard-drop-zone"
-                :class="{ 'drop-zone-active': isDraggingFront, 'drop-zone-has-file': !!(form.frontImageUrl || form.frontVideoUrl) }"
+                :class="{ 'drop-zone-active': isDraggingFront, 'drop-zone-has-file': !!(form.frontImageUrl || form.frontVideoUrl || form.frontAudioUrl) }"
                 @dragenter.prevent="isDraggingFront = true"
                 @dragover.prevent="isDraggingFront = true"
                 @dragleave.prevent="isDraggingFront = false"
@@ -206,18 +210,22 @@
                   <img :src="form.frontImageUrl" alt="Uploaded image" class="preview-img"/>
                   <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
                 </div>
+                <div v-else-if="form.frontAudioUrl" class="drop-zone-preview">
+                  <audio :src="form.frontAudioUrl" controls class="preview-audio" @click.stop/>
+                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
+                </div>
                 <div v-else-if="form.frontVideoUrl" class="drop-zone-preview">
                   <video :src="form.frontVideoUrl" controls class="preview-video" @click.stop/>
                   <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
                 </div>
                 <div v-else class="drop-zone-placeholder">
-                  <div>Drag &amp; drop an image or video here</div>
+                  <div>Drag &amp; drop an image, audio, or video here</div>
                   <div class="drop-zone-or">or</div>
                   <b-button size="sm" variant="outline-secondary" @click.stop="$refs.frontMediaInput.click()">Browse Files</b-button>
-                  <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP4, MOV, WebM</div>
+                  <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP3, MP4, MOV, WebM</div>
                 </div>
               </div>
-              <input ref="frontMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'front')"/>
+              <input ref="frontMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'front')"/>
               <!-- Alt text / decorative (images only) -->
               <div v-if="form.frontImageUrl" class="mt-2">
                 <b-form-checkbox
@@ -291,13 +299,13 @@
                   </div>
                 </template>
               </div>
-              <!-- Caption language (videos only) -->
-              <div v-if="form.frontVideoUrl" class="mt-2 d-flex align-items-center">
+              <!-- Caption language (audio/video only) -->
+              <div v-if="form.frontAudioUrl || form.frontVideoUrl" class="mt-2 d-flex align-items-center">
                 <label class="mb-0 mr-2 small text-muted" :for="'front-caption-lang-media'">
-                  Video Caption Language*
+                  {{ form.frontMediaType === 'audio' ? 'Audio' : 'Video' }} Caption Language*
                   <b-icon id="front-caption-lang-media-tooltip" icon="question-circle" class="text-primary" style="cursor:pointer"/>
                   <b-tooltip target="front-caption-lang-media-tooltip" delay="250" triggers="hover focus">
-                    Captions will be automatically generated from the video audio using AI. Select the language spoken in the video.
+                    Captions will be automatically generated from the {{ form.frontMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken in the {{ form.frontMediaType === 'audio' ? 'file' : 'video' }}.
                   </b-tooltip>
                 </label>
                 <b-form-select
@@ -382,7 +390,7 @@
               <div class="flashcard-editor-media">
                 <div
                   class="flashcard-drop-zone"
-                  :class="{ 'drop-zone-active': isDraggingBack, 'drop-zone-has-file': !!(form.backImageUrl || form.backVideoUrl) }"
+                  :class="{ 'drop-zone-active': isDraggingBack, 'drop-zone-has-file': !!(form.backImageUrl || form.backVideoUrl || form.backAudioUrl) }"
                   @dragenter.prevent="isDraggingBack = true"
                   @dragover.prevent="isDraggingBack = true"
                   @dragleave.prevent="isDraggingBack = false"
@@ -393,18 +401,22 @@
                     <img :src="form.backImageUrl" alt="Uploaded image" class="preview-img"/>
                     <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
                   </div>
+                  <div v-else-if="form.backAudioUrl" class="drop-zone-preview">
+                    <audio :src="form.backAudioUrl" controls class="preview-audio" @click.stop/>
+                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
+                  </div>
                   <div v-else-if="form.backVideoUrl" class="drop-zone-preview">
                     <video :src="form.backVideoUrl" controls class="preview-video" @click.stop/>
                     <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
                   </div>
                   <div v-else class="drop-zone-placeholder">
-                    <div>Drag &amp; drop an image or video here</div>
+                    <div>Drag &amp; drop an image, audio, or video here</div>
                     <div class="drop-zone-or">or</div>
                     <b-button size="sm" variant="outline-secondary" @click.stop="$refs.backMediaInput.click()">Browse Files</b-button>
-                    <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP4, MOV, WebM</div>
+                    <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP3, MP4, MOV, WebM</div>
                   </div>
                 </div>
-                <input ref="backMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'back')"/>
+                <input ref="backMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'back')"/>
                 <!-- Alt text / decorative (images only) -->
                 <div v-if="form.backImageUrl" class="mt-2">
                   <b-form-checkbox
@@ -478,13 +490,13 @@
                     </div>
                   </template>
                 </div>
-                <!-- Caption language (videos only) -->
-                <div v-if="form.backVideoUrl" class="mt-2 d-flex align-items-center">
+                <!-- Caption language (audio/video only) -->
+                <div v-if="form.backAudioUrl || form.backVideoUrl" class="mt-2 d-flex align-items-center">
                   <label class="mb-0 mr-2 small text-muted" :for="'back-caption-lang-text-media'">
-                    Video Caption Language*
+                    {{ form.backMediaType === 'audio' ? 'Audio' : 'Video' }} Caption Language*
                     <b-icon id="back-caption-lang-text-media-tooltip" icon="question-circle" class="text-primary" style="cursor:pointer"/>
                     <b-tooltip target="back-caption-lang-text-media-tooltip" delay="250" triggers="hover focus">
-                      Captions will be automatically generated from the video audio using AI. Select the language spoken in the video.
+                      Captions will be automatically generated from the {{ form.backMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken in the {{ form.backMediaType === 'audio' ? 'file' : 'video' }}.
                     </b-tooltip>
                   </label>
                   <b-form-select
@@ -505,7 +517,7 @@
             <div class="flashcard-media-only">
               <div
                 class="flashcard-drop-zone"
-                :class="{ 'drop-zone-active': isDraggingBack, 'drop-zone-has-file': !!(form.backImageUrl || form.backVideoUrl) }"
+                :class="{ 'drop-zone-active': isDraggingBack, 'drop-zone-has-file': !!(form.backImageUrl || form.backVideoUrl || form.backAudioUrl) }"
                 @dragenter.prevent="isDraggingBack = true"
                 @dragover.prevent="isDraggingBack = true"
                 @dragleave.prevent="isDraggingBack = false"
@@ -516,18 +528,22 @@
                   <img :src="form.backImageUrl" alt="Uploaded image" class="preview-img"/>
                   <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
                 </div>
+                <div v-else-if="form.backAudioUrl" class="drop-zone-preview">
+                  <audio :src="form.backAudioUrl" controls class="preview-audio" @click.stop/>
+                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
+                </div>
                 <div v-else-if="form.backVideoUrl" class="drop-zone-preview">
                   <video :src="form.backVideoUrl" controls class="preview-video" @click.stop/>
                   <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
                 </div>
                 <div v-else class="drop-zone-placeholder">
-                  <div>Drag &amp; drop an image or video here</div>
+                  <div>Drag &amp; drop an image, audio, or video here</div>
                   <div class="drop-zone-or">or</div>
                   <b-button size="sm" variant="outline-secondary" @click.stop="$refs.backMediaInput.click()">Browse Files</b-button>
-                  <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP4, MOV, WebM</div>
+                  <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP3, MP4, MOV, WebM</div>
                 </div>
               </div>
-              <input ref="backMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'back')"/>
+              <input ref="backMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'back')"/>
               <!-- Alt text / decorative (images only) -->
               <div v-if="form.backImageUrl" class="mt-2">
                 <b-form-checkbox
@@ -601,13 +617,13 @@
                   </div>
                 </template>
               </div>
-              <!-- Caption language (videos only) -->
-              <div v-if="form.backVideoUrl" class="mt-2 d-flex align-items-center">
+              <!-- Caption language (audio/video only) -->
+              <div v-if="form.backAudioUrl || form.backVideoUrl" class="mt-2 d-flex align-items-center">
                 <label class="mb-0 mr-2 small text-muted" :for="'back-caption-lang-media'">
-                  Video Caption Language*
+                  {{ form.backMediaType === 'audio' ? 'Audio' : 'Video' }} Caption Language*
                   <b-icon id="back-caption-lang-media-tooltip" icon="question-circle" class="text-primary" style="cursor:pointer"/>
                   <b-tooltip target="back-caption-lang-media-tooltip" delay="250" triggers="hover focus">
-                    Captions will be automatically generated from the video audio using AI. Select the language spoken in the video.
+                    Captions will be automatically generated from the {{ form.backMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken in the {{ form.backMediaType === 'audio' ? 'file' : 'video' }}.
                   </b-tooltip>
                 </label>
                 <b-form-select
@@ -658,6 +674,7 @@
 import CKEditor from 'ckeditor4-vue'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const ACCEPTED_AUDIO_TYPES = ['audio/mpeg', 'audio/mp3']
 const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm']
 
 function emptyForm (frontType = 'text_only', backType = 'text_only') {
@@ -679,6 +696,7 @@ function emptyForm (frontType = 'text_only', backType = 'text_only') {
     frontShowLongDesc: false,
     frontImageUrl: '',
     frontVideoUrl: '',
+    frontAudioUrl: '',
     frontCaptionLanguage: 'en',
     // back fields
     back: '',
@@ -695,6 +713,7 @@ function emptyForm (frontType = 'text_only', backType = 'text_only') {
     backShowLongDesc: false,
     backImageUrl: '',
     backVideoUrl: '',
+    backAudioUrl: '',
     backCaptionLanguage: 'en',
     // hint (optional, applies to any card type)
     hint: ''
@@ -731,7 +750,7 @@ function warningMessage (side, fromType, toType, form) {
     return 'Changing to Media will clear all existing content for this side. Are you sure?'
   }
   if (fromType === 'text_media' && form[`${side}MediaUrl`]) {
-    return 'Changing from Text & Media will remove the uploaded image or video. The text will be kept. Are you sure?'
+    return 'Changing from Text & Media will remove the uploaded image, audio, or video. The text will be kept. Are you sure?'
   }
   return 'Changing the type will clear some content. Are you sure?'
 }
@@ -841,10 +860,12 @@ export default {
     }
     if (this.form.frontMediaUrl && this.form.frontMediaType) {
       this.form.frontImageUrl = this.form.frontMediaType === 'image' ? this.form.frontMediaUrl : ''
+      this.form.frontAudioUrl = this.form.frontMediaType === 'audio' ? this.form.frontMediaUrl : ''
       this.form.frontVideoUrl = this.form.frontMediaType === 'video' ? this.form.frontMediaUrl : ''
     }
     if (this.form.backMediaUrl && this.form.backMediaType) {
       this.form.backImageUrl = this.form.backMediaType === 'image' ? this.form.backMediaUrl : ''
+      this.form.backAudioUrl = this.form.backMediaType === 'audio' ? this.form.backMediaUrl : ''
       this.form.backVideoUrl = this.form.backMediaType === 'video' ? this.form.backMediaUrl : ''
     }
   },
@@ -965,12 +986,11 @@ export default {
 
     processFile (file, side) {
       const isImage = ACCEPTED_IMAGE_TYPES.includes(file.type)
+      const isAudio = ACCEPTED_AUDIO_TYPES.includes(file.type)
       const isVideo = ACCEPTED_VIDEO_TYPES.includes(file.type)
 
-      if (!isImage && !isVideo) {
-        this.$noty
-          ? this.$noty.error('Please upload a valid file (JPG, PNG, GIF, WebP, MP4, MOV, or WebM).')
-          : alert('Please upload a valid file (JPG, PNG, GIF, WebP, MP4, MOV, or WebM).')
+      if (!isImage && !isAudio && !isVideo) {
+        this.$noty.error('Please upload a valid file (JPG, PNG, GIF, WebP, MP3, MP4, MOV, or WebM).')
         return
       }
 
@@ -981,8 +1001,9 @@ export default {
       const objectUrl = URL.createObjectURL(file)
       this.form[`${side}MediaUrl`] = objectUrl
       this.form[`${side}MediaFile`] = file
-      this.form[`${side}MediaType`] = isImage ? 'image' : 'video'
+      this.form[`${side}MediaType`] = isImage ? 'image' : isAudio ? 'audio' : 'video'
       this.form[`${side}ImageUrl`] = isImage ? objectUrl : ''
+      this.form[`${side}AudioUrl`] = isAudio ? objectUrl : ''
       this.form[`${side}VideoUrl`] = isVideo ? objectUrl : ''
       this.form[`${side}MediaAlt`] = ''
       this.form[`${side}MediaDecorative`] = false
@@ -1004,6 +1025,7 @@ export default {
       this.form[`${side}MediaFile`] = null
       this.form[`${side}MediaType`] = null
       this.form[`${side}ImageUrl`] = ''
+      this.form[`${side}AudioUrl`] = ''
       this.form[`${side}VideoUrl`] = ''
       this.form[`${side}MediaAlt`] = ''
       this.form[`${side}MediaDecorative`] = false
@@ -1038,7 +1060,9 @@ export default {
               data.frontMediaLongDesc = f.frontMediaLongDesc || ''
             }
           }
-          if (f.frontMediaType === 'video') data.frontCaptionLanguage = f.frontCaptionLanguage
+          if (f.frontMediaType === 'audio' || f.frontMediaType === 'video') {
+            data.frontCaptionLanguage = f.frontCaptionLanguage
+          }
           break
         case 'media':
           data.frontMediaS3Key = f.frontMediaS3Key
@@ -1051,7 +1075,9 @@ export default {
               data.frontMediaLongDesc = f.frontMediaLongDesc || ''
             }
           }
-          if (f.frontMediaType === 'video') data.frontCaptionLanguage = f.frontCaptionLanguage
+          if (f.frontMediaType === 'audio' || f.frontMediaType === 'video') {
+            data.frontCaptionLanguage = f.frontCaptionLanguage
+          }
           break
       }
 
@@ -1071,7 +1097,9 @@ export default {
               data.backMediaLongDesc = f.backMediaLongDesc || ''
             }
           }
-          if (f.backMediaType === 'video') data.backCaptionLanguage = f.backCaptionLanguage
+          if (f.backMediaType === 'audio' || f.backMediaType === 'video') {
+            data.backCaptionLanguage = f.backCaptionLanguage
+          }
           break
         case 'media':
           data.backMediaS3Key = f.backMediaS3Key
@@ -1084,13 +1112,15 @@ export default {
               data.backMediaLongDesc = f.backMediaLongDesc || ''
             }
           }
-          if (f.backMediaType === 'video') data.backCaptionLanguage = f.backCaptionLanguage
+          if (f.backMediaType === 'audio' || f.backMediaType === 'video') {
+            data.backCaptionLanguage = f.backCaptionLanguage
+          }
           break
       }
 
       // Hint (any card type)
       if (f.hint && f.hint.trim()) data.hint = f.hint.trim()
-console.error(data)
+
       return data
     },
 
@@ -1103,6 +1133,7 @@ console.error(data)
       this.form[`${side}MediaS3Key`] = s3Key
       this.form[`${side}MediaType`] = mediaType
       this.form[`${side}ImageUrl`] = mediaType === 'image' ? temporaryUrl : ''
+      this.form[`${side}AudioUrl`] = mediaType === 'audio' ? temporaryUrl : ''
       this.form[`${side}VideoUrl`] = mediaType === 'video' ? temporaryUrl : ''
     },
 
@@ -1261,6 +1292,11 @@ console.error(data)
   max-height: 160px;
   border-radius: 6px;
   object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.preview-audio {
+  width: 100%;
   margin-bottom: 8px;
 }
 

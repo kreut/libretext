@@ -351,7 +351,7 @@
             <template v-else-if="currentCard.frontType === 'text_media'">
               <div class="fc-two-col">
                 <div class="fc-term">{{ currentCard.term }}</div>
-                <div class="fc-media">
+                <div :class="currentCard.frontMediaType !== 'audio' ? 'fc-media' : ''">
                   <CardMedia :card="currentCard" side="front" @click.native.stop/>
                 </div>
               </div>
@@ -411,7 +411,7 @@
             <template v-else-if="currentCard.backType === 'text_media'">
               <div class="fc-two-col">
                 <div class="fc-answer">{{ currentCard.answer }}</div>
-                <div class="fc-media">
+                <div :class="currentCard.backMediaType !== 'audio' ? 'fc-media' : ''">
                   <CardMedia :card="currentCard" side="back" @click.native.stop/>
                 </div>
               </div>
@@ -608,7 +608,7 @@ const CardMedia = {
     }
   },
   template: `
-    <div style="width:100%">
+    <div :style="mediaType !== 'audio' ? 'width:100%' : ''">
     <figure v-if="mediaType === 'image' && mediaUrl" class="fc-figure">
       <img :src="mediaUrl" :alt="decorative ? '' : mediaAlt" :role="decorative ? 'presentation' : undefined"
            class="fc-img"
@@ -622,17 +622,22 @@ const CardMedia = {
         <div v-show="longDescOpen" class="fc-longdesc" v-html="longDesc"/>
       </div>
     </figure>
+    <audio v-else-if="mediaType === 'audio' && mediaUrl" class="fc-audio fc-audio-wrap"
+           @click.stop :src="mediaUrl"
+           controls
+
+    />
     <iframe
-      v-else-if="(mediaType === 'video' || mediaType === 'audio') && mediaUrl"
-      :src="mediaPlayerUrl"
-      class="fc-media-iframe"
-      width="100%"
-      height="380"
-      allowfullscreen
-      allow="autoplay; fullscreen"
-      frameborder="0"
-      scrolling="no"
-      title="Media player"
+        v-else-if="(mediaType === 'video' || mediaType === 'audio') && mediaUrl"
+        :src="mediaPlayerUrl"
+        class="fc-media-iframe"
+        width="100%"
+        height="380"
+        allowfullscreen
+        allow="autoplay; fullscreen"
+        frameborder="0"
+        scrolling="no"
+        title="Media player"
     />
     <span v-else class="fc-media-placeholder">No media uploaded</span>
     </div>
@@ -1728,7 +1733,7 @@ kbd {
 }
 
 .fc-media > div {
-  width: 100%;
+  //width: 100%;
 }
 
 .fc-stack-col {
