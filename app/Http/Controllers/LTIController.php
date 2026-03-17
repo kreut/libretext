@@ -248,9 +248,24 @@ class LTIController extends Controller
             //check by email first because this is the most recent account *******THINK ABOUT THIS!!!!!!********
             $sub = $launch->get_launch_data()['sub'];
             $lti_user = null;
+            $launch_redirect = null;
             if ($sub) {
                 $lti_user = $user->where('lms_user_id', $sub)->first();
             }
+            if (!$lti_user) {
+                $launch_redirect = DB::table('launch_redirects')
+                    ->where('original_email', $email)
+                    ->first();
+                if ($launch_redirect) {
+                    $redirect_email = $launch_redirect->redirect_email;
+                    $lti_user = $user->where('email', $redirect_email)->first();
+                    if (!$lti_user) {
+                        throw new Exception("Redirect email {$redirect_email} does not map to a user.");
+                    }
+                    $email = $redirect_email;
+                }
+            }
+
             if (!$lti_user) {
                 $lti_user = $user->where('email', $email)->first();
             }
@@ -267,7 +282,7 @@ class LTIController extends Controller
                 ]);
             } else {
                 ///eventually I shouldn't need the following code since they'll all be new
-                if (!$lti_user->sub) {
+                if (!$lti_user->sub && !$launch_redirect) {
                     $lti_user->lms_user_id = $sub;
                     $lti_user->save();
                 }
