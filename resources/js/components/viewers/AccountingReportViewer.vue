@@ -14,6 +14,17 @@
 
     <!-- Report Table -->
     <table v-if="responsesReady" class="table table-sm report-table mb-0">
+      <thead v-if="hasColumnHeaders">
+      <tr>
+        <th
+          v-for="(col, ci) in qtiJson.columns"
+          :key="`th-${ci}`"
+          class="column-header text-center"
+        >
+          {{ col.header }}
+        </th>
+      </tr>
+      </thead>
       <tbody>
       <tr
         v-for="(row, ri) in qtiJson.rows"
@@ -39,6 +50,7 @@
             <div
               class="cell-content"
               :class="getUnderlineClass(row, ci)"
+              :style="col.type === 'text' && row.cells[ci].indent ? { paddingLeft: '1.5rem' } : {}"
             >
               <!-- Blank cell -->
               <template v-if="row.cells[ci].mode === 'blank'">
@@ -48,6 +60,9 @@
               <!-- Display cell (shown to student) -->
               <template v-else-if="row.cells[ci].mode === 'display'">
                 {{ row.cells[ci].value }}
+                <div v-if="col.type === 'text' && row.cells[ci].description" class="cell-description">
+                  {{ row.cells[ci].description }}
+                </div>
               </template>
 
               <!-- Answer cell -->
@@ -90,6 +105,9 @@
                     @input="markCellEdited(ri, ci)"
                   />
                 </div>
+                <div v-if="col.type === 'text' && row.cells[ci].description" class="cell-description">
+                  {{ row.cells[ci].description }}
+                </div>
               </template>
             </div>
           </td>
@@ -126,6 +144,12 @@ export default {
         return false
       }
       return this.qtiJson.reportHeading.some(line => line && line.trim() !== '')
+    },
+    hasColumnHeaders () {
+      if (!this.qtiJson.columns || !Array.isArray(this.qtiJson.columns)) {
+        return false
+      }
+      return this.qtiJson.columns.some(col => col.header && col.header.trim() !== '')
     },
     parsedGradingResults () {
       let response = this.qtiJson.studentResponse
@@ -292,6 +316,16 @@ export default {
   padding: 0.5rem 0.75rem !important;
 }
 
+.column-header {
+  background-color: #1a2744;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid #dee2e6;
+  letter-spacing: 0.02em;
+}
+
 .blank-cell {
   background-color: transparent;
 }
@@ -360,5 +394,15 @@ input.border-danger,
 select.border-danger {
   border: 2px solid #b02a37 !important;
   box-shadow: none !important;
+}
+
+/* ============================================ */
+/* DESCRIPTION                                   */
+/* ============================================ */
+.cell-description {
+  font-size: 0.78rem;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 1px;
 }
 </style>

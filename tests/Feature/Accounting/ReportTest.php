@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Tests\Feature\Accounting;
 
 use App\Question;
@@ -19,6 +18,16 @@ class AccountingReportTest extends TestCase
         $this->student_user = factory(User::class)->create(['role' => 3]);
         $this->saved_questions_folder = factory(SavedQuestionsFolder::class)->create(['user_id' => $this->user->id, 'type' => 'my_questions']);
 
+        // Income Statement:
+        //   Revenues (section header)
+        //     row 1: Sales Revenue        | 475000  (answer)
+        //   Expenses (section header)
+        //     row 3: Salaries Expense     | 80000   (answer)
+        //     row 4: Rent Expense         | 36000   (answer)
+        //     row 5: Total Expenses       | 116000  (answer)
+        //     row 6: Net Income           | 359000  (answer)
+        //
+        // By default: orderMode = 'exact', no rows are flexible.
         $this->qti_question_info = [
             "question_type" => "assessment",
             "folder_id" => $this->saved_questions_folder->id,
@@ -70,6 +79,7 @@ class AccountingReportTest extends TestCase
                     [
                         "identifier" => "row-1",
                         "isHeader" => false,
+                        "flexible" => false,
                         "headerText" => "",
                         "cells" => [
                             ["identifier" => "cell-1-0", "mode" => "display", "value" => "Sales Revenue", "underline" => "none"],
@@ -84,6 +94,7 @@ class AccountingReportTest extends TestCase
                     [
                         "identifier" => "row-3",
                         "isHeader" => false,
+                        "flexible" => false,
                         "headerText" => "",
                         "cells" => [
                             ["identifier" => "cell-3-0", "mode" => "display", "value" => "Salaries Expense", "underline" => "none"],
@@ -93,6 +104,7 @@ class AccountingReportTest extends TestCase
                     [
                         "identifier" => "row-4",
                         "isHeader" => false,
+                        "flexible" => false,
                         "headerText" => "",
                         "cells" => [
                             ["identifier" => "cell-4-0", "mode" => "display", "value" => "Rent Expense", "underline" => "none"],
@@ -102,6 +114,7 @@ class AccountingReportTest extends TestCase
                     [
                         "identifier" => "row-5",
                         "isHeader" => false,
+                        "flexible" => false,
                         "headerText" => "",
                         "cells" => [
                             ["identifier" => "cell-5-0", "mode" => "display", "value" => "Total Expenses", "underline" => "none"],
@@ -111,6 +124,7 @@ class AccountingReportTest extends TestCase
                     [
                         "identifier" => "row-6",
                         "isHeader" => false,
+                        "flexible" => false,
                         "headerText" => "",
                         "cells" => [
                             ["identifier" => "cell-6-0", "mode" => "display", "value" => "Net Income", "underline" => "none"],
@@ -145,12 +159,18 @@ class AccountingReportTest extends TestCase
         return json_decode($errors[0], true);
     }
 
-    private function buildQtiArray(string $orderMode = 'exact', array $rowOverrides = []): array
+    /**
+     * Return a qtiArray with orderMode set and rows optionally modified.
+     * Pass $flexibleRowIndices to mark specific row indices as flexible: true.
+     */
+    private function buildQtiArray(string $orderMode = 'exact', array $flexibleRowIndices = []): array
     {
         $qtiJson = $this->getQtiJson();
         $qtiJson['orderMode'] = $orderMode;
-        if (!empty($rowOverrides)) {
-            $qtiJson['rows'] = $rowOverrides;
+        foreach ($flexibleRowIndices as $ri) {
+            if (isset($qtiJson['rows'][$ri])) {
+                $qtiJson['rows'][$ri]['flexible'] = true;
+            }
         }
         return $qtiJson;
     }
@@ -224,6 +244,7 @@ class AccountingReportTest extends TestCase
             [
                 "identifier" => "row-1",
                 "isHeader" => false,
+                "flexible" => false,
                 "headerText" => "",
                 "cells" => [
                     ["identifier" => "c1", "mode" => "display", "value" => "Sales", "underline" => "none"],
@@ -245,6 +266,7 @@ class AccountingReportTest extends TestCase
             [
                 "identifier" => "row-1",
                 "isHeader" => false,
+                "flexible" => false,
                 "headerText" => "",
                 "cells" => [
                     ["identifier" => "c1", "mode" => "answer", "value" => "100", "underline" => "none"],
@@ -306,7 +328,6 @@ class AccountingReportTest extends TestCase
     public function numeric_display_values_must_be_numeric()
     {
         $qtiJson = $this->getQtiJson();
-        // Change a display cell to numeric column and set non-numeric value
         $qtiJson['rows'][1]['cells'][0]['value'] = 'abc';
         $qtiJson['columns'][0]['type'] = 'numeric';
         $this->setQtiJson($qtiJson);
@@ -319,7 +340,6 @@ class AccountingReportTest extends TestCase
     public function cell_count_must_match_column_count()
     {
         $qtiJson = $this->getQtiJson();
-        // Remove one cell from a row
         $qtiJson['rows'][1]['cells'] = [
             ["identifier" => "c1", "mode" => "display", "value" => "Sales", "underline" => "none"]
         ];
@@ -375,7 +395,7 @@ class AccountingReportTest extends TestCase
         $qtiArray = $this->buildQtiArray('exact');
         $submission = new Submission();
 
-        // Only first answer correct
+        // Only the first answer correct; 1 out of 5
         $studentSubmission = [
             '1' => ['1' => '475000'],
             '3' => ['1' => ''],
@@ -386,9 +406,6 @@ class AccountingReportTest extends TestCase
 
         $result = $submission->computeScoreForAccountingReport($qtiArray, $studentSubmission);
 
-        $this->assertGreaterThan(0, $result['proportionCorrect']);
-        $this->assertLessThan(1, $result['proportionCorrect']);
-        // 1 out of 5 correct
         $this->assertEquals(round(1 / 5, 4), $result['proportionCorrect']);
     }
 
@@ -454,7 +471,6 @@ class AccountingReportTest extends TestCase
     {
         $qtiArray = $this->getQtiJson();
         $qtiArray['orderMode'] = 'exact';
-        // Change expected value to a decimal
         $qtiArray['rows'][1]['cells'][1]['value'] = '475000.50';
 
         $submission = new Submission();
@@ -477,7 +493,6 @@ class AccountingReportTest extends TestCase
     {
         $qtiArray = $this->getQtiJson();
         $qtiArray['orderMode'] = 'exact';
-        // Make a text column answer cell
         $qtiArray['rows'][1]['cells'][0]['mode'] = 'answer';
         $qtiArray['rows'][1]['cells'][0]['value'] = 'Sales Revenue';
 
@@ -496,14 +511,68 @@ class AccountingReportTest extends TestCase
         $this->assertTrue($result['results']['1']['0']['isCorrect']);
     }
 
+    /** @test */
+    public function exact_mode_wrong_row_order_is_marked_incorrect()
+    {
+        // In exact mode, putting Rent Expense value (36000) where Salaries Expense (80000)
+        // is expected scores that cell wrong even though 36000 is correct elsewhere.
+        $qtiArray = $this->buildQtiArray('exact');
+        $submission = new Submission();
+
+        $studentSubmission = [
+            '1' => ['1' => '475000'],
+            '3' => ['1' => '36000'],  // Wrong: expected 80000
+            '4' => ['1' => '80000'],  // Wrong: expected 36000
+            '5' => ['1' => '116000'],
+            '6' => ['1' => '359000']
+        ];
+
+        $result = $submission->computeScoreForAccountingReport($qtiArray, $studentSubmission);
+
+        $this->assertFalse($result['results']['3']['1']['isCorrect']);
+        $this->assertFalse($result['results']['4']['1']['isCorrect']);
+        // 3 out of 5 correct
+        $this->assertEquals(round(3 / 5, 4), $result['proportionCorrect']);
+    }
+
     // =========================================================================
-    // SCORING - FLEXIBLE MODE
+    // SCORING - WITHIN_SECTIONS MODE, NO FLEXIBLE ROWS (all positional)
     // =========================================================================
 
     /** @test */
-    public function flexible_mode_scores_100_when_rows_in_correct_order()
+    public function within_sections_mode_with_no_flexible_rows_behaves_like_exact()
     {
-        $qtiArray = $this->buildQtiArray('flexible');
+        // When orderMode is within_sections but no rows are marked flexible,
+        // every row is positional — identical behaviour to exact mode.
+        $qtiArray = $this->buildQtiArray('within_sections'); // no flexibleRowIndices
+
+        $submission = new Submission();
+
+        $studentSubmission = [
+            '1' => ['1' => '475000'],
+            '3' => ['1' => '36000'],  // Wrong positionally: expected 80000
+            '4' => ['1' => '80000'],  // Wrong positionally: expected 36000
+            '5' => ['1' => '116000'],
+            '6' => ['1' => '359000']
+        ];
+
+        $result = $submission->computeScoreForAccountingReport($qtiArray, $studentSubmission);
+
+        $this->assertFalse($result['results']['3']['1']['isCorrect']);
+        $this->assertFalse($result['results']['4']['1']['isCorrect']);
+        $this->assertEquals(round(3 / 5, 4), $result['proportionCorrect']);
+    }
+
+    // =========================================================================
+    // SCORING - WITHIN_SECTIONS MODE, WITH FLEXIBLE ROWS
+    // =========================================================================
+
+    /** @test */
+    public function flexible_rows_score_100_when_submitted_in_correct_order()
+    {
+        // rows 3 and 4 (Salaries, Rent) marked flexible; row 5 (Total) and row 6 (Net Income) positional
+        // Student submits everything in the expected order — should still be 100%.
+        $qtiArray = $this->buildQtiArray('within_sections', [3, 4]);
         $submission = new Submission();
 
         $studentSubmission = [
@@ -520,17 +589,16 @@ class AccountingReportTest extends TestCase
     }
 
     /** @test */
-    public function flexible_mode_scores_100_when_rows_within_section_are_reordered()
+    public function flexible_rows_score_100_when_submitted_in_swapped_order()
     {
-        // Swap Salaries Expense (row 3) and Rent Expense (row 4) values
-        // Student puts Rent Expense amount in row 3 and Salaries Expense amount in row 4
-        $qtiArray = $this->buildQtiArray('flexible');
+        // rows 3 and 4 marked flexible; student swaps their values — should still be 100%.
+        $qtiArray = $this->buildQtiArray('within_sections', [3, 4]);
         $submission = new Submission();
 
         $studentSubmission = [
             '1' => ['1' => '475000'],
-            '3' => ['1' => '36000'],  // Rent Expense value in Salaries row
-            '4' => ['1' => '80000'],  // Salaries Expense value in Rent row
+            '3' => ['1' => '36000'],  // Rent value in Salaries row — flexible match
+            '4' => ['1' => '80000'],  // Salaries value in Rent row — flexible match
             '5' => ['1' => '116000'],
             '6' => ['1' => '359000']
         ];
@@ -541,15 +609,40 @@ class AccountingReportTest extends TestCase
     }
 
     /** @test */
-    public function flexible_mode_does_not_match_rows_across_sections()
+    public function positional_rows_within_within_sections_mode_still_require_correct_position()
     {
-        $qtiArray = $this->buildQtiArray('flexible');
+        // row 5 (Total Expenses) is NOT marked flexible — swapping it should score wrong.
+        $qtiArray = $this->buildQtiArray('within_sections', [3, 4]); // row 5 stays positional
+
         $submission = new Submission();
 
-        // Put Revenues section answer in Expenses section
         $studentSubmission = [
-            '1' => ['1' => ''],       // Revenue section: empty
-            '3' => ['1' => '475000'], // Expense section: Revenue value (should not match)
+            '1' => ['1' => '475000'],
+            '3' => ['1' => '80000'],
+            '4' => ['1' => '36000'],
+            '5' => ['1' => '999999'], // Wrong value for positional Total Expenses
+            '6' => ['1' => '359000']
+        ];
+
+        $result = $submission->computeScoreForAccountingReport($qtiArray, $studentSubmission);
+
+        $this->assertFalse($result['results']['5']['1']['isCorrect']);
+        // 4 out of 5 correct
+        $this->assertEquals(round(4 / 5, 4), $result['proportionCorrect']);
+    }
+
+    /** @test */
+    public function flexible_rows_do_not_match_across_sections()
+    {
+        // rows 1 (Revenue section) and 3 (Expenses section) both marked flexible,
+        // but they are in different sections and must not match each other.
+        $qtiArray = $this->buildQtiArray('within_sections', [1, 3]);
+        $submission = new Submission();
+
+        // Student puts Revenue value (475000) in Expenses section row 3
+        $studentSubmission = [
+            '1' => ['1' => ''],       // Revenue section: blank
+            '3' => ['1' => '475000'], // Expenses section: Revenue value — must NOT cross-match
             '4' => ['1' => '36000'],
             '5' => ['1' => '116000'],
             '6' => ['1' => '359000']
@@ -557,31 +650,75 @@ class AccountingReportTest extends TestCase
 
         $result = $submission->computeScoreForAccountingReport($qtiArray, $studentSubmission);
 
-        // Revenue answer is wrong (empty), and 475000 in Expenses section should not match across
+        // row 1 is blank (wrong), row 3 has 475000 which != 80000 (wrong)
+        $this->assertFalse($result['results']['1']['1']['isCorrect']);
+        $this->assertFalse($result['results']['3']['1']['isCorrect']);
         $this->assertLessThan(1.0, $result['proportionCorrect']);
     }
 
     /** @test */
-    public function flexible_mode_partially_correct_reordered_rows_score_proportionally()
+    public function flexible_rows_with_one_wrong_value_score_proportionally()
     {
-        $qtiArray = $this->buildQtiArray('flexible');
+        // rows 3 and 4 flexible. Student swaps correctly but one value is wrong.
+        $qtiArray = $this->buildQtiArray('within_sections', [3, 4]);
         $submission = new Submission();
 
-        // Swap rows within Expenses section, but one value is wrong
         $studentSubmission = [
             '1' => ['1' => '475000'],
-            '3' => ['1' => '36000'],  // Rent value in Salaries row (flexible match)
-            '4' => ['1' => '99999'],  // Wrong value
+            '3' => ['1' => '36000'],  // Rent value — greedy matches expected Salaries row (row 3) first, scores wrong
+            '4' => ['1' => '99999'],  // Wrong value — matched to expected Rent row (row 4), scores wrong
+            '5' => ['1' => '116000'],
+            '6' => ['1' => '359000']
+        ];
+
+        // Greedy processes expected row 3 (80000) first:
+        //   student row 3 (36000) and row 4 (99999) both have 0 matches → picks row 3 (36000 ≠ 80000 ✗)
+        // Then expected row 4 (36000): only row 4 (99999) left → 99999 ≠ 36000 ✗
+        // Result: 475000 ✓, 36000 ✗, 99999 ✗, 116000 ✓, 359000 ✓ → 3/5
+        $result = $submission->computeScoreForAccountingReport($qtiArray, $studentSubmission);
+
+        $this->assertEquals(round(3 / 5, 4), $result['proportionCorrect']);
+    }
+
+    /** @test */
+    public function flexible_rows_blank_submission_counts_as_wrong()
+    {
+        $qtiArray = $this->buildQtiArray('within_sections', [3, 4]);
+        $submission = new Submission();
+
+        $studentSubmission = [
+            '1' => ['1' => '475000'],
+            '3' => ['1' => ''],  // Blank — wrong
+            '4' => ['1' => ''],  // Blank — wrong
             '5' => ['1' => '116000'],
             '6' => ['1' => '359000']
         ];
 
         $result = $submission->computeScoreForAccountingReport($qtiArray, $studentSubmission);
 
-        // 3 out of 5 correct: 475000 ✓, 36000 matched to wrong expected (greedy),
-        // 99999 ✗, 116000 ✓, 359000 ✓
-        $this->assertGreaterThan(0, $result['proportionCorrect']);
-        $this->assertLessThan(1, $result['proportionCorrect']);
+        // 3 out of 5 correct
         $this->assertEquals(round(3 / 5, 4), $result['proportionCorrect']);
+    }
+
+    /** @test */
+    public function flexible_rows_partial_blank_still_awards_matching_cells()
+    {
+        // rows 3 and 4 flexible. One row blank, one row correct.
+        // The non-blank row should still match its best expected row.
+        $qtiArray = $this->buildQtiArray('within_sections', [3, 4]);
+        $submission = new Submission();
+
+        $studentSubmission = [
+            '1' => ['1' => '475000'],
+            '3' => ['1' => '80000'],  // Matches expected Salaries row exactly
+            '4' => ['1' => ''],       // Blank — wrong for remaining Rent row
+            '5' => ['1' => '116000'],
+            '6' => ['1' => '359000']
+        ];
+
+        // 4 out of 5 correct
+        $result = $submission->computeScoreForAccountingReport($qtiArray, $studentSubmission);
+
+        $this->assertEquals(round(4 / 5, 4), $result['proportionCorrect']);
     }
 }

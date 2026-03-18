@@ -38,6 +38,15 @@ class Submission extends Model
 
     protected $guarded = [];
 
+
+    /**
+     * CHANGES TO Submission.php
+     *
+     * Replace the existing computeScoreForAccountingReport() method and
+     * _getAccountingReportSections() method with the versions below.
+     * Everything else in Submission.php stays the same.
+     */
+
     public function computeScoreForAccountingReport(array $qtiArray, array $studentSubmission): array
     {
         $results = [];
@@ -49,22 +58,14 @@ class Submission extends Model
         $orderMode = $qtiArray['orderMode'] ?? 'exact';
 
         if ($orderMode === 'exact') {
-            // Exact mode: compare position by position
             foreach ($rows as $ri => $row) {
-                if ($row['isHeader'] ?? false) {
-                    continue;
-                }
-                if (!isset($row['cells'])) {
-                    continue;
-                }
+                if ($row['isHeader'] ?? false) continue;
+                if (!isset($row['cells'])) continue;
                 foreach ($row['cells'] as $ci => $cell) {
-                    if (($cell['mode'] ?? '') !== 'answer') {
-                        continue;
-                    }
+                    if (($cell['mode'] ?? '') !== 'answer') continue;
                     $totalAnswerCells++;
                     $expectedValue = $cell['value'] ?? '';
                     $colType = $columns[$ci]['type'] ?? 'text';
-
                     if ($colType === 'numeric') {
                         $studentValue = str_replace(['$', ',', ' '], '', $studentSubmission[$ri][$ci] ?? '');
                         $cleanExpected = str_replace(['$', ',', ' '], '', $expectedValue);
@@ -73,138 +74,152 @@ class Submission extends Model
                         $studentValue = $studentSubmission[$ri][$ci] ?? '';
                         $isCorrect = strtolower(trim($expectedValue)) === strtolower(trim($studentValue));
                     }
-
                     $results[$ri][$ci] = [
                         'studentValue' => $studentSubmission[$ri][$ci] ?? '',
                         'expectedValue' => $expectedValue,
                         'isCorrect' => $isCorrect
                     ];
-
-                    if ($isCorrect) {
-                        $correctCells++;
-                    }
+                    if ($isCorrect) $correctCells++;
                 }
             }
         } else {
-            // Flexible mode: within each section, find best row match
+            // within_sections mode:
+            // - flexible: true rows → best-match scoring within the section
+            // - flexible: false/missing rows → positional (exact order)
             $sections = $this->_getAccountingReportSections($rows);
 
             foreach ($sections as $section) {
-                $sectionRows = $section['rows'];
+                $positionalEntries = [];
+                $flexibleEntries = [];
 
-                // Collect expected rows and student rows for this section
-                $expectedRows = [];
-                $studentRows = [];
-
-                foreach ($sectionRows as $entry) {
-                    $ri = $entry['ri'];
-                    $row = $entry['row'];
-                    if (!isset($row['cells'])) {
-                        continue;
-                    }
-
-                    // Build expected row values (answer cells only)
-                    $expectedCells = [];
-                    foreach ($row['cells'] as $ci => $cell) {
-                        if (($cell['mode'] ?? '') === 'answer') {
-                            $expectedCells[$ci] = $cell['value'] ?? '';
-                        }
-                    }
-                    if (!empty($expectedCells)) {
-                        $expectedRows[] = ['ri' => $ri, 'cells' => $expectedCells, 'row' => $row];
-                    }
-
-                    // Build student row values (clean numeric values only)
-                    $studentCells = [];
-                    foreach ($row['cells'] as $ci => $cell) {
-                        if (($cell['mode'] ?? '') === 'answer') {
-                            $colType = $columns[$ci]['type'] ?? 'text';
-                            $rawValue = $studentSubmission[$ri][$ci] ?? '';
-                            if ($colType === 'numeric') {
-                                $studentCells[$ci] = str_replace(['$', ',', ' '], '', $rawValue);
-                            } else {
-                                $studentCells[$ci] = $rawValue;
-                            }
-                        }
-                    }
-                    if (!empty($studentCells)) {
-                        $studentRows[] = ['ri' => $ri, 'cells' => $studentCells];
+                foreach ($section['rows'] as $entry) {
+                    if (!empty($entry['row']['flexible'])) {
+                        $flexibleEntries[] = $entry;
+                    } else {
+                        $positionalEntries[] = $entry;
                     }
                 }
 
-                // Match each expected row to the best student row
-                $usedStudentIndices = [];
-
-                foreach ($expectedRows as $expectedIndex => $expected) {
-                    $bestStudentIndex = null;
-                    $bestMatchCount = -1;
-
-                    foreach ($studentRows as $studentIndex => $student) {
-                        if (in_array($studentIndex, $usedStudentIndices)) {
-                            continue;
-                        }
-
-                        $matchCount = 0;
-                        foreach ($expected['cells'] as $ci => $expectedValue) {
-                            $studentValue = $student['cells'][$ci] ?? '';
-                            $colType = $columns[$ci]['type'] ?? 'text';
-
-                            if ($colType === 'numeric') {
-                                $cleanExpected = str_replace(['$', ',', ' '], '', $expectedValue);
-                                if ($studentValue !== '' && abs((float)$cleanExpected - (float)$studentValue) < 0.01) {
-                                    $matchCount++;
-                                }
-                            } else {
-                                if (strtolower(trim($expectedValue)) === strtolower(trim($studentValue))) {
-                                    $matchCount++;
-                                }
-                            }
-                        }
-
-                        if ($matchCount > $bestMatchCount) {
-                            $bestMatchCount = $matchCount;
-                            $bestStudentIndex = $studentIndex;
-                        }
-                    }
-
-                    // Grade the best-matched student row against this expected row
-                    $studentRi = $bestStudentIndex !== null ? $studentRows[$bestStudentIndex]['ri'] : null;
-                    if ($bestStudentIndex !== null) {
-                        $usedStudentIndices[] = $bestStudentIndex;
-                    }
-
-                    foreach ($expected['cells'] as $ci => $expectedValue) {
+                // --- Positional rows: grade by position ---
+                foreach ($positionalEntries as $entry) {
+                    $ri = $entry['ri'];
+                    $row = $entry['row'];
+                    if (!isset($row['cells'])) continue;
+                    foreach ($row['cells'] as $ci => $cell) {
+                        if (($cell['mode'] ?? '') !== 'answer') continue;
                         $totalAnswerCells++;
-                        $studentValue = '';
-                        $rawStudentValue = '';
+                        $expectedValue = $cell['value'] ?? '';
                         $colType = $columns[$ci]['type'] ?? 'text';
-
-                        if ($studentRi !== null) {
-                            $rawStudentValue = $studentSubmission[$studentRi][$ci] ?? '';
-                            if ($colType === 'numeric') {
-                                $studentValue = str_replace(['$', ',', ' '], '', $rawStudentValue);
-                            } else {
-                                $studentValue = $rawStudentValue;
-                            }
-                        }
-
+                        $rawStudentValue = $studentSubmission[$ri][$ci] ?? '';
                         if ($colType === 'numeric') {
+                            $studentValue = str_replace(['$', ',', ' '], '', $rawStudentValue);
                             $cleanExpected = str_replace(['$', ',', ' '], '', $expectedValue);
                             $isCorrect = $studentValue !== '' && abs((float)$cleanExpected - (float)$studentValue) < 0.01;
                         } else {
-                            $isCorrect = strtolower(trim($expectedValue)) === strtolower(trim($studentValue));
+                            $isCorrect = strtolower(trim($expectedValue)) === strtolower(trim($rawStudentValue));
                         }
-
-                        // Store result against the student's row index so feedback appears on the right input
-                        $resultRi = $studentRi ?? $expected['ri'];
-                        $results[$resultRi][$ci] = [
+                        $results[$ri][$ci] = [
                             'studentValue' => $rawStudentValue,
                             'expectedValue' => $expectedValue,
                             'isCorrect' => $isCorrect
                         ];
+                        if ($isCorrect) $correctCells++;
+                    }
+                }
 
-                        if ($isCorrect) {
-                            $correctCells++;
+                // --- Flexible rows: best-match scoring ---
+                if (!empty($flexibleEntries)) {
+                    // Build expected rows (answer cells only)
+                    $expectedRows = [];
+                    foreach ($flexibleEntries as $entry) {
+                        $ri = $entry['ri'];
+                        $row = $entry['row'];
+                        if (!isset($row['cells'])) continue;
+                        $answerCells = [];
+                        foreach ($row['cells'] as $ci => $cell) {
+                            if (($cell['mode'] ?? '') === 'answer') {
+                                $answerCells[$ci] = $cell['value'] ?? '';
+                            }
+                        }
+                        if (!empty($answerCells)) {
+                            $expectedRows[] = ['ri' => $ri, 'cells' => $answerCells];
+                        }
+                    }
+
+                    // Build student rows (cleaned values, same positional indices)
+                    $studentRows = [];
+                    foreach ($flexibleEntries as $entry) {
+                        $ri = $entry['ri'];
+                        $row = $entry['row'];
+                        if (!isset($row['cells'])) continue;
+                        $studentCells = [];
+                        foreach ($row['cells'] as $ci => $cell) {
+                            if (($cell['mode'] ?? '') === 'answer') {
+                                $colType = $columns[$ci]['type'] ?? 'text';
+                                $rawValue = $studentSubmission[$ri][$ci] ?? '';
+                                $studentCells[$ci] = $colType === 'numeric'
+                                    ? str_replace(['$', ',', ' '], '', $rawValue)
+                                    : $rawValue;
+                            }
+                        }
+                        $studentRows[] = ['ri' => $ri, 'cells' => $studentCells];
+                    }
+
+                    // Greedy best-match: each student row can only be used once
+                    $usedStudentIndices = [];
+
+                    foreach ($expectedRows as $expected) {
+                        $bestStudentIndex = null;
+                        $bestMatchCount = -1;
+
+                        foreach ($studentRows as $studentIndex => $student) {
+                            if (in_array($studentIndex, $usedStudentIndices)) continue;
+                            $matchCount = 0;
+                            foreach ($expected['cells'] as $ci => $expectedValue) {
+                                $studentValue = $student['cells'][$ci] ?? '';
+                                $colType = $columns[$ci]['type'] ?? 'text';
+                                if ($colType === 'numeric') {
+                                    $cleanExpected = str_replace(['$', ',', ' '], '', $expectedValue);
+                                    if ($studentValue !== '' && abs((float)$cleanExpected - (float)$studentValue) < 0.01) {
+                                        $matchCount++;
+                                    }
+                                } else {
+                                    if (strtolower(trim($expectedValue)) === strtolower(trim($studentValue))) {
+                                        $matchCount++;
+                                    }
+                                }
+                            }
+                            if ($matchCount > $bestMatchCount) {
+                                $bestMatchCount = $matchCount;
+                                $bestStudentIndex = $studentIndex;
+                            }
+                        }
+
+                        if ($bestStudentIndex !== null) {
+                            $usedStudentIndices[] = $bestStudentIndex;
+                        }
+                        $studentRi = $bestStudentIndex !== null ? $studentRows[$bestStudentIndex]['ri'] : null;
+
+                        // Grade each answer cell; store against the student's row index
+                        // so feedback highlights the right input in the viewer
+                        foreach ($expected['cells'] as $ci => $expectedValue) {
+                            $totalAnswerCells++;
+                            $colType = $columns[$ci]['type'] ?? 'text';
+                            $rawStudentValue = $studentRi !== null ? ($studentSubmission[$studentRi][$ci] ?? '') : '';
+                            if ($colType === 'numeric') {
+                                $studentValue = str_replace(['$', ',', ' '], '', $rawStudentValue);
+                                $cleanExpected = str_replace(['$', ',', ' '], '', $expectedValue);
+                                $isCorrect = $studentValue !== '' && abs((float)$cleanExpected - (float)$studentValue) < 0.01;
+                            } else {
+                                $isCorrect = strtolower(trim($expectedValue)) === strtolower(trim($rawStudentValue));
+                            }
+                            $resultRi = $studentRi ?? $expected['ri'];
+                            $results[$resultRi][$ci] = [
+                                'studentValue' => $rawStudentValue,
+                                'expectedValue' => $expectedValue,
+                                'isCorrect' => $isCorrect
+                            ];
+                            if ($isCorrect) $correctCells++;
                         }
                     }
                 }
@@ -219,7 +234,7 @@ class Submission extends Model
 
     /**
      * Split rows into sections based on section headers.
-     * Each section contains the data rows between headers.
+     * Rows with no preceding header fall into the first implicit section.
      */
     private function _getAccountingReportSections(array $rows): array
     {
@@ -228,7 +243,6 @@ class Submission extends Model
 
         foreach ($rows as $ri => $row) {
             if ($row['isHeader'] ?? false) {
-                // Save previous section if it has rows
                 if (!empty($currentSection['rows'])) {
                     $sections[] = $currentSection;
                 }
@@ -238,7 +252,6 @@ class Submission extends Model
             }
         }
 
-        // Don't forget the last section
         if (!empty($currentSection['rows'])) {
             $sections[] = $currentSection;
         }

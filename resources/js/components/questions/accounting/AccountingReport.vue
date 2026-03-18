@@ -102,7 +102,7 @@
             />
             <span
               v-b-tooltip.hover
-              title="Exact Order: student responses must match your row order exactly. Flexible Within Sections: rows between section headers can appear in any order, but sections themselves must be in order (e.g., Revenue items can be in any order, but Revenue must come before Expenses)."
+              title="Exact Order: student responses must match your row order exactly. Flexible Within Sections: rows are positional by default, but you can mark individual rows with the shuffle icon (⇄) to allow them to match in any order within their section. Use this for detail line items like revenue or expense entries where order doesn't matter, while leaving totals positional."
               class="ml-2 text-muted"
             >
               <b-icon-question-circle />
@@ -288,7 +288,7 @@
                       @drop.prevent="onDrop(ri)"
                     >
                       <div v-if="row.cells && row.cells[ci]" class="cell-wrapper">
-                        <!-- Icon bar: drag handle on first col + mode + underline -->
+                        <!-- Icon bar: drag handle on first col + mode + underline + indent (text only) -->
                         <div class="cell-icon-bar">
                             <span
                               v-if="ci === 0"
@@ -300,6 +300,17 @@
                             >
                               <b-icon-grip-horizontal />
                             </span>
+                          <!-- Flexible toggle (within_sections mode, first col only) -->
+                          <template v-if="ci === 0 && qtiJson.orderMode === 'within_sections'">
+                            <span
+                              class="cell-icon"
+                              :class="{ active: row.flexible }"
+                              title="Flexible order (row can match in any order within this section)"
+                              @click="toggleRowFlexible(ri)"
+                            >
+                              <b-icon-shuffle />
+                            </span>
+                          </template>
                           <!-- Mode icons -->
                           <span
                             class="cell-icon"
@@ -353,6 +364,19 @@
                           >
                               <span class="ul-icon-double">U</span>
                             </span>
+
+                          <!-- Indent toggle (text columns only, non-blank) -->
+                          <template v-if="col.type === 'text' && row.cells[ci].mode !== 'blank'">
+                            <span class="cell-icon-divider">|</span>
+                            <span
+                              class="cell-icon"
+                              :class="{ active: row.cells[ci].indent }"
+                              title="Indent"
+                              @click="toggleCellIndent(ri, ci)"
+                            >
+                              <b-icon-text-indent-left />
+                            </span>
+                          </template>
                         </div>
 
                         <!-- Cell value input -->
@@ -380,6 +404,20 @@
                           <div v-if="getSpecificError(ri, ci, 'value')" class="inline-error-text">
                             {{ getSpecificError(ri, ci, 'value') }}
                           </div>
+                        </div>
+
+                        <!-- Description input (text columns only, non-blank) -->
+                        <div
+                          v-if="col.type === 'text' && row.cells[ci].mode !== 'blank'"
+                          class="cell-description-input mt-1"
+                        >
+                          <b-form-input
+                            v-model="row.cells[ci].description"
+                            type="text"
+                            size="sm"
+                            placeholder="Description (optional)..."
+                            @input="handleInput()"
+                          />
                         </div>
 
                         <!-- Blank indicator -->
@@ -732,7 +770,9 @@ export default {
         identifier: uuidv4(),
         mode: 'answer',
         value: '',
-        underline: 'none'
+        underline: 'none',
+        indent: false,
+        description: ''
       }
     },
     createRow (isHeader) {
@@ -748,6 +788,7 @@ export default {
         identifier: uuidv4(),
         isHeader: false,
         headerText: '',
+        flexible: false,
         cells
       }
     },
@@ -833,6 +874,8 @@ export default {
       if (mode === 'blank') {
         cell.value = ''
         cell.underline = 'none'
+        cell.indent = false
+        cell.description = ''
       }
       this.clearSpecificError(rowIndex, colIndex, 'value')
       this.handleInput()
@@ -840,6 +883,18 @@ export default {
     },
     setCellUnderline (rowIndex, colIndex, underline) {
       this.qtiJson.rows[rowIndex].cells[colIndex].underline = underline
+      this.handleInput()
+      this.$forceUpdate()
+    },
+    toggleCellIndent (rowIndex, colIndex) {
+      const cell = this.qtiJson.rows[rowIndex].cells[colIndex]
+      this.$set(cell, 'indent', !cell.indent)
+      this.handleInput()
+      this.$forceUpdate()
+    },
+    toggleRowFlexible (rowIndex) {
+      const row = this.qtiJson.rows[rowIndex]
+      this.$set(row, 'flexible', !row.flexible)
       this.handleInput()
       this.$forceUpdate()
     },
@@ -1092,6 +1147,15 @@ tr.drag-over {
 .cell-blank-indicator {
   text-align: center;
   padding: 4px 0;
+}
+
+/* ============================================ */
+/* DESCRIPTION INPUT                             */
+/* ============================================ */
+.cell-description-input input {
+  font-size: 0.78rem;
+  color: #6c757d;
+  font-style: italic;
 }
 
 /* ============================================ */

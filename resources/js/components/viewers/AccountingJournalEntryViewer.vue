@@ -57,6 +57,13 @@
               <datalist id="account-titles-list">
                 <option v-for="account in accountTitles" :key="account" :value="account"/>
               </datalist>
+              <!-- Narrative shown below the account title of the last row -->
+              <div
+                v-if="rowIndex === entry.rows.length - 1 && getEntryNarrative(entryIndex)"
+                class="entry-narrative"
+              >
+                {{ getEntryNarrative(entryIndex) }}
+              </div>
             </td>
             <td>
               <b-form-input
@@ -108,9 +115,9 @@ export default {
   data () {
     return {
       studentEntries: [],
-      hasStartedEditing: false, // Track if user has started editing - clears all grading colors
+      hasStartedEditing: false,
       accountTitles: [],
-      indentTracker: 0 // Reactivity trigger for indent recalculation
+      indentTracker: 0
     }
   },
   computed: {
@@ -118,16 +125,12 @@ export default {
       const options = [{ value: null, text: 'Select an entry...' }]
       if (this.qtiJson.entries) {
         this.qtiJson.entries.forEach((entry, index) => {
-          options.push({
-            value: index,
-            text: entry.entryText
-          })
+          options.push({ value: index, text: entry.entryText })
         })
       }
       return options
     },
     parsedGradingResults () {
-      // Parse studentResponse from qtiJson if it's a string
       let response = this.qtiJson.studentResponse
       if (typeof response === 'string') {
         try {
@@ -139,26 +142,12 @@ export default {
       return response
     },
     showValidationWarning () {
-      // Check if any required fields are missing - updates in real-time as user types
-      if (!this.studentEntries || this.studentEntries.length === 0) {
-        return false
-      }
-
+      if (!this.studentEntries || this.studentEntries.length === 0) return false
       for (const entry of this.studentEntries) {
-        // Check entry selection
-        if (entry.selectedEntryIndex === null) {
-          return true
-        }
-        // Check each row
+        if (entry.selectedEntryIndex === null) return true
         for (const row of entry.rows) {
-          // Check account title
-          if (!row.accountTitle || row.accountTitle.trim() === '') {
-            return true
-          }
-          // Check that at least one of debit or credit has a value
-          if ((!row.debit || row.debit === '') && (!row.credit || row.credit === '')) {
-            return true
-          }
+          if (!row.accountTitle || row.accountTitle.trim() === '') return true
+          if ((!row.debit || row.debit === '') && (!row.credit || row.credit === '')) return true
         }
       }
       return false
@@ -181,32 +170,32 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    getEntryNarrative (entryIndex) {
+      // Look up the narrative from the source entry using the student's selected entry index.
+      // Fall back to the positional entry if nothing is selected yet.
+      const studentEntry = this.studentEntries[entryIndex]
+      const selectedIndex = studentEntry ? studentEntry.selectedEntryIndex : null
+      const sourceIndex = selectedIndex !== null ? selectedIndex : entryIndex
+      const sourceEntry = this.qtiJson.entries && this.qtiJson.entries[sourceIndex]
+      return (sourceEntry && sourceEntry.entryNarrative) ? sourceEntry.entryNarrative.trim() : ''
+    },
     getEntryOptionsFor (entryIndex) {
-      // Get all selected entry indices EXCEPT the current row's selection
       const selectedByOthers = this.studentEntries
         .map((entry, idx) => idx === entryIndex ? null : entry.selectedEntryIndex)
         .filter(val => val !== null)
-
       const options = [{ value: null, text: 'Select an entry...' }]
-
       if (this.qtiJson.entries) {
         this.qtiJson.entries.forEach((entry, index) => {
-          // Include if not selected by another row
           if (!selectedByOthers.includes(index)) {
-            options.push({
-              value: index,
-              text: entry.entryText
-            })
+            options.push({ value: index, text: entry.entryText })
           }
         })
       }
-
       return options
     },
     initializeStudentEntries () {
       if (!this.qtiJson.entries) return
-
-      this.studentEntries = this.qtiJson.entries.map((entry, entryIndex) => {
+      this.studentEntries = this.qtiJson.entries.map((entry) => {
         const numRows = entry.solutionRows ? entry.solutionRows.length : 2
         return {
           selectedEntryIndex: null,
@@ -219,10 +208,7 @@ export default {
       })
     },
     loadStudentResponse () {
-      // Use studentResponse prop if provided, otherwise fall back to qtiJson.studentResponse
       let response = this.studentResponse || this.qtiJson.studentResponse
-
-      // Parse if it's a JSON string
       if (typeof response === 'string') {
         try {
           response = JSON.parse(response)
@@ -231,14 +217,10 @@ export default {
           return
         }
       }
-
       if (response && Array.isArray(response)) {
         response.forEach((responseEntry, entryIndex) => {
           if (this.studentEntries[entryIndex]) {
-            // Load selected entry index
             this.studentEntries[entryIndex].selectedEntryIndex = responseEntry.selectedEntryIndex ?? null
-
-            // Load row data
             if (responseEntry.rows) {
               responseEntry.rows.forEach((row, rowIndex) => {
                 if (this.studentEntries[entryIndex].rows[rowIndex]) {
@@ -255,7 +237,6 @@ export default {
       }
     },
     isCreditRow (entryIndex, rowIndex) {
-      // Depend on indentTracker for reactivity
       // eslint-disable-next-line no-unused-expressions
       this.indentTracker
       const row = this.studentEntries[entryIndex]?.rows[rowIndex]
@@ -264,95 +245,54 @@ export default {
     },
     onAmountInput (entryIndex, rowIndex, field) {
       this.clearFieldColor(entryIndex, rowIndex, field)
-      // Bump the tracker to force indent class recalculation
       this.indentTracker++
     },
     clearEntryColor (entryIndex) {
-      // Mark that user has started editing - clear all grading colors
       this.hasStartedEditing = true
     },
     clearFieldColor (entryIndex, rowIndex, field) {
-      // Mark that user has started editing - clear all grading colors
       this.hasStartedEditing = true
     },
     isIncomplete (entryIndex, rowIndex, field) {
-      // Don't show incomplete styling if we have grading results
-      if (this.parsedGradingResults && this.parsedGradingResults.length > 0) {
-        return false
-      }
-
-      // Only show incomplete styling if warning is showing
-      if (!this.showValidationWarning) {
-        return false
-      }
-
+      if (this.parsedGradingResults && this.parsedGradingResults.length > 0) return false
+      if (!this.showValidationWarning) return false
       const entry = this.studentEntries[entryIndex]
       if (!entry) return false
-
-      if (field === 'entry') {
-        return entry.selectedEntryIndex === null
-      }
-
+      if (field === 'entry') return entry.selectedEntryIndex === null
       const row = entry.rows[rowIndex]
       if (!row) return false
-
-      if (field === 'accountTitle') {
-        return !row.accountTitle || row.accountTitle.trim() === ''
-      }
-
+      if (field === 'accountTitle') return !row.accountTitle || row.accountTitle.trim() === ''
       if (field === 'debit' || field === 'credit') {
-        // Both debit and credit are incomplete if neither has a value
         return (!row.debit || row.debit === '') && (!row.credit || row.credit === '')
       }
-
       return false
     },
     getStudentResponse () {
-      // Return entries if complete, null if not
-      if (this.showValidationWarning) {
-        return null
-      }
+      if (this.showValidationWarning) return null
       return this.studentEntries
     },
     getEntryCellClass (entryIndex) {
-      // If user has started editing, clear all grading colors
-      if (this.hasStartedEditing) {
-        return ''
-      }
-
-      // Only apply color coding if we have grading results
+      if (this.hasStartedEditing) return ''
       if (!this.parsedGradingResults ||
         !this.parsedGradingResults[entryIndex] ||
         this.parsedGradingResults[entryIndex].selectedEntryCorrect === undefined) {
         return ''
       }
-
       return this.parsedGradingResults[entryIndex].selectedEntryCorrect
         ? 'border-success'
         : 'border-danger'
     },
     getFieldClass (entryIndex, rowIndex, field) {
-      // If user has started editing, clear all grading colors
-      if (this.hasStartedEditing) {
-        return ''
-      }
-
-      // Only apply color coding if we have grading results
+      if (this.hasStartedEditing) return ''
       if (!this.parsedGradingResults ||
         !this.parsedGradingResults[entryIndex] ||
         !this.parsedGradingResults[entryIndex].rows ||
         !this.parsedGradingResults[entryIndex].rows[rowIndex]) {
         return ''
       }
-
       const row = this.parsedGradingResults[entryIndex].rows[rowIndex]
       const fieldKey = field + 'Correct'
-
-      // Check if this field has been graded
-      if (row[fieldKey] === undefined) {
-        return ''
-      }
-
+      if (row[fieldKey] === undefined) return ''
       return row[fieldKey] ? 'border-success' : 'border-danger'
     }
   }
@@ -398,13 +338,18 @@ export default {
   padding-left: 2rem !important;
 }
 
-/* Right-align debit/credit inputs via class */
 .amount-input {
   text-align: right;
 }
 
-/* Apply thin border colors directly to form controls only */
-/* Using darker colors for WCAG AA accessibility */
+.entry-narrative {
+  font-size: 0.82rem;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 4px;
+  padding-left: 2px;
+}
+
 select.border-success,
 input.border-success {
   border: 2px solid #0d6832 !important;
@@ -417,7 +362,6 @@ input.border-danger {
   box-shadow: none !important;
 }
 
-/* Incomplete field styling - darker yellow/gold for accessibility */
 select.is-incomplete,
 input.is-incomplete {
   border: 2px solid #997404 !important;

@@ -206,6 +206,29 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Entry Note (Optional) -->
+                <div class="pb-3">
+                  <div class="d-flex align-items-center mb-1">
+                    <label class="mb-0"><strong>Entry Note (Optional):</strong></label>
+                    <span
+                      v-b-tooltip.hover
+                      title="Displayed below the last row of the entry, e.g., To record sale of calculators on account."
+                      class="ml-2 text-muted"
+                    >
+                      <b-icon-question-circle />
+                    </span>
+                  </div>
+                  <div style="width: 50%">
+                    <b-form-input
+                      v-model="entry.entryNarrative"
+                      type="text"
+                      placeholder="Entry note..."
+                      @input="handleInput()"
+                    />
+                  </div>
+                </div>
+
               </b-collapse>
             </b-card>
           </div>
@@ -262,13 +285,12 @@ export default {
         { value: 'credit', text: 'Credit' }
       ],
       collapsedStates: {},
-      hasBeenCollapsed: {}, // Track which entries have been collapsed at least once
+      hasBeenCollapsed: {},
       accountTitles: []
     }
   },
   computed: {
     errorKey () {
-      // Return whichever key has the errors
       if (this.questionForm && this.questionForm.errors) {
         if (this.questionForm.errors.get('entries')) {
           return 'entries'
@@ -282,13 +304,13 @@ export default {
   },
   mounted () {
     this.getAccountTitles()
-    // Initialize qtiJson with default values if not provided
     if (!this.qtiJson.entries || this.qtiJson.entries.length === 0) {
       this.$set(this.qtiJson, 'entries', [
         {
           identifier: uuidv4(),
           entryText: '',
           entryDescription: '',
+          entryNarrative: '',
           solutionRows: [
             { identifier: uuidv4(), accountTitle: '', type: null, amount: '' },
             { identifier: uuidv4(), accountTitle: '', type: null, amount: '' }
@@ -296,23 +318,15 @@ export default {
         }
       ])
     }
-
-    // Check for errors and expand entries that have errors
     this.$nextTick(() => {
       this.expandEntriesWithErrors()
     })
   },
   methods: {
-    /**
-     * Helper method to parse amount strings that may contain commas
-     * @param {string|number} value - The amount value to parse
-     * @returns {number} - The parsed numeric value, or 0 if invalid
-     */
     parseAmount (value) {
       if (value === null || value === undefined || value === '') {
         return 0
       }
-      // Convert to string, remove commas, then parse as float
       return parseFloat(value.toString().replace(/,/g, '')) || 0
     },
     async getAccountTitles () {
@@ -327,30 +341,21 @@ export default {
       if (!this.questionForm || !this.questionForm.errors || !this.questionForm.errors.get) {
         return
       }
-
-      // Map key - if it's 'entries', also check 'qti_json'
       const errorKey = key === 'entries'
         ? (this.questionForm.errors.get(errorKey) ? 'entries' : 'qti_json')
         : key
-
       try {
         const errors = this.questionForm.errors.get(errorKey)
         if (!errors) return
-
         const parsedErrors = JSON.parse(errors)
-
         if (errorKey === 'entries' || errorKey === 'qti_json') {
           if (entryIndex !== null) {
             if (!parsedErrors.specific || !parsedErrors.specific[entryIndex]) return
-
-            // If we have rowIndex and field, we're clearing a solution row error
             if (typeof rowIndexOrField === 'number' && field) {
               const rowIndex = rowIndexOrField
               if (parsedErrors.specific[entryIndex].solutionRows &&
                 parsedErrors.specific[entryIndex].solutionRows[rowIndex]) {
                 delete parsedErrors.specific[entryIndex].solutionRows[rowIndex][field]
-
-                // Clean up empty objects
                 if (Object.keys(parsedErrors.specific[entryIndex].solutionRows[rowIndex]).length === 0) {
                   delete parsedErrors.specific[entryIndex].solutionRows[rowIndex]
                 }
@@ -360,14 +365,11 @@ export default {
                 }
               }
             } else {
-              // Clearing entry-level field like entryText or entryDescription
               const fieldName = rowIndexOrField
               if (parsedErrors.specific[entryIndex][fieldName]) {
                 delete parsedErrors.specific[entryIndex][fieldName]
               }
             }
-
-            // Clean up empty objects
             if (Object.keys(parsedErrors.specific[entryIndex]).length === 0) {
               delete parsedErrors.specific[entryIndex]
             }
@@ -376,9 +378,8 @@ export default {
             }
           }
         }
-
         this.questionForm.errors.set(errorKey, JSON.stringify(parsedErrors))
-        this.$forceUpdate() // Force update to refresh error display in collapsed headers
+        this.$forceUpdate()
       } catch (error) {
         console.error('Error clearing errors:', error)
       }
@@ -390,25 +391,17 @@ export default {
       if (!this.questionForm || !this.questionForm.errors || !this.questionForm.errors.get) {
         return
       }
-
       try {
-        // Check for errors under 'entries' or 'qti_json'
         let entriesErrors = this.questionForm.errors.get('entries')
         if (!entriesErrors) {
           entriesErrors = this.questionForm.errors.get('qti_json')
         }
-
         if (!entriesErrors) return
-
         const parsedErrors = JSON.parse(entriesErrors)
         if (!parsedErrors.specific) return
-
-        // For each entry with errors, expand it and mark it as having been collapsed
         Object.keys(parsedErrors.specific).forEach(entryIndex => {
           const index = parseInt(entryIndex)
-          // Mark as having been collapsed so errors will show
           this.$set(this.hasBeenCollapsed, index, true)
-          // Expand the entry
           this.$root.$emit('bv::toggle::collapse', `entry-collapse-${index}`)
         })
       } catch (error) {
@@ -416,51 +409,30 @@ export default {
       }
     },
     handleCollapseToggle (entryIndex) {
-      // Mark this entry as having been collapsed at least once
       this.$set(this.hasBeenCollapsed, entryIndex, true)
     },
     getEntryErrors (entryIndex) {
       const errors = []
-
       const entry = this.qtiJson.entries[entryIndex]
       if (!entry) return errors
-
-      // Check for entry-level errors
       if (!entry.entryText || entry.entryText.trim() === '') {
         errors.push('Missing entry text')
       }
       if (!entry.entryDescription || entry.entryDescription.trim() === '') {
         errors.push('Missing description')
       }
-
-      // Check for solution row errors
       if (entry.solutionRows && entry.solutionRows.length > 0) {
         let rowErrorCount = 0
-
-        entry.solutionRows.forEach((row, rowIndex) => {
+        entry.solutionRows.forEach((row) => {
           let rowHasError = false
-
-          if (!row.accountTitle || row.accountTitle.trim() === '') {
-            rowHasError = true
-          }
-          if (!row.type) {
-            rowHasError = true
-          }
-          // Use parseAmount helper to handle commas
-          if (!row.amount || row.amount === '' || this.parseAmount(row.amount) <= 0) {
-            rowHasError = true
-          }
-
-          if (rowHasError) {
-            rowErrorCount++
-          }
+          if (!row.accountTitle || row.accountTitle.trim() === '') rowHasError = true
+          if (!row.type) rowHasError = true
+          if (!row.amount || row.amount === '' || this.parseAmount(row.amount) <= 0) rowHasError = true
+          if (rowHasError) rowErrorCount++
         })
-
         if (rowErrorCount > 0) {
           errors.push(`${rowErrorCount} row${rowErrorCount > 1 ? 's have' : ' has'} missing fields`)
         }
-
-        // Check if debits and credits balance
         const balanceInfo = this.getBalanceInfo(entryIndex)
         if (balanceInfo.isBalanced === false) {
           errors.push('Entry does not balance')
@@ -468,37 +440,24 @@ export default {
       } else {
         errors.push('Missing solution rows')
       }
-
       return errors
     },
     getBalanceInfo (entryIndex) {
       let totalDebits = 0
       let totalCredits = 0
       let hasAnyValues = false
-
       const entry = this.qtiJson.entries[entryIndex]
       if (!entry || !entry.solutionRows || !Array.isArray(entry.solutionRows)) {
-        return {
-          totalDebits: 0,
-          totalCredits: 0,
-          isBalanced: null
-        }
+        return { totalDebits: 0, totalCredits: 0, isBalanced: null }
       }
-
       entry.solutionRows.forEach((row) => {
-        // Use parseAmount helper to handle commas in amount values
         const amount = this.parseAmount(row.amount)
-
         if (amount > 0 && row.type) {
           hasAnyValues = true
-          if (row.type === 'debit') {
-            totalDebits += amount
-          } else if (row.type === 'credit') {
-            totalCredits += amount
-          }
+          if (row.type === 'debit') totalDebits += amount
+          else if (row.type === 'credit') totalCredits += amount
         }
       })
-
       return {
         totalDebits,
         totalCredits,
@@ -509,11 +468,11 @@ export default {
       if (!this.qtiJson.entries) {
         this.$set(this.qtiJson, 'entries', [])
       }
-
       this.qtiJson.entries.push({
         identifier: uuidv4(),
         entryText: '',
         entryDescription: '',
+        entryNarrative: '',
         solutionRows: [
           { identifier: uuidv4(), accountTitle: '', type: null, amount: '' },
           { identifier: uuidv4(), accountTitle: '', type: null, amount: '' }
@@ -532,11 +491,9 @@ export default {
     },
     addRow (entryIndex) {
       const entry = this.qtiJson.entries[entryIndex]
-
       if (!entry.solutionRows) {
         this.$set(entry, 'solutionRows', [])
       }
-
       if (entry.solutionRows.length < 5) {
         entry.solutionRows.push({
           identifier: uuidv4(),
@@ -552,16 +509,11 @@ export default {
     },
     deleteRow (entryIndex, rowIndex) {
       const entry = this.qtiJson.entries[entryIndex]
-
-      if (!entry.solutionRows) {
-        return
-      }
-
+      if (!entry.solutionRows) return
       if (entry.solutionRows.length <= 2) {
         this.$noty.info('You need at least two rows for a journal entry.')
         return
       }
-
       entry.solutionRows.splice(rowIndex, 1)
       this.$emit('update-qti-json', 'entries', this.qtiJson.entries)
     },
