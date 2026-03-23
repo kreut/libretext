@@ -5242,9 +5242,6 @@ export default {
       } catch (error) {
         console.error(`Error saving submission confirmation: ${error.message}`)
       }
-      if (this.isFlashcard() && this.assessmentType !== 'flashcard') {
-        this.nextQuestion()
-      }
     },
     showHideLeftAndRightColumns (showLeftColumn, showRightColumn) {
       this.$root.$emit('bv::hide::tooltip')
@@ -6544,8 +6541,8 @@ export default {
                 window.parent.postMessage(`{"source": "app_clicker","message": "${submissionDataMessage}","type":"${type}"}`, '*')
               } else if (this.assessmentType !== 'flashcard') {
                 this.showSubmitMoleculeSubmission = false
-                this.$bvModal.show('modal-submission-accepted')
                 this.completedAllAssignmentQuestions = data.completed_all_assignment_questions && this.user.role === 3
+                this.isFlashcard() ? this.nextQuestion() : this.$bvModal.show('modal-submission-accepted')
               }
             }
           }
