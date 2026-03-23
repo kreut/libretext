@@ -6,7 +6,7 @@ function reformatTime (vm, time) {
 }
 
 export const defaultFlashcardSettings = {
-  autoplay: { enabled: true, student_override: true, seconds: 2 },
+  autoplay: { enabled: false, student_override: true, seconds: 2 },
   random_shuffle: { enabled: true, student_override: true },
   show_hint: { enabled: true, student_override: true },
   text_to_speech: { enabled: true, student_override: true },
