@@ -582,18 +582,20 @@ class ScoreController extends Controller
                 }
                 $columns['name'] = $name;
 
+                if (isset($scores_by_user_id[$user_id])) {
+                    $override = Helper::removeZerosAfterDecimal(round((float)$scores_by_user_id[$user_id], 2));
+                    $computed = Helper::removeZerosAfterDecimal(round((float)$assignment_score, 2));
+                    if ($override !== $computed) {
+                        $columns['override_score'] = $override;
+                        $assignment_score = (float)$scores_by_user_id[$user_id]; // use override for percent
+                    }
+                }
                 if ($total_points) {
                     $columns['percent_correct'] = 100 * Helper::removeZerosAfterDecimal(round((float)$assignment_score / $total_points, 4)) . '%';
                     $columns['total_points'] = Helper::removeZerosAfterDecimal(round((float)$assignment_score, 2));
                 } else {
                     $columns['percent_correct'] = "N/A";
                     $columns['total_points'] = 0;
-                }
-                if (isset($scores_by_user_id[$user_id])) {
-                    $assignment_score = Helper::removeZerosAfterDecimal(round((float)$scores_by_user_id[$user_id], 2));
-                    if ($assignment_score !== $columns['total_points']) {
-                        $columns['override_score'] = $assignment_score;
-                    }
                 }
                 $columns['userId'] = $user_id;
                 $columns['email'] = $sorted_users_by_user_id[$user_id]['email'] ?? 'None provided';
