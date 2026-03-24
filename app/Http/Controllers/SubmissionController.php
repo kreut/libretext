@@ -235,6 +235,13 @@ class SubmissionController extends Controller
                 ->where('user_id', $request->user()->id)
                 ->first();
             $user = $request->user();
+            if (!$user->central_identity_id){
+                $response = $user->updateCentralIdentityId();
+                if ($response['type'] === 'error'){
+                    $response['message'] = $response['message'];
+                    return $response;
+                }
+            }
             if ($submission && $assignment->number_of_allowed_attempts !== 'unlimited'
                 && (int)$submission->submission_count === (int)$assignment->number_of_allowed_attempts) {
                 $response['type'] = 'error';

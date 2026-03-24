@@ -647,6 +647,14 @@ class ForgeController extends Controller
                 }
             }
             if ($request->user()->role === 3) {
+                $user = $request->user();
+                if (!$user->central_identity_id){
+                    $response = $user->updateCentralIdentityId();
+                    if ($response['type'] === 'error'){
+                        $response['message'] = $response['message'];
+                        return $response;
+                    }
+                }
                 if (!$forgeEnrollment->where('user_id', $request->user()->id)
                     ->where('course_id', $assignment->course->id)
                     ->first()) {

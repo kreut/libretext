@@ -4,6 +4,7 @@ namespace App;
 
 use App\Notifications\ResetPassword;
 use App\Notifications\VerifyEmail;
+use Exception;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -11,6 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Tymon\JWTAuth\Contracts\JWTSubject;
@@ -118,6 +120,7 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
             ->first()
             ->name;
     }
+
     public function assignmentsAndAssignToTimingsByCourse(int $course_id)
     {
         $assignments_info = DB::table('assign_to_timings')
@@ -141,5 +144,28 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
         return in_array($this->id, [1, 5, 96, 1387]);
     }
 
+    /**
+     * @return array
+     */
+    public function updateCentralIdentityId(): array
+    {
+        $response['type'] = 'error';
+        if ($this->fake_student || $this->formative_student) {
+            $response['type'] = 'success';
+            return $response;
+        }
+        $password = DB::table('key_secrets')->where('key', 'adapt_production')->first()->secret;
+        $result = Http::withBasicAuth('adapt_production', $password)
+            ->get("https://one.libretexts.org/api/v1/users/principal-attributes?username=" . $this->email);
+        if ($result->successful()) {
+            $this->central_identity_id = $result->json()['uuid'];
+            $this->save();
+            $response['type'] = 'success';
+        } else {
+            $response['message'] = "Unable to create central identity ID.";
+
+        }
+        return $response;
+    }
 
 }
