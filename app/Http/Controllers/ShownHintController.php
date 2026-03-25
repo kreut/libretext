@@ -41,6 +41,7 @@ class ShownHintController extends Controller
             $shownHint->question_id = $question->id;
             $shownHint->save();
             $question->addTimeToS3Files($question->hint, new \DOMDocument(), false);
+            $response['hint'] = $question->hint;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $response['message'] = 'We were unable to confirm that you would like the hint to be shown.';
