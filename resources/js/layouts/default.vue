@@ -38,10 +38,10 @@
                 Statement
               </b-nav-item>
               <b-nav-item
-                href="https://chem.libretexts.org/Courses/Remixer_University/LibreVerse_Accessibility_Conformance_Reports"
+                href="https://commons.libretexts.org/accessibility"
                 target="_blank"
               >
-                Accessibility Report
+                Accessibility
               </b-nav-item>
               <b-nav-item @click="contactUsWidget();">
                 Contact Us
