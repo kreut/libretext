@@ -3162,12 +3162,16 @@
                           </b-button>
                           <b-button variant="primary"
                                     size="sm"
+                                    :disabled="!submitButtonActive"
                                     @click="submitText"
                           >
                             Submit
                           </b-button>
                         </b-row>
                       </b-container>
+                      <div v-if="lastAutoSavedAt" class="text-muted small mt-1">
+                        Last saved at {{ lastAutoSavedAt }}
+                      </div>
                     </div>
                     <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
                       <div class="h7">
@@ -3805,6 +3809,8 @@ export default {
     CloneQuestion
   },
   data: () => ({
+    lastAutoSavedAt: '',
+    autoSaveInterval: null,
     forgeSettingsKey: 0,
     assignmentCanSubmitWork: false,
     numberOfSubmissions: 0,
@@ -4412,6 +4418,8 @@ export default {
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
     window.removeEventListener('resize', this.resizeHandler)
+    clearInterval(this.autoSaveInterval);
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
     if (this.reviewQuestionPollingSetInterval) {
       clearInterval(this.reviewQuestionPollingSetInterval)
       this.reviewQuestionPollingSetInterval = null
@@ -4436,6 +4444,15 @@ export default {
     getTechnologySrcDoc,
     addGlow,
     hideSubmitButtonsIfCannotSubmit,
+    handleBeforeUnload () {
+      if (this.isOpenEndedTextSubmission
+        && this.user.role === 3
+        && !this.isAnonymousUser
+        && this.textSubmissionForm.text_submission
+        && this.submitButtonActive) {
+        this.submitText(false)
+      }
+    },
     cardChanged (questionId) {
       if (this.assessmentType !== 'flashcard' || !questionId) return
       this.currentPage = this.getInitialCurrentPage(questionId)
@@ -6247,20 +6264,29 @@ export default {
       }
       return `${capitalizedTitle} Submission Information`
     },
-    async submitText () {
+    async submitText (showModal = true) {
       try {
         this.textSubmissionForm.questionId = this.questions[this.currentPage - 1].id
         this.textSubmissionForm.assignmentId = this.assignmentId
         this.textSubmissionForm.pasted_content = this.pastedContent
+        console.error(this.textSubmissionForm)
         const { data } = await this.textSubmissionForm.post('/api/submission-texts')
         this.submissionDataMessage = data.message
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].date_submitted = data.date_submitted
+          if (data.date_submitted) {
+            this.lastAutoSavedAt = new Date(data.date_submitted).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          }
           this.questions[this.currentPage - 1].submission = this.textSubmissionForm.text_submission
           this.questions[this.currentPage - 1].submission_file_score = data.score
           this.updateTotalScore()
           this.cacheKey++
-          this.$bvModal.show('modal-submission-accepted')
+          if (showModal) {
+            this.$bvModal.show('modal-submission-accepted')
+          }
           this.completedAllAssignmentQuestions = data.completed_all_assignment_questions && this.user.role === 3
         } else {
           this.$bvModal.show('modal-thumbs-down')
@@ -6955,6 +6981,17 @@ export default {
         this.extraWaitForRenderComplete = true
       }, 2000)
       await this.getEmailToGraderSubject()
+      if (this.autoSaveInterval) {
+        clearInterval(this.autoSaveInterval)
+        this.autoSaveInterval = null
+      }
+      if (this.isOpenEndedTextSubmission && this.user.role === 3 && !this.isAnonymousUser) {
+        this.autoSaveInterval = setInterval(() => {
+          if (this.textSubmissionForm.text_submission && this.submitButtonActive) {
+            this.submitText(false)
+          }
+        }, 10000)
+      }
     },
     async updateReviewQuestionTime () {
       try {
