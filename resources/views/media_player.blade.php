@@ -193,7 +193,7 @@
             @endif
           @endif
           @if ($vtt_file)
-            <track kind="captions" src="{{ $vtt_file }}" default/>
+            <track kind="captions" src="{{ $vtt_file }}" />
           @endif
         </video>
 
@@ -309,7 +309,7 @@
             @endif
           @endif
           @if ($vtt_file)
-            <track kind="captions" src="{{ $vtt_file }}" default/>
+            <track kind="captions" src="{{ $vtt_file }}" />
           @endif
         </video>
 
