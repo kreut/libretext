@@ -2581,11 +2581,25 @@
                     </li>
                   </ul>
                 </b-row>
-                <b-textarea v-model="questionForm.webwork_code"
-                            style="width:100%"
-                            :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"
-                            rows="20"
-                            @keydown="questionForm.errors.clear('webwork_code')"
+                <WebworkMacroPickerModal
+                  :current-code="questionForm.webwork_code || ''"
+                  @insert="insertMacroLoadStatement"
+                />
+
+                <b-button
+                  size="sm"
+                  variant="outline-primary"
+                  class="mb-2"
+                  @click="$bvModal.show('modal-webwork-macro-picker')"
+                >
+                  <b-icon icon="plus-circle" class="mr-1" />
+                  Add Macro
+                </b-button>
+                <CodeMirrorEditor
+                  :key="`webwork-code-${webworkCodeKey}`"
+                  v-model="questionForm.webwork_code"
+                  :is-invalid="questionForm.errors.has('webwork_code')"
+                  @input="questionForm.errors.clear('webwork_code')"
                 />
                 <has-error :form="questionForm" field="webwork_code"/>
               </div>
@@ -2902,6 +2916,7 @@
 
 <script>
 import AccountingMultiPartComputation from './accounting/AccountingMultiPartComputation.vue'
+import CodeMirrorEditor from '~/components/CodeMirrorEditor'
 import QuestionMediaUpload from '~/components/QuestionMediaUpload.vue'
 import CKEditorFileToLinkUploader from '~/components/CKEditorFileToLinkUploader.vue'
 import { doCopy } from '~/helpers/Copy'
@@ -2964,6 +2979,7 @@ import ThreeDModel from './ThreeDModel.vue'
 import AccountingJournalEntry from './accounting/AccountingJournalEntry.vue'
 import AccountingReport from './accounting/AccountingReport.vue'
 import Flashcard from './Flashcard.vue'
+import WebworkMacroPickerModal from '../WebworkMacroPickerModal.vue'
 
 const parameters3DModel = {
   modelID: '',
@@ -3125,6 +3141,8 @@ export default {
   name: 'CreateQuestion',
   components: {
     AccountingMultiPartComputation,
+    WebworkMacroPickerModal,
+    CodeMirrorEditor,
     Flashcard,
     AccountingReport,
     AccountingJournalEntry,
@@ -3197,6 +3215,7 @@ export default {
     }
   },
   data: () => ({
+    webworkCodeKey: 0,
     isLoadingEdit: false,
     attachmentToDelete: {},
     attachmentsFields: [
@@ -3573,6 +3592,36 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    insertMacroLoadStatement (statement) {
+      let code = this.questionForm.webwork_code || ''
+
+      // Extract just the macro filename from the loadMacros("...") statement
+      const macroMatch = statement.match(/loadMacros\(\s*"([^"]+)"\s*\)/)
+      const macroFile = macroMatch ? macroMatch[1] : null
+
+      if (macroFile) {
+        // Check if there's already a loadMacros block
+        const existingLoadMacros = code.match(/loadMacros\s*\(([^)]+)\)/)
+        if (existingLoadMacros) {
+          // Add to existing loadMacros list
+          const insertion = `,\n  "${macroFile}"`
+          code = code.replace(existingLoadMacros[0], existingLoadMacros[0].replace(/\)$/, `${insertion}\n)`))
+          this.questionForm.webwork_code = code
+          this.webworkCodeKey++
+          return
+        }
+      }
+
+      // No existing loadMacros — insert after DOCUMENT(); or prepend DOCUMENT(); if missing
+      if (code.includes('DOCUMENT();')) {
+        code = code.replace('DOCUMENT();', `DOCUMENT();\n${statement}`)
+      } else {
+        code = `DOCUMENT();\n${statement}\n` + code
+      }
+
+      this.questionForm.webwork_code = code
+      this.webworkCodeKey++
+    },
     capitalize,
     getQuestionSubjectIdOptions,
     getQuestionChapterIdOptions,
@@ -5626,6 +5675,7 @@ export default {
           this.questionForm.technology = 'webwork'
           this.questionForm.new_auto_graded_code = 'webwork'
           this.questionForm.response_format = null
+          this.webworkCodeKey++
           break
         case ('forge'):
           this.questionForm.technology = 'qti'
@@ -5872,9 +5922,7 @@ export default {
 
         this.showQtiAnswer = false
         this.$bvModal.show(this.modalId)
-        this.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        })
+        this.typesetMath()
         console.log(this.questionToView)
       } catch (error) {
         this.$noty.error(error.message)

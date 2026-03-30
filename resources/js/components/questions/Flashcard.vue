@@ -1289,11 +1289,7 @@ export default {
     },
 
     retypesetMath () {
-      this.$nextTick(() => {
-        if (window.MathJax && window.MathJax.Hub) {
-          window.MathJax.Hub.Queue(['Typeset', window.MathJax.Hub])
-        }
-      })
+      this.typesetMath()
     }
   },
 

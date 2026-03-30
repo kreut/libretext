@@ -44,72 +44,89 @@ if (config('app.env') === 'dev' && (!isset($_COOKIE['IS_ME']) || $_COOKIE['IS_ME
 </script>
 {{-- Load the application scripts --}}
 <script src="{{ mix('dist/js/app.js') }}"></script>
-<script type="text/x-mathjax-config">/*<![CDATA[*/
-  MathJax.Ajax.config.path["mhchem"] =
-            "https://cdnjs.cloudflare.com/ajax/libs/mathjax-mhchem/3.3.2";
-        MathJax.Hub.Config({ messageStyle: "none",
-        tex2jax: {preview: "none"},
-        jax: ["input/TeX","input/MathML","output/SVG"],
-  extensions: ["tex2jax.js","mml2jax.js","MathMenu.js","MathZoom.js"],
-  TeX: {
-        extensions: ["autobold.js","mhchem.js","color.js","cancel.js", "AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"]
-  },
-    "HTML-CSS": { linebreaks: { automatic: true , width: "90%"}, scale: 85, mtextFontInherit: false},
-menuSettings: { zscale: "150%", zoom: "Double-Click" },
-         SVG: { linebreaks: { automatic: true } }});
-/*]]>*/
-
-
-
-
-
-
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
 <script>
-  titleHolder = document.getElementById('titleHolder')
-  let front
+  // Compute the section/chapter prefix for equation numbering
+  let front = '';
+  const titleHolder = document.getElementById('titleHolder');
   if (titleHolder) {
-    front = titleHolder.innerText
-    front = front.match(/^.*?:/)
-  }
-  if (front) {
-    front = front[0]
-    front = front.split(':')[0]
-    if (front.includes('.')) {
-      front = front.split('.')
-      front = front.map((int) => int.includes('0') ? parseInt(int, 10) : int).join('.')
+    let match = titleHolder.innerText.match(/^.*?:/);
+    if (match) {
+      front = match[0].split(':')[0];
+      if (front.includes('.')) {
+        front = front.split('.').map(s => s.includes('0') ? parseInt(s, 10) : s).join('.');
+      }
+      front += '.';
     }
-    front += '.'
-  } else {
-    front = ''
   }
-  front = front.replace(/_/g, ' ')
-  MathJaxConfig = {
-    TeX: {
-      equationNumbers: {
-        autoNumber: 'all',
-        formatNumber: function (n) {
-          return front + n
-        }
+  front = front.replace(/_/g, ' ');
+
+  // MathJax v4 config — must be set BEFORE the script tag loads
+  window.MathJax = {
+    options: {
+      ignoreHtmlClass: "tex2jax_ignore",
+      processHtmlClass: "math-tex",
+      skipHtmlTags: ["mjx-container", "svg"],
+      menuOptions: {
+        settings: {
+          zscale: "150%",
+          zoom: "Double-Click",
+          assistiveMml: true,
+          collapsible: false,
+        },
+      },
+    },
+    output: {
+      scale: 0.85,
+      mtextInheritFont: false,
+      displayOverflow: "linebreak",
+      linebreaks: { width: "100%" },
+    },
+    startup: {
+      pageReady: () => {
+        if (window.activateBeeLine) window.activateBeeLine();
+        return MathJax.startup.defaultPageReady();
+      },
+    },
+    chtml: { matchFontHeight: true },
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      tags: "all",
+      tagformat: {
+        number: (n) => {
+          if (window.InitialOffset) {
+            const offset = Number(window.InitialOffset);
+            if (!offset) return front + n;
+            return front + (Number(n) + offset);
+          }
+          return front + n;
+        },
       },
       macros: {
-        PageIndex: ['{' + front + ' #1}', 1],
-        test: ['{' + front + ' #1}', 1]
+        eatSpaces: ["#1", 2, ["", " ", "\\endSpaces"]],
+        PageIndex: ["{" + front.replace(/\./g, "{.}") + "\\eatSpaces#1 \\endSpaces}", 1],
+        test: ["{" + front + "#1}", 1],
+        mhchemrightleftharpoons: "{\\unicode{x21CC}\\,}",
+        xrightleftharpoons: ["\\mhchemxrightleftharpoons[#1]{#2}", 2, ""],
       },
-      Macros: {
-        PageIndex: ['{' + front + ' #1}', 1],
-        test: ['{' + front + ' #1}', 1]
+      packages: {
+        "[+]": ["mhchem", "color", "cancel", "ams", "tagformat", "noerrors"],
       },
-      SVG: {
-        linebreaks: { automatic: true }
-      }
-    }
-  }
-
-  MathJax.Hub.Config(MathJaxConfig)
-
+    },
+    loader: {
+      "[tex]/mhchem": {
+        ready() {
+          const { MapHandler } = MathJax._.input.tex.MapHandler;
+          const mhchem = MapHandler.getMap("mhchem-chars");
+          mhchem.lookup("mhchemrightarrow")._char = "\uE42D";
+          mhchem.lookup("mhchemleftarrow")._char = "\uE42C";
+        },
+      },
+      load: ["[tex]/tagformat", "[tex]/noerrors", "[tex]/cancel", 'a11y/assistive-mml', 'a11y/semantic-enrich'],
+    },
+  };
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-svg.min.js"></script>
 <script>
   if (window.top === window.self) {
     // Not in an iframe --- fix the padding issue
@@ -135,6 +152,7 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
       console.log(document.getElementsByTagName('body')[0])
       document.body.style.background = 'transparent'
     }
-  })</script>
+  })
+</script>
 </body>
 </html>

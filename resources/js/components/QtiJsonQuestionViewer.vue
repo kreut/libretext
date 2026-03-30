@@ -560,7 +560,7 @@ export default {
     this.prompt = this.formatQuestionMediaPlayer(this.prompt)
     this.$forceUpdate()
     this.$nextTick(() => {
-      MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+      this.typesetMath()
       iFrameResize({ log: true }, '.question-media-player')
     })
 

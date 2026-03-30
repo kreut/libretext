@@ -153,6 +153,19 @@ class UserPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the users from the database.');
     }
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function getPotentialWebworkEditors(User $user): Response
+    {
+
+        return Helper::isAdmin()
+            ? Response::allow()
+            : Response::deny('You are not allowed to retrieve potential webwork editors from the database.');
+    }
+
+
 
 
 

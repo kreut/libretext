@@ -30,6 +30,7 @@ class LoginAsTest extends TestCase
     }
 
 
+
     /** @test */
     public function can_get_all_users_if_you_have_a_correct_email()
     {

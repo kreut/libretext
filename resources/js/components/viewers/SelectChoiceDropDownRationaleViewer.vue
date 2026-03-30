@@ -120,7 +120,7 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
           : 'incorrect'
       }
       console.log(this.selectedOption)
-      MathJax.Hub.Queue(function () {
+      MathJax.startup.promise.then(() => {
         // MathJax was double rendering the equations so I'm just keeping the assisted technology version
         const selects = document.querySelectorAll('select[class^="identifier-"]')
 
@@ -128,10 +128,8 @@ aria-label="combobox ${Math.ceil(i / 2)} of ${Math.floor(selectChoicesArray.leng
           const options = select.querySelectorAll('option')
 
           options.forEach(option => {
-            // Find all descendants of the current <option> with the class "math"
             const mathElements = option.querySelectorAll('.math')
             mathElements.forEach(mathElement => {
-              // Remove the element with the class "math"
               mathElement.remove()
             })
           })

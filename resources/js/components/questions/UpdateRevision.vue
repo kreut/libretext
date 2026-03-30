@@ -333,9 +333,7 @@ export default {
     },
     renderMathJax () {
       this.mathJaxRendered = true
-      this.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
+      this.typesetMath()
     },
     showRevision () {
       this.understandStudentSubmissionsRemoved = 0

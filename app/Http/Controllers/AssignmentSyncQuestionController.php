@@ -2450,7 +2450,7 @@ class AssignmentSyncQuestionController extends Controller
                     $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id);
                     $seed = is_object($seed) ? $seed->seed : $seed;
                     $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, true, new DOMDocument(), new JWE());
-                    $columns['technology_iframe_src'] = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], []);
+                    $columns['technology_iframe_src'] = $columns['technology_iframe'] = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], []);
                     $columns['solution_type'] = 'html';
                     $columns['problem_jwt'] = $technology_src_and_problemJWT['problemJWT'];
                 } else {

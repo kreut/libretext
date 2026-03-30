@@ -3,7 +3,8 @@ import {
   h5pOnLoadCssUpdates,
   h5pStudentCssUpdates,
   webworkOnLoadCssUpdates,
-  webworkStudentCssUpdates
+  webworkStudentCssUpdates,
+  applyWarningsVisibility
 } from './CSSUpdates'
 
 export function getTechnology (body) {
@@ -14,7 +15,7 @@ export function getTechnology (body) {
     technology = 'h5p'
   } else if (body.includes('imathas.libretexts.org')) {
     technology = 'imathas'
-  } else if (body.includes('wwrenderer-staging.libretexts.org') || body.includes('wwrenderer.libretexts.org') || body.includes('webwork.libretexts.org') || (body.includes('demo.webwork.rochester.edu'))) {
+  } else if (body.includes('render.libretexts.org') || body.includes('staging-render.libretexts.org') || body.includes('wwrenderer-staging.libretexts.org') || body.includes('wwrenderer.libretexts.org') || body.includes('webwork.libretexts.org') || (body.includes('demo.webwork.rochester.edu'))) {
     technology = 'webwork'
   } else {
     technology = false
@@ -79,8 +80,9 @@ export async function hideSubmitButtonsIfCannotSubmit (vm, routeName, technology
       console.log('updating CSS for webwork!!!')
       console.log(vm.event.data)
       console.log('sync receiveMessage')
+      let jsonObj = {}
       try {
-        let jsonObj = JSON.parse(vm.event.data)
+        jsonObj = JSON.parse(vm.event.data)
         console.log(jsonObj.solutions)
         if (jsonObj.solutions.length) {
           question.solution_type = 'html'
@@ -89,15 +91,16 @@ export async function hideSubmitButtonsIfCannotSubmit (vm, routeName, technology
             question.solution_html += jsonObj.solutions[i]
           }
         }
-        vm.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        })
+        vm.typesetMath()
       } catch (error) {
         console.log('Not an object:' + vm.event.data)
       }
-      if (vm.event.data === 'loaded' || updatedLastSubmittedInfo) {
+      console.error('a')
+      console.error(vm.event.data)
+      if (jsonObj.type === 'webwork.lifecycle.loaded' || updatedLastSubmittedInfo) {
         // just do it on these 2 events or it will happen 50 million times and the browser will crash
         vm.iframeDomLoaded = true
+        applyWarningsVisibility(vm.user)
         vm.event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), vm.event.origin)
         console.log('webwork css applied')
         vm.addGlow(vm.event, vm.submissionArray, 'webwork')
@@ -168,6 +171,8 @@ export async function processReceiveMessage (vm, routeName, event) {
   console.log(routeName)
   const question = getQuestionBasedOnRoute(vm, routeName)
   let technology = getTechnology(event.origin)
+  console.error('aaaaaaaaaaaaaaa')
+  console.error(technology)
   vm.event = event
   await hideSubmitButtonsIfCannotSubmit(vm, routeName, technology)
 
@@ -216,8 +221,15 @@ export async function processReceiveMessage (vm, routeName, event) {
     }
     try {
       serverSideSubmit = ((technology === 'imathas' && JSON.parse(event.data).subject === 'lti.ext.imathas.result') ||
-        (technology === 'webwork' && JSON.parse(event.data).subject === 'webwork.result'))
+        (technology === 'webwork' && JSON.parse(event.data).type === 'webwork.interaction.submitted'))
+      console.error('checking server side')
+      console.error(serverSideSubmit)
+      console.error('good')
+      console.error(technology)
+      console.error(event.data)
     } catch (error) {
+      console.error('bad')
+      console.error(event.data)
       serverSideSubmit = false
     }
 
@@ -242,26 +254,23 @@ export async function processReceiveMessage (vm, routeName, event) {
       parseInt(vm.activeId) !== 0
     if (serverSideSubmit) {
       question.can_give_up = true
-      let data = JSON.parse(event.data)
-      if (technology === 'webwork' && data.status) {
-        if (data.status >= 300) {
-          data.type = 'error'
+      let data = {}
+      try {
+        data = JSON.parse(event.data)
+        if (technology === 'webwork' && data.type === 'webwork.interaction.submitted') {
+          let verdict = data.status
+          if (verdict.status >= 300) {
+            verdict.type = 'error'
+          }
+          data = verdict
         }
-        let isParseableObject
-        try {
-          isParseableObject = Boolean(JSON.parse(data.message))
-        } catch {
-          isParseableObject = false
-        }
-        let message
-        if (isParseableObject) {
-          // must be running on the old renderer code
-          message = JSON.parse(data.message)
-          data = { ...data, ...message }
-        } else {
-          // the new renderer code so we don't need to fix anything
-        }
+      } catch (e) {
+        this.$noty.error('Could not parse response from webWork. Please contact Support.')
+        return
       }
+      console.error('Route name')
+      console.error(data)
+      console.error(routeName)
       switch (routeName) {
         case ('questions.view'):
           await vm.showResponse(data)

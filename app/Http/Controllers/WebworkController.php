@@ -14,9 +14,28 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
 
 class WebworkController extends Controller
 {
+    /**
+     * @param string $problemJWT
+     * @param Webwork $webwork
+     * @return array
+     * @throws Exception
+     */
+    public function solution(string $problemJWT, Webwork $webwork): array
+    {
+
+        try {
+            return $webwork->getSolution($problemJWT);
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were unable to retrieve solution to this problem.  Please try again or contact support.";
+        }
+        return $response;
+    }
 
     /**
      * @param WebworkSubmissionError $webworkSubmissionError
@@ -228,6 +247,7 @@ DOC;
 
 
     }
+
 
     /**
      * @param Webwork $webwork

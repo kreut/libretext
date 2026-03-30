@@ -1938,9 +1938,7 @@ export default {
         }
         this.discussions = data.discussions.filter(item => item.group === this.group)
 
-        this.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        })
+        this.typesetMath()
         if (resetOpenStates) {
           for (let i = 0; i < this.discussions.length; i++) {
             this.openStates[i] = i === 0

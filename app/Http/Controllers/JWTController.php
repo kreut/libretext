@@ -138,8 +138,8 @@ class JWTController extends Controller
             }
 
 //if the token isn't formed correctly return a message
-
             $problemJWT = json_decode($problemJWT);
+
             $missing_properties = !(
                 isset($problemJWT->adapt) &&
                 isset($problemJWT->adapt->assignment_id) &&
@@ -204,6 +204,11 @@ class JWTController extends Controller
             }
             $Submission = new Submission();
             if ($problemJWT->adapt->technology === 'webwork') {
+                if (isset($problemJWT->adapt->preview)){
+                    $response['type'] = 'preview';
+                    $response['message'] = '';
+                    return $response;
+                }
                 UnconfirmedSubmission::updateOrCreate([
                     'assignment_id' => $problemJWT->adapt->assignment_id,
                     'question_id' => $problemJWT->adapt->question_id,

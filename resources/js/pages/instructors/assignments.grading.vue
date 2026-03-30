@@ -1285,7 +1285,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import SolutionFileHtml from '../../components/SolutionFileHtml'
 import Report from '../../components/Report.vue'
 import ModalOverrideSubmissionScore from '../../components/ModalOverrideSubmissionScore.vue'
-import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates } from '~/helpers/CSSUpdates'
+import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates, applyWarningsVisibility } from '~/helpers/CSSUpdates'
 import QtiJsonQuestionViewer from '../../components/QtiJsonQuestionViewer.vue'
 import SubmissionArray from '../../components/SubmissionArray.vue'
 import CompletedIcon from '../../components/CompletedIcon.vue'
@@ -1482,6 +1482,7 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   mounted () {
+    applyWarningsVisibility(this.user)
     this.routeStudentUserId = this.$route.params.studentUserId
     this.routeQuestionId = this.$route.params.questionId
 
@@ -1666,9 +1667,7 @@ export default {
       this.renderMathJax = !this.renderMathJax
       if (this.renderMathJax) {
         localStorage.renderMathJax = 1
-        this.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        })
+        this.typesetMath()
       } else {
         localStorage.renderMathJax = 0
       }
@@ -1729,7 +1728,13 @@ export default {
     },
     receiveMessage (event) {
       this.event = event
-      if (event.data === 'loaded') {
+      let jsonObj = {}
+      try {
+        jsonObj = JSON.parse(event.data)
+      } catch (e) {
+        console.error('Why me???!?@?#')
+      }
+      if (event.data === 'loaded' || jsonObj.type === 'webwork.lifecycle.loaded') {
         switch (this.technology) {
           case ('webwork'):
             webworkOnLoadCssUpdates.elements.push({
@@ -2328,9 +2333,7 @@ export default {
             this.addGlowTwiceMore()
           })
           if (this.renderMathJax) {
-            this.$nextTick(() => {
-              MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-            })
+            this.typesetMath()
           }
         }
       } catch (error) {

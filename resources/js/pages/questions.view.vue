@@ -1075,10 +1075,7 @@
               :key="`unconfirmed-submission-${itemIndex}`"
           >
             <td>
-              <div v-if="hasHTML" v-html="item"/>
-              <div v-if="!hasHTML">
-                {{ item ? item : 'Nothing submitted' }}
-              </div>
+              <div v-html="item ? item : 'Nothing submitted'"/>
             </td>
           </tr>
           </tbody>
@@ -5196,9 +5193,7 @@ export default {
       }
     },
     renderMathJax () {
-      this.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
+      this.typesetMath(document.getElementById('modal-confirm-submission'))
     },
     showContactInstructorAutoGraded () {
       let canContactInstructorAutoGraded
@@ -5443,9 +5438,7 @@ export default {
         this.$bvModal.hide('modal-confirm-show-hint')
         this.$bvModal.show('modal-hint')
 
-        this.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        })
+        this.typesetMath()
         this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
       } catch (error) {
         this.$noty.error(error.message)
@@ -5976,9 +5969,7 @@ export default {
       }
 
       if (this.questionView === 'expanded') {
-        this.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        })
+        this.typesetMath()
       }
     },
     onCKEditorNamespaceLoaded (CKEDITOR) {
@@ -6552,6 +6543,11 @@ export default {
       this.cacheKey++
       this.questions[this.currentPage - 1].submissions_array = []
       this.submissionDataType = ['success', 'info'].includes(data.type) ? data.type : 'danger'
+      console.error('aaaaaaaaaaaaaaaaaaaaaa')
+      console.error(data)
+      if (data.type === 'preview'){
+        return
+      }
       if (data.type === 'unconfirmed') {
         this.user.role === 3 ? await this.initConfirmSubmission() : await this.completeSubmission()
         return
@@ -6944,7 +6940,7 @@ export default {
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
         this.questionWeightForm.weight = this.questions[currentPage - 1].weight
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+        this.typesetMath()
       })
 
       if (this.showAssignmentStatistics) {

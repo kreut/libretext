@@ -33,7 +33,7 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
 /*]]>*/
     </script>
     <script type="text/javascript" async="true"
-            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
+            src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-svg.min.js"></script>
     <script type="text/javascript">
         front = document.getElementById('titleHolder').innerText;
         front = front.match(/^.*?:/);
