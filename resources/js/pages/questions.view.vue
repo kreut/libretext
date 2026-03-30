@@ -5798,22 +5798,11 @@ export default {
       this.$noty.success(message)
     },
     async reloadSingleQuestion () {
-      // Flashcard manages its own state — reloading would destroy FlashcardViewer and reset the deck
+      this.questionId = this.questions[this.currentPage - 1].id
       if (this.assessmentType === 'flashcard') {
-        const questionId = this.questions[this.currentPage - 1].id
-        try {
-          const { data } = await axios.get(`/api/questions/${questionId}`)
-          if (data.type === 'success') {
-            this.$set(this.questions[this.currentPage - 1], 'qti_json', data.question.qti_json)
-            this.$set(this.questions[this.currentPage - 1], 'hint', data.question.hint)
-            this.$set(this.questions[this.currentPage - 1], 'title', data.question.title)
-          }
-        } catch (error) {
-          this.$noty.error(`Could not refresh flashcard: ${error.message}`)
-        }
+        window.location.href = `/assignments/${this.assignmentId}/questions/view/${this.questionId}`
         return
       }
-      this.questionId = this.questions[this.currentPage - 1].id
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       this.currentPage = this.getInitialCurrentPage(this.questionId)
       this.cacheIndex++
