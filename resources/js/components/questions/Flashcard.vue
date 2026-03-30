@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Confirm side type change modal -->
     <b-modal
       id="modal-flashcard-confirm-type-change"
       title="Change Type?"
@@ -34,7 +33,26 @@
           <b-form-radio value="free_form">Free-form</b-form-radio>
           <b-form-radio value="media">Media</b-form-radio>
         </b-form-radio-group>
-
+        <div v-if="['text_only','text_media'].includes(form.frontType)" class="mb-2">
+          <label class="mb-0 mr-2 small" :for="'front-text-to-speech-lang-text-only'">
+            <span class="mr-1">
+            Text Language*
+            <b-icon id="front-text-to-speech-lang-text-only" icon="question-circle" class="text-primary"
+                    style="cursor:pointer"
+            />
+            <b-tooltip target="front-text-to-speech-lang-text-only" delay="250" triggers="hover focus">
+              Text to Speech will be automatically generated using AI. Select the language for the text.
+            </b-tooltip>
+              </span>
+            <b-form-select
+              :id="'front-text-to-speech-lang-text-only'"
+              v-model="form.frontTTSLanguage"
+              :options="ttsLanguageOptions"
+              size="sm"
+              style="width: 150px"
+            />
+          </label>
+        </div>
         <div class="flashcard-side-panel flashcard-side-front mb-1">
           <!-- Free-form front -->
           <template v-if="form.frontType === 'free_form'">
@@ -81,24 +99,31 @@
                 >
                   <div v-if="form.frontImageUrl" class="drop-zone-preview">
                     <img :src="form.frontImageUrl" alt="Uploaded image" class="preview-img"/>
-                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
+                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove
+                    </b-button>
                   </div>
                   <div v-else-if="form.frontAudioUrl" class="drop-zone-preview">
                     <audio :src="form.frontAudioUrl" controls class="preview-audio" @click.stop/>
-                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
+                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove
+                    </b-button>
                   </div>
                   <div v-else-if="form.frontVideoUrl" class="drop-zone-preview">
                     <video :src="form.frontVideoUrl" controls class="preview-video" @click.stop/>
-                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
+                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove
+                    </b-button>
                   </div>
                   <div v-else class="drop-zone-placeholder">
                     <div>Drag &amp; drop an image, audio, or video here</div>
                     <div class="drop-zone-or">or</div>
-                    <b-button size="sm" variant="outline-secondary" @click.stop="$refs.frontMediaInput.click()">Browse Files</b-button>
+                    <b-button size="sm" variant="outline-secondary" @click.stop="$refs.frontMediaInput.click()">Browse
+                      Files
+                    </b-button>
                     <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP3, MP4, MOV, WebM</div>
                   </div>
                 </div>
-                <input ref="frontMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'front')"/>
+                <input ref="frontMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm"
+                       style="display:none" @change="handleFileSelect($event, 'front')"
+                />
                 <!-- Alt text / decorative (images only) -->
                 <div v-if="form.frontImageUrl" class="mt-2">
                   <b-form-checkbox
@@ -140,7 +165,9 @@
                           :config="captionEditorConfig"
                           @namespaceloaded="onCKEditorNamespaceLoaded"
                         />
-                        <b-button variant="link" size="sm" class="px-0" @click="form.frontShowCaption = false; retypesetMath()">
+                        <b-button variant="link" size="sm" class="px-0"
+                                  @click="form.frontShowCaption = false; retypesetMath()"
+                        >
                           Done
                         </b-button>
                       </div>
@@ -165,7 +192,9 @@
                           :config="longDescEditorConfig"
                           @namespaceloaded="onCKEditorNamespaceLoaded"
                         />
-                        <b-button variant="link" size="sm" class="px-0" @click="form.frontShowLongDesc = false; retypesetMath()">
+                        <b-button variant="link" size="sm" class="px-0"
+                                  @click="form.frontShowLongDesc = false; retypesetMath()"
+                        >
                           Done
                         </b-button>
                       </div>
@@ -176,9 +205,13 @@
                 <div v-if="form.frontAudioUrl || form.frontVideoUrl" class="mt-2 d-flex align-items-center">
                   <label class="mb-0 mr-2 small text-muted" :for="'front-caption-lang-text-media'">
                     {{ form.frontMediaType === 'audio' ? 'Audio' : 'Video' }} Caption Language*
-                    <b-icon id="front-caption-lang-text-media-tooltip" icon="question-circle" class="text-primary" style="cursor:pointer"/>
+                    <b-icon id="front-caption-lang-text-media-tooltip" icon="question-circle" class="text-primary"
+                            style="cursor:pointer"
+                    />
                     <b-tooltip target="front-caption-lang-text-media-tooltip" delay="250" triggers="hover focus">
-                      Captions will be automatically generated from the {{ form.frontMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken in the {{ form.frontMediaType === 'audio' ? 'file' : 'video' }}.
+                      Captions will be automatically generated from the
+                      {{ form.frontMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language
+                      spoken in the {{ form.frontMediaType === 'audio' ? 'file' : 'video' }}.
                     </b-tooltip>
                   </label>
                   <b-form-select
@@ -189,7 +222,10 @@
                     style="width: 150px"
                   />
                 </div>
-                <div v-if="errors.frontCaptionLanguage" class="invalid-feedback d-block">{{ errors.frontCaptionLanguage }}</div>
+                <div v-if="errors.frontCaptionLanguage" class="invalid-feedback d-block">{{
+                    errors.frontCaptionLanguage
+                  }}
+                </div>
               </div>
             </div>
           </template>
@@ -208,24 +244,31 @@
               >
                 <div v-if="form.frontImageUrl" class="drop-zone-preview">
                   <img :src="form.frontImageUrl" alt="Uploaded image" class="preview-img"/>
-                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
+                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove
+                  </b-button>
                 </div>
                 <div v-else-if="form.frontAudioUrl" class="drop-zone-preview">
                   <audio :src="form.frontAudioUrl" controls class="preview-audio" @click.stop/>
-                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
+                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove
+                  </b-button>
                 </div>
                 <div v-else-if="form.frontVideoUrl" class="drop-zone-preview">
                   <video :src="form.frontVideoUrl" controls class="preview-video" @click.stop/>
-                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove</b-button>
+                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('front')">Remove
+                  </b-button>
                 </div>
                 <div v-else class="drop-zone-placeholder">
                   <div>Drag &amp; drop an image, audio, or video here</div>
                   <div class="drop-zone-or">or</div>
-                  <b-button size="sm" variant="outline-secondary" @click.stop="$refs.frontMediaInput.click()">Browse Files</b-button>
+                  <b-button size="sm" variant="outline-secondary" @click.stop="$refs.frontMediaInput.click()">Browse
+                    Files
+                  </b-button>
                   <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP3, MP4, MOV, WebM</div>
                 </div>
               </div>
-              <input ref="frontMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'front')"/>
+              <input ref="frontMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm"
+                     style="display:none" @change="handleFileSelect($event, 'front')"
+              />
               <!-- Alt text / decorative (images only) -->
               <div v-if="form.frontImageUrl" class="mt-2">
                 <b-form-checkbox
@@ -267,7 +310,9 @@
                         :config="captionEditorConfig"
                         @namespaceloaded="onCKEditorNamespaceLoaded"
                       />
-                      <b-button variant="link" size="sm" class="px-0" @click="form.frontShowCaption = false; retypesetMath()">
+                      <b-button variant="link" size="sm" class="px-0"
+                                @click="form.frontShowCaption = false; retypesetMath()"
+                      >
                         Done
                       </b-button>
                     </div>
@@ -292,7 +337,9 @@
                         :config="longDescEditorConfig"
                         @namespaceloaded="onCKEditorNamespaceLoaded"
                       />
-                      <b-button variant="link" size="sm" class="px-0" @click="form.frontShowLongDesc = false; retypesetMath()">
+                      <b-button variant="link" size="sm" class="px-0"
+                                @click="form.frontShowLongDesc = false; retypesetMath()"
+                      >
                         Done
                       </b-button>
                     </div>
@@ -303,20 +350,27 @@
               <div v-if="form.frontAudioUrl || form.frontVideoUrl" class="mt-2 d-flex align-items-center">
                 <label class="mb-0 mr-2 small text-muted" :for="'front-caption-lang-media'">
                   {{ form.frontMediaType === 'audio' ? 'Audio' : 'Video' }} Caption Language*
-                  <b-icon id="front-caption-lang-media-tooltip" icon="question-circle" class="text-primary" style="cursor:pointer"/>
+                  <b-icon id="front-caption-lang-media-tooltip" icon="question-circle" class="text-primary"
+                          style="cursor:pointer"
+                  />
                   <b-tooltip target="front-caption-lang-media-tooltip" delay="250" triggers="hover focus">
-                    Captions will be automatically generated from the {{ form.frontMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken in the {{ form.frontMediaType === 'audio' ? 'file' : 'video' }}.
+                    Captions will be automatically generated from the
+                    {{ form.frontMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken
+                    in the {{ form.frontMediaType === 'audio' ? 'file' : 'video' }}.
                   </b-tooltip>
                 </label>
                 <b-form-select
                   :id="'front-caption-lang-media'"
                   v-model="form.frontCaptionLanguage"
-                  :options="captionLanguageOptions"
+                  :options="ttsLanguageOptions"
                   size="sm"
                   style="width: 150px"
                 />
               </div>
-              <div v-if="errors.frontCaptionLanguage" class="invalid-feedback d-block">{{ errors.frontCaptionLanguage }}</div>
+              <div v-if="errors.frontCaptionLanguage" class="invalid-feedback d-block">{{
+                  errors.frontCaptionLanguage
+                }}
+              </div>
             </div>
           </template>
         </div>
@@ -333,7 +387,9 @@
           </div>
         </div>
         <div v-else-if="errors.term" class="invalid-feedback d-block mb-2">{{ errors.term }}</div>
-        <div v-if="form.frontType === 'media' && errors.frontMediaS3Key" class="invalid-feedback d-block mb-2">{{ errors.frontMediaS3Key }}</div>
+        <div v-if="form.frontType === 'media' && errors.frontMediaS3Key" class="invalid-feedback d-block mb-2">
+          {{ errors.frontMediaS3Key }}
+        </div>
 
         <hr>
 
@@ -352,7 +408,26 @@
           <b-form-radio value="free_form">Free-form</b-form-radio>
           <b-form-radio value="media">Media</b-form-radio>
         </b-form-radio-group>
-
+        <div v-if="['text_only','text_media'].includes(form.backType)" class="mb-2">
+          <label class="mb-0 mr-2 small" :for="'back-text-to-speech-lang-text-only'">
+               <span class="mr-1">
+            Text Language*
+            <b-icon id="back-text-to-speech-lang-text-only" icon="question-circle" class="text-primary"
+                    style="cursor:pointer"
+            />
+            <b-tooltip target="back-text-to-speech-lang-text-only" delay="250" triggers="hover focus">
+              Text to Speech will be automatically generated using AI. Select the language for the text.
+            </b-tooltip>
+             </span>
+            <b-form-select
+              :id="'back-text-to-speech-lang-text-only'"
+              v-model="form.backTTSLanguage"
+              :options="ttsLanguageOptions"
+              size="sm"
+              style="width: 150px"
+            />
+          </label>
+        </div>
         <div class="flashcard-side-panel flashcard-side-back mb-1">
           <!-- Free-form back -->
           <template v-if="form.backType === 'free_form'">
@@ -399,24 +474,31 @@
                 >
                   <div v-if="form.backImageUrl" class="drop-zone-preview">
                     <img :src="form.backImageUrl" alt="Uploaded image" class="preview-img"/>
-                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
+                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove
+                    </b-button>
                   </div>
                   <div v-else-if="form.backAudioUrl" class="drop-zone-preview">
                     <audio :src="form.backAudioUrl" controls class="preview-audio" @click.stop/>
-                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
+                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove
+                    </b-button>
                   </div>
                   <div v-else-if="form.backVideoUrl" class="drop-zone-preview">
                     <video :src="form.backVideoUrl" controls class="preview-video" @click.stop/>
-                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
+                    <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove
+                    </b-button>
                   </div>
                   <div v-else class="drop-zone-placeholder">
                     <div>Drag &amp; drop an image, audio, or video here</div>
                     <div class="drop-zone-or">or</div>
-                    <b-button size="sm" variant="outline-secondary" @click.stop="$refs.backMediaInput.click()">Browse Files</b-button>
+                    <b-button size="sm" variant="outline-secondary" @click.stop="$refs.backMediaInput.click()">Browse
+                      Files
+                    </b-button>
                     <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP3, MP4, MOV, WebM</div>
                   </div>
                 </div>
-                <input ref="backMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'back')"/>
+                <input ref="backMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm"
+                       style="display:none" @change="handleFileSelect($event, 'back')"
+                />
                 <!-- Alt text / decorative (images only) -->
                 <div v-if="form.backImageUrl" class="mt-2">
                   <b-form-checkbox
@@ -458,7 +540,9 @@
                           :config="captionEditorConfig"
                           @namespaceloaded="onCKEditorNamespaceLoaded"
                         />
-                        <b-button variant="link" size="sm" class="px-0" @click="form.backShowCaption = false; retypesetMath()">
+                        <b-button variant="link" size="sm" class="px-0"
+                                  @click="form.backShowCaption = false; retypesetMath()"
+                        >
                           Done
                         </b-button>
                       </div>
@@ -483,7 +567,9 @@
                           :config="longDescEditorConfig"
                           @namespaceloaded="onCKEditorNamespaceLoaded"
                         />
-                        <b-button variant="link" size="sm" class="px-0" @click="form.backShowLongDesc = false; retypesetMath()">
+                        <b-button variant="link" size="sm" class="px-0"
+                                  @click="form.backShowLongDesc = false; retypesetMath()"
+                        >
                           Done
                         </b-button>
                       </div>
@@ -494,9 +580,13 @@
                 <div v-if="form.backAudioUrl || form.backVideoUrl" class="mt-2 d-flex align-items-center">
                   <label class="mb-0 mr-2 small text-muted" :for="'back-caption-lang-text-media'">
                     {{ form.backMediaType === 'audio' ? 'Audio' : 'Video' }} Caption Language*
-                    <b-icon id="back-caption-lang-text-media-tooltip" icon="question-circle" class="text-primary" style="cursor:pointer"/>
+                    <b-icon id="back-caption-lang-text-media-tooltip" icon="question-circle" class="text-primary"
+                            style="cursor:pointer"
+                    />
                     <b-tooltip target="back-caption-lang-text-media-tooltip" delay="250" triggers="hover focus">
-                      Captions will be automatically generated from the {{ form.backMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken in the {{ form.backMediaType === 'audio' ? 'file' : 'video' }}.
+                      Captions will be automatically generated from the
+                      {{ form.backMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language
+                      spoken in the {{ form.backMediaType === 'audio' ? 'file' : 'video' }}.
                     </b-tooltip>
                   </label>
                   <b-form-select
@@ -507,7 +597,10 @@
                     style="width: 150px"
                   />
                 </div>
-                <div v-if="errors.backCaptionLanguage" class="invalid-feedback d-block">{{ errors.backCaptionLanguage }}</div>
+                <div v-if="errors.backCaptionLanguage" class="invalid-feedback d-block">{{
+                    errors.backCaptionLanguage
+                  }}
+                </div>
               </div>
             </div>
           </template>
@@ -526,24 +619,31 @@
               >
                 <div v-if="form.backImageUrl" class="drop-zone-preview">
                   <img :src="form.backImageUrl" alt="Uploaded image" class="preview-img"/>
-                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
+                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove
+                  </b-button>
                 </div>
                 <div v-else-if="form.backAudioUrl" class="drop-zone-preview">
                   <audio :src="form.backAudioUrl" controls class="preview-audio" @click.stop/>
-                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
+                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove
+                  </b-button>
                 </div>
                 <div v-else-if="form.backVideoUrl" class="drop-zone-preview">
                   <video :src="form.backVideoUrl" controls class="preview-video" @click.stop/>
-                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove</b-button>
+                  <b-button size="sm" variant="outline-danger" class="mt-2" @click.stop="clearMedia('back')">Remove
+                  </b-button>
                 </div>
                 <div v-else class="drop-zone-placeholder">
                   <div>Drag &amp; drop an image, audio, or video here</div>
                   <div class="drop-zone-or">or</div>
-                  <b-button size="sm" variant="outline-secondary" @click.stop="$refs.backMediaInput.click()">Browse Files</b-button>
+                  <b-button size="sm" variant="outline-secondary" @click.stop="$refs.backMediaInput.click()">Browse
+                    Files
+                  </b-button>
                   <div class="drop-zone-hint">JPG, PNG, GIF, WebP, MP3, MP4, MOV, WebM</div>
                 </div>
               </div>
-              <input ref="backMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm" style="display:none" @change="handleFileSelect($event, 'back')"/>
+              <input ref="backMediaInput" type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.mp3,.mp4,.mov,.webm"
+                     style="display:none" @change="handleFileSelect($event, 'back')"
+              />
               <!-- Alt text / decorative (images only) -->
               <div v-if="form.backImageUrl" class="mt-2">
                 <b-form-checkbox
@@ -585,7 +685,9 @@
                         :config="captionEditorConfig"
                         @namespaceloaded="onCKEditorNamespaceLoaded"
                       />
-                      <b-button variant="link" size="sm" class="px-0" @click="form.backShowCaption = false; retypesetMath()">
+                      <b-button variant="link" size="sm" class="px-0"
+                                @click="form.backShowCaption = false; retypesetMath()"
+                      >
                         Done
                       </b-button>
                     </div>
@@ -610,7 +712,9 @@
                         :config="longDescEditorConfig"
                         @namespaceloaded="onCKEditorNamespaceLoaded"
                       />
-                      <b-button variant="link" size="sm" class="px-0" @click="form.backShowLongDesc = false; retypesetMath()">
+                      <b-button variant="link" size="sm" class="px-0"
+                                @click="form.backShowLongDesc = false; retypesetMath()"
+                      >
                         Done
                       </b-button>
                     </div>
@@ -621,9 +725,13 @@
               <div v-if="form.backAudioUrl || form.backVideoUrl" class="mt-2 d-flex align-items-center">
                 <label class="mb-0 mr-2 small text-muted" :for="'back-caption-lang-media'">
                   {{ form.backMediaType === 'audio' ? 'Audio' : 'Video' }} Caption Language*
-                  <b-icon id="back-caption-lang-media-tooltip" icon="question-circle" class="text-primary" style="cursor:pointer"/>
+                  <b-icon id="back-caption-lang-media-tooltip" icon="question-circle" class="text-primary"
+                          style="cursor:pointer"
+                  />
                   <b-tooltip target="back-caption-lang-media-tooltip" delay="250" triggers="hover focus">
-                    Captions will be automatically generated from the {{ form.backMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken in the {{ form.backMediaType === 'audio' ? 'file' : 'video' }}.
+                    Captions will be automatically generated from the
+                    {{ form.backMediaType === 'audio' ? 'audio' : 'video audio' }} using AI. Select the language spoken
+                    in the {{ form.backMediaType === 'audio' ? 'file' : 'video' }}.
                   </b-tooltip>
                 </label>
                 <b-form-select
@@ -634,7 +742,10 @@
                   style="width: 150px"
                 />
               </div>
-              <div v-if="errors.backCaptionLanguage" class="invalid-feedback d-block">{{ errors.backCaptionLanguage }}</div>
+              <div v-if="errors.backCaptionLanguage" class="invalid-feedback d-block">{{
+                  errors.backCaptionLanguage
+                }}
+              </div>
             </div>
           </template>
         </div>
@@ -651,7 +762,9 @@
           </div>
         </div>
         <div v-else-if="errors.answer" class="invalid-feedback d-block mb-2">{{ errors.answer }}</div>
-        <div v-if="form.backType === 'media' && errors.backMediaS3Key" class="invalid-feedback d-block mb-2">{{ errors.backMediaS3Key }}</div>
+        <div v-if="form.backType === 'media' && errors.backMediaS3Key" class="invalid-feedback d-block mb-2">
+          {{ errors.backMediaS3Key }}
+        </div>
 
         <!-- ── HINT (optional) ───────────────────────────────────── -->
         <hr>
@@ -822,6 +935,11 @@ export default {
       typeChangeWarningMessage: '',
       isDraggingFront: false,
       isDraggingBack: false,
+      ttsLanguageOptions: [
+        { value: 'English', text: 'English' },
+        { value: 'Spanish', text: 'Spanish' },
+        { value: 'French', text: 'French' }
+      ],
       captionLanguageOptions: [
         { value: 'en', text: 'English' },
         { value: 'es', text: 'Spanish' },
@@ -845,12 +963,13 @@ export default {
         backMediaS3Key: '',
         frontMediaAlt: '',
         backMediaAlt: '',
+        frontTTSLanguage: '',
+        backTTSLanguage: '',
         frontCaptionLanguage: '',
         backCaptionLanguage: ''
       }
     }
   },
-
   mounted () {
     if (this.form.term && this.$refs.termInput) {
       this.$refs.termInput.value = this.form.term
@@ -868,6 +987,15 @@ export default {
       this.form.backAudioUrl = this.form.backMediaType === 'audio' ? this.form.backMediaUrl : ''
       this.form.backVideoUrl = this.form.backMediaType === 'video' ? this.form.backMediaUrl : ''
     }
+    this.$nextTick(() => {
+      if (typeof this.form.frontTTSLanguage === 'undefined') {
+        this.form.frontTTSLanguage = 'English'
+      }
+      if (typeof this.form.backTTSLanguage === 'undefined') {
+        this.form.backTTSLanguage = 'English'
+      }
+      this.$forceUpdate()
+    })
   },
 
   methods: {
@@ -882,6 +1010,8 @@ export default {
       this.errors.backMediaAlt = errors.backMediaAlt || ''
       this.errors.frontCaptionLanguage = errors.frontCaptionLanguage || ''
       this.errors.backCaptionLanguage = errors.backCaptionLanguage || ''
+      this.errors.frontTTSLanguage = errors.frontTTSLanguage || ''
+      this.errors.backTTSLanguage = errors.backTTSLanguage || ''
     },
 
     handleTypeChange (side, newType) {
@@ -972,8 +1102,11 @@ export default {
     },
 
     handleDrop (event, side) {
-      if (side === 'front') this.isDraggingFront = false
-      else this.isDraggingBack = false
+      if (side === 'front') {
+        this.isDraggingFront = false
+      } else {
+        this.isDraggingBack = false
+      }
       const file = event.dataTransfer.files[0]
       if (file) this.processFile(file, side)
     },
@@ -1046,8 +1179,16 @@ export default {
 
       // Front
       switch (f.frontType) {
-        case 'free_form': data.front = f.front; break
-        case 'text_only': data.term = f.term; break
+        case 'free_form':
+          data.front = f.front
+          data.frontTTSLanguage = f.frontTTSLanguage
+          data.backTTSLanguage = f.backTTSLanguage
+          break
+        case 'text_only':
+          data.term = f.term
+          data.frontTTSLanguage = f.frontTTSLanguage
+          data.backTTSLanguage = f.backTTSLanguage
+          break
         case 'text_media':
           data.term = f.term
           data.frontMediaS3Key = f.frontMediaS3Key
@@ -1063,6 +1204,8 @@ export default {
           if (f.frontMediaType === 'audio' || f.frontMediaType === 'video') {
             data.frontCaptionLanguage = f.frontCaptionLanguage
           }
+          data.frontTTSLanguage = f.frontTTSLanguage
+          data.backTTSLanguage = f.backTTSLanguage
           break
         case 'media':
           data.frontMediaS3Key = f.frontMediaS3Key
@@ -1083,8 +1226,12 @@ export default {
 
       // Back
       switch (f.backType) {
-        case 'free_form': data.back = f.back; break
-        case 'text_only': data.answer = f.answer; break
+        case 'free_form':
+          data.back = f.back
+          break
+        case 'text_only':
+          data.answer = f.answer
+          break
         case 'text_media':
           data.answer = f.answer
           data.backMediaS3Key = f.backMediaS3Key
@@ -1208,7 +1355,9 @@ export default {
   border-radius: 8px;
 }
 
-.flashcard-fill::placeholder { color: transparent; }
+.flashcard-fill::placeholder {
+  color: transparent;
+}
 
 .flashcard-fill:focus {
   outline: none;
@@ -1265,9 +1414,16 @@ export default {
 }
 
 .flashcard-drop-zone:hover,
-.drop-zone-active { border-color: #007bff; background: #f0f6ff; }
+.drop-zone-active {
+  border-color: #007bff;
+  background: #f0f6ff;
+}
 
-.drop-zone-has-file { border-style: solid; border-color: #28a745; background: #f6fff8; }
+.drop-zone-has-file {
+  border-style: solid;
+  border-color: #28a745;
+  background: #f6fff8;
+}
 
 .drop-zone-placeholder {
   display: flex;
@@ -1278,8 +1434,16 @@ export default {
   font-size: 0.9rem;
 }
 
-.drop-zone-or { font-size: 0.8rem; color: #adb5bd; }
-.drop-zone-hint { font-size: 0.75rem; color: #adb5bd; margin-top: 4px; }
+.drop-zone-or {
+  font-size: 0.8rem;
+  color: #adb5bd;
+}
+
+.drop-zone-hint {
+  font-size: 0.75rem;
+  color: #adb5bd;
+  margin-top: 4px;
+}
 
 .drop-zone-preview {
   display: flex;
@@ -1307,13 +1471,52 @@ export default {
   margin-bottom: 8px;
 }
 
-.optional-field-label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
-.optional-field-preview { display: flex; align-items: flex-start; gap: 4px; }
-.optional-field-content { font-size: 0.85rem; color: #495057; flex: 1; min-width: 0; word-break: break-word; white-space: normal; overflow-wrap: break-word; }
-.optional-field-content p { margin: 0; }
+.optional-field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 3px;
+}
 
-.flashcard-error-row { display: flex; flex-direction: row; }
-.flashcard-error-term { flex: 0 0 40%; padding-right: 16px; }
-.flashcard-error-divider { width: 2px; flex-shrink: 0; }
-.flashcard-error-media { flex: 0 0 60%; padding-left: 16px; }
+.optional-field-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.optional-field-content {
+  font-size: 0.85rem;
+  color: #495057;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.optional-field-content p {
+  margin: 0;
+}
+
+.flashcard-error-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flashcard-error-term {
+  flex: 0 0 40%;
+  padding-right: 16px;
+}
+
+.flashcard-error-divider {
+  width: 2px;
+  flex-shrink: 0;
+}
+
+.flashcard-error-media {
+  flex: 0 0 60%;
+  padding-left: 16px;
+}
 </style>

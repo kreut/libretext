@@ -66,7 +66,9 @@ class QuestionController extends Controller
     protected $flashcard_keys = [
         'Title*',
         'Front*',
+        'Front Text Language*',
         'Back*',
+        'Back Text Language*',
         'Hint',
         'Tags',
         'Folder*',
@@ -162,6 +164,66 @@ class QuestionController extends Controller
             "Hint"
         ];
 
+    }
+
+
+    /**
+     * @param Request $request
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function storeFlashcardTts(Request $request, Question $question): array
+    {
+
+        $authorized = Gate::inspect('storeFlashcardTts', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $revision = QuestionRevision::where('question_id', $question->id)
+            ->orderByDesc('id')
+            ->firstOrFail();
+
+        $side = $request->input('side');
+        $dir = "uploads/flashcard-tts/{$question->id}/{$revision->id}";
+        $filename = "{$side}.mp3";
+        $qti_json = json_decode($revision->qti_json, 1);
+        $s3Key = "$dir/$filename";
+        try {
+            Storage::disk('s3')->putFileAs(
+                $dir,
+                $request->file('audio'),
+                $filename
+            );
+
+            $ttsKeyField = $side === 'front' ? 'frontTtsS3Key' : 'backTtsS3Key';
+
+            $qti_json['card'][$ttsKeyField] = $s3Key;
+            $qti_json = json_encode($qti_json);
+            DB::beginTransaction();
+            $revision->qti_json = $qti_json;
+            $revision->save();
+            $question->qti_json = $qti_json;
+            $question->save();
+            DB::commit();
+            $tts_url = Storage::disk('s3')->temporaryUrl(
+                $s3Key,
+                Carbon::now()->addHours(2)
+            );
+
+            $response['type'] = 'success';
+            $response['tts_url'] = $tts_url;
+
+        } catch (Exception $e) {
+            if (DB::transactionLevel()) {
+                DB::rollback();
+            }
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We could not delete the attachment.  Please contact support.";
+        }
+        return $response;
     }
 
     public function validAccountingJournalEntries(): array
@@ -1103,6 +1165,12 @@ class QuestionController extends Controller
                     }
                     if (!$question['Back*']) {
                         $messages[] = "Row $row_num is missing a Back (definition).";
+                    }
+                    if (!in_array($question['Front Text Language*'], ['English', 'Spanish', 'French'])) {
+                        $messages[] = "Row $row_num is missing a valid Front Text Language (English, Spanish, or French)";
+                    }
+                    if (!in_array($question['Back Text Language*'], ['English', 'Spanish', 'French'])) {
+                        $messages[] = "Row $row_num is missing a valid Back Text Language (English, Spanish, or French)";
                     }
                 }
                 if (!$question['License*']) {

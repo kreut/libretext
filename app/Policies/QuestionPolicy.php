@@ -297,6 +297,33 @@ class QuestionPolicy
             ->first();
     }
 
+    /**
+     * @param User $user
+     * @param Question $question
+     * @return Response
+     */
+    public function storeFlashcardTts(User $user, Question $question): Response
+    {
+        if (Helper::isAdmin()) {
+            $authorize = true;
+        } else {
+            $authorize = $question->isCoQuestionEditor()
+                || $user->isDeveloper()
+                || ((int)$user->id == $question->question_editor_user_id
+                    && ($user->role === 2));
+        }
+        return $authorize
+            ? Response::allow()
+            : Response::deny("You are not allowed to override the audio for this flashcard.");
+
+    }
+
+    /**
+     * @param User $user
+     * @param Question $question
+     * @param $folder_id
+     * @return Response
+     */
     public function update(User $user, Question $question, $folder_id): Response
     {
 

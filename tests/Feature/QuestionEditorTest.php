@@ -16,7 +16,9 @@ use App\Traits\Test;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Tests\TestCase;
@@ -195,6 +197,42 @@ class QuestionEditorTest extends TestCase
                 's3_key' => 'b55954d63c857ceb82e1e9231c84e441.txt',
                 'question_id' => $this->question->id])
             ->assertJson(['message' => "As a non-owner, you cannot delete that attachment."]);
+    }
+
+    /** @test */
+    public function student_cannot_override_flashcard_tts_audio()
+    {
+        $this->question->question_editor_user_id = $this->user->id;
+        $this->question->save();
+
+        Storage::fake('s3');
+        $file = UploadedFile::fake()->create('front.webm', 100, 'audio/webm');
+
+        $this->actingAs($this->student_user)
+            ->postJson("/api/questions/{$this->question->id}/flashcard-tts-override", [
+                'audio' => $file,
+                'side'  => 'front',
+            ])
+            ->assertJson(['message' => 'You are not allowed to override the audio for this flashcard.']);
+    }
+
+    /** @test */
+    public function non_owner_instructor_cannot_override_flashcard_tts_audio()
+    {
+        $this->question->question_editor_user_id = $this->user->id;
+        $this->question->save();
+
+        Storage::fake('s3');
+        $file = UploadedFile::fake()->create('front.webm', 100, 'audio/webm');
+
+        $other_instructor = factory(User::class)->create(['role' => 2]);
+
+        $this->actingAs($other_instructor)
+            ->postJson("/api/questions/{$this->question->id}/flashcard-tts-override", [
+                'audio' => $file,
+                'side'  => 'front',
+            ])
+            ->assertJson(['message' => 'You are not allowed to override the audio for this flashcard.']);
     }
 
     /** @test */

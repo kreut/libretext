@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Exceptions\Handler;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -44,18 +45,6 @@ class GenerateFlashcardTTS extends FlashcardAudioJob
                 continue;
             }
 
-            // For text_media with a non-decorative image, append the alt text
-            if ($type === 'text_media'
-                && ($card["{$side}MediaType"] ?? '') === 'image'
-                && empty($card["{$side}MediaDecorative"])
-                && !empty($card["{$side}MediaAlt"])
-            ) {
-                $altText = trim($card["{$side}MediaAlt"]);
-                if ($altText !== '') {
-                    $text = "Text: {$text}. Image description: {$altText}";
-                }
-            }
-
             $sides[$side] = $text;
         }
 
@@ -63,47 +52,71 @@ class GenerateFlashcardTTS extends FlashcardAudioJob
     }
 
     /**
-     * Call the OpenAI TTS API for one side and store the mp3 on S3.
+     * Call the ElevenLabs TTS API for one side and store the mp3 on S3.
+     * @throws Exception
      */
-    protected function processForSide(string $side, $text): ?string
+    public function processForSide(string $side, $payload, string $language = ''): ?string
     {
-        $model = 'tts-1';
-        $voice = 'nova';
+        $model = 'eleven_flash_v2_5';
+        switch ($language) {
+            case('English'):
+                $voiceId = 'F7hCTbeEDbm7osolS21j';
+                $prompt = 'Speak clearly and naturally, as if reading a single vocabulary word or short phrase for a language learning flashcard. No filler sounds, no hesitation. Deliver it cleanly and confidently.';
+                break;
+            case('Spanish'):
+                $voiceId = 'wHiOjOiwglSlcqGt7GVl';
+                $prompt = 'Habla con claridad y naturalidad, como si leyeras una palabra o frase corta para una tarjeta de vocabulario de aprendizaje de idiomas. Sin sonidos de relleno, sin dudas. Pronúnciala de forma limpia y segura.';
+                break;
+            case('French'):
+                $voiceId = 'MNiuKciqE420DCRJtdeb';
+                $prompt = "Parle clairement et naturellement, comme si tu lisais un mot de vocabulaire ou une courte phrase pour une carte d'apprentissage de langue. Pas de sons de remplissage, pas d'hésitation. Prononce-le de façon nette et assurée.";
+                break;
+            default:
+                throw new Exception("No voiceId exists for the language: $language");
+        }
         $s3Key = "uploads/flashcard-tts/{$this->questionId}/{$this->questionRevisionId}/{$side}.mp3";
 
-        $this->upsertLog($side, 'processing', null, null, null, $model, $voice);
+        $this->upsertLog($side, 'processing', null, null, null, $model, $voiceId);
 
         $startMs = (int)round(microtime(true) * 1000);
-
+        $api_key = DB::table('key_secrets')->where('key', 'elevenlabs')->first()->secret;
         try {
-            $httpResponse = Http::withToken(config('myconfig.openai_api_key'))
-                ->withHeaders(['Accept' => 'audio/mpeg'])
-                ->post('https://api.openai.com/v1/audio/speech', [
-                    'model'           => $model,
-                    'input'           => $this->preprocessTtsText($text),
-                    'voice'           => $voice,
-                    'response_format' => 'mp3',
+            $httpResponse = Http::withHeaders([
+                'xi-api-key' => $api_key,
+                'Content-Type' => 'application/json',
+                'Accept' => 'audio/mpeg',
+            ])
+                ->post("https://api.elevenlabs.io/v1/text-to-speech/{$voiceId}", [
+                    'text' => $this->preprocessTtsText($payload),
+                    'model_id' => 'eleven_v3',
+                    'voice_settings' => [
+                        'stability' => 0.65,
+                        'similarity_boost' => 0.75,
+                        'style' => 0.0,
+                        'use_speaker_boost' => true,
+                        'prompt' => $prompt,
+                    ],
                 ]);
 
             if (!$httpResponse->successful()) {
                 $json = $httpResponse->json();
-                $error = is_array($json) && isset($json['error']['message'])
-                    ? $json['error']['message']
+                $error = is_array($json) && isset($json['detail']['message'])
+                    ? $json['detail']['message']
                     : $httpResponse->body();
-                throw new Exception("OpenAI TTS error: {$error}");
+                throw new Exception("ElevenLabs TTS error: {$error}");
             }
 
             $response = $httpResponse->body();
 
             if (!$response) {
-                throw new Exception("Empty response from OpenAI TTS for question {$this->questionId} side={$side}");
+                throw new Exception("Empty response from ElevenLabs TTS for question {$this->questionId} side={$side}");
             }
 
             $durationMs = (int)round(microtime(true) * 1000) - $startMs;
 
             Storage::disk('s3')->put($s3Key, $response);
 
-            $this->upsertLog($side, 'success', $s3Key, null, $durationMs, $model, $voice);
+            $this->upsertLog($side, 'success', $s3Key, null, $durationMs, $model, $voiceId);
 
             return $s3Key;
 
@@ -113,7 +126,7 @@ class GenerateFlashcardTTS extends FlashcardAudioJob
             $h = new Handler(app());
             $h->report($e);
 
-            $this->upsertLog($side, 'error', null, $e->getMessage(), $durationMs, $model, $voice);
+            $this->upsertLog($side, 'error', null, $e->getMessage(), $durationMs, $model, $voiceId);
 
             return null;
         }
@@ -121,6 +134,9 @@ class GenerateFlashcardTTS extends FlashcardAudioJob
 
     private function preprocessTtsText(string $text): string
     {
+        if (str_word_count($text) <= 5) {
+            $text = '<break time="1.5s" /> ' . $text;
+        }
         // Replace gender suffix patterns like aburrido/a → aburrido, aburrida
         $text = preg_replace_callback(
             '/(\w+)\/a\b/',
@@ -141,7 +157,6 @@ class GenerateFlashcardTTS extends FlashcardAudioJob
         $text = trim($text);
 
         // Add a period if the text doesn't already end with punctuation
-        // This helps OpenAI TTS pronounce short words clearly
         if (!preg_match('/[.!?;,]$/', $text)) {
             $text .= '.';
         }

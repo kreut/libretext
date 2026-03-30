@@ -62,7 +62,11 @@ abstract class FlashcardAudioJob implements ShouldQueue
             return;
         }
         foreach ($sides as $side => $payload) {
-            $s3Key = $this->processForSide($side, $payload);
+            $language = '';
+            if ($this->jobType() === 'tts' && in_array($card["{$side}Type"], ['text_only', 'text_media'])) {
+                $language = $card["{$side}TTSLanguage"];
+            }
+            $s3Key = $this->processForSide($side, $payload, $language);
             if ($s3Key) {
                 $this->writeS3KeyToQtiJson($question, $revision, $side, $s3Key);
             }
@@ -85,9 +89,10 @@ abstract class FlashcardAudioJob implements ShouldQueue
      *
      * @param string $side 'front' or 'back'
      * @param mixed $payload Whatever getSidesToProcess() put in the array
+     * @param string $language
      * @return string|null
      */
-    abstract protected function processForSide(string $side, $payload): ?string;
+    abstract protected function processForSide(string $side, $payload, string $language = ''): ?string;
 
     /**
      * The job_type value for the log table ('tts' or 'vtt').

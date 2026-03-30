@@ -56,7 +56,7 @@ class GenerateFlashcardAudioVTT extends FlashcardAudioJob
      * @param array $payload ['s3Key' => '...', 'language' => 'es'|null]
      * @throws Exception
      */
-    protected function processForSide(string $side, $payload): ?string
+    protected function processForSide(string $side, $payload, $language = ''): ?string
     {
         $audioS3Key = $payload['s3Key'];
         $language = $payload['language'] ?? null;
@@ -83,7 +83,6 @@ class GenerateFlashcardAudioVTT extends FlashcardAudioJob
         $full_path = $full_dir . '/' . $local_filename;
 
 
-
         try {
             if (!Storage::disk('s3')->exists($audioS3Key)) {
                 throw new Exception("Audio file not found on S3: {$audioS3Key}");
@@ -93,7 +92,7 @@ class GenerateFlashcardAudioVTT extends FlashcardAudioJob
 
             $whisperParams = [
                 'model' => $model,
-                'file'  => $cFile,
+                'file' => $cFile,
                 'response_format' => 'vtt',
             ];
 

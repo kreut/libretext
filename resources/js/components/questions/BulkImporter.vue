@@ -50,7 +50,9 @@
       <ol v-if="importTemplate === 'flashcard'">
         <li>Starred fields are required.</li>
         <li><strong>Front*</strong> is the question or term shown on the front of the card.</li>
+        <li><strong>Front Text Language*</strong> is the language of the text on the front of the card.</li>
         <li><strong>Back*</strong> is the answer or definition shown on the back of the card.</li>
+        <li><strong>Back Text Language*</strong> is the language of the text on the front of the card.</li>
         <li><strong>Hint</strong> and <strong>Tags</strong> are optional and may be left blank.</li>
         <li>Tags should be a comma separated list: tag 1, tag 2, tag 3.</li>
         <li>Please enter 1 for yes and 0 for no in the Public* column.</li>
@@ -1198,6 +1200,8 @@ export default {
         const card = {
           frontType: 'text_only',
           backType: 'text_only',
+          frontTTSLanguage: row['Front Text Language*'],
+          backTTSLanguage: row['Back Text Language*'],
           term: row['Front*'],
           answer: row['Back*']
         }
