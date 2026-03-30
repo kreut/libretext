@@ -74,6 +74,11 @@ export default {
         },
         {
           icon: '',
+          name: 'WebWork Macro Editors',
+          route: 'webworkMacroEditors'
+        },
+        {
+          icon: '',
           name: 'Tester Access Codes',
           route: 'testerAccessCodes'
         },

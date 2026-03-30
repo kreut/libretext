@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
-use App\Helpers\Helper;
 use App\Question;
 use App\Webwork;
 use App\WebworkAttachment;
@@ -45,15 +44,7 @@ class WebworkAttachmentController extends Controller
                     ->where('filename', $filename)
                     ->where('question_revision_id', $question_revision_id)
                     ->delete();
-                try {
-                    $webwork_dir = $webwork->getDir($question_id, $question_revision_id);
-                    $path_to_file = Helper::getWebworkCodePath() . $webwork_dir . "/$filename";
-                    $webwork->deletePath($path_to_file);
-                } catch (Exception $e) {
-                    if (strpos($e->getMessage(), 'Path does not exist') === false) {
-                        throw new Exception ($e->getMessage());
-                    }
-                }
+
             }
             DB::commit();
             $response['message'] = "$filename has been deleted.  Please update your weBWork code to reflect this change.";
@@ -127,6 +118,10 @@ class WebworkAttachmentController extends Controller
         }
         if (!$session_identifier) {
             $response['message'] = "Request is missing a session identifier.";
+            return $response;
+        }
+        if (!$request->hasFile('file')) {
+            $response['message'] = 'No file uploaded. File may exceed the 2MB server limit.';
             return $response;
         }
         $validator = Validator::make($request->all(), [

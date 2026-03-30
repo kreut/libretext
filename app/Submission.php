@@ -905,6 +905,22 @@ class Submission extends Model
                 'open_ended_submission_type')
             ->first();
 
+        $gave_up = DB::table('can_give_ups')
+            ->where('question_id', $data['question_id'])
+            ->where('assignment_id', $assignment->id)
+            ->where('user_id',$data['user_id'])
+            ->where('status', 'gave up')
+            ->first();
+        if ($gave_up){
+            $response['message'] = 'The solution is already available so you cannot resubmit.';
+            return $response;
+        }
+
+
+
+
+
+
         if (!$assignment_question) {
             $response['message'] = 'That question is not part of the assignment.';
             return $response;

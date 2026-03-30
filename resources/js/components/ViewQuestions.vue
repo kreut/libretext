@@ -15,6 +15,15 @@
       />
     </div>
     <div>
+      <SolutionFileHtml
+        :key="`solution-file-html-${question.id}`"
+        :questions="[question]"
+        :current-page="1"
+        :show-na="false"
+        assignment-name="Question"
+        :modal-id="'preview-question'"
+        :is-preview-solution-html="true"
+      />
       <iframe v-show="question.non_technology"
               v-resize="{ log: false, checkOrigin: false }"
               style="height: 30px"
@@ -39,7 +48,7 @@
         :src="question.technology_iframe_src"
         frameborder="0"
       />
-      <div v-if="question.solution_html && showSolutions" v-html="question.solution_html"/>
+      <div v-if="question.solution_html && showSolutions" v-html="question.solution_html" />
     </div>
   </div>
 </template>
@@ -49,11 +58,12 @@ import axios from 'axios'
 import { h5pResizer } from '~/helpers/H5PResizer'
 import _ from 'lodash'
 import QtiJsonQuestionViewer from './QtiJsonQuestionViewer'
-import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates } from '../helpers/CSSUpdates'
+import { h5pOnLoadCssUpdates, webworkOnLoadCssUpdates, applyWarningsVisibility } from '../helpers/CSSUpdates'
+import SolutionFileHtml from './SolutionFileHtml.vue'
 
 export default {
   name: 'ViewQuestions',
-  components: { QtiJsonQuestionViewer },
+  components: { SolutionFileHtml, QtiJsonQuestionViewer },
   props: {
     showSolutions: {
       type: Boolean,
@@ -90,6 +100,7 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   mounted () {
+    applyWarningsVisibility(this.user)
     this.type = this.questionIdsToView.length ? 'View' : 'Preview'
     if (this.questionIdsToView.length) {
       this.viewQuestion(this.questionIdsToView[0])
@@ -97,9 +108,7 @@ export default {
     if (!_.isEmpty(this.questionToView)) {
       this.showQuestion = false
       this.$bvModal.show(this.modalId)
-      this.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
+      this.typesetMath()
       this.loadingQuestion = true
       this.question = this.questionToView
       this.showQuestion = true
@@ -114,10 +123,15 @@ export default {
           event.source.postMessage(JSON.stringify(h5pOnLoadCssUpdates), event.origin)
         }
       }
-      if (this.question.technology === 'webwork') {
-        if (event.data === 'loaded') {
-          event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), event.origin)
-        }
+      // console.error('aaaaaaaa')
+      let jsonObj = {}
+      try {
+        jsonObj = JSON.parse(event.data)
+      } catch (e) {
+        console.error('Why me???!?@?#')
+      }
+      if (jsonObj.type === 'webwork.lifecycle.loaded') {
+        event.source.postMessage(JSON.stringify(webworkOnLoadCssUpdates), event.origin)
       }
     },
     arrowListener (event) {
@@ -150,9 +164,7 @@ export default {
         this.question.question_id = data.question.id
         this.$emit('questionToViewSet', this.question)
         this.showQuestion = true
-        this.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        })
+        await this.typesetMath()
       } catch (error) {
         this.$noty.error(error.message)
       }

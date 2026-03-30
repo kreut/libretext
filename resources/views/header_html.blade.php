@@ -43,7 +43,7 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
 
 
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-svg.min.js"></script>
 <script>
   titleHolder = document.getElementById('titleHolder')
   let front

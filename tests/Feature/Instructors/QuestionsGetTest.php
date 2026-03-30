@@ -472,7 +472,7 @@ class QuestionsGetTest extends TestCase
         $this->actingAs($this->user)
             ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
                 ['direct_import' => "1-26", 'type' => 'adapt id']
-            )->assertJson(['message' => '1-26 is not a valid ADAPT ID.']);
+            )->assertJson(['message' => '26 is not a valid question ID.']);
 
     }
 

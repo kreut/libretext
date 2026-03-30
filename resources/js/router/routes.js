@@ -189,6 +189,16 @@ let control_panel_paths = [
         name: 'testerAccessCodes',
         component: page('control_panel/tester.access.codes.vue')
       },
+      {
+        path: 'admin.webwork.macros.manager',
+        name: 'adminWebworkMacrosManager',
+        component: page('control_panel/admin.webwork.macros.manager.vue')
+      },
+      {
+        path: 'webwork-macro-editors',
+        name: 'webworkMacroEditors',
+        component: page('control_panel/webwork.macro.editors.vue')
+      },
       { path: 'question-editors', name: 'questionEditors', component: page('control_panel/question.editors.vue') },
       {
         path: 'courses-to-reset',

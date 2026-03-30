@@ -8,7 +8,7 @@ export const h5pOnLoadCssUpdates = {
 }
 
 const iframeTextType = window.self !== window.top ? ';font-size:17.6px;font-weight:400;color:#000000;font-family:Tahoma, Ariel, serif' : ''
-export const webworkOnLoadCssUpdates = {
+export var webworkOnLoadCssUpdates = {
   elements: [
     {
       selector: 'div#problem_body',
@@ -37,13 +37,17 @@ export const webworkOnLoadCssUpdates = {
     {
       selector: 'a.knowls',
       style: 'visibility:hidden'
+    },
+    {
+      selector: '.solution',
+      style: 'display:none'
     }
   ],
   templates: [
     '.btn-primary:not(:hover) {background-color: #0058E6 !important;}',
     '.btn-primary:hover, .btn-primary:focus {color: #0058E6 !important;background-color: white !important;}',
     'p>a.knowl {display:none;}'],
-  showSolutions: '*'
+  showSolutions: true
 }
 
 export const h5pStudentCssUpdates = {
@@ -66,4 +70,11 @@ export const webworkStudentCssUpdates = {
     '.btn-primary:not(:hover) {background-color: #0058E6 !important;}',
     '.btn-primary:hover, .btn-primary:focus {color: #0058E6 !important;background-color: white !important;}'
   ]
+}
+
+export function applyWarningsVisibility (user) {
+  const showWarnings = user && (user.is_webwork_macro_editor || user.role === 5)
+  if (!showWarnings) {
+    webworkOnLoadCssUpdates.elements.push({ selector: '.Warnings', style: 'display:none' })
+  }
 }

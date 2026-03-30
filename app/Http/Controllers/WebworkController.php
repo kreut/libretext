@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
+use App\JWE;
 use App\Question;
 use App\Submission;
 use App\Webwork;
@@ -17,6 +18,38 @@ use Illuminate\Support\Facades\Gate;
 
 class WebworkController extends Controller
 {
+    /**
+     * @param string $problemJWT
+     * @param Webwork $webwork
+     * @return array
+     * @throws Exception
+     */
+    public function solution(string $problemJWT, Webwork $webwork): array
+    {
+        try {
+            $authorized = Gate::inspect('solution', [$webwork, $problemJWT]);
+
+            if (!$authorized->allowed()) {
+                return [
+                    'type'    => 'success',
+                    'message' => sprintf(
+                        '<div class="alert alert-danger">%s</div>',
+                        e($authorized->message())
+                    )
+                ];
+            }
+
+            return $webwork->getSolution($problemJWT);
+
+        } catch (Exception $e) {
+            app(Handler::class)->report($e);
+
+            return [
+                'type'    => 'error',
+                'message' => '<div class="alert alert-danger">We were unable to retrieve the solution to this problem. Please try again or contact support.</div>'
+            ];
+        }
+    }
 
     /**
      * @param WebworkSubmissionError $webworkSubmissionError
@@ -228,6 +261,7 @@ DOC;
 
 
     }
+
 
     /**
      * @param Webwork $webwork

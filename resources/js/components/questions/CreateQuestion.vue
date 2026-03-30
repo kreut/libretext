@@ -629,16 +629,6 @@
       size="lg"
       ok-only
     >
-      <SolutionFileHtml
-        :key="`solution-file-html-${modalId}`"
-        :questions="[questionToView]"
-        :current-page="1"
-        :show-na="false"
-        assignment-name="Question"
-        :modal-id="'preview-question'"
-        :is-preview-solution-html="true"
-      />
-
       <div v-if="questionForm.technology === 'qti'">
         <b-button
           v-if="questionForm.technology === 'qti' && !['discuss_it','forge','flashcard'].includes(qtiQuestionType)"
@@ -2531,39 +2521,37 @@
                               target="_blank"
                 >https://webwork.maa.org/wiki/Authors</a>.
                 </div>
-                <b-row>
-                  <b-col cols="6">
-                    <b-form-file
-                      v-model="webworkAttachmentsForm.attachment"
-                      class="mb-2"
-                      size="sm"
-                      placeholder="Choose an image or drop it here..."
-                      drop-placeholder="Drop Image here..."
-                    />
-                    <div v-if="uploading">
-                      <b-spinner small type="grow"/>
-                      Uploading file...
-                    </div>
-                    <div v-for="(errorMessage, errorMessageIndex) in errorMessages"
-                         :key="`error-message-${errorMessageIndex}`"
+                <b-row class="align-items-center mb-2">
+                  <b-col cols="auto">
+                    <input
+                      ref="webworkFileInput"
+                      type="file"
+                      accept="image/*"
+                      style="display:none"
+                      @change="onWebworkFileChange"
                     >
-                      <ErrorMessage :message="errorMessage"/>
-                    </div>
-                  </b-col>
-                  <b-col>
-                    <b-button variant="info"
-                              size="sm"
-                              :disabled="!webworkAttachmentsForm.attachment || (webworkAttachmentsForm.attachment && webworkAttachmentsForm.attachment.length === 0)"
-                              @click="uploadWebworkAttachment"
-                    >
-                      Upload Image
+                    <b-button size="sm" variant="outline-secondary" @click="$refs.webworkFileInput.click()">
+                      Choose Image
                     </b-button>
-                    <a v-if="questionForm.id && initiallyWebworkQuestion"
-                       class="btn btn-sm btn-outline-primary link-outline-primary-btn ml-2"
-                       :href="`/api/questions/export-webwork-code/${questionForm.id}`"
+                  </b-col>
+                  <b-col cols="auto">
+                    <b-button
+                      variant="info"
+                      size="sm"
+                      :disabled="!webworkUploadFile || webworkUploading"
+                      @click="uploadWebworkAttachmentViaPresignedUrl"
                     >
-                      <div style="margin-top:3px">Export webWork code</div>
-                    </a>
+                      <span v-if="webworkUploading"><b-spinner small type="grow"/> Uploading...</span>
+                      <span v-else>Upload Image</span>
+                    </b-button>
+                  </b-col>
+                  <b-col v-if="webworkUploadFilename" cols="auto" class="text-muted">
+                    {{ webworkUploadFilename }}
+                  </b-col>
+                </b-row>
+                <b-row v-if="webworkUploading" class="mb-2">
+                  <b-col cols="6">
+                    <b-progress :value="webworkUploadProgress" max="100" show-progress animated/>
                   </b-col>
                 </b-row>
                 <b-row v-if="webworkAttachments">
@@ -2581,11 +2569,33 @@
                     </li>
                   </ul>
                 </b-row>
-                <b-textarea v-model="questionForm.webwork_code"
-                            style="width:100%"
-                            :class="{ 'is-invalid': questionForm.errors.has('webwork_code')}"
-                            rows="20"
-                            @keydown="questionForm.errors.clear('webwork_code')"
+                <WebworkMacroPickerModal
+                  :current-code="questionForm.webwork_code || ''"
+                  @insert="insertMacroLoadStatement"
+                />
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <b-button
+                    size="sm"
+                    variant="outline-primary"
+                    @click="$bvModal.show('modal-webwork-macro-picker')"
+                  >
+                    <b-icon icon="plus-circle" class="mr-1" />
+                    Add Macro
+                  </b-button>
+                  <a v-if="questionForm.id && initiallyWebworkQuestion"
+                     class="btn btn-sm btn-outline-primary link-outline-primary-btn"
+                     :href="`/api/questions/export-webwork-code/${questionForm.id}`"
+                  >
+                    <div style="margin-top:3px">Export Code</div>
+                  </a>
+                </div>
+
+                <CodeMirrorEditor
+                  :key="`webwork-code-${webworkCodeKey}`"
+                  v-model="questionForm.webwork_code"
+                  :is-invalid="questionForm.errors.has('webwork_code')"
+                  @input="questionForm.errors.clear('webwork_code')"
                 />
                 <has-error :form="questionForm" field="webwork_code"/>
               </div>
@@ -2902,6 +2912,7 @@
 
 <script>
 import AccountingMultiPartComputation from './accounting/AccountingMultiPartComputation.vue'
+import CodeMirrorEditor from '~/components/CodeMirrorEditor'
 import QuestionMediaUpload from '~/components/QuestionMediaUpload.vue'
 import CKEditorFileToLinkUploader from '~/components/CKEditorFileToLinkUploader.vue'
 import { doCopy } from '~/helpers/Copy'
@@ -2964,6 +2975,7 @@ import ThreeDModel from './ThreeDModel.vue'
 import AccountingJournalEntry from './accounting/AccountingJournalEntry.vue'
 import AccountingReport from './accounting/AccountingReport.vue'
 import Flashcard from './Flashcard.vue'
+import WebworkMacroPickerModal from '../WebworkMacroPickerModal.vue'
 
 const parameters3DModel = {
   modelID: '',
@@ -3125,6 +3137,8 @@ export default {
   name: 'CreateQuestion',
   components: {
     AccountingMultiPartComputation,
+    WebworkMacroPickerModal,
+    CodeMirrorEditor,
     Flashcard,
     AccountingReport,
     AccountingJournalEntry,
@@ -3197,6 +3211,11 @@ export default {
     }
   },
   data: () => ({
+    webworkUploadFilename: '',
+    webworkUploadFile: null,
+    webworkUploadProgress: 0,
+    webworkUploading: false,
+    webworkCodeKey: 0,
     isLoadingEdit: false,
     attachmentToDelete: {},
     attachmentsFields: [
@@ -3296,11 +3315,7 @@ export default {
     },
     webworkAttachments: [],
     sessionIdentifier: '',
-    uploading: false,
     errorMessages: [],
-    webworkAttachmentsForm: new Form({
-      attachment: []
-    }),
     savingQuestion: false,
     frameworkItemSyncQuestion: { 'descriptors': [], 'levels': [] },
     copyIcon: faCopy,
@@ -3573,6 +3588,36 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    insertMacroLoadStatement (statement) {
+      let code = this.questionForm.webwork_code || ''
+
+      // Extract just the macro filename from the loadMacros("...") statement
+      const macroMatch = statement.match(/loadMacros\(\s*"([^"]+)"\s*\)/)
+      const macroFile = macroMatch ? macroMatch[1] : null
+
+      if (macroFile) {
+        // Check if there's already a loadMacros block
+        const existingLoadMacros = code.match(/loadMacros\s*\(([^)]+)\)/)
+        if (existingLoadMacros) {
+          // Add to existing loadMacros list
+          const insertion = `,\n  "${macroFile}"`
+          code = code.replace(existingLoadMacros[0], existingLoadMacros[0].replace(/\)$/, `${insertion}\n)`))
+          this.questionForm.webwork_code = code
+          this.webworkCodeKey++
+          return
+        }
+      }
+
+      // No existing loadMacros — insert after DOCUMENT(); or prepend DOCUMENT(); if missing
+      if (code.includes('DOCUMENT();')) {
+        code = code.replace('DOCUMENT();', `DOCUMENT();\n${statement}`)
+      } else {
+        code = `DOCUMENT();\n${statement}\n` + code
+      }
+
+      this.questionForm.webwork_code = code
+      this.webworkCodeKey++
+    },
     capitalize,
     getQuestionSubjectIdOptions,
     getQuestionChapterIdOptions,
@@ -4942,36 +4987,97 @@ export default {
       }
       this.$bvModal.hide('modal-webwork-image-options')
     },
-    async uploadWebworkAttachment () {
-      this.errorMessages = ''
+    onWebworkFileChange(e) {
+      const file = e.target.files[0]
+      if (!file) return
+      this.webworkUploadFile = file
+      this.webworkUploadFilename = file.name
+      this.webworkUploadProgress = 0
+      this.errorMessages = []
+    },
+
+    async uploadWebworkAttachmentViaPresignedUrl() {
+      if (!this.webworkUploadFile) return
+      this.webworkUploading = true
+      this.errorMessages = []
       try {
-        if (this.uploading) {
-          this.$noty.info('Please be patient while the file is uploading.')
-          return false
+        const { data } = await axios.post('/api/s3/pre-signed-url', {
+          upload_file_type: 'webwork-attachment',
+          file_name: this.webworkUploadFile.name
+        })
+        if (data.type === 'error') {
+          this.errorMessages = [data.message]
+          return
         }
-        this.uploading = true
-        let uploadWebworkAttachmentFormData = new FormData()
-        uploadWebworkAttachmentFormData.append('file', this.webworkAttachmentsForm.attachment)
-        uploadWebworkAttachmentFormData.append('_method', 'put') // add this
-        uploadWebworkAttachmentFormData.append('session_identifier', this.sessionIdentifier)
-        const { data } = await axios.post(`/api/webwork-attachments/upload`, uploadWebworkAttachmentFormData)
-        if (data.type !== 'success') {
-          this.$noty.error(data.message)
+
+        // Read width/height client-side
+        const { width, height } = await this.getImageDimensions(this.webworkUploadFile)
+
+        // Upload to S3
+        await this.uploadWebworkFileWithProgress(this.webworkUploadFile, data.preSignedURL, data.s3_key)
+
+        const attachment = {
+          filename: this.webworkUploadFile.name,
+          s3_key: data.s3_key,
+          width,
+          height,
+          status: 'pending'
+        }
+
+        if (!this.webworkAttachments.find(a => a.filename === attachment.filename)) {
+          this.webworkAttachments.push(attachment)
         } else {
-          this.webworkAttachmentsForm.attachment = []
-          if (!this.webworkAttachments.find(attachment => attachment.filename === data.attachment.filename)) {
-            this.webworkAttachments.push(data.attachment)
+          const idx = this.webworkAttachments.findIndex(a => a.filename === attachment.filename)
+          this.webworkAttachments.splice(idx, 1, attachment)
+          this.$noty.info(`${attachment.filename} has been overwritten with the newer version.`)
+        }
+
+        this.webworkUploadFilename = ''
+        this.webworkUploadFile = null
+        this.$refs.webworkFileInput.value = ''
+      } catch (error) {
+        this.errorMessages = [error.message]
+      } finally {
+        this.webworkUploading = false
+        this.webworkUploadProgress = 0
+      }
+    },
+
+    getImageDimensions(file) {
+      return new Promise((resolve) => {
+        const url = URL.createObjectURL(file)
+        const img = new Image()
+        img.onload = () => {
+          resolve({ width: img.naturalWidth, height: img.naturalHeight })
+          URL.revokeObjectURL(url)
+        }
+        img.onerror = () => {
+          resolve({ width: 0, height: 0 })
+          URL.revokeObjectURL(url)
+        }
+        img.src = url
+      })
+    },
+
+    async uploadWebworkFileWithProgress(file, url, s3Key) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            this.webworkUploadProgress = Math.round((e.loaded / e.total) * 100)
+          }
+        })
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            resolve()
           } else {
-            this.$noty.info(`${data.attachment.filename} has been overwritten with the newer version of the file.`)
+            reject(new Error('Upload failed with status ' + xhr.status))
           }
         }
-      } catch (error) {
-        if (error.message.includes('status code 413')) {
-          error.message = 'The maximum size allowed is 10MB.'
-        }
-        this.$noty.error(error.message)
-      }
-      this.uploading = false
+        xhr.onerror = () => reject(new Error('XHR network error'))
+        xhr.open('PUT', url)
+        xhr.send(file)
+      })
     },
     async getFrameworkItemSyncQuestion () {
       try {
@@ -5626,6 +5732,7 @@ export default {
           this.questionForm.technology = 'webwork'
           this.questionForm.new_auto_graded_code = 'webwork'
           this.questionForm.response_format = null
+          this.webworkCodeKey++
           break
         case ('forge'):
           this.questionForm.technology = 'qti'
@@ -5709,7 +5816,10 @@ export default {
           this.questionForm.non_technology_text = this.switchingType ? nonTechnologyText : ''
           this.questionForm.source_url = window.location.origin
           this.webworkAttachments = []
-          this.webworkAttachmentsForm = new Form({ attachment: [] })
+          this.webworkUploadFile = null
+          this.webworkUploadFilename = ''
+          this.webworkUploadProgress = 0
+          this.webworkUploading = false
           this.webworkEditorShown = false
           this.questionForm.author = this.user.first_name + ' ' + this.user.last_name
           this.newAutoGradedTechnology = null
@@ -5873,7 +5983,7 @@ export default {
         this.showQtiAnswer = false
         this.$bvModal.show(this.modalId)
         this.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+          this.typesetMath(document.getElementById(this.modalId))
         })
         console.log(this.questionToView)
       } catch (error) {

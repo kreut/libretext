@@ -390,6 +390,14 @@ class QuestionPolicy
 
     }
 
+    public function preview(User $user): Response
+    {
+        return in_array($user->role, [2, 5])
+            ? Response::allow()
+            : Response::deny("You are not allowed to preview questions.");
+
+    }
+
     public function updateProperties(User $user): Response
     {
         return ($user->role === 2)

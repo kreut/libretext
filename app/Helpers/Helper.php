@@ -35,13 +35,21 @@ class Helper
                 || in_array(session()->get('original_email'), $admins));//get the original email since they may be in student view
     }
 
+    public static function isWebworkMacroEditor(): bool
+    {
+        return Helper::isAdmin() || (Auth::user() && DB::table('webwork_macro_editors')
+                    ->where('user_id', Auth::user()->id)
+                    ->exists());
+    }
+
 
     /**
      * @return string
      */
     public static function getWebworkCodePath(): string
     {
-        return app()->environment() === 'production' ? "private/ww_files/" : "private/ww_files/" . app()->environment() . "/";
+        return 'LibreTexts/ww_files/';
+
     }
 
 

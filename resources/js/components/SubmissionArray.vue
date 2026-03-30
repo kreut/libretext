@@ -135,9 +135,7 @@ export default {
         }
       }
       if (this.renderMathJax) {
-        await this.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        })
+        this.typesetMath()
       }
     },
     async getSubmissionHistory () {

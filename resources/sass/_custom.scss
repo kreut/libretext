@@ -491,7 +491,30 @@ div#discuss-it-recorder .ar-records__record {
   text-decoration: none !important;
   box-shadow: none !important;
 }
+mjx-assistive-mml {
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: -9999px !important;
+}
 
+.CtxtMenu_MenuFrame,
+.CtxtMenu_Menu,
+.CtxtMenu_ContextMenu {
+  z-index: 99999 !important;
+}
+
+/* global styles */
+.modal-90 {
+  max-width: 90vw !important;
+  width: 90vw;
+  margin: 5vh auto;
+}
+
+.modal-90 .modal-content {
+  height: 90vh;
+  overflow-y: auto;
+}
 
 
 

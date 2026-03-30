@@ -68,7 +68,7 @@ export default {
           }
         },
         afterChange: function (changes, src) {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+          this.typesetMath()
           if (src !== 'loadData') {
             this.instance.vueParent.updateChartFromTable()
           }
@@ -158,7 +158,7 @@ export default {
       if (src !== 'loadData') {
         setTimeout(() => {
           this.updateChartFromTable()
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+          this.typesetMath()
         }, 50)
       }
     }

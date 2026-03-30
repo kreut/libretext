@@ -42,6 +42,7 @@ class UserController extends Controller
             $request->user()->is_tester_student = DB::table('tester_students')
                 ->where('student_user_id', $request->user()->id)
                 ->exists();
+            $request->user()->is_webwork_macro_editor = Helper::isWebworkMacroEditor();
             if ($request->user()->is_tester_student) {
                 $request->user()->email = '';
             }
@@ -421,6 +422,44 @@ class UserController extends Controller
      * @return array
      * @throws Exception
      */
+    public function getPotentialWebworkEditors(Request $request, User $user): array
+    {
+        $response['type'] = 'error';
+            $authorized = Gate::inspect('getPotentialWebworkEditors', $user);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+        try {
+            $users
+                = DB::table('users')
+                ->orderBy('last_name')
+                ->select(DB::raw('CONCAT(first_name, " " , last_name, " --- ", email) AS user'))
+                ->where('email', '<>', null)
+                ->where('central_identity_id', '<>', null)
+                ->whereIn('users.role', [2,5])
+                ->where('users.testing_student', 0)
+                ->get()
+                ->pluck('user');
+
+            $response['users'] = $users;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting all the potential webwork macro editors.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @return array
+     * @throws Exception
+     */
     public function getAll(Request $request, User $user): array
     {
         $response['type'] = 'error';
@@ -437,6 +476,7 @@ class UserController extends Controller
                 ->orderBy('last_name')
                 ->select(DB::raw('CONCAT(first_name, " " , last_name, " --- ", email) AS user'))
                 ->where('email', '<>', null)
+                ->where('central_identity_id', '<>', null)
                 ->where('users.formative_student', 0)
                 ->where('users.testing_student', 0);
             if ($request->user()->id == 7665) {
@@ -456,8 +496,6 @@ class UserController extends Controller
 
         }
         return $response;
-
-
     }
 
 

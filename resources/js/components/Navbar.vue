@@ -119,7 +119,8 @@
              text="Dashboard"
              variant="primary"
              class="m-2"
-             size="sm">
+             size="sm"
+           >
               <b-dropdown-item v-for="location in dashboards" :key="location.text" href="#" :class="{
                 'border-bottom': location.text === 'My Rubric Templates',
                 'pb-2': location.text === 'My Rubric Templates',

@@ -19,6 +19,7 @@
       size="xl"
       hide-footer
       no-close-on-backdrop
+      dialog-class="modal-90"
       @shown="updateModalToggleIndex('modal-edit-question')"
     >
       <CreateQuestion :key="`question-to-edit-${questionToEdit.id}`"

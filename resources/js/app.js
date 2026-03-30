@@ -39,6 +39,13 @@ Vue.mixin({
     htmlToText: str => str.replace(/<[^>]+>/g, ''),
     zoomGreaterThan: function (zoom) {
       return (window.outerWidth - 8) / window.innerWidth > zoom
+    },
+    typesetMath(el) {
+      return this.$nextTick().then(() => {
+        if (window.MathJax?.typesetPromise) {
+          return MathJax.typesetPromise([el || this.$el])
+        }
+      })
     }
   }
 })

@@ -29,6 +29,7 @@ use App\RubricCategory;
 use App\RubricTemplate;
 use App\SavedQuestionsFolder;
 use App\Section;
+use App\Services\WebworkMacroService;
 use App\Tag;
 use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
@@ -604,10 +605,7 @@ class QuestionController extends Controller
                 $webwork = new Webwork();
                 $latest_revision_id = $clone_source->latestQuestionRevision('id');
                 $source_dir = $latest_revision_id ? "$clone_source->id-$latest_revision_id" : $clone_source->id;
-                $webwork_response = $webwork->cloneDir($source_dir, $cloned_question->id);
-                if ($webwork_response !== 'clone successful') {
-                    throw new Exception("Error cloning webwork folder: $webwork_response");
-                }
+                $webwork->cloneDir($source_dir, $cloned_question->id);
 
                 $webwork_dir = $webwork->getDir($cloned_question->id, 0);
                 $cloned_question->updateWebworkPath($webwork_dir);
@@ -1991,6 +1989,21 @@ class QuestionController extends Controller
             } else {
                 DB::table('rubric_categories')->where('question_id', $question->id)->delete();
             }
+
+
+            if (
+                isset($data['technology']) && $data['technology'] === 'webwork'
+                && !empty($data['webwork_code'])
+            ) {
+
+                $macroService = app(WebworkMacroService::class);
+                $macroService->syncMacrosForQuestion(
+                    $question->id,
+                    $new_question_revision_id,   // 0 for brand-new questions
+                    $data['webwork_code']
+                );
+            }
+
             $question->addTags($tags);
             $question->addFrameworkItems($request->framework_item_sync_question);
             $question->saveFormat();
@@ -2092,11 +2105,6 @@ class QuestionController extends Controller
                 }
             }
             if ($request->technology === 'webwork' && $request->new_auto_graded_code === 'webwork') {
-                $efs_dir = "/mnt/local/";
-                $is_efs = is_dir($efs_dir);
-                $storage_path = $is_efs
-                    ? $efs_dir
-                    : Storage::disk('local')->getAdapter()->getPathPrefix();
                 $webwork = new Webwork();
                 $webwork_dir = $webwork->getDir($question->id, $new_question_revision_id);
 
@@ -2113,29 +2121,24 @@ class QuestionController extends Controller
                     $source_dir = $lastRevision ? "$question->id-$currentQuestionRevision->id" : $question->id;
                     $webwork->cloneDir($source_dir, $webwork_dir);
                 }
-                $webwork_response = $webwork->storeQuestion($question->webwork_code, $webwork_dir);
-                if ($webwork_response !== 200) {
-                    throw new Exception($webwork_response);
-                }
-                $question->updateQuestionRevisionWebworkPath($webwork_dir, $new_question_revision_id);
+                $webwork->storeQuestion($question->webwork_code, $webwork_dir);
 
+
+                $question->updateQuestionRevisionWebworkPath($webwork_dir, $new_question_revision_id);
                 foreach ($request->webwork_attachments as $webwork_attachment) {
                     if ($webwork_attachment['status'] === 'pending') {
-                        $pending_attachment_path = "{$storage_path}pending-attachments/$request->session_identifier/{$webwork_attachment['filename']}";
-                        if (file_exists($pending_attachment_path)) {
-                            $webwork_response = $webwork->storeAttachment($webwork_attachment['filename'], $pending_attachment_path, $webwork_dir);
-                            if ($webwork_response !== 200) {
-                                throw new Exception ("Unable to send $pending_attachment_path to the webwork server: $webwork_response");
-                            }
-                        } else {
-                            throw new Exception("Could not locate the webwork_attachment: $pending_attachment_path");
+                        $s3_key = $webwork_attachment['s3_key'];
+                        if (!Storage::disk('s3')->exists($s3_key)) {
+                            throw new Exception("Could not locate the webwork attachment on S3: $s3_key");
                         }
+                        $file_contents = Storage::disk('s3')->get($s3_key);
+                        $mime_type = Storage::disk('s3')->mimeType($s3_key);
+                        $webwork->storeAttachment($webwork_attachment['filename'], $file_contents, $webwork_dir, $mime_type);
+                        Storage::disk('s3')->delete($s3_key);
                     }
-
-
                     $webworkAttachment = new WebworkAttachment();
-                    $webworkAttachment->width = $webwork_attachment['width'];
-                    $webworkAttachment->height = $webwork_attachment['height'];
+                    $webworkAttachment->width = $webwork_attachment['width'] ?? null;
+                    $webworkAttachment->height = $webwork_attachment['height'] ?? null;
                     $webworkAttachment->filename = $webwork_attachment['filename'];
                     $webworkAttachment->question_id = $question->id;
                     $webworkAttachment->question_revision_id = $new_question_revision_id;
@@ -2655,7 +2658,7 @@ class QuestionController extends Controller
             $filename = preg_replace(' /[^a-z0-9]+/', '-', strtolower($question->title));
             return response()->streamDownload(function () use ($meta_tags, $webwork_code) {
                 echo $meta_tags . $webwork_code;
-            }, "$filename.txt");
+            }, "$filename.pg");
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -2669,6 +2672,7 @@ class QuestionController extends Controller
     /**
      * @param Request $request
      * @param Question $question
+     * @param IMathAS $IMathAS
      * @return array
      * @throws Exception
      */
@@ -2679,6 +2683,11 @@ class QuestionController extends Controller
     {
         $response['type'] = 'error';
         try {
+            $authorized = Gate::inspect('preview', $question);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
             $question['non_technology_iframe_src'] = null;
             $question['solution_html'] = $request->solution_html;
             $question['solution_type'] = $request->solution_html ? 'html' : null;
@@ -2697,34 +2706,36 @@ class QuestionController extends Controller
             $iframe_id = substr(sha1(mt_rand()), 17, 12);
             if ($request->technology !== 'text') {
                 if ($request->technology === 'webwork' && $request->webwork_code) {
-                    $efs_dir = '/mnt/local/';
-                    $is_efs = is_dir($efs_dir);
-                    $storage_path = $is_efs
-                        ? $efs_dir
-                        : Storage::disk('local')->getAdapter()->getPathPrefix();
                     $webwork = new Webwork();
-                    $webwork_response = $webwork->storeQuestion($request->webwork_code, "preview/{$request->user()->id}");
-                    if ($webwork_response !== 200) {
-                        throw new Exception($webwork_response);
-                    }
+                    $webwork->storeQuestion($request->webwork_code, "preview/{$request->user()->id}");
                     if ($request->session_identifier) {
-                        foreach ($request->pending_webwork_attachments as $pending_webwork_attachment) {
-                            $pending_attachment_path = "{$storage_path}pending-attachments/$request->session_identifier/{$pending_webwork_attachment['filename']}";
-                            if (file_exists($pending_attachment_path)) {
-                                $webwork_response = $webwork->storeAttachment($pending_webwork_attachment['filename'], $pending_attachment_path, "preview/{$request->user()->id}");
-                                if ($webwork_response !== 200) {
-                                    throw new Exception ("Unable to send $pending_attachment_path to the webwork server: $webwork_response");
+                        if ($request->pending_webwork_attachments) {
+                            foreach ($request->pending_webwork_attachments as $pending_webwork_attachment) {
+                                $s3_key = $pending_webwork_attachment['s3_key'];
+                                if (Storage::disk('s3')->exists($s3_key)) {
+                                    $file_contents = Storage::disk('s3')->get($s3_key);
+                                    $mime_type = Storage::disk('s3')->mimeType($s3_key);
+                                    $webwork->storeAttachment(
+                                        $pending_webwork_attachment['filename'],
+                                        $file_contents,
+                                        "preview/{$request->user()->id}",
+                                        $mime_type
+                                    );
                                 }
-                            } else {
-                                throw new Exception("Could not locate the webwork_attachment: $pending_attachment_path");
                             }
                         }
                     }
-                    $question['technology_iframe_src'] = $this->formatIframeSrc($question->getTechnologyIframeFromTechnology('webwork', Helper::getWebworkCodePath() . "preview/{$request->user()->id}/code.pg"), $iframe_id);
+
+                    $problemJWT = $question->getPreviewWebworkProblemJWT("LibreTexts/ww_files/preview/{$request->user()->id}/code.pg");
+                    $domain = $question->getWebworkDomain();
+                    $endpoint = $question->getWebworkEndpoint();
+                    $question['technology_iframe_src'] = "$domain/$endpoint?problemJWT=$problemJWT";
+
                     if ($webwork->algorithmicSolution($request)) {
-                        $question['technology_iframe_src'] .= "&showSolutions=1";
+                        $question['technology_iframe'] = $question['technology_iframe_src'];
                         $question['solution_html'] = null;
-                        $question['solution_type'] = null;
+                        $question['solution_type'] = 'html';
+                        $question['render_webwork_solution'] = true;
                     }
                 } else {
                     $problem_jwt = '';

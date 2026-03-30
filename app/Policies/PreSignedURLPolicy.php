@@ -84,6 +84,21 @@ class PreSignedURLPolicy
      * @param PreSignedURL $preSignedURL
      * @return Response
      */
+    public function webworkAttachment(User $user, PreSignedURL $preSignedURL): Response
+    {
+
+        return in_array($user->role, [2, 5])
+            ? Response::allow()
+            : Response::deny('You are not allowed to upload webwork attachments.');
+
+    }
+
+
+    /**
+     * @param User $user
+     * @param PreSignedURL $preSignedURL
+     * @return Response
+     */
     public function questionAttachment(User $user, PreSignedURL $preSignedURL): Response
     {
 

@@ -18,6 +18,18 @@ class WebworkTest extends TestCase
 
 
     /** @test */
+    public function student_cannot_get_pre_signed_url_for_webwork_attachment()
+    {
+        $this->user->role = 3;
+        $this->user->save();
+
+        $this->actingAs($this->user)->postJson("/api/s3/pre-signed-url", [
+            'upload_file_type' => 'webwork-attachment',
+            'file_name' => 'graph.png'
+        ])
+            ->assertJson(['message' => 'You are not allowed to upload webwork attachments.']);
+    }
+    /** @test */
     public function student_cannot_get_the_webwork_templates()
     {
         $this->user->role = 3;

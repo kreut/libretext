@@ -143,9 +143,7 @@ export default {
   methods: {
     rerenderMathaJax () {
       if (this.pieChartData.use_mathjax) {
-        this.$nextTick(() => {
-          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        })
+        this.typesetMath()
       }
     },
     updatePieChartView () {

@@ -935,6 +935,7 @@ export default {
             last_question_submission: lastSubmitted,
             questionSubmissionRequired: questionSubmissionRequired,
             technology_iframe_src: question.technology_iframe,
+            technology_iframe: question.technology_iframe,
             render_webwork_solution: question.render_webwork_solution,
             showThumbsUpForQuestionSubmission: showThumbsUpForQuestionSubmission,
             openEndedSubmissionRequired: openEndedSubmissionRequired,

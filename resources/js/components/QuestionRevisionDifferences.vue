@@ -100,9 +100,7 @@ export default {
       this.differences = this.getRevisionDifferences(this.revision1, this.revision2)
     }
     if (this.mathJaxRendered){
-      this.$nextTick(() => {
-        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-      })
+      this.typesetMath()
     }
   },
   methods: {

@@ -2,8 +2,9 @@
   <b-modal :id="`qti-answer-${modalId}`"
            size="lg"
            hide-header
+           @shown="onModalShown"
   >
-    <div v-if="['forge_iteration','forge'].includes(JSON.parse(qtiJson).questionType)"
+    <div v-if="qtiJson && ['forge_iteration','forge'].includes(JSON.parse(qtiJson).questionType)"
          v-html="JSON.parse(qtiJson).solution_html"
     />
     <div v-else>
@@ -45,6 +46,11 @@ export default {
     modalId: {
       type: Number,
       default: 0
+    }
+  },
+  methods: {
+    onModalShown() {
+      this.typesetMath()
     }
   }
 }

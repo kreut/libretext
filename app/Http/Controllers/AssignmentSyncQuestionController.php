@@ -2450,7 +2450,7 @@ class AssignmentSyncQuestionController extends Controller
                     $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id);
                     $seed = is_object($seed) ? $seed->seed : $seed;
                     $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, true, new DOMDocument(), new JWE());
-                    $columns['technology_iframe_src'] = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], []);
+                    $columns['technology_iframe_src'] = $columns['technology_iframe'] = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], []);
                     $columns['solution_type'] = 'html';
                     $columns['problem_jwt'] = $technology_src_and_problemJWT['problemJWT'];
                 } else {
@@ -3147,6 +3147,7 @@ class AssignmentSyncQuestionController extends Controller
             if ($question->technology === 'webwork') {
                 $technology_src_and_problemJWT = $question->getTechnologySrcAndProblemJWT($request, $assignment, $question, $seed, true, new DOMDocument(), new JWE());
                 $technology_iframe_src = $this->formatIframeSrc($question['technology_iframe'], rand(1, 1000), $technology_src_and_problemJWT['problemJWT'], $response_info['session_jwt']);
+                $solution_type = 'html';
             }
             if ($question->technology === 'imathas' && $IMathAS->solutionExists($question)) {
                 $imathas_solution = true;
@@ -3198,6 +3199,7 @@ class AssignmentSyncQuestionController extends Controller
 
         }
         return ['last_submitted' => $last_submitted,
+            'gave_up' => $gave_up,
             'student_response' => $response_info['student_response'],
             'answered_correctly' => $answered_correctly,
             'submission_count' => $response_info['submission_count'],
@@ -3953,6 +3955,9 @@ class AssignmentSyncQuestionController extends Controller
                         $qti_answer_json['solution_html'] = $assignment->questions[$key]['answer_html'];
                         $assignment->questions[$key]['qti_answer_json'] = json_encode($qti_answer_json);
                     }
+                }
+                if (request()->user()->role === 3) {
+                    $assignment->questions[$key]['webwork_code'] = null;
                 }
                 if ($show_solution
                     && request()->user()->role === 3

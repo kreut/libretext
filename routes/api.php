@@ -192,13 +192,13 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
     Route::delete('/user', 'Auth\LoginController@destroy');
     Route::get('/user', 'Auth\UserController@current');
     Route::get('/user/all', 'Auth\UserController@getAll');
+    Route::get('/user/potential-webwork-editors', 'Auth\UserController@getPotentialWebworkEditors');
 
     Route::post('/user/toggle-student-view', 'Auth\UserController@toggleStudentView');
     Route::post('/user/login-as', 'Auth\UserController@loginAs');
     Route::patch('/user/role', 'UserController@updateRole');
     Route::patch('/user/email', 'UserController@updateEmail');
     Route::patch('/user/get-user-info-by-email', 'UserController@getUserInfoByEmail');
-
 
     Route::patch('/linked-account/email-validation-code', 'LinkedAccountController@emailLinkToAccountValidationCode');
     Route::patch('/linked-account/validate-code', 'LinkedAccountController@validateCodeToLinkToAccount');
@@ -644,6 +644,17 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
     Route::get('/assignments/{assignment}/questions/{question}/forge-draft-submissions', 'AssignmentSyncQuestionController@getForgeDraftSubmissions');
     Route::delete('/assignments/{assignment}/questions/{question}/forge-draft', 'AssignmentSyncQuestionController@destroyForgeDraft');
 
+    Route::get('/webwork-macros', 'WebworkMacroController@index');
+    Route::get('/webwork-macros/source/{name}', 'WebworkMacroController@getSource');
+    Route::post('/webwork-macros', 'WebworkMacroController@store');
+    Route::patch('/webwork-macros/{webworkMacro}', 'WebworkMacroController@update');
+    Route::delete('/webwork-macros/{webworkMacro}', 'WebworkMacroController@destroy');
+    Route::get('/webwork-macros/{webworkMacro}/revisions', 'WebworkMacroController@revisions');
+    Route::get('webwork-macros/{webworkMacro}/diff/{revision1}/{revision2}', 'WebworkMacroController@diffRevisions');
+    Route::get('/webwork-macro-editors', 'WebworkMacroEditorController@index');
+    Route::post('/webwork-macro-editors', 'WebworkMacroEditorController@store');
+    Route::delete('/webwork-macro-editors/{webworkMacroEditor}', 'WebworkMacroEditorController@destroy');
+
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::get('/questions/{question}/assignment-status', 'QuestionController@getAssignmentStatus');
     Route::get('/questions/{question}/question-revision/{questionRevisionId}/rubric-categories', 'QuestionController@getRubricCategories');
@@ -678,6 +689,7 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
     Route::get('/webwork/delete', 'WebworkController@delete');
     Route::post('/webwork/src-doc/assignment/{assignment}/question/{question}', 'WebworkController@getSrcDoc');
     Route::get('/webwork/templates', 'WebworkController@templates');
+    Route::get('/webwork/solution/{problemJWT}', 'WebworkController@solution');
     Route::get('/webwork/submission-errors', 'WebworkController@SubmissionErrors');
 
     Route::get('/unconfirmed-submissions/assignment/{assignment}/question/{question}', 'UnconfirmedSubmissionController@show');

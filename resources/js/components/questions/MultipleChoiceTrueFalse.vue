@@ -267,9 +267,7 @@ export default {
       this.randomizeOrder = this.qtiJson.randomizeOrder || !this.qtiJson.randomizeOrder ? 'yes' : 'no' // in case it wasn't defined
       this.qtiJson.randomizeOrder = this.randomizeOrder
     }
-    this.$nextTick(() => {
-      MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-    })
+    this.typesetMath()
   },
   methods: {
     toggleFeedbackEditorShown (identifier, boolean) {
