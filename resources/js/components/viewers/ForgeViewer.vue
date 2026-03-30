@@ -158,7 +158,7 @@ export default {
             }
             if (data.forge_draft_id) {
               this.forgeURL = this.user.role === 2
-                ? `${data.domain}/classdetail/${data.forge_class_id}&userId=${data.token}`
+                ? `${data.domain}/classdetail/${data.forge_class_id}?userId=${data.token}`
                 : `${data.domain}/assignment/${data.forge_question_id}?draftId=${data.forge_draft_id}&userId=${data.token}`
             }
           } catch (error) {
