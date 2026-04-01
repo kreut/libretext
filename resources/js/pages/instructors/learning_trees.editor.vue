@@ -521,7 +521,6 @@ import { updateAutoAttribution } from '~/helpers/Licenses'
 import LearningTreeProperties from '../../components/LearningTreeProperties.vue'
 import { doCopy } from '../../helpers/Copy'
 
-
 window.onmousemove = function (e) {
   window.doNotDrag = e.ctrlKey || e.metaKey
 }
@@ -691,9 +690,10 @@ export default {
       }
     }
     let checkTouch = function (event) {
-      aclick = false
+      if (Math.abs(event.movementX) > 3 || Math.abs(event.movementY) > 3) {
+        aclick = false
+      }
     }
-
     let doneTouch = function (event) {
       // console.log(event.target.className)
       // console.log(event.type)
