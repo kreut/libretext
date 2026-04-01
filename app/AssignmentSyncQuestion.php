@@ -19,6 +19,7 @@ use Illuminate\Support\Collection;
 class AssignmentSyncQuestion extends Model
 {
     use DateFormatter;
+
     protected $table = 'assignment_question';
     protected $guarded = [];
 
@@ -48,6 +49,7 @@ class AssignmentSyncQuestion extends Model
 
         return $clean_assign_to;
     }
+
     /**
      * @throws Exception
      */
@@ -549,6 +551,9 @@ class AssignmentSyncQuestion extends Model
 
         $question_revision_id = Question::find($question_id)->latestQuestionRevision('id');
         $question = Question::find($question_id);
+        if ($open_ended_submission_type === 'rich text') {
+            $open_ended_submission_type = 'text';
+        }
         DB::table('assignment_question')
             ->insertGetId([
                 'assignment_id' => $assignment->id,
@@ -559,6 +564,7 @@ class AssignmentSyncQuestion extends Model
                 'question_revision_id' => $question_revision_id,
                 'custom_rubric' => $custom_rubric,
                 'open_ended_submission_type' => $question->isDiscussIt() ? 0 : $open_ended_submission_type,
+                'open_ended_text_editor' => $open_ended_submission_type === 'text' ? 'rich text' : null,
                 'discuss_it_settings' => Helper::defaultDiscussItSettings(),
                 'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                 'open_ended_text_editor' => $open_ended_text_editor]);
