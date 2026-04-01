@@ -313,7 +313,7 @@
         @keydown.enter.space.prevent="handleCardClick"
       >
         <!-- FRONT -->
-        <div class="fc-face fc-front" :aria-hidden="isFlipped ? 'true' : 'false'">
+        <div class="fc-face fc-front" :aria-hidden="isFlipped ? 'true' : 'false'" ref="frontFace">
           <!-- Top-right icon buttons: hint + TTS -->
           <div class="fc-top-actions">
             <button
@@ -387,7 +387,7 @@
         </div>
 
         <!-- BACK -->
-        <div class="fc-face fc-back" :aria-hidden="!isFlipped ? 'true' : 'false'">
+        <div class="fc-face fc-back" :aria-hidden="!isFlipped ? 'true' : 'false'" ref="backFace">
           <!-- Top-right icon buttons (back): TTS only -->
           <div v-if="ttsEnabled && currentCard.backTtsUrl" class="fc-top-actions">
             <button
@@ -909,6 +909,7 @@ export default {
       if (this.assignmentId) {
         this.getQuestionUsageFlashcardSettings()
       }
+      this.syncCardHeight()
     },
     showSummary (val) {
       if (val) {
@@ -954,6 +955,27 @@ export default {
   },
 
   methods: {
+    syncCardHeight () {
+      this.$nextTick(() => {
+        const front = this.$refs.frontFace
+        const back = this.$refs.backFace
+        if (!front || !back) return
+
+        const isFreeForm = this.currentCard.frontType === 'free_form' || this.currentCard.backType === 'free_form'
+        const scene = this.$el.querySelector('.fc-scene')
+        if (!scene) return
+
+        if (isFreeForm) {
+          // scrollHeight works even when the element is rotated/hidden via backface-visibility
+          // No need to touch transform or visibility at all
+          const frontH = front.scrollHeight
+          const backH = back.scrollHeight
+          scene.style.minHeight = Math.max(frontH, backH) + 'px'
+        } else {
+          scene.style.minHeight = ''
+        }
+      })
+    },
     onAutoplaySecondsKeydown (e) {
       if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
       if (!/^[0-9]$/.test(e.key)) {
@@ -1732,7 +1754,7 @@ kbd {
 }
 
 .fc-media > div {
-  //width: 100%;
+//width: 100%;
 }
 
 .fc-stack-col {
@@ -2105,4 +2127,5 @@ kbd {
 .fc-strip-seg--current.fc-strip-seg--incorrect {
   background: #e03131;
 }
+
 </style>
