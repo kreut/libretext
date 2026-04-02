@@ -937,16 +937,10 @@ export default {
       return
     }
     this.initialized = false
-    if (this.user.role === 3) {
-      if (this.assessmentType === 'flashcard') {
-        this.loadStudentOverrides()
-        this.openStudentSettings()
-      } else {
-        this.initialize()
-      }
-    } else {
-      this.initialize()
+    if (this.user.role === 3 && this.assessmentType === 'flashcard') {
+      this.loadStudentOverrides()
     }
+    this.initialize()
   },
 
   beforeDestroy () {
@@ -962,19 +956,39 @@ export default {
         if (!front || !back) return
 
         const isFreeForm = this.currentCard.frontType === 'free_form' || this.currentCard.backType === 'free_form'
+        const hasMedia = this.currentCard.frontType === 'media' || this.currentCard.backType === 'media'
         const scene = this.$el.querySelector('.fc-scene')
         if (!scene) return
 
-        if (isFreeForm) {
-          // scrollHeight works even when the element is rotated/hidden via backface-visibility
-          // No need to touch transform or visibility at all
-          const frontH = front.scrollHeight
-          const backH = back.scrollHeight
-          scene.style.minHeight = Math.max(frontH, backH) + 'px'
+        if (isFreeForm || hasMedia) {
+          // Search the entire component for images, not just the front face
+          const imgs = this.$el.querySelectorAll('img')
+
+          if (imgs.length > 0) {
+            Promise.all(
+              [...imgs].map(img =>
+                img.complete
+                  ? Promise.resolve()
+                  : new Promise(resolve => {
+                    img.addEventListener('load', resolve, { once: true })
+                    img.addEventListener('error', resolve, { once: true })
+                  })
+              )
+            ).then(() => this.applyHeight(front, back, scene))
+          } else {
+            this.applyHeight(front, back, scene)
+          }
         } else {
           scene.style.minHeight = ''
         }
       })
+    },
+
+    applyHeight (front, back, scene) {
+      const frontH = front.scrollHeight
+      const backH = back.scrollHeight
+      console.log('frontH:', frontH, 'backH:', backH) // add this temporarily
+      scene.style.minHeight = Math.max(frontH, backH) + 'px'
     },
     onAutoplaySecondsKeydown (e) {
       if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
@@ -2028,6 +2042,12 @@ kbd {
   max-height: 220px;
   border-radius: 8px;
   object-fit: contain;
+}
+.fc-media-center,
+.fc-media-center *,
+.fc-figure,
+.fc-figure * {
+  pointer-events: none;
 }
 
 .fc-media-iframe {
