@@ -560,7 +560,7 @@
                             v-for="(comment,commentIndex) in discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
                             :key="`comments-${commentIndex}`"
                           >
-                              <span v-show="discussItCompletionCriteria">
+                            <span v-show="discussItCompletionCriteria">
                                 <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
                                       :title="satisfiedRequirement(comment.discussion_comment_id)
                                         ? 'This discussion comment satisfied the requirement.'
@@ -608,11 +608,20 @@
                               </span>
                             <iframe
                               v-if="comment.file"
+                              :key="`discussion-comment-${discussionCommentCacheKey}`"
                               v-resize="{ log: false }"
                               :src="`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`"
                               width="100%"
                               frameborder="0"
                               allowfullscreen=""
+                            />
+                            <Transcript :key="`discussion-comment-id-${comment.id}`"
+                                        :active-transcript="comment.transcript"
+                                        :active-media="comment"
+                                        :model="'DiscussionComment'"
+                                        :in-modal="false"
+                                        @updateTranscriptInMedia="updateTranscriptInComment"
+                                        @setActiveMedia="setActiveComment"
                             />
                           </div>
                         </div>
@@ -1287,11 +1296,13 @@ import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { roundToDecimalSigFig } from '../../helpers/Math'
 import ForgeViewer from '../../components/viewers/ForgeViewer.vue'
+import Transcript from '../../components/Transcript.vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    Transcript,
     ForgeViewer,
     FontAwesomeIcon,
     QtiJsonAnswerViewer,
@@ -1313,6 +1324,8 @@ export default {
     return { title: 'Assignment Grading' }
   },
   data: () => ({
+    discussionCommentCacheKey: 0,
+    activeDiscussionCommentId: 0,
     formattedForgeQuestionType: '',
     isForge: false,
     canSubmitWork: false,
@@ -1486,6 +1499,21 @@ export default {
     downloadSolutionFile,
     getAcceptedFileTypes,
     getFullPdfUrlAtPage,
+    setActiveComment (comment) {
+      this.activeDicussionCommentId = comment.id
+    },
+    updateTranscriptInComment (caption, transcriptTiming, activeTranscriptTimingText) {
+      const userDiscussion = this.discussionsByUserId.find(
+        item => item.user_id === this.grading[this.currentStudentPage - 1].student.user_id
+      )
+      const commentIndex = userDiscussion?.comments.findIndex(
+        item => item.id === this.activeDicussionCommentId
+      )
+      if (commentIndex > -1) {
+        userDiscussion.comments[commentIndex].transcript[caption].text = activeTranscriptTimingText
+        this.discussionCommentCacheKey++
+      }
+    },
     getScoreLabel () {
       if (this.isOpenEnded) {
         return 'Open-ended'

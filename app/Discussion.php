@@ -151,11 +151,14 @@ class Discussion extends Model
                     'comments' => []];
             }
             $discussions_by_user_id[$value->discussion_comments_user_id]['comments'][] = [
+                'id' => $value->comment_id, //needed for the trnascript
                 'discussion_comment_id' => $value->comment_id,
                 'discussion_id' => $discussion_id,
                 'text' => $question->addTimeToS3Files($value->text, $htmlDom, false),
                 'pasted_comment' => $value->pasted_comment,
                 'file' => $value->file,
+                'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
+                're_processed_transcript' => $value->re_processed_transcript,
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_comments_user_id])
             ];
         }

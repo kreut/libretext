@@ -21,21 +21,20 @@
         </template>
       </b-modal>
       <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
+
         label-for="transcript-timing"
         label-size="sm"
-        label-align="center"
       >
-        <template #label>
-          Time Range <QuestionCircleTooltip :id="'discuss-it-description-tooltip'"/> <b-tooltip target="discuss-it-description-tooltip"
+        <b-form-row>    <span class="col-form-label-sm">
+          Time Range
+          <QuestionCircleTooltip :id="'discuss-it-description-tooltip'"/>
+          <b-tooltip target="discuss-it-description-tooltip"
                      delay="250"
                      triggers="hover focus"
           >
             Select one of the time ranges to view/edit the transcript.
           </b-tooltip>
-        </template>
-        <b-form-row>
+        </span>
           <b-form-select v-model="transcriptTiming"
                          style="width:200px"
                          size="sm"
@@ -48,8 +47,8 @@
     </div>
     <div v-if="transcriptTiming && activeTranscriptTiming.start">
       <b-form-group
-        label-cols-sm="2"
-        label-cols-lg="1"
+        :label-cols-sm="inModal ? 2 : 3"
+        :label-cols-lg="inModal ? 1 : 2"
         label-for="caption"
         label="Caption"
         label-size="sm"
@@ -95,6 +94,10 @@ import axios from 'axios'
 export default {
   name: 'Transcript',
   props: {
+    inModal: {
+      type: Boolean,
+      default: true
+    },
     activeMedia: {
       type: Object,
       default: () => {
@@ -140,6 +143,7 @@ export default {
       }
     },
     async updateCaption () {
+      this.$emit('setActiveMedia', this.activeMedia) //needed in the grading
       try {
         const caption = this.activeMedia.transcript.findIndex(caption => caption.start === this.transcriptTiming)
         if (caption === -1) {
