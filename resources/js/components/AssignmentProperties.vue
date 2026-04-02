@@ -46,7 +46,7 @@
     <b-form v-if="!isLoading" ref="form">
       <div v-if="isLocked(hasSubmissionsOrFileSubmissions) && !isFormativeCourse">
         <b-alert variant="info" show>
-          <span class="font-weight-bold" v-html="isLockedMessage()" />
+          <span class="font-weight-bold" v-html="isLockedMessage()"/>
         </b-alert>
       </div>
       <div v-if="isBetaAssignment">
@@ -77,7 +77,7 @@
               :class="{ 'is-invalid': form.errors.has('template_name') }"
               @keydown="form.errors.clear('template_name')"
             />
-            <has-error :form="form" field="template_name" />
+            <has-error :form="form" field="template_name"/>
           </b-form-row>
         </b-form-group>
 
@@ -97,7 +97,7 @@
               :class="{ 'is-invalid': form.errors.has('template_description') }"
               @keydown="form.errors.clear('template_description')"
             />
-            <has-error :form="form" field="template_description" />
+            <has-error :form="form" field="template_description"/>
           </b-form-row>
         </b-form-group>
       </b-card>
@@ -318,9 +318,9 @@
         </div>
       </b-card>
       <b-card
-              :header-html="getHeaderHtml('Modality')"
-              body-class="pb-0 card-body-pl"
-              class="mb-3"
+        :header-html="getHeaderHtml('Modality')"
+        body-class="pb-0 card-body-pl"
+        class="mb-3"
       >
         <b-form-group
           v-show="!anonymousUsers"
@@ -383,182 +383,183 @@
           </b-form-group>
         </div>
         <div v-if="!isFormativeCourse && form.formative !== '1'">
-        <div v-if="user.role ===2">
-          <b-form-group
-            label-for="assignment_group"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Assignment Group*"
-          >
-            <b-form-row>
-              <b-col lg="5">
-                <b-form-select id="assignment_group"
-                               v-model="form.assignment_group_id"
-                               :options="assignmentGroups"
-                               required
-                               :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
-                               @change="checkGroupId(form.assignment_group_id)"
-                />
-                <has-error :form="form" field="assignment_group_id" />
-              </b-col>
-
-              <b-modal id="modal-number-of-allowed-attempts-penalty-warning"
-                       title="Number of Allowed Attempts Penalty"
-              >
-                <p>
-                  You are about to update the number of allowed attempts penalty but there are already submissions in
-                  this assignment. Please note that this new penalty will only apply to future submissions.
-                </p>
-                <template #modal-footer="{ cancel, ok }">
-                  <b-button size="sm" variant="primary"
-                            @click="$bvModal.hide('modal-number-of-allowed-attempts-penalty-warning')"
-                  >
-                    I understand
-                  </b-button>
-                </template>
-              </b-modal>
-              <b-modal id="modal-change-number-of-allowed-attempts-warning"
-                       title="Number of Allowed Attempts"
-              >
-                <p>
-                  You are about to update the number of allowed attempts but there are already submissions in
-                  this assignment. In order to avoid confusion, it is recommended that you let your students know that
-                  this
-                  aspect of the assignment
-                  has been updated.
-                </p>
-                <template #modal-footer="{ cancel, ok }">
-                  <b-button size="sm" variant="primary"
-                            @click="changeNumberOfAllowedAttempts"
-                  >
-                    I understand
-                  </b-button>
-                </template>
-              </b-modal>
-              <b-modal
-                id="modal-per-question-solutions-availability"
-                :title="`Solutions Availability: ${delayedShowSolutionsAvailabilityType}`"
-                size="lg"
-                hide-footer
-              >
-                <div v-if="delayedShowSolutionsAvailabilityType === 'Automatic'">
-                  <p>
-                    If you choose a finite number of attempts for your students, then students will see the solution if
-                    either
-                  </p>
-                  <ul>
-                    <li>They get the question completely correct.</li>
-                    <li>They cannot make any more attempts.</li>
-                  </ul>
-                  <p>If you choose an unlimited number of attempts, then students will see the solution if either</p>
-                  <ul>
-                    <li>They get the question completely correct.</li>
-                    <li>
-                      They request to see the solution. After requesting to see the solution, they will not be allowed
-                      to
-                      resubmit.
-                    </li>
-                  </ul>
-                  <p>
-                    If at any point you would like all of your students to see all of the solutions, you can always
-                    override
-                    this option by releasing the solutions in the Control Panel.
-                  </p>
-                </div>
-                <div v-if="delayedShowSolutionsAvailabilityType === 'Manual'">
-                  <p>
-                    If you choose the manual option, then students will not see the solutions until you release the
-                    solutions
-                    in the Control Panel for this assignment.
-                  </p>
-                </div>
-              </b-modal>
-              <b-modal
-                id="modal-create-assignment-group"
-                ref="modal"
-                title="Create Assignment Group"
-              >
-                <RequiredText />
-                <b-form-row>
-                  <b-form-group
-                    label-cols-sm="5"
-                    label-cols-lg="6"
-                    label-for="create_assignment_group"
-                    label="Assignment Group*"
-                  >
-                    <b-form-input
-                      id="create_assignment_group"
-                      v-model="assignmentGroupForm.assignment_group"
-                      required
-                      type="text"
-                      placeholder=""
-                      :class="{ 'is-invalid': assignmentGroupForm.errors.has('assignment_group') }"
-                      @keydown="assignmentGroupForm.errors.clear('assignment_group')"
-                    />
-                    <has-error :form="assignmentGroupForm" field="assignment_group" />
-                  </b-form-group>
-                </b-form-row>
-                <template #modal-footer>
-                  <b-button
-                    size="sm"
-                    class="float-right"
-                    @click="resetAssignmentGroupForm;$bvModal.hide('modal-create-assignment-group')"
-                  >
-                    Cancel
-                  </b-button>
-                  <b-button
-                    variant="primary"
-                    size="sm"
-                    class="float-right"
-                    @click="handleCreateAssignmentGroup"
-                  >
-                    Submit
-                  </b-button>
-                </template>
-              </b-modal>
-            </b-form-row>
-          </b-form-group>
-          <b-form-group
-            v-if="!lms"
-            id="source"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="source"
-          >
-            <template v-slot:label>
-              Source*
-            </template>
-            <b-form-radio-group
-              id="source"
-              v-model="form.source"
-              stacked
-              required
-              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+          <div v-if="user.role ===2">
+            <b-form-group
+              label-for="assignment_group"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label="Assignment Group*"
             >
-              <b-form-radio name="source" value="a">
-                Internal
-                <QuestionCircleTooltip :id="'internal'" />
-                <b-tooltip target="internal"
-                           delay="250"
-                           triggers="hover focus"
-                >
-                  Get questions from the ADAPT database or from the Query library
-                </b-tooltip>
-              </b-form-radio>
+              <b-form-row>
+                <b-col lg="5">
+                  <b-form-select id="assignment_group"
+                                 v-model="form.assignment_group_id"
+                                 :options="assignmentGroups"
+                                 required
+                                 :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
+                                 @change="checkGroupId(form.assignment_group_id)"
+                  />
+                  <has-error :form="form" field="assignment_group_id"/>
+                </b-col>
 
-              <b-form-radio name="source" value="x">
-                External
-                <QuestionCircleTooltip :id="'external'" />
-                <b-tooltip target="external"
-                           delay="250"
-                           triggers="hover focus"
+                <b-modal id="modal-number-of-allowed-attempts-penalty-warning"
+                         title="Number of Allowed Attempts Penalty"
                 >
-                  Use questions outside of ADAPT and manually input scores into the grade book
-                </b-tooltip>
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
-        </div>
+                  <p>
+                    You are about to update the number of allowed attempts penalty but there are already submissions in
+                    this assignment. Please note that this new penalty will only apply to future submissions.
+                  </p>
+                  <template #modal-footer="{ cancel, ok }">
+                    <b-button size="sm" variant="primary"
+                              @click="$bvModal.hide('modal-number-of-allowed-attempts-penalty-warning')"
+                    >
+                      I understand
+                    </b-button>
+                  </template>
+                </b-modal>
+                <b-modal id="modal-change-number-of-allowed-attempts-warning"
+                         title="Number of Allowed Attempts"
+                >
+                  <p>
+                    You are about to update the number of allowed attempts but there are already submissions in
+                    this assignment. In order to avoid confusion, it is recommended that you let your students know that
+                    this
+                    aspect of the assignment
+                    has been updated.
+                  </p>
+                  <template #modal-footer="{ cancel, ok }">
+                    <b-button size="sm" variant="primary"
+                              @click="changeNumberOfAllowedAttempts"
+                    >
+                      I understand
+                    </b-button>
+                  </template>
+                </b-modal>
+                <b-modal
+                  id="modal-per-question-solutions-availability"
+                  :title="`Solutions Availability: ${delayedShowSolutionsAvailabilityType}`"
+                  size="lg"
+                  hide-footer
+                >
+                  <div v-if="delayedShowSolutionsAvailabilityType === 'Automatic'">
+                    <p>
+                      If you choose a finite number of attempts for your students, then students will see the solution
+                      if
+                      either
+                    </p>
+                    <ul>
+                      <li>They get the question completely correct.</li>
+                      <li>They cannot make any more attempts.</li>
+                    </ul>
+                    <p>If you choose an unlimited number of attempts, then students will see the solution if either</p>
+                    <ul>
+                      <li>They get the question completely correct.</li>
+                      <li>
+                        They request to see the solution. After requesting to see the solution, they will not be allowed
+                        to
+                        resubmit.
+                      </li>
+                    </ul>
+                    <p>
+                      If at any point you would like all of your students to see all of the solutions, you can always
+                      override
+                      this option by releasing the solutions in the Control Panel.
+                    </p>
+                  </div>
+                  <div v-if="delayedShowSolutionsAvailabilityType === 'Manual'">
+                    <p>
+                      If you choose the manual option, then students will not see the solutions until you release the
+                      solutions
+                      in the Control Panel for this assignment.
+                    </p>
+                  </div>
+                </b-modal>
+                <b-modal
+                  id="modal-create-assignment-group"
+                  ref="modal"
+                  title="Create Assignment Group"
+                >
+                  <RequiredText/>
+                  <b-form-row>
+                    <b-form-group
+                      label-cols-sm="5"
+                      label-cols-lg="6"
+                      label-for="create_assignment_group"
+                      label="Assignment Group*"
+                    >
+                      <b-form-input
+                        id="create_assignment_group"
+                        v-model="assignmentGroupForm.assignment_group"
+                        required
+                        type="text"
+                        placeholder=""
+                        :class="{ 'is-invalid': assignmentGroupForm.errors.has('assignment_group') }"
+                        @keydown="assignmentGroupForm.errors.clear('assignment_group')"
+                      />
+                      <has-error :form="assignmentGroupForm" field="assignment_group"/>
+                    </b-form-group>
+                  </b-form-row>
+                  <template #modal-footer>
+                    <b-button
+                      size="sm"
+                      class="float-right"
+                      @click="resetAssignmentGroupForm;$bvModal.hide('modal-create-assignment-group')"
+                    >
+                      Cancel
+                    </b-button>
+                    <b-button
+                      variant="primary"
+                      size="sm"
+                      class="float-right"
+                      @click="handleCreateAssignmentGroup"
+                    >
+                      Submit
+                    </b-button>
+                  </template>
+                </b-modal>
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              v-if="!lms"
+              id="source"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label-for="source"
+            >
+              <template v-slot:label>
+                Source*
+              </template>
+              <b-form-radio-group
+                id="source"
+                v-model="form.source"
+                stacked
+                required
+                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+              >
+                <b-form-radio name="source" value="a">
+                  Internal
+                  <QuestionCircleTooltip :id="'internal'"/>
+                  <b-tooltip target="internal"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Get questions from the ADAPT database or from the Query library
+                  </b-tooltip>
+                </b-form-radio>
+
+                <b-form-radio name="source" value="x">
+                  External
+                  <QuestionCircleTooltip :id="'external'"/>
+                  <b-tooltip target="external"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Use questions outside of ADAPT and manually input scores into the grade book
+                  </b-tooltip>
+                </b-form-radio>
+              </b-form-radio-group>
+            </b-form-group>
+          </div>
         </div>
       </b-card>
       <div>
@@ -585,7 +586,7 @@
                                     required
                 >
               <span @click="form.number_of_allowed_attempts=1">
-                <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'" />
+                <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'"/>
                   <b-tooltip target="performance"
                              delay="250"
                              triggers="hover focus"
@@ -595,7 +596,7 @@
               </span>
                   <span @click="canSwitchToCompleteIncomplete">
                 <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
-                  <b-form-radio value="c">Completion <QuestionCircleTooltip :id="'completion'" />
+                  <b-form-radio value="c">Completion <QuestionCircleTooltip :id="'completion'"/>
                     <b-tooltip target="completion"
                                delay="250"
                                triggers="hover focus"
@@ -1047,19 +1048,42 @@
                     after the first attempt regardless of how many attempts you allow.
                   </b-tooltip>
                 </template>
-                <b-form-select id="number_of_allowed_attempts"
-                               v-model="form.number_of_allowed_attempts"
-                               required
-                               class="mt-2"
-                               :options="['real time','clicker'].includes(form.assessment_type)
-                               ? numberOfAllowedAttemptsOptions
-                               : numberOfAllowedAttemptsOptions.filter(numberOfAttempts => parseInt(numberOfAttempts.value) !== 1)"
-                               :style="[form.number_of_allowed_attempts !== 'unlimited' ? {'width':'60px'} : {'width':'120px'}]"
-                               :disabled="isBetaAssignment"
-                               :class="{ 'is-invalid': form.errors.has('number_of_allowed_attempts') }"
-                               @change="initChangeNumberOfAllowedAttempts(form.number_of_allowed_attempts)"
-                />
-                <has-error :form="form" field="number_of_allowed_attempts"/>
+                <div class="mt-2">
+                  <div class="d-flex align-items-center mb-2">
+                    <div style="width: 100px; cursor: pointer;" @click="() => {
+      if (form.number_of_allowed_attempts === 'unlimited') {
+        form.number_of_allowed_attempts = '';
+        initChangeNumberOfAllowedAttempts('');
+      }
+    }"
+                    >
+                      <b-form-input
+                        :value="form.number_of_allowed_attempts !== 'unlimited' ? form.number_of_allowed_attempts : ''"
+                        type="text"
+                        :style="form.number_of_allowed_attempts === 'unlimited' ? 'pointer-events: none;' : ''"
+                        :disabled="isBetaAssignment || form.number_of_allowed_attempts === 'unlimited'"
+                        aria-label="Number of allowed attempts"
+                        placeholder="1, 2, 3, ..."
+                        @input="val => {
+          form.number_of_allowed_attempts = val;
+          initChangeNumberOfAllowedAttempts(val);
+        }"
+                      />
+                    </div>
+                    <span class="mx-3 text-muted">— or —</span>
+                    <b-form-checkbox
+                      :checked="form.number_of_allowed_attempts === 'unlimited'"
+                      :disabled="isBetaAssignment"
+                      @change="checked => {
+        form.number_of_allowed_attempts = checked ? 'unlimited' : '';
+        initChangeNumberOfAllowedAttempts(form.number_of_allowed_attempts);
+      }"
+                    >
+                      Unlimited
+                    </b-form-checkbox>
+                  </div>
+                  <ErrorMessage :message="form.errors.get('number_of_allowed_attempts')"/>
+                </div>
               </b-form-group>
               <b-form-group
                 v-if="form.number_of_allowed_attempts !== '1' && form.assessment_type !== 'clicker'"
@@ -1196,7 +1220,8 @@
                   Individual Assessment Upload
                   <QuestionCircleTooltip :id="'individual_assessment_upload_tooltip'"/>
                   <b-tooltip target="individual_assessment_upload_tooltip" delay="250" triggers="hover focus">
-                    <p>If you choose this option, your students will upload individual submissions at the question level.</p>
+                    <p>If you choose this option, your students will upload individual submissions at the question
+                      level.</p>
                   </b-tooltip>
                 </b-form-radio>
                 <b-form-radio name="file_upload_mode" value="compiled_pdf">
@@ -1433,7 +1458,7 @@
         >
           <template v-slot:label>
             Random sampling*
-            <QuestionCircleTooltip :id="'random-sampling-tooltip'" />
+            <QuestionCircleTooltip :id="'random-sampling-tooltip'"/>
             <b-tooltip target="random-sampling-tooltip" delay="250" triggers="hover focus">
               With random sampling enabled, your students will receive a random subset of questions from a pool.
             </b-tooltip>
@@ -1457,7 +1482,7 @@
         >
           <template v-slot:label>
             Number of randomized assessments*
-            <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'" />
+            <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'"/>
             <b-tooltip target="number_of_randomized_assessments_tooltip" delay="250" triggers="hover focus">
               ADAPT will randomly choose a subset of assessments from the total that you provide
             </b-tooltip>
@@ -1473,7 +1498,7 @@
                 :class="{ 'is-invalid': form.errors.has('number_of_randomized_assessments') }"
                 @keydown="form.errors.clear('number_of_randomized_assessments')"
               />
-              <has-error :form="form" field="number_of_randomized_assessments" />
+              <has-error :form="form" field="number_of_randomized_assessments"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -1483,7 +1508,8 @@
               Algorithmic*
               <QuestionCircleTooltip :id="'algorithmic-tooltip'"/>
               <b-tooltip target="algorithmic-tooltip" delay="250" triggers="hover focus">
-                WeBWork and IMathAS support algorithmic questions. Students will receive slight variations of the original question.
+                WeBWork and IMathAS support algorithmic questions. Students will receive slight variations of the
+                original question.
               </b-tooltip>
             </template>
             <b-form-radio-group id="algorithmic"
@@ -1516,7 +1542,8 @@
             Autoplay
             <QuestionCircleTooltip :id="'autoplay-tooltip'"/>
             <b-tooltip target="autoplay-tooltip" delay="250" triggers="hover focus">
-              When enabled, flashcards will automatically advance to the next card. Each side of the card is shown for this many seconds before advancing.
+              When enabled, flashcards will automatically advance to the next card. Each side of the card is shown for
+              this many seconds before advancing.
             </b-tooltip>
           </template>
           <b-form-radio-group
@@ -1618,7 +1645,8 @@
             Text-to-Speech <sup class="text-muted">†</sup>
             <QuestionCircleTooltip :id="'flashcard-tts-tooltip'"/>
             <b-tooltip target="flashcard-tts-tooltip" delay="250" triggers="hover focus">
-              When enabled, students will see a speaker icon on text-only cards that reads the content aloud using AI-generated audio.
+              When enabled, students will see a speaker icon on text-only cards that reads the content aloud using
+              AI-generated audio.
             </b-tooltip>
           </template>
           <b-form-radio-group
@@ -1649,7 +1677,8 @@
             Captions <sup class="text-muted">†</sup>
             <QuestionCircleTooltip :id="'flashcard-captions-tooltip'"/>
             <b-tooltip target="flashcard-captions-tooltip" delay="250" triggers="hover focus">
-              When enabled, students will see AI-generated captions displayed alongside text-to-speech audio on text-only cards.
+              When enabled, students will see AI-generated captions displayed alongside text-to-speech audio on
+              text-only cards.
             </b-tooltip>
           </template>
           <b-form-radio-group
@@ -1705,7 +1734,9 @@
             </b-form-radio-group>
           </b-form-group>
           <div v-show="form.late_policy === 'deduction'">
-            <b-form-group label-cols-sm="4" label-cols-lg="3" label="Late Deduction Percent" label-for="late_deduction_percent">
+            <b-form-group label-cols-sm="4" label-cols-lg="3" label="Late Deduction Percent"
+                          label-for="late_deduction_percent"
+            >
               <b-form-row>
                 <b-col lg="4">
                   <b-form-input
@@ -1723,7 +1754,9 @@
             </b-form-group>
             <b-form-group label-cols-sm="4" label-cols-lg="3" label-for="late_deduction_application_period">
               <template v-slot:label>Late Deduction Applied*</template>
-              <b-form-radio-group v-model="form.late_deduction_applied_once" stacked required :disabled="isLocked(hasSubmissionsOrFileSubmissions)">
+              <b-form-radio-group v-model="form.late_deduction_applied_once" stacked required
+                                  :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
+              >
                 <span @click="form.late_deduction_application_period = ''">
                   <b-form-radio value="1">Just once</b-form-radio>
                 </span>
@@ -1773,7 +1806,8 @@
         <div v-show="form.assessment_type === 'clicker'">
           <b-form-group label-cols-sm="4" label-cols-lg="3" label-for="assign_to" label="Assign To">
             <div class="mt-2">
-              Clicker assignments are assigned to all students and manually opened by the instructor at the start of the assignment.
+              Clicker assignments are assigned to all students and manually opened by the instructor at the start of the
+              assignment.
             </div>
           </b-form-group>
         </div>
@@ -1784,7 +1818,8 @@
                 Assign to*
                 <QuestionCircleTooltip :id="'assign_to_tooltip'"/>
                 <b-tooltip target="assign_to_tooltip" delay="250" triggers="hover focus">
-                  You can assign to Everybody, a particular section (search by name) or student (search by name or email).
+                  You can assign to Everybody, a particular section (search by name) or student (search by name or
+                  email).
                 </b-tooltip>
               </template>
               <b-form-row>
@@ -1799,11 +1834,15 @@
                   <has-error :form="form" :field="`groups_${index}`"/>
                 </b-col>
                 <b-col>
-                  <ul v-for="(group,group_index) in assignTo.groups" :key="group_index" class="flex-column align-items-start">
+                  <ul v-for="(group,group_index) in assignTo.groups" :key="group_index"
+                      class="flex-column align-items-start"
+                  >
                     <li>
                       {{ group.text }}
                       <a href="" @click.prevent="removeAssignToGroup(assignTo, group)">
-                        <b-icon icon="trash" :aria-label="`Remove ${group.text} from this Assign To`" class="text-muted"/>
+                        <b-icon icon="trash" :aria-label="`Remove ${group.text} from this Assign To`"
+                                class="text-muted"
+                        />
                       </a>
                     </li>
                   </ul>
@@ -1836,7 +1875,9 @@
                                   @input="form.errors.clear(`available_from_time_${index}`)"
                                   @shown="form.errors.clear(`available_from_time_${index}`)"
                   >
-                    <template v-slot:icon><b-icon-clock/></template>
+                    <template v-slot:icon>
+                      <b-icon-clock/>
+                    </template>
                   </vue-timepicker>
                   <ErrorMessage :message="form.errors.get(`available_from_time_${index}`)"/>
                 </b-col>
@@ -1869,7 +1910,9 @@
                                   @input="form.errors.clear(`due_time_${index}`)"
                                   @shown="form.errors.clear(`due_time_${index}`)"
                   >
-                    <template v-slot:icon><b-icon-clock/></template>
+                    <template v-slot:icon>
+                      <b-icon-clock/>
+                    </template>
                   </vue-timepicker>
                   <ErrorMessage :message="form.errors.get(`due_time_${index}`)"/>
                 </b-col>
@@ -1885,7 +1928,8 @@
                 Final Submission Deadline*
                 <QuestionCircleTooltip :id="'final_submission_deadline_tooltip'"/>
                 <b-tooltip target="final_submission_deadline_tooltip" delay="250" triggers="hover focus">
-                  For assessments where you allow late submissions, this is the latest possible date for which you'll accept a submission.
+                  For assessments where you allow late submissions, this is the latest possible date for which you'll
+                  accept a submission.
                 </b-tooltip>
               </template>
               <b-form-row>
@@ -1914,7 +1958,9 @@
                                   @input="form.errors.clear(`final_submission_deadline_time_${index}`)"
                                   @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
                   >
-                    <template v-slot:icon><b-icon-clock/></template>
+                    <template v-slot:icon>
+                      <b-icon-clock/>
+                    </template>
                   </vue-timepicker>
                   <ErrorMessage :message="form.errors.get(`final_submission_deadline_time_${index}`)"/>
                 </b-col>
@@ -1931,7 +1977,7 @@
           </div>
           <span v-if="courseId">
             <b-button variant="outline-primary" size="sm" @click="addAssignTo">Add Assign to</b-button>
-            <QuestionCircleTooltip :id="'add_assign_to_tooltip'" />
+            <QuestionCircleTooltip :id="'add_assign_to_tooltip'"/>
             <b-tooltip target="add_assign_to_tooltip" delay="250" triggers="hover focus">
               When adding new "assign tos", we first assign at the user level, then section level, and finally at the course level.
             </b-tooltip>
@@ -2002,15 +2048,18 @@ export default {
   props: {
     form: {
       type: Object,
-      default: function () {}
+      default: function () {
+      }
     },
     course: {
       type: Object,
-      default: function () {}
+      default: function () {
+      }
     },
     assignmentGroups: {
       type: Array,
-      default: function () {}
+      default: function () {
+      }
     },
     isBetaAssignment: { type: Boolean, default: false },
     lms: { type: Boolean, default: false },
@@ -2054,8 +2103,14 @@ export default {
     richEditorConfig: {
       toolbar: [
         { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo'] },
-        { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat'] },
-        { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
+        {
+          name: 'basicstyles',
+          items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat']
+        },
+        {
+          name: 'paragraph',
+          items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']
+        },
         '/',
         { name: 'links', items: ['Link', 'Unlink'] },
         { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },

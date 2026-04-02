@@ -13,6 +13,7 @@ use App\Rules\IsPositiveInteger;
 use App\Rules\isValidDefaultCompletionScoringType;
 use App\Rules\IsValidFlashcardSettings;
 use App\Rules\IsValidHintPenalty;
+use App\Rules\IsValidNumberOfAllowedAttempts;
 use App\Rules\IsValidNumberOfAllowedAttemptsPenalty;
 use App\Rules\IsValidPeriodOfTime;
 use App\Rules\IsADateLaterThan;
@@ -150,7 +151,7 @@ class StoreAssignmentProperties extends FormRequest
                 $this->number_of_allowed_attempts_penalty = 0;
             }
             if (!$formative && in_array($this->assessment_type, ['real time', 'learning tree']) && $this->scoring_type === 'p') {
-                $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
+                $rules['number_of_allowed_attempts'] = ['required',new IsValidNumberOfAllowedAttempts()];
                 if ($this->number_of_allowed_attempts !== '1') {
                     $rules['number_of_allowed_attempts_penalty'] = ['required', new IsValidNumberOfAllowedAttemptsPenalty($this->number_of_allowed_attempts)];
                 }
@@ -220,7 +221,7 @@ class StoreAssignmentProperties extends FormRequest
             }
             if ($this->assessment_type === 'clicker') {
                 $rules['default_clicker_time_to_submit'] = new IsValidPeriodOfTime();
-                $rules['number_of_allowed_attempts'] = ['required', Rule::in(['1', '2', '3', '4', 'unlimited'])];
+                $rules['number_of_allowed_attempts'] = ['required',new IsValidNumberOfAllowedAttempts()];
             }
             if ($this->late_policy === 'deduction') {
                 //has to be at least one or division by 0 issue in setScoreBasedOnLatePolicy
