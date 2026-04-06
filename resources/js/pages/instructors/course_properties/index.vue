@@ -143,7 +143,7 @@ export default {
       let tabs
       tabs = this.tabs
       if (this.formative) {
-        tabs = tabs.filter(tab => ['General Information', 'Embed Properties'].includes(tab.name))
+        tabs = tabs.filter(tab => ['General Information', 'Embed Properties','Co-Instructors'].includes(tab.name))
       }
       if (this.isCoInstructor) {
         tabs = tabs.filter(tab => tab.name !== 'Co-Instructors')
