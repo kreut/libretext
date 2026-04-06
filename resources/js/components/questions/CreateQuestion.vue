@@ -1511,7 +1511,10 @@
                           <p style="margin: 0 0 10px;">Questions can be added in two ways:</p>
 
                           <p style="margin: 0 0 4px;"><strong style="font-weight: 500;">Bulk Import</strong></p>
-                          <p style="margin: 0 0 10px;">Export questions in QTI format from your LMS and import them via the <strong style="font-weight: 500;">Bulk Import</strong> tab. Both QTI questions and flashcards (which are not in QTI format) are supported. You can edit them in ADAPT after importing.</p>
+                          <p style="margin: 0 0 10px;">Export questions in QTI format from your LMS and import them via
+                            the <strong style="font-weight: 500;">Bulk Import</strong> tab. Both QTI questions and
+                            flashcards (which are not in QTI format) are supported. You can edit them in ADAPT after
+                            importing.</p>
 
                           <p style="margin: 0 0 4px;"><strong style="font-weight: 500;">Manual Creation</strong></p>
                           <p style="margin: 0;">Use the question editor below to build new questions directly.</p>
@@ -4438,15 +4441,13 @@ export default {
     },
     async setQuestionToEdit () {
       this.isLoadingEdit = true
-      if (this.user.role === 5) {
-        await this.getCurrentQuestionEditor()
-        await this.updateCurrentQuestionEditor()
-        this.checkForOtherNonInstructorEditors()
-      }
+      await this.getCurrentQuestionEditor()
+      await this.updateCurrentQuestionEditor()
+      this.checkForOtherQuestionEditors()
       this.isEdit = true
       this.powerUser = this.isAdmin
       console.log(this.questionToEdit)
-      this.isWebworkDownloadOnly = !this.canEdit(this.isAdmin, this.user, this.questionToEdit) && this.questionToEdit.technology === 'webwork'
+      this.isWebworkDownloadOnly = !await this.canEdit(this.isAdmin, this.user, this.questionToEdit) && this.questionToEdit.technology === 'webwork'
       if (!this.isWebworkDownloadOnly) {
         await this.getRevisions(this.questionToEdit)
         if (this.questionToEdit.technology === 'webwork' && this.questionToEdit.webwork_code) {
@@ -4983,7 +4984,7 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    checkForOtherNonInstructorEditors: function () {
+    checkForOtherQuestionEditors: function () {
       window.currentQuestionEditorUpdatedAt = setInterval(() => {
         this.updateCurrentQuestionEditor()
         if (!this.currentQuestionEditor) {
@@ -5010,6 +5011,7 @@ export default {
           return false
         }
         this.currentQuestionEditor = data.current_question_editor
+        console.error(this.currentQuestionEditor)
         if (this.currentQuestionEditor) {
           this.$bvModal.show('modal-current-question-editor')
         }

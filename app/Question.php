@@ -35,6 +35,20 @@ class Question extends Model
     }
 
     /**
+     * @return mixed
+     */
+    public function isCoQuestionEditor($question_editor_user_id = null)
+    {
+        if ($this->question_editor_user_id) {
+            $question_editor_user_id = $this->question_editor_user_id;
+        }
+        return CoQuestionEditor::where('question_editor_user_id', $question_editor_user_id)
+            ->where('co_question_editor_user_id', request()->user()->id)
+            ->where('status', 'accepted')
+            ->exists();
+    }
+
+    /**
      * @return string[]
      */
     function getValidLicenses(): array
@@ -111,7 +125,7 @@ class Question extends Model
 
     function folderIdRequired($user, $question_editor_user_id): bool
     {
-        if ($user->isDeveloper() || Helper::isAdmin() || $user->role === 5) {
+        if ($this->isCoQuestionEditor($question_editor_user_id) || $user->isDeveloper() || Helper::isAdmin() || $user->role === 5) {
             return $question_editor_user_id === $user->id;
         }
         return true;

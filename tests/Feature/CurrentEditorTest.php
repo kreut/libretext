@@ -19,6 +19,7 @@ class CurrentEditorTest extends TestCase
 
         parent::setUp();
         $this->user = factory(User::class)->create();
+        $this->student_user = factory(User::class)->create(['role'=>3]);
         $this->non_instructor_question_editor = factory(User::class)->create(['role' => 5]);
         $this->non_instructor_question_editor_2 = factory(User::class)->create(['role' => 5]);
         $this->question = factory(Question::class)->create(['page_id' => 2348783]);
@@ -29,7 +30,7 @@ class CurrentEditorTest extends TestCase
     public function non_instructor_question_editor_cannot_update_a_current_question_editor()
     {
 
-        $this->actingAs($this->user)->patchJson("/api/current-question-editor/{$this->question->id}")
+        $this->actingAs($this->student_user)->patchJson("/api/current-question-editor/{$this->question->id}")
             ->assertJson(['message' => 'You are not allowed to update the current question editor.']);
 
     }

@@ -183,6 +183,8 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
     Route::get('/question-editor', 'QuestionEditorController@index');
     Route::delete('/question-editor/{questionEditorUser}', 'QuestionEditorController@destroy');
 
+    Route::get('/co-question-editor/question/{question}/can-edit', 'CoQuestionEditorController@canEdit');
+
     Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');
     Route::patch('/cookie/set-assignment-group-filter/{course}/{chosenAssignmentGroup}', 'CookieController@setAssignmentGroupFilter');
     Route::patch('/cookie/set-ferpa-mode/{ferpaMode}', 'CookieController@setFerpaMode');

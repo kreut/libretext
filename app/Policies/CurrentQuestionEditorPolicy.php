@@ -20,7 +20,7 @@ class CurrentQuestionEditorPolicy
      */
     public function update(User $user): Response
     {
-        return (int)$user->role === 5
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny('You are not allowed to update the current question editor.');
 
@@ -32,7 +32,7 @@ class CurrentQuestionEditorPolicy
      */
     public function show(User $user): Response
     {
-        return (int)$user->role === 5
+        return in_array($user->role, [2, 5])
             ? Response::allow()
             : Response::deny('You are not allowed to view the current question editor.');
 

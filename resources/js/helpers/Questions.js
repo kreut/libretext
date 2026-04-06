@@ -5,9 +5,9 @@ import Form from 'vform/src'
 export function isQtiOrForgeWithQtiAnswerSolution (item) {
   try {
     return !['forge', 'forge_iteration'].includes(JSON.parse(item.qti_answer_json).questionType) ||
-        (['forge', 'forge_iteration'].includes(JSON.parse(item.qti_answer_json).questionType) &&
-      typeof JSON.parse(item.qti_answer_json).solution_html !== 'undefined' &&
-    JSON.parse(item.qti_answer_json).solution_html !== null)
+      (['forge', 'forge_iteration'].includes(JSON.parse(item.qti_answer_json).questionType) &&
+        typeof JSON.parse(item.qti_answer_json).solution_html !== 'undefined' &&
+        JSON.parse(item.qti_answer_json).solution_html !== null)
   } catch {
     return false
   }
@@ -331,7 +331,20 @@ export function doCopy (adaptId) {
   })
 }
 
-export function canEdit (isAdmin, user, question) {
+export async function canEdit (isAdmin, user, question) {
+  try {
+    const { data } = await axios.get(`/api/co-question-editor/question/${question.id}/can-edit`)
+    if (data.type === 'success') {
+      if (data.can_edit) {
+        return true
+      }
+    } else {
+      this.$noty.error(data.message)
+    }
+  } catch (error) {
+    this.$noty.error(error.message)
+    return false
+  }
   if (isAdmin || user.is_developer || user.role === 5) {
     return true
   } else {
@@ -350,7 +363,8 @@ export async function editQuestionSource (question) {
     return false
   }
 
-  if (!canEdit(this.isAdmin, this.user, question)) {
+  if (!await canEdit(this.isAdmin, this.user, question)) {
+    console.error(question)
     if (question.technology !== 'webwork') {
       this.$noty.info('You cannot edit this question since you did not create it.')
       return false
