@@ -1949,7 +1949,11 @@
 
             <ul v-if="!clickerApp" style="list-style-type:none" class="p-0 mt-2">
               <li
-                v-if="isInstructor() && !isInstructorWithAnonymousView && assessmentType !== 'clicker' && !inIFrame"
+                v-if="isInstructor()
+                  && !isInstructorWithAnonymousView
+                  && assessmentType !== 'clicker'
+                  && !inIFrame
+                  && !isFormative"
                 class="mb-2"
               >
                 <span class="font-weight-bold">Usage Settings:</span>
@@ -2372,7 +2376,7 @@
                 />
               </span>
               <span
-                v-show="user.role === 2
+                v-show="loaded && user.role === 2
                   && assessmentType !== 'clicker'
                   && (!questions[currentPage - 1].use_existing_rubric || (questions[currentPage - 1].use_existing_rubric && !questions[currentPage - 1].rubric))"
               >
@@ -4494,7 +4498,7 @@ export default {
         this.isLoading = false
         return false
       }
-      this.showAssignmentStatistics = this.questions.length && (this.user.role === 2 || (this.user.role === 3 && this.students_can_view_assignment_statistics))
+      this.showAssignmentStatistics = !this.isFormative && this.questions.length && (this.user.role === 2 || (this.user.role === 3 && this.students_can_view_assignment_statistics))
       if (this.showAssignmentStatistics) {
         this.getScoresSummary = getScoresSummary
       }
@@ -4599,6 +4603,7 @@ export default {
       // await this.startClickerAssessment()
     }
     this.previouslyUploadedAudioFile = this.questions[this.currentPage - 1].submission ? this.questions[this.currentPage - 1].submission : ''
+  this.loaded = true
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
