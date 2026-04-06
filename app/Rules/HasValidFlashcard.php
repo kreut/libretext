@@ -46,14 +46,14 @@ class HasValidFlashcard implements Rule
         $frontType = $card['frontType'] ?? '';
         switch ($frontType) {
             case 'text_only':
-                if (empty(trim($card['term'] ?? ''))) {
+                if (trim($card['term'] ?? '') === '') {
                     $errors['term'] = 'A term is required.';
                     $passes = false;
                 }
                 break;
 
             case 'text_media':
-                if (empty(trim($card['term'] ?? ''))) {
+                if (trim($card['term'] ?? '') === '') {
                     $errors['term'] = 'A term is required.';
                     $passes = false;
                 }
@@ -68,7 +68,7 @@ class HasValidFlashcard implements Rule
                 break;
 
             case 'free_form':
-                if (empty(trim(strip_tags($card['front'] ?? '')))) {
+                if (trim(strip_tags($card['front'] ?? '')) === '') {
                     $errors['front'] = 'Front content is required.';
                     $passes = false;
                 }
@@ -94,14 +94,14 @@ class HasValidFlashcard implements Rule
         $backType = $card['backType'] ?? '';
         switch ($backType) {
             case 'text_only':
-                if (empty(trim($card['answer'] ?? ''))) {
+                if (trim($card['answer'] ?? '') === '') {
                     $errors['answer'] = 'An answer is required.';
                     $passes = false;
                 }
                 break;
 
             case 'text_media':
-                if (empty(trim($card['answer'] ?? ''))) {
+                if (trim($card['answer'] ?? '') === '') {
                     $errors['answer'] = 'An answer is required.';
                     $passes = false;
                 }
@@ -116,7 +116,7 @@ class HasValidFlashcard implements Rule
                 break;
 
             case 'free_form':
-                if (empty(trim(strip_tags($card['back'] ?? '')))) {
+                if (trim(strip_tags($card['back'] ?? '')) === '') {
                     $errors['back'] = 'Back content is required.';
                     $passes = false;
                 }
@@ -154,7 +154,7 @@ class HasValidFlashcard implements Rule
 
         $alt = trim($card["{$side}MediaAlt"] ?? '');
 
-        if (empty($alt)) {
+        if ($alt === '') {
             $errors["{$side}MediaAlt"] = 'Alt text is required for accessibility.';
             return false;
         }
@@ -174,7 +174,7 @@ class HasValidFlashcard implements Rule
     {
         $lang = $card["{$side}CaptionLanguage"] ?? '';
 
-        if (empty($lang) || !in_array($lang, self::VALID_CAPTION_LANGUAGES)) {
+        if ($lang === '' || !in_array($lang, self::VALID_CAPTION_LANGUAGES)) {
             $errors["{$side}CaptionLanguage"] = 'Please select a valid caption language.';
             return false;
         }
