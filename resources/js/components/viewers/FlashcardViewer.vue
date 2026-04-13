@@ -1483,11 +1483,13 @@ kbd {
 }
 
 .fc-answer {
+  flex: 1;
   font-size: 1.35rem;
   font-weight: 600;
   color: #212529;
   text-align: center;
-  width: 100%;
+  padding-right: 20px;
+  word-break: break-word;
 }
 
 .fc-two-col {

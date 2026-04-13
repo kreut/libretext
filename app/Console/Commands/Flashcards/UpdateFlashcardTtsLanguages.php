@@ -33,7 +33,9 @@ class UpdateFlashcardTtsLanguages extends Command
         $csvContents = str_replace("\r\n", "\n", $csvContents);
         $csvContents = str_replace("\r", "\n", $csvContents);
 
-        $lines = array_filter(explode("\n", $csvContents), fn($l) => trim($l) !== '');
+        $lines = array_filter(explode("\n", $csvContents), function ($l) {
+            return trim($l) !== '';
+        });
         $lines = array_values($lines);
 
         if (count($lines) < 2) {
