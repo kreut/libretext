@@ -44,8 +44,7 @@ class UpdateFlashcardTtsLanguages extends Command
         }
 
         // ── Parse CSV into a map: revision_id => ['front' => lang, 'back' => lang] ──
-        $header = str_getcsv(array_shift($lines));
-
+        $header = array_map('trim', str_getcsv(array_shift($lines)));
         $colIndex = array_flip($header);
         $required = ['question_id', 'revision_id', 'side', 'assigned_language'];
         foreach ($required as $col) {
@@ -60,8 +59,15 @@ class UpdateFlashcardTtsLanguages extends Command
         $revisionLanguages = [];
         $noRevisionLanguages = [];
 
-        foreach ($lines as $line) {
-            $row = array_map('trim', str_getcsv($line));
+        $handle = fopen('php://memory', 'r+');
+        fwrite($handle, $csvContents);
+        rewind($handle);
+
+        $header = array_map('trim', fgetcsv($handle));
+        $colIndex = array_flip($header);
+
+        while (($row = fgetcsv($handle)) !== false) {
+            $row = array_map('trim', $row);
             $questionId = (int)($row[$colIndex['question_id']] ?? 0);
             $revisionIdRaw = ($row[$colIndex['revision_id']] ?? '');
             $side = ($row[$colIndex['side']] ?? '');
@@ -81,6 +87,7 @@ class UpdateFlashcardTtsLanguages extends Command
             }
 
             $revisionId = (int)$revisionIdRaw;
+            $this->line($revisionId);
             if (!isset($revisionLanguages[$revisionId])) {
                 $revisionLanguages[$revisionId] = ['question_id' => $questionId];
             }
