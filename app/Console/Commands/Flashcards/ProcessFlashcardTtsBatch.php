@@ -45,30 +45,64 @@ class ProcessFlashcardTtsBatch extends Command
             ->unique()
             ->toArray();
 
-        $skipIds = array_unique(array_merge($doneRevisionIds, $processingRevisionIds));
+        $skipRevisionIds = array_unique(array_merge($doneRevisionIds, $processingRevisionIds));
 
+        // ── Questions with revisions ─────────────────────────────────────────
         $query = DB::table('question_revisions')
             ->where('qti_json_type', 'flashcard')
             ->orderBy('id');
 
-        if (!empty($skipIds)) {
-            $query->whereNotIn('id', $skipIds);
+        if (!empty($skipRevisionIds)) {
+            $query->whereNotIn('id', $skipRevisionIds);
         }
 
         $revisions = $query->limit($batchSize)->get(['id', 'question_id']);
 
-        if ($revisions->isEmpty()) {
-            $this->line('No pending flashcard revisions found.');
+        // ── Questions without any revisions ──────────────────────────────────
+        // Fill remaining batch slots with revision-less flashcard questions
+        // that haven't been successfully processed yet (log uses question_id,
+        // revision_id = null for these).
+        $remainingSlots = $batchSize - $revisions->count();
+
+        $noRevisionQuestions = collect();
+        if ($remainingSlots > 0) {
+            $doneNoRevisionQuestionIds = DB::table('flashcard_ai_audio_logs')
+                ->where('job_type', 'tts')
+                ->whereIn('status', ['success', 'processing'])
+                ->whereNull('question_revision_id')
+                ->pluck('question_id')
+                ->unique()
+                ->toArray();
+
+            // Questions that have no revisions at all
+            $noRevisionQuestions = DB::table('questions')
+                ->where('qti_json_type', 'flashcard')
+                ->whereNotExists(function ($q) {
+                    $q->select(DB::raw(1))
+                        ->from('question_revisions')
+                        ->whereColumn('question_revisions.question_id', 'questions.id');
+                })
+                ->when(!empty($doneNoRevisionQuestionIds), function ($q) use ($doneNoRevisionQuestionIds) {
+                    $q->whereNotIn('id', $doneNoRevisionQuestionIds);
+                })
+                ->orderBy('id')
+                ->limit($remainingSlots)
+                ->get(['id as question_id']);
+        }
+
+        if ($revisions->isEmpty() && $noRevisionQuestions->isEmpty()) {
+            $this->line('No pending flashcard questions found.');
             return 0;
         }
 
-        $total     = $revisions->count();
+        $total     = $revisions->count() + $noRevisionQuestions->count();
         $succeeded = 0;
         $failed    = 0;
         $times     = [];
 
-        $this->line("Processing {$total} revision(s)...\n");
+        $this->line("Processing {$total} question(s)...\n");
 
+        // ── Process revisions ────────────────────────────────────────────────
         foreach ($revisions as $i => $revision) {
             $num = $i + 1;
             $this->line("[{$num}/{$total}] Revision {$revision->id} (question {$revision->question_id})...");
@@ -77,6 +111,28 @@ class ProcessFlashcardTtsBatch extends Command
 
             try {
                 $job = new GenerateFlashcardTTS($revision->question_id, $revision->id);
+                $job->handle();
+                $elapsed = round(microtime(true) - $start, 1);
+                $times[] = $elapsed;
+                $this->line("  ✓ Done ({$elapsed}s)");
+                $succeeded++;
+            } catch (Exception $e) {
+                $elapsed = round(microtime(true) - $start, 1);
+                $this->line("  ✗ Failed ({$elapsed}s): " . $e->getMessage());
+                $failed++;
+            }
+        }
+
+        // ── Process revision-less questions ──────────────────────────────────
+        $offset = $revisions->count();
+        foreach ($noRevisionQuestions as $i => $question) {
+            $num = $offset + $i + 1;
+            $this->line("[{$num}/{$total}] Question {$question->question_id} (no revision)...");
+
+            $start = microtime(true);
+
+            try {
+                $job = new GenerateFlashcardTTS($question->question_id, 0);
                 $job->handle();
                 $elapsed = round(microtime(true) - $start, 1);
                 $times[] = $elapsed;
