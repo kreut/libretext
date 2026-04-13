@@ -48,6 +48,16 @@ abstract class FlashcardAudioJob implements ShouldQueue
 
         if ($this->questionRevisionId) {
             $revision = QuestionRevision::find($this->questionRevisionId);
+            /*if ($revision  && $this->jobType() === 'tts'){
+          $revision_number =  $revision->revision_number;
+          $last_revision = QuestionRevision::where('question_id', $this->questionId)
+              ->where('revision_number',$revision_number-1)
+              ->first();
+          if ($last_revision){
+             // $last_revision_id = $
+          }
+         dd("Question:" . $this->questionId . ' Revision:' .$this->questionRevisionId);
+      }*/
             $qtiJson = $revision ? $revision->qti_json : $question->qti_json;
         } else {
             $revision = null;
