@@ -183,12 +183,12 @@ class QuestionController extends Controller
         }
         $revision = QuestionRevision::where('question_id', $question->id)
             ->orderByDesc('id')
-            ->firstOrFail();
-
+            ->first();
+        $revision_id = $revision ? $revision->id : 0;
         $side = $request->input('side');
-        $dir = "uploads/flashcard-tts/{$question->id}/{$revision->id}";
+        $dir = "uploads/flashcard-tts/{$question->id}/$revision_id";
         $filename = "{$side}.mp3";
-        $qti_json = json_decode($revision->qti_json, 1);
+        $qti_json = $revision_id ? json_decode($revision->qti_json, 1) : json_decode($question->qti_json, 1);
         $s3Key = "$dir/$filename";
         try {
             Storage::disk('s3')->putFileAs(
@@ -202,8 +202,10 @@ class QuestionController extends Controller
             $qti_json['card'][$ttsKeyField] = $s3Key;
             $qti_json = json_encode($qti_json);
             DB::beginTransaction();
-            $revision->qti_json = $qti_json;
-            $revision->save();
+            if ($revision) {
+                $revision->qti_json = $qti_json;
+                $revision->save();
+            }
             $question->qti_json = $qti_json;
             $question->save();
             DB::commit();
@@ -221,7 +223,7 @@ class QuestionController extends Controller
             }
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We could not delete the attachment.  Please contact support.";
+            $response['message'] = "We could not re-record the audio.  Please contact support.";
         }
         return $response;
     }
