@@ -63,7 +63,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('fix:BadTranscriptionQuestionMediaUploads')->everyThirtyMinutes();
             $schedule->command('fix:DiscussionComment502Errors')->everyFiveMinutes();
             $schedule->command('remove:pendingCourseInvitationsFromClosedCourses')->daily();
-            $schedule->command('flashcards:process-tts-batch --batch=50')->everyFiveMinutes();
+            //$schedule->command('flashcards:process-tts-batch --batch=50')->everyFiveMinutes();
             $schedule->command('auto:registerAndEnrollForNonLMSOnlyCourse')->daily();
             $schedule->command('send:frameworkItemsByQuestionUpdates')->daily();
             $schedule->command('notify:failedTranscriptions')->hourly();
