@@ -7,6 +7,7 @@ use App\Question;
 use App\QuestionRevision;
 use Exception;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -37,6 +38,7 @@ abstract class FlashcardAudioJob implements ShouldQueue
 
     /**
      * Execute the job.
+     * @throws FileNotFoundException
      */
     public function handle()
     {
@@ -45,25 +47,23 @@ abstract class FlashcardAudioJob implements ShouldQueue
         if (!$question || $question->qti_json_type !== 'flashcard') {
             return;
         }
-
+        $s3_keys_of_previously_generated_audio = [];
         if ($this->questionRevisionId) {
             $revision = QuestionRevision::find($this->questionRevisionId);
-            /*if ($revision  && $this->jobType() === 'tts'){
-          $revision_number =  $revision->revision_number;
-          $last_revision = QuestionRevision::where('question_id', $this->questionId)
-              ->where('revision_number',$revision_number-1)
-              ->first();
-          if ($last_revision){
-             // $last_revision_id = $
-          }
-         dd("Question:" . $this->questionId . ' Revision:' .$this->questionRevisionId);
-      }*/
+            if ($revision && $this->jobType() === 'tts') {
+                $revision_number = $revision->revision_number;
+                $last_revision = QuestionRevision::where('question_id', $this->questionId)
+                    ->where('revision_number', $revision_number - 1)
+                    ->first();
+                if ($last_revision) {
+                    $s3_keys_of_previously_generated_audio = $this->_s3KeysOfPreviouslyGeneratedAudio($question, $last_revision, $this->questionRevisionId);
+                }
+            }
             $qtiJson = $revision ? $revision->qti_json : $question->qti_json;
         } else {
             $revision = null;
             $qtiJson = $question->qti_json;
         }
-
         $qti = json_decode($qtiJson, true);
         $card = $qti['card'] ?? [];
         $sides = $this->getSidesToProcess($card);
@@ -76,7 +76,7 @@ abstract class FlashcardAudioJob implements ShouldQueue
             if ($this->jobType() === 'tts' && in_array($card["{$side}Type"], ['text_only', 'text_media'])) {
                 $language = $card["{$side}TTSLanguage"];
             }
-            $s3Key = $this->processForSide($side, $payload, $language);
+            $s3Key = $s3_keys_of_previously_generated_audio[$side] ?? $this->processForSide($side, $payload, $language);
             if ($s3Key) {
                 $this->writeS3KeyToQtiJson($question, $revision, $side, $s3Key);
             }
@@ -171,5 +171,47 @@ abstract class FlashcardAudioJob implements ShouldQueue
                 'created_at' => now(),
             ]
         );
+    }
+
+    /**
+     * @param $question
+     * @param $last_revision
+     * @param $current_revision_id
+     * @return array
+     * @throws FileNotFoundException
+     */
+    private function _s3KeysOfPreviouslyGeneratedAudio($question, $last_revision, $current_revision_id): array
+    {
+        $s3_keys = [];
+        $question_qti_json = json_decode($question->qti_json, 1);
+       //Log::info($question_qti_json);
+        //Log::info($last_revision->revision_number);
+        $last_revision_qti_json = json_decode($last_revision->qti_json, 1);
+        //Log::info($last_revision_qti_json);
+        //Log::info($question->id . ' ' . $last_revision->id);
+        $question_card = $question_qti_json['card'];
+        $last_revision_card = $last_revision_qti_json['card'];
+
+        foreach (['front', 'back'] as $side) {
+            //Log::info($side);
+            $word_to_match = $side === 'front' ? 'term' : 'answer';
+            if ($question_card[$word_to_match] === $last_revision_card[$word_to_match]
+                && str_contains($question_card["{$side}Type"], 'text')
+                && $question_card["{$side}TTSLanguage"] === $last_revision_card["{$side}TTSLanguage"]) {
+                $s3_key = $last_revision->revision_number === 0
+                    ? "uploads/flashcard-tts/$question->id/0/$side.mp3"
+                    : "uploads/flashcard-tts/$question->id/$last_revision->id/$side.mp3";
+                //Log::info("s3 key: " . $s3_key);
+                if (Storage::disk('s3')->exists($s3_key)) {
+                    $new_s3_key = "uploads/flashcard-tts/$question->id/$current_revision_id/$side.mp3";
+                    //Log::info("new key". $new_s3_key);
+                    $s3_keys[$side] = $new_s3_key;
+                    $contents = Storage::disk('s3')->get($s3_key);
+                    Storage::disk('s3')->put($new_s3_key, $contents);
+                    //Log::info("New file exists: " . (Storage::disk('s3')->exists($new_s3_key) ? 'true' : 'false'));
+                }
+            }
+        }
+        return $s3_keys;
     }
 }

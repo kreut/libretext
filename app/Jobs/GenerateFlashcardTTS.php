@@ -6,6 +6,7 @@ use App\Exceptions\Handler;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class GenerateFlashcardTTS extends FlashcardAudioJob
@@ -163,4 +164,5 @@ class GenerateFlashcardTTS extends FlashcardAudioJob
 
         return $text;
     }
+
 }
