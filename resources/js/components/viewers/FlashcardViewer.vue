@@ -438,7 +438,7 @@
           <FlashcardAudioRecorder
             v-if="isTtsEligible(currentCard.frontType)"
             side="front"
-            :question-id="currentCard.question_id"
+            :question-id="questionId"
             :text="currentCard.term || ''"
             :tts-url="effectiveFrontTtsUrl"
             @updated="onTtsUpdated"
@@ -446,7 +446,7 @@
           <FlashcardAudioRecorder
             v-if="isTtsEligible(currentCard.backType)"
             side="back"
-            :question-id="currentCard.question_id"
+            :question-id="questionId"
             :text="currentCard.answer || ''"
             :tts-url="effectiveBackTtsUrl"
             @updated="onTtsUpdated"
@@ -543,6 +543,7 @@ export default {
   components: { CardMedia, FlashcardAudioRecorder },
   props: {
     assessmentType: { type: String, default: '' },
+    questionId: { type: Number, default: 0 },
     initialQuestionId: { type: Number, default: 0 },
     card: { type: Object, default: null },
     cards: { type: Array, default: () => [] },
@@ -733,8 +734,9 @@ export default {
     async currentCard (card) {
       this.canOverrideAudio = false
       this.currentCardQuestionId = card.question_id
-      if (this.currentCardQuestionId && this.assessmentType === 'flashcard') {
-        this.canOverrideAudio = await this.canEdit(this.isAdmin, this.user, { id: this.currentCardQuestionId })
+      this.canOverrideAudio = false
+      if (this.questionId && !this.user.fake_student) {
+        this.canOverrideAudio = await this.canEdit(this.isAdmin, this.user, { id: this.questionId })
       }
     },
     card () {
@@ -771,8 +773,8 @@ export default {
         })
       }
     }
-  },
-
+  }
+  ,
   async mounted () {
     window.addEventListener('keydown', this.handleKeyNav)
     if (typeof this.effectiveCards[0] === 'undefined') return
@@ -781,13 +783,13 @@ export default {
       this.loadStudentOverrides()
     }
     this.initialize()
-  },
+  }
+  ,
 
   beforeDestroy () {
     this.stopAutoplay()
     window.removeEventListener('keydown', this.handleKeyNav)
   },
-
   methods: {
     canEdit,
     syncCardHeight () {
@@ -796,7 +798,8 @@ export default {
         const back = this.$refs.backFace
         if (!front || !back) return
         const isFreeForm = this.currentCard.frontType === 'free_form' || this.currentCard.backType === 'free_form'
-        const hasMedia = this.currentCard.frontType === 'media' || this.currentCard.backType === 'media'
+        const hasMedia = ['text_media', 'media'].includes(this.currentCard.frontType) || ['text_media', 'media'].includes(this.currentCard.backType)
+
         const scene = this.$el.querySelector('.fc-scene')
         if (!scene) return
         if (isFreeForm || hasMedia) {
@@ -813,14 +816,17 @@ export default {
           scene.style.minHeight = ''
         }
       })
-    },
+    }
+    ,
 
     applyHeight (front, back, scene) {
       scene.style.minHeight = Math.max(front.scrollHeight, back.scrollHeight) + 'px'
-    },
+    }
+    ,
     isTtsEligible (type) {
       return ['text_only', 'text_media'].includes(type)
-    },
+    }
+    ,
 
     onTtsUpdated ({ side, ttsUrl }) {
       const id = this.currentCard.question_id
@@ -831,7 +837,8 @@ export default {
       if (this.orderedCards[this.currentIndex]) {
         this.$set(this.orderedCards[this.currentIndex], side === 'front' ? 'frontTtsUrl' : 'backTtsUrl', ttsUrl)
       }
-    },
+    }
+    ,
 
     onAutoplaySecondsKeydown (e) {
       if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
@@ -842,7 +849,8 @@ export default {
       const input = e.target
       const hasSelection = input.selectionStart !== input.selectionEnd
       if (!hasSelection && String(this.studentSettingsForm.autoplay_seconds || '').length >= 2) e.preventDefault()
-    },
+    }
+    ,
 
     onAutoplaySecondsInput (val) {
       if (val === '' || val === null) return
@@ -856,7 +864,8 @@ export default {
           this.studentSettingsForm.autoplay_seconds = 99
         })
       }
-    },
+    }
+    ,
 
     loadStudentOverrides () {
       if (!this.assignmentId) return
@@ -875,7 +884,8 @@ export default {
         }
       } catch (e) { /* ignore */
       }
-    },
+    }
+    ,
 
     initialize () {
       if (!this.initialized) this.initDeck()
@@ -890,7 +900,8 @@ export default {
       }
       this.$nextTick(() => this.emitControlsState())
       this.initialized = true
-    },
+    }
+    ,
 
     async getQuestionUsageFlashcardSettings () {
       if (!this.currentCardQuestionId) return
@@ -921,7 +932,8 @@ export default {
         console.error(error)
         this.$noty.error(error.message)
       }
-    },
+    }
+    ,
     initDeck () {
       this.orderedCards = [...this.effectiveCards]
       console.error(this.orderedCards)
@@ -943,7 +955,8 @@ export default {
       this.cardResults = results
       this.selfReport = this.cardResults[0] || null
       if (this.shuffleOn && this.user.role !== 2) this.applyOrder()
-    },
+    }
+    ,
 
     applyOrder () {
       if (this.shuffleOn) {
@@ -956,7 +969,8 @@ export default {
       } else {
         this.orderedCards = this.effectiveCards.map((c, i) => ({ ...c, _deckIndex: i }))
       }
-    },
+    }
+    ,
 
     toggleShuffle () {
       this.shuffleOn = !this.shuffleOn
@@ -964,7 +978,8 @@ export default {
       this.currentIndex = 0
       this.isFlipped = false
       this.emitControlsState()
-    },
+    }
+    ,
 
     goTo (index) {
       if (index < 0 || index >= this.orderedCards.length) return
@@ -975,7 +990,8 @@ export default {
       this.selfReport = this.cardResults[index] || null
       if (this.autoplayActive) this.resumeAutoplay()
       if (this.orderedCards[index].question_id) this.$emit('cardChanged', this.orderedCards[index].question_id)
-    },
+    }
+    ,
 
     handleKeyNav (e) {
       const tag = document.activeElement && document.activeElement.tagName
@@ -1002,7 +1018,8 @@ export default {
         e.preventDefault()
         this.submitSelfReport('incorrect')
       }
-    },
+    }
+    ,
 
     toggleTts (side) {
       const audio = this.$refs.ttsAudio
@@ -1022,7 +1039,8 @@ export default {
         this.ttsPlayingSide = null
       })
       this.ttsPlayingSide = side
-    },
+    }
+    ,
 
     stopTts () {
       const a = this.$refs.ttsAudio
@@ -1031,10 +1049,12 @@ export default {
         a.currentTime = 0
       }
       this.ttsPlayingSide = null
-    },
+    }
+    ,
     localStorageKey () {
       return `flashcard_settings_${this.assignmentId}`
-    },
+    }
+    ,
 
     handleCardClick () {
       this.isFlipped = !this.isFlipped
@@ -1047,12 +1067,14 @@ export default {
       } else {
         this.stopAutoplay()
       }
-    },
+    }
+    ,
 
     toggleHint () {
       if (!this.effectiveHintText) return
       this.hintVisible = !this.hintVisible
-    },
+    }
+    ,
 
     toggleAutoplay () {
       if (this.autoplayActive) {
@@ -1063,7 +1085,8 @@ export default {
         this.resumeAutoplay()
       }
       this.emitControlsState()
-    },
+    }
+    ,
 
     resumeAutoplay () {
       this.stopAutoplay()
@@ -1074,7 +1097,8 @@ export default {
       }
       this.autoplayCountdown = this.effectiveAutoplaySeconds
       this.tickAutoplay()
-    },
+    }
+    ,
 
     tickAutoplay () {
       this.autoplayTimer = setTimeout(() => {
@@ -1091,7 +1115,8 @@ export default {
           this.autoAdvance()
         }
       }, 1000)
-    },
+    }
+    ,
 
     autoAdvance () {
       if (this.currentIndex < this.orderedCards.length - 1) {
@@ -1105,18 +1130,21 @@ export default {
         this.autoplayActive = false
         if (!this.isInstructor && !this.previewingQuestion) this.showSummary = true
       }
-    },
+    }
+    ,
 
     startAutoplay () {
       this.autoplayActive = true
       this.resumeAutoplay()
-    },
+    }
+    ,
     stopAutoplay () {
       if (this.autoplayTimer) {
         clearTimeout(this.autoplayTimer)
         this.autoplayTimer = null
       }
-    },
+    }
+    ,
 
     submitSelfReport (result) {
       this.stopAutoplay()
@@ -1126,7 +1154,8 @@ export default {
       this.$set(this.cardResults, this.currentIndex, result)
       this.submitting = true
       this.$emit('selfReported', { result, questionId: this.currentCard.question_id })
-    },
+    }
+    ,
 
     onSubmitResult (success) {
       this.submitting = false
@@ -1142,11 +1171,13 @@ export default {
       } else if (this.currentIndex < this.orderedCards.length - 1) {
         this.goTo(this.currentIndex + 1)
       }
-    },
+    }
+    ,
 
     getStudentResponse () {
       return this.selfReport
-    },
+    }
+    ,
 
     reviewMissed () {
       this.showSummary = false
@@ -1160,18 +1191,20 @@ export default {
       this.isFlipped = false
       this.cardResults = {}
       this.selfReport = null
-    },
+    }
+    ,
 
     async openSettings () {
       await this.getQuestionUsageFlashcardSettings()
       this.$bvModal.show(`modal-flashcard-card-settings-${this.uuid}`)
-    },
+    }
+    ,
     initSettings () {
-    },
+    }
+    ,
     resetSettingsForm () {
       this.settingsForm = { show_hint: false, captions: false, text_to_speech: false, autoplay_seconds: null }
     },
-
     async saveSettings () {
       const payload = { ...this.settingsForm }
       if (!payload.autoplay_seconds) payload.autoplay_seconds = null
@@ -1187,7 +1220,8 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    },
+    }
+    ,
 
     emitControlsState () {
       this.$emit('controlsStateChanged', {
@@ -1200,17 +1234,21 @@ export default {
         isInstructor: this.isInstructor,
         hasStudentOverridableSettings: this.hasStudentOverridableSettings
       })
-    },
+    }
+    ,
 
     externalToggleAutoplay () {
       this.toggleAutoplay()
-    },
+    }
+    ,
     externalToggleShuffle () {
       this.toggleShuffle()
-    },
+    }
+    ,
     externalOpenSettings () {
       this.isInstructor ? this.openSettings() : this.openStudentSettings()
-    },
+    }
+    ,
 
     openStudentSettings () {
       const r = this.resolvedSettings
@@ -1223,7 +1261,8 @@ export default {
         captions: r.captions.enabled
       }
       this.$bvModal.show(`modal-flashcard-student-settings-${this.uuid}`)
-    },
+    }
+    ,
 
     saveStudentSettings () {
       const s = this.flashcardSettings
