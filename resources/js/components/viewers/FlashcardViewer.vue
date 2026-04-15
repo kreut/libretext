@@ -13,7 +13,7 @@
         <b-form-group v-if="flashcardSettings" label-cols-sm="6" label-size="sm" label-align="right">
           <template #label>
             Show Hint
-            <QuestionCircleTooltip :id="'fc-card-show-hint-tooltip'"/>
+            <QuestionCircleTooltip :id="'fc-card-show-hint-tooltip'" />
             <b-tooltip target="fc-card-show-hint-tooltip" delay="250" triggers="hover focus">
               Override whether the hint button is shown for this card.
             </b-tooltip>
@@ -26,7 +26,7 @@
         <b-form-group v-if="flashcardSettings" label-cols-sm="6" label-size="sm" label-align="right">
           <template #label>
             Text-to-Speech
-            <QuestionCircleTooltip :id="'fc-card-tts-tooltip'"/>
+            <QuestionCircleTooltip :id="'fc-card-tts-tooltip'" />
             <b-tooltip target="fc-card-tts-tooltip" delay="250" triggers="hover focus">
               Override whether text-to-speech is available for this card.
             </b-tooltip>
@@ -39,7 +39,7 @@
         <b-form-group v-if="flashcardSettings" label-cols-sm="6" label-size="sm" label-align="right">
           <template #label>
             Captions
-            <QuestionCircleTooltip :id="'fc-card-captions-tooltip'"/>
+            <QuestionCircleTooltip :id="'fc-card-captions-tooltip'" />
             <b-tooltip target="fc-card-captions-tooltip" delay="250" triggers="hover focus">
               Override whether captions are shown for this card.
             </b-tooltip>
@@ -76,7 +76,7 @@
         >
           <template #label>
             Autoplay
-            <QuestionCircleTooltip :id="`fc-student-autoplay-tooltip-${uuid}`"/>
+            <QuestionCircleTooltip :id="`fc-student-autoplay-tooltip-${uuid}`" />
             <b-tooltip :target="`fc-student-autoplay-tooltip-${uuid}`" delay="250" triggers="hover focus">
               Automatically flips each card and advances to the next after the set number of seconds.
             </b-tooltip>
@@ -106,7 +106,7 @@
         >
           <template #label>
             Random Shuffle
-            <QuestionCircleTooltip :id="`fc-student-shuffle-tooltip-${uuid}`"/>
+            <QuestionCircleTooltip :id="`fc-student-shuffle-tooltip-${uuid}`" />
             <b-tooltip :target="`fc-student-shuffle-tooltip-${uuid}`" delay="250" triggers="hover focus">
               Randomizes the order of cards each time you start or restart the deck.
             </b-tooltip>
@@ -120,7 +120,7 @@
         >
           <template #label>
             Show Hint
-            <QuestionCircleTooltip :id="`fc-student-hint-tooltip-${uuid}`"/>
+            <QuestionCircleTooltip :id="`fc-student-hint-tooltip-${uuid}`" />
             <b-tooltip :target="`fc-student-hint-tooltip-${uuid}`" delay="250" triggers="hover focus">
               Shows a hint before flipping the card.
             </b-tooltip>
@@ -134,7 +134,7 @@
         >
           <template #label>
             Text-to-Speech
-            <QuestionCircleTooltip :id="`fc-student-tts-tooltip-${uuid}`"/>
+            <QuestionCircleTooltip :id="`fc-student-tts-tooltip-${uuid}`" />
             <b-tooltip :target="`fc-student-tts-tooltip-${uuid}`" delay="250" triggers="hover focus">
               Plays an audio pronunciation of the card content.
             </b-tooltip>
@@ -148,7 +148,7 @@
         >
           <template #label>
             Captions
-            <QuestionCircleTooltip :id="`fc-student-captions-tooltip-${uuid}`"/>
+            <QuestionCircleTooltip :id="`fc-student-captions-tooltip-${uuid}`" />
             <b-tooltip :target="`fc-student-captions-tooltip-${uuid}`" delay="250" triggers="hover focus">
               Shows captions for audio and video content.
             </b-tooltip>
@@ -164,26 +164,26 @@
           </div>
           <table class="fc-keyboard-table">
             <tbody>
-            <tr>
-              <td><kbd>Space</kbd> / <kbd>Enter</kbd></td>
-              <td>Flip card</td>
-            </tr>
-            <tr>
-              <td><kbd>&#8594;</kbd></td>
-              <td>Next card</td>
-            </tr>
-            <tr>
-              <td><kbd>&#8592;</kbd></td>
-              <td>Previous card</td>
-            </tr>
-            <tr>
-              <td><kbd>&#8593;</kbd></td>
-              <td>Mark Correct (after flip)</td>
-            </tr>
-            <tr>
-              <td><kbd>&#8595;</kbd></td>
-              <td>Mark Incorrect (after flip)</td>
-            </tr>
+              <tr>
+                <td><kbd>Space</kbd> / <kbd>Enter</kbd></td>
+                <td>Flip card</td>
+              </tr>
+              <tr>
+                <td><kbd>&#8594;</kbd></td>
+                <td>Next card</td>
+              </tr>
+              <tr>
+                <td><kbd>&#8592;</kbd></td>
+                <td>Previous card</td>
+              </tr>
+              <tr>
+                <td><kbd>&#8593;</kbd></td>
+                <td>Mark Correct (after flip)</td>
+              </tr>
+              <tr>
+                <td><kbd>&#8595;</kbd></td>
+                <td>Mark Incorrect (after flip)</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -201,13 +201,13 @@
     <!-- ─── Main session layout ─────────────────────────────────────────────── -->
     <div class="fc-session">
       <div v-if="orderedCards.length > 1" class="fc-progress-wrap">
-        <div class="fc-progress-bar" :style="{ width: progressPct + '%' }"/>
+        <div class="fc-progress-bar" :style="{ width: progressPct + '%' }" />
       </div>
 
       <div v-if="orderedCards.length > 1" class="fc-header">
         <span class="fc-counter">Card {{ currentIndex + 1 }} <span class="fc-counter-of">of {{
-            cards.length
-          }}</span></span>
+          cards.length
+        }}</span></span>
       </div>
 
       <div v-if="orderedCards.length > 1" aria-live="polite" aria-atomic="true" class="sr-only">
@@ -251,12 +251,12 @@
                     :aria-label="ttsPlayingSide === 'front' ? 'Stop audio' : 'Play pronunciation'" tabindex="0"
                     @click.stop="toggleTts('front')"
             >
-              <b-icon :icon="ttsPlayingSide === 'front' ? 'stop-circle-fill' : 'mic-fill'" aria-hidden="true"/>
+              <b-icon :icon="ttsPlayingSide === 'front' ? 'stop-circle-fill' : 'mic-fill'" aria-hidden="true" />
             </button>
           </div>
           <div class="fc-face-content">
             <template v-if="currentCard.frontType === 'free_form'">
-              <div class="fc-rich" v-html="currentCard.front"/>
+              <div class="fc-rich" v-html="currentCard.front" />
             </template>
             <template v-else-if="currentCard.frontType === 'text_only'">
               <div class="fc-term">
@@ -269,13 +269,13 @@
                   {{ currentCard.term }}
                 </div>
                 <div :class="currentCard.frontMediaType !== 'audio' ? 'fc-media' : ''">
-                  <CardMedia :card="currentCard" side="front" @click.native.stop/>
+                  <CardMedia :card="currentCard" side="front" @click.native.stop />
                 </div>
               </div>
             </template>
             <template v-else-if="currentCard.frontType === 'media'">
               <div class="fc-media-center">
-                <CardMedia :card="currentCard" side="front" @click.native.stop/>
+                <CardMedia :card="currentCard" side="front" @click.native.stop />
               </div>
             </template>
           </div>
@@ -284,7 +284,7 @@
                  aria-atomic="true" @click.stop
             >
               <button type="button" class="fc-hint-close" aria-label="Close hint" @click.stop="hintVisible = false">
-                <b-icon icon="x" aria-hidden="true"/>
+                <b-icon icon="x" aria-hidden="true" />
               </button>
               <span class="fc-hint-label" aria-hidden="true">Hint</span>
               <span class="fc-hint-text" aria-hidden="true">{{ effectiveHintText }}</span>
@@ -300,12 +300,12 @@
                     :aria-label="ttsPlayingSide === 'back' ? 'Stop audio' : 'Play pronunciation'" tabindex="0"
                     @click.stop="toggleTts('back')"
             >
-              <b-icon :icon="ttsPlayingSide === 'back' ? 'stop-circle-fill' : 'mic-fill'" aria-hidden="true"/>
+              <b-icon :icon="ttsPlayingSide === 'back' ? 'stop-circle-fill' : 'mic-fill'" aria-hidden="true" />
             </button>
           </div>
           <div class="fc-face-content">
             <template v-if="currentCard.backType === 'free_form'">
-              <div class="fc-rich" v-html="currentCard.back"/>
+              <div class="fc-rich" v-html="currentCard.back" />
             </template>
             <template v-else-if="currentCard.backType === 'text_only'">
               <div class="fc-answer">
@@ -318,13 +318,13 @@
                   {{ currentCard.answer }}
                 </div>
                 <div :class="currentCard.backMediaType !== 'audio' ? 'fc-media' : ''">
-                  <CardMedia :card="currentCard" side="back" @click.native.stop/>
+                  <CardMedia :card="currentCard" side="back" @click.native.stop />
                 </div>
               </div>
             </template>
             <template v-else-if="currentCard.backType === 'media'">
               <div class="fc-media-center">
-                <CardMedia :card="currentCard" side="back" @click.native.stop/>
+                <CardMedia :card="currentCard" side="back" @click.native.stop />
               </div>
             </template>
           </div>
@@ -336,7 +336,7 @@
                   class="fc-nav-btn" :aria-label="`Previous card, card ${currentIndex} of ${orderedCards.length}`"
                   @click="goTo(currentIndex - 1)"
         >
-          <b-icon icon="chevron-left" aria-hidden="true"/>
+          <b-icon icon="chevron-left" aria-hidden="true" />
           Prev
         </b-button>
 
@@ -349,16 +349,16 @@
                       :disabled="submitting" :aria-pressed="selfReport === 'correct' ? 'true' : 'false'"
                       @click="submitSelfReport('correct')"
             >
-              <b-spinner v-if="submitting && selfReport === 'correct'" small class="mr-1" aria-hidden="true"/>
-              <b-icon v-else icon="check-circle-fill" class="mr-1" aria-hidden="true"/>
+              <b-spinner v-if="submitting && selfReport === 'correct'" small class="mr-1" aria-hidden="true" />
+              <b-icon v-else icon="check-circle-fill" class="mr-1" aria-hidden="true" />
               Correct
             </b-button>
             <b-button :variant="selfReport === 'incorrect' ? 'danger' : 'outline-danger'" class="fc-report-btn"
                       :disabled="submitting" :aria-pressed="selfReport === 'incorrect' ? 'true' : 'false'"
                       @click="submitSelfReport('incorrect')"
             >
-              <b-spinner v-if="submitting && selfReport === 'incorrect'" small class="mr-1" aria-hidden="true"/>
-              <b-icon v-else icon="x-circle-fill" class="mr-1" aria-hidden="true"/>
+              <b-spinner v-if="submitting && selfReport === 'incorrect'" small class="mr-1" aria-hidden="true" />
+              <b-icon v-else icon="x-circle-fill" class="mr-1" aria-hidden="true" />
               Incorrect
             </b-button>
           </div>
@@ -381,7 +381,7 @@
             />
           </div>
         </template>
-        <div v-else-if="orderedCards.length <= 1" class="fc-dots"/>
+        <div v-else-if="orderedCards.length <= 1" class="fc-dots" />
 
         <b-button v-if="orderedCards.length > 1" variant="outline-secondary"
                   :disabled="currentIndex === orderedCards.length - 1" class="fc-nav-btn"
@@ -389,7 +389,7 @@
                   @click="goTo(currentIndex + 1)"
         >
           Next
-          <b-icon icon="chevron-right" aria-hidden="true"/>
+          <b-icon icon="chevron-right" aria-hidden="true" />
         </b-button>
       </div>
 
@@ -405,22 +405,22 @@
             <div class="fc-stat fc-stat--correct" :aria-label="`${correctCount} correct`">
               <span class="fc-stat-num" aria-hidden="true">{{ correctCount }}</span><span class="fc-stat-lbl"
                                                                                           aria-hidden="true"
-            >Correct</span>
+              >Correct</span>
             </div>
             <div class="fc-stat fc-stat--incorrect" :aria-label="`${incorrectCount} incorrect`">
               <span class="fc-stat-num" aria-hidden="true">{{ incorrectCount }}</span><span class="fc-stat-lbl"
                                                                                             aria-hidden="true"
-            >Incorrect</span>
+              >Incorrect</span>
             </div>
             <div class="fc-stat fc-stat--unanswered" :aria-label="`${unansweredCount} skipped`">
               <span class="fc-stat-num" aria-hidden="true">{{ unansweredCount }}</span><span class="fc-stat-lbl"
                                                                                              aria-hidden="true"
-            >Skipped</span>
+              >Skipped</span>
             </div>
           </div>
           <div class="fc-summary-actions">
             <b-button variant="outline-danger" size="sm" :disabled="incorrectCount === 0" @click="reviewMissed">
-              <b-icon icon="arrow-repeat" aria-hidden="true"/>
+              <b-icon icon="arrow-repeat" aria-hidden="true" />
               Review Incorrect
             </b-button>
             <b-button variant="primary" size="sm" @click="showSummary = false">
@@ -431,7 +431,7 @@
       </transition>
       <div v-if="canOverrideAudio && currentCard.question_id && hasTtsEligibleSide" class="fc-recorder-panel">
         <div class="fc-recorder-panel-title">
-          <b-icon icon="mic-fill" class="mr-1" aria-hidden="true"/>
+          <b-icon icon="mic-fill" class="mr-1" aria-hidden="true" />
           Card Audio
         </div>
         <div class="fc-recorder-sides">
@@ -773,8 +773,7 @@ export default {
         })
       }
     }
-  }
-  ,
+  },
   async mounted () {
     window.addEventListener('keydown', this.handleKeyNav)
     if (typeof this.effectiveCards[0] === 'undefined') return
@@ -783,8 +782,7 @@ export default {
       this.loadStudentOverrides()
     }
     this.initialize()
-  }
-  ,
+  },
 
   beforeDestroy () {
     this.stopAutoplay()
@@ -816,17 +814,14 @@ export default {
           scene.style.minHeight = ''
         }
       })
-    }
-    ,
+    },
 
     applyHeight (front, back, scene) {
       scene.style.minHeight = Math.max(front.scrollHeight, back.scrollHeight) + 'px'
-    }
-    ,
+    },
     isTtsEligible (type) {
       return ['text_only', 'text_media'].includes(type)
-    }
-    ,
+    },
 
     onTtsUpdated ({ side, ttsUrl }) {
       const id = this.currentCard.question_id
@@ -837,8 +832,7 @@ export default {
       if (this.orderedCards[this.currentIndex]) {
         this.$set(this.orderedCards[this.currentIndex], side === 'front' ? 'frontTtsUrl' : 'backTtsUrl', ttsUrl)
       }
-    }
-    ,
+    },
 
     onAutoplaySecondsKeydown (e) {
       if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return
@@ -849,8 +843,7 @@ export default {
       const input = e.target
       const hasSelection = input.selectionStart !== input.selectionEnd
       if (!hasSelection && String(this.studentSettingsForm.autoplay_seconds || '').length >= 2) e.preventDefault()
-    }
-    ,
+    },
 
     onAutoplaySecondsInput (val) {
       if (val === '' || val === null) return
@@ -864,8 +857,7 @@ export default {
           this.studentSettingsForm.autoplay_seconds = 99
         })
       }
-    }
-    ,
+    },
 
     loadStudentOverrides () {
       if (!this.assignmentId) return
@@ -884,8 +876,7 @@ export default {
         }
       } catch (e) { /* ignore */
       }
-    }
-    ,
+    },
 
     initialize () {
       if (!this.initialized) this.initDeck()
@@ -900,8 +891,7 @@ export default {
       }
       this.$nextTick(() => this.emitControlsState())
       this.initialized = true
-    }
-    ,
+    },
 
     async getQuestionUsageFlashcardSettings () {
       if (!this.currentCardQuestionId) return
@@ -932,8 +922,7 @@ export default {
         console.error(error)
         this.$noty.error(error.message)
       }
-    }
-    ,
+    },
     initDeck () {
       this.orderedCards = [...this.effectiveCards]
       console.error(this.orderedCards)
@@ -955,8 +944,7 @@ export default {
       this.cardResults = results
       this.selfReport = this.cardResults[0] || null
       if (this.shuffleOn && this.user.role !== 2) this.applyOrder()
-    }
-    ,
+    },
 
     applyOrder () {
       if (this.shuffleOn) {
@@ -969,8 +957,7 @@ export default {
       } else {
         this.orderedCards = this.effectiveCards.map((c, i) => ({ ...c, _deckIndex: i }))
       }
-    }
-    ,
+    },
 
     toggleShuffle () {
       this.shuffleOn = !this.shuffleOn
@@ -978,20 +965,20 @@ export default {
       this.currentIndex = 0
       this.isFlipped = false
       this.emitControlsState()
-    }
-    ,
+    },
 
     goTo (index) {
       if (index < 0 || index >= this.orderedCards.length) return
       this.stopTts()
       this.stopAutoplay()
+      const scene = this.$el.querySelector('.fc-scene')
+      if (scene) scene.style.minHeight = ''
       this.currentIndex = index
       this.isFlipped = false
       this.selfReport = this.cardResults[index] || null
       if (this.autoplayActive) this.resumeAutoplay()
       if (this.orderedCards[index].question_id) this.$emit('cardChanged', this.orderedCards[index].question_id)
-    }
-    ,
+    },
 
     handleKeyNav (e) {
       const tag = document.activeElement && document.activeElement.tagName
@@ -1018,8 +1005,7 @@ export default {
         e.preventDefault()
         this.submitSelfReport('incorrect')
       }
-    }
-    ,
+    },
 
     toggleTts (side) {
       const audio = this.$refs.ttsAudio
@@ -1039,8 +1025,7 @@ export default {
         this.ttsPlayingSide = null
       })
       this.ttsPlayingSide = side
-    }
-    ,
+    },
 
     stopTts () {
       const a = this.$refs.ttsAudio
@@ -1049,12 +1034,10 @@ export default {
         a.currentTime = 0
       }
       this.ttsPlayingSide = null
-    }
-    ,
+    },
     localStorageKey () {
       return `flashcard_settings_${this.assignmentId}`
-    }
-    ,
+    },
 
     handleCardClick () {
       this.isFlipped = !this.isFlipped
@@ -1067,14 +1050,12 @@ export default {
       } else {
         this.stopAutoplay()
       }
-    }
-    ,
+    },
 
     toggleHint () {
       if (!this.effectiveHintText) return
       this.hintVisible = !this.hintVisible
-    }
-    ,
+    },
 
     toggleAutoplay () {
       if (this.autoplayActive) {
@@ -1085,8 +1066,7 @@ export default {
         this.resumeAutoplay()
       }
       this.emitControlsState()
-    }
-    ,
+    },
 
     resumeAutoplay () {
       this.stopAutoplay()
@@ -1097,8 +1077,7 @@ export default {
       }
       this.autoplayCountdown = this.effectiveAutoplaySeconds
       this.tickAutoplay()
-    }
-    ,
+    },
 
     tickAutoplay () {
       this.autoplayTimer = setTimeout(() => {
@@ -1115,8 +1094,7 @@ export default {
           this.autoAdvance()
         }
       }, 1000)
-    }
-    ,
+    },
 
     autoAdvance () {
       if (this.currentIndex < this.orderedCards.length - 1) {
@@ -1130,21 +1108,18 @@ export default {
         this.autoplayActive = false
         if (!this.isInstructor && !this.previewingQuestion) this.showSummary = true
       }
-    }
-    ,
+    },
 
     startAutoplay () {
       this.autoplayActive = true
       this.resumeAutoplay()
-    }
-    ,
+    },
     stopAutoplay () {
       if (this.autoplayTimer) {
         clearTimeout(this.autoplayTimer)
         this.autoplayTimer = null
       }
-    }
-    ,
+    },
 
     submitSelfReport (result) {
       this.stopAutoplay()
@@ -1154,8 +1129,7 @@ export default {
       this.$set(this.cardResults, this.currentIndex, result)
       this.submitting = true
       this.$emit('selfReported', { result, questionId: this.currentCard.question_id })
-    }
-    ,
+    },
 
     onSubmitResult (success) {
       this.submitting = false
@@ -1171,13 +1145,11 @@ export default {
       } else if (this.currentIndex < this.orderedCards.length - 1) {
         this.goTo(this.currentIndex + 1)
       }
-    }
-    ,
+    },
 
     getStudentResponse () {
       return this.selfReport
-    }
-    ,
+    },
 
     reviewMissed () {
       this.showSummary = false
@@ -1191,17 +1163,14 @@ export default {
       this.isFlipped = false
       this.cardResults = {}
       this.selfReport = null
-    }
-    ,
+    },
 
     async openSettings () {
       await this.getQuestionUsageFlashcardSettings()
       this.$bvModal.show(`modal-flashcard-card-settings-${this.uuid}`)
-    }
-    ,
+    },
     initSettings () {
-    }
-    ,
+    },
     resetSettingsForm () {
       this.settingsForm = { show_hint: false, captions: false, text_to_speech: false, autoplay_seconds: null }
     },
@@ -1220,8 +1189,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    }
-    ,
+    },
 
     emitControlsState () {
       this.$emit('controlsStateChanged', {
@@ -1234,21 +1202,17 @@ export default {
         isInstructor: this.isInstructor,
         hasStudentOverridableSettings: this.hasStudentOverridableSettings
       })
-    }
-    ,
+    },
 
     externalToggleAutoplay () {
       this.toggleAutoplay()
-    }
-    ,
+    },
     externalToggleShuffle () {
       this.toggleShuffle()
-    }
-    ,
+    },
     externalOpenSettings () {
       this.isInstructor ? this.openSettings() : this.openStudentSettings()
-    }
-    ,
+    },
 
     openStudentSettings () {
       const r = this.resolvedSettings
@@ -1261,8 +1225,7 @@ export default {
         captions: r.captions.enabled
       }
       this.$bvModal.show(`modal-flashcard-student-settings-${this.uuid}`)
-    }
-    ,
+    },
 
     saveStudentSettings () {
       const s = this.flashcardSettings
