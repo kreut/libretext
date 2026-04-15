@@ -269,13 +269,13 @@
                   {{ currentCard.term }}
                 </div>
                 <div :class="currentCard.frontMediaType !== 'audio' ? 'fc-media' : ''">
-                  <CardMedia :card="currentCard" side="front" @click.native.stop />
+                  <CardMedia :card="currentCard" side="front"  />
                 </div>
               </div>
             </template>
             <template v-else-if="currentCard.frontType === 'media'">
               <div class="fc-media-center">
-                <CardMedia :card="currentCard" side="front" @click.native.stop />
+                <CardMedia :card="currentCard" side="front"  />
               </div>
             </template>
           </div>
@@ -318,13 +318,13 @@
                   {{ currentCard.answer }}
                 </div>
                 <div :class="currentCard.backMediaType !== 'audio' ? 'fc-media' : ''">
-                  <CardMedia :card="currentCard" side="back" @click.native.stop />
+                  <CardMedia :card="currentCard" side="back"  />
                 </div>
               </div>
             </template>
             <template v-else-if="currentCard.backType === 'media'">
               <div class="fc-media-center">
-                <CardMedia :card="currentCard" side="back" @click.native.stop />
+                <CardMedia :card="currentCard" side="back"  />
               </div>
             </template>
           </div>
