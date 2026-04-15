@@ -321,7 +321,10 @@
         :header-html="getHeaderHtml('Modality')"
         body-class="pb-0 card-body-pl"
         class="mb-3"
-      >
+      ><b-alert :show="isFormativeCourse" alert>
+        This assignment is part of a formative course. It will automatically be marked as formative.
+      </b-alert>
+        <div v-show="!isFormativeCourse">
         <b-form-group
           v-show="!anonymousUsers"
           id="modality"
@@ -365,6 +368,7 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
+        </div>
         <div v-if="courseId && !assignmentId && assignmentTemplateOptions.length">
           <b-form-group
             label-for="assignment_template"
