@@ -659,6 +659,7 @@ class Assignment extends Model
                     continue;
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
+                $assignments_info[$key]['in_formative_course'] = $course->formative;
                 $assignments_info[$key]['lms'] = $course->lms;
                 $assignments_info[$key]['lms_only_entry'] = $course->lms_only_entry;
                 $assignments_info[$key]['lti_assignments_and_grades_url'] = $lti_assignments_and_grades_url_by_assignment_id[$assignment->id] ?? null;
@@ -1320,7 +1321,7 @@ class Assignment extends Model
     {
         $questionFileSubmissions = DB::table('submission_files')
             ->leftJoin('users', 'grader_id', '=', 'users.id')
-            ->whereIn('type', ['q', 'text', 'audio', 'discuss_it', 'no upload', 'forge','forge_iteration'])
+            ->whereIn('type', ['q', 'text', 'audio', 'discuss_it', 'no upload', 'forge', 'forge_iteration'])
             ->where('assignment_id', $this->id)
             ->select('submission_files.*', DB::raw('CONCAT(users.first_name," ", users.last_name) AS grader_name'))
             ->get();

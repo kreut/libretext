@@ -986,15 +986,24 @@ class CourseController extends Controller
                 ->join('schools', 'courses.school_id', '=', 'schools.id')
                 ->where('courses.user_id', $commons_user->id)
                 ->where('shown', 1)
-                ->select('courses.id',
+                ->select(
+                    'courses.id',
                     'courses.name AS name',
+                    'courses.formative',
                     'disciplines.name AS discipline_name',
                     'disciplines.id AS discipline_id',
                     'courses.public_description AS description',
                     'schools.name AS school',
                     DB::raw("CONCAT(users.first_name, ' ',users.last_name) AS instructor"),
                     'alpha',
-                    'anonymous_users')
+                    'anonymous_users',
+                    DB::raw("EXISTS (
+            SELECT 1
+            FROM assignments
+            WHERE assignments.course_id = courses.id
+              AND assignments.formative = 1
+        ) AS has_at_least_one_formative_assignment")
+                )
                 ->get();
             $response['commons_courses'] = $commons_courses;
             $response['type'] = 'success';
@@ -1132,7 +1141,17 @@ class CourseController extends Controller
                 case(true):
                     $public_courses = $course->where('public', 1)
                         ->where('user_id', $instructor->id)
-                        ->select('id', 'name')
+                        ->select(
+                            'id',
+                            'name',
+                            'formative',
+                            DB::raw("EXISTS (
+            SELECT 1
+            FROM assignments
+            WHERE assignments.course_id = courses.id
+              AND assignments.formative = 1
+        ) AS has_at_least_one_formative_assignment")
+                        )
                         ->orderBy('name')
                         ->get();
                     break;

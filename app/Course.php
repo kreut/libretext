@@ -937,13 +937,20 @@ class Course extends Model
             ->whereIn('courses.id', $public_courses_with_at_least_one_question)
             ->orWhereIn('courses.id', $commons_courses)
             ->select('courses.id',
+                'courses.formative',
                 'courses.name AS name',
                 'schools.name AS school',
                 'disciplines.id AS discipline_id',
                 'disciplines.name AS discipline_name',
                 'term',
                 'alpha',
-                DB::raw('CONCAT(first_name, " " , last_name) AS instructor'))
+                DB::raw('CONCAT(first_name, " " , last_name) AS instructor'),
+                DB::raw("EXISTS (
+            SELECT 1
+            FROM assignments
+            WHERE assignments.course_id = courses.id
+              AND assignments.formative = 1
+        ) AS has_at_least_one_formative_assignment"))
             ->orderBy('discipline_name')
             ->orderBy('name')
             ->get();
@@ -981,7 +988,13 @@ class Course extends Model
             WHERE co_instructors.course_id = courses.id
               AND co_instructors.user_id = {$user->id}
               AND co_instructors.status = 'accepted'
-        ) AS is_co_instructor")
+        ) AS is_co_instructor"),
+                        DB::raw("EXISTS (
+                SELECT 1
+                FROM assignments
+                WHERE assignments.course_id = courses.id
+                  AND assignments.formative = 1
+            ) AS has_at_least_one_formative_assignment")
                     )
                     ->join('course_orders', function ($join) use ($user) {
                         $join->on('course_orders.course_id', '=', 'courses.id')

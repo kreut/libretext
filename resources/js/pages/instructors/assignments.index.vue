@@ -578,6 +578,9 @@
         title="Import Assignment"
       >
         <b-container>
+          <b-alert :show="Boolean(course.formative)">
+            Only formative assignments and assignments from formative courses are available to import into this formative course.
+          </b-alert>
           <b-row class="pb-4">
             <b-form-select id="collections"
                            v-model="collection"
@@ -1046,7 +1049,6 @@
               >
                 New Assignment
               </b-button>
-              <span v-if="!course.formative">
                 <b-button v-if="(user && user.role === 2)"
                           class="mr-1"
                           size="sm"
@@ -1055,6 +1057,7 @@
                 >
                   Import Assignment
                 </b-button>
+                <span v-if="!course.formative">
                 <b-button
                   v-if="[2,4].includes(user.role)"
                   :class="(user && user.role === 4) ? 'float-right' : ''"
@@ -2134,7 +2137,11 @@ What assignment parameters??? */
           this.importableAssignmentOptions = [{ value: null, text: `Please choose an assignment` }]
           if (data.assignments) {
             for (let i = 0; i < data.assignments.length; i++) {
-              this.importableAssignmentOptions.push({ value: data.assignments[i].id, text: data.assignments[i].name })
+              const assignment = data.assignments[i]
+              if (this.course.formative && !assignment.formative && !assignment.in_formative_course) {
+                continue
+              }
+              this.importableAssignmentOptions.push({ value: assignment.id, text: assignment.name })
             }
           }
         }
@@ -2170,11 +2177,15 @@ What assignment parameters??? */
           this.$noty.error(data.message)
           return false
         }
+        console.error(data)
         this.importableCourseOptions = [{ value: null, text: `Please choose a course` }]
         if (data[collectionName]) {
           let importableCourseOptions = []
           for (let i = 0; i < data[collectionName].length; i++) {
             let course = data[collectionName][i]
+            if (this.course.formative && !(course.formative || course.has_at_least_one_formative_assignment)) {
+              continue
+            }
             let text = course.name
             if (collection === 'all_public_courses' && course.instructor === 'Commons Instructor') {
               continue

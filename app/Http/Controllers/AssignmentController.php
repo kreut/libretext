@@ -832,6 +832,7 @@ class AssignmentController extends Controller
                 ->where('course_id', $course->id)
                 ->select('assignments.id',
                     'assignments.id AS assignment_id',
+                    'assignments.formative',
                     'name',
                     'public_description AS description',
                     DB::raw("COUNT(assignment_question.question_id) as num_questions")
