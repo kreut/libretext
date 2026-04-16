@@ -245,6 +245,13 @@
               if (startTime) {
                 this.currentTime(startTime);
               }
+              player.on('timeupdate', function() {
+                window.parent.postMessage({
+                  type: 'videoTimeUpdate',
+                  mediaId: "{{ $media_id ?? '' }}",  // pass your media ID into the blade template
+                  currentTime: player.currentTime()
+                }, '*');
+              });
             });
           })();
         </script>
@@ -367,6 +374,13 @@
 
               });
               ro.observe(this.el());
+              player.on('timeupdate', function() {
+                window.parent.postMessage({
+                  type: 'videoTimeUpdate',
+                  mediaId: "{{ $media_id ?? '' }}",  // pass your media ID into the blade template
+                  currentTime: player.currentTime()
+                }, '*');
+              });
             });
           })();
         </script>

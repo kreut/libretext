@@ -739,6 +739,7 @@ class DiscussionCommentController extends Controller
         }
 
         return view('media_player', ['type' => $type,
+            'media_id' => "media_id-$key_id",
             'temporary_url' => $temporary_url,
             'mp4_temporary_url' => $mp4_temporary_url,
             'vtt_file' => $vtt_file,

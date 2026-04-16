@@ -107,7 +107,6 @@ class QuestionMediaController extends Controller
         $vtt_file = $request->query('vtt_url', '');
         $start_time = (int)$request->query('start_time', 0);
         $is_phone = 0;
-
         return view('media_player', [
             'type' => $type,
             'temporary_url' => $url,
