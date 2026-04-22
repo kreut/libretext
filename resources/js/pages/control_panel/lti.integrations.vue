@@ -181,7 +181,8 @@ export default {
             auth_server: 'https://blackboard.com',
             campus_id: 'N/A',
             name: blackboard[i].name,
-            api: 'no'
+            api: 'no',
+            active: 1
           }
           this.ltiRegistrations.push(value)
         }
