@@ -67,7 +67,7 @@
           <b-button size="sm" variant="primary" @click="updateCaption">
             Update
           </b-button>
-          <b-button size="sm" @click="$emit('hideMediaModal')">
+          <b-button size="sm" @click="$emit('hideMediaModal');transcriptTiming = null">
             Cancel
           </b-button>
           <span v-show="model==='DiscussionComment'" class="pl-2">
@@ -99,6 +99,8 @@
       class="transcript-segment"
       :class="{ 'transcript-segment--active': caption.start === currentPlaybackStart }"
       :aria-current="caption.start === currentPlaybackStart ? 'true' : null"
+      style="cursor: pointer;"
+      @click="seekToCaption(caption)"
     >{{ caption.text }} </span>
       </div>
     </div>
@@ -151,6 +153,17 @@ export default {
     window.addEventListener('message', this.handlePlayerTimeUpdate)
   },
   methods: {
+    seekToCaption (caption) {
+      const seconds = this.parseTimeToSeconds(caption.start)
+      const iframes = window.document.querySelectorAll('iframe')
+      iframes.forEach(iframe => {
+        iframe.contentWindow.postMessage({
+          type: 'videoSeekTo',
+          mediaId: `media_id-${this.activeMedia.id}`,
+          time: seconds
+        }, '*')
+      })
+    },
     handlePlayerTimeUpdate (event) {
       console.error(this.activeMedia.id)
       console.error(event)

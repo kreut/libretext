@@ -168,7 +168,18 @@
       </div>
       <script>
         configureAudioPlayer('mobile-audio-player', {!! $vtt_file ? "'mobile-caption-display'" : 'null' !!}, {{ $start_time ?? 0 }}, {!! $vtt_file ? json_encode($vtt_file) : 'null' !!});
-      </script>
+        document.getElementById('audio-player').addEventListener('timeupdate', function() {
+          window.parent.postMessage({
+            type: 'videoTimeUpdate',
+            mediaId: "{{ $media_id ?? '' }}",
+            currentTime: this.currentTime
+          }, '*');
+        });
+        window.addEventListener('message', function(event) {
+          if (event.data?.type !== 'videoSeekTo') return
+          if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
+          document.getElementById('audio-player').currentTime = event.data.time
+        });</script>
 
     @elseif($type === 'video')
       @php
@@ -252,6 +263,11 @@
                   currentTime: player.currentTime()
                 }, '*');
               });
+              window.addEventListener('message', function(event) {
+                if (event.data?.type !== 'videoSeekTo') return
+                if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
+                player.currentTime(event.data.time)
+              });
             });
           })();
         </script>
@@ -291,7 +307,17 @@
       </div>
       <script>
         configureAudioPlayer('audio-player', {!! $vtt_file ? "'caption-display'" : 'null' !!}, {{ $start_time ?? 0 }}, {!! $vtt_file ? json_encode($vtt_file) : 'null' !!});
-      </script>
+        document.getElementById('audio-player').addEventListener('timeupdate', function() {
+          window.parent.postMessage({
+            type: 'videoTimeUpdate',
+            mediaId: "{{ $media_id ?? '' }}",
+            currentTime: this.currentTime
+          }, '*');
+        }); window.addEventListener('message', function(event) {
+          if (event.data?.type !== 'videoSeekTo') return
+          if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
+          document.getElementById('audio-player').currentTime = event.data.time
+        });</script>
 
     @elseif($type === 'video')
       @php
@@ -380,6 +406,11 @@
                   mediaId: "{{ $media_id ?? '' }}",  // pass your media ID into the blade template
                   currentTime: player.currentTime()
                 }, '*');
+              });
+              window.addEventListener('message', function(event) {
+                if (event.data?.type !== 'videoSeekTo') return
+                if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
+                player.currentTime(event.data.time)
               });
             });
           })();
