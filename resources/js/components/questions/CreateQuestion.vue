@@ -1571,9 +1571,7 @@
                                                   :color-class="'font-bold'"
                       />
                     </b-form-radio>
-                    <b-form-radio v-show="(isAdmin || [142886,11712].includes(user.id))"
-                                  value="accounting"
-                    >
+                    <b-form-radio value="accounting">
                       Accounting
                     </b-form-radio>
                     <b-form-radio value="all">
