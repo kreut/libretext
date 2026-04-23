@@ -131,6 +131,7 @@ export default {
     }
   },
   data: () => ({
+    seekedCaptionStart: null,
     activeTranscriptTimingText: '',
     transcriptTimingOptions: [],
     transcriptTiming: null,
@@ -154,22 +155,21 @@ export default {
   },
   methods: {
     seekToCaption (caption) {
-      const seconds = this.parseTimeToSeconds(caption.start)
+      this.currentPlaybackStart = caption.start
+      this.seekedCaptionStart = caption.start  // remember what user clicked
+      const seconds = this.parseTimeToSeconds(caption.start) + 0.01
       const iframes = window.document.querySelectorAll('iframe')
       iframes.forEach(iframe => {
         iframe.contentWindow.postMessage({
-          type: 'videoSeekTo',
+          type: 'mediaPlayerSeekTo',
           mediaId: `media_id-${this.activeMedia.id}`,
           time: seconds
         }, '*')
       })
     },
     handlePlayerTimeUpdate (event) {
-      console.error(this.activeMedia.id)
-      console.error(event)
       if (event.data?.type !== 'videoTimeUpdate') return
       if (event.data?.mediaId !== `media_id-${this.activeMedia.id}`) return
-      console.error(event)
       const currentTime = event.data.currentTime
 
       const match = this.activeMedia.transcript?.find(caption => {
@@ -178,14 +178,23 @@ export default {
         return currentTime >= start && currentTime < end
       })
 
-      if (match && match.start !== this.currentPlaybackStart) {
-        this.currentPlaybackStart = match.start
-        this.$nextTick(() => {
-          const ref = this.$refs['caption-' + match.start]
-          const el = Array.isArray(ref) ? ref[0] : ref
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-        })
+      if (!match) return
+      if (match.start === this.currentPlaybackStart) return
+
+      // if user seeked, don't allow highlight to go before the seeked caption
+      if (this.seekedCaptionStart) {
+        const matchSeconds = this.parseTimeToSeconds(match.start)
+        const seekedSeconds = this.parseTimeToSeconds(this.seekedCaptionStart)
+        if (matchSeconds < seekedSeconds) return
+        this.seekedCaptionStart = null  // clear once we've moved forward
       }
+
+      this.currentPlaybackStart = match.start
+      this.$nextTick(() => {
+        const ref = this.$refs['caption-' + match.start]
+        const el = Array.isArray(ref) ? ref[0] : ref
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      })
     },
     parseTimeToSeconds (timeStr) {
       const [hours, minutes, seconds] = timeStr.split(':').map(Number)

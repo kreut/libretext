@@ -176,7 +176,7 @@
           }, '*');
         });
         window.addEventListener('message', function(event) {
-          if (event.data?.type !== 'videoSeekTo') return
+          if (event.data?.type !== 'mediaPlayerSeekTo') return
           if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
           document.getElementById('audio-player').currentTime = event.data.time
         });</script>
@@ -264,7 +264,7 @@
                 }, '*');
               });
               window.addEventListener('message', function(event) {
-                if (event.data?.type !== 'videoSeekTo') return
+                if (event.data?.type !== 'mediaPlayerSeekTo') return
                 if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
                 player.currentTime(event.data.time)
               });
@@ -313,8 +313,9 @@
             mediaId: "{{ $media_id ?? '' }}",
             currentTime: this.currentTime
           }, '*');
-        }); window.addEventListener('message', function(event) {
-          if (event.data?.type !== 'videoSeekTo') return
+        });
+        window.addEventListener('message', function(event) {
+          if (event.data?.type !== 'mediaPlayerSeekTo') return
           if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
           document.getElementById('audio-player').currentTime = event.data.time
         });</script>
@@ -408,7 +409,7 @@
                 }, '*');
               });
               window.addEventListener('message', function(event) {
-                if (event.data?.type !== 'videoSeekTo') return
+                if (event.data?.type !== 'mediaPlayerSeekTo') return
                 if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
                 player.currentTime(event.data.time)
               });
