@@ -406,20 +406,6 @@
                           </div>
                         </div>
 
-                        <!-- Description input (text columns only, non-blank) -->
-                        <div
-                          v-if="col.type === 'text' && row.cells[ci].mode !== 'blank'"
-                          class="cell-description-input mt-1"
-                        >
-                          <b-form-input
-                            v-model="row.cells[ci].description"
-                            type="text"
-                            size="sm"
-                            placeholder="Description (optional)..."
-                            @input="handleInput()"
-                          />
-                        </div>
-
                         <!-- Blank indicator -->
                         <div v-else-if="row.cells[ci].mode === 'blank'" class="cell-blank-indicator">
                           <span class="text-muted small">(blank)</span>
@@ -771,8 +757,7 @@ export default {
         mode: 'answer',
         value: '',
         underline: 'none',
-        indent: false,
-        description: ''
+        indent: false
       }
     },
     createRow (isHeader) {
@@ -875,7 +860,6 @@ export default {
         cell.value = ''
         cell.underline = 'none'
         cell.indent = false
-        cell.description = ''
       }
       this.clearSpecificError(rowIndex, colIndex, 'value')
       this.handleInput()
@@ -1147,15 +1131,6 @@ tr.drag-over {
 .cell-blank-indicator {
   text-align: center;
   padding: 4px 0;
-}
-
-/* ============================================ */
-/* DESCRIPTION INPUT                             */
-/* ============================================ */
-.cell-description-input input {
-  font-size: 0.78rem;
-  color: #6c757d;
-  font-style: italic;
 }
 
 /* ============================================ */
