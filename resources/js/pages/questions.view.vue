@@ -2875,6 +2875,7 @@
                     </span>
 
                     <span v-if="!isDiscussIt()
+                             && !isForge()
                             && showSubmissionInformation
                             && showQuestion
                             && assessmentType !== 'flashcard'
@@ -2904,7 +2905,8 @@
                       </span>
                       <span v-if="questionStatus !== 'closed'
                         && studentNonClicker()
-                        && ['real time'].includes(assessmentType)
+                        && !isForge()
+                        && assessmentType === 'real time'
                         && numberOfAllowedAttempts !== '1'
                         && !questions[currentPage-1].solution_type
                         && (questions[currentPage-1].solution_exists || questions[currentPage-1].qti_json)"
@@ -4418,8 +4420,8 @@ export default {
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
     window.removeEventListener('resize', this.resizeHandler)
-    clearInterval(this.autoSaveInterval);
-    window.removeEventListener('beforeunload', this.handleBeforeUnload);
+    clearInterval(this.autoSaveInterval)
+    window.removeEventListener('beforeunload', this.handleBeforeUnload)
     if (this.reviewQuestionPollingSetInterval) {
       clearInterval(this.reviewQuestionPollingSetInterval)
       this.reviewQuestionPollingSetInterval = null
