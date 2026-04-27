@@ -233,6 +233,7 @@ let control_panel_paths = [
     ]
   }]
 let general_paths = [
+  { path: '/too-many-requests', name: 'TooManyRequests', component: page('too_many_requests.vue') },
   { path: '/login-to-view', name: 'LogInToView', component: page('login_to_view.vue') },
   { path: '/beta-course-test', name: 'BetaCourseTest', component: page('beta_course_test.vue') },
   {

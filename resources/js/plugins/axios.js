@@ -21,6 +21,8 @@ axios.interceptors.request.use(request => {
   return request
 })
 
+let rateLimitModalShown = false
+
 // Response interceptor
 axios.interceptors.response.use(response => {
   if (typeof response.data === 'string') {
@@ -39,6 +41,17 @@ axios.interceptors.response.use(response => {
   return response
 }, error => {
   const { status } = error.response
+
+  if (status === 429) {
+    if (window.location.pathname !== '/too-many-requests') {
+      const retryAfter = error.response.headers['retry-after'] || null
+      window.location.href = retryAfter
+        ? `/too-many-requests?retryAfter=${retryAfter}`
+        : '/too-many-requests'
+    }
+    return Promise.reject(error)
+  }
+
   if (status >= 500) {
     Swal.fire({
       type: 'error',
@@ -60,7 +73,6 @@ axios.interceptors.response.use(response => {
       cancelButtonText: i18n.t('cancel')
     }).then(() => {
       store.commit('auth/LOGOUT')
-
       router.push({ name: 'home' })
     })
   }

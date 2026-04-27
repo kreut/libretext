@@ -6,6 +6,7 @@ use App\Http\Middleware\Analytics;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CheckForMaintenanceMode;
 use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\RateLimitByUser;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\SetAppVersionHeader;
 use App\Http\Middleware\SetLocale;
@@ -50,6 +51,9 @@ class Kernel extends HttpKernel
         SetLocale::class,
         SetAppVersionHeader::class
     ];
+    protected $except = [
+        'rl_token',
+    ];
 
     /**
      * The application's route middleware groups.
@@ -92,5 +96,6 @@ class Kernel extends HttpKernel
         'password.confirm' => RequirePassword::class,
         'signed' => ValidateSignature::class,
         'verified' => EnsureEmailIsVerified::class,
+        'rate.limit.by.user' => RateLimitByUser::class,
     ];
 }

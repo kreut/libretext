@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
+
 Route::get('/lti/public-key/{lms}', 'LTIController@publicKey');
 Route::get('/php-info', 'QuestionMediaController@phpInfo');
 Route::get('/generate-jwk', 'LTIController@generateJWK');
@@ -73,53 +74,53 @@ Route::post('/lti/get-token-by-lti-token-id', 'LTIController@getTokenByLtiTokenI
 Route::get('/lti/user', 'LTIController@getUser');
 Route::post('/refresh-token', 'LTIController@refreshToken');
 
-Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
+
 
 Route::post('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
 Route::get('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
 Route::get('/lti/redirect-uri/{campus_id?}', 'LTIController@authenticationResponse');
 Route::post('/lti/redirect-uri/{campus_id?}', 'LTIController@authenticationResponse');
 
-Route::get('/lti/json-config/{campus_id}', 'LTIController@jsonConfig');
-Route::get('/lti/public-jwk', 'LTIController@publicJWK');
-Route::post('/lti-registration/email-details', 'LtiRegistrationController@emailDetails');
-Route::get('/lti-registration/is-valid-campus-id/{type}/{campusId}', 'LtiRegistrationController@isValidCampusId');
-Route::patch('/lti-registration/api-key', 'LtiRegistrationController@updateAPIKey');
 
-Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
-Route::post('/email/send', 'EmailController@send');
+
 
 Route::get('jwt/init', 'JWTController@init');
 Route::get('jwt/secret', 'JWTController@signWithNewSecret');
 
-Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'BetaAssignmentController@getBetaCourseFromAlphaAssignment');
-Route::get('/beta-assignments/is-beta-assignment/{assignment}', 'BetaAssignmentController@isBetaAssignment');
+
+Route::group(['middleware' => [ 'rate.limit.by.user']], function () {
+    Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
+    Route::post('/email/send', 'EmailController@send');
+    Route::post('mind-touch-events/update', 'MindTouchEventController@update');
+
+    Route::get('/lti/json-config/{campus_id}', 'LTIController@jsonConfig');
+    Route::get('/lti/public-jwk', 'LTIController@publicJWK');
+    Route::post('/lti-registration/email-details', 'LtiRegistrationController@emailDetails');
+    Route::get('/lti-registration/is-valid-campus-id/{type}/{campusId}', 'LtiRegistrationController@isValidCampusId');
+    Route::patch('/lti-registration/api-key', 'LtiRegistrationController@updateAPIKey');
+
+    Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'BetaAssignmentController@getBetaCourseFromAlphaAssignment');
+    Route::get('/beta-assignments/is-beta-assignment/{assignment}', 'BetaAssignmentController@isBetaAssignment');
+
+    Route::get('/disciplines', 'DisciplineController@index');
+    Route::post('/disciplines', 'DisciplineController@store');
+    Route::post('/disciplines/request-new', 'DisciplineController@requestNew');
+    Route::patch('/disciplines/{discipline}', 'DisciplineController@edit');
+    Route::delete('/disciplines/{discipline}', 'DisciplineController@destroy');
+    Route::get('/courses/commons', 'CourseController@getCommonsCourses');
+    Route::get('/courses/open', 'CourseController@getOpenCourses');
+    Route::get('/courses/all', 'CourseController@getAllCourses');
+    Route::get('/h5p-collections', 'H5PCollectionController@index');
+    Route::post('/h5p-collections/validate-import', 'H5PCollectionController@validateImport');
+    Route::patch('/h5p-collections/get-adapt-question-id-by-h5p-id/{h5p_id}', 'H5PCollectionController@getAdaptIdByH5pId');
+    Route::get('/time-zones', 'TimeZoneController@index');
+    Route::get('/schools', 'SchoolController@index');
+    Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCourseAssignments');
+    Route::get('/user/login-as-formative-student/assignment/{assignment}', 'Auth\UserController@loginToAssignmentAsFormativeStudent');
 
 
-Route::get('/disciplines', 'DisciplineController@index');
-Route::post('/disciplines', 'DisciplineController@store');
-Route::post('/disciplines/request-new', 'DisciplineController@requestNew');
-Route::patch('/disciplines/{discipline}', 'DisciplineController@edit');
-Route::delete('/disciplines/{discipline}', 'DisciplineController@destroy');
-
-
-Route::get('/h5p-collections', 'H5PCollectionController@index');
-Route::post('/h5p-collections/validate-import', 'H5PCollectionController@validateImport');
-Route::patch('/h5p-collections/get-adapt-question-id-by-h5p-id/{h5p_id}', 'H5PCollectionController@getAdaptIdByH5pId');
-
-
-Route::get('/courses/commons', 'CourseController@getCommonsCourses');
-Route::get('/courses/open', 'CourseController@getOpenCourses');
-Route::get('/courses/all', 'CourseController@getAllCourses');
-Route::get('/assignments/open/{type}/{course}', 'AssignmentController@getOpenCourseAssignments');
-
-Route::get('/user/login-as-formative-student/assignment/{assignment}', 'Auth\UserController@loginToAssignmentAsFormativeStudent');
-
-Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
-Route::get('/assignments/{assignment}/get-course-name-from-assignment', 'AssignmentController@getCourseNameFromAssignment');
-Route::get('assignments/{assignment}/review-history', 'AssignmentController@getReviewHistoryByAssignment');
-Route::get('/analytics/nursing/{download}', 'AnalyticsController@nursing');
+});
 
 
 Route::get('/libre-one-access-code/user/{access_code}', 'LibreOneAccessCodeController@getUserByAccessCode');
@@ -129,24 +130,22 @@ Route::post('/analytics-dashboard/unsync/{analytics_course_id}', 'AnalyticsDashb
 Route::get('/analytics-dashboard/{course}', 'AnalyticsDashboardController@show');
 
 
-Route::get('/schools', 'SchoolController@index');
-Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
-Route::post('/users/student-roster-upload-template', 'UserController@getStudentRosterUploadTemplate');
-Route::patch('/users/get-students-to-invite', 'UserController@getStudentsToInvite');
-Route::post('/users/invite-student', 'UserController@inviteStudent');
-Route::delete('/users/courses/{course}/revoke-student-invitations', 'UserController@revokeStudentInvitations');
-Route::get('/pending-course-invitations/{course}', 'PendingCourseInvitationController@getPendingCourseInvitations');
-Route::delete('/pending-course-invitations/{pendingCourseInvitation}', 'PendingCourseInvitationController@destroy');
-
-Route::get('/time-zones', 'TimeZoneController@index');
 Route::get('/users/get-cookie-user-jwt', 'UserController@getCookieUserJWT');
-
 Route::get('/users/auto-login', 'Auth\UserController@autoLogin');
-
 Route::get('/courses/mini-summary', 'CourseController@showMiniSummary');
 
-Route::group(['middleware' => ['auth:api', 'analytics']], function () {
-
+Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], function () {
+    Route::get('/assignments/names-ids-by-course/{course}', 'AssignmentController@getAssignmentNamesIdsByCourse');
+    Route::get('/assignments/{assignment}/get-course-name-from-assignment', 'AssignmentController@getCourseNameFromAssignment');
+    Route::get('assignments/{assignment}/review-history', 'AssignmentController@getReviewHistoryByAssignment');
+    Route::get('/analytics/nursing/{download}', 'AnalyticsController@nursing');
+    Route::post('/questions/bulk-upload-template/{import_template}/{course?}', 'QuestionController@getBulkUploadTemplate');
+    Route::post('/users/student-roster-upload-template', 'UserController@getStudentRosterUploadTemplate');
+    Route::patch('/users/get-students-to-invite', 'UserController@getStudentsToInvite');
+    Route::post('/users/invite-student', 'UserController@inviteStudent');
+    Route::delete('/users/courses/{course}/revoke-student-invitations', 'UserController@revokeStudentInvitations');
+    Route::get('/pending-course-invitations/{course}', 'PendingCourseInvitationController@getPendingCourseInvitations');
+    Route::delete('/pending-course-invitations/{pendingCourseInvitation}', 'PendingCourseInvitationController@destroy');
     Route::post('/forge/assignment/{assignment}/question/{question}/initialize', 'ForgeController@initialize');
     Route::get('/forge/assignments/{assignment}/questions/{parent_question}/current-question/{current_question}', 'ForgeController@getAssignTosByAssignmentQuestionLoggedInUser');
     Route::post('/forge/submissions/assignment/{assignment}/question/{question}/student/{student}/allow-resubmission', 'ForgeController@allowResubmission');
