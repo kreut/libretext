@@ -145,7 +145,7 @@ Route::get('/users/auto-login', 'Auth\UserController@autoLogin');
 
 Route::get('/courses/mini-summary', 'CourseController@showMiniSummary');
 
-Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], function () {
+Route::group(['middleware' => ['auth:api', 'analytics']], function () {
 
     Route::post('/forge/assignment/{assignment}/question/{question}/initialize', 'ForgeController@initialize');
     Route::get('/forge/assignments/{assignment}/questions/{parent_question}/current-question/{current_question}', 'ForgeController@getAssignTosByAssignmentQuestionLoggedInUser');
@@ -958,7 +958,7 @@ Route::group(['middleware' => ['auth:api', 'analytics', 'throttle:550,1']], func
 
 });
 
-Route::group(['middleware' => ['guest:api', 'throttle:30,1']], function () {
+Route::group(['middleware' => ['guest:api']], function () {
     Route::post('/co-instructors', 'CoInstructorController@store');
     Route::get('/courses/anonymous-user/can-log-in', 'CourseController@canLogInAsAnonymousUser');
     Route::get('/courses/open/index', 'CourseController@open');
