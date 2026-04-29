@@ -321,53 +321,55 @@
         :header-html="getHeaderHtml('Modality')"
         body-class="pb-0 card-body-pl"
         class="mb-3"
-      ><b-alert :show="isFormativeCourse" alert>
-        This assignment is part of a formative course. It will automatically be marked as formative.
-      </b-alert>
+      >
+        <b-alert :show="isFormativeCourse" alert>
+          This assignment is part of a formative course. It will automatically be marked as formative.
+        </b-alert>
         <div v-show="!isFormativeCourse">
-        <b-form-group
-          v-show="!anonymousUsers"
-          id="modality"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label-for="modality"
-          label="Modality*"
-        >
-          <div v-if="!courseId" class="mt-2">
-            Summative
-          </div>
-          <b-form-radio-group
-            v-show="courseId"
-            v-model="form.formative"
-            stacked
-            required
-            :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-            @change="canChangeFromSummativeToFormative($event)"
+          <b-form-group
+            v-show="!anonymousUsers"
+            id="modality"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="modality"
+            label="Modality*"
           >
-            <b-form-radio name="formative" value="0">
+            <div v-if="!courseId" class="mt-2">
               Summative
-              <QuestionCircleTooltip id="summative"/>
-              <b-tooltip target="summative"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Questions in summative assignments can only be accessed by students enrolled in your course. Submissions
-                are saved and student scores are viewable in your gradebook.
-              </b-tooltip>
-            </b-form-radio>
-            <b-form-radio name="formative" value="1">
-              Formative
-              <QuestionCircleTooltip id="formative"/>
-              <b-tooltip target="formative"
-                         delay="250"
-                         triggers="hover focus"
-              >
-                Questions in formative assignments can be accessed by any student using a special link or QR code.
-                Submissions persist within a given session. Scores are not viewable in your gradebook.
-              </b-tooltip>
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
+            </div>
+            <b-form-radio-group
+              v-show="courseId"
+              v-model="form.formative"
+              stacked
+              required
+              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
+              @change="canChangeFromSummativeToFormative($event)"
+            >
+              <b-form-radio name="formative" value="0">
+                Summative
+                <QuestionCircleTooltip id="summative"/>
+                <b-tooltip target="summative"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Questions in summative assignments can only be accessed by students enrolled in your course.
+                  Submissions
+                  are saved and student scores are viewable in your gradebook.
+                </b-tooltip>
+              </b-form-radio>
+              <b-form-radio name="formative" value="1">
+                Formative
+                <QuestionCircleTooltip id="formative"/>
+                <b-tooltip target="formative"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Questions in formative assignments can be accessed by any student using a special link or QR code.
+                  Submissions persist within a given session. Scores are not viewable in your gradebook.
+                </b-tooltip>
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
         </div>
         <div v-if="courseId && !assignmentId && assignmentTemplateOptions.length">
           <b-form-group
@@ -576,6 +578,7 @@
           >
             <b-card-text>
               <b-form-group
+                v-if="form.source === 'a'"
                 label-cols-sm="4"
                 label-cols-lg="3"
                 label-for="scoring_type"
@@ -616,7 +619,7 @@
                 </b-form-radio-group>
               </b-form-group>
               <b-form-group
-                v-show="form.scoring_type === 'c'"
+                v-show="form.scoring_type === 'c' && form.source === 'a'"
                 label-cols-sm="4"
                 label-cols-lg="3"
                 label-for="completion_scoring_mode"
@@ -781,7 +784,7 @@
               </div>
               <div v-if="!isFormativeCourse && form.formative !== '1'">
                 <b-form-group
-                  v-if="!lms"
+                  v-if="!lms && form.source === 'a'"
                   label-cols-sm="4"
                   label-cols-lg="3"
                   label-for="include_in_final_score"
@@ -1391,7 +1394,9 @@
 
       <!-- Hints: hidden for flashcard (flashcard has its own hint setting below) -->
       <b-card
-        v-show="form.assessment_type !== 'flashcard' && form.assessment_type !== 'clicker'"
+        v-show="form.assessment_type !== 'flashcard'
+        && form.assessment_type !== 'clicker'
+&& form.source === 'a'"
         :header-html="getHeaderHtml('Hints')"
         body-class="pb-0 card-body-pl"
         class="mb-3"
