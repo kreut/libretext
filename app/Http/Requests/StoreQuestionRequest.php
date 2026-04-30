@@ -17,6 +17,7 @@ use App\Rules\DropDownTableRows;
 use App\Rules\hasValid3DModelParameters;
 use App\Rules\hasValid3dModelSolutionStructure;
 use App\Rules\HasValidAccountingJournalEntries;
+use App\Rules\HasValidAccountingMultiPartComputation;
 use App\Rules\HasValidAccountingReport;
 use App\Rules\HasValidFlashcard;
 use App\Rules\HighlightTableHeaders;
@@ -168,6 +169,10 @@ class StoreQuestionRequest extends FormRequest
                                 case('accounting_report'):
                                     $rules['qti_prompt'] = ['required'];
                                     $rules['qti_json'] = new HasValidAccountingReport();
+                                    break;
+                                case('accounting_multi_part_computation'):
+                                    $rules['qti_prompt'] = ['required'];
+                                    $rules['qti_json'] = new HasValidAccountingMultiPartComputation();
                                     break;
                                 case('accounting_journal_entry'):
                                     $rules['qti_json'] = new HasValidAccountingJournalEntries();

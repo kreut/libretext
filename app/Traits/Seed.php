@@ -49,6 +49,13 @@ trait Seed
                     return $seed;
                 }
                 switch ($question_type) {
+                    case('accounting_multi_part_computation'):
+                        if (!($qti_array['randomizeDropdowns'] ?? false)) {
+                            return $seed; // fixed order, no per-student seed needed
+                        }
+                        // Generate a per-student seed integer for the backend to use
+                        $seed = rand(1, 99999);
+                        break;
                     case('drag_and_drop_cloze'):
                         $seed = [];
                         foreach (['correctResponses', 'distractors'] as $group)
