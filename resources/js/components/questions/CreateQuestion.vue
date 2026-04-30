@@ -1254,7 +1254,6 @@
         <b-card border-variant="primary"
                 class="mb-3"
         >
-
           <p>
             Questions can consist of either pure HTML (text-based question), an auto-graded technology for automatic
             scoring, or
@@ -1508,16 +1507,26 @@
                                  triggers="hover focus"
                       >
                         <div style="max-width: 320px; font-size: 13px; line-height: 1.6;">
-                          <p style="margin: 0 0 10px;">Questions can be added in two ways:</p>
+                          <p style="margin: 0 0 10px;">
+                            Questions can be added in two ways:
+                          </p>
 
-                          <p style="margin: 0 0 4px;"><strong style="font-weight: 500;">Bulk Import</strong></p>
-                          <p style="margin: 0 0 10px;">Export questions in QTI format from your LMS and import them via
+                          <p style="margin: 0 0 4px;">
+                            <strong style="font-weight: 500;">Bulk Import</strong>
+                          </p>
+                          <p style="margin: 0 0 10px;">
+                            Export questions in QTI format from your LMS and import them via
                             the <strong style="font-weight: 500;">Bulk Import</strong> tab. Both QTI questions and
                             flashcards (which are not in QTI format) are supported. You can edit them in ADAPT after
-                            importing.</p>
+                            importing.
+                          </p>
 
-                          <p style="margin: 0 0 4px;"><strong style="font-weight: 500;">Manual Creation</strong></p>
-                          <p style="margin: 0;">Use the question editor below to build new questions directly.</p>
+                          <p style="margin: 0 0 4px;">
+                            <strong style="font-weight: 500;">Manual Creation</strong>
+                          </p>
+                          <p style="margin: 0;">
+                            Use the question editor below to build new questions directly.
+                          </p>
                         </div>
                       </b-tooltip>
                     </b-form-radio>
@@ -1634,6 +1643,14 @@
                                   @change="initQTIQuestionType($event)"
                     >
                       Report
+                    </b-form-radio>
+                    <b-form-radio v-if="(142886,11712,1,5).includes(user.id)"
+                                  v-model="qtiQuestionType"
+                                  name="qti-question-type"
+                                  value="accounting_multi_part_computation"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multi-part Computation
                     </b-form-radio>
                   </div>
                   <div v-if="['all','basic'].includes(nativeType)">
@@ -1969,7 +1986,8 @@
                 </div>
                 <div
                   v-if="['accounting_report',
-                          'forge',
+                         'accounting_multi_part_computation',
+                         'forge',
                          'matching',
                          'multiple_answers',
                          'true_false',
@@ -2056,6 +2074,13 @@
                 </div>
                 <div v-if="'accounting_journal_entry' === qtiQuestionType">
                   <AccountingJournalEntry
+                    :qti-json="qtiJson"
+                    :question-form="questionForm"
+                    @updateQtiJson="updateQtiJson"
+                  />
+                </div>
+                <div v-if="'accounting_multi_part_computation' === qtiQuestionType">
+                  <AccountingMultiPartComputation
                     :qti-json="qtiJson"
                     :question-form="questionForm"
                     @updateQtiJson="updateQtiJson"
@@ -2720,44 +2745,44 @@
               v-if="questionForm.question_type === 'assessment' || editorGroup.id==='notes'"
               :label-for="editorGroup.label"
             >
-  <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
-    {{ editorGroup.label }}
-    <span v-if="editorGroup.label === 'Answer'">
-      <span v-if="!isNativeQti()"> <QuestionCircleTooltip id="answer-tooltip"/>
-        <b-tooltip target="answer-tooltip"
-                   delay="250"
-                   triggers="hover focus"
-        >
-          The answer to the question.  Answers are optional.
-        </b-tooltip>
-      </span>
-    </span>
-    <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
-      <b-tooltip target="solution-tooltip"
-                 delay="250"
-                 triggers="hover focus"
-      >
-        A more detailed solution to the question. Solutions are optional.
-      </b-tooltip>
-    </span>
-    <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"/>
-      <b-tooltip target="hint-tooltip"
-                 delay="250"
-                 triggers="hover focus"
-      >
-        Hints can be provided to students within assignments. Hints are optional.
-      </b-tooltip>
-    </span>
-    <span v-show="!(isNativeQti() && editorGroup.id === 'answer_html')">
-      <font-awesome-icon
-        v-if="!editorGroups.find(group => group.id === editorGroup.id).expanded"
-        :icon="caretRightIcon" size="lg"
-      />
-      <font-awesome-icon v-if="editorGroups.find(group => group.id === editorGroup.id).expanded"
-                         :icon="caretDownIcon" size="lg"
-      />
-    </span>
-  </span>
+              <span style="cursor: pointer;" @click="toggleExpanded (editorGroup.id)">
+                {{ editorGroup.label }}
+                <span v-if="editorGroup.label === 'Answer'">
+                  <span v-if="!isNativeQti()"> <QuestionCircleTooltip id="answer-tooltip"/>
+                    <b-tooltip target="answer-tooltip"
+                               delay="250"
+                               triggers="hover focus"
+                    >
+                      The answer to the question.  Answers are optional.
+                    </b-tooltip>
+                  </span>
+                </span>
+                <span v-if="editorGroup.label === 'Solution'"><QuestionCircleTooltip id="solution-tooltip"/>
+                  <b-tooltip target="solution-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    A more detailed solution to the question. Solutions are optional.
+                  </b-tooltip>
+                </span>
+                <span v-if="editorGroup.label === 'Hint'"><QuestionCircleTooltip id="hint-tooltip"/>
+                  <b-tooltip target="hint-tooltip"
+                             delay="250"
+                             triggers="hover focus"
+                  >
+                    Hints can be provided to students within assignments. Hints are optional.
+                  </b-tooltip>
+                </span>
+                <span v-show="!(isNativeQti() && editorGroup.id === 'answer_html')">
+                  <font-awesome-icon
+                    v-if="!editorGroups.find(group => group.id === editorGroup.id).expanded"
+                    :icon="caretRightIcon" size="lg"
+                  />
+                  <font-awesome-icon v-if="editorGroups.find(group => group.id === editorGroup.id).expanded"
+                                     :icon="caretDownIcon" size="lg"
+                  />
+                </span>
+              </span>
               <div v-if="isNativeQti() && editorGroup.id === 'answer_html'">
                 <b-alert show variant="info">
                   Native question types already have the answer built into the question creation process.
@@ -2877,6 +2902,7 @@
 </template>
 
 <script>
+import AccountingMultiPartComputation from './accounting/AccountingMultiPartComputation.vue'
 import QuestionMediaUpload from '~/components/QuestionMediaUpload.vue'
 import CKEditorFileToLinkUploader from '~/components/CKEditorFileToLinkUploader.vue'
 import { doCopy } from '~/helpers/Copy'
@@ -3099,6 +3125,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    AccountingMultiPartComputation,
     Flashcard,
     AccountingReport,
     AccountingJournalEntry,
@@ -3534,8 +3561,9 @@ export default {
       this.$nextTick(() => {
         // this.setToQuestionType('three_d_model_multiple_choice')
         // this.setToQuestionType('accounting_journal_entry')
-        //this.setToQuestionType('accounting_report')
-        //this.setToQuestionType('flashcard')
+        // this.setToQuestionType('accounting_report')
+        // this.setToQuestionType('flashcard')
+        this.setToQuestionType('accounting_multi_part_computation')
       })
     }
   },
@@ -3727,6 +3755,17 @@ export default {
     setToQuestionType (questionType) {
       document.getElementById('primary-content___BV_tab_button__').click()
       switch (questionType) {
+        case ('accounting_multi_part_computation'):
+          document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="native-question-type"][value="accounting"]').click()
+            }, 250
+          )
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_multi_part_computation"]').click()
+            }, 250
+          )
+          break
         case ('accounting_report'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
@@ -4173,6 +4212,29 @@ export default {
           case ('accounting_journal_entry'):
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
+          case ('accounting_multi_part_computation'):
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            // Shuffle dropdown options once for fixed order; backend re-shuffles per student if randomizeDropdowns is true
+            const mpcJson = JSON.parse(JSON.stringify(this.qtiJson)) // deep clone, never mutate the editor state
+            mpcJson.tables.forEach(table => {
+              table.rows.forEach(row => {
+                if (row.rowType === 'data' && row.cells) {
+                  row.cells.forEach(cell => {
+                    if (cell.mode === 'answer' && cell.answerType === 'dropdown' && cell.dropdownOptions && cell.dropdownOptions.length > 0) {
+                      // Fisher-Yates shuffle on a copy
+                      const shuffled = [...cell.dropdownOptions]
+                      for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+                      }
+                      cell.shuffledOptions = shuffled
+                    }
+                  })
+                }
+              })
+            })
+            this.questionForm.qti_json = JSON.stringify(mpcJson)
+            break
           case ('three_d_model_multiple_choice'):
             this.receivedModelStructureData = false
             document.getElementById('threeDModel').contentWindow.postMessage('save3DModel', '*')
@@ -4513,6 +4575,10 @@ export default {
             this.qtiQuestionType = 'accounting_report'
             this.nativeType = 'accounting'
             break
+          case ('accounting_multi_part_computation'):
+            this.qtiQuestionType = 'accounting_multi_part_computation'
+            this.nativeType = 'accounting'
+            break
           case ('discuss_it'):
             this.qtiPrompt = this.qtiJson['prompt']
             this.qtiQuestionType = this.qtiJson.questionType
@@ -4807,7 +4873,7 @@ export default {
         this.qtiQuestionType = 'discuss_it'
         this.initQTIQuestionType('discuss_it')
       } else if (['nursing', 'sketcher', 'accounting'].includes(type)) {
-        this.nativeType = type  // ensure it's set
+        this.nativeType = type // ensure it's set
         this.initNonBasicQTIQuestion()
       } else {
         this.qtiQuestionType = 'multiple_choice'
@@ -5183,6 +5249,13 @@ export default {
               }
             ],
             rows: []
+          }
+          break
+        case ('accounting_multi_part_computation'):
+          this.qtiJson = {
+            questionType: 'accounting_multi_part_computation',
+            prompt: '',
+            tables: []
           }
           break
         case ('three_d_model_multiple_choice'):
@@ -5750,6 +5823,7 @@ export default {
               break
             case ('accounting_report'):
             case ('accounting_journal_entry'):
+            case ('accounting_multi_part_computation'):
               this.$forceUpdate()
               break
             case ('discuss_it'):
@@ -5878,6 +5952,8 @@ export default {
                   formattedErrors.push('Please fix the errors associated with your journal entries.')
                 } else if (this.qtiQuestionType === 'accounting_report') {
                   formattedErrors.push('Please fix the errors associated with your accounting report.')
+                } else if (this.qtiQuestionType === 'accounting_multi_part_computation') {
+                  formattedErrors.push('Please fix the errors associated with your multi-part computation.')
                 }
                 break
               case ('parameters'):

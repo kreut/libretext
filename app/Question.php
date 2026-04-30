@@ -749,6 +749,89 @@ class Question extends Model
                     }
                 }
                 break;
+            case('accounting_multi_part_computation'):
+                if ($seed) {
+                    foreach ($qti_array['tables'] as &$table) {
+                        foreach ($table['rows'] as &$row) {
+                            if (($row['rowType'] ?? '') === 'data' && isset($row['cells'])) {
+                                foreach ($row['cells'] as &$cell) {
+                                    if (($cell['mode'] ?? '') === 'answer'
+                                        && ($cell['answerType'] ?? '') === 'dropdown'
+                                        && !empty($cell['shuffledOptions'])) {
+                                        $cell['dropdownOptions'] = ($qti_array['randomizeDropdowns'] ?? false)
+                                            ? $this->_applyDropdownSeed($cell['shuffledOptions'], (int)$seed)
+                                            : $cell['shuffledOptions'];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if ($student_response) {
+                    $studentSubmission = json_decode($student_response, true);
+                    if ($show_solution) {
+                        $submission = new Submission();
+                        $gradingResult = $submission->computeScoreForAccountingMultiPartComputation(
+                            $qti_array, $studentSubmission
+                        );
+                        $qti_array['studentResponse'] = $gradingResult['results'];
+                        $qti_array['score'] = $gradingResult['proportionCorrect'];
+
+                        // Strip expected values from student-facing results
+                        if (request()->user()->role === 3 && isset($qti_array['studentResponse'])) {
+                            foreach ($qti_array['studentResponse'] as $ti => $tableResults) {
+                                foreach ($tableResults as $ri => $rowResults) {
+                                    foreach ($rowResults as $ci => $cellResult) {
+                                        if (is_array($cellResult)) {
+                                            $qti_array['studentResponse'][$ti][$ri][$ci] = [
+                                                'studentValue' => $cellResult['studentValue'] ?? '',
+                                                'isCorrect' => $cellResult['isCorrect'] ?? false
+                                            ];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        $qti_array['studentResponse'] = $studentSubmission;
+                    }
+                }
+
+                // Strip correct answers from cells for students
+                if (request()->user()->role === 3) {
+                    if (!$show_solution || (!$student_response && $json_type === 'question_json')) {
+                        foreach ($qti_array['tables'] as &$table) {
+                            foreach ($table['rows'] as &$row) {
+                                if (($row['rowType'] ?? '') === 'data' && isset($row['cells'])) {
+                                    foreach ($row['cells'] as &$cell) {
+                                        if (($cell['mode'] ?? '') === 'answer') {
+                                            unset($cell['value']);
+                                            unset($cell['correctIndex']);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Answer JSON — pre-fill with correct answers for solution view
+                if ($json_type === 'answer_json') {
+                    $solutionResponse = [];
+                    foreach ($qti_array['tables'] as $ti => $table) {
+                        foreach ($table['rows'] as $ri => $row) {
+                            if (($row['rowType'] ?? '') === 'data' && isset($row['cells'])) {
+                                foreach ($row['cells'] as $ci => $cell) {
+                                    if (($cell['mode'] ?? '') === 'answer') {
+                                        $solutionResponse[$ti][$ri][$ci] = $cell['value'] ?? '';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    $qti_array['studentResponse'] = $solutionResponse;
+                }
+                break;
             case('three_d_model_multiple_choice'):
                 if ($student_response) {
                     $qti_array['studentResponse'] = json_decode($student_response, 1);
@@ -3870,6 +3953,17 @@ class Question extends Model
             }
         }
         return $solution_structure;
+    }
+
+    private function _applyDropdownSeed(array $options, int $seed): array
+    {
+        $count = count($options);
+        for ($i = $count - 1; $i > 0; $i--) {
+            $seed = ($seed * 1664525 + 1013904223) & 0xFFFFFFFF;
+            $j = $seed % ($i + 1);
+            [$options[$i], $options[$j]] = [$options[$j], $options[$i]];
+        }
+        return $options;
     }
 }
 

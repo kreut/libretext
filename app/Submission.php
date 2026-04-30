@@ -39,9 +39,94 @@ class Submission extends Model
     protected $guarded = [];
 
 
+    public function computeScoreForAccountingMultiPartComputation(array $qtiArray, array $studentSubmission): array
+    {
+        $results = [];
+        $totalAnswerCells = 0;
+        $correctCells = 0;
+
+        $tables = $qtiArray['tables'] ?? [];
+
+        foreach ($tables as $ti => $table) {
+            $rows = $table['rows'] ?? [];
+
+            foreach ($rows as $ri => $row) {
+                if (($row['rowType'] ?? '') !== 'data') continue;
+                if (!isset($row['cells'])) continue;
+
+                foreach ($row['cells'] as $ci => $cell) {
+                    if (($cell['mode'] ?? '') !== 'answer') continue;
+
+                    $totalAnswerCells++;
+                    $expectedValue = $cell['value'] ?? '';
+                    $answerType    = $cell['answerType'] ?? 'dollar';
+                    $rawStudent    = $studentSubmission[$ti][$ri][$ci] ?? '';
+
+                    // Strip all formatting characters before comparison
+                    $cleanStudent  = str_replace(['$', ',', '%', ' '], '', (string)$rawStudent);
+                    // Also strip the :1 ratio suffix if present
+                    $cleanStudent  = preg_replace('/:1$/', '', $cleanStudent);
+                    $cleanExpected = str_replace(['$', ',', '%', ' '], '', (string)$expectedValue);
+                    $cleanExpected = preg_replace('/:1$/', '', $cleanExpected);
+
+                    if ($answerType === 'dropdown') {
+                        // Exact case-insensitive match
+                        $isCorrect = strtolower(trim($rawStudent)) === strtolower(trim($expectedValue));
+                    } else {
+                        // Numeric comparison with tolerance based on rounding setting
+                        if (!is_numeric($cleanStudent) || !is_numeric($cleanExpected)) {
+                            $isCorrect = false;
+                        } else {
+                            $tolerance = $this->_getMpcTolerance($cell);
+                            $isCorrect = abs((float)$cleanExpected - (float)$cleanStudent) <= $tolerance;
+                        }
+                    }
+
+                    $results[$ti][$ri][$ci] = [
+                        'studentValue' => $rawStudent,
+                        'expectedValue' => $expectedValue,
+                        'isCorrect' => $isCorrect
+                    ];
+
+                    if ($isCorrect) $correctCells++;
+                }
+            }
+        }
+
+        return [
+            'results' => $results,
+            'proportionCorrect' => $totalAnswerCells > 0 ? round($correctCells / $totalAnswerCells, 4) : 0
+        ];
+    }
+
     /**
-     * CHANGES TO Submission.php
-     *
+     * Compute the grading tolerance for a multi-part computation answer cell
+     * based on its type and rounding settings.
+     */
+    private function _getMpcTolerance(array $cell): float
+    {
+        $answerType = $cell['answerType'] ?? 'dollar';
+
+        switch ($answerType) {
+            case 'dollar':
+                // Nearest dollar: tolerance of 0.50 (anything that rounds to correct integer)
+                // Nearest cent: tolerance of 0.005
+                return ($cell['dollarRounding'] ?? 'dollar') === 'cent' ? 0.005 : 0.50;
+            case 'general':
+            case 'percentage':
+            case 'ratio':
+            case 'custom':
+                // Tolerance is half a unit at the specified decimal place
+                // e.g. 2 decimal places → tolerance of 0.005
+                $decimalPlaces = isset($cell['decimalPlaces']) ? (int)$cell['decimalPlaces'] : 2;
+                return 0.5 * pow(10, -$decimalPlaces);
+
+            default:
+                return 0.005;
+        }
+    }
+
+    /**
      * Replace the existing computeScoreForAccountingReport() method and
      * _getAccountingReportSections() method with the versions below.
      * Everything else in Submission.php stays the same.
@@ -363,6 +448,12 @@ class Submission extends Model
                         $studentSubmission = json_decode($submission->student_response, 1);
                         $solution = $submission->question->entries;
                         $proportion_correct_info = $this->computeScoreForAccountingJournalEntry($solution, $studentSubmission);
+                        $proportion_correct = $proportion_correct_info['proportionCorrect'];
+                        break;
+                    case('accounting_multi_part_computation'):
+                        $studentSubmission = json_decode($submission->student_response, true);
+                        $qtiArray = json_decode(json_encode($submission->question), true);
+                        $proportion_correct_info = $this->computeScoreForAccountingMultiPartComputation($qtiArray, $studentSubmission);
                         $proportion_correct = $proportion_correct_info['proportionCorrect'];
                         break;
                     case('three_d_model_multiple_choice'):

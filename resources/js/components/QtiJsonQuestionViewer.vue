@@ -81,6 +81,7 @@
       />
       <div
         v-if="['accounting_report',
+               'accounting_multi_part_computation',
                'forge',
                'forge_iteration',
                'three_d_model_multiple_choice',
@@ -104,6 +105,13 @@
         <div style="font-family: Sans-Serif,serif;" :style="presentationMode ? 'font-size:20px' : 'font-size:16px'">
           <span v-html="prompt"/>
         </div>
+        <AccountingMultiPartComputationViewer
+          v-if="questionType === 'accounting_multi_part_computation'"
+          ref="accountingMultiPartComputationViewer"
+          :key="`accounting-multi-part-computation-${qtiJsonCacheKey}`"
+          :qti-json="JSON.parse(qtiJson)"
+          :show-answer="showQtiAnswer"
+        />
         <b-form-group>
           <div>
             <div v-if="['submit_molecule', 'marker'].includes(questionType)
@@ -321,10 +329,12 @@ import ThreeDModelViewer from './viewers/ThreeDModelViewer.vue'
 import AccountingJournalEntryViewer from './viewers/AccountingJournalEntryViewer.vue'
 import AccountingReportViewer from './viewers/AccountingReportViewer.vue'
 import FlashcardViewer from './viewers/FlashcardViewer.vue'
+import AccountingMultiPartComputationViewer from './viewers/AccountingMultiPartComputationViewer.vue'
 
 export default {
   name: 'QtiJsonQuestionViewer',
   components: {
+    AccountingMultiPartComputationViewer,
     FlashcardViewer,
     AccountingReportViewer,
     ForgeViewer,
@@ -500,6 +510,7 @@ export default {
       case ('accounting_journal_entry'):
         break
       case ('accounting_report'):
+      case ('accounting_multi_part_computation'):
       case ('forge'):
       case ('forge_iteration'):
       case ('three_d_model_multiple_choice'):
@@ -690,6 +701,9 @@ export default {
           break
         case ('accounting_journal_entry'):
           response = JSON.stringify(this.$refs.accountingJournalEntryViewer.studentEntries)
+          break
+        case ('accounting_multi_part_computation'):
+          response = JSON.stringify(this.$refs.accountingMultiPartComputationViewer.getStudentResponse())
           break
         case ('three_d_model_multiple_choice'):
           const markComponentiframe = document.querySelector('#question-to-view .threeDModelViewer')
