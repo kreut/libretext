@@ -17,21 +17,48 @@
           <div v-html="formatQuestionMediaPlayer(item.termToMatch)"/>
         </th>
         <td :class="qtiJson.studentResponse ? 'd-flex' : ''">
-          <b-dropdown :id="`matching-answer-${item.identifier}`"
-                      :html="getChosenMatch(item)"
-                      class="matching-dropdown m-md-2"
-                      no-flip
-                      :variant="item.chosenMatchIdentifier === null ? 'secondary' : 'info'"
-          >
-            <b-dropdown-item v-for="possibleMatch in nonNullPossibleMatches"
-                             :id="`dropdown-${possibleMatch.identifier}`"
-                             :key="`possible-match-${possibleMatch.identifier}`"
-                             style="overflow-x:auto;overflow-y:auto"
-                             @click="updateChosenMatch(item, possibleMatch)"
+          <div>
+            <b-dropdown :id="`matching-answer-${item.identifier}`"
+                        :ref="`dropdown-${item.identifier}`"
+                        :html="getChosenMatch(item)"
+                        class="matching-dropdown m-md-2"
+                        no-flip
+                        :variant="item.chosenMatchIdentifier === null ? 'secondary' : 'info'"
+                        @shown="onDropdownShown(item)"
             >
-              <span v-html="possibleMatch.matchingTerm"/>
-            </b-dropdown-item>
-          </b-dropdown>
+              <div v-for="possibleMatch in nonNullPossibleMatches"
+                   :key="`possible-match-${possibleMatch.identifier}`"
+                   class="dropdown-match-item"
+              >
+                <!-- Unified layout when any item in the list is a media player -->
+                <div v-if="hasMediaPlayer" class="dropdown-match-item__media-row">
+                  <span v-html="formatQuestionMediaPlayer(possibleMatch.matchingTerm)"
+                        class="dropdown-match-item__player"
+                  />
+                  <button class="btn btn-info btn-block dropdown-match-item__select-btn"
+                          @click.stop="updateChosenMatch(item, possibleMatch)"
+                  >
+                    Select
+                  </button>
+                </div>
+
+                <!-- Pure text list — direct click -->
+                <div v-else
+                     class="dropdown-match-item__text"
+                     @click="updateChosenMatch(item, possibleMatch)"
+                >
+                  <span v-html="possibleMatch.matchingTerm"/>
+                </div>
+              </div>
+            </b-dropdown>
+
+            <!-- Render the selected media player inline below the dropdown -->
+            <div v-if="chosenMatchHasMediaPlayer(item)"
+                 class="chosen-media-player mt-2 ml-2"
+                 v-html="formatQuestionMediaPlayer(getChosenMatchTerm(item))"
+            />
+          </div>
+
           <div v-if="qtiJson.studentResponse
               && qtiJson.studentResponse[index].chosenMatchIdentifier === item.chosenMatchIdentifier
               && qtiJson.studentResponse[index].hasOwnProperty('answeredCorrectly')"
@@ -91,8 +118,7 @@ export default {
   props: {
     qtiJson: {
       type: Object,
-      default: () => {
-      }
+      default: () => {}
     },
     showResponseFeedback: {
       type: Boolean,
@@ -103,10 +129,18 @@ export default {
     feedbackFields: ['termToMatch', 'feedback'],
     showQtiAnswer: false,
     termsToMatch: [],
+    possibleMatches: [],
     doNotRepeatErrorMessage: '',
     matchingFeedbacks: ''
   }),
   computed: {
+    hasMediaPlayer () {
+      const currentDomain = window.location.origin
+      return this.possibleMatches.some(match =>
+        match.matchingTerm &&
+        match.matchingTerm.includes(`${currentDomain}/question-media-player/`)
+      )
+    },
     termsToMatchWithFeedback () {
       return this.qtiJson.termsToMatch.filter(item => item.feedback && item.feedback !== '')
     },
@@ -122,7 +156,7 @@ export default {
     let chooseMatchMessage = 'Choose a match'
     for (let i = 0; i < this.possibleMatches.length; i++) {
       let possibleMatch = this.possibleMatches[i]
-      html = html = $.parseHTML(possibleMatch.matchingTerm)
+      html = $.parseHTML(possibleMatch.matchingTerm)
       if ($(html).find('img').length) {
         chooseMatchMessage = 'Choose a match from the images below'
         $(html).find('img').each(function () {
@@ -135,7 +169,9 @@ export default {
     this.possibleMatches.push({ identifier: null, matchingTerm: chooseMatchMessage })
     for (let i = 0; i < this.termsToMatch.length; i++) {
       if (this.qtiJson.studentResponse) {
-        this.termsToMatch[i].chosenMatchIdentifier = this.qtiJson.studentResponse.find(response => response.identifier === this.termsToMatch[i].identifier).chosenMatchIdentifier
+        this.termsToMatch[i].chosenMatchIdentifier = this.qtiJson.studentResponse.find(
+          response => response.identifier === this.termsToMatch[i].identifier
+        ).chosenMatchIdentifier
       } else {
         this.termsToMatch[i].chosenMatchIdentifier = null
         this.termsToMatch[i].errorMessage = ''
@@ -147,6 +183,15 @@ export default {
   },
   methods: {
     formatQuestionMediaPlayer,
+    onDropdownShown (item) {
+      if (!this.hasMediaPlayer) return
+      this.$forceUpdate()
+      const menu = document.querySelector('ul.dropdown-menu.show')
+      if (menu) {
+        menu.style.width = '250px'
+        menu.style.minWidth = '250px'
+      }
+    },
     getMatchingFeedbacks () {
       for (let i = 0; i < this.qtiJson.termsToMatch.length; i++) {
         let termToMatch = this.qtiJson.termsToMatch[i]
@@ -154,18 +199,100 @@ export default {
       }
     },
     getChosenMatch (item) {
-      return this.possibleMatches.find(possibleMatch => possibleMatch.identifier === item.chosenMatchIdentifier).matchingTerm.replace('<p>', '').replace('</p>', '')
+      const match = this.possibleMatches.find(
+        possibleMatch => possibleMatch.identifier === item.chosenMatchIdentifier
+      )
+      if (!match) return 'Choose a match'
+      const currentDomain = window.location.origin
+      if (match.matchingTerm.includes(`${currentDomain}/question-media-player/`)) {
+        return '&#9654; Audio selected'
+      }
+      return match.matchingTerm.replace('<p>', '').replace('</p>', '')
+    },
+    getChosenMatchTerm (item) {
+      const match = this.possibleMatches.find(
+        possibleMatch => possibleMatch.identifier === item.chosenMatchIdentifier
+      )
+      return match ? match.matchingTerm : ''
+    },
+    chosenMatchHasMediaPlayer (item) {
+      if (item.chosenMatchIdentifier === null) return false
+      const match = this.possibleMatches.find(
+        possibleMatch => possibleMatch.identifier === item.chosenMatchIdentifier
+      )
+      if (!match) return false
+      const currentDomain = window.location.origin
+      return match.matchingTerm.includes(`${currentDomain}/question-media-player/`)
     },
     updateChosenMatch (item, possibleMatch) {
       item.errorMessage = ''
       item.chosenMatchIdentifier = possibleMatch.identifier
-      this.$forceUpdate()
+      // Close the dropdown by clicking the toggle button
       this.$nextTick(() => {
+        const toggle = document.querySelector(`#matching-answer-${item.identifier} .btn`)
+        if (toggle) toggle.click()
         $(`#matching-answer-${item.identifier}`).find('.dropdown-toggle')
           .removeClass('dropdown-toggle')
           .css('border-radius', '4px')
       })
+      this.$forceUpdate()
     }
   }
 }
 </script>
+
+<style scoped>
+/* Wider menu when media players are present */
+.matching-dropdown-wide-menu {
+  min-width: 480px !important;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Each option row */
+.dropdown-match-item {
+  padding: 6px 12px;
+  border-bottom: 1px solid #e9ecef;
+}
+.dropdown-match-item:last-child {
+  border-bottom: none;
+}
+
+/* Text-only option */
+.dropdown-match-item__text {
+  cursor: pointer;
+  padding: 4px 0;
+}
+.dropdown-match-item__text:hover {
+  background-color: #f8f9fa;
+}
+
+/* Media (or mixed) row: player on top, Select button flush below */
+.dropdown-match-item__media-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+}
+
+/* Allow iframe interaction inside the menu */
+.dropdown-match-item__player {
+  display: block;
+  pointer-events: auto;
+}
+
+/* Full-width Select button sits tight under the player */
+.dropdown-match-item__select-btn {
+  width: 100%;
+}
+
+/* Selected media player rendered below the dropdown toggle */
+.chosen-media-player {
+  width: 480px;
+}
+
+.chosen-media-player >>> iframe.question-media-player {
+  display: block;
+  min-height: 120px;
+}
+</style>
