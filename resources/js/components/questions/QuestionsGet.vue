@@ -972,7 +972,7 @@
                                      @change="filterByContentType($event)"
                       />
                     </b-form>
-                    <b-form inline class="pb-3">
+                    <b-form inline class="pb-3" v-if="allQuestionsContent !== 'open_ended_only'">
                       <label class="ml-2" style="font-size:14px;margin-right:10px">Technology</label>
                       <b-form-select
                         id="all-questions-technology-select"
@@ -1302,7 +1302,7 @@
                       </a>
                     </template>
                     <template v-slot:cell(technology)="data">
-                      {{ allQuestionsTechnologyOptions.find(item => item.value === data.item.technology).text }}
+                      {{ allQuestionsTechnologyOptions.find(item => item.value === data.item.technology) ? allQuestionsTechnologyOptions.find(item => item.value === data.item.technology).text : 'None'}}
                     </template>
                     <template v-slot:cell(tag)="data">
                       <span v-html="data.item.tag"/>
@@ -1639,11 +1639,11 @@ export default {
     allQuestionsTechnology: 'any',
     allQuestionsTechnologyOptions: [
       { value: 'any', text: 'Any technology' },
-      { value: 'webwork', text: 'WeBWork' },
-      { value: 'imathas', text: 'IMathAS' },
-      { value: 'h5p', text: 'H5P' },
       { value: 'qti', text: 'Native' },
-      { value: 'text', text: 'Open-ended' }
+      { value: 'h5p', text: 'H5P' },
+      { value: 'forge', text: 'Forge' },
+      { value: 'imathas', text: 'IMathAS' },
+      { value: 'webwork', text: 'WeBWork' }
     ],
     allQuestionsPageOptions: [10, 50, 100, 500, 1000],
     allQuestionsPerPage: 100,

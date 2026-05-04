@@ -1581,6 +1581,14 @@
                 </b-form-group>
                 <b-form-group>
                   <div v-if="nativeType === 'sketcher'">
+                    <div class="mb-2">
+                      If you need help getting started, please visit
+                      <ConsultInsight
+                        id="consult-insight-webwork"
+                        :url="'https://commons.libretexts.org/insight/adapt-sketcher'"
+                        :formatting-class="''"
+                      />.
+                    </div>
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="submit_molecule"
                                   @change="initQTIQuestionType($event)"
                     >
@@ -1607,6 +1615,14 @@
                     </b-form-radio>
                   </div>
                   <div v-if="nativeType === 'accounting'">
+                    <div class="mb-2">
+                      If you need help getting started, please visit
+                      <ConsultInsight
+                        id="consult-insight-webwork"
+                        :url="'https://commons.libretexts.org/insight/adapt-accounting'"
+                        :formatting-class="''"
+                      />.
+                    </div>
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
                                   value="accounting_journal_entry"
                                   @change="initQTIQuestionType($event)"

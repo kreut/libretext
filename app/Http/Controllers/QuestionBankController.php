@@ -353,7 +353,10 @@ class QuestionBankController extends Controller
                 $question_ids = $question_ids->where('author', 'LIKE', "%$author%");
             }
             if ($technology !== 'any') {
-                $question_ids = $question_ids->where('technology', $technology);
+                $question_ids = $technology === 'forge'
+                    ? $question_ids->where('qti_json_type', 'forge')
+                    : $question_ids->where('technology', $technology);
+
                 if ($technology_id) {
                     $question_ids = $question_ids->where('technology_id', $technology_id);
                 }
@@ -372,7 +375,7 @@ class QuestionBankController extends Controller
                     } else if (in_array($request->question_type, ['Marker', 'Submit Molecule'])) {
                         $question_ids = $question_ids->where('qti_json_type', strtolower(str_replace(' ', '_', $request->question_type)));
                     } else if ($request->qti_content_type === 'sketcher') {
-                        $question_ids = $question_ids->whereIn('qti_json_type',['marker', 'submit_molecule']);
+                        $question_ids = $question_ids->whereIn('qti_json_type', ['marker', 'submit_molecule']);
                     } else {
                         $basic_types = ['multiple_choice', 'true_false', 'numerical', 'multiple_answers', 'fill_in_the_blank', 'select_choice', 'matching'];
                         switch ($qti_question_type) {
@@ -476,6 +479,9 @@ class QuestionBankController extends Controller
             $questions_info = $questionBank->getSupplementaryQuestionInfo($questions_info, $userAssignment);
             foreach ($questions_info as $key => $value) {
                 $questions[$key] = $value;
+                if ($questions[$key]->qti_json_type === 'forge') {
+                    $questions[$key]->question_type = 'Forge';
+                }
                 if ($questions[$key]->qti_json_type === 'submit_molecule') {
                     $questions[$key]->question_type = 'Submit Molecule';
                 }

@@ -57,6 +57,9 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Frameworks"/>
+        <p>A Framework is a hierarchical map of structured knowledge that can be aligned to your questions.
+          Frameworks can represent different types of organization — including keywords, skills, taxonomies, concepts, learning outcomes, or learning objectives — making them flexible enough to reflect how your course or discipline is structured.
+          Once built, aligning questions to a Framework helps ensure assessment coverage and supports tracking student mastery across topics.</p>
         <b-container>
           <b-row align-h="end" class="mb-4">
             <b-button
