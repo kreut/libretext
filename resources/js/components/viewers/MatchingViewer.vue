@@ -193,6 +193,7 @@ export default {
       }
     },
     getMatchingFeedbacks () {
+      if (!this.qtiJson?.termsToMatch) return
       for (let i = 0; i < this.qtiJson.termsToMatch.length; i++) {
         let termToMatch = this.qtiJson.termsToMatch[i]
         console.log(termToMatch)
