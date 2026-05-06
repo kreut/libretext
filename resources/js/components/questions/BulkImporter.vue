@@ -1954,6 +1954,7 @@ export default {
             topic: question['Topic'],
             non_technology_text: question['Open-Ended Content'],
             technology: question['Auto-Graded Technology'],
+            open_ended_submission_type: '0',
             technology_id: question['Technology ID/File Path'],
             text_question: question['Text Question'],
             a11y_question: question['A11Y Question'],
