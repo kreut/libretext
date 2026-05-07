@@ -1636,7 +1636,10 @@ class QuestionController extends Controller
                         $unsets = ['actions_to_take', 'parameters_to_monitor', 'potential_conditions'];
                         break;
                     case('numerical'):
-                        $unsets = ['correct_response', 'margin_of_error'];
+                        $unsets = ['correct_response', 'margin_of_error', 'relative_tolerance'];
+                        break;
+                    case('multi_numerical'):
+                        $unsets = ['correct_response', 'margin_of_error', 'relative_tolerance', 'placeholders'];
                         break;
                     case('multiple_response_grouping'):
                     case('matrix_multiple_choice'):

@@ -1586,7 +1586,8 @@
                         id="consult-insight-webwork"
                         :url="'https://commons.libretexts.org/insight/adapt-sketcher'"
                         :formatting-class="''"
-                      />.
+                      />
+                      .
                     </div>
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="submit_molecule"
                                   @change="initQTIQuestionType($event)"
@@ -1620,7 +1621,8 @@
                         id="consult-insight-webwork"
                         :url="'https://commons.libretexts.org/insight/adapt-accounting'"
                         :formatting-class="''"
-                      />.
+                      />
+                      .
                     </div>
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type"
                                   value="accounting_journal_entry"
@@ -1656,7 +1658,12 @@
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="numerical"
                                   @change="initQTIQuestionType($event)"
                     >
-                      Numerical
+                      Single Numerical
+                    </b-form-radio>
+                    <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multi_numerical"
+                                  @change="initQTIQuestionType($event)"
+                    >
+                      Multi Numerical
                     </b-form-radio>
                     <b-form-radio v-model="qtiQuestionType" name="qti-question-type" value="multiple_answers"
                                   @change="initQTIQuestionType($event)"
@@ -1885,15 +1892,19 @@
                     response, an incorrect response, or any response.
                   </b-alert>
                 </div>
-
                 <div v-if="qtiQuestionType === 'numerical'">
                   <b-alert show variant="info">
                     Write a question prompt which requires a numerical response, specifying the margin of error
-                    accepted
-                    in
-                    the response.
+                    accepted in the response.
                     Optionally provide general feedback for a correct response, an incorrect response, or any
                     response.
+                  </b-alert>
+                </div>
+                <div v-if="qtiQuestionType === 'multi_numerical'">
+                  <b-alert show variant="info">
+                    Type your question in the editor, then click the U toolbar button to underline each numerical answer.
+                    For example: 60% of 30 is <u>18</u> while 10% of 30 is <u>3</u>. A table will appear below the editor where you can set the correct tolerance for each blank.
+                    Tolerance can be set in Absolute (±) terms for a fixed range, or Relative (%) terms for a percentage-based range
                   </b-alert>
                 </div>
                 <div v-if="qtiQuestionType === 'drag_and_drop_cloze'">
@@ -1981,7 +1992,7 @@
                          'multiple_answers',
                          'true_false',
                          'multiple_choice',
-                         'numerical',
+                           'numerical',
                          'multiple_response_select_all_that_apply',
                          'multiple_response_select_n',
                          'matrix_multiple_response',
@@ -2265,10 +2276,18 @@
                                 :qti-json="qtiJson"
                                 :question-form="questionForm"
                 />
-                <Numerical v-if="qtiQuestionType === 'numerical'"
-                           ref="Nuemrical"
-                           :qti-json="qtiJson"
-                           :question-form="questionForm"
+                <SingleNumerical v-if="qtiQuestionType === 'numerical'"
+                                 ref="SingleNumerical"
+                                 :qti-json="qtiJson"
+                                 :question-form="questionForm"
+                />
+                <MultiNumerical v-if="qtiQuestionType === 'multi_numerical'"
+                                ref="MultiNumerical"
+                                :key="`multi-numerical-${isEdit}`"
+                                :qti-json="qtiJson"
+                                :question-form="questionForm"
+                                :rich-editor-config="richEditorConfig"
+                                @setCKEditorKeydownAsTrue="setCKEditorKeydownAsTrue"
                 />
 
                 <div
@@ -2385,7 +2404,7 @@
                 </div>
                 <div class="pb-2">
                   <b-card
-                    v-if="['multiple_choice','numerical'].includes(qtiQuestionType)
+                    v-if ="['multiple_choice', 'numerical'].includes(qtiQuestionType)
                       || nursingQuestions.includes(qtiQuestionType)
                       || qtiQuestionType.includes('drop_down_rationale')
                       || (qtiQuestionType === 'select_choice' && nativeType === 'nursing')"
@@ -2951,7 +2970,8 @@ import SelectChoiceDropDownRationale from './nursing/SelectChoiceDropDownRationa
 import HighlightText from './nursing/HighlightText'
 import HighlightTable from './nursing/HighlightTable'
 import Matching from './Matching'
-import Numerical from './Numerical'
+import SingleNumerical from './SingleNumerical'
+import MultiNumerical from './MultiNumerical'
 import MultipleAnswers from './MultipleAnswers'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import FrameworkAligner from '../FrameworkAligner'
@@ -3159,7 +3179,8 @@ export default {
     FrameworkAligner,
     MultipleChoiceTrueFalse,
     MultipleAnswers,
-    Numerical,
+    SingleNumerical,
+    MultiNumerical,
     FillInTheBlank,
     Matching,
     HighlightTable,
@@ -3580,6 +3601,7 @@ export default {
         // this.setToQuestionType('accounting_report')
         // this.setToQuestionType('flashcard')
         //this.setToQuestionType('accounting_multi_part_computation')
+        //this.setToQuestionType('multi_numerical')
       })
     }
   },
@@ -3801,6 +3823,32 @@ export default {
     setToQuestionType (questionType) {
       document.getElementById('primary-content___BV_tab_button__').click()
       switch (questionType) {
+        case ('numerical'):
+          document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="native-question-type"][value="basic"]').click()
+            }
+            , 250
+          )
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="numerical"]').click()
+            }
+            , 250
+          )
+          break
+        case ('multi_numerical'):
+          document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="native-question-type"][value="basic"]').click()
+            }
+            , 250
+          )
+          window.setTimeout(() => {
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="multi_numerical"]').click()
+            }
+            , 250
+          )
+          break
         case ('accounting_multi_part_computation'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
@@ -4379,7 +4427,23 @@ export default {
             this.$forceUpdate()
             this.questionForm.qti_prompt = this.qtiJson['prompt']
             this.questionForm.correct_response = this.qtiJson.correctResponse.value
-            this.questionForm.margin_of_error = this.qtiJson.correctResponse.marginOfError
+            this.questionForm.margin_of_error = this.qtiJson.correctResponse.toleranceType === 'relative'
+              ? '0'
+              : this.qtiJson.correctResponse.marginOfError
+            this.questionForm.relative_tolerance = this.qtiJson.correctResponse.toleranceType === 'relative'
+              ? this.qtiJson.correctResponse.relativeTolerance
+              : '0'
+            this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+            break
+          case ('multi_numerical'):
+            this.$forceUpdate()
+            this.questionForm.qti_prompt = this.qtiJson['prompt']
+            if (this.qtiJson.placeholders && this.qtiJson.placeholders.length) {
+              this.questionForm.placeholders = JSON.stringify(this.qtiJson.placeholders)
+              const first = this.qtiJson.placeholders[0]
+              this.questionForm.correct_response = first.value
+              this.questionForm.margin_of_error = first.toleranceType === 'absolute' ? first.absoluteTolerance : '0'
+            }
             this.questionForm.qti_json = JSON.stringify(this.qtiJson)
             break
           case ('matching'):
@@ -4678,6 +4742,30 @@ export default {
           case ('numerical'):
             this.qtiQuestionType = 'numerical'
             this.qtiPrompt = this.qtiJson['prompt']
+            if (!this.qtiJson.feedback) {
+              this.qtiJson.feedback = {}
+            }
+            // Backwards compat: set toleranceType if missing
+            if (!this.qtiJson.correctResponse.toleranceType) {
+              this.$set(this.qtiJson.correctResponse, 'toleranceType', 'absolute')
+            }
+            if (!this.qtiJson.correctResponse.relativeTolerance) {
+              this.$set(this.qtiJson.correctResponse, 'relativeTolerance', '0')
+            }
+            break
+          case ('multi_numerical'):
+            this.qtiQuestionType = 'multi_numerical'
+            this.qtiPrompt = this.qtiJson['prompt']
+            if (!this.qtiJson.placeholders || !this.qtiJson.placeholders.length) {
+              this.$set(this.qtiJson, 'placeholders', [
+                {
+                  value: this.qtiJson.correctResponse?.value ?? '',
+                  toleranceType: 'absolute',
+                  absoluteTolerance: this.qtiJson.correctResponse?.marginOfError ?? '0',
+                  relativeTolerance: '0'
+                }
+              ])
+            }
             if (!this.qtiJson.feedback) {
               this.qtiJson.feedback = {}
             }
@@ -5535,7 +5623,9 @@ export default {
             prompt: '',
             correctResponse: {
               value: '',
-              marginOfError: '0'
+              marginOfError: '0',
+              toleranceType: 'absolute',
+              relativeTolerance: '0'
             },
             feedback: {
               any: '',
@@ -5544,6 +5634,25 @@ export default {
             }
           }
           break
+        case ('multi_numerical'):
+          this.qtiJson = {
+            questionType: 'multi_numerical',
+            prompt: '',
+            placeholders: [
+              {
+                value: '',
+                toleranceType: 'absolute',
+                absoluteTolerance: '0',
+                relativeTolerance: '0'
+              }
+            ],
+            correctResponse: {
+              value: '',
+              marginOfError: '0'
+            }
+          }
+          break
+
         case ('matching'):
           this.qtiJson = { questionType: 'matching' }
           this.qtiJson.prompt = {}
@@ -6119,6 +6228,10 @@ export default {
                 break
               case ('atoms_and_bonds'):
                 formattedErrors.push('Please fix the Score Adjustment Percent errors associated with your Marker question.')
+                break
+              case ('placeholders'):
+                formattedErrors.push('Please fix the numerical blank errors.')
+                this.$refs.Numerical.setErrors(JSON.parse(errors[property]))
                 break
               default:
                 formattedErrors.push(errors[property][0])

@@ -18,16 +18,18 @@
         </b-button>
       </template>
     </b-modal>
-    <b-modal
-      id="modal-submission-error"
-      title="Submission Not Accepted"
-      size="lg"
-      hide-footer
-    >
-      <b-alert variant="danger" :show="true">
-        <span style="font-size: large">{{ submissionErrorMessage }}</span>
-      </b-alert>
-    </b-modal>
+    <div v-if="question.jsonType === 'question_json'">
+      <b-modal
+        id="modal-submission-error"
+        title="Submission Not Accepted"
+        size="lg"
+        hide-footer
+      >
+        <b-alert variant="danger" :show="true">
+          <span style="font-size: large">{{ submissionErrorMessage }}</span>
+        </b-alert>
+      </b-modal>
+    </div>
     <div v-show="showRandomizedMessage()">
       <b-alert
         show
@@ -93,6 +95,7 @@
                'multiple_choice',
                'multiple_answers',
                'numerical',
+               'multi_numerical',
                'multiple_response_select_all_that_apply',
                'multiple_response_select_n',
                'matrix_multiple_response',
@@ -183,10 +186,18 @@
             :qti-json="JSON.parse(qtiJson)"
             :show-response-feedback="showResponseFeedback"
           />
-          <NumericalViewer v-if="questionType === 'numerical'"
-                           ref="numericalViewer"
-                           :key="`numerical-${qtiJsonCacheKey}`"
-                           :qti-json="JSON.parse(qtiJson)"
+          <SingleNumericalViewer v-if="questionType === 'numerical'"
+                                 ref="numericalViewer"
+                                 :key="`numerical-${qtiJsonCacheKey}`"
+                                 :qti-json="JSON.parse(qtiJson)"
+                                 :show-response-feedback="showResponseFeedback"
+                                 :prompt="JSON.parse(qtiJson).prompt || ''"
+          />
+          <MultiNumericalViewer v-if="questionType === 'multi_numerical'"
+                                ref="multiNumericalViewer"
+                                :key="`multi-numerical-${qtiJsonCacheKey}`"
+                                :qti-json="JSON.parse(qtiJson)"
+                                :show-response-feedback="showResponseFeedback"
           />
           <MatchingViewer v-if="questionType === 'matching'"
                           ref="matchingViewer"
@@ -302,11 +313,13 @@
 </template>
 
 <script>
+import { v4 as uuidv4 } from 'uuid'
 import $ from 'jquery'
 import { mapGetters } from 'vuex'
 import ForgeViewer from './viewers/ForgeViewer.vue'
 import SketcherViewer from './viewers/SketcherViewer.vue'
-import NumericalViewer from './viewers/NumericalViewer'
+import SingleNumericalViewer from './viewers/SingleNumericalViewer'
+import MultiNumericalViewer from './viewers/MultiNumericalViewer'
 import BowTieViewer from './viewers/BowTieViewer'
 import MatrixMultipleChoiceViewer from './viewers/MatrixMultipleChoiceViewer'
 import MultipleResponseSelectAllThatApplyOrSelectNViewer
@@ -346,7 +359,8 @@ export default {
     MatrixMultipleResponseViewer,
     MultipleChoiceTrueFalseViewer,
     MultipleAnswersViewer,
-    NumericalViewer,
+    SingleNumericalViewer,
+    MultiNumericalViewer,
     SelectChoiceDropDownRationaleViewer,
     FillInTheBlankViewer,
     MatchingViewer,
@@ -427,6 +441,7 @@ export default {
 
   },
   data: () => ({
+      uuid: '',
       receivedModelStructureData: false,
       structureImageUploaderKey: 0,
       confirmedStructure: false,
@@ -516,7 +531,6 @@ export default {
       case ('three_d_model_multiple_choice'):
       case ('submit_molecule'):
       case ('marker'):
-      case ('numerical'):
       case ('matching') :
       case ('multiple_answers'):
       case ('matrix_multiple_response'):
@@ -539,6 +553,29 @@ export default {
             'margin-inline-start': '0px',
             'margin-inline-end': '0px',
             'font-weight': 'bold'
+          })
+        })
+        break
+      case ('numerical'):
+        this.prompt = ''
+        this.$nextTick(() => {
+          $('#question').find('h2').css({
+            'display': 'block',
+            'font-size': '1.333em',
+            'margin-block-start': '0.83em',
+            'margin-block-end': '0.83em',
+            'margin-inline-start': '0px',
+            'margin-inline-end': '0px',
+            'font-weight': 'bold'
+          })
+        })
+        break
+      case ('multi_numerical'):
+        // MultiNumericalViewer renders the prompt inline — don't set it here
+        this.prompt = ''
+        this.$nextTick(() => {
+          $('#question').find('h2').css({
+            'display': 'block',
           })
         })
         break
@@ -727,13 +764,39 @@ export default {
           response = JSON.stringify(this.response)
           break
         case ('numerical'):
-          response = this.$refs.numericalViewer.numericalResponse.toString()
+          response = this.$refs.numericalViewer.numericalResponse.toString().trim()
           if (response === '') {
             invalidResponse = true
+            submissionErrorMessage = 'Please enter a number before submitting.'
+          } else if (isNaN(response)) {
+            invalidResponse = true
+            submissionErrorMessage = 'Please enter only a numerical value before submitting.'
           } else {
             response = response.replace(',', '')
           }
-          submissionErrorMessage = 'Please make a selection before submitting.'
+          break
+        case ('multi_numerical'):
+          response = []
+          let numericalInvalidFormat = false
+          $('#question-to-view input.numerical-blank').each(function () {
+            const val = $(this).val().trim()
+            if (val === '') {
+              $(this).addClass('is-invalid-border')
+              invalidResponse = true
+            } else if (isNaN(val)) {
+              $(this).addClass('is-invalid-border')
+              numericalInvalidFormat = true
+            }
+            response.push({ response: val })
+          })
+          if (invalidResponse) {
+            submissionErrorMessage = 'Please enter a number in all text boxes before submitting.'
+          } else if (numericalInvalidFormat) {
+            submissionErrorMessage = 'Please enter only numerical values before submitting.'
+            invalidResponse = true
+          } else {
+            response = JSON.stringify({ answers: response })
+          }
           break
         case ('matching'):
           response = JSON.stringify(this.$refs.matchingViewer.termsToMatch)

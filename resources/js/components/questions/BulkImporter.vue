@@ -504,7 +504,6 @@
           <ul>
             <li>True/False</li>
             <li>Multiple Choice</li>
-            <li>Numerical</li>
             <li>Multiple Answer</li>
             <li>Fill in the blank</li>
             <li>Fill in multiple blanks</li>

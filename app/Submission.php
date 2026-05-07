@@ -59,13 +59,13 @@ class Submission extends Model
 
                     $totalAnswerCells++;
                     $expectedValue = $cell['value'] ?? '';
-                    $answerType    = $cell['answerType'] ?? 'dollar';
-                    $rawStudent    = $studentSubmission[$ti][$ri][$ci] ?? '';
+                    $answerType = $cell['answerType'] ?? 'dollar';
+                    $rawStudent = $studentSubmission[$ti][$ri][$ci] ?? '';
 
                     // Strip all formatting characters before comparison
-                    $cleanStudent  = str_replace(['$', ',', '%', ' '], '', (string)$rawStudent);
+                    $cleanStudent = str_replace(['$', ',', '%', ' '], '', (string)$rawStudent);
                     // Also strip the :1 ratio suffix if present
-                    $cleanStudent  = preg_replace('/:1$/', '', $cleanStudent);
+                    $cleanStudent = preg_replace('/:1$/', '', $cleanStudent);
                     $cleanExpected = str_replace(['$', ',', '%', ' '], '', (string)$expectedValue);
                     $cleanExpected = preg_replace('/:1$/', '', $cleanExpected);
 
@@ -606,12 +606,58 @@ class Submission extends Model
                         $proportion_correct = $num_correct / 5;
                         break;
                     }
-                    case('numerical'):
-                        $student_response = $submission->student_response;
-                        $margin_of_error = (float)$submission->question->correctResponse->marginOfError;
-                        $diff = abs((float)$student_response - (float)$submission->question->correctResponse->value);
-                        $proportion_correct = +($diff <= $margin_of_error);
+                    case('numerical'): {
+                        $cr            = $submission->question->correctResponse;
+                        $toleranceType = $cr->toleranceType ?? 'absolute';
+                        $correct       = (float) $cr->value;
+                        $diff          = round(abs((float) $submission->student_response - $correct), 10);
+
+                        if ($toleranceType === 'relative') {
+                            $pct              = (float) ($cr->relativeTolerance ?? 0);
+                            $proportion_correct = (int) ($diff <= round(abs($correct) * $pct / 100, 10));
+                        } else {
+                            $margin_of_error  = round((float) $cr->marginOfError, 10);
+                            $proportion_correct = (int) ($diff <= $margin_of_error);
+                        }
                         break;
+                    }
+                    case('multi_numerical'): {
+                        $placeholders = isset($submission->question->placeholders)
+                            ? (array) $submission->question->placeholders
+                            : [];
+                        $total   = count($placeholders);
+                        $correct = 0;
+
+                        // Handle legacy bare scalar submission
+                        $decoded = json_decode($submission->student_response, true);
+                        if (!isset($decoded['answers'])) {
+                            $cr   = $submission->question->correctResponse;
+                            $diff = round(abs((float) $submission->student_response - (float) $cr->value), 10);
+                            $proportion_correct = (int) ($diff <= round((float) $cr->marginOfError, 10));
+                            break;
+                        }
+
+                        foreach ($placeholders as $i => $placeholder) {
+                            $placeholder  = (array) $placeholder;
+                            $studentValue = $decoded['answers'][$i]['response'] ?? '';
+                            if (!is_numeric($studentValue) || !is_numeric($placeholder['value'])) {
+                                continue;
+                            }
+                            $diff          = round(abs((float) $studentValue - (float) $placeholder['value']), 10);
+                            $toleranceType = $placeholder['toleranceType'] ?? 'absolute';
+                            if ($toleranceType === 'relative') {
+                                $pct             = (float) ($placeholder['relativeTolerance'] ?? 0);
+                                $withinTolerance = $diff <= round(abs((float) $placeholder['value']) * $pct / 100, 10);
+                            } else {
+                                $withinTolerance = $diff <= round((float) ($placeholder['absoluteTolerance'] ?? 0), 10);
+                            }
+                            if ($withinTolerance) {
+                                $correct++;
+                            }
+                        }
+                        $proportion_correct = $total > 0 ? $correct / $total : 0;
+                        break;
+                    }
                     case('matching'):
                         $student_response = json_decode($submission->student_response);
                         $student_response_by_term_identifier = [];

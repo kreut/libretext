@@ -1230,9 +1230,9 @@
                     <b-button variant="primary" size="sm" @click="getCollection('all_questions')">
                       Update Results
                     </b-button>
-                    <span class="font-weight-bold ml-5"> {{
-                        Number(allQuestionsTotalRows).toLocaleString()
-                      }} questions</span>
+                    <span class="font-weight-bold ml-5">
+  {{ Number(allQuestionsTotalRows).toLocaleString() }} {{ Number(allQuestionsTotalRows) === 1 ? 'question' : 'questions' }}
+</span>
                   </div>
                 </b-form>
                 <div v-show="false" id="adapt-ids">
@@ -1302,7 +1302,7 @@
                       </a>
                     </template>
                     <template v-slot:cell(technology)="data">
-                      {{ allQuestionsTechnologyOptions.find(item => item.value === data.item.technology) ? allQuestionsTechnologyOptions.find(item => item.value === data.item.technology).text : 'None'}}
+                      {{ allQuestionsTechnologyOptions.find(item => item.value === data.item.technology) ? allQuestionsTechnologyOptions.find(item => item.value === data.item.technology).text : 'None' }}
                     </template>
                     <template v-slot:cell(tag)="data">
                       <span v-html="data.item.tag"/>
@@ -1928,7 +1928,7 @@ export default {
           switch (this.qtiContentType) {
             case ('basic'):
               options = [
-                'Multiple Choice', 'True/False', 'Numerical', 'Multiple Answer', 'Fill-in-the-blank', 'Select Choice', 'Matching']
+                'Multiple Choice', 'True/False', 'Single Numerical', 'Multi Numerical', 'Multiple Answer', 'Fill-in-the-blank', 'Select Choice', 'Matching']
               break
             case ('sketcher'):
               options = ['Submit Molecule', 'Marker']

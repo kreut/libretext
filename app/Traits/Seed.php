@@ -42,6 +42,7 @@ trait Seed
                     'true_false',
                     'fill_in_the_blank',
                     'numerical',
+                    'multi_numerical',
                     'matrix_multiple_choice',
                     'highlight_text',
                     'highlight_table',

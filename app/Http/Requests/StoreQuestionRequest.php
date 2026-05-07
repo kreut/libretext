@@ -52,6 +52,7 @@ use App\Rules\MultipleResponseGroupingRows;
 use App\Rules\nonRepeatingMatchingTerms;
 use App\Rules\nonRepeatingSimpleChoice;
 use App\Rules\nonRepeatingTermsToMatch;
+use App\Rules\ValidNumericalPlaceholders;
 use Exception;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
@@ -247,7 +248,30 @@ class StoreQuestionRequest extends FormRequest
                                 case('numerical'):
                                     $rules['qti_prompt'] = ['required', new IsValidNumericalPrompt($this->qti_json, $this->route('question'))];
                                     $rules['correct_response'] = 'required|numeric';
-                                    $rules['margin_of_error'] = 'required|numeric|min:0';
+                                    $qti = json_decode($this->qti_json, true);
+                                    $toleranceType = $qti['correctResponse']['toleranceType'] ?? 'absolute';
+                                    if ($toleranceType === 'relative') {
+                                        $rules['relative_tolerance'] = 'required|numeric|min:0';
+                                    } else {
+                                        $rules['margin_of_error'] = 'required|numeric|min:0';
+                                    }
+                                    break;
+                                case('multi_numerical'):
+                                    if ($this->input('placeholders') !== null) {
+                                        $rules['qti_prompt'] = [
+                                            'required',
+                                            function ($attribute, $value, $fail) {
+                                                if (!preg_match('/<u>.+?<\/u>/s', $value ?? '')) {
+                                                    $fail('The prompt must contain at least one underlined blank.');
+                                                }
+                                            },
+                                        ];
+                                        $rules['placeholders'] = ['required', new ValidNumericalPlaceholders()];
+                                    } else {
+                                        // Legacy fallback
+                                        $rules['correct_response'] = 'required|numeric';
+                                        $rules['margin_of_error'] = 'required|numeric|min:0';
+                                    }
                                     break;
                                 case('matching'):
                                     $rules['qti_prompt'] = ['required', new IsValidMatchingPrompt($qti_array['questionType'], $this->qti_json, $this->route('question'))];

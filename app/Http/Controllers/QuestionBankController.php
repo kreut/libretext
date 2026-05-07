@@ -334,6 +334,7 @@ class QuestionBankController extends Controller
 
             }
 
+
             $question_subject_id = $request->question_subject_id;
             $question_chapter_id = $request->question_chapter_id;
             $question_section_id = $request->question_section_id;
@@ -377,7 +378,7 @@ class QuestionBankController extends Controller
                     } else if ($request->qti_content_type === 'sketcher') {
                         $question_ids = $question_ids->whereIn('qti_json_type', ['marker', 'submit_molecule']);
                     } else {
-                        $basic_types = ['multiple_choice', 'true_false', 'numerical', 'multiple_answers', 'fill_in_the_blank', 'select_choice', 'matching'];
+                        $basic_types = ['multiple_choice', 'true_false', 'numerical', 'multi_numerical','multiple_answers', 'fill_in_the_blank', 'select_choice', 'matching'];
                         switch ($qti_question_type) {
                             case('basic'):
                                 $question_ids = $question_ids->whereIn('qti_json_type', $basic_types);

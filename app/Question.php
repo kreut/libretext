@@ -930,17 +930,28 @@ class Question extends Model
             case('numerical'):
                 if ($student_response) {
                     $student_response = json_decode($student_response, 1);
-                    $margin_of_error = (float)$qti_array['correctResponse']['marginOfError'];
-                    $diff = abs((float)$student_response - (float)$qti_array['correctResponse']['value']);
+                    $cr            = $qti_array['correctResponse'];
+                    $toleranceType = $cr['toleranceType'] ?? 'absolute';
+                    $correct       = (float) $cr['value'];
+                    $diff          = round(abs((float) $student_response - $correct), 10);
+
+                    if ($toleranceType === 'relative') {
+                        $pct              = (float) ($cr['relativeTolerance'] ?? 0);
+                        $answeredCorrectly = $diff <= round(abs($correct) * $pct / 100, 10);
+                    } else {
+                        $margin_of_error  = round((float) $cr['marginOfError'], 10);
+                        $answeredCorrectly = $diff <= $margin_of_error;
+                    }
 
                     $qti_array['studentResponse'] = [
-                        'response' => $student_response,
-                        'answeredCorrectly' => $diff <= $margin_of_error
+                        'response'          => $student_response,
+                        'answeredCorrectly' => $answeredCorrectly,
                     ];
                 }
                 if (!$show_solution) {
                     if (request()->user()->role === 3) {
                         unset($qti_array['correctResponse']);
+                        unset($qti_array['studentResponse']['answeredCorrectly']);
                         unset($qti_array['feedback']);
                     }
                 } else {
@@ -954,6 +965,70 @@ class Question extends Model
                         $qti_array['studentResponse'] = ['response' => $qti_array['correctResponse']['value']];
                     }
                 }
+                break;
+
+            case('multi_numerical'):
+                // Capture full placeholders BEFORE any stripping
+                $placeholders = $qti_array['placeholders'] ?? [];
+                $total        = count($placeholders);
+
+                if ($student_response) {
+                    $decoded       = json_decode($student_response, true);
+                    $raw_answers   = $decoded['answers'] ?? [];
+                    $answers       = [];
+                    $correct_count = 0;
+
+                    foreach ($placeholders as $i => $placeholder) {
+                        $studentValue      = $raw_answers[$i]['response'] ?? '';
+                        $answeredCorrectly = $this->_isNumericalAnswerCorrect((array) $placeholder, $studentValue);
+                        if ($answeredCorrectly) {
+                            $correct_count++;
+                        }
+                        $answer = ['response' => $studentValue];
+                        if ($show_solution || request()->user()->role !== 3) {
+                            $answer['answeredCorrectly'] = $answeredCorrectly;
+                        }
+                        $answers[] = $answer;
+                    }
+
+                    $qti_array['studentResponse'] = [
+                        'answers'           => $answers,
+                        'proportionCorrect' => $total > 0 ? $correct_count / $total : 0,
+                    ];
+                }
+
+                if ($json_type === 'answer_json') {
+                    $qti_array['studentResponse'] = [
+                        'answers'           => array_map(function ($p) {
+                            return ['response' => $p['value'], 'answeredCorrectly' => true];
+                        }, $placeholders),
+                        'proportionCorrect' => 1,
+                    ];
+                }
+                if (request()->user()->role === 3) {
+                    $qti_array['prompt'] = preg_replace('/<u>.*?<\/u>/s', '<u></u>', $qti_array['prompt'] ?? '');
+
+                    if ($show_solution && $json_type === 'answer_json') {
+                        // Show tolerance range hints but not the correct value
+                        $qti_array['placeholders'] = array_map(function ($p) {
+                            return [
+                                'toleranceType'     => $p['toleranceType'] ?? 'absolute',
+                                'absoluteTolerance' => $p['absoluteTolerance'] ?? '0',
+                                'relativeTolerance' => $p['relativeTolerance'] ?? '0',
+                            ];
+                        }, $placeholders);
+                    } else {
+                        // No tolerance hints — just enough for viewer to know blank count
+                        $qti_array['placeholders'] = array_map(function ($p) {
+                            return ['toleranceType' => $p['toleranceType'] ?? 'absolute'];
+                        }, $placeholders);
+                    }
+
+                    unset($qti_array['correctResponse']);
+                    unset($qti_array['feedback']);
+                }
+
+
                 break;
             case('matrix_multiple_choice'):
                 if ($student_response) {
@@ -3663,8 +3738,12 @@ class Question extends Model
             case('short_answer_question'):
                 $formatted_question_type = 'Open-ended';
                 break;
+            case('numerical'):
             case('numerical_question'):
-                $formatted_question_type = 'Numerical';
+                $formatted_question_type = 'Single Numerical';
+                break;
+            case('multi_numerical'):
+                $formatted_question_type = 'Multi Numerical';
                 break;
             case('true_false'):
                 $formatted_question_type = 'True/False';
@@ -3769,6 +3848,7 @@ class Question extends Model
                     $formatted_question_type = $this->h5pFormattedType();
                     break;
                 case('qti_json'):
+                case('qti'):
                     $formatted_question_type = $this->nativeFormattedType();
                     break;
                 case('imathas'):
@@ -3924,6 +4004,22 @@ class Question extends Model
         $custom_claims['webwork']['showCorrectAnswersButton'] = 0;
         $jwe = new JWE();
         return $this->createProblemJWT($jwe, $custom_claims, 'webwork');
+    }
+
+    private function _isNumericalAnswerCorrect(array $placeholder, $studentValue): bool
+    {
+        if (!is_numeric($studentValue) || !is_numeric($placeholder['value'])) {
+            return false;
+        }
+        $correct = (float) $placeholder['value'];
+        $diff    = round(abs((float) $studentValue - $correct), 10);
+
+        if (($placeholder['toleranceType'] ?? 'absolute') === 'relative') {
+            $pct = (float) ($placeholder['relativeTolerance'] ?? 0);
+            return $diff <= round(abs($correct) * $pct / 100, 10);
+        }
+
+        return $diff <= round((float) ($placeholder['absoluteTolerance'] ?? 0), 10);
     }
 }
 
