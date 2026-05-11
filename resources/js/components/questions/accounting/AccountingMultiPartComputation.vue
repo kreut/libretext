@@ -144,9 +144,9 @@
                       @drop.prevent="onDrop(ti, ri)"
                     >
                       <div class="d-flex align-items-center" style="gap:6px;">
-                        <b-form-input
+                        <b-form-textarea
                           v-model="row.instructionText"
-                          type="text"
+                          rows="2"
                           size="sm"
                           placeholder="Instruction text (spans full row)..."
                           class="instruction-input flex-grow-1"

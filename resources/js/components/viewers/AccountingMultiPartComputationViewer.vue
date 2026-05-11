@@ -7,10 +7,9 @@
       :key="`table-${ti}`"
       class="mpc-table-wrapper mb-4"
     >
-
-      <!-- ============================================ -->
-      <!-- GRID TABLE (tableType === 'table')            -->
-      <!-- ============================================ -->
+      <div v-if="table.label && table.label.trim()" class="mpc-table-label">
+        {{ table.label }}
+      </div>
       <table v-if="table.tableType !== 'lineItems'" class="mpc-table">
         <thead v-if="tableHasColumnHeaders(table)">
         <tr>
@@ -338,7 +337,8 @@ export default {
 .mpc-table {
   border-collapse: collapse;
   border: none;
-  width: auto;
+  width: 100%;
+  table-layout: fixed;
 }
 .mpc-table td, .mpc-table th {
   border: none;
@@ -463,4 +463,12 @@ input.border-danger, select.border-danger {
   border: 2px solid #b02a37 !important;
   box-shadow: none !important;
 }
+.mpc-table-label {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #343a40;
+}
+
 </style>

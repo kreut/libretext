@@ -1644,8 +1644,7 @@
                     >
                       Report
                     </b-form-radio>
-                    <b-form-radio v-if="[142886,11712,1,5].includes(user.id)"
-                                  v-model="qtiQuestionType"
+                    <b-form-radio v-model="qtiQuestionType"
                                   name="qti-question-type"
                                   value="accounting_multi_part_computation"
                                   @change="initQTIQuestionType($event)"
