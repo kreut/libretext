@@ -199,7 +199,7 @@ class CourseController extends Controller
      * @param Assignment $assignment
      * @return array
      */
-    public function getAssignmentStatusesByCourse(Request $request, Course $course, Assignment $assignment)
+    public function getAssignmentStatusesByCourse(Request $request, Course $course, Assignment $assignment): array
     {
 
         $assign_to_timings = DB::table('assignments')
@@ -218,6 +218,15 @@ class CourseController extends Controller
                 $assign_to_timing->status = $assignment->getStatus($assign_to_timing->available_from, $assign_to_timing->due, $assign_to_timing->final_submission_deadline);
             }
         }
+        $assignment_ids = $course->assignments->pluck('id');
+        $assignment_level_overrides = DB::table('assignment_level_overrides')
+            ->join('users', 'assignment_level_overrides.user_id', '=', 'users.id')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->where('user_id', $request->user()->id)
+            ->get()
+            ->pluck('assignment_id')
+            ->toArray();
+        $response['assignment_level_overrides'] = $assignment_level_overrides;
         $response['assignment_statuses'] = $assign_to_timings;
         $response['type'] = 'success';
         return $response;

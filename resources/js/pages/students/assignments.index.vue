@@ -288,7 +288,10 @@
               </span>
             </template>
             <template #cell(status)="data">
-              <span :class="getStatusTextClass(data.item.status)"> {{ data.item.status }}</span>
+              <span v-if="assignmentLevelOverrides.includes(data.item.id)">
+                 <span class="text-success"> Open</span>
+              </span>
+              <span v-else :class="getStatusTextClass(data.item.status)"> {{ data.item.status }}</span>
             </template>
             <template #cell(score)="data">
               <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
@@ -339,6 +342,7 @@ export default {
     return { title: 'My Assignments' }
   },
   data: () => ({
+    assignmentLevelOverrides: [],
     redirectToClickerModalKey: 0,
     clickerAssignmentId: 0,
     clickerQuestionId: 0,
@@ -480,6 +484,7 @@ export default {
         const { data } = await axios.get(`/api/courses/${this.courseId}/assignment-statuses`)
         if (data.type === 'success') {
           this.assignmentStatuses = data.assignment_statuses
+          this.assignmentLevelOverrides = data.assignment_level_overrides
         } else {
           this.$noty.error(data.message)
         }
