@@ -82,6 +82,32 @@
         <has-error :form="macroForm" field="name"/>
       </b-form-group>
 
+      <!-- Revision select — only shown when editing a macro that has revisions -->
+      <b-form-group
+        v-if="isEdit && revisions.length"
+        label-cols-sm="2"
+        label-cols-lg="1"
+        label="Revision"
+      >
+        <b-form-row class="align-items-center">
+          <b-form-select
+            v-model="editRevisionId"
+            style="width:500px"
+            size="sm"
+            :options="revisionOptions"
+            class="mr-2"
+            @change="loadRevisionIntoForm"
+          />
+          <b-button
+            size="sm"
+            variant="outline-primary"
+            @click="openCompareFromEdit"
+          >
+            Compare Revisions
+          </b-button>
+        </b-form-row>
+      </b-form-group>
+
       <b-form-group
         label-cols-sm="2"
         label-cols-lg="1"
@@ -207,7 +233,7 @@
               <td style="width:90px; white-space:nowrap">
                 {{ formatDate(macro.updated_at) }}
               </td>
-              <td style="width:140px">
+              <td style="width:120px">
                 <span :id="`edit-macro-${macro.id}`">
                   <b-icon
                     v-if="macro.can_edit"
@@ -262,25 +288,6 @@
                   :delay="{ show: 500, hide: 0 }"
                 >
                   Clone {{ macro.name }}
-                </b-tooltip>
-
-                <span :id="`revisions-macro-${macro.id}`">
-                  <b-icon
-                    v-if="isAdmin && macro.has_revisions"
-                    class="text-muted"
-                    icon="clock-history"
-                    aria-label="View revision history"
-                    style="cursor:pointer"
-                    @click="viewRevisions(macro)"
-                  />
-                </span>
-                <b-tooltip
-                  v-if="isAdmin"
-                  :target="`revisions-macro-${macro.id}`"
-                  triggers="hover"
-                  :delay="{ show: 500, hide: 0 }"
-                >
-                  View revisions for {{ macro.name }}
                 </b-tooltip>
               </td>
             </tr>
@@ -353,6 +360,7 @@ export default {
     comparingMacroName: '',
     codeMirrorKey: 0,
     macroFormModalVisible: false,
+    editRevisionId: null,
 
     richEditorConfig: {
       toolbar: [
@@ -461,15 +469,19 @@ export default {
         this.$noty.error(error.message)
       }
     },
+
     initAddMacro () {
       this.isEdit = false
       this.isClone = false
       this.cloningFromName = ''
       this.editingMacroId = null
+      this.revisions = []
+      this.editRevisionId = null
       this.macroForm = new Form({ ...defaultMacroForm })
       this.codeMirrorKey++
       this.$bvModal.show('modal-webwork-macro-form')
     },
+
     async initEditMacro (macro) {
       try {
         const { data } = await axios.get(`/api/webwork-macros/source/${macro.name}`)
@@ -485,19 +497,40 @@ export default {
             reason_for_edit: ''
           })
           this.codeMirrorKey++
+
+          // fetch revisions
+          this.revisions = []
+          this.editRevisionId = null
+          try {
+            const revData = await axios.get(`/api/webwork-macros/${macro.id}/revisions`)
+            if (revData.data.type !== 'error') {
+              this.revisions = revData.data.revisions
+              // default select to current revision
+              const current = this.revisions.find(r => r.revision_number === this.maxRevisionNumber)
+              if (current) {
+                this.editRevisionId = current.id
+              }
+            }
+          } catch (revError) {
+            // revisions are optional — silently ignore if unavailable
+          }
+
           this.$bvModal.show('modal-webwork-macro-form')
         } else {
-          this.noty.error(data.type)
+          this.$noty.error(data.type)
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
+
     initCloneMacro (macro) {
       this.isEdit = false
       this.isClone = true
       this.cloningFromName = macro.name
       this.editingMacroId = null
+      this.revisions = []
+      this.editRevisionId = null
       this.macroForm = new Form({
         name: '',
         description: macro.description,
@@ -511,6 +544,29 @@ export default {
     initDeleteMacro (macro) {
       this.macroToDelete = macro
       this.$bvModal.show('modal-confirm-delete-webwork-macro')
+    },
+
+    loadRevisionIntoForm () {
+      const revision = this.revisions.find(r => r.id === this.editRevisionId)
+      if (!revision) return
+      this.macroForm.macro = revision.macro ? revision.macro.trim() : ''
+      const revLabel = revision.revision_number === 0
+        ? 'original'
+        : `revision ${revision.revision_number}`
+      this.macroForm.reason_for_edit = `Restored to ${revLabel} (${revision.editor_name}, ${this.formatDateTime(revision.created_at)})`
+      this.codeMirrorKey++
+    },
+
+    openCompareFromEdit () {
+      this.macroToView = { id: this.editingMacroId, name: this.macroForm.name }
+      this.comparingMacroName = this.macroForm.name
+      this.revision1Id = null
+      this.revision2Id = null
+      this.revision1 = null
+      this.revision2 = null
+      this.differences = []
+      this.diffsShown = true
+      this.$bvModal.show('modal-compare-revisions')
     },
 
     async saveMacro () {
@@ -546,29 +602,6 @@ export default {
       this.$bvModal.hide('modal-confirm-delete-webwork-macro')
     },
 
-    // CHANGED: show noty and bail early if no revisions exist
-    async viewRevisions (macro) {
-      this.macroToView = macro
-      this.revisions = []
-      this.revision1Id = null
-      this.revision2Id = null
-      this.revision1 = null
-      this.revision2 = null
-      this.comparingMacroName = macro.name
-      this.diffsShown = true
-      try {
-        const { data } = await axios.get(`/api/webwork-macros/${macro.id}/revisions`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return
-        }
-        this.revisions = data.revisions
-        this.$bvModal.show('modal-compare-revisions')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-
     async compareRevisions () {
       if (!this.revision1Id || !this.revision2Id) return
       this.revision1 = null
@@ -591,7 +624,8 @@ export default {
     reloadMacroRevisionDifferences (diffsShown) {
       this.diffsShown = diffsShown
       this.macroRevisionDifferencesKey++
-    }
+    },
+
   }
 }
 </script>

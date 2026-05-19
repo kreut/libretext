@@ -24,33 +24,37 @@
     </div>
     <table v-if="differences.length" class="table table-striped">
       <thead>
-      <tr>
-        <th>Property</th>
-        <th>
-          <span v-if="revision1.revision_number === 0">Original</span>
-          <span v-else-if="isCurrentRevision(revision1)">Current</span>
-          <span v-else>Revision {{ revision1.revision_number }}</span>
-          <div class="small font-weight-normal text-muted">
-            {{ formatDateTime(revision1.created_at) }} — {{ revision1.editor_name }}
-          </div>
-        </th>
-        <th>
-          <span v-if="revision2.revision_number === 0">Original</span>
-          <span v-else-if="isCurrentRevision(revision2)">Current</span>
-          <span v-else>Revision {{ revision2.revision_number }}</span>
-          <div class="small font-weight-normal text-muted">
-            {{ formatDateTime(revision2.created_at) }} — {{ revision2.editor_name }}
-          </div>
-        </th>
-      </tr>
+        <tr>
+          <th>Property</th>
+          <th style="width:45%">
+            <span v-if="revision1.revision_number === 0">Original</span>
+            <span v-else-if="isCurrentRevision(revision1)">Current</span>
+            <span v-else>Revision {{ revision1.revision_number }}</span>
+            <div class="small font-weight-normal text-muted">
+              {{ formatDateTime(revision1.created_at) }} — {{ revision1.editor_name }}
+            </div>
+          </th>
+          <th style="width:45%">
+            <span v-if="revision2.revision_number === 0">Original</span>
+            <span v-else-if="isCurrentRevision(revision2)">Current</span>
+            <span v-else>Revision {{ revision2.revision_number }}</span>
+            <div class="small font-weight-normal text-muted">
+              {{ formatDateTime(revision2.created_at) }} — {{ revision2.editor_name }}
+            </div>
+          </th>
+        </tr>
       </thead>
       <tbody>
-      <tr v-for="(difference, i) in differences" :key="`macro-diff-${i}`">
-        <td>{{ difference.property }}</td>
-        <td><div v-html="difference.revision1" /></td>
-        <td v-show="diffsShown"><div v-html="difference.revision2" /></td>
-        <td v-show="!diffsShown"><div v-html="difference.revision2NoDiffs" /></td>
-      </tr>
+        <tr v-for="(difference, i) in differences" :key="`macro-diff-${i}`">
+          <td>{{ difference.property }}</td>
+          <td><div v-html="difference.revision1" /></td>
+          <td v-show="diffsShown">
+            <div v-html="difference.revision2" />
+          </td>
+          <td v-show="!diffsShown">
+            <div v-html="difference.revision2NoDiffs" />
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -61,11 +65,11 @@ export default {
   name: 'MacroRevisionDifferences',
 
   props: {
-    differences:       { type: Array,   default: () => [] },
-    revision1:         { type: Object,  default: () => ({}) },
-    revision2:         { type: Object,  default: () => ({}) },
-    diffsShown:        { type: Boolean, default: true },
-    maxRevisionNumber: { type: Number,  default: null }
+    differences: { type: Array, default: () => [] },
+    revision1: { type: Object, default: () => ({}) },
+    revision2: { type: Object, default: () => ({}) },
+    diffsShown: { type: Boolean, default: true },
+    maxRevisionNumber: { type: Number, default: null }
   },
 
   methods: {
