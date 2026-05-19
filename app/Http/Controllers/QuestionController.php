@@ -2074,17 +2074,13 @@ class QuestionController extends Controller
                 }
             }
             if ($request->assignment_id) { //for creating a new question within an assignment
-                if (!DB::table('assignments')
-                    ->join('courses', "assignments.course_id", "=", "courses.id")
-                    ->where("assignments.id", $request->assignment_id)
-                    ->where("courses.user_id", $request->user()->id)
-                    ->select("assignments.id")
-                    ->first()) {
+                $assignment = Assignment::find($request->assignment_id);
+                $course = Course::find($assignment->course_id);
+                if (!$course->ownsCourseOrIsCoInstructor($request->user()->id)) {
                     DB::rollBack();
                     $response['message'] = "That is not one of your assignments.";
                     return $response;
                 }
-                $assignment = Assignment::find($request->assignment_id);
                 $assignment_name = $assignment->name;
                 if ($assignment->cannotAddOrRemoveQuestionsForQuestionWeightAssignment()) {
                     DB::rollBack();

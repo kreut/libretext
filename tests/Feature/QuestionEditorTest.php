@@ -256,7 +256,10 @@ class QuestionEditorTest extends TestCase
     /** @test */
     public function cannot_add_new_question_if_not_your_assignment()
     {
-        $this->question_to_store['assignment_id'] = -1;
+        $user = factory(User::class)->create(['role' => 2]);
+        $course = factory(Course::class)->create(['user_id' => $user->id]);
+        $assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+        $this->question_to_store['assignment_id'] = $assignment->id;
         $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
             ->assertJson(['message' => 'That is not one of your assignments.']);
     }
