@@ -119,7 +119,7 @@
          class="btn btn-sm btn-outline-primary link-outline-primary-btn"
          :href="`/api/questions/export-webwork-code/${questionToView.id}`"
       >
-        Export webWork code
+        Export code
       </a>
 
       <template #modal-footer="{ ok }">

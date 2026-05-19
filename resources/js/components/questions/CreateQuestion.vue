@@ -2558,12 +2558,6 @@
                     >
                       Upload Image
                     </b-button>
-                    <a v-if="questionForm.id && initiallyWebworkQuestion"
-                       class="btn btn-sm btn-outline-primary link-outline-primary-btn ml-2"
-                       :href="`/api/questions/export-webwork-code/${questionForm.id}`"
-                    >
-                      <div style="margin-top:3px">Export webWork code</div>
-                    </a>
                   </b-col>
                 </b-row>
                 <b-row v-if="webworkAttachments">
@@ -2586,15 +2580,23 @@
                   @insert="insertMacroLoadStatement"
                 />
 
-                <b-button
-                  size="sm"
-                  variant="outline-primary"
-                  class="mb-2"
-                  @click="$bvModal.show('modal-webwork-macro-picker')"
-                >
-                  <b-icon icon="plus-circle" class="mr-1" />
-                  Add Macro
-                </b-button>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <b-button
+                    size="sm"
+                    variant="outline-primary"
+                    @click="$bvModal.show('modal-webwork-macro-picker')"
+                  >
+                    <b-icon icon="plus-circle" class="mr-1" />
+                    Add Macro
+                  </b-button>
+                  <a v-if="questionForm.id && initiallyWebworkQuestion"
+                     class="btn btn-sm btn-outline-primary link-outline-primary-btn"
+                     :href="`/api/questions/export-webwork-code/${questionForm.id}`"
+                  >
+                    <div style="margin-top:3px">Export code</div>
+                  </a>
+                </div>
+
                 <CodeMirrorEditor
                   :key="`webwork-code-${webworkCodeKey}`"
                   v-model="questionForm.webwork_code"
