@@ -629,16 +629,6 @@
       size="lg"
       ok-only
     >
-      <SolutionFileHtml
-        :key="`solution-file-html-${modalId}`"
-        :questions="[questionToView]"
-        :current-page="1"
-        :show-na="false"
-        assignment-name="Question"
-        :modal-id="'preview-question'"
-        :is-preview-solution-html="true"
-      />
-
       <div v-if="questionForm.technology === 'qti'">
         <b-button
           v-if="questionForm.technology === 'qti' && !['discuss_it','forge','flashcard'].includes(qtiQuestionType)"
@@ -2593,7 +2583,7 @@
                      class="btn btn-sm btn-outline-primary link-outline-primary-btn"
                      :href="`/api/questions/export-webwork-code/${questionForm.id}`"
                   >
-                    <div style="margin-top:3px">Export code</div>
+                    <div style="margin-top:3px">Export Code</div>
                   </a>
                 </div>
 

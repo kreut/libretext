@@ -134,7 +134,7 @@
           :disabled="!macroForm.macro || !macroForm.macro.trim()"
           @click="exportMacroCode"
         >
-          Export code
+          Export Code
         </b-button>
       </b-row>
       <b-form-group label-cols-sm="2" label-cols-lg="1" label-for="macro-body" label="Macro*">
