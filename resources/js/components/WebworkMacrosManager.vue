@@ -127,6 +127,16 @@
         <has-error :form="macroForm" field="description"/>
       </b-form-group>
 
+      <b-row class="justify-content-end mb-2 pr-3">
+        <b-button
+          variant="outline-primary"
+          size="sm"
+          :disabled="!macroForm.macro || !macroForm.macro.trim()"
+          @click="exportMacroCode"
+        >
+          Export code
+        </b-button>
+      </b-row>
       <b-form-group label-cols-sm="2" label-cols-lg="1" label-for="macro-body" label="Macro*">
         <CodeMirrorEditor
           ref="codeMirrorEditor"
@@ -423,6 +433,21 @@ export default {
   },
 
   methods: {
+    exportMacroCode () {
+      const code = this.macroForm.macro || ''
+      const filename = this.macroForm.name
+        ? this.macroForm.name.endsWith('.pl') ? this.macroForm.name : this.macroForm.name + '.pl'
+        : 'macro.pl'
+      const blob = new Blob([code], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    },
     refreshCodeMirror () {
       this.$nextTick(() => {
         const cm = this.$refs.codeMirrorEditor
