@@ -2671,7 +2671,7 @@ class QuestionController extends Controller
             $filename = preg_replace(' /[^a-z0-9]+/', '-', strtolower($question->title));
             return response()->streamDownload(function () use ($meta_tags, $webwork_code) {
                 echo $meta_tags . $webwork_code;
-            }, "$filename.txt");
+            }, "$filename.pg");
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
