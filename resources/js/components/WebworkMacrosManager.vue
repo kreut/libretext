@@ -61,6 +61,7 @@
       id="modal-webwork-macro-form"
       :title="isEdit ? `Edit ${macroForm.name}` : (isClone ? `Clone ${macroForm.name}` : 'Add Macro')"
       size="xl"
+      dialog-class="modal-90"
       no-close-on-backdrop
       @shown="macroFormModalVisible = true; refreshCodeMirror()"
       @hidden="macroFormModalVisible = false"
@@ -237,7 +238,7 @@
                 <span :id="`edit-macro-${macro.id}`">
                   <b-icon
                     v-if="macro.can_edit"
-                    class="text-muted mr-2"
+                    class="text-muted mr-1"
                     icon="pencil"
                     :aria-label="`Edit ${macro.name}`"
                     style="cursor:pointer"
@@ -256,7 +257,7 @@
                 <span :id="`delete-macro-${macro.id}`">
                   <b-icon
                     v-if="macro.can_edit"
-                    class="text-muted mr-2"
+                    class="text-muted mr-1"
                     icon="trash"
                     :aria-label="`Retire ${macro.id}`"
                     style="cursor:pointer"

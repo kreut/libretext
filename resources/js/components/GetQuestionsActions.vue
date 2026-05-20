@@ -54,6 +54,7 @@
     <b-modal
       :id="`modal-edit-question-${questionToEdit.id}`"
       size="xl"
+      dialog-class="modal-90"
       hide-footer
       no-close-on-backdrop
       @hidden="hideModalEditActions()"

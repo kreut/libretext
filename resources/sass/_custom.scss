@@ -504,5 +504,17 @@ mjx-assistive-mml {
   z-index: 99999 !important;
 }
 
+/* global styles */
+.modal-90 {
+  max-width: 90vw !important;
+  width: 90vw;
+  margin: 5vh auto;
+}
+
+.modal-90 .modal-content {
+  height: 90vh;
+  overflow-y: auto;
+}
+
 
 

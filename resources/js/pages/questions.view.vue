@@ -728,6 +728,7 @@
       :no-close-on-esc="true"
       size="xl"
       hide-footer
+      dialog-class="modal-90"
       @hidden="reloadAndRemoveQuestionEditorUpdatedAt"
     >
       <template #modal-header>
