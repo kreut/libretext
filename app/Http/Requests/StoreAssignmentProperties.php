@@ -208,7 +208,7 @@ class StoreAssignmentProperties extends FormRequest
                     }
                     break;
                 case('x'):
-                    $rules['external_source_points'] = 'required|integer|min:0|max:200';
+                    $rules['external_source_points'] = 'required|integer|min:0|max:65000';
                     break;
 
             }
