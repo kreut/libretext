@@ -122,7 +122,7 @@ if (config('app.env') === 'dev' && (!isset($_COOKIE['IS_ME']) || $_COOKIE['IS_ME
           mhchem.lookup("mhchemleftarrow")._char = "\uE42C";
         },
       },
-      load: ["[tex]/tagformat", "[tex]/noerrors", "[tex]/cancel", 'a11y/assistive-mml', 'a11y/semantic-enrich'],
+      load: ["[tex]/mhchem","[tex]/tagformat", "[tex]/noerrors", "[tex]/cancel", 'a11y/assistive-mml', 'a11y/semantic-enrich'],
     },
   };
 </script>
