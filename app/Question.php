@@ -441,7 +441,7 @@ class Question extends Model
                     || $assignment->assessment_type === 'real time'
                     || ($assignment->assessment_type === 'delayed' && $show_solutions);
 
-                $custom_claims['webwork']['showSolutions'] = (int) $is_privileged_user;
+                $custom_claims['webwork']['showSolutions'] = (int)$is_privileged_user;
                 $custom_claims['webwork']['hideFeedback'] = !$show_feedback;
 
                 if (!$question->technology_iframe) {
@@ -2827,6 +2827,7 @@ class Question extends Model
         if ($question_info['technology'] === 'webwork') {
             $technology_src = $this->getIframeSrcFromHtml(new DOMDocument(), $question['technology_iframe']);
             $source_file_path = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+            $source_file_path = str_replace('private/ww_files/', 'LibreTexts/ww_files/', $source_file_path);
             $problemJWT = app()->environment('testing')
                 ? 'someJWT'
                 : $this->getPreviewWebworkProblemJWT($source_file_path);
