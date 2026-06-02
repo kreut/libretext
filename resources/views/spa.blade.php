@@ -114,14 +114,6 @@ if (config('app.env') === 'dev' && (!isset($_COOKIE['IS_ME']) || $_COOKIE['IS_ME
       },
     },
     loader: {
-      "[tex]/mhchem": {
-        ready() {
-          const { MapHandler } = MathJax._.input.tex.MapHandler;
-          const mhchem = MapHandler.getMap("mhchem-chars");
-          mhchem.lookup("mhchemrightarrow")._char = "\uE42D";
-          mhchem.lookup("mhchemleftarrow")._char = "\uE42C";
-        },
-      },
       load: ["[tex]/mhchem","[tex]/tagformat", "[tex]/noerrors", "[tex]/cancel", 'a11y/assistive-mml', 'a11y/semantic-enrich'],
     },
   };
