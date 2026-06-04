@@ -6499,6 +6499,8 @@ export default {
           await this.canSubmit()
         }
         this.submitWorkKey++
+        await this.$nextTick()
+        await this.typesetMath()
       } catch (error) {
         this.$noty.error(error.message)
       }
