@@ -221,7 +221,7 @@ class DiscussionCommentPolicy
                 $has_access = $user->id === $student_user_id;
                 break;
             case(2):
-                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
+                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id) || $assignment->course->public;
                 break;
         }
         return $has_access

@@ -201,7 +201,7 @@ php artisan make:migration create_profile_user_pivot_table --create profile_user
 php artisan make:model Project -mc  creates the migration AND the controller
 
 App\Assignment::where('completed', false)->get()
-php artisan make:controller CustomersController --model=Customer  will create a controller with the restful stuff along with the associated model
+php artisan make:controller -CustomersController --model=Customer  will create a controller with the restful stuff along with the associated model
 Look up browser validation: "required"
 If you would like model binding to use a default database column other than id when retrieving a given model class, you may override the getRouteKeyName method on the Eloquent model:
 

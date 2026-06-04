@@ -212,7 +212,7 @@ class AssignmentSyncQuestionPolicy
                                          Assignment             $assignment,
                                          Question               $question): Response
     {
-        return $this->_canAccessQuestionSettings($user, $assignment, $question)
+        return $this->_canAccessQuestionSettings($user, $assignment, $question) || $assignment->course->public && $user->role === 2
             ? Response::allow()
             : Response::deny('You are not allowed to get the discuss-it settings for that question.');
     }

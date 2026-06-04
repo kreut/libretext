@@ -145,7 +145,9 @@ class DiscussionController extends Controller
             $page = 1;
 
             $discussions = $discussion->getByAssignmentQuestionMediaUploadId($assignment, $question, $media_upload_id)['discussions'];
-
+            if ($assignment->course->public && request()->user()->id <> $assignment->course->user_id) {
+               $discussions = [];
+            }
             $response['page'] = $page;
             $response['discussions'] = $discussions;
             $response['type'] = 'success';
