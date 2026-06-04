@@ -25,25 +25,24 @@
 </head>
 <body>
 <div id="non-technology-html">{!! $non_technology_html!!}</div>
-<script type="text/x-mathjax-config">/*<![CDATA[*/
-  MathJax.Ajax.config.path["mhchem"] =
-            "https://cdnjs.cloudflare.com/ajax/libs/mathjax-mhchem/3.3.2";
-        MathJax.Hub.Config({ messageStyle: "none",
-        tex2jax: {preview: "none"},
-        jax: ["input/TeX","input/MathML","output/SVG"],
-  extensions: ["tex2jax.js","mml2jax.js","MathMenu.js","MathZoom.js"],
-  TeX: {
-        extensions: ["autobold.js","mhchem.js","color.js","cancel.js", "AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"]
-  },
-    "HTML-CSS": { linebreaks: { automatic: true , width: "90%"}, scale: 85, mtextFontInherit: false},
-menuSettings: { zscale: "150%", zoom: "Double-Click" },
-         SVG: { linebreaks: { automatic: true } }});
-/*]]>*/
-
-
-
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      packages: { '[+]': ['mhchem', 'cancel', 'color', 'noerrors'] },
+      macros: {
+        mhchemrightleftharpoons: "{\\unicode{x21CC}\\,}",
+        xrightleftharpoons: ["\\mhchemxrightleftharpoons[#1]{#2}", 2, ""],
+      },
+    },
+    loader: {
+      load: ['[tex]/mhchem', '[tex]/cancel', '[tex]/noerrors'],
+    },
+  };
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.0.0/tex-mml-svg.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-svg.min.js"></script>
 <script>
   titleHolder = document.getElementById('titleHolder')
   let front
