@@ -102,7 +102,13 @@
   }
 </script>
 <script>
-  iframes = iFrameResize({}, 'iframe');
+  const observer = new ResizeObserver(() => {
+    if (window.parentIFrame) {
+      window.parentIFrame.size()
+    }
+  })
+
+  observer.observe(document.body)
 </script>
 </body>
 </html>

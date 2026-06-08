@@ -26,7 +26,7 @@ class DiscussionCommentTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->student_user = factory(User::class)->create(['role' => 3]);
-        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id,'public'=>0]);
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
