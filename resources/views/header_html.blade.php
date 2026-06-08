@@ -42,7 +42,6 @@
   };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-svg.min.js"></script>
 <script>
   titleHolder = document.getElementById('titleHolder')
   let front
@@ -62,29 +61,7 @@
     front = ''
   }
   front = front.replace(/_/g, ' ')
-  MathJaxConfig = {
-    TeX: {
-      equationNumbers: {
-        autoNumber: 'all',
-        formatNumber: function (n) {
-          return front + n
-        }
-      },
-      macros: {
-        PageIndex: ['{' + front + ' #1}', 1],
-        test: ['{' + front + ' #1}', 1]
-      },
-      Macros: {
-        PageIndex: ['{' + front + ' #1}', 1],
-        test: ['{' + front + ' #1}', 1]
-      },
-      SVG: {
-        linebreaks: { automatic: true }
-      }
-    }
-  }
 
-  MathJax.Hub.Config(MathJaxConfig)
   const currentDomain = window.location.origin;
   const regex = new RegExp(`<a\\s+href="${currentDomain}/question-media-player/([^"]+)">([^<]+)<\\/a>`, 'g');
   const regex2 = new RegExp(`<a\\s+href="https:\\/\\/customer-([a-zA-Z0-9]+)\\.cloudflarestream\\.com\\/([a-zA-Z0-9]+)\\/iframe">([^<]+)<\\/a>`, 'g');
@@ -102,6 +79,7 @@
   }
 </script>
 <script>
+  iframes = iFrameResize({}, 'iframe');
   const observer = new ResizeObserver(() => {
     if (window.parentIFrame) {
       window.parentIFrame.size()
