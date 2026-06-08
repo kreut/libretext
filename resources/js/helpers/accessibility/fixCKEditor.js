@@ -6,6 +6,27 @@ export async function fixCKEditor (vm) {
         ckeVoiceLabels[i].innerHTML = ckeVoiceLabels[i].innerHTML + ' (Use the OPTION key instead ALT on a Mac)'
       }
     }
+
+    // Fix BootstrapVue focus trap conflicting with CKEditor dialogs
+    if (typeof CKEDITOR !== 'undefined') {
+      Object.values(CKEDITOR.instances).forEach(editor => {
+        if (!editor._bvFocusTrapPatched) {
+          editor._bvFocusTrapPatched = true
+          editor.on('dialogShow', () => {
+            const modal = document.querySelector('[id*="BV_modal"]')
+            if (modal?.__vue__?.$parent?.$parent?.setEnforceFocus) {
+              modal.__vue__.$parent.$parent.setEnforceFocus(false)
+            }
+          })
+          editor.on('dialogHide', () => {
+            const modal = document.querySelector('[id*="BV_modal"]')
+            if (modal?.__vue__?.$parent?.$parent?.setEnforceFocus) {
+              modal.__vue__.$parent.$parent.setEnforceFocus(true)
+            }
+          })
+        }
+      })
+    }
   })
 }
 
