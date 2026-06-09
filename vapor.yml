@@ -16,9 +16,10 @@ environments:
         deploy:
             - 'php artisan migrate --force'
         build:
-            - 'COMPOSER_MIRROR_PATH_REPOS=1 composer install --no-dev'
-            - 'php artisan event:cache'
-            - 'npm ci && npm run prod'
+          - 'COMPOSER_MIRROR_PATH_REPOS=1 composer install --no-dev --optimize-autoloader --classmap-authoritative'
+          - 'php artisan event:cache'
+          - 'npm ci && npm run prod'
+          - 'rm -rf node_modules'
     staging:
         memory: 1536
         timeout: 20
@@ -32,6 +33,7 @@ environments:
         deploy:
             - 'php artisan migrate --force'
         build:
-            - 'COMPOSER_MIRROR_PATH_REPOS=1 composer install --no-dev'
-            - 'php artisan event:cache'
-            - 'npm ci && npm run prod'
+          - 'COMPOSER_MIRROR_PATH_REPOS=1 composer install --no-dev --optimize-autoloader --classmap-authoritative'
+          - 'php artisan event:cache'
+          - 'npm ci && npm run prod'
+          - 'rm -rf node_modules'
