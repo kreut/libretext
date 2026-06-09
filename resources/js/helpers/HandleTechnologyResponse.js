@@ -77,21 +77,11 @@ export async function hideSubmitButtonsIfCannotSubmit (vm, routeName, technology
       vm.iframeDomLoaded = true
       break
     case ('webwork'):
-      console.log('updating CSS for webwork!!!')
-      console.log(vm.event.data)
-      console.log('sync receiveMessage')
+      console.log('receiveMessage from webwork')
       let jsonObj = {}
       try {
         jsonObj = JSON.parse(vm.event.data)
         console.log(jsonObj.solutions)
-        if (jsonObj.solutions.length) {
-          question.solution_type = 'html'
-          question.solution_html = '<h2 class="editable">Solution</h2>'
-          for (let i = 0; i < jsonObj.solutions.length; i++) {
-            question.solution_html += jsonObj.solutions[i]
-          }
-        }
-        vm.typesetMath()
       } catch (error) {
         console.log('Not an object:' + vm.event.data)
       }

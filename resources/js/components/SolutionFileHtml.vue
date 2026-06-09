@@ -200,12 +200,16 @@ export default {
       await this.openShowHTMLSolutionModal()
     },
     async getWebworkSolution (problemJWT) {
-      const { data } = await axios.get(`/api/webwork/solution/${problemJWT}`)
-      if (data.type === 'error') {
-        this.$noty.error(data.message)
-        return
+      try {
+        const { data } = await axios.get(`/api/webwork/solution/${problemJWT}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return
+        }
+        this.renderedWebworkSolution = data.message
+      } catch (error) {
+        this.$noty.error(error.message)
       }
-      this.renderedWebworkSolution = data.message
     },
     async getIMathASSolution (problemJWT) {
       this.imathasSolution = true
@@ -225,16 +229,7 @@ export default {
     },
     onHTMLSolutionModalShown () {
       const modalEl = document.querySelector(`#modal-show-html-solution-${this.modalId}`)
-      modalEl.querySelectorAll('script[type="math/tex"]').forEach(el => {
-        const span = document.createElement('span')
-        span.textContent = `\\(${el.textContent}\\)`
-        el.replaceWith(span)
-      })
-      modalEl.querySelectorAll('script[type="math/tex; mode=display"]').forEach(el => {
-        const span = document.createElement('span')
-        span.textContent = `\\[${el.textContent}\\]`
-        el.replaceWith(span)
-      })
+      this.convertMathJaxV2ToV3(modalEl)
       this.typesetMath(modalEl)
     },
     async openShowHTMLSolutionModal () {

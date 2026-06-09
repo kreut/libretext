@@ -40,6 +40,18 @@ Vue.mixin({
     zoomGreaterThan: function (zoom) {
       return (window.outerWidth - 8) / window.innerWidth > zoom
     },
+    convertMathJaxV2ToV3(el) {
+      el.querySelectorAll('script[type="math/tex"]').forEach(node => {
+        const span = document.createElement('span')
+        span.textContent = `\\(${node.textContent}\\)`
+        node.replaceWith(span)
+      })
+      el.querySelectorAll('script[type="math/tex; mode=display"]').forEach(node => {
+        const span = document.createElement('span')
+        span.textContent = `\\[${node.textContent}\\]`
+        node.replaceWith(span)
+      })
+    },
     typesetMath(el) {
       return this.$nextTick().then(() => {
         if (window.MathJax?.typesetPromise) {
