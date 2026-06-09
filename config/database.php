@@ -67,7 +67,7 @@ return [
             'database' => env('TEST_DB_DATABASE', 'forge'),
             'username' => env('TEST_DB_USERNAME', 'forge'),
             'password' => env('TEST_DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
+            'unix_socket' => env('TEST_DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
