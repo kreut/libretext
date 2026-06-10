@@ -811,6 +811,10 @@ export default {
     },
     checkIfLTI (school) {
       this.ltiIsEnabled = this.ltiSchools.includes(school)
+      this.form.lms = 0
+      this.form.lms_only_entry = 0
+      this.showLmsOnlyEntry = false
+      this.showAdaptEnrollmentNotificationDate = false
     },
     async getLTISchools () {
       try {
