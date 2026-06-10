@@ -61,7 +61,10 @@
           />
         </b-col>
       </b-form-row>
-
+      <p class="text-muted small mb-3">
+        To create or edit custom macros,
+        <a href="https://support.libretexts.org" target="_blank">contact us</a> to request access.
+      </p>
       <div v-if="filteredMacros.length">
         <table class="table table-striped table-sm">
           <thead>

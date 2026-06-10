@@ -655,6 +655,10 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
     Route::post('/webwork-macro-editors', 'WebworkMacroEditorController@store');
     Route::delete('/webwork-macro-editors/{webworkMacroEditor}', 'WebworkMacroEditorController@destroy');
 
+    Route::get('/webwork-macros/{webworkMacro}/co-editors', 'WebworkMacroController@getCoEditors');
+    Route::post('/webwork-macros/{webworkMacro}/co-editors', 'WebworkMacroController@addCoEditor');
+    Route::delete('/webwork-macros/{webworkMacro}/co-editors/{coEditor}', 'WebworkMacroController@removeCoEditor');
+
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::get('/questions/{question}/assignment-status', 'QuestionController@getAssignmentStatus');
     Route::get('/questions/{question}/question-revision/{questionRevisionId}/rubric-categories', 'QuestionController@getRubricCategories');

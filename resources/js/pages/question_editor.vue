@@ -35,7 +35,7 @@
       >
         <MetaTag :key="`meta-tags-${numClicksMyQuestions}`"/>
       </b-tab>
-      <b-tab v-if="user.is_webwork_macro_editor || isAdmin"
+      <b-tab v-if="user.is_webwork_macro_editor || isAdmin || user.is_webwork_macro_co_editor"
              :key="`webwork-macros-${numClicksMyQuestions}`"
              title="WeBWork Macros"
       >

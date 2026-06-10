@@ -1,6 +1,11 @@
 <template>
   <div>
-    <!-- ── Compare revisions modal (admin only) ─────────────────────── -->
+    <AllFormErrors
+      :all-form-errors="allFormErrors"
+      :modal-id="`modal-form-errors-webwork-macro`"
+    />
+
+    <!-- ── Compare revisions modal (admin / owner / co-editor) ──────── -->
     <b-modal
       id="modal-compare-revisions"
       :title="`Compare Revisions for ${comparingMacroName}`"
@@ -53,6 +58,69 @@
           Cancel
         </b-button>
         <b-button size="sm" variant="danger" @click="destroyMacro">Retire</b-button>
+      </template>
+    </b-modal>
+
+    <!-- ── Co-editors modal (owner / admin only) ─────────────────────── -->
+    <b-modal
+      id="modal-co-editors"
+      :title="`Co-Editors — ${coEditorMacroName}`"
+      size="lg"
+      no-close-on-backdrop
+      @hidden="selectedCoEditorUserId = null"
+    >
+      <p class="mb-3">
+        Co-editors may edit and compare revisions for this macro, but cannot retire it or manage co-editors.
+      </p>
+
+      <!-- Current co-editors -->
+      <div v-if="coEditors.length" class="mb-3">
+        <b-badge
+          v-for="ce in coEditors"
+          :key="ce.id"
+          variant="secondary"
+          class="mr-1 mb-1 p-2"
+          style="font-size:0.85em"
+        >
+          {{ ce.user_name }}
+          <b-icon
+            icon="x"
+            style="cursor:pointer; margin-left:4px"
+            :aria-label="`Remove ${ce.user_name} as co-editor`"
+            @click="removeCoEditor(ce)"
+          />
+        </b-badge>
+      </div>
+      <b-alert v-else show variant="info" class="mb-3">No co-editors yet.</b-alert>
+
+      <!-- Dropdown user select -->
+      <b-form-row class="align-items-center">
+        <b-col>
+          <b-form-select
+            v-model="selectedCoEditorUserId"
+            size="sm"
+            :options="availableCoEditorOptions"
+          />
+        </b-col>
+        <b-col cols="auto">
+          <b-button
+            size="sm"
+            variant="outline-primary"
+            :disabled="!selectedCoEditorUserId || isAddingCoEditor"
+            @click="addCoEditor"
+          >
+            <b-spinner v-if="isAddingCoEditor" small class="mr-1"/>
+            Add Co-Editor
+          </b-button>
+        </b-col>
+      </b-form-row>
+      <p class="text-muted small mt-2 mb-0">
+        Don't see the person you're looking for? They'll need macro editor access first —
+        <a href="https://support.libretexts.org" target="_blank">contact us</a> to request it.
+      </p>
+
+      <template #modal-footer>
+        <b-button size="sm" @click="$bvModal.hide('modal-co-editors')">Close</b-button>
       </template>
     </b-modal>
 
@@ -137,6 +205,7 @@
           Export Code
         </b-button>
       </b-row>
+
       <b-form-group label-cols-sm="2" label-cols-lg="1" label-for="macro-body" label="Macro*">
         <CodeMirrorEditor
           ref="codeMirrorEditor"
@@ -148,7 +217,7 @@
         <has-error :form="macroForm" field="macro"/>
       </b-form-group>
 
-      <!-- Reason for edit only shown when editing (not cloning) -->
+      <!-- Reason for edit — only when editing (not cloning) -->
       <b-form-group
         v-if="isEdit"
         label-cols-sm="3"
@@ -170,7 +239,7 @@
       <template #modal-footer>
         <b-button size="sm" @click="$bvModal.hide('modal-webwork-macro-form')">Cancel</b-button>
         <b-button size="sm" variant="primary" :disabled="isSaving" @click="saveMacro">
-          <b-spinner v-if="isSaving" small class="mr-1" />
+          <b-spinner v-if="isSaving" small class="mr-1"/>
           {{ isSaving ? 'Saving...' : 'Submit' }}
         </b-button>
       </template>
@@ -194,7 +263,7 @@
           <b-col cols="auto">
             <b-form-row v-if="isAdmin" class="align-items-end">
               <b-col cols="auto">
-                <label class="mb-1 small font-weight-bold">Filter by Creator</label>
+                <label class="mb-1 small font-weight-bold">Filter by User</label>
                 <b-form-select
                   v-model="filterUserId"
                   size="sm"
@@ -223,8 +292,7 @@
             <tr>
               <th scope="col">Name</th>
               <th scope="col">Description</th>
-              <th v-if="isAdmin" scope="col">Created By</th>
-              <th scope="col">Last Updated</th>
+              <th scope="col">Author</th>
               <th scope="col">Actions</th>
             </tr>
             </thead>
@@ -243,9 +311,23 @@
               <td style="width:220px">
                 <span v-html="macro.description || 'None available'"/>
               </td>
-              <td v-if="isAdmin" style="width:160px">{{ macro.owner_name }}</td>
-              <td style="width:90px; white-space:nowrap">
-                {{ formatDate(macro.updated_at) }}
+              <td style="width:180px; font-size:0.875em; line-height:1.6">
+                <div v-if="macro.owner_name && macro.owner_name !== '—'">
+                  <span class="font-weight-bold">Created by</span> {{ macro.owner_name }}
+                </div>
+                <template v-if="macro.last_editor_name && macro.owner_name && macro.owner_name !== '—' && macro.last_editor_name !== macro.owner_name">
+                  <hr class="my-1">
+                  <div>
+                    <span class="font-weight-bold">Last edited by</span> {{ macro.last_editor_name }}, {{ formatDate(macro.updated_at) }}
+                  </div>
+                </template>
+                <div v-else-if="macro.last_editor_name && (!macro.owner_name || macro.owner_name === '—')">
+                  <span class="font-weight-bold">Last edited by</span> {{ macro.last_editor_name }}, {{ formatDate(macro.updated_at) }}
+                </div>
+                <div v-else-if="macro.updated_at">
+                  {{ formatDate(macro.updated_at) }}
+                </div>
+              </td>
               </td>
               <td style="width:120px">
                 <span :id="`edit-macro-${macro.id}`">
@@ -267,9 +349,10 @@
                   Edit {{ macro.name }}
                 </b-tooltip>
 
+                <!-- Retire icon: only owner or admin (not co-editors) -->
                 <span :id="`delete-macro-${macro.id}`">
                   <b-icon
-                    v-if="macro.can_edit"
+                    v-if="macro.can_manage_co_editors"
                     class="text-muted mr-1"
                     icon="trash"
                     :aria-label="`Retire ${macro.id}`"
@@ -278,7 +361,7 @@
                   />
                 </span>
                 <b-tooltip
-                  v-if="macro.can_edit"
+                  v-if="macro.can_manage_co_editors"
                   :target="`delete-macro-${macro.id}`"
                   triggers="hover"
                   :delay="{ show: 500, hide: 0 }"
@@ -302,6 +385,26 @@
                   :delay="{ show: 500, hide: 0 }"
                 >
                   Clone {{ macro.name }}
+                </b-tooltip>
+
+                <!-- People icon: manage co-editors (owner / admin only) -->
+                <span :id="`co-editors-macro-${macro.id}`">
+                  <b-icon
+                    v-if="macro.can_manage_co_editors"
+                    icon="people-fill"
+                    :class="macro.co_editor_count > 0 ? 'text-success' : 'text-muted'"
+                    style="cursor:pointer"
+                    :aria-label="`Manage co-editors for ${macro.name}`"
+                    @click="initCoEditors(macro)"
+                  />
+                </span>
+                <b-tooltip
+                  v-if="macro.can_manage_co_editors"
+                  :target="`co-editors-macro-${macro.id}`"
+                  triggers="hover"
+                  :delay="{ show: 500, hide: 0 }"
+                >
+                  {{ macro.co_editor_count > 0 ? `${macro.co_editor_count} co-editor(s)` : 'Manage co-editors' }}
                 </b-tooltip>
               </td>
             </tr>
@@ -327,6 +430,7 @@ import axios from 'axios'
 import CKEditor from 'ckeditor4-vue'
 import MacroRevisionDifferences from '~/components/MacroRevisionDifferences'
 import CodeMirrorEditor from '~/components/CodeMirrorEditor'
+import AllFormErrors from '~/components/AllFormErrors'
 
 const defaultMacroForm = {
   name: '',
@@ -341,6 +445,7 @@ export default {
   components: {
     FontAwesomeIcon,
     Loading,
+    AllFormErrors,
     ckeditor: CKEditor.component,
     MacroRevisionDifferences,
     CodeMirrorEditor
@@ -350,6 +455,7 @@ export default {
 
   data: () => ({
     isSaving: false,
+    allFormErrors: [],
     macroToView: {},
     differences: [],
     copyIcon: faCopy,
@@ -360,6 +466,8 @@ export default {
     isClone: false,
     cloningFromName: '',
     editingMacroId: null,
+    editingMacroOwnerId: null,       // NEW: track owner so we know if current user can manage co-editors
+    canManageCoEditorsForCurrent: false, // NEW
     macroForm: new Form({ ...defaultMacroForm }),
     filterUserId: '',
     creators: [],
@@ -376,6 +484,14 @@ export default {
     codeMirrorKey: 0,
     macroFormModalVisible: false,
     editRevisionId: null,
+
+    // Co-editor state
+    coEditorMacroId: null,
+    coEditorMacroName: '',
+    coEditors: [],
+    potentialEditors: [],
+    selectedCoEditorUserId: null,
+    isAddingCoEditor: false,
 
     richEditorConfig: {
       toolbar: [
@@ -395,12 +511,9 @@ export default {
 
   computed: {
     creatorOptions () {
-      const options = [{ value: '', text: 'All Creators' }]
+      const options = [{ value: '', text: 'All Users' }]
       this.creators.forEach(c => {
-        options.push({
-          value: c.id,
-          text: `${c.first_name} ${c.last_name}`
-        })
+        options.push({ value: c.id, text: `${c.first_name} ${c.last_name}` })
       })
       return options
     },
@@ -428,7 +541,16 @@ export default {
     maxRevisionNumber () {
       if (!this.revisions.length) return null
       return Math.max(...this.revisions.map(r => r.revision_number))
-    }
+    },
+
+    availableCoEditorOptions () {
+      const usedIds = new Set(this.coEditors.map(ce => ce.user_id))
+      const placeholder = [{ value: null, text: 'Select an editor…' }]
+      return placeholder.concat(
+        this.potentialEditors.filter(u => !usedIds.has(u.value))
+      )
+    },
+
   },
 
   async mounted () {
@@ -437,6 +559,7 @@ export default {
   },
 
   methods: {
+    // ── Export ──────────────────────────────────────────────────────────
     exportMacroCode () {
       const code = this.macroForm.macro || ''
       const filename = this.macroForm.name
@@ -452,15 +575,16 @@ export default {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     },
+
+    // ── CodeMirror ──────────────────────────────────────────────────────
     refreshCodeMirror () {
       this.$nextTick(() => {
         const cm = this.$refs.codeMirrorEditor
-        if (cm && cm.editor) {
-          cm.editor.refresh()
-        }
+        if (cm && cm.editor) cm.editor.refresh()
       })
     },
 
+    // ── Formatting ──────────────────────────────────────────────────────
     formatDate (dateStr) {
       if (!dateStr) return ''
       const d = new Date(dateStr)
@@ -478,6 +602,7 @@ export default {
       return `${date} ${h}:${minutes} ${ampm}`
     },
 
+    // ── Data loading ────────────────────────────────────────────────────
     async getMacros () {
       try {
         const params = {}
@@ -486,9 +611,18 @@ export default {
           this.$noty.error(data.message)
           return
         }
+        const selectedUser = this.filterUserId
+          ? data.creators && data.creators.find(c => c.id === this.filterUserId)
+          : null
+        const selectedName = selectedUser
+          ? `${selectedUser.first_name} ${selectedUser.last_name}`
+          : null
         this.webworkMacros = data.webwork_macros
           .filter(m => m.source === 'custom')
-          .filter(m => !this.filterUserId || (m.owner_id && m.owner_id === this.filterUserId))
+          .filter(m => {
+            if (!selectedName) return true
+            return m.owner_name === selectedName || m.last_editor_name === selectedName
+          })
           .sort((a, b) => a.name.localeCompare(b.name))
         this.canCreate = data.can_create
         this.isAdmin = data.is_admin
@@ -500,13 +634,19 @@ export default {
       }
     },
 
+    // ── Modal initialisers ──────────────────────────────────────────────
     initAddMacro () {
       this.isEdit = false
       this.isClone = false
       this.cloningFromName = ''
       this.editingMacroId = null
+      this.editingMacroOwnerId = null
+      this.canManageCoEditorsForCurrent = false
       this.revisions = []
       this.editRevisionId = null
+      this.coEditors = []
+      this.potentialEditors = []
+      this.selectedCoEditorUserId = null
       this.macroForm = new Form({ ...defaultMacroForm })
       this.codeMirrorKey++
       this.$bvModal.show('modal-webwork-macro-form')
@@ -515,40 +655,45 @@ export default {
     async initEditMacro (macro) {
       try {
         const { data } = await axios.get(`/api/webwork-macros/source/${macro.name}`)
-        if (data.type === 'success') {
-          this.isEdit = true
-          this.isClone = false
-          this.cloningFromName = ''
-          this.editingMacroId = macro.id
-          this.macroForm = new Form({
-            name: macro.name,
-            description: macro.description,
-            macro: data.macro ? data.macro.trim() : '',
-            reason_for_edit: ''
-          })
-          this.codeMirrorKey++
-
-          // fetch revisions
-          this.revisions = []
-          this.editRevisionId = null
-          try {
-            const revData = await axios.get(`/api/webwork-macros/${macro.id}/revisions`)
-            if (revData.data.type !== 'error') {
-              this.revisions = revData.data.revisions
-              // default select to current revision
-              const current = this.revisions.find(r => r.revision_number === this.maxRevisionNumber)
-              if (current) {
-                this.editRevisionId = current.id
-              }
-            }
-          } catch (revError) {
-            // revisions are optional — silently ignore if unavailable
-          }
-
-          this.$bvModal.show('modal-webwork-macro-form')
-        } else {
+        if (data.type !== 'success') {
           this.$noty.error(data.type)
+          return
         }
+
+        this.isEdit = true
+        this.isClone = false
+        this.cloningFromName = ''
+        this.editingMacroId = macro.id
+        this.editingMacroOwnerId = macro.owner_id
+        this.canManageCoEditorsForCurrent = !!macro.can_manage_co_editors
+        this.macroForm = new Form({
+          name: macro.name,
+          description: macro.description,
+          macro: data.macro ? data.macro.trim() : '',
+          reason_for_edit: ''
+        })
+        this.codeMirrorKey++
+
+        // Fetch revisions
+        this.revisions = []
+        this.editRevisionId = null
+        try {
+          const revData = await axios.get(`/api/webwork-macros/${macro.id}/revisions`)
+          if (revData.data.type !== 'error') {
+            this.revisions = revData.data.revisions
+            const current = this.revisions.find(r => r.revision_number === this.maxRevisionNumber)
+            if (current) this.editRevisionId = current.id
+          }
+        } catch (_) {
+          // revisions optional — silently ignore
+        }
+
+        // Fetch co-editors (only if owner/admin) — now handled by initCoEditors
+        this.coEditors = []
+        this.potentialEditors = []
+        this.selectedCoEditorUserId = null
+
+        this.$bvModal.show('modal-webwork-macro-form')
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -559,8 +704,13 @@ export default {
       this.isClone = true
       this.cloningFromName = macro.name
       this.editingMacroId = null
+      this.editingMacroOwnerId = null
+      this.canManageCoEditorsForCurrent = false
       this.revisions = []
       this.editRevisionId = null
+      this.coEditors = []
+      this.potentialEditors = []
+      this.selectedCoEditorUserId = null
       this.macroForm = new Form({
         name: '',
         description: macro.description,
@@ -576,6 +726,7 @@ export default {
       this.$bvModal.show('modal-confirm-delete-webwork-macro')
     },
 
+    // ── Revision helpers ────────────────────────────────────────────────
     loadRevisionIntoForm () {
       const revision = this.revisions.find(r => r.id === this.editRevisionId)
       if (!revision) return
@@ -599,6 +750,7 @@ export default {
       this.$bvModal.show('modal-compare-revisions')
     },
 
+    // ── Save / destroy ──────────────────────────────────────────────────
     async saveMacro () {
       try {
         this.isSaving = true
@@ -614,7 +766,10 @@ export default {
           await this.getMacros()
         }
       } catch (error) {
-        if (!error.message.includes('status code 422')) {
+        if (error.message.includes('status code 422')) {
+          this.allFormErrors = this.macroForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-webwork-macro')
+        } else {
           this.$noty.error(error.message)
         }
       } finally {
@@ -635,6 +790,7 @@ export default {
       this.$bvModal.hide('modal-confirm-delete-webwork-macro')
     },
 
+    // ── Compare revisions ───────────────────────────────────────────────
     async compareRevisions () {
       if (!this.revision1Id || !this.revision2Id) return
       this.revision1 = null
@@ -659,6 +815,72 @@ export default {
       this.macroRevisionDifferencesKey++
     },
 
+    // ── Co-editor management ────────────────────────────────────────────
+    async initCoEditors (macro) {
+      this.coEditorMacroId = macro.id
+      this.coEditorMacroName = macro.name
+      this.coEditors = []
+      this.potentialEditors = []
+      this.selectedCoEditorUserId = null
+      try {
+        const { data } = await axios.get(`/api/webwork-macros/${macro.id}/co-editors`)
+        if (data.type === 'success') {
+          this.coEditors = data.co_editors
+          this.potentialEditors = data.potential_editors
+        } else {
+          this.$noty.error(data.message)
+          return
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+        return
+      }
+      this.$bvModal.show('modal-co-editors')
+    },
+
+    async addCoEditor () {
+      if (!this.selectedCoEditorUserId) return
+      this.isAddingCoEditor = true
+      try {
+        const { data } = await axios.post(
+          `/api/webwork-macros/${this.coEditorMacroId}/co-editors`,
+          { user_id: this.selectedCoEditorUserId }
+        )
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          const ceData = await axios.get(`/api/webwork-macros/${this.coEditorMacroId}/co-editors`)
+          if (ceData.data.type === 'success') {
+            this.coEditors = ceData.data.co_editors
+            this.potentialEditors = ceData.data.potential_editors
+          }
+          this.selectedCoEditorUserId = null
+          // Update co_editor_count in the table row
+          const macro = this.webworkMacros.find(m => m.id === this.coEditorMacroId)
+          if (macro) macro.co_editor_count = this.coEditors.length
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      } finally {
+        this.isAddingCoEditor = false
+      }
+    },
+
+    async removeCoEditor (ce) {
+      try {
+        const { data } = await axios.delete(
+          `/api/webwork-macros/${this.coEditorMacroId}/co-editors/${ce.id}`
+        )
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.coEditors = this.coEditors.filter(c => c.id !== ce.id)
+          // Update co_editor_count in the table row
+          const macro = this.webworkMacros.find(m => m.id === this.coEditorMacroId)
+          if (macro) macro.co_editor_count = this.coEditors.length
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    }
   }
 }
 </script>

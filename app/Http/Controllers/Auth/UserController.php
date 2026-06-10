@@ -43,6 +43,9 @@ class UserController extends Controller
                 ->where('student_user_id', $request->user()->id)
                 ->exists();
             $request->user()->is_webwork_macro_editor = Helper::isWebworkMacroEditor();
+            $request->user()->is_webwork_macro_co_editor = DB::table('webwork_macro_co_editors')
+                ->where('user_id', $request->user()->id)
+                ->exists();
             if ($request->user()->is_tester_student) {
                 $request->user()->email = '';
             }
