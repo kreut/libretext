@@ -1528,7 +1528,7 @@ class QuestionController extends Controller
                    Assignment             $assignment): array
     {
         $response['type'] = 'error';
-
+        $original_question_technology = '';
         $is_update = isset($request->id);
 
         $authorized = $is_update ? Gate::inspect('update', [$question, $request->folder_id])
@@ -1775,6 +1775,7 @@ class QuestionController extends Controller
             }
             if ($is_update) {
                 $question = Question::find($request->id);
+                $original_question_technology = $question->technology;
                 if (!QuestionRevision::where('question_id', $question->id)->first()) {
                     $question_revision = $question->toArray();
                     $question_revision['revision_number'] = 0;
@@ -2118,8 +2119,10 @@ class QuestionController extends Controller
                     $lastRevision = QuestionRevision::where('question_id', $question->id)
                         ->where('revision_number', $currentQuestionRevision->revision_number - 1)
                         ->first();
-                    $source_dir = $lastRevision ? "$question->id-$currentQuestionRevision->id" : $question->id;
-                    $webwork->cloneDir($source_dir, $webwork_dir);
+                    if (($lastRevision && $lastRevision->technology === 'webwork') || (!$lastRevision && $original_question_technology === 'webwork')) {
+                        $source_dir = $lastRevision ? "$question->id-$currentQuestionRevision->id" : $question->id;
+                        $webwork->cloneDir($source_dir, $webwork_dir);
+                    }
                 }
                 $webwork->storeQuestion($question->webwork_code, $webwork_dir);
 
