@@ -130,21 +130,30 @@
     </b-modal>
     <b-row>
       <div v-if="!isVttUpload" :class="isDiscussIt ? 'mt-3' : ''">
-        <file-upload
-          ref="questionMediaUpload"
-          v-model="files"
-          class="btn btn-primary btn-sm"
-          :accept="isDiscussIt ? '.mp3,.mp4,.vtt,.pdf' : '.mp3,.mp4,.vtt'"
-          put-action="/put.method"
-          @input-file="inputFile"
-          @input-filter="inputUploadFileFilter"
-        >
-          {{ isDiscussIt ? 'Upload Media' : 'Upload Audio or Video file' }}
-        </file-upload>
-        <QuestionCircleTooltipModal v-show="!isDiscussIt" :modal-id="'modal-upload-question-media'"/>
+        <div class="d-inline-block">
+          <file-upload
+            ref="questionMediaUpload"
+            v-model="files"
+            class="btn btn-primary btn-sm"
+            :accept="isDiscussIt ? '.mp3,.mp4,.pdf' : '.mp3,.mp4'"
+            put-action="/put.method"
+            @input-file="inputFile"
+            @input-filter="inputUploadFileFilter"
+          >
+            {{ isDiscussIt ? 'Upload Media' : 'Upload Audio or Video' }}
+          </file-upload>
+          <QuestionCircleTooltipModal v-show="!isDiscussIt" :modal-id="'modal-upload-question-media'"/>
+          <div v-if="isDiscussIt" class="text-muted mt-1" style="font-size: 0.8em;">
+            MP3 · MP4 · PDF
+          </div>
+          <div v-else class="text-muted mt-1" style="font-size: 0.8em;">
+            MP3 · MP4
+          </div>
+        </div>
         <b-button v-show="isDiscussIt"
                   size="sm"
                   variant="info"
+                  style="vertical-align: top"
                   @click="$emit('initDiscussItText')"
         >
           Add Text
