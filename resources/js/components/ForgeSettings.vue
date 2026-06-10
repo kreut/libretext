@@ -734,11 +734,10 @@
 
           <b-form-group :class="{ 'is-invalid': hasError('settings.autoAccept') }">
             <b-form-checkbox v-model="settings.autoAccept" @change="clearError('settings.autoAccept')">
-              Auto-accept AI feedback
-              <QuestionCircleTooltip id="auto-accept-tooltip"/>
-              <b-tooltip target="auto-accept-tooltip" delay="250" triggers="hover focus">
-                Automatically accept AI-generated feedback without instructor review.
-              </b-tooltip>
+              Auto-accept track changes on submit
+              <ConsultInsight
+                :url="'https://commons.libretexts.org/insight/forge-settings-in-adapt'"
+              />
             </b-form-checkbox>
             <div v-if="hasError('settings.autoAccept')" class="invalid-feedback d-block">
               {{ getError('settings.autoAccept') }}
@@ -852,10 +851,12 @@ import { v4 as uuidv4 } from 'uuid'
 import draggable from 'vuedraggable'
 import VueTimepicker from 'vue2-timepicker/src/vue-timepicker.vue'
 import AllFormErrors from '~/components/AllFormErrors'
+import ConsultInsight from './ConsultInsight.vue'
 
 export default {
   name: 'ForgeSettings',
   components: {
+    ConsultInsight,
     draggable,
     VueTimepicker,
     AllFormErrors
