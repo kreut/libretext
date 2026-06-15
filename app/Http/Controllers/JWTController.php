@@ -15,6 +15,7 @@ use App\LearningTreeNodeSubmission;
 use App\Score;
 use App\Submission;
 use App\UnconfirmedSubmission;
+use App\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,19 +41,19 @@ class JWTController extends Controller
     public function signWithNewSecret()
     {
 
-         try {
-            if (!app()->environment('local')){
-                 dd('Can only run locally');
-             }
-             $key = new HmacKey(config('myconfig.analytics_token'));
-             $signer = new HS256($key);
-             $generator = new Generator($signer);
-             $jwt = $generator->generate(['id' => 7]);
+        try {
+            if (!app()->environment('local')) {
+                dd('Can only run locally');
+            }
+            $key = new HmacKey(config('myconfig.analytics_token'));
+            $signer = new HS256($key);
+            $generator = new Generator($signer);
+            $jwt = $generator->generate(['id' => 7]);
 
-             dd($jwt); // "abc.123.xyz"
-         } catch (Exception $e) {
-             echo $e->getMessage();
-         }
+            dd($jwt); // "abc.123.xyz"
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
         $payload = auth()->payload();
         print_r($payload->toArray()); // current user info
         \JWTAuth::getJWTProvider()->setSecret('secret'); //change the secret
@@ -133,13 +134,11 @@ class JWTController extends Controller
             $problemJWT = $jwe->decrypt($answerJWT->problemJWT, $technology);
             $token = \JWTAuth::getJWTProvider()->encode(json_decode($problemJWT, true));
             //Log::info($token);
-            if (!auth()->setToken($token)->getPayload()) {
-                throw new Exception('User not found');
-            }
-
 //if the token isn't formed correctly return a message
             $problemJWT = json_decode($problemJWT);
-
+            if (!User::find($problemJWT->sub)) {
+                throw new Exception('User not found');
+            }
             $missing_properties = !(
                 isset($problemJWT->adapt) &&
                 isset($problemJWT->adapt->assignment_id) &&
@@ -204,7 +203,7 @@ class JWTController extends Controller
             }
             $Submission = new Submission();
             if ($problemJWT->adapt->technology === 'webwork') {
-                if (isset($problemJWT->adapt->preview)){
+                if (isset($problemJWT->adapt->preview)) {
                     $response['type'] = 'preview';
                     $response['message'] = '';
                     return $response;
