@@ -135,6 +135,7 @@ class JWTController extends Controller
             $token = \JWTAuth::getJWTProvider()->encode(json_decode($problemJWT, true));
             //Log::info($token);
 //if the token isn't formed correctly return a message
+
             $problemJWT = json_decode($problemJWT);
             if (!User::find($problemJWT->sub)) {
                 throw new Exception('User not found');
@@ -147,7 +148,9 @@ class JWTController extends Controller
             if ($missing_properties) {
                 throw new Exception("The problemJWT has an incorrect structure.  Please contact us for assistance.");
             }
-
+            if ($problemJWT->adapt->technology === 'imathas') {
+                auth()->setToken($token)->getPayload();
+            }
             if (!in_array($problemJWT->adapt->technology, ['webwork', 'imathas'])) {
                 throw new Exception($problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.");
             }
