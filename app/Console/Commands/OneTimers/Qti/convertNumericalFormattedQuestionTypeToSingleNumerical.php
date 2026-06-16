@@ -23,7 +23,7 @@ class convertNumericalFormattedQuestionTypeToSingleNumerical extends Command
         $from = $undo ? 'Single Numerical' : 'Numerical';
         $to   = $undo ? 'Numerical' : 'Single Numerical';
 
-        $count =  DB::table('formatted_question_types')
+        $count = DB::table('formatted_question_types')
             ->join('questions', 'formatted_question_types.question_id', '=', 'questions.id')
             ->where('formatted_question_type', $from)
             ->where('qti_json_type', 'numerical')
@@ -34,10 +34,6 @@ class convertNumericalFormattedQuestionTypeToSingleNumerical extends Command
             return 0;
         }
 
-        if (!$this->confirm("{$count} record(s) will be updated from '{$from}' to '{$to}'. Proceed?")) {
-            $this->info('Aborted.');
-            return 0;
-        }
 
         DB::table('formatted_question_types')
             ->join('questions', 'formatted_question_types.question_id', '=', 'questions.id')

@@ -3772,6 +3772,7 @@ class AssignmentSyncQuestionController extends Controller
                     : "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
 
                 $response_info = $this->getResponseInfo($assignment, $extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
+                $assignment->questions[$key]['answered_correctly_at_least_once'] = $response_info['answered_correctly_at_least_once'] ?? 0;
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
                 $submitted_work = $response_info['submitted_work']

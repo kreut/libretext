@@ -826,7 +826,9 @@
       <b-alert :show="user.role === 2" variant="info">
         Students receive a {{ hintPenaltyIfShownHint }}% penalty for viewing the hint.
       </b-alert>
+      <div id="hint-html">
       <span v-html="questions[currentPage - 1].hint"/>
+      </div>
       <template #modal-footer="{ ok}">
         <b-button
           size="sm"
@@ -2892,6 +2894,7 @@
                       </b-button>
                       <span v-if="['real time','learning tree'].includes(assessmentType)
                         && canViewHintAtAssignmentLevel
+                        && !questions[currentPage-1].answered_correctly_at_least_once
                         && questions[currentPage-1].hint_exists
                         && (user.role ===2 || canViewHint)"
                       >
@@ -2906,6 +2909,7 @@
                       <span v-if="questionStatus !== 'closed'
                         && studentNonClicker()
                         && !isForge()
+                        && !questions[currentPage-1].answered_correctly_at_least_once
                         && assessmentType === 'real time'
                         && numberOfAllowedAttempts !== '1'
                         && !questions[currentPage-1].solution_type
@@ -4875,8 +4879,9 @@ export default {
       !this.questions[this.currentPage - 1].shown_hint
         ? this.$bvModal.show('modal-confirm-show-hint')
         : this.$bvModal.show('modal-hint')
+
       this.$nextTick(() => {
-        this.renderMathJax()
+        this.typesetMath(document.getElementById('hint-html'))
       })
     },
     isDiscussIt () {
@@ -5465,7 +5470,9 @@ export default {
         this.$bvModal.hide('modal-confirm-show-hint')
         this.$bvModal.show('modal-hint')
 
-        this.typesetMath()
+        this.$nextTick(() => {
+          this.typesetMath(document.getElementById('hint-html'))
+        })
         this.maximumNumberOfPointsPossible = this.getMaximumNumberOfPointsPossible()
       } catch (error) {
         this.$noty.error(error.message)
@@ -6872,7 +6879,7 @@ export default {
                 if (this.user.role === 2) {
                   const url = new URL(this.questions[this.currentPage - 1].technology_iframe)
                   const problemJWT = url.searchParams.get('problemJWT')
-                this.getWebworkSolution(problemJWT)
+                  this.getWebworkSolution(problemJWT)
                 }
               }
               break
