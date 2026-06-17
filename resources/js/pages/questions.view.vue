@@ -5208,7 +5208,8 @@ export default {
         } else {
           this.hasHTML = data.has_html
           this.unconfirmedSubmission = data.unconfirmed_submission
-          this.$bvModal.show('modal-confirm-submission')
+          // this.$bvModal.show('modal-confirm-submission')
+          await this.completeSubmission()
         }
       } catch (error) {
         this.$noty.error(error.message)
