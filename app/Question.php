@@ -444,7 +444,7 @@ class Question extends Model
                     || ($assignment->assessment_type === 'delayed' && $show_solutions);
 
                 $custom_claims['webwork']['showSolutions'] = (int)$is_privileged_user;
-                $custom_claims['webwork']['hideFeedback'] = !$show_feedback;
+                $custom_claims['webwork']['hideFeedback'] = true;
 
                 if (!$question->technology_iframe) {
                     $custom_claims['webwork']['sourceFilePath'] = $question->technology_id;
