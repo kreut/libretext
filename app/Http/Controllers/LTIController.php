@@ -13,6 +13,7 @@ use App\OIDC;
 use App\Section;
 use App\User;
 use Exception;
+use GuzzleHttp\Middleware;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Jose\Component\KeyManagement\JWKFactory;
@@ -28,6 +30,7 @@ use App\Custom\LTIDatabase;
 use App\Assignment;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Http\Message\RequestInterface;
 
 
 class LTIController extends Controller
@@ -598,4 +601,13 @@ class LTIController extends Controller
 
     }
 
+    public function getCanvasPublicKey()
+    {
+        $response = Http::withHeaders([
+            'User-Agent' => 'ADAPT https://adapt.libretexts.org/ (adapt@libretexts.org)',
+        ])->get('https://canvas.instructure.com/api/lti/security/jwks');
+
+        $public_key_set = $response->json();
+        dd($public_key_set);
+    }
 }

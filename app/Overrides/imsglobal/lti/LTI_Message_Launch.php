@@ -3,6 +3,7 @@ namespace Overrides\IMSGlobal\LTI;
 
 use App\Overrides\imsglobal\lti\Firebase\JWK;
 use App\Overrides\imsglobal\lti\Firebase\JWT;
+use Illuminate\Support\Facades\Http;
 use Overrides\IMSGlobal\LTI\LTI_Service_Connector;
 
 JWT::$leeway = 5;
@@ -226,7 +227,9 @@ class LTI_Message_Launch
         $key_set_url = $this->registration->get_key_set_url();
 
         // Download key set
-        $public_key_set = json_decode(file_get_contents($key_set_url), true);
+        $public_key_set = Http::withHeaders([
+            'User-Agent' => 'ADAPT https://adapt.libretexts.org/ (adapt@libretexts.org)',
+        ])->get($key_set_url)->json();
 
         if (empty($public_key_set)) {
             // Failed to fetch public keyset from URL.

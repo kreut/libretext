@@ -20,6 +20,7 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
+Route::get('/lti/canvas-public-key', 'LTIController@getCanvasPublicKey');
 Route::get('/lti/public-key/{lms}', 'LTIController@publicKey');
 Route::get('/php-info', 'QuestionMediaController@phpInfo');
 Route::get('/generate-jwk', 'LTIController@generateJWK');
