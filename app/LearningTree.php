@@ -256,7 +256,7 @@ class LearningTree extends Model
             foreach ($block->data as $item) {
 
                 if ($item->name === 'question_id') {
-                    $question_ids[] = $item->value;
+                    $question_ids[] = (int) trim($item->value);
                 }
             }
 
