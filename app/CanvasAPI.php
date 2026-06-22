@@ -264,6 +264,7 @@ class CanvasAPI extends Model
         curl_setopt_array($curl, array(
             CURLOPT_URL => $token_url,
             CURLOPT_HTTPHEADER => $header,
+            CURLOPT_USERAGENT => 'ADAPT https://adapt.libretexts.org/ (adapt@libretexts.org)',
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
