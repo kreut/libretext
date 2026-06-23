@@ -2,6 +2,8 @@
 
 namespace Overrides\IMSGlobal\LTI;
 
+use App\LtiRegistration;
+
 class LTI_OIDC_Login
 {
 
@@ -120,9 +122,9 @@ class LTI_OIDC_Login
         // Fetch Registration Details.
         $is_blackboard = $request['iss'] === "https://blackboard.com";
         $is_moodle = strpos($request['iss'], 'moodle') !== false;
-        $is_brightspace =(strpos($request['iss'], 'brightspace') !== false || strpos($request['iss'], 'd2l') !== false );
+        $is_brightspace = LtiRegistration::isBrightSpace($request['iss']);
         $registration = $is_blackboard || $is_moodle || $is_brightspace
-        ? $this->db->find_registration_by_client_id($request['client_id'])
+            ? $this->db->find_registration_by_client_id($request['client_id'])
             : $this->db->find_registration_by_campus_id($campus_id);
 
         // Check we got something.

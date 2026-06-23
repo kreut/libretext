@@ -8,6 +8,7 @@ use App\LtiAssignmentsAndGradesUrl;
 use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\LtiNamesAndRolesUrl;
+use App\LtiRegistration;
 use App\LtiToken;
 use App\OIDC;
 use App\Section;
@@ -178,7 +179,7 @@ class LTIController extends Controller
         $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
         $is_moodle = isset($request['iss']) && strpos($request['iss'], 'moodle') !== false;
         $is_brightspace = isset($request['iss'])
-            && (strpos($request['iss'], 'brightspace') !== false || strpos($request['iss'], 'd2l') !== false);
+            && LtiRegistration::isBrightSpace($request['iss']);
         if ($is_brightspace || $is_moodle || $campus_id === 'configure' || $campus_id === 'redirect-uri') {
             $campus_id = '';
             $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri";

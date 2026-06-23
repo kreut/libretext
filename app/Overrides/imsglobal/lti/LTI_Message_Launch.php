@@ -1,6 +1,7 @@
 <?php
 namespace Overrides\IMSGlobal\LTI;
 
+use App\LtiRegistration;
 use App\Overrides\imsglobal\lti\Firebase\JWK;
 use App\Overrides\imsglobal\lti\Firebase\JWT;
 use Illuminate\Support\Facades\Http;
@@ -307,7 +308,7 @@ class LTI_Message_Launch
         $iss = $this->jwt['body']['iss'];
         $is_blackboard = $iss === 'https://blackboard.com';
         $is_moodle = strpos($iss, 'moodle') !== false;
-        $is_brightspace =(strpos($iss, 'brightspace') !== false || strpos($iss, 'd2l') !== false );
+        $is_brightspace = LtiRegistration::isBrightSpace($iss);
         $this->registration = $is_blackboard || $is_moodle || $is_brightspace
             ? $this->db->find_registration_by_client_id($this->jwt['body']['aud'])
             : $this->db->find_registration_by_campus_id($campus_id);
@@ -327,7 +328,7 @@ class LTI_Message_Launch
 
     private function validate_jwt_signature()
     {
-        if (app()->environment('local')){
+        if (app()->environment('local')) {
 
             return $this;
         }
@@ -355,7 +356,7 @@ class LTI_Message_Launch
         $client_id = $this->jwt['body']['aud'];
         $iss = $this->jwt['body']['iss'];
         $is_moodle = strpos($iss, 'moodle') !== false;
-        $is_brightspace = strpos($iss, 'brightspace') !== false || strpos($iss, 'd2l') !== false ;
+        $is_brightspace = LtiRegistration::isBrightSpace($iss);
         $deployment = $is_moodle || $is_brightspace
             ? $this->db->find_deployment_by_iss_and_client_id($iss, $client_id, $deployment_id)
             : $this->db->find_deployment_by_campus_id($campus_id, $deployment_id);

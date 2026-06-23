@@ -33,6 +33,7 @@ use App\Jobs\ProcessImportCourse;
 use App\Jobs\ProcessResetCourse;
 use App\LmsAPI;
 use App\LtiNamesAndRolesUrl;
+use App\LtiRegistration;
 use App\Section;
 use App\Traits\DateFormatter;
 use App\User;
@@ -1707,7 +1708,7 @@ class CourseController extends Controller
 
                 $course->lms_has_access_token = $course->lms_has_access_token !== null;
                 $lti_registration = $school->LTIRegistration();
-                $course->is_brightspace = $lti_registration && strpos($lti_registration->iss, 'brightspace') !== false;
+                $course->is_brightspace = $lti_registration && LtiRegistration::isBrightSpace($lti_registration->iss);
                 $course->is_canvas = $lti_registration && strpos($lti_registration->iss, 'instructure') !== false;
                 $course->lms_has_api_key = $lti_registration && $lti_registration->api_key;
 

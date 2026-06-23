@@ -38,7 +38,7 @@ class LTI_Service_Connector
         //Storage::disk('s3')->put("lti_registration.txt", $this->registration->get_auth_token_url());
         //Storage::disk('s3')->put("issuer.txt", $this->registration->get_issuer());
         $issuer = $this->registration->get_issuer();
-        if (strpos($issuer, 'moodle') !== false || strpos($issuer, 'brightspace') !== false) {
+        if (strpos($issuer, 'moodle') !== false || LtiRegistration::isBrightSpace($issuer)) {
             $aud = $this->registration->get_auth_token_url();
         } else {
             switch ($issuer) {
@@ -98,6 +98,7 @@ class LTI_Service_Connector
     public function make_service_request($scopes, $method, $url, $body = null, $content_type = 'application/json', $accept = 'application/json')
     {
         try {
+
             $ch = curl_init();
             $headers = [
                 'Authorization: Bearer ' . $this->get_access_token($scopes),
@@ -143,6 +144,7 @@ class LTI_Service_Connector
             }
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             $response = curl_exec($ch);
+
             if (curl_errno($ch)) {
                 throw new Exception ('Make Service Request Error:' . curl_error($ch));
             }

@@ -67,6 +67,7 @@ class LtiGradePassback extends Model
             $launch_id = $ltiLaunch->launch_id;
             $user_id = $ltiLaunch->user_id;
             $assignment_id = $ltiLaunch->assignment_id;
+
             if (Assignment::find($assignment_id)->formative) {
                 $this->updateOrCreate(['user_id' => $user_id, 'assignment_id' => $assignment_id],
                     [
@@ -87,8 +88,7 @@ class LtiGradePassback extends Model
                 $is_canvas = strpos($iss, "canvas") !== false;
                 $is_blackboard = strpos($iss, "blackboard") !== false;
                 $is_moodle = strpos($iss, "moodle") !== false;
-                $is_brightspace = str_contains($iss, "brightspace") || str_contains($iss, "desire2learn");
-
+                $is_brightspace = LtiRegistration::isBrightSpace($iss);
                 $score_maximum = 0 + DB::table('assignment_question')
                         ->where('assignment_id', $assignment_id)
                         ->sum('points');
@@ -110,6 +110,7 @@ class LtiGradePassback extends Model
 
                 //  file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID: " . $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'] . "\r\n", FILE_APPEND);
                 $response = $grades->put_grade($score);
+
                 $body = $response['body'];
                 if ($is_moodle || $is_brightspace) {
                     $success = $response['body'] === null;
