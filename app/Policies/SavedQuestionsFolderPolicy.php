@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Helpers\Helper;
 use App\MyFavorite;
 use App\Question;
 use App\SavedQuestionsFolder;
@@ -15,33 +16,49 @@ class SavedQuestionsFolderPolicy
     use HandlesAuthorization;
 
 
-public function getClonedQuestionsFolder(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
-{
+    public function getClonedQuestionsFolder(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
+    {
 
-    return (in_array($user->role, [2, 5]))
-        ? Response::allow()
-        : Response::deny("You are not allowed to retrieve the Cloned Questions folder.");
-}
+        return (in_array($user->role, [2, 5]))
+            ? Response::allow()
+            : Response::deny("You are not allowed to retrieve the Cloned Questions folder.");
+    }
+
     public function getMyQuestionsFoldersAsOptions(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
     {
 
-        return (in_array($user->role,[2,5]))
+        return (in_array($user->role, [2, 5]))
             ? Response::allow()
             : Response::deny("You are not allowed to retrieve the My Questions folders as options.");
 
     }
+
+    /**
+     * @param User $user
+     * @param SavedQuestionsFolder $savedQuestionFolder
+     * @return Response
+     */
+    public function getMyQuestionsFoldersAsOptionsByUser(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
+    {
+        return Helper::isAdmin()
+            ? Response::allow()
+            : Response::deny("You are not allowed to retrieve the My Questions folders as options for this user.");
+
+    }
+
     public function getSavedQuestionsFoldersByType(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
     {
 
-        return (in_array($user->role,[2,5]))
+        return (in_array($user->role, [2, 5]))
             ? Response::allow()
             : Response::deny("You are not allowed to retrieve folders.");
 
     }
+
     public function store(User $user, SavedQuestionsFolder $savedQuestionFolder): Response
     {
 
-        return (in_array($user->role,[2,5]))
+        return (in_array($user->role, [2, 5]))
             ? Response::allow()
             : Response::deny("You are not allowed to create folders.");
 
@@ -75,29 +92,30 @@ public function getClonedQuestionsFolder(User $user, SavedQuestionsFolder $saved
     public function move(User                 $user,
                          SavedQuestionsFolder $toFolder,
                          SavedQuestionsFolder $fromFolder,
-                             Question             $question){
-        $owns_folders=       DB::table('saved_questions_folders')
-            ->where('user_id', $user->id)
-            ->where('id', $toFolder->id)
-            ->exists()
+                         Question             $question)
+    {
+        $owns_folders = DB::table('saved_questions_folders')
+                ->where('user_id', $user->id)
+                ->where('id', $toFolder->id)
+                ->exists()
             && DB::table('saved_questions_folders')
                 ->where('user_id', $user->id)
                 ->where('id', $fromFolder->id)
                 ->exists();
         $owns_question = false;
-        switch($fromFolder->type){
+        switch ($fromFolder->type) {
             case('my_favorites'):
-                $owns_question =DB::table('my_favorites')
-                        ->where('user_id', $user->id)
-                        ->where('question_id', $question->id)
-                        ->where('folder_id',$fromFolder->id)
-                        ->exists();
+                $owns_question = DB::table('my_favorites')
+                    ->where('user_id', $user->id)
+                    ->where('question_id', $question->id)
+                    ->where('folder_id', $fromFolder->id)
+                    ->exists();
                 break;
             case('my_questions'):
-                $owns_question =DB::table('questions')
+                $owns_question = DB::table('questions')
                     ->where('question_editor_user_id', $user->id)
                     ->where('id', $question->id)
-                    ->where('folder_id',$fromFolder->id)
+                    ->where('folder_id', $fromFolder->id)
                     ->exists();
                 break;
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\CurrentQuestionEditor;
 use App\Forge;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
@@ -1738,8 +1739,13 @@ class QuestionController extends Controller
                 if ($data['technology'] !== 'h5p') {
                     $data['h5p_type'] = null;
                 }
-                if ($question->folderIdRequired($request->user(), Question::find($request->id)->question_editor_user_id)) {
+                $question_to_update = Question::find($request->id);
+                if (Helper::isAdmin() && isset($data['question_editor_user_id']) && $data['question_editor_user_id']) {
+                    // Admin explicitly reassigning — keep what was sent
+                } elseif ($question->folderIdRequired($request->user(), $question_to_update->question_editor_user_id)) {
                     $data['question_editor_user_id'] = $request->user()->id;
+                } else {
+                    $data['question_editor_user_id'] = $question_to_update->question_editor_user_id;
                 }
             } else {
                 $data['question_editor_user_id'] = $request->user()->id;

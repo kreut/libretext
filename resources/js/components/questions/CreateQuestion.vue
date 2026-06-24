@@ -908,29 +908,58 @@
             </b-form-group>
           </div>
           <b-form-group
+            v-if="isAdmin && isEdit"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="question_owner"
+            label="Owner*"
+          >
+            <b-form-row>
+              <autocomplete
+                ref="ownerSearch"
+                style="width:400px"
+                :search="searchByOwner"
+                :default-value="questionToEdit.question_editor_name"
+                inline
+                @submit="onOwnerSelect"
+              />
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
             label-cols-sm="3"
             label-cols-lg="2"
             label-for="folder"
             label="Folder*"
           >
             <b-form-row>
-              <span v-show="!showFolderOptions" class="mt-2">
-                The folder is set by the question owner ({{ questionForm.question_editor_name }}).
-              </span>
+    <span v-show="!showFolderOptions" class="mt-2">
+      The folder is set by the question owner ({{ questionForm.question_editor_name }}).
+    </span>
               <span v-show="showFolderOptions">
-                <SavedQuestionsFolders
-                  ref="savedQuestionsFolders1"
-                  :key="`saved-questions-folders-key-${savedQuestionsFolderKey}-${questionForm.folder_id}`"
-                  class="mt-2"
-                  :type="'my_questions'"
-                  :init-saved-questions-folder="questionForm.folder_id"
-                  :create-modal-add-saved-questions-folder="true"
-                  :folder-to-choose-from="'My Questions'"
-                  :question-source-is-my-favorites="false"
-                  @reloadSavedQuestionsFolders="reloadCreateQuestionSavedQuestionsFolders"
-                  @savedQuestionsFolderSet="setMyCoursesFolder"
-                />
-              </span>
+      <span v-if="isAdmin && isEdit">
+        <b-form-select
+          v-model="questionForm.folder_id"
+          :options="ownerFolderOptions"
+          size="sm"
+          style="width:400px"
+          class="mt-2"
+        />
+      </span>
+      <span v-else>
+        <SavedQuestionsFolders
+          ref="savedQuestionsFolders1"
+          :key="`saved-questions-folders-key-${savedQuestionsFolderKey}-${questionForm.folder_id}`"
+          class="mt-2"
+          :type="'my_questions'"
+          :init-saved-questions-folder="questionForm.folder_id"
+          :create-modal-add-saved-questions-folder="true"
+          :folder-to-choose-from="'My Questions'"
+          :question-source-is-my-favorites="false"
+          @reloadSavedQuestionsFolders="reloadCreateQuestionSavedQuestionsFolders"
+          @savedQuestionsFolderSet="setMyCoursesFolder"
+        />
+      </span>
+    </span>
             </b-form-row>
             <ErrorMessage v-if="questionForm.errors.get('folder_id')"
                           :message="questionForm.errors.get('folder_id')"
@@ -1902,9 +1931,12 @@
                 </div>
                 <div v-if="qtiQuestionType === 'multi_numerical'">
                   <b-alert show variant="info">
-                    Type your question in the editor, then click the U toolbar button to underline each numerical answer.
-                    For example: 60% of 30 is <u>18</u> while 10% of 30 is <u>3</u>. A table will appear below the editor where you can set the correct tolerance for each blank.
-                    Tolerance can be set in Absolute (±) terms for a fixed range, or Relative (%) terms for a percentage-based range
+                    Type your question in the editor, then click the U toolbar button to underline each numerical
+                    answer.
+                    For example: 60% of 30 is <u>18</u> while 10% of 30 is <u>3</u>. A table will appear below the
+                    editor where you can set the correct tolerance for each blank.
+                    Tolerance can be set in Absolute (±) terms for a fixed range, or Relative (%) terms for a
+                    percentage-based range
                   </b-alert>
                 </div>
                 <div v-if="qtiQuestionType === 'drag_and_drop_cloze'">
@@ -2404,7 +2436,7 @@
                 </div>
                 <div class="pb-2">
                   <b-card
-                    v-if ="['multiple_choice', 'numerical'].includes(qtiQuestionType)
+                    v-if="['multiple_choice', 'numerical'].includes(qtiQuestionType)
                       || nursingQuestions.includes(qtiQuestionType)
                       || qtiQuestionType.includes('drop_down_rationale')
                       || (qtiQuestionType === 'select_choice' && nativeType === 'nursing')"
@@ -2599,7 +2631,7 @@
                     variant="outline-primary"
                     @click="$bvModal.show('modal-webwork-macro-picker')"
                   >
-                    <b-icon icon="plus-circle" class="mr-1" />
+                    <b-icon icon="plus-circle" class="mr-1"/>
                     Add Macro
                   </b-button>
                   <a v-if="questionForm.id && initiallyWebworkQuestion"
@@ -2932,6 +2964,8 @@
 </template>
 
 <script>
+import Autocomplete from '@trevoreyre/autocomplete-vue'
+import '@trevoreyre/autocomplete-vue/dist/style.css'
 import AccountingMultiPartComputation from './accounting/AccountingMultiPartComputation.vue'
 import CodeMirrorEditor from '~/components/CodeMirrorEditor'
 import QuestionMediaUpload from '~/components/QuestionMediaUpload.vue'
@@ -3158,6 +3192,7 @@ const textEntryInteractionJson = {
 export default {
   name: 'CreateQuestion',
   components: {
+    Autocomplete,
     AccountingMultiPartComputation,
     WebworkMacroPickerModal,
     CodeMirrorEditor,
@@ -3198,8 +3233,7 @@ export default {
     AllFormErrors,
     ViewQuestions,
     SavedQuestionsFolders,
-    QtiJsonQuestionViewer,
-    SolutionFileHtml
+    QtiJsonQuestionViewer
   },
   props: {
     assignmentId: {
@@ -3234,6 +3268,9 @@ export default {
     }
   },
   data: () => ({
+    allQuestionEditors: [],
+    selectedOwnerId: null,
+    ownerFolderOptions: [],
     webworkUploadFilename: '',
     webworkUploadFile: null,
     webworkUploadProgress: 0,
@@ -3612,6 +3649,68 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    searchByOwner (input) {
+      if (input.length < 1) return []
+      return this.allQuestionEditors
+        .filter(e => e.label.toLowerCase().includes(input.toLowerCase()))
+        .map(e => e.label)
+        .sort()
+    },
+
+    onOwnerSelect (selectedLabel) {
+      if (!selectedLabel) return
+      const match = this.allQuestionEditors.find(e => e.label === selectedLabel)
+      if (match) {
+        this.onOwnerChange(match.value)
+      }
+    },
+    async getAllQuestionEditors () {
+      try {
+        const { data } = await axios.get('/api/user/question-editors/1')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return
+        }
+        // Prepend the current owner in case they're excluded from the list
+        // (endpoint excludes the requesting admin, not the question owner)
+        const currentOwner = {
+          value: this.questionToEdit.question_editor_user_id,
+          label: this.questionToEdit.question_editor_name
+        }
+        const alreadyIncluded = data.question_editors.some(
+          e => e.value === currentOwner.value
+        )
+        this.allQuestionEditors = alreadyIncluded
+          ? data.question_editors
+          : [currentOwner, ...data.question_editors]
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+
+    async getAdminFolderOptions (userId) {
+      try {
+        const { data } = await axios.get(
+          `/api/saved-questions-folders/options/my-questions-folders/${userId}`
+        )
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return
+        }
+        this.ownerFolderOptions = [
+          { value: null, text: 'Choose a folder' },
+          ...data.my_questions_folders.map(f => ({ value: f.id, text: f.name }))
+        ]
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+
+    async onOwnerChange (newOwnerId) {
+      this.questionForm.question_editor_user_id = newOwnerId
+      this.questionForm.folder_id = null
+      await this.getAdminFolderOptions(newOwnerId)
+    },
     insertMacroLoadStatement (statement) {
       let code = this.questionForm.webwork_code || ''
 
@@ -4642,6 +4741,11 @@ export default {
       }
       this.questionForm.folder_id = this.questionToEdit.folder_id
       this.showFolderOptions = this.user.id === this.questionToEdit.question_editor_user_id
+      if (this.isAdmin) {
+        this.showFolderOptions = true
+        await this.getAllQuestionEditors()
+        await this.getAdminFolderOptions(this.questionToEdit.question_editor_user_id)
+      }
       this.initiallyWebworkQuestion = this.questionToEdit.technology === 'webwork'
       await this.getFrameworkItemSyncQuestion()
       if (this.questionToEdit.attachments) {
@@ -5077,7 +5181,7 @@ export default {
       }
       this.$bvModal.hide('modal-webwork-image-options')
     },
-    onWebworkFileChange(e) {
+    onWebworkFileChange (e) {
       const file = e.target.files[0]
       if (!file) return
       this.webworkUploadFile = file
@@ -5086,7 +5190,7 @@ export default {
       this.errorMessages = []
     },
 
-    async uploadWebworkAttachmentViaPresignedUrl() {
+    async uploadWebworkAttachmentViaPresignedUrl () {
       if (!this.webworkUploadFile) return
       this.webworkUploading = true
       this.errorMessages = []
@@ -5133,7 +5237,7 @@ export default {
       }
     },
 
-    getImageDimensions(file) {
+    getImageDimensions (file) {
       return new Promise((resolve) => {
         const url = URL.createObjectURL(file)
         const img = new Image()
@@ -5149,7 +5253,7 @@ export default {
       })
     },
 
-    async uploadWebworkFileWithProgress(file, url, s3Key) {
+    async uploadWebworkFileWithProgress (file, url, s3Key) {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest()
         xhr.upload.addEventListener('progress', (e) => {
@@ -5260,8 +5364,8 @@ export default {
       }
     },
     checkForOtherQuestionEditors: function () {
+      this.updateCurrentQuestionEditor()
       window.currentQuestionEditorUpdatedAt = setInterval(() => {
-        this.updateCurrentQuestionEditor()
         if (!this.currentQuestionEditor) {
           this.getCurrentQuestionEditor()
         }

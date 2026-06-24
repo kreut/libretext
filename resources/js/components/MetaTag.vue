@@ -146,6 +146,22 @@
               />
             </b-form-row>
           </b-form-group>
+          <b-form-group
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="apply_to"
+            label="Apply to"
+          >
+            <b-form-row>
+              <b-form-input
+                id="apply_to"
+                v-model="metaTagsForm.apply_to"
+                style="width: 200px"
+                type="text"
+                placeholder="Question ID or all"
+              />
+            </b-form-row>
+          </b-form-group>
         </div>
         <div v-if="filterBy === 'my_questions_folders'">
           <b-form-group
@@ -163,6 +179,22 @@
                            :options="myQuestionsFoldersOptions"
                            @change="currentPage=1;perPage=10;getQuestionMetaInfoByFilter()"
             />
+          </b-form-group>
+          <b-form-group
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="apply_to"
+            label="Apply to"
+          >
+            <b-form-row>
+              <b-form-input
+                id="apply_to"
+                v-model="metaTagsForm.apply_to"
+                type="text"
+                style="width: 200px"
+                placeholder="Question ID or all"
+              />
+            </b-form-row>
           </b-form-group>
         </div>
         <div v-if="questionMetaTags.length">
@@ -330,21 +362,6 @@
                   size="sm"
                   type="text"
                   class="mt-2"
-                />
-              </b-form-row>
-            </b-form-group>
-            <b-form-group
-              label-cols-sm="3"
-              label-cols-lg="2"
-              label-for="apply_to"
-              label="Apply to"
-            >
-              <b-form-row>
-                <b-form-input
-                  id="apply_to"
-                  v-model="metaTagsForm.apply_to"
-                  type="text"
-                  placeholder="Question ID or all"
                 />
               </b-form-row>
             </b-form-group>
@@ -622,7 +639,7 @@ export default {
     },
     async getAllQuestionEditors () {
       try {
-        const { data } = await axios.get('/api/user/question-editors')
+        const { data } = await axios.get('/api/user/question-editors/0')
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

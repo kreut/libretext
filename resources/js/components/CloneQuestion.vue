@@ -367,7 +367,7 @@ export default {
     },
     async getAllQuestionEditors () {
       try {
-        const { data } = await axios.get('/api/user/question-editors')
+        const { data } = await axios.get('/api/user/question-editors/0')
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

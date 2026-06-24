@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\Helper;
 use App\Question;
 use App\Rules\atLeastOneFillInTheBlank;
 use App\Rules\atLeastOneSelectChoice;
@@ -53,6 +54,7 @@ use App\Rules\nonRepeatingMatchingTerms;
 use App\Rules\nonRepeatingSimpleChoice;
 use App\Rules\nonRepeatingTermsToMatch;
 use App\Rules\ValidNumericalPlaceholders;
+use App\SavedQuestionsFolder;
 use Exception;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Log;
@@ -97,13 +99,25 @@ class StoreQuestionRequest extends FormRequest
             'hint' => 'nullable',
             'notes' => 'nullable',
             'license' => ['required', Rule::in($question->getValidLicenses())],
-            'license_version' => 'nullable'
+            'license_version' => 'nullable',
+            'question_editor_user_id' => ['nullable', 'integer', Rule::exists('users', 'id')->whereIn('role', [2, 5])],
         ];
         // source_url not required for bulk imports
         $rules['source_url'] = $this->source_url_required ? 'required|url' : 'nullable';
         if ($this->route()->getActionMethod() === 'update') {
-            if ($question->folderIdRequired($this->user(), Question::find($this->id)->question_editor_user_id)) {
+            if (Helper::isAdmin() || $question->folderIdRequired($this->user(), Question::find($this->id)->question_editor_user_id)) {
                 $rules['folder_id'] = ['required'];
+            }
+            if (Helper::isAdmin() && $this->question_editor_user_id) {
+                $rules['folder_id'][] = function ($attribute, $value, $fail) {
+                    $folder = SavedQuestionsFolder::where('id', $value)
+                        ->where('user_id', $this->question_editor_user_id)
+                        ->where('type', 'my_questions')
+                        ->first();
+                    if (!$folder) {
+                        $fail('The folder must belong to the new question owner.');
+                    }
+                };
             }
         } else {
             $rules['folder_id'] = ['required'];
@@ -366,6 +380,7 @@ class StoreQuestionRequest extends FormRequest
             ? 'Either the Open-Ended Content field or the technology field is required.'
             : 'The Open-Ended Content field is required.';
         $messages['folder_id.required'] = "The folder is required.";
+        $messages['question_editor_user_id.exists'] = 'The new owner must be an instructor or non-instructor editor.';
 
         foreach ($this->all() as $key => $value) {
             if (strpos($key, 'qti_simple_choice_') !== false) {

@@ -212,7 +212,7 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
 
     Route::get('/user/get-session', 'Auth\UserController@getSession');
     Route::post('/user/instructors-with-public-courses', 'UserController@getInstructorsWithPublicCourses');
-    Route::get('/user/question-editors', 'UserController@getAllQuestionEditors');
+    Route::get('/user/question-editors/{with_email}', 'UserController@getAllQuestionEditors');
     Route::patch('/user/student-email/{student}', 'UserController@updateStudentEmail');
     Route::delete('/user/{student}/course/{course}', 'UserController@destroy');
 
@@ -268,11 +268,14 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
     Route::get('/h5p-activity-set/submissions/assignment/{assignment}/question/{question}', 'H5pActivitySetController@getSubmissions');
 
     Route::get('/saved-questions-folders/options/my-questions-folders', 'SavedQuestionsFoldersController@getMyQuestionsFoldersAsOptions');
+    Route::get('/saved-questions-folders/options/my-questions-folders/{user}', 'SavedQuestionsFoldersController@getMyQuestionsFoldersAsOptionsByUser');
     Route::get('/saved-questions-folders/cloned-questions-folder', 'SavedQuestionsFoldersController@getClonedQuestionsFolder');
     Route::get('/saved-questions-folders/{type}/{withH5P?}', 'SavedQuestionsFoldersController@getSavedQuestionsFoldersByType');
 
     Route::post('/saved-questions-folders', 'SavedQuestionsFoldersController@store');
     Route::patch('/saved-questions-folders', 'SavedQuestionsFoldersController@update');
+    Route::post('/saved-questions-folders/delete/{savedQuestionsFolder}', 'SavedQuestionsFoldersController@destroy');
+    Route::patch('/saved-questions-folders/move/{question}/from/{fromFolder}/to/{toFolder}', 'SavedQuestionsFoldersController@move');
 
 
     Route::get('/lms-api/access-token/course/{course}/code/{authorization_code}', 'LmsApiController@getAccessToken');
@@ -312,8 +315,6 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
     Route::patch('/framework-descriptors/{frameworkDescriptor}', 'FrameworkDescriptorController@update');
     Route::delete('/framework-descriptors/{frameworkDescriptor}', 'FrameworkDescriptorController@destroy');
 
-    Route::post('/saved-questions-folders/delete/{savedQuestionsFolder}', 'SavedQuestionsFoldersController@destroy');
-    Route::patch('/saved-questions-folders/move/{question}/from/{fromFolder}/to/{toFolder}', 'SavedQuestionsFoldersController@move');
 
     Route::post('/my-favorites', 'MyFavoriteController@store');
 

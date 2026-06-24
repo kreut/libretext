@@ -182,6 +182,142 @@ class QuestionEditorTest extends TestCase
     }
 
     /** @test */
+    public function non_admin_cannot_change_question_owner()
+    {
+        $this->question->question_editor_user_id = $this->user->id;
+        $this->question->folder_id = $this->my_questions_folder->id;
+        $this->question->save();
+
+        $other_user = factory(User::class)->create(['role' => 2]);
+        $other_folder = factory(SavedQuestionsFolder::class)->create([
+            'user_id' => $other_user->id,
+            'type' => 'my_questions'
+        ]);
+
+        $this->question_to_store['id'] = $this->question->id;
+        $this->question_to_store['question_editor_user_id'] = $other_user->id;
+        $this->question_to_store['folder_id'] = $other_folder->id;
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
+
+        $this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}", $this->question_to_store);
+        $this->assertDatabaseHas('questions', [
+            'id' => $this->question->id,
+            'question_editor_user_id' => $this->user->id
+        ]);
+    }
+
+    /** @test */
+    public function admin_can_change_question_owner()
+    {
+        $this->question->question_editor_user_id = $this->user->id;
+        $this->question->folder_id = $this->my_questions_folder->id;
+        $this->question->save();
+
+        $new_owner = factory(User::class)->create(['role' => 2]);
+        $new_owner_folder = factory(SavedQuestionsFolder::class)->create([
+            'user_id' => $new_owner->id,
+            'type' => 'my_questions'
+        ]);
+
+        $this->question_to_store['id'] = $this->question->id;
+        $this->question_to_store['question_editor_user_id'] = $new_owner->id;
+        $this->question_to_store['folder_id'] = $new_owner_folder->id;
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
+
+        $this->actingAs($this->admin_user)->patchJson("/api/questions/{$this->question->id}", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('questions', [
+            'id' => $this->question->id,
+            'question_editor_user_id' => $new_owner->id,
+            'folder_id' => $new_owner_folder->id
+        ]);
+    }
+
+    /** @test */
+    public function admin_changing_owner_requires_folder_belonging_to_new_owner()
+    {
+        $this->question->question_editor_user_id = $this->user->id;
+        $this->question->folder_id = $this->my_questions_folder->id;
+        $this->question->save();
+
+        $new_owner = factory(User::class)->create(['role' => 2]);
+
+        $this->question_to_store['id'] = $this->question->id;
+        $this->question_to_store['question_editor_user_id'] = $new_owner->id;
+        $this->question_to_store['folder_id'] = $this->my_questions_folder->id; // belongs to original owner, not new owner
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
+
+        $this->actingAs($this->admin_user)->patchJson("/api/questions/{$this->question->id}", $this->question_to_store)
+            ->assertJsonValidationErrors(['folder_id']);
+    }
+
+    /** @test */
+    public function admin_saving_without_changing_owner_preserves_original_owner()
+    {
+        $this->question->question_editor_user_id = $this->user->id;
+        $this->question->folder_id = $this->my_questions_folder->id;
+        $this->question->save();
+
+        $this->question_to_store['id'] = $this->question->id;
+        $this->question_to_store['question_editor_user_id'] = $this->user->id;
+        $this->question_to_store['folder_id'] = $this->my_questions_folder->id;
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
+
+        $this->actingAs($this->admin_user)->patchJson("/api/questions/{$this->question->id}", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('questions', [
+            'id' => $this->question->id,
+            'question_editor_user_id' => $this->user->id
+        ]);
+    }
+
+    /** @test */
+    public function admin_cannot_change_owner_to_a_student()
+    {
+        $this->question->question_editor_user_id = $this->user->id;
+        $this->question->folder_id = $this->my_questions_folder->id;
+        $this->question->save();
+
+        $student_folder = factory(SavedQuestionsFolder::class)->create([
+            'user_id' => $this->student_user->id,
+            'type' => 'my_questions'
+        ]);
+
+        $this->question_to_store['id'] = $this->question->id;
+        $this->question_to_store['question_editor_user_id'] = $this->student_user->id;
+        $this->question_to_store['folder_id'] = $student_folder->id;
+        $this->question_to_store = $this->addQuestionRevisionInfo($this->question_to_store);
+
+        $this->actingAs($this->admin_user)->patchJson("/api/questions/{$this->question->id}", $this->question_to_store)
+            ->assertJsonValidationErrors(['question_editor_user_id']);
+    }
+
+    /** @test */
+    public function admin_can_get_folders_for_another_user()
+    {
+        factory(SavedQuestionsFolder::class)->create([
+            'user_id' => $this->user->id,
+            'name' => 'User Folder',
+            'type' => 'my_questions'
+        ]);
+
+        $this->actingAs($this->admin_user)
+            ->getJson("/api/saved-questions-folders/options/my-questions-folders/{$this->user->id}")
+            ->assertJson(['type' => 'success'])
+            ->assertJsonFragment(['name' => 'User Folder']);
+    }
+
+    /** @test */
+    public function non_admin_cannot_get_folders_for_another_user()
+    {
+        $other_user = factory(User::class)->create(['role' => 2]);
+
+        $this->actingAs($other_user)
+            ->getJson("/api/saved-questions-folders/options/my-questions-folders/{$this->user->id}")
+            ->assertJson(['type' => 'error']);
+    }
+
+    /** @test */
     public function cannot_delete_attachment_if_do_not_own_question()
     {
         $this->question->attachments = '[

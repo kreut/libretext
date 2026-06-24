@@ -296,7 +296,7 @@ class UserController extends Controller
                 $response['type'] = 'error';
                 $response['message'] = "Error: $errors";
             } else {
-                if ($request->invitation_type !== 'email_list'){
+                if ($request->invitation_type !== 'email_list') {
 
                     $data = ['email' => $email,
                         'first_name' => $first_name,
@@ -655,7 +655,7 @@ class UserController extends Controller
     }
 
     public
-    function getAllQuestionEditors(User $user): array
+    function getAllQuestionEditors(User $user, $with_email = false): array
     {
 
         $response['type'] = 'error';
@@ -666,12 +666,19 @@ class UserController extends Controller
         }
         try {
 
-            $response['question_editors'] = DB::table('users')
-                ->select('users.id AS value', DB::raw('CONCAT(first_name, " " , last_name) AS label'))
-                ->orderBy('label')
-                ->whereIn('role', [2, 5])
-                ->where('id', '<>', $user->id)
-                ->get();
+            $response['question_editors'] = $with_email
+                ? $response['question_editors'] = DB::table('users')
+                    ->select('users.id AS value', DB::raw('CONCAT(first_name, " " , last_name, " (", email, ")") AS label'))
+                    ->orderBy('label')
+                    ->whereIn('role', [2, 5])
+                    ->where('id', '<>', $user->id)
+                    ->get()
+                : DB::table('users')
+                    ->select('users.id AS value', DB::raw('CONCAT(first_name, " " , last_name) AS label'))
+                    ->orderBy('label')
+                    ->whereIn('role', [2, 5])
+                    ->where('id', '<>', $user->id)
+                    ->get();
 
             $response['type'] = 'success';
         } catch (Exception $e) {

@@ -9,6 +9,7 @@ use App\Jobs\ProcessGetSavedQuestionsByType;
 use App\MyFavorite;
 use App\Question;
 use App\SavedQuestionsFolder;
+use App\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +57,42 @@ class SavedQuestionsFoldersController extends Controller
         return $response;
 
 
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @param SavedQuestionsFolder $savedQuestionsFolder
+     * @return array
+     * @throws Exception
+     */
+    public function getMyQuestionsFoldersAsOptionsByUser(Request              $request,
+                                                         User                 $user,
+                                                         SavedQuestionsFolder $savedQuestionsFolder): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getMyQuestionsFoldersAsOptionsByUser', $savedQuestionsFolder);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $my_questions_folders = DB::table('saved_questions_folders')
+                ->select('id', 'name')
+                ->where('saved_questions_folders.user_id', $user->id)
+                ->where('type', 'my_questions')
+                ->get();
+            $my_questions_folders = $savedQuestionsFolder->getMyQuestionsFoldersWithH5pImportsAndTransferredQuestionsFirst($my_questions_folders);
+            $response['type'] = 'success';
+            $response['my_questions_folders'] = $my_questions_folders;
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting your My Questions Folder.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
@@ -119,7 +156,7 @@ class SavedQuestionsFoldersController extends Controller
         }
 
         try {
-            if ($withH5P === -1){
+            if ($withH5P === -1) {
                 //way to ensure that the job doesn't get run.  This code is used for getting the summary of the folders as well.
                 //for those calls, I don't want to get the H5P questions
                 return $savedQuestionsFolder->getSavedQuestionsFoldersByType($request->user(), $type);
