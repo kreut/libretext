@@ -13,40 +13,18 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class cacheMetrics extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'cache:Metrics';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Command description';
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         parent::__construct();
     }
 
-    /**
-     * @param Question $question
-     * @param User $user
-     * @param DataShop $dataShop
-     * @return int
-     * @throws Exception
-     */
     public function handle(Question $question, User $user, DataShop $dataShop): int
     {
         try {
@@ -57,15 +35,16 @@ class cacheMetrics extends Command
                 ->select('data_shops_enrollments.*', 'disciplines.name AS discipline')
                 ->get()
                 ->toArray();
+
             $cell_data = array_values($cell_data);
-            foreach ($cell_data as $key => $value) {
+            foreach ($cell_data as $value) {
                 if (!$value->discipline) {
                     $value->discipline = "None provided";
                 }
-
             }
-            Cache::forever('cell_data', $cell_data);
-            echo "Cell data cached.\r\n";
+
+            Storage::disk('s3')->put('cache/cell_data.json', json_encode($cell_data));
+            echo "Cell data stored in S3.\r\n";
 
             $my_id = $this->_getMyId();
             $instructor_accounts = $user->where('role', 2)->where('id', '<>', $my_id)->count();
@@ -80,33 +59,8 @@ class cacheMetrics extends Command
                 ->select('school_id')
                 ->groupBy('school_id')
                 ->count();
-            /* $courses = DB::table('data_shops_complete')
-                 ->select('course_id', 'instructor_name')
-                 ->distinct()
-                 ->get();
-             foreach ($courses as $key => $course) {
-                 if ($course->instructor_name === 'Instructor Kean') {
-                     $courses->forget($key);
-                 }
 
-             }
-            /* $total_entries_by_course = DB::table('data_shops_complete')
-                 ->select('course_id', DB::raw('COUNT(DISTINCT anon_student_id) as total_entries'))
-                 ->groupBy('course_id')
-                 ->get();
-             $total_entries_by_course_id = [];
-             foreach ($total_entries_by_course as $entry) {
-                 $total_entries_by_course_id[$entry->course_id] = $entry->total_entries;
-             }
-             foreach ($courses as $key => $data) {
-                 if ($total_entries_by_course_id[$data->course_id] < 3) {
-                     unset($courses[$key]);
-                 }
-             }
-             $real_courses = count($courses);
-            */
-
-            $live_courses = $this->_liveCoursesQuery($my_id, [0,1]);
+            $live_courses = $this->_liveCoursesQuery($my_id, [0, 1]);
             $live_lms_courses = $this->_liveCoursesQuery($my_id, [1]);
             $live_non_lms_courses = $this->_liveCoursesQuery($my_id, [0]);
 
@@ -116,7 +70,9 @@ class cacheMetrics extends Command
                 ->count();
             $open_ended_submissions = DB::table('submission_files')->max('id');
             $auto_graded_submissions = DB::table('submissions')->max('id');
-            $metrics = compact('instructor_accounts',
+
+            $metrics = compact(
+                'instructor_accounts',
                 'student_accounts',
                 'questions',
                 'campuses',
@@ -126,17 +82,17 @@ class cacheMetrics extends Command
                 'grade_passbacks',
                 'LTI_schools',
                 'open_ended_submissions',
-                'auto_graded_submissions');
+                'auto_graded_submissions'
+            );
             Cache::forever('metrics', $metrics);
             echo "Metrics cached.\r\n";
             return 0;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-
+            echo $e->getMessage();
+            return 1;
         }
-        echo $e->getMessage();
-        return 1;
     }
 
     private function _liveCoursesQuery(int $my_id, array $lms)
@@ -156,9 +112,7 @@ class cacheMetrics extends Command
                     ->groupBy('course_id');
             })->count();
     }
-    /**
-     * @return int|mixed
-     */
+
     private function _getMyId()
     {
         if (app()->environment() === 'testing') {
