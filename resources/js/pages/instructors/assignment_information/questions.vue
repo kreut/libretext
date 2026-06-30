@@ -579,7 +579,6 @@
                   </b-tooltip>
                 </span>
               <CloneQuestion
-                v-if="assessmentType !== 'learning tree'"
                 :key="`copy-question-${item.question_id}`"
                 :question-id="item.forge_source_id || item.question_id"
                 :is-forge-draft="!!item.forge_source_id"
@@ -589,6 +588,7 @@
                 :license="item.license"
                 :public="item.public"
                 :library="item.library"
+                :learning-tree-id="item.learning_tree_id ? item.learning_tree_id : 0"
                 :non-technology="item.non_technology"
                 :assignment-id="+assignmentId"
                 @reloadQuestions="getAssignmentInfo()"

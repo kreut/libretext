@@ -1,5 +1,22 @@
 <template>
   <span>
+    <b-modal :id="`modal-clone-learning-tree-${questionId}`"
+             title="Cloning learning trees"
+    >
+      <p>Cloning trees cannot be cloned within an assignment context because the question in the root node will remain
+      unchanged and must be unique within an assignment.</p>
+      <p>If you would like to clone a learning tree, please go to your <router-link
+        to="/instructors/learning-trees"
+      >Learning Trees</router-link> and
+      clone it there.  You will then be able to adjust it and add it to an assignment which doesn't share the same root node.</p>
+   <template #modal-footer>
+        <b-button size="sm"
+                  variant="primary"
+                  @click="$bvModal.hide(`modal-clone-learning-tree-${questionId}`)"
+        >
+          OK
+        </b-button>
+   </template></b-modal>
     <b-modal :id="`modal-clone-question-${questionId}`"
              :title="`Clone ${title}`"
              size="lg"
@@ -139,8 +156,11 @@
     <span v-if="['ccbyncnd', 'ccbynd', 'arr'].includes(license)">
       Due to licensing restrictions, this question cannot be cloned.
     </span>
-    <span v-if="!this.public">
+    <span v-if="!this.public && !learningTreeId">
       Since this question is not public, it cannot be cloned.
+    </span>
+      <span v-if="learningTreeId">
+      Since you do not own this learning tree you cannot clone it.
     </span>
   </span>
 </b-tooltip>
@@ -164,6 +184,10 @@ export default {
     ToggleButton
   },
   props: {
+    learningTreeId: {
+      type: Number,
+      default: 0
+    },
     isForgeDraft: {
       type: Boolean,
       default: false
@@ -214,10 +238,10 @@ export default {
     }
   },
   data: () => ({
+    learningTreeAuthorId: 0,
     weightedPointsPerQuestionWithSubmissions: false,
     cloning: false,
     showModalContents: false,
-    canClone: true,
     courseId: null,
     courseOptions: [{ value: null, text: 'Please choose a course' }],
     assignmentOptions: [{ value: null, text: 'Please choose an assignment' }],
@@ -237,16 +261,48 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
-    isAdmin: () => window.config.isAdmin
+    isAdmin: () => window.config.isAdmin,
+    canClone () {
+      if (this.learningTreeId) {
+        return this.learningTreeAuthorId === this.user.id
+      }
+      if (this.user.id !== this.questionEditorUserId) {
+        return !['ccbyncnd', 'ccbynd', 'arr'].includes(this.license) && Boolean(this.public)
+      }
+      return true
+    }
   },
   mounted () {
     this.actingAs = this.user.first_name
-    this.canClone = true
-    if (this.user.id !== this.questionEditorUserId) {
-      this.canClone = !['ccbyncnd', 'ccbynd', 'arr'].includes(this.license) && this.public
+    if (this.learningTreeId) {
+      this.getLearningTreeAuthor()
+    }
+  },
+  watch: {
+    learningTreeId: {
+      immediate: false, // mounted() already handles the initial call
+      handler (newVal) {
+        if (newVal) {
+          this.getLearningTreeAuthor()
+        } else {
+          this.learningTreeAuthorId = 0
+        }
+      }
     }
   },
   methods: {
+    async getLearningTreeAuthor () {
+      try {
+        const { data } = await axios.get(`/api/learning-trees/${this.learningTreeId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.learningTreeAuthorId = data.author_id
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async validateNotWeightedPointsPerQuestionWithSubmissions (assignmentId) {
       try {
         const { data } = await axios.get(`/api/assignments/validate-not-weighted-points-per-question-with-submissions/${assignmentId}`)
@@ -333,6 +389,14 @@ export default {
       this.actingAs = this.actingAs === this.user.first_name ? 'Admin' : this.user.first_name
     },
     openModalCopyQuestion () {
+      if (this.learningTreeId) {
+        if (this.canClone) {
+          this.$bvModal.show(`modal-clone-learning-tree-${this.questionId}`)
+          return false
+        } else {
+          return false
+        }
+      }
       if (!this.canClone) {
         return false
       }

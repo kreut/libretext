@@ -1998,6 +1998,7 @@
                 View the question's properties
               </b-tooltip>
               <CloneQuestion
+                :learning-tree-id="questions[currentPage - 1].learning_tree_id ? questions[currentPage - 1].learning_tree_id : 0"
                 :assignment-id="+assignmentId"
                 class="pl-1"
                 :question-id="questions[currentPage - 1].id"
@@ -4329,13 +4330,6 @@ export default {
         this.questionId = this.questions[0].id
       }
       await this.changePage(this.currentPage)
-      this.$nextTick(() => {
-        const sourceDiv = document.getElementById('action-icons')
-        const targetDiv = document.getElementById('instructor-action-icons')
-        if (targetDiv) {
-          targetDiv.append(...sourceDiv.childNodes)
-        }
-      })
       if (this.isDiscussIt()) {
         this.$nextTick(() => {
           document.querySelectorAll('.container').forEach(element => {
@@ -7004,6 +6998,16 @@ export default {
         await this.canSubmit()
       }
       this.isLoading = false
+      if (this.questions[this.currentPage - 1].qti_json || this.questions[this.currentPage - 1].a11y_qti_json) {
+        this.showQtiJsonQuestionViewer = true
+      }
+      this.$nextTick(() => {
+        const sourceDiv = document.getElementById('action-icons')
+        const targetDiv = document.getElementById('instructor-action-icons')
+        if (sourceDiv && targetDiv && sourceDiv.childNodes.length) {
+          targetDiv.append(...sourceDiv.childNodes)
+        }
+      })
       if (this.questions[this.currentPage - 1].qti_json || this.questions[this.currentPage - 1].a11y_qti_json) {
         this.showQtiJsonQuestionViewer = true
       }
