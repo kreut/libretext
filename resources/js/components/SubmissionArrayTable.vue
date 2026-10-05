@@ -20,6 +20,9 @@
           <th scope="col">
             Result
           </th>
+          <th v-if="hasFeedback" scope="col">
+            Feedback
+          </th>
           <th v-if="(userRole === 2 || showCorrectAnswer) && technology === 'webwork'" scope="col">
             Correct Answer
           </th>
@@ -52,6 +55,11 @@
             <span v-show="!item.correct" class="text-danger">
                   {{ item.partial_credit ? 'Partial Credit' : 'Incorrect' }}
                 </span>
+          </td>
+          <td v-if="hasFeedback">
+            <span v-if="item.feedback && !item.feedback_has_html">{{ item.feedback }}</span>
+            <div v-if="item.feedback && item.feedback_has_html" v-html="item.feedback"/>
+            <span v-if="!item.feedback" class="text-muted">None provided.</span>
           </td>
           <td v-if="(userRole === 2 || showCorrectAnswer) && technology === 'webwork'">
             <span v-show="!item.correct_ans_has_html" :class="item.correct ? 'text-success' : 'text-danger'">{{
@@ -112,6 +120,12 @@ export default {
     technology: {
       type: String,
       default: ''
+    }
+  },
+  computed: {
+    hasFeedback () {
+      return Array.isArray(this.currentQuestionSubmissionArray) &&
+        this.currentQuestionSubmissionArray.some(item => item.feedback)
     }
   },
   methods: {

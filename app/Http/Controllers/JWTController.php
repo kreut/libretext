@@ -18,7 +18,6 @@ use App\UnconfirmedSubmission;
 use App\User;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\JWT;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
@@ -109,8 +108,6 @@ class JWTController extends Controller
     public function processAnswerJWT(Request $request)
     {
         try {
-
-            $log_exception = true;
             $JWE = new JWE();
             //$referer = $request->headers->get('referer');//will use this to determine the technology
             $technology = 'webwork';
@@ -155,39 +152,8 @@ class JWTController extends Controller
                 throw new Exception($problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.");
             }
 
-            if ($problemJWT->adapt->technology === 'webwork' && isset($answerJWT->score['answers'])) {
-                $answers = $answerJWT->score['answers'];
-                Log::info(json_encode($answers));
-                foreach ($answers as $value) {
-                    if (isset($value['error_message']) && $value['error_message']) {
-                        $log_exception = false;
-                        $canGiveUp = new CanGiveUp();
-                        $completed_assignment = false;
-                        try {
-                            DB::table('webwork_submission_errors')->insert([
-                                'user_id' => $problemJWT->sub,
-                                'assignment_id' => $problemJWT->adapt->assignment_id,
-                                'question_id' => $problemJWT->adapt->question_id,
-                                'first_error' => $value['error_message'],
-                                'problem_jwt' => json_encode($problemJWT),
-                                'created_at' => now(),
-                                'updated_at' => now()]);
-                            $assignment = DB::table('assignments')->where('id', $problemJWT->adapt->assignment_id)->first();
-                            $completed_assignment = $assignment->scoring_type === 'c';
-                        } catch (Exception $e) {
-                            $h = new Handler(app());
-                            $h->report($e);
-                        }
-                        $canGiveUp->store($problemJWT->sub, $problemJWT->adapt->assignment_id, $problemJWT->adapt->question_id);
-                        if (!$completed_assignment) {
-                            $error_message = str_replace(["'", PHP_EOL], ["`", "<br>"], $value['error_message']);
-                            throw new Exception ("There is an error with at least one of your submissions: $error_message");
-                        }
-                    }
-                }
-            }
             //good to go!
-            $request = new storeSubmission();
+            $request = new StoreSubmission();
             $request['assignment_id'] = $problemJWT->adapt->assignment_id;
             $request['question_id'] = $problemJWT->adapt->question_id;
             $request['technology'] = $problemJWT->adapt->technology;
@@ -228,10 +194,8 @@ class JWTController extends Controller
             return $Submission->store($request, new Submission(), new Assignment(), new Score(), new DataShop(), new AssignmentSyncQuestion());
 
         } catch (Exception $e) {
-            if ($log_exception) {
-                $h = new Handler(app());
-                $h->report($e);
-            }
+            $h = new Handler(app());
+            $h->report($e);
             $response['type'] = 'error';
             $response['status'] = 400;
 

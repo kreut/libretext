@@ -2534,6 +2534,10 @@ class Submission extends Model
         return $default_submission_results;
     }
 
+
+// Replace the existing getSubmissionArray() method in app/Submission.php with this one.
+// Only change: the webwork branch now adds 'feedback' / 'feedback_has_html' from ans_message.
+
     /**
      * @param Assignment $assignment
      * @param Question $question
@@ -2586,6 +2590,14 @@ class Submission extends Model
                                 'partial_credit' => !$is_correct && $value['score'] > 0,
                                 'points' => $points,
                                 'percent' => $percent];
+
+                            // WeBWorK feedback channel (system + custom feedback both arrive here)
+                            $feedback = trim($value['ans_message'] ?? '');
+                            if ($feedback !== '') {
+                                $submission_array_value['feedback'] = $feedback;
+                                $submission_array_value['feedback_has_html'] = $this->hasHtml($feedback);
+                            }
+
                             $show_solution_as_student = Cache::get('show_solution_' . request()->user()->id . '_' . $assignment->id . '_' . $question->id, false);
                             if (request()->user()->role === 2 || $show_solution_as_student) {
                                 if (isset($value['correct_ans_latex_string'])) {
@@ -2685,7 +2697,6 @@ class Submission extends Model
         }
         return $submission_array;
     }
-
     /**
      * @param $assignment_question
      * @param $score
