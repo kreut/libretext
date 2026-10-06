@@ -1312,7 +1312,59 @@
               <div
                 v-if="(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'])"
               >
-                <div v-if="fullView && isOpenEndedFileSubmission" class="row">
+                <div v-if="fullView && isOpenEndedFileSubmission && isImageSubmission()" class="submission-image-viewer">
+                  <div class="submission-image-toolbar">
+                    <b-button-group size="sm">
+                      <b-button variant="outline-secondary"
+                                :pressed="imageViewMode === 'width'"
+                                @click="setImageFit('width')"
+                      >
+                        Fit Width
+                      </b-button>
+                      <b-button variant="outline-secondary"
+                                :pressed="imageViewMode === 'page'"
+                                @click="setImageFit('page')"
+                      >
+                        Fit Page
+                      </b-button>
+                      <b-button variant="outline-secondary"
+                                :pressed="imageViewMode === 'zoom' && imageZoom === 1"
+                                @click="setImageZoom(1)"
+                      >
+                        100%
+                      </b-button>
+                    </b-button-group>
+                    <b-button-group size="sm" class="ml-2">
+                      <b-button variant="outline-secondary" aria-label="Zoom out" @click="stepImageZoom(-1)">
+                        &minus;
+                      </b-button>
+                      <b-button variant="outline-secondary" aria-label="Zoom in" @click="stepImageZoom(1)">
+                        +
+                      </b-button>
+                    </b-button-group>
+                    <span class="ml-2 small text-muted">{{ imageZoomLabel() }} · click image to zoom</span>
+                  </div>
+                  <div ref="imageViewport"
+                       class="submission-image-viewport"
+                       :class="`mode-${imageViewMode}`"
+                  >
+                    <img v-show="!imageLoadError"
+                         :key="grading[currentStudentPage - 1]['open_ended_submission']['submission_url']"
+                         ref="submissionImage"
+                         alt="Student file submission"
+                         :src="grading[currentStudentPage - 1]['open_ended_submission']['submission_url']"
+                         :style="imageViewMode === 'zoom' && imageNaturalWidth ? { width: `${imageNaturalWidth * imageZoom}px` } : {}"
+                         @load="onSubmissionImageLoad"
+                         @error="onSubmissionImageError"
+                         @click="toggleImageZoom"
+                    >
+                    <div v-if="imageLoadError" class="p-4 text-center">
+                      This image can't be displayed in the browser (for example, an iPhone HEIC photo).
+                      Use <strong>Open File Submission</strong> above to download it.
+                    </div>
+                  </div>
+                </div>
+                <div v-else-if="fullView && isOpenEndedFileSubmission" class="row">
                   <iframe :key="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
                           title="Open-ended submission"
                           width="600"
@@ -1470,6 +1522,13 @@ export default {
     routeQuestionId: null,
     discussItCompletionCriteria: false,
     renderMathJax: false,
+    // Image submission viewer: 'width' | 'page' (fit modes) or 'zoom' (fixed scale)
+    imageViewMode: 'width',
+    imageFitPreference: 'width',
+    imageZoom: 1,
+    imageNaturalWidth: 0,
+    imageLoadError: false,
+    imageRetried: false,
     showDiscussIt: false,
     discussItRequirementsInfo: {},
     activeDiscussion: {},
@@ -1613,6 +1672,14 @@ export default {
     this.routeQuestionId = this.$route.params.questionId
 
     this.renderMathJax = +localStorage.renderMathJax === 1
+    try {
+      if (['width', 'page'].includes(localStorage.graderImageFit)) {
+        this.imageFitPreference = localStorage.graderImageFit
+        this.imageViewMode = localStorage.graderImageFit
+      }
+    } catch (e) {
+      // storage unavailable; use default fit
+    }
     window.addEventListener('message', this.receiveMessage)
     h5pResizer()
     this.assignmentId = this.$route.params.assignmentId
@@ -2136,6 +2203,101 @@ export default {
         : ''
       return `<h2 class="h7 mb-0">Grader Feedback ${grader}</h2>`
     },
+    isImageSubmission () {
+      const submission = this.grading[this.currentStudentPage - 1]?.open_ended_submission?.submission
+      return typeof submission === 'string' && /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i.test(submission)
+    },
+    resetImageViewer () {
+      this.imageViewMode = this.imageFitPreference
+      this.imageZoom = 1
+      this.imageNaturalWidth = 0
+      this.imageLoadError = false
+      this.imageRetried = false
+    },
+    async onSubmissionImageError () {
+      // The usual cause is an expired temporary S3 link: fetch a fresh one and retry once
+      if (this.imageRetried) {
+        this.imageLoadError = true
+        return
+      }
+      this.imageRetried = true
+      const page = this.currentStudentPage
+      const current = this.grading[page - 1]?.open_ended_submission
+      if (!current) return
+      const oldUrl = current.submission_url
+      current.got_files = false
+      await this.getFilesFromS3()
+      // If the grader moved to another student meanwhile, leave that student's viewer alone
+      if (page !== this.currentStudentPage) return
+      if (current.submission_url === oldUrl) {
+        // No new link came back, so retrying would fail the same way
+        this.imageLoadError = true
+      }
+      // Otherwise the :key on the <img> (its URL) changes, so Vue loads the fresh link
+    },
+    onSubmissionImageLoad (event) {
+      this.imageNaturalWidth = event.target.naturalWidth
+      this.imageLoadError = false
+    },
+    setImageFit (mode) {
+      this.imageViewMode = mode
+      this.imageFitPreference = mode
+      try {
+        localStorage.graderImageFit = mode
+      } catch (e) {
+        // storage unavailable; preference just won't persist
+      }
+    },
+    currentImageScale () {
+      // Scale the image is displayed at right now, relative to its natural size
+      const img = this.$refs.submissionImage
+      if (!img || !this.imageNaturalWidth) return 1
+      return this.imageViewMode === 'zoom' ? this.imageZoom : img.clientWidth / this.imageNaturalWidth
+    },
+    setImageZoom (zoom, anchor = null) {
+      const viewport = this.$refs.imageViewport
+      const img = this.$refs.submissionImage
+      const clamped = Math.min(4, Math.max(0.1, zoom))
+      // Remember which point of the image sits under the anchor (cursor or viewport center)
+      let fx = 0.5
+      let fy = 0.5
+      let ax = viewport ? viewport.clientWidth / 2 : 0
+      let ay = viewport ? viewport.clientHeight / 2 : 0
+      if (img && viewport) {
+        const rect = img.getBoundingClientRect()
+        const vRect = viewport.getBoundingClientRect()
+        if (anchor) {
+          ax = anchor.clientX - vRect.left
+          ay = anchor.clientY - vRect.top
+        }
+        fx = rect.width ? (vRect.left + ax - rect.left) / rect.width : 0.5
+        fy = rect.height ? (vRect.top + ay - rect.top) / rect.height : 0.5
+      }
+      this.imageZoom = clamped
+      this.imageViewMode = 'zoom'
+      this.$nextTick(() => {
+        if (!img || !viewport) return
+        viewport.scrollLeft = fx * img.offsetWidth - ax
+        viewport.scrollTop = fy * img.offsetHeight - ay
+      })
+    },
+    stepImageZoom (direction) {
+      const factor = direction > 0 ? 1.25 : 0.8
+      this.setImageZoom(this.currentImageScale() * factor)
+    },
+    toggleImageZoom (event) {
+      if (this.imageViewMode === 'zoom') {
+        this.imageViewMode = this.imageFitPreference
+        return
+      }
+      // From a fit mode: zoom in to full resolution (at least 2x the fitted size) at the clicked point
+      this.setImageZoom(Math.max(1, this.currentImageScale() * 2), event)
+    },
+    imageZoomLabel () {
+      if (this.imageViewMode === 'width') return 'Fit width'
+      if (this.imageViewMode === 'page') return 'Fit page'
+      return `${Math.round(this.imageZoom * 100)}%`
+    },
     openInNewTab (url) {
       console.log(url)
       window.open(url, '_blank')
@@ -2407,6 +2569,8 @@ export default {
       console.log(this.grading[this.currentStudentPage - 1]['open_ended_submission'])
 
       this.openEndedType = this.grading[this.currentStudentPage - 1]['open_ended_submission'].open_ended_submission_type
+      // Reset before the files load, so a fast image error isn't wiped out afterwards
+      this.resetImageViewer()
       await this.getSubmittedWorkWithPendingScore()
       await this.getFilesFromS3()
       if (this.isDiscussIt) {
@@ -2762,5 +2926,54 @@ export default {
 <style>
 div.ar-icon svg {
   vertical-align: top !important;
+}
+
+/* Image submission viewer */
+.submission-image-viewer {
+  width: min(900px, 95vw);
+}
+
+.submission-image-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.submission-image-viewport {
+  height: min(80vh, 900px);
+  overflow: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background: #f8f9fa;
+}
+
+.submission-image-viewport img {
+  display: block;
+  margin: 0 auto;
+}
+
+.submission-image-viewport.mode-width img {
+  width: 100%;
+  height: auto;
+  cursor: zoom-in;
+}
+
+.submission-image-viewport.mode-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submission-image-viewport.mode-page img {
+  max-width: 100%;
+  max-height: 100%;
+  cursor: zoom-in;
+}
+
+.submission-image-viewport.mode-zoom img {
+  max-width: none;
+  height: auto;
+  cursor: zoom-out;
 }
 </style>
