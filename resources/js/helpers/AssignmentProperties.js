@@ -13,6 +13,10 @@ export const defaultFlashcardSettings = {
   captions: { enabled: true, student_override: true }
 }
 
+// File Upload Mode is no longer chosen by the instructor: students can always upload a file per question
+// or one PDF for multiple questions, so delayed assignments are always 'both'.
+export const fileUploadMode = 'both'
+
 export const assignmentForm = new Form({
   name: '',
   assign_tos: [],
@@ -24,7 +28,7 @@ export const assignmentForm = new Form({
   can_contact_instructor_auto_graded: 'never',
   default_completion_scoring_mode: '100% for either',
   completion_split_auto_graded_percentage: '50',
-  file_upload_mode: 'individual_assessment',
+  file_upload_mode: fileUploadMode,
   late_policy: 'not accepted',
   late_deduction_percent: null,
   late_deduction_applied_once: 1,
@@ -188,7 +192,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
   form.hint_penalty = 0
   form.algorithmic = 0
   form.solutions_availability = 'automatic'
-  form.file_upload_mode = 'individual_assessment'
+  form.file_upload_mode = fileUploadMode
   form.number_of_randomized_assessments = null
   form.randomizations = 0
   form.lms_grade_passback = 'automatic'
@@ -327,7 +331,7 @@ export async function editAssignmentProperties (assignmentProperties, vm) {
   if (assignmentProperties.default_open_ended_text_editor) {
     vm.form.default_open_ended_submission_type = assignmentProperties.default_open_ended_text_editor + ' ' + assignmentProperties.default_open_ended_submission_type
   }
-  vm.form.file_upload_mode = assignmentProperties.file_upload_mode
+  vm.form.file_upload_mode = fileUploadMode
   vm.form.num_submissions_needed = assignmentProperties.num_submissions_needed
   vm.form.default_points_per_question = assignmentProperties.default_points_per_question
   vm.form.total_points = assignmentProperties.total_points

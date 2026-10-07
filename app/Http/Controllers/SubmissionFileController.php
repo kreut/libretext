@@ -35,6 +35,8 @@ use Illuminate\Support\Facades\DB;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
+use setasign\Fpdi\Fpdi;
+use Throwable;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -130,6 +132,9 @@ class SubmissionFileController extends Controller
     }
 
     /**
+     * Assigns a page of the student's compiled PDF (the type 'a' submission file) to a question.
+     * Only questions whose open-ended submission type is 'file' can receive a page.
+     *
      * @param UpdateSubmisionFilePage $request
      * @param Assignment $assignment
      * @param Question $question
@@ -150,8 +155,10 @@ class SubmissionFileController extends Controller
         if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id)) {
             if ($can_upload_response['type'] === 'error') {
                 $compiledPDFOverride = new CompiledPDFOverride();
+                $questionLevelOverride = new QuestionLevelOverride();
                 $assignmentLevelOverride = new AssignmentLevelOverride();
-                $has_set_page_override = $compiledPDFOverride->hasSetPageOverride($assignment->id, $assignmentLevelOverride);
+                $has_set_page_override = $compiledPDFOverride->hasSetPageOverride($assignment->id, $assignmentLevelOverride)
+                    || $questionLevelOverride->hasOpenEndedOverride($assignment->id, $question->id, $assignmentLevelOverride);
                 if (!$has_set_page_override) {
                     $response['message'] = $can_upload_response['message'];
                     return $response;
@@ -159,13 +166,36 @@ class SubmissionFileController extends Controller
             }
 
         }
+
+        $assignment_question = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
+        if (!$assignment_question || $assignment_question->open_ended_submission_type !== 'file') {
+            $response['message'] = "Pages from your PDF can only be assigned to questions that accept a file upload.";
+            return $response;
+        }
+
+        $full_file = $submissionFile->where('assignment_id', $assignment->id)
+            ->where('user_id', Auth::user()->id)
+            ->where('type', 'a')
+            ->first();
+        if (!$full_file) {
+            $response['message'] = "Please upload your PDF before assigning pages.";
+            return $response;
+        }
+
         $data = $request->validated();
+        $number_of_pages = $this->_getNumberOfPages($full_file);
+        if ($number_of_pages && $data['page'] > $number_of_pages) {
+            $response['message'] = $number_of_pages === 1
+                ? "Your PDF only has 1 page."
+                : "Your PDF only has $number_of_pages pages.  Please choose a page from 1 to $number_of_pages.";
+            $response['number_of_pages'] = $number_of_pages;
+            return $response;
+        }
         try {
             $page = $data['page'];
-            $full_file = $submissionFile->where('assignment_id', $assignment->id)
-                ->where('user_id', Auth::user()->id)
-                ->where('type', 'a')
-                ->first();
 
             $submission_file_data = ['type' => 'q',
                 'submission' => $full_file->submission,
@@ -198,6 +228,7 @@ class SubmissionFileController extends Controller
             $total_score = $open_ended_score + ($auto_graded_submission ? $auto_graded_submission->score : 0);
 
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
+            $response['submission'] = $full_file->submission;
             $response['original_filename'] = $full_file->original_filename;
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
             $response['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $full_file->submission) . "#page=$page";
@@ -206,6 +237,7 @@ class SubmissionFileController extends Controller
             $re = $is_update ? 're-' : '';
             $response['message'] = "You have {$re}assigned Page $page as the start of the submitted solution to Question $request->question_number.";
             $response['page'] = $page;
+            $response['number_of_pages'] = $number_of_pages;
             $response['type'] = 'success';
 
 
@@ -337,6 +369,78 @@ class SubmissionFileController extends Controller
 
 
     /**
+     * The number of pages in the student's PDF for multiple questions.  PDFs uploaded before the page count was
+     * saved are counted from S3 once and the count is saved.
+     *
+     * @param SubmissionFile $full_file
+     * @return int|null null if the PDF can't be read, in which case any page is accepted
+     */
+    private function _getNumberOfPages(SubmissionFile $full_file): ?int
+    {
+        if ($full_file->number_of_pages) {
+            return (int)$full_file->number_of_pages;
+        }
+        $temp_path = tempnam(sys_get_temp_dir(), 'pdf');
+        try {
+            file_put_contents($temp_path, Storage::disk('s3')->get("assignments/$full_file->assignment_id/$full_file->submission"));
+            $number_of_pages = $this->_countPdfPages($temp_path);
+        } catch (Throwable $e) {
+            $number_of_pages = null;
+        } finally {
+            @unlink($temp_path);
+        }
+        if ($number_of_pages) {
+            $full_file->number_of_pages = $number_of_pages;
+            $full_file->save();
+        }
+        return $number_of_pages;
+    }
+
+    /**
+     * @param string $path
+     * @return int|null null if the PDF can't be read (encrypted, damaged...)
+     */
+    private function _countPdfPages(string $path): ?int
+    {
+        try {
+            $number_of_pages = (new Fpdi())->setSourceFile($path);
+            return $number_of_pages > 0 ? $number_of_pages : null;
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * The compiled PDF (upload level 'assignment') is stored as a single type 'a' row with no question,
+     * so its upload count is tracked separately from the per-question (type 'q') uploads.
+     *
+     * @param int $assignment_id
+     * @param int $question_id
+     * @param int $user_id
+     * @param string $upload_level
+     * @return int
+     */
+    private function _getUploadCount(int $assignment_id, int $question_id, int $user_id, string $upload_level): int
+    {
+        $latest_submission = $upload_level === 'assignment'
+            ? DB::table('submission_files')
+                ->where('type', 'a')
+                ->where('assignment_id', $assignment_id)
+                ->where('user_id', $user_id)
+                ->select('upload_count')
+                ->first()
+            : DB::table('submission_files')
+                ->where('type', 'q') //not needed but for completeness
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->where('user_id', $user_id)
+                ->select('upload_count')
+                ->first();
+
+        return is_null($latest_submission) ? 0 : $latest_submission->upload_count;
+    }
+
+    /**
      * @param Request $request
      * @return array
      * @throws Exception
@@ -347,13 +451,19 @@ class SubmissionFileController extends Controller
             $assignment_id = $request->assignmentId;
             $assignment = Assignment::find($assignment_id);
             $question_id = $request->questionId;
-            $upload_level = $request->uploadLevel;
+            $upload_level = $request->uploadLevel ?: 'question';
             $user = Auth::user();
             $user_id = $user->id;
             $response['type'] = 'error';
 
+            if (!in_array($upload_level, ['assignment', 'question'])) {
+                $response['message'] = "$upload_level is not a valid upload level.";
+                return $response;
+            }
 
-            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id, $upload_level)) {
+            //a PDF for multiple questions isn't tied to the question the student happened to upload it from
+            $policy_question_id = $upload_level === 'assignment' ? 0 : $question_id;
+            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $policy_question_id, $upload_level)) {
                 if ($can_upload_response['type'] === 'error') {
                     $compiledPDFOverride = new CompiledPDFOverride();
                     $questionLevelOverride = new QuestionLevelOverride();
@@ -368,16 +478,7 @@ class SubmissionFileController extends Controller
                 }
             }
 
-            $latest_submission = DB::table('submission_files')
-                ->where('type', 'q') //not needed but for completeness
-                ->where('assignment_id', $assignment_id)
-                ->where('question_id', $question_id)
-                ->where('user_id', $user_id)
-                ->select('upload_count')
-                ->first();
-
-            $upload_count = is_null($latest_submission) ? 0 : $latest_submission->upload_count;
-
+            $upload_count = $this->_getUploadCount($assignment_id, (int)$question_id, $user_id, $upload_level);
 
             if ($upload_count + 1 > $this->max_number_of_uploads_allowed) {
                 $response['message'] = 'You have exceeded the number of times that you can re-upload a file submission.';
@@ -422,7 +523,7 @@ class SubmissionFileController extends Controller
 
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
-        $upload_level = $request->uploadLevel;
+        $upload_level = $request->uploadLevel ?: 'question';
         $user = Auth::user();
         $user_id = $user->id;
 
@@ -443,15 +544,7 @@ class SubmissionFileController extends Controller
             }
             $assignment = Assignment::find($assignment_id);
 
-            $latest_submission = DB::table('submission_files')
-                ->where('type', 'q') //not needed but for completeness
-                ->where('assignment_id', $assignment_id)
-                ->where('question_id', $question_id)
-                ->where('user_id', $user_id)
-                ->select('upload_count')
-                ->first();
-
-            $upload_count = is_null($latest_submission) ? 0 : $latest_submission->upload_count;
+            $upload_count = $this->_getUploadCount($assignment_id, (int)$question_id, $user_id, $upload_level);
 
 
             $submission = $request->s3_key;
@@ -460,9 +553,14 @@ class SubmissionFileController extends Controller
             Storage::disk('local')->put($submission, $s3_file_contents);
 
             $mime_type = Storage::disk('s3')->mimeType($submission);
-            $valid_mime_type = $assignment->file_upload_mode === 'compiled_pdf'
-                ? $mime_type === 'application/pdf'
-                : in_array($mime_type, [
+            //a file for multiple questions has its pages assigned to questions, so it has to be a PDF
+            if ($upload_level === 'assignment') {
+                if ($mime_type !== 'application/pdf') {
+                    $response['message'] = "Only a PDF can be used for multiple questions.  Your file has a mime type of $mime_type.";
+                    return $response;
+                }
+            } else {
+                $valid_mime_type = in_array($mime_type, [
                     'application/pdf',
                     'text/plain',
                     'image/png',
@@ -471,10 +569,16 @@ class SubmissionFileController extends Controller
                     'audio/mpeg',
                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                 ]);
-            if (!$valid_mime_type) {
-                $response['message'] = "Your file has a mime type of $mime_type which is not an accepted mime type.";
-                return $response;
+                if (!$valid_mime_type) {
+                    $response['message'] = "Your file has a mime type of $mime_type which is not an accepted mime type.";
+                    return $response;
+                }
             }
+
+            //so that students can't assign a page past the end of their PDF
+            $number_of_pages = $upload_level === 'assignment'
+                ? $this->_countPdfPages(Storage::disk('local')->path($submission))
+                : null;
 
             $submission_file_data = ['type' => $upload_level[0],
                 'submission' => basename($submission),
@@ -490,13 +594,15 @@ class SubmissionFileController extends Controller
             switch ($upload_level) {
                 case('assignment'):
 
+                    $submission_file_data['number_of_pages'] = $number_of_pages;
                     $submissionFile->updateOrCreate(
                         ['user_id' => $user_id,
                             'assignment_id' => $assignment_id,
                             'type' => 'a'],
                         $submission_file_data
                     );
-                    $response['message'] = "You can now set the pages for your open-ended submissions.";
+                    $response['number_of_pages'] = $number_of_pages;
+                    $response['message'] = "Your PDF has been uploaded.  Now choose which page goes with each question.";
                     $response['full_pdf_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
                     break;
                 case('question'):

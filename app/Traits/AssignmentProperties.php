@@ -128,6 +128,18 @@ trait AssignmentProperties
     }
 
     /**
+     * Every delayed assignment now lets students upload per question or upload one PDF for multiple
+     * questions, so the File Upload Mode is always 'both' for delayed assignments.
+     *
+     * @param $request
+     * @return string|null
+     */
+    public function getFileUploadMode($request): ?string
+    {
+        return $request->assessment_type === 'delayed' ? 'both' : null;
+    }
+
+    /**
      * @param $request
      * @param $data
      * @return array|string|string[]|null
@@ -136,8 +148,6 @@ trait AssignmentProperties
     function getDefaultOpenEndedTextEditor($request, $data)
     {
         if ($request->assessment_type !== 'delayed') {
-            return null;
-        } elseif ($data['file_upload_mode'] === 'combined_pdf') {
             return null;
         } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
             return str_replace(' text', '', $data['default_open_ended_submission_type']);
@@ -211,7 +221,7 @@ trait AssignmentProperties
             'default_clicker_time_to_submit' => $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data),
             'scoring_type' => $data['scoring_type'],
             'default_completion_scoring_mode' => Helper::getCompletionScoringMode($data['scoring_type'], $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage),
-            'file_upload_mode' => $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null,
+            'file_upload_mode' => $this->getFileUploadMode($request),
             'default_open_ended_submission_type' => $this->getDefaultOpenEndedSubmissionType($request, $data),
             'default_open_ended_text_editor' => $this->getDefaultOpenEndedTextEditor($request, $data),
             'late_policy' => $data['late_policy'],
@@ -246,7 +256,7 @@ trait AssignmentProperties
         $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
         $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
         $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
-        $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
+        $data['file_upload_mode'] = $this->getFileUploadMode($request);
         $data['points_per_question'] = $this->getPointsPerQuestion($data);
 
         //learning tree

@@ -132,16 +132,13 @@ class StoreAssignmentProperties extends FormRequest
 
             }
 
-
-            if ($this->file_upload_mode === 'compiled_pdf') {
-                $rules['default_open_ended_submission_type'] = Rule::in(['file', 0]);
-            }
-
             $rules['textbook_url'] = 'nullable|url';
 
-
+            //File Upload Mode is no longer chosen by the instructor: every delayed assignment lets students
+            //upload per question or upload one PDF for multiple questions (stored as 'both').  Older clients may
+            //still send a value, so it's accepted but ignored (see AssignmentProperties trait).
             if ($this->assessment_type === 'delayed') {
-                $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
+                $rules['file_upload_mode'] = ['nullable', Rule::in(['compiled_pdf', 'individual_assessment', 'both'])];
             }
 
             $rules['can_view_hint'] = ['required', Rule::in([0, 1])];

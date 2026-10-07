@@ -211,11 +211,9 @@
             <b-card-text>
               <p>
                 Optionally allow a subset of your class to re-submit any auto-graded or open-ended question
-                after an assignment has been closed. Students may also upload a Compiled PDF and Set Pages if the
-                Compiled
-                PDF option is set for the assignment. If this option is set, it will take precedence over any individual
-                override
-                set below.
+                after an assignment has been closed. For delayed assignments, students may also upload a PDF for
+                multiple questions and assign its pages. If this option is set, it will take precedence over any
+                individual override set below.
               </p>
               <b-form>
                 <RequiredText/>
@@ -274,15 +272,16 @@
               </div>
             </b-card-text>
           </b-card>
-          <div v-if="fileUploadMode !== 'individual_assessment'">
+          <div v-if="assessmentType === 'delayed'">
             <b-card
-              header-html="<h2 class=&quot;h7&quot;>Allow Uploading PDF and Assigning (all questions in assignment)</h2>"
+              header-html="<h2 class=&quot;h7&quot;>Allow Uploading a PDF for Multiple Questions and Assigning Pages (all questions in assignment)</h2>"
               class="mb-4"
             >
               <b-card-text>
                 <p>
-                  Optionally allow a subset of your class to upload their compiled PDF and set pages even if
-                  an assignment has been closed. This can be useful if individual students with the uploading process.
+                  Optionally allow a subset of your class to upload a PDF for multiple questions and assign its pages
+                  even if an assignment has been closed. This can be useful if individual students had trouble with
+                  the uploading process.
                 </p>
                 <b-form>
                   <RequiredText/>
@@ -322,7 +321,7 @@
                       {{ compiledPDFOverride.text }}
                       <a href="" @click.prevent="removeOverride(compiledPDFOverride,'compiled-pdf')">
                         <b-icon-trash class="text-muted"
-                                      :aria-label="`Remove compiled PDF override: ${compiledPDFOverride.text}`"
+                                      :aria-label="`Remove PDF upload override: ${compiledPDFOverride.text}`"
                         />
                       </a>
                     </li>
@@ -331,7 +330,7 @@
                             size="sm"
                             @click="removeOverride({value: -1},'compiled-pdf')"
                   >
-                    Remove All Compiled PDF Overrides
+                    Remove All PDF Upload Overrides
                   </b-button>
                 </div>
                 <div v-else>
@@ -342,15 +341,14 @@
               </b-card-text>
             </b-card>
             <b-card
-              header-html="<h2 class=&quot;h7&quot;>Allow Assigning to Existing Uploaded PDF (all questions in assignment)</h2>"
+              header-html="<h2 class=&quot;h7&quot;>Allow Assigning Pages From an Already Uploaded PDF (all questions in assignment)</h2>"
               class="mb-4"
             >
               <b-card-text>
                 <p>
-                  Optionally allow a subset of your class to set pages in their compiled PDF even if
-                  an assignment has been closed. Students will not be allowed to upload a new compiled PDF.
-                  This can be useful if individual students forgot to do this after
-                  uploading their compiled PDF.
+                  Optionally allow a subset of your class to assign pages from a PDF they already uploaded for multiple
+                  questions, even if an assignment has been closed. Students will not be allowed to upload a new PDF.
+                  This can be useful if individual students forgot to assign their pages after uploading.
                 </p>
                 <b-form>
                   <RequiredText/>
@@ -560,7 +558,7 @@ export default {
     return { title: 'Assignment Overrides' }
   },
   data: () => ({
-    fileUploadMode: '',
+    assessmentType: '',
     isTimedAssignment: false,
     justAutoGraded: false,
     justOpenEnded: false,
@@ -659,7 +657,8 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.fileUploadMode = data.assignment.file_upload_mode
+        // PDF uploads for multiple questions are available in every delayed assignment
+        this.assessmentType = data.assignment.assessment_type
         this.isTimedAssignment = Boolean(
           data.assignment.assign_tos && data.assignment.assign_tos.some(assignTo => assignTo.time_limit)
         )

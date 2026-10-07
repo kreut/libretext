@@ -1,6 +1,5 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
     <RedirectToClickerModal
       :key="`redirect-to-clicker-modal-${clickerAssignmentId}-${clickerQuestionId}-${redirectToClickerModalKey}`"
       :assignment-id="clickerAssignmentId"
@@ -49,47 +48,6 @@
           All responses successfully submitted.
         </span>
       </b-alert>
-    </b-modal>
-    <b-modal
-      id="modal-submission-accepted"
-      ref="modalThumbsUp"
-      hide-footer
-      title="Submission Accepted"
-    >
-      <b-alert variant="info" show>
-        <span style="font-size: large">
-          {{ successMessage }}
-        </span>
-      </b-alert>
-    </b-modal>
-    <b-modal
-      id="modal-thumbs-down"
-      ref="modalThumbsUp"
-      hide-footer
-      size="lg"
-      title="Submission Not Accepted"
-    >
-      <b-alert variant="danger" :show="true">
-        <span class="font-weight-bold" style="font-size: large" v-html="errorMessage"/>
-      </b-alert>
-    </b-modal>
-    <b-modal id="modal-confirm-set-page"
-             ref="confirmSetPage"
-             title="Confirm Set Page"
-    >
-      <p>
-        You already have submitted a file for this question. If you set the page again, your submission file
-        will be updated with the associated page from your compiled PDF.
-      </p>
-      <p>Would you like to update your submission with a page from your compiled PDF?</p>
-      <template #modal-footer="{ ok, cancel }">
-        <b-button size="sm" @click="$bvModal.hide('modal-confirm-set-page')">
-          Cancel
-        </b-button>
-        <b-button size="sm" variant="primary" @click="handleSetPageAsSubmission">
-          Yes, set the page!
-        </b-button>
-      </template>
     </b-modal>
 
     <div class="vld-parent">
@@ -190,77 +148,18 @@
                   <span class="font-weight-bold">Late Policy: </span>
                   <span> {{ formattedLatePolicy }}</span>
                 </li>
-                <li v-if="bothFileUploadMode && hasAtLeastOneFileUpload" class="mb-2">
+                <li v-if="numberOfFileUploadQuestions > 1" class="mb-2">
                   <span class="font-weight-bold">
-                    Open-ended submissions:</span>
+                    File submissions:</span>
                   <span>
-                    Upload a single compiled PDF of the questions and assign pages and/or submit individual submissions on each page.
+                    Upload your files from each question's page. If your work for several questions is in one PDF,
+                    upload it from any of those questions and then choose which page goes with each question.
                   </span>
                 </li>
               </ul>
             </b-card-text>
           </b-card>
 
-          <b-card v-show="items.length && (compiledPdf || (bothFileUploadMode && hasAtLeastOneFileUpload))"
-                  class="mt-3 mb-3"
-                  header="default"
-                  header-html="<h2 class=&quot;h5&quot;>Upload Compiled PDF Submission</h2>"
-          >
-            Upload your compiled PDF and then set each submission.
-            <file-upload
-              ref="upload"
-              v-model="files"
-              accept="application/pdf"
-              put-action="/put.method"
-              @input-file="inputFile"
-              @input-filter="inputFilter"
-              @click="submissionFileForm.errors.clear('submission')"
-            />
-            <input type="hidden" class="form-control is-invalid">
-            <div v-if="submissionFileForm.errors.has('submission')"
-                 class="help-block invalid-feedback"
-            >
-              {{ submissionFileForm.errors.errors.submission[0] }}
-            </div>
-            <div class="upload mt-3">
-              <ul v-if="files.length && (preSignedURL !== '')">
-                <li v-for="file in files" :key="file.id">
-                  <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
-                      file.name
-                    }}</span> -
-                  <span>{{ formatFileSize(file.size) }} </span>
-                  <span v-if="file.size > 10000000">Note: large files may take up to a minute to process.</span>
-                  <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
-                  <span v-else-if="file.active" class="ml-2">
-                    <b-spinner small type="grow"/>
-                    Uploading File...
-                  </span>
-                  <span v-if="processingFile">
-                    <b-spinner small type="grow"/>
-                    Processing file...
-                  </span>
-                  <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
-                            variant="success"
-                            size="sm"
-                            style="vertical-align: top"
-                            @click.prevent="$refs.upload.active = true"
-                  >
-                    Start Upload
-                  </b-button>
-                </li>
-              </ul>
-            </div>
-            <div v-show="fullPdfUrl" class="mb-2">
-              <b-embed
-                :key="fullPdfUrlKey"
-                type="iframe"
-                aspect="16by9"
-                aria-label="Compiled PDF"
-                :src="getFullPdfUrlAtPage(fullPdfUrl, questionSubmissionPageForm.page)"
-                allowfullscreen
-              />
-            </div>
-          </b-card>
           <b-card v-show="items.length && assessmentType !== 'clicker'"
                   id="questions_card"
                   class="mt-3 mb-3"
@@ -280,11 +179,6 @@
                 <b-alert variant="success" :show="completedAllAssignmentQuestions">
                   <span class="font-weight-bold">You have completed all assessments on this assignment!</span>
                 </b-alert>
-                <div v-if="!setAllPages && fullPdfUrl">
-                  <b-alert show variant="info">
-                    Please remember to set the Initial Pages for each of the questions below.
-                  </b-alert>
-                </div>
                 <b-table
                   id="summary_of_questions_and_submissions"
                   aria-label="Summary of questions and submissions"
@@ -370,37 +264,6 @@
   {{ formattedDue }}
 </span>
                   </template>
-                  <template #cell(page)="data">
-                    <div v-if="data.item.isOpenEndedFileSubmission">
-                      <b-input-group>
-                        <div class="d-flex">
-                          <b-form-input :id="`set_page_for_question_${data.item.question_number}`"
-                                        v-model="data.item.page"
-                                        type="text"
-                                        style="width: 60px"
-                                        placeholder=""
-                                        :class="{ 'is-invalid': data.item.question_id === questionSubmissionPageForm.questionId && questionSubmissionPageForm.errors.has('page') }"
-                                        @keydown="questionSubmissionPageForm.errors.clear('page')"
-                          />
-                          <b-button variant="primary"
-                                    size="sm"
-                                    class="ml-1"
-                                    :disabled="!fullPdfUrl"
-                                    @click="confirmSetPageAsSubmission(data.item.question_number, data.item.question_id, data.item.page)"
-                          >
-                            <label :for="`set_page_for_question_${data.item.question_number}`" style="margin-bottom:0">Set
-                              Page</label>
-                          </b-button>
-                          <has-error v-show="data.item.question_id === questionSubmissionPageForm.questionId"
-                                     :form="questionSubmissionPageForm" field="page"
-                          />
-                        </div>
-                      </b-input-group>
-                    </div>
-                    <div v-else>
-                      N/A
-                    </div>
-                  </template>
                 </b-table>
               </div>
             </div>
@@ -426,14 +289,9 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import AssignmentStatistics from '~/components/AssignmentStatistics'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
-import Vue from 'vue'
-import Form from 'vform'
-import { getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
 import LoggedInAsStudent from '~/components/LoggedInAsStudent'
-import AllFormErrors from '~/components/AllFormErrors'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 import QuestionCircleTooltipModal from '~/components/QuestionCircleTooltipModal'
-import { makeFileUploaderAccessible } from '~/helpers/accessibility/makeFileUploaderAccessible'
 import RedirectToClickerModal from '../../components/RedirectToClickerModal.vue'
 import {
   initClickerAssignmentsForEnrolledAndOpenCourses,
@@ -441,9 +299,6 @@ import {
 } from '../../helpers/clicker'
 import ForgeViewer from '~/components/viewers/ForgeViewer.vue'
 import ForgeDueDates from '../../components/ForgeDueDates.vue'
-
-const VueUploadComponent = require('vue-upload-component')
-Vue.component('file-upload', VueUploadComponent)
 
 export default {
   components: {
@@ -454,7 +309,6 @@ export default {
     Loading,
     FontAwesomeIcon,
     LoggedInAsStudent,
-    AllFormErrors,
     SolutionFileHtml,
     QuestionCircleTooltipModal
   },
@@ -474,39 +328,18 @@ export default {
     showNoAccessMessage: '',
     solutionsReleased: false,
     assignmentId: 0,
-    setAllPages: false,
     cacheKey: 0,
     numberOfAllowedAttempts: '',
     numberOfAllowedAttemptsPenalty: '',
-    hasAtLeastOneFileUpload: false,
-    allFormErrors: [],
+    numberOfFileUploadQuestions: 0,
     extension: null,
     timeLimitStatus: {},
     public_description: null,
     isInstructorLoggedInAsStudent: false,
-    bothFileUploadMode: false,
-    compiledPdf: false,
     totalPoints: '',
     completedAllAssignmentQuestions: false,
-    successMessage: '',
-    errorMessage: '',
     openEndedSubmissionQuestionOptions: [],
     question: {},
-    fullPdfUrl: '',
-    fullPdfUrlKey: 0,
-    questionSubmissionPageForm: new Form({
-      question_number: '',
-      questionId: 0,
-      page: ''
-    }),
-    processingFile: false,
-    preSignedURL: '',
-    files: [],
-    submissionFileForm: new Form({
-      questionFile: null,
-      assignmentId: null,
-      questionId: null
-    }),
     checkIcon: faCheck,
     fields: [],
     items: [],
@@ -535,9 +368,6 @@ export default {
       })
     }
   },
-  created () {
-    this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
-  },
   async mounted () {
     this.assignmentId = this.$route.params.assignmentId
     if (await this.getAssignmentSummary() === false) {
@@ -553,7 +383,6 @@ export default {
     this.isLoading = false
     this.$nextTick(function () {
       this.resizeHandler()
-      makeFileUploaderAccessible()
     })
     window.addEventListener('resize', this.resizeHandler)
     await this.initClickerAssignmentsForEnrolledAndOpenCourses()
@@ -641,164 +470,6 @@ export default {
         document.getElementById('questions_card').style.width = ''
       }
     },
-    confirmSetPageAsSubmission (questionNumber, questionId, page) {
-      this.questionSubmissionPageForm.questionId = questionId
-      this.questionSubmissionPageForm.page = page
-      this.questionSubmissionPageForm.question_number = questionNumber
-      let question = this.items.find(question => question.question_id === questionId)
-      question.submission_file_exists
-        ? this.$bvModal.show('modal-confirm-set-page')
-        : this.handleSetPageAsSubmission()
-    },
-    async handleSetPageAsSubmission () {
-      try {
-        const { data } = await this.questionSubmissionPageForm.patch(`/api/submission-files/${this.assignmentId}/${this.questionSubmissionPageForm.questionId}/page`)
-        this.$bvModal.hide('modal-confirm-set-page')
-        if (data.type === 'error') {
-          this.errorMessage = data.message
-          this.$bvModal.show('modal-thumbs-down')
-          return false
-        }
-        let openEndedSubmission
-        openEndedSubmission = this.items.find(question => question.question_id === this.questionSubmissionPageForm.questionId)
-        openEndedSubmission.submission_file_exists = true
-        openEndedSubmission.submission_file_url = data.submission_file_url
-        openEndedSubmission.last_open_ended_submission = data.date_submitted
-        if (openEndedSubmission.hasOwnProperty('total_score')) {
-          openEndedSubmission.total_score = data.total_score
-        }
-        openEndedSubmission.showThumbsUpForOpenEndedSubmission = true
-        this.successMessage = data.message
-        this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
-        this.cacheKey++
-        if (this.completedAllAssignmentQuestions) {
-          this.$bvModal.show('modal-completed-assignment')
-        }
-        this.$bvModal.show('modal-submission-accepted')
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.errorMessage = error.message
-          this.$bvModal.hide('modal-confirm-set-page')
-          this.$bvModal.show('modal-thumbs-down')
-        }
-      }
-    },
-    formatFileSize (size) {
-      let sizes = [' Bytes', ' KB', ' MB', ' GB', ' TB', ' PB', ' EB', ' ZB', ' YB']
-      for (let i = 1; i < sizes.length; i++) {
-        if (size < Math.pow(1024, i)) return (Math.round((size / Math.pow(1024, i - 1)) * 100) / 100) + sizes[i - 1]
-      }
-      return size
-    },
-    inputFile (newFile, oldFile) {
-      if (newFile && oldFile && !newFile.active && oldFile.active) {
-        if (newFile.xhr) {
-          console.log('status', newFile.xhr.status)
-          if (newFile.xhr.status === 200) {
-            if (!this.handledOK) {
-              this.handledOK = true
-              console.log(this.handledOK)
-              this.handleOK()
-            }
-          } else {
-            this.$noty.error('We were not able to save your file to our server.  Please try again or contact us if the problem persists.')
-          }
-        } else {
-          this.$noty.error('We were not able to save your file to our server.  Please try again or contact us if the problem persists.')
-        }
-      }
-    },
-    async handleOK () {
-      this.submissionFileForm.uploadLevel = 'assignment'
-      this.submissionFileForm.s3_key = this.s3Key
-      this.submissionFileForm.original_filename = this.originalFilename
-      if (this.uploading) {
-        this.$noty.info('Please be patient while the file is uploading.')
-        return false
-      }
-      this.processingFile = true
-
-      try {
-        let formData = new FormData()
-        formData.append('submission', this.submissionFileForm)
-        formData.append('assignmentId', this.assignmentId)
-        formData.append('questionId', '0')
-        formData.append('type', 'submission')
-        formData.append('s3_key', this.submissionFileForm.s3_key)
-        formData.append('original_filename', this.submissionFileForm.original_filename)
-        formData.append('uploadLevel', this.submissionFileForm.uploadLevel)
-        formData.append('_method', 'put')
-
-        const { data } = await axios.post('/api/submission-files', formData)
-        this.$noty[data.type](data.message)
-        if (data.type !== 'error') {
-          this.fullPdfUrl = data.full_pdf_url
-          this.fields.find(field => field.key === 'page').shown = true
-          this.setAllPages = false
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-      this.processingFile = false
-      this.files = []
-    },
-    handleCancel () {
-      this.$refs.upload.active = false
-      this.files = []
-      this.processingFile = false
-    },
-    async inputFilter (newFile, oldFile, prevent) {
-      this.submissionFileForm.errors.clear()
-      if (newFile && !oldFile) {
-        if (parseInt(newFile.size) > 20000000) {
-          let message = '20 MB max allowed.  Your file is too large.  '
-          if (/\.(pdf)$/i.test(newFile.name)) {
-            message += 'You might want to try an online PDF compressor such as https://smallpdf.com/compress-pdf to reduce the size.'
-          }
-          this.submissionFileForm.errors.set('submission', message)
-          this.allFormErrors = this.submissionFileForm.errors.flatten()
-          this.$bvModal.show('modal-form-errors-file-upload')
-          return prevent()
-        }
-        let validUploadTypesMessage = `The file type must be .pdf`
-        let validExtension = /\.(pdf)$/i.test(newFile.name)
-
-        if (!validExtension) {
-          this.submissionFileForm.errors.set('submission', validUploadTypesMessage)
-          this.allFormErrors = this.submissionFileForm.errors.flatten()
-          this.$bvModal.show('modal-form-errors-file-upload')
-          return prevent()
-        } else {
-          try {
-            this.preSignedURL = ''
-            let uploadFileData = {
-              assignment_id: this.assignmentId,
-              upload_file_type: 'submission',
-              file_name: newFile.name
-            }
-            const { data } = await axios.post('/api/s3/pre-signed-url', uploadFileData)
-            if (data.type === 'error') {
-              this.$noty.error(data.message)
-              return false
-            }
-            this.preSignedURL = data.preSignedURL
-            newFile.putAction = this.preSignedURL
-            this.s3Key = data.s3_key
-            this.originalFilename = newFile.name
-            this.handledOK = false
-          } catch (error) {
-            this.$noty.error(error.message)
-            return false
-          }
-        }
-      }
-
-      newFile.blob = ''
-      let URL = window.URL || window.webkitURL
-      if (URL && URL.createObjectURL) {
-        newFile.blob = URL.createObjectURL(newFile.file)
-      }
-    },
     viewQuestion (questionId) {
       this.$router.push({ path: `/assignments/${this.assignmentId}/questions/view/${questionId}` })
       return false
@@ -845,15 +516,11 @@ export default {
         this.totalPoints = assignment.total_points
         this.numberOfAllowedAttempts = assignment.number_of_allowed_attempts
         this.numberOfAllowedAttemptsPenalty = assignment.number_of_allowed_attempts_penalty
-        this.compiledPdf = assignment.file_upload_mode === 'compiled_pdf'
-        this.bothFileUploadMode = assignment.file_upload_mode === 'both'
         this.assessmentType = assignment.assessment_type
         this.extension = assignment.extension
         this.name = assignment.name
         this.solutionsReleased = Boolean(assignment.solutions_released)
         this.canViewAssignmentStatistics = assignment.can_view_assignment_statistics
-        this.fullPdfUrl = assignment.full_pdf_url
-        this.fullPdfUrlKey++
         this.completedAllAssignmentQuestions = assignment.completed_all_assignment_questions
         this.fields = [
           {
@@ -877,12 +544,6 @@ export default {
             label: 'Due Dates',
             thStyle: { minWidth: '165px' },
             shown: true
-          },
-          {
-            key: 'page',
-            label: 'Initial Page',
-            shown: this.fullPdfUrl !== null,
-            thStyle: { 'width': '165px' }
           },
           {
             key: 'points',
@@ -914,7 +575,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.hasAtLeastOneFileUpload = false
+        this.numberOfFileUploadQuestions = 0
         for (let i = 0; i < data.questions.length; i++) {
           let question = data.questions[i]
           let lastOpenEndedSubmission = 'N/A'
@@ -933,7 +594,7 @@ export default {
             this.openEndedSubmissionQuestionOptions.push({ value: question.id, text: i + 1 })
           }
           if (question.open_ended_submission_type === 'file') {
-            this.hasAtLeastOneFileUpload = true
+            this.numberOfFileUploadQuestions++
           }
           if (question.technology_iframe || (question.qti_json && !['forge', 'forge_iteration'].includes(question.qti_json_type))) {
             questionSubmissionRequired = true
@@ -942,9 +603,6 @@ export default {
               : question.last_submitted
             showThumbsUpForQuestionSubmission = question.last_submitted !== 'N/A'
           }
-          console.log(question.technology_iframe)
-          console.log(question.technology === 'webwork')
-          console.log(this.solutionsReleased)
           let solutionHtml
           if (question.solution_type === 'html') {
             solutionHtml = question.solution_html
@@ -967,7 +625,6 @@ export default {
             last_open_ended_submission: lastOpenEndedSubmission,
             isOpenEndedFileSubmission: question.open_ended_submission_type === 'file',
             showThumbsUpForOpenEndedSubmission: showThumbsUpForOpenEndedSubmission,
-            page: question.submission_file_page ? question.submission_file_page : null,
             submission_file_exists: question.submission_file_exists,
             submission_file_url: question.submission_file_url ? question.submission_file_url : null,
             solution_type: question.solution_type,

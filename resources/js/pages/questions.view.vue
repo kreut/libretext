@@ -1665,7 +1665,7 @@
 
       <div v-if="solutionTypeIsPdfImage">
         <b-form ref="form">
-          <b-container v-show="uploadLevel === 'assignment' && (!showCurrentFullPDF && (cutups.length || fullPdfUrl))">
+          <b-container v-show="user.role === 2 && uploadLevel === 'assignment' && (!showCurrentFullPDF && (cutups.length || fullPdfUrl))">
             <b-row align-h="center">
               <b-button class="ml-2" size="sm" variant="outline-primary" @click="showCurrentFullPDF = true">
                 Use Current PDF
@@ -1674,17 +1674,9 @@
           </b-container>
           <b-container>
             <div v-if="!isOpenEndedAudioSubmission">
-              <div v-if="bothFileUploadMode">
-                <p>
-                  Upload individual question submission. Optionally, upload an entire PDF with one submission per page
-                  and let ADAPT cut up the PDF for you on the assignment's
-                  <a :href="`/students/assignments/${assignmentId}/summary`" target="_blank">summary page</a>.
-                </p>
-              </div>
-              <p v-if="compiledPDF">
-                Please upload an entire PDF with one submission per page and let ADAPT cut up the PDF for you on the
-                assignment's
-                <a :href="`/students/assignments/${assignmentId}/summary`" target="_blank">summary page</a>.
+              <p v-if="canUploadPdfForMultipleQuestions">
+                You can upload a file for just this question. If your work for several questions is in one PDF,
+                you can upload it once and then choose which page goes with each question.
               </p>
               <p>
                 <strong>Important:</strong> For best results, don't crop any of your pages. In addition, please make
@@ -1694,7 +1686,7 @@
               </p>
             </div>
             <file-upload
-              v-if="isOpenEndedAudioSubmission && !compiledPDF"
+              v-if="isOpenEndedAudioSubmission"
               ref="upload"
               v-model="files"
               accept=".mp3"
@@ -1703,7 +1695,7 @@
               @input-filter="inputFilter"
             />
             <b-button
-              v-if="!isOpenEndedAudioSubmission && !compiledPDF"
+              v-if="!isOpenEndedAudioSubmission"
               variant="primary"
               size="sm"
               @click="triggerFileSelect"
@@ -1723,9 +1715,26 @@
               />
             </div>
           </b-container>
-          <div v-show="uploadLevel === 'question' || !showCurrentFullPDF">
+          <div v-show="user.role !== 2 || uploadLevel === 'question' || !showCurrentFullPDF">
             <div class="example-drag">
               <div class="upload mt-3">
+                <b-form-group
+                  v-if="showPdfDestinationChoice && files.length && (preSignedURL !== '')"
+                  label="Is this PDF for just this question or for multiple questions?"
+                  label-class="font-weight-bold"
+                >
+                  <b-form-radio-group v-model="pdfUploadDestination"
+                                      stacked
+                                      name="pdf-upload-destination"
+                  >
+                    <b-form-radio value="question">
+                      Just this question (Question {{ currentPage }})
+                    </b-form-radio>
+                    <b-form-radio value="assignment">
+                      Multiple questions: after uploading, I'll choose which page goes with each question
+                    </b-form-radio>
+                  </b-form-radio-group>
+                </b-form-group>
                 <ul v-if="files.length && (preSignedURL !== '')">
                   <li v-for="file in files" :key="file.id">
                     <span :class="file.success ? 'text-success font-weight-bold' : ''">{{
@@ -1746,6 +1755,7 @@
                               variant="success"
                               size="sm"
                               style="vertical-align: top"
+                              :disabled="showPdfDestinationChoice && !pdfUploadDestination"
                               @click.prevent="$refs.upload.active = true"
                     >
                       Start Upload
@@ -1762,6 +1772,87 @@
           </div>
         </b-form>
       </div>
+    </b-modal>
+    <b-modal
+      id="modal-assign-pdf-pages"
+      title="Assign Pages From Your PDF"
+      size="xl"
+      no-close-on-backdrop
+    >
+      <p>
+        For each question below, enter the page in your PDF where your answer starts and click
+        <strong>Assign</strong>. Only questions that accept a file upload are listed.
+        <span v-if="fullPdfNumberOfPages">
+          Your PDF has {{ fullPdfNumberOfPages }} {{ fullPdfNumberOfPages === 1 ? 'page' : 'pages' }}.
+        </span>
+      </p>
+      <b-row>
+        <b-col lg="6">
+          <b-table
+            aria-label="Assign pages to questions"
+            small
+            striped
+            :fields="assignPdfPagesFields"
+            :items="eligiblePdfQuestions"
+          >
+            <template #cell(question)="data">
+              Question {{ data.item.questionNumber }}
+              <span v-if="data.item.title" class="text-muted">: {{ data.item.title }}</span>
+            </template>
+            <template #cell(status)="data">
+              <span v-if="data.item.submission_file_page" class="text-success">
+                Page {{ data.item.submission_file_page }}
+              </span>
+              <span v-else-if="data.item.submission_file_exists">Separate file uploaded</span>
+              <span v-else class="text-muted">Not assigned</span>
+            </template>
+            <template #cell(page)="data">
+              <div class="d-flex align-items-center">
+                <b-form-input v-model="assignPdfPages[data.item.id]"
+                              :aria-label="`Starting page for question ${data.item.questionNumber}`"
+                              type="text"
+                              size="sm"
+                              style="width: 60px"
+                              @focus="pdfPreviewPage = assignPdfPages[data.item.id] || pdfPreviewPage"
+                />
+                <b-button variant="primary"
+                          size="sm"
+                          class="ml-1"
+                          :disabled="assigningPdfPageQuestionId === data.item.id"
+                          @click="initAssignPdfPage(data.item)"
+                >
+                  Assign
+                </b-button>
+              </div>
+            </template>
+          </b-table>
+        </b-col>
+        <b-col lg="6">
+          <div class="d-flex align-items-center mb-2">
+            <span class="mr-2">Preview page:</span>
+            <b-form-input v-model="pdfPreviewPage"
+                          aria-label="Preview page"
+                          type="text"
+                          size="sm"
+                          style="width: 60px"
+            />
+          </div>
+          <b-embed
+            v-if="fullPdfUrl"
+            :key="`pdf-preview-${pdfPreviewPage}`"
+            type="iframe"
+            aspect="4by3"
+            aria-label="Your uploaded PDF"
+            :src="getFullPdfUrlAtPage(fullPdfUrl, pdfPreviewPage)"
+            allowfullscreen
+          />
+        </b-col>
+      </b-row>
+      <template #modal-footer>
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-assign-pdf-pages')">
+          Done
+        </b-button>
+      </template>
     </b-modal>
     <div v-if="inIFrame && showAssignmentInformation" class="text-center">
       <h5 v-if="(questions !==['init']) && canView">
@@ -2337,7 +2428,7 @@
                 Open-Ended Submission Type:
               </span>
               <b-form-select v-model="openEndedSubmissionType"
-                             :options="compiledPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
+                             :options="openEndedSubmissionTypeOptions"
                              :style="['0',0,'no submission, manual grading'].includes(openEndedSubmissionType) ? 'width:250px' : 'width:100px'"
                              size="sm"
                              @change="initUpdateOpenEndedSubmissionType(questions[currentPage - 1].id)"
@@ -3288,6 +3379,14 @@
                         >
                           Upload New File
                         </b-button>
+                        <b-button v-if="fullPdfUrl && canUploadPdfForMultipleQuestions"
+                                  variant="outline-primary"
+                                  size="sm"
+                                  class="ml-2"
+                                  @click="openAssignPdfPagesModal"
+                        >
+                          Assign Pages From My Uploaded PDF
+                        </b-button>
                       </div>
                       <b-alert :show="!submitButtonActive" variant="info" class="mt-3">
                         {{ submitBlockedReason || 'No additional submissions will be accepted.' }}
@@ -4094,9 +4193,17 @@ export default {
     autoAttribution: true,
     isInstructorLoggedInAsStudent: false,
     checkIcon: faCheck,
-    bothFileUploadMode: false,
-    compiledPDF: false,
     fullPdfUrl: '',
+    pdfUploadDestination: null,
+    assignPdfPages: {},
+    fullPdfNumberOfPages: null, // known once the PDF is uploaded or a page is assigned
+    pdfPreviewPage: 1,
+    assigningPdfPageQuestionId: 0,
+    assignPdfPagesFields: [
+      { key: 'question', label: 'Question', isRowHeader: true },
+      { key: 'status', label: 'Currently' },
+      { key: 'page', label: 'Starting Page' }
+    ],
     handledOK: false,
     fileUploadKey: 1,
     preSignedURL: '',
@@ -4197,10 +4304,6 @@ export default {
 
     responseText: '',
     openEndedSubmissionTypeOptions: openEndedSubmissionTypeOptions,
-    openEndedSubmissionCompiledPDFTypeOptions: [
-      { value: 'file', text: 'PDF' },
-      { value: 0, text: 'None' }
-    ],
     showDidNotAnswerCorrectlyMessage: false,
     embedCode: '',
     canView: false,
@@ -4312,6 +4415,32 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
+    // Questions a compiled PDF page can be assigned to: only those set up as file uploads
+    // (rich text and audio questions are excluded).
+    eligiblePdfQuestions () {
+      if (!Array.isArray(this.questions)) {
+        return []
+      }
+      const eligible = []
+      this.questions.forEach((question, index) => {
+        if (question && question.open_ended_submission_type === 'file') {
+          eligible.push({ ...question, questionNumber: index + 1 })
+        }
+      })
+      return eligible
+    },
+    canUploadPdfForMultipleQuestions () {
+      return this.user.role === 3 &&
+        this.uploadFileType === 'submission' &&
+        this.isOpenEndedFileSubmission &&
+        this.eligiblePdfQuestions.length > 1
+    },
+    // Only ask "this question or multiple questions?" for PDFs; images etc. always go to the current question.
+    showPdfDestinationChoice () {
+      return this.canUploadPdfForMultipleQuestions &&
+        this.files.length > 0 &&
+        /\.pdf$/i.test(this.files[0].name)
+    },
     formattedTimeLimit () {
       if (!this.timeLimitSeconds) {
         return this.timeLimit
@@ -4411,6 +4540,16 @@ export default {
   watch: {
     openEndedSubmissionType: function (newVal, oldVal) {
       this.originalOpenEndedSubmissionType = oldVal
+    },
+    pdfUploadDestination: function (newVal) {
+      if (this.user.role === 3 && this.uploadFileType === 'submission') {
+        this.uploadLevel = newVal === 'assignment' ? 'assignment' : 'question'
+      }
+    },
+    files: function (newVal) {
+      if (!newVal.length) {
+        this.pdfUploadDestination = null
+      }
     },
     isLoading: function (newVal) {
       if (this.questions[this.currentPage - 1] && this.questions[this.currentPage - 1].technology === 'h5p') {
@@ -7064,6 +7203,7 @@ export default {
     async openUploadFileModal (questionId) {
       if (this.uploadFileType === 'submission') {
         this.uploadLevel = 'question'
+        this.pdfUploadDestination = null
         try {
           const { data } = await axios.post('/api/submission-files/can-submit-file-submission', {
             assignmentId: this.assignmentId,
@@ -7113,6 +7253,17 @@ export default {
         this.$noty.error(error.message)
       }
 
+      // A student's PDF for multiple questions: store it as the compiled PDF, then let them assign pages.
+      if (this.user.role === 3 && this.uploadFileType === 'submission' && this.uploadLevel === 'assignment') {
+        this.processingFile = false
+        this.files = []
+        if (!this.uploadFileForm.errors.has(this.uploadFileType)) {
+          this.$bvModal.hide('modal-upload-file')
+          this.openAssignPdfPagesModal()
+        }
+        return
+      }
+
       if (!this.uploadFileForm.errors.has(this.uploadFileType)) {
         this.user.role === 2 ? await this.getCutups(this.assignmentId)
           : this.showCurrentFullPDF = true
@@ -7136,6 +7287,81 @@ export default {
       this.files = []
       this.processingFile = false
       this.$bvModal.hide(`modal-upload-file`)
+    },
+    openAssignPdfPagesModal () {
+      const assignPdfPages = {}
+      for (const question of this.eligiblePdfQuestions) {
+        assignPdfPages[question.id] = question.submission_file_page ? String(question.submission_file_page) : ''
+      }
+      this.assignPdfPages = assignPdfPages
+      this.pdfPreviewPage = 1
+      this.$bvModal.show('modal-assign-pdf-pages')
+    },
+    async initAssignPdfPage (eligibleQuestion) {
+      const page = String(this.assignPdfPages[eligibleQuestion.id] || '').trim()
+      if (!/^[1-9]\d*$/.test(page)) {
+        this.$noty.info(`Please enter the starting page for Question ${eligibleQuestion.questionNumber}.`)
+        return false
+      }
+      if (this.fullPdfNumberOfPages && +page > this.fullPdfNumberOfPages) {
+        this.$noty.info(this.fullPdfNumberOfPages === 1
+          ? 'Your PDF only has 1 page.'
+          : `Your PDF only has ${this.fullPdfNumberOfPages} pages.  Please choose a page from 1 to ${this.fullPdfNumberOfPages}.`)
+        return false
+      }
+      // Assigning a page replaces a file that was uploaded separately for this question.
+      if (eligibleQuestion.submission_file_exists && !eligibleQuestion.submission_file_page) {
+        const confirmed = await this.$bvModal.msgBoxConfirm(
+          `You already uploaded a separate file for Question ${eligibleQuestion.questionNumber}. Assigning page ${page} of your PDF will replace it. Continue?`,
+          { title: 'Replace Your Submission?', size: 'md', buttonSize: 'sm', okTitle: 'Yes, replace it', cancelTitle: 'Cancel', centered: true }
+        )
+        if (!confirmed) {
+          return false
+        }
+      }
+      await this.assignPdfPage(eligibleQuestion, page)
+    },
+    async assignPdfPage (eligibleQuestion, page) {
+      this.assigningPdfPageQuestionId = eligibleQuestion.id
+      try {
+        const { data } = await axios.patch(`/api/submission-files/${this.assignmentId}/${eligibleQuestion.id}/page`, {
+          page: page,
+          question_number: eligibleQuestion.questionNumber
+        })
+        this.$noty[data.type](data.message)
+        if (data.number_of_pages) {
+          this.fullPdfNumberOfPages = data.number_of_pages
+        }
+        if (data.type === 'success') {
+          const question = this.questions.find(item => item.id === eligibleQuestion.id)
+          if (question) {
+            const updates = {
+              submission: data.submission,
+              original_filename: data.original_filename,
+              date_graded: 'N/A',
+              file_feedback: 'N/A',
+              submission_file_exists: true,
+              submission_file_page: data.page,
+              late_file_submission: data.late_file_submission,
+              submission_file_url: data.submission_file_url,
+              date_submitted: data.date_submitted
+            }
+            // scores are only on the question when they've been released
+            if (data.total_score !== undefined && Object.prototype.hasOwnProperty.call(question, 'total_score')) {
+              updates.total_score = data.total_score
+            }
+            for (const key in updates) {
+              this.$set(question, key, updates[key])
+            }
+          }
+          this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
+          this.pdfPreviewPage = page
+        }
+      } catch (error) {
+        const pageErrors = error.response && error.response.data && error.response.data.errors && error.response.data.errors.page
+        this.$noty.error(pageErrors ? pageErrors[0] : error.message)
+      }
+      this.assigningPdfPageQuestionId = 0
     },
     showIframe () {
       this.iframeLoaded = true
@@ -7519,8 +7745,6 @@ export default {
 
         this.totalPoints = parseInt(String(assignment.total_points).replace(/\.00$/, ''))
         this.source = assignment.source
-        this.compiledPDF = assignment.file_upload_mode === 'compiled_pdf'
-        this.bothFileUploadMode = assignment.file_upload_mode === 'both'
         this.openEndedSubmissionTypeAllowed = (assignment.assessment_type === 'delayed')// can upload at the question level
         this.solutionsReleased = Boolean(Number(assignment.solutions_released))
         this.latePolicy = assignment.late_policy

@@ -1236,61 +1236,15 @@
               v-show="form.assessment_type === 'delayed' && form.source === 'a'"
               label-cols-sm="4"
               label-cols-lg="3"
-              label-for="file_upload_mode"
-            >
-              <template v-slot:label>
-                File Upload Mode*
-              </template>
-              <b-form-radio-group id="file_upload_mode"
-                                  v-model="form.file_upload_mode"
-                                  stacked
-                                  required
-                                  :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
-                                  name="file_upload_mode"
-                                  :class="{ 'is-invalid': form.errors.has('file_upload_mode') }"
-                                  @keydown="form.errors.clear('file_upload_mode')"
-                                  @change="initFileUploadModeSwitch($event);checkDefaultOpenEndedSubmissionType()"
-              >
-                <b-form-radio name="file_upload_mode" value="individual_assessment">
-                  Individual Assessment Upload
-                  <QuestionCircleTooltip :id="'individual_assessment_upload_tooltip'" />
-                  <b-tooltip target="individual_assessment_upload_tooltip" delay="250" triggers="hover focus">
-                    <p>
-                      If you choose this option, your students will upload individual submissions at the question
-                      level.
-                    </p>
-                  </b-tooltip>
-                </b-form-radio>
-                <b-form-radio name="file_upload_mode" value="compiled_pdf">
-                  Compiled Upload (PDFs only)
-                  <QuestionCircleTooltip :id="'compiled_pdf_tooltip'" />
-                  <b-tooltip target="compiled_pdf_tooltip" delay="250" triggers="hover focus">
-                    <p>If you choose this option, your students will upload a single compiled PDF.</p>
-                  </b-tooltip>
-                </b-form-radio>
-                <b-form-radio name="file_upload_mode" value="both">
-                  Compiled Upload &amp; Individual Assessment Upload
-                  <QuestionCircleTooltip :id="'both_upload_tooltip'" />
-                  <b-tooltip target="both_upload_tooltip" delay="250" triggers="hover focus">
-                    <p>Students will be able to upload either a compiled PDF or individual assessment uploads.</p>
-                  </b-tooltip>
-                </b-form-radio>
-              </b-form-radio-group>
-              <div v-if="form.errors.has('file_upload_mode')" class="help-block invalid-feedback">
-                Please choose one of the given options.
-              </div>
-            </b-form-group>
-            <b-form-group
-              v-show="form.assessment_type === 'delayed' && form.source === 'a' && parseInt(form.file_upload_mode) !==1"
-              label-cols-sm="4"
-              label-cols-lg="3"
               label-for="default_open_ended_submission_type"
             >
               <template v-slot:label>
                 Default Open-ended Submission Type*
                 <QuestionCircleTooltip :id="'default_open_ended_submission_type_tooltip'" />
                 <b-tooltip target="default_open_ended_submission_type_tooltip" delay="250" triggers="hover focus">
-                  Adjust this option if your assignment consists of open-ended questions.
+                  Adjust this option if your assignment consists of open-ended questions. For questions with a File
+                  submission type, students can upload a file for each question or upload one PDF for multiple
+                  questions and choose which page goes with each question.
                 </b-tooltip>
               </template>
               <b-form-radio-group id="default_open_ended_submission_type"
@@ -1300,7 +1254,6 @@
                                   :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                                   name="default_open_ended_submission_type"
                                   :class="{ 'is-invalid': form.errors.has('default_open_ended_submission_type') }"
-                                  @change="checkIfCompiledPdf()"
                                   @keydown="form.errors.clear('default_open_ended_submission_type')"
               >
                 <b-form-radio name="default_open_ended_submission_type" value="file">
@@ -2513,52 +2466,6 @@ export default {
         fixDatePicker(`available_from_${i}`, `selected_available_from_${i}`)
         fixDatePicker(`due_date_${i}`, `selected_due_date_${i}`)
         fixDatePicker(`final_submission_deadline_${i}`, `selected_final_submission_deadline_${i}`)
-      }
-    },
-    checkDefaultOpenEndedSubmissionType () {
-      let originalFileUploadMode = this.form.file_upload_mode
-      this.$nextTick(function () {
-        if (this.form.file_upload_mode === 'compiled_pdf' &&
-          !['0', 'file'].includes(this.form.default_open_ended_submission_type)) {
-          this.form.file_upload_mode = originalFileUploadMode
-          this.$noty.info('You cannot choose a File Upload Mode of Compiled PDF\'s unless your Default Open-Ended Submission Type is File or None', { timeout: 9000 })
-        }
-      })
-    },
-    checkIfCompiledPdf () {
-      let originalDefaultOpenEndedSubmissionType = this.form.default_open_ended_submission_type
-      this.$nextTick(function () {
-        if (this.form.file_upload_mode === 'compiled_pdf' &&
-          !['0', 'file'].includes(this.form.default_open_ended_submission_type)) {
-          this.form.default_open_ended_submission_type = originalDefaultOpenEndedSubmissionType
-          this.$noty.info('Since you have chosen a File Upload Mode of Compiled Upload, your Default Open-ended Submission Type can only be File or None.', { timeout: 9000 })
-        }
-      })
-    },
-    async initFileUploadModeSwitch (value) {
-      let currentFileUploadMode = this.form.file_upload_mode
-      try {
-        if (this.assignmentId) {
-          if (value === 'compiled_pdf') {
-            const { data } = await axios.get(`/api/assignments/${this.assignmentId}/validate-can-switch-to-compiled-pdf`)
-            if (data.type === 'error') {
-              this.$noty.error(data.message)
-              this.form.file_upload_mode = currentFileUploadMode
-              return false
-            }
-          }
-          const { data } = await axios.get(`/api/assignments/${this.assignmentId}/validate-can-switch-to-or-from-compiled-pdf`)
-          if (data.type === 'error') {
-            this.$noty.error(data.message)
-            this.form.file_upload_mode = currentFileUploadMode
-            return false
-          }
-        }
-        if (this.form.file_upload_mode === 'compiled_pdf') {
-          this.form.default_open_ended_submission_type = 'file'
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
       }
     },
     onCKEditorNamespaceLoaded (CKEDITOR) {

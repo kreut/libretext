@@ -149,6 +149,8 @@ export async function submitUploadFile (type, form, noty, nextTick, bvModal, upl
     console.log(data)
     if (form.uploadLevel === 'assignment' && type === 'submission') {
       this.fullPdfUrl = data.full_pdf_url
+      // null when the PDF couldn't be read; the server then accepts any page
+      this.fullPdfNumberOfPages = data.number_of_pages || null
     }
     if (form.uploadLevel === 'question' && type === 'submission') {
       // immediate feedback for them to see.
