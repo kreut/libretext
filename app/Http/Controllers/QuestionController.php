@@ -1627,7 +1627,6 @@ class QuestionController extends Controller
                    Assignment             $assignment): array
     {
         $response['type'] = 'error';
-        $original_question_technology = '';
         $is_update = isset($request->id);
 
         $authorized = $is_update ? Gate::inspect('update', [$question, $request->folder_id])
@@ -1883,7 +1882,6 @@ class QuestionController extends Controller
             }
             if ($is_update) {
                 $question = Question::find($request->id);
-                $original_question_technology = $question->technology;
                 if (!QuestionRevision::where('question_id', $question->id)->first()) {
                     $question_revision = $question->toArray();
                     $question_revision['revision_number'] = 0;
@@ -2268,11 +2266,13 @@ class QuestionController extends Controller
                     return $response;
                 }
                 if ($is_update) {
-                    $lastRevision = QuestionRevision::where('question_id', $question->id)
-                        ->where('revision_number', $currentQuestionRevision->revision_number - 1)
-                        ->first();
-                    if (($lastRevision && $lastRevision->technology === 'webwork') || (!$lastRevision && $original_question_technology === 'webwork')) {
-                        $source_dir = $lastRevision ? "$question->id-$currentQuestionRevision->id" : $question->id;
+                    // Copy the previous version's OPL directory (code + images) into the new
+                    // revision's directory. Check the same revision we clone from; only
+                    // revisions with ADAPT-authored code have a directory to copy.
+                    if ($currentQuestionRevision->technology === 'webwork' && $currentQuestionRevision->webwork_code) {
+                        $source_dir = $currentQuestionRevision->revision_number > 0
+                            ? "$question->id-$currentQuestionRevision->id"
+                            : $question->id;
                         $webwork->cloneDir($source_dir, $webwork_dir);
                     }
                 }
