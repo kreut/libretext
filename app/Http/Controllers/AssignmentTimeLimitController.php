@@ -20,6 +20,12 @@ class AssignmentTimeLimitController extends Controller
     use DateFormatter;
 
     /**
+     * Value the Overrides page sends for "Everybody" - same convention as
+     * SubmissionOverrideController.
+     */
+    private const EVERYBODY = -1;
+
+    /**
      * Student-facing: tells the frontend whether to show a "Start" button
      * or a running countdown for the current user.
      *
@@ -46,15 +52,15 @@ class AssignmentTimeLimitController extends Controller
     }
 
     /**
-     * Instructor-facing: same shape as getStatus(), but for a specific
-     * student rather than the authenticated user - this is what feeds the
-     * per-student start/expiry display in the grading view.
+     * Instructor-facing: status for one student, or a class-wide summary
+     * when "Everybody" (-1) is chosen.
      *
+     * @param Request $request
      * @param Assignment $assignment
-     * @param User $user
+     * @param $user
      * @return array
      */
-    public function getStatusForStudent(Assignment $assignment, User $user): array
+    public function getStatusForStudent(Request $request, Assignment $assignment, $user): array
     {
         $response['type'] = 'error';
         try {
@@ -63,7 +69,15 @@ class AssignmentTimeLimitController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
-            $response = $this->buildTimeLimitStatus($assignment, $user);
+            if ($this->isEverybody($user)) {
+                return $this->buildEverybodySummary($request, $assignment);
+            }
+            $student = User::find($user);
+            if (!$student) {
+                $response['message'] = 'We could not find that student.';
+                return $response;
+            }
+            $response = $this->buildTimeLimitStatus($assignment, $student);
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -91,10 +105,7 @@ class AssignmentTimeLimitController extends Controller
             return $response;
         }
 
-        $timing_start = DB::table('assign_to_timing_starts')
-            ->where('assign_to_timing_id', $assign_to_timing->id)
-            ->where('user_id', $user->id)
-            ->first();
+        $timing_start = $this->getTimingStart($assign_to_timing->id, $user->id);
 
         $response['type'] = 'success';
         $response['time_limit'] = $assign_to_timing->time_limit;
@@ -114,6 +125,42 @@ class AssignmentTimeLimitController extends Controller
             ? max(0, strtotime($timing_start->expires_at) - time())
             : null;
         return $response;
+    }
+
+    /**
+     * Class-wide summary for "Everybody": how many students are running,
+     * expired, or not started.
+     *
+     * @param Request $request
+     * @param Assignment $assignment
+     * @return array
+     */
+    private function buildEverybodySummary(Request $request, Assignment $assignment): array
+    {
+        $summary = ['total' => 0, 'running' => 0, 'expired' => 0, 'not_started' => 0];
+        $time_limits = [];
+        foreach ($this->everybodyStudentIds($request, $assignment) as $user_id) {
+            $assign_to_timing = $assignment->assignToTimingByUser('', $user_id);
+            if (!$assign_to_timing || !$assign_to_timing->time_limit) {
+                continue;
+            }
+            $summary['total']++;
+            $time_limits[$assign_to_timing->time_limit] = true;
+            $timing_start = $this->getTimingStart($assign_to_timing->id, $user_id);
+            if (!$timing_start || !$timing_start->started_at) {
+                $summary['not_started']++;
+            } elseif (strtotime($timing_start->expires_at) > time()) {
+                $summary['running']++;
+            } else {
+                $summary['expired']++;
+            }
+        }
+        return [
+            'type' => 'success',
+            'is_everybody' => true,
+            'time_limit' => $summary['total'] ? implode(', ', array_keys($time_limits)) : null,
+            'summary' => $summary,
+        ];
     }
 
     /**
@@ -152,10 +199,7 @@ class AssignmentTimeLimitController extends Controller
                 return $response;
             }
 
-            $existing = DB::table('assign_to_timing_starts')
-                ->where('assign_to_timing_id', $assign_to_timing->id)
-                ->where('user_id', $user->id)
-                ->first();
+            $existing = $this->getTimingStart($assign_to_timing->id, $user->id);
 
             if ($existing && $existing->started_at) {
                 // Already started - hand back the existing expiry rather than
@@ -173,10 +217,7 @@ class AssignmentTimeLimitController extends Controller
 
             // Automatic starts always cap at the group's due date - only an
             // explicit instructor add/set action (below) can push a student's
-            // personal expiry past due. Fake students are exempt: they're
-            // only reaching this line at all because the due-date check
-            // above let them start past due for testing purposes, and
-            // capping them here would hand them an already-expired timer.
+            // personal expiry past due. Fake students are exempt.
             $due = Carbon::parse($assign_to_timing->due);
             if ($expires_at->greaterThan($due) && !$user->fake_student) {
                 $expires_at = $due;
@@ -189,9 +230,6 @@ class AssignmentTimeLimitController extends Controller
 
             $response['type'] = 'success';
             $response['expires_at'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($expires_at->toDateTimeString(), Auth::user()->time_zone);
-            // getTimestamp() is an unambiguous UTC epoch, so this is immune to
-            // the naive-datetime-string timezone-parsing problem the frontend
-            // would otherwise hit trying to compute this itself from expires_at.
             $response['seconds_left'] = max(0, $expires_at->getTimestamp() - time());
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -202,18 +240,17 @@ class AssignmentTimeLimitController extends Controller
     }
 
     /**
-     * Instructor-facing: add minutes to a specific student's running clock.
-     * Can push expires_at past the assign-to group's due date - the frontend
-     * is expected to have already confirmed that with the instructor before
-     * calling this (see extended_past_due in the response, which the
-     * frontend should surface even if it didn't catch it beforehand).
+     * Instructor-facing: add minutes to one student's clock, or (Everybody)
+     * to every student whose clock is currently running. For Everybody,
+     * expired and not-started students are skipped so nobody is revived
+     * by accident.
      *
      * @param Request $request
      * @param Assignment $assignment
-     * @param User $user
+     * @param $user
      * @return array
      */
-    public function addTime(Request $request, Assignment $assignment, User $user): array
+    public function addTime(Request $request, Assignment $assignment, $user): array
     {
         $response['type'] = 'error';
         try {
@@ -223,84 +260,154 @@ class AssignmentTimeLimitController extends Controller
                 return $response;
             }
 
-            $assign_to_timing = $assignment->assignToTimingByUser('', $user->id);
-            if (!$assign_to_timing || !$assign_to_timing->time_limit) {
-                $response['message'] = 'This student does not have a time limit set for this assignment.';
+            $minutes_to_add = (int)$request->minutes;
+            if ($minutes_to_add < 1) {
+                $response['message'] = 'Please enter a positive number of minutes.';
                 return $response;
             }
 
-            $timing_start = DB::table('assign_to_timing_starts')
-                ->where('assign_to_timing_id', $assign_to_timing->id)
-                ->where('user_id', $user->id)
-                ->first();
-            if (!$timing_start || !$timing_start->started_at) {
+            if ($this->isEverybody($user)) {
+                $counts = ['updated' => 0, 'expired' => 0, 'not_started' => 0, 'extended_past_due' => 0];
+                $to_publish = [];
+                DB::beginTransaction();
+                foreach ($this->everybodyStudentIds($request, $assignment) as $user_id) {
+                    $result = $this->addTimeForUser($assignment, $user_id, $minutes_to_add, false);
+                    if ($result['status'] === 'updated') {
+                        $counts['updated']++;
+                        if ($result['extended_past_due']) {
+                            $counts['extended_past_due']++;
+                        }
+                        $to_publish[$user_id] = $result['publish'];
+                    } elseif (isset($counts[$result['status']])) {
+                        $counts[$result['status']]++;
+                    }
+                }
+                DB::commit();
+                $this->publishAll($assignment, $to_publish);
+
+                $parts = ["Added $minutes_to_add minute(s) for {$counts['updated']} student(s) with a running clock."];
+                if ($counts['expired']) {
+                    $parts[] = "{$counts['expired']} student(s) whose time had expired were not changed.";
+                }
+                if ($counts['not_started']) {
+                    $parts[] = "{$counts['not_started']} student(s) who haven't started were not changed.";
+                }
+                if ($counts['extended_past_due']) {
+                    $parts[] = "Note: {$counts['extended_past_due']} student(s) now have time extending past the due date.";
+                }
+                $response['type'] = 'success';
+                $response['is_everybody'] = true;
+                $response['counts'] = $counts;
+                $response['extended_past_due'] = $counts['extended_past_due'] > 0;
+                $response['message'] = implode(' ', $parts);
+                return $response;
+            }
+
+            $student = User::find($user);
+            if (!$student) {
+                $response['message'] = 'We could not find that student.';
+                return $response;
+            }
+            $result = $this->addTimeForUser($assignment, $student->id, $minutes_to_add, true);
+            if ($result['status'] === 'no_time_limit') {
+                $response['message'] = 'This student does not have a time limit set for this assignment.';
+                return $response;
+            }
+            if ($result['status'] === 'not_started') {
                 $response['message'] = 'This student has not started the assignment yet, so there is no clock to add time to.';
                 return $response;
             }
 
-            $minutes_to_add = (int)$request->minutes;
-            $current_expires_at = Carbon::parse($timing_start->expires_at);
-            // If already expired, "add time" only means something if it's
-            // measured from now - adding 10 minutes to a timer that expired
-            // 3 hours ago wouldn't give the student any usable time at all.
-            // The frontend is expected to confirm with the instructor first
-            // when this path is taken (see was_expired in the response).
-            $was_expired = $current_expires_at->isPast();
-            $base = $was_expired ? Carbon::now() : $current_expires_at;
-            $new_expires_at = $base->copy()->addMinutes($minutes_to_add);
-
-            $due = Carbon::parse($assign_to_timing->due);
-            $extended_past_due = $new_expires_at->greaterThan($due);
-
-            DB::table('assign_to_timing_starts')
-                ->where('id', $timing_start->id)
-                ->update([
-                    'expires_at' => $new_expires_at,
-                    'extended_past_due' => $extended_past_due,
-                    'instructor_adjusted' => true,
-                    'updated_at' => Carbon::now(),
-                ]);
-
             $response['type'] = 'success';
-            $response['expires_at'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($new_expires_at->toDateTimeString(), Auth::user()->time_zone);
-            $response['seconds_left'] = max(0, $new_expires_at->getTimestamp() - time());
-            $response['was_expired'] = $was_expired;
-            $response['extended_past_due'] = $extended_past_due;
-            $this->publishTimeLimitUpdate($assignment, $user->id, [
-                'seconds_left' => $response['seconds_left'],
-                'extended_past_due' => $extended_past_due,
-            ]);
+            $response['expires_at'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($result['expires_at']->toDateTimeString(), Auth::user()->time_zone);
+            $response['seconds_left'] = $result['publish']['seconds_left'];
+            $response['was_expired'] = $result['was_expired'];
+            $response['extended_past_due'] = $result['extended_past_due'];
+            $this->publishTimeLimitUpdate($assignment, $student->id, $result['publish']);
         } catch (Exception $e) {
+            if (DB::transactionLevel()) {
+                DB::rollBack();
+            }
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = 'There was an error adding time for this student. Please try again or contact us for assistance.';
+            $response['message'] = 'There was an error adding time. Please try again or contact us for assistance.';
         }
         return $response;
     }
 
     /**
-     * Instructor-facing: set an explicit new duration for a specific student,
-     * recomputed from when they started (or from now, if starting fresh on
-     * their behalf). Same "may exceed due" behavior as addTime.
+     * Adds minutes to one student's clock. Does not publish - the caller
+     * does that (after commit, for bulk).
+     *
+     * @param Assignment $assignment
+     * @param int $user_id
+     * @param int $minutes
+     * @param bool $revive_expired If false, expired clocks are left alone.
+     * @return array
+     */
+    private function addTimeForUser(Assignment $assignment, int $user_id, int $minutes, bool $revive_expired): array
+    {
+        $assign_to_timing = $assignment->assignToTimingByUser('', $user_id);
+        if (!$assign_to_timing || !$assign_to_timing->time_limit) {
+            return ['status' => 'no_time_limit'];
+        }
+        $timing_start = $this->getTimingStart($assign_to_timing->id, $user_id);
+        if (!$timing_start || !$timing_start->started_at) {
+            return ['status' => 'not_started'];
+        }
+
+        $current_expires_at = Carbon::parse($timing_start->expires_at);
+        // If already expired, "add time" only means something if it's
+        // measured from now.
+        $was_expired = $current_expires_at->isPast();
+        if ($was_expired && !$revive_expired) {
+            return ['status' => 'expired'];
+        }
+        $base = $was_expired ? Carbon::now() : $current_expires_at;
+        $new_expires_at = $base->copy()->addMinutes($minutes);
+        $extended_past_due = $new_expires_at->greaterThan(Carbon::parse($assign_to_timing->due));
+
+        DB::table('assign_to_timing_starts')
+            ->where('id', $timing_start->id)
+            ->update([
+                'expires_at' => $new_expires_at,
+                'extended_past_due' => $extended_past_due,
+                'instructor_adjusted' => true,
+                'updated_at' => Carbon::now(),
+            ]);
+
+        return [
+            'status' => 'updated',
+            'expires_at' => $new_expires_at,
+            'was_expired' => $was_expired,
+            'extended_past_due' => $extended_past_due,
+            'publish' => [
+                'seconds_left' => max(0, $new_expires_at->getTimestamp() - time()),
+                'extended_past_due' => $extended_past_due,
+            ],
+        ];
+    }
+
+    /**
+     * Instructor-facing: set a new total duration.
+     * - One student: same as before (running clocks are measured from
+     *   started_at; never-started or expired clocks get a fresh window now).
+     * - Everybody: applies to every student who has started, always measured
+     *   from their own started_at. Students who haven't started are skipped -
+     *   they get the assignment's normal time limit when they click Start.
      *
      * @param Request $request
      * @param Assignment $assignment
-     * @param User $user
+     * @param $user
      * @return array
      */
-    public function setTime(Request $request, Assignment $assignment, User $user): array
+    public function setTime(Request $request, Assignment $assignment, $user): array
     {
         $response['type'] = 'error';
         try {
             $authorized = Gate::inspect('manageAssignmentTimeLimit', [$assignment]);
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
-                return $response;
-            }
-
-            $assign_to_timing = $assignment->assignToTimingByUser('', $user->id);
-            if (!$assign_to_timing || !$assign_to_timing->time_limit) {
-                $response['message'] = 'This student does not have a time limit set for this assignment.';
                 return $response;
             }
 
@@ -314,61 +421,131 @@ class AssignmentTimeLimitController extends Controller
                 return $response;
             }
 
-            $timing_start = DB::table('assign_to_timing_starts')
-                ->where('assign_to_timing_id', $assign_to_timing->id)
-                ->where('user_id', $user->id)
-                ->first();
+            if ($this->isEverybody($user)) {
+                $counts = ['updated' => 0, 'still_expired' => 0, 'not_started' => 0, 'extended_past_due' => 0];
+                $to_publish = [];
+                DB::beginTransaction();
+                foreach ($this->everybodyStudentIds($request, $assignment) as $user_id) {
+                    $result = $this->setTimeForUser($assignment, $user_id, $interval, $request->time_limit, true);
+                    if ($result['status'] === 'updated') {
+                        $counts['updated']++;
+                        if ($result['expires_at']->isPast()) {
+                            $counts['still_expired']++;
+                        }
+                        if ($result['extended_past_due']) {
+                            $counts['extended_past_due']++;
+                        }
+                        $to_publish[$user_id] = $result['publish'];
+                    } elseif ($result['status'] === 'not_started') {
+                        $counts['not_started']++;
+                    }
+                }
+                DB::commit();
+                $this->publishAll($assignment, $to_publish);
 
-            // A total duration only means "from when they started" while
-            // they're still actively running. For a student who never
-            // started, or whose timer already fully expired, recomputing
-            // from a stale (or absent) started_at would almost always still
-            // land in the past - both cases should give them a fresh window
-            // starting now, the same way addTime() already treats an
-            // already-expired timer.
-            $was_expired = $timing_start && $timing_start->started_at && Carbon::parse($timing_start->expires_at)->isPast();
-            $is_still_running = $timing_start && $timing_start->started_at && !$was_expired;
-            $started_at = $is_still_running ? Carbon::parse($timing_start->started_at) : Carbon::now();
-            $new_expires_at = $started_at->copy()->add($interval);
+                $parts = ["Set a total duration of $request->time_limit for {$counts['updated']} student(s)."];
+                if ($counts['still_expired']) {
+                    $parts[] = "{$counts['still_expired']} of them are still expired because that much time has already passed since they started.";
+                }
+                if ($counts['not_started']) {
+                    $parts[] = "{$counts['not_started']} student(s) who haven't started were not changed.";
+                }
+                if ($counts['extended_past_due']) {
+                    $parts[] = "Note: {$counts['extended_past_due']} student(s) now have time extending past the due date.";
+                }
+                $response['type'] = 'success';
+                $response['is_everybody'] = true;
+                $response['counts'] = $counts;
+                $response['extended_past_due'] = $counts['extended_past_due'] > 0;
+                $response['message'] = implode(' ', $parts);
+                return $response;
+            }
 
-            $due = Carbon::parse($assign_to_timing->due);
-            $extended_past_due = $new_expires_at->greaterThan($due);
-
-            DB::table('assign_to_timing_starts')->updateOrInsert(
-                ['assign_to_timing_id' => $assign_to_timing->id, 'user_id' => $user->id],
-                [
-                    'started_at' => $started_at,
-                    'expires_at' => $new_expires_at,
-                    'time_limit_override' => $request->time_limit,
-                    'extended_past_due' => $extended_past_due,
-                    'instructor_adjusted' => true,
-                    'updated_at' => Carbon::now(),
-                ]
-            );
+            $student = User::find($user);
+            if (!$student) {
+                $response['message'] = 'We could not find that student.';
+                return $response;
+            }
+            $result = $this->setTimeForUser($assignment, $student->id, $interval, $request->time_limit, false);
+            if ($result['status'] === 'no_time_limit') {
+                $response['message'] = 'This student does not have a time limit set for this assignment.';
+                return $response;
+            }
 
             $response['type'] = 'success';
-            $response['expires_at'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($new_expires_at->toDateTimeString(), Auth::user()->time_zone);
-            $response['seconds_left'] = max(0, $new_expires_at->getTimestamp() - time());
-            $response['was_expired'] = $was_expired;
-            $response['extended_past_due'] = $extended_past_due;
-            $this->publishTimeLimitUpdate($assignment, $user->id, [
-                'seconds_left' => $response['seconds_left'],
-                'extended_past_due' => $extended_past_due,
-            ]);
+            $response['expires_at'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($result['expires_at']->toDateTimeString(), Auth::user()->time_zone);
+            $response['seconds_left'] = $result['publish']['seconds_left'];
+            $response['was_expired'] = $result['was_expired'];
+            $response['extended_past_due'] = $result['extended_past_due'];
+            $this->publishTimeLimitUpdate($assignment, $student->id, $result['publish']);
         } catch (Exception $e) {
+            if (DB::transactionLevel()) {
+                DB::rollBack();
+            }
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = 'There was an error setting the time limit for this student. Please try again or contact us for assistance.';
+            $response['message'] = 'There was an error setting the time limit. Please try again or contact us for assistance.';
         }
         return $response;
     }
 
     /**
+     * Sets a new total duration for one student. Does not publish.
+     *
+     * @param Assignment $assignment
+     * @param int $user_id
+     * @param CarbonInterval $interval
+     * @param string $time_limit_text
+     * @param bool $bulk
+     * @return array
+     */
+    private function setTimeForUser(Assignment $assignment, int $user_id, CarbonInterval $interval, string $time_limit_text, bool $bulk): array
+    {
+        $assign_to_timing = $assignment->assignToTimingByUser('', $user_id);
+        if (!$assign_to_timing || !$assign_to_timing->time_limit) {
+            return ['status' => 'no_time_limit'];
+        }
+        $timing_start = $this->getTimingStart($assign_to_timing->id, $user_id);
+        $has_started = $timing_start && $timing_start->started_at;
+        if ($bulk && !$has_started) {
+            return ['status' => 'not_started'];
+        }
+
+        $was_expired = $has_started && Carbon::parse($timing_start->expires_at)->isPast();
+        $is_still_running = $has_started && !$was_expired;
+        // Single student: never-started or expired gets a fresh window from
+        // now. Bulk: always measured from each student's own start.
+        $started_at = ($bulk || $is_still_running) ? Carbon::parse($timing_start->started_at) : Carbon::now();
+        $new_expires_at = $started_at->copy()->add($interval);
+        $extended_past_due = $new_expires_at->greaterThan(Carbon::parse($assign_to_timing->due));
+
+        DB::table('assign_to_timing_starts')->updateOrInsert(
+            ['assign_to_timing_id' => $assign_to_timing->id, 'user_id' => $user_id],
+            [
+                'started_at' => $started_at,
+                'expires_at' => $new_expires_at,
+                'time_limit_override' => $time_limit_text,
+                'extended_past_due' => $extended_past_due,
+                'instructor_adjusted' => true,
+                'updated_at' => Carbon::now(),
+            ]
+        );
+
+        return [
+            'status' => 'updated',
+            'expires_at' => $new_expires_at,
+            'was_expired' => $was_expired,
+            'extended_past_due' => $extended_past_due,
+            'publish' => [
+                'seconds_left' => max(0, $new_expires_at->getTimestamp() - time()),
+                'extended_past_due' => $extended_past_due,
+            ],
+        ];
+    }
+
+    /**
      * Fake-student / instructor-testing only: deletes the current user's own
-     * timing-start row so they can click "Start Assignment" again. This is
-     * deliberately scoped to the authenticated user's own row and gated to
-     * fake_student/instructor - a real student can never reset their own
-     * clock, which is the whole point of the feature.
+     * timing-start row so they can click "Start Assignment" again.
      *
      * @param Assignment $assignment
      * @return array
@@ -404,18 +581,15 @@ class AssignmentTimeLimitController extends Controller
     }
 
     /**
-     * Instructor-facing: fully resets a specific student's clock - wipes the
-     * timing-start row entirely, so the student sees the Start Assignment
-     * screen again and gets a full fresh duration whenever they click it.
-     * This is deliberately destructive (loses the original started_at) -
-     * for extending an already-running or already-expired clock without
-     * losing that history, use addTime/setTime instead.
+     * Instructor-facing: fully resets one student's clock, or every
+     * student's clock for Everybody.
      *
+     * @param Request $request
      * @param Assignment $assignment
-     * @param User $user
+     * @param $user
      * @return array
      */
-    public function resetTimerForStudent(Assignment $assignment, User $user): array
+    public function resetTimerForStudent(Request $request, Assignment $assignment, $user): array
     {
         $response['type'] = 'error';
         try {
@@ -425,7 +599,38 @@ class AssignmentTimeLimitController extends Controller
                 return $response;
             }
 
-            $assign_to_timing = $assignment->assignToTimingByUser('', $user->id);
+            if ($this->isEverybody($user)) {
+                $reset_user_ids = [];
+                DB::beginTransaction();
+                foreach ($this->everybodyStudentIds($request, $assignment) as $user_id) {
+                    $assign_to_timing = $assignment->assignToTimingByUser('', $user_id);
+                    if (!$assign_to_timing) {
+                        continue;
+                    }
+                    $deleted = DB::table('assign_to_timing_starts')
+                        ->where('assign_to_timing_id', $assign_to_timing->id)
+                        ->where('user_id', $user_id)
+                        ->delete();
+                    if ($deleted) {
+                        $reset_user_ids[] = $user_id;
+                    }
+                }
+                DB::commit();
+                foreach ($reset_user_ids as $user_id) {
+                    $this->publishTimeLimitUpdate($assignment, $user_id, ['seconds_left' => null]);
+                }
+                $response['type'] = 'success';
+                $response['is_everybody'] = true;
+                $response['message'] = 'Timers reset for ' . count($reset_user_ids) . ' student(s).';
+                return $response;
+            }
+
+            $student = User::find($user);
+            if (!$student) {
+                $response['message'] = 'We could not find that student.';
+                return $response;
+            }
+            $assign_to_timing = $assignment->assignToTimingByUser('', $student->id);
             if (!$assign_to_timing) {
                 $response['message'] = 'This student is not assigned to this assignment.';
                 return $response;
@@ -433,26 +638,25 @@ class AssignmentTimeLimitController extends Controller
 
             DB::table('assign_to_timing_starts')
                 ->where('assign_to_timing_id', $assign_to_timing->id)
-                ->where('user_id', $user->id)
+                ->where('user_id', $student->id)
                 ->delete();
 
             $response['type'] = 'success';
-            $this->publishTimeLimitUpdate($assignment, $user->id, ['seconds_left' => null]);
+            $this->publishTimeLimitUpdate($assignment, $student->id, ['seconds_left' => null]);
         } catch (Exception $e) {
+            if (DB::transactionLevel()) {
+                DB::rollBack();
+            }
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = 'There was an error resetting the timer for this student. Please try again or contact us for assistance.';
+            $response['message'] = 'There was an error resetting the timer. Please try again or contact us for assistance.';
         }
         return $response;
     }
 
     /**
      * Instructor-facing: lists every real student who has started their
-     * personal timer for this assignment, across all assign-to groups - lets
-     * the Overrides page show what's currently happening without the
-     * instructor picking through students one at a time from the dropdown.
-     * Fake students are excluded, same as elsewhere in this feature's
-     * instructor-facing views.
+     * personal timer for this assignment, across all assign-to groups.
      *
      * @param Assignment $assignment
      * @return array
@@ -495,11 +699,6 @@ class AssignmentTimeLimitController extends Controller
                 $statuses[] = [
                     'user_id' => $row->user_id,
                     'name' => $row->name,
-                    // The override string (e.g. "2 hours") reflects what's
-                    // actually governing this student's clock right now -
-                    // the group's base time_limit (e.g. "15 seconds") is
-                    // misleading once an instructor has set a different
-                    // total duration for them specifically.
                     'time_limit' => $row->time_limit_override ?: $row->time_limit,
                     'is_override' => (bool)$row->time_limit_override,
                     'started_at' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($row->started_at, Auth::user()->time_zone),
@@ -520,17 +719,42 @@ class AssignmentTimeLimitController extends Controller
         return $response;
     }
 
+    private function isEverybody($user): bool
+    {
+        return (int)$user === self::EVERYBODY;
+    }
+
+    /**
+     * Real (non-fake) enrolled students - same source SubmissionOverrideController
+     * uses for "Everybody".
+     */
+    private function everybodyStudentIds(Request $request, Assignment $assignment): array
+    {
+        $enrolled_ids = $assignment->getEnrolledStudentIdsByAssignment($request->user()->role);
+        return User::whereIn('id', $enrolled_ids)
+            ->where('fake_student', 0)
+            ->pluck('id')
+            ->toArray();
+    }
+
+    private function getTimingStart(int $assign_to_timing_id, int $user_id)
+    {
+        return DB::table('assign_to_timing_starts')
+            ->where('assign_to_timing_id', $assign_to_timing_id)
+            ->where('user_id', $user_id)
+            ->first();
+    }
+
+    private function publishAll(Assignment $assignment, array $to_publish): void
+    {
+        foreach ($to_publish as $user_id => $data) {
+            $this->publishTimeLimitUpdate($assignment, $user_id, $data);
+        }
+    }
+
     /**
      * Pushes a live update to the affected student's own assignment page via
-     * Centrifugo, mirroring the clicker feature's publish pattern (see
-     * AssignmentSyncQuestionController::setCurrentPage() etc.) - so an
-     * instructor's addTime/setTime/reset action is reflected immediately on
-     * the student's page instead of waiting for a manual reload or tab
-     * refocus. expires_at: null signals "no longer running" (a reset).
-     * Swallows its own failures: a Centrifugo hiccup must never turn an
-     * otherwise-successful timer change into a reported error, since the
-     * actual change already succeeded in the database regardless of whether
-     * the live notification went out.
+     * Centrifugo. Swallows its own failures: the DB change already succeeded.
      */
     private function publishTimeLimitUpdate(Assignment $assignment, int $user_id, array $data): void
     {

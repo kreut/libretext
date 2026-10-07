@@ -131,15 +131,15 @@
           </template>
           <div class="mt-2">
             <span id="assignment-url">{{ getAssignmentUrl() }}</span> <a
-            href=""
-            class="pr-1"
-            aria-label="Copy Direct Student Link"
-            @click.prevent="doCopy('assignment-url')"
-          >
-            <font-awesome-icon
-              :icon="copyIcon"
-            />
-          </a>
+              href=""
+              class="pr-1"
+              aria-label="Copy Direct Student Link"
+              @click.prevent="doCopy('assignment-url')"
+            >
+              <font-awesome-icon
+                :icon="copyIcon"
+              />
+            </a>
           </div>
         </b-form-group>
         <b-form-group
@@ -2124,9 +2124,14 @@
                     @keydown="form.errors.clear(`time_limit_${index}`)"
                   />
                   <has-error :form="form" :field="`time_limit_${index}`" />
-                  <small v-if="assignTo.time_limit_locked" class="text-muted d-block mt-1">
-                    This can't be changed because at least one student has already started their timer for this
-                    assignment.
+                </b-col>
+                <b-col v-if="assignTo.time_limit_locked" class="d-flex align-items-center">
+                  <small class="text-muted">
+                    Locked: students have started.
+                    <router-link v-if="assignmentId"
+                                 :to="{ name: 'instructors.assignments.overrides', params: { assignmentId } }"
+                                 target="_blank"
+                    >Adjust time in Overrides</router-link>
                   </small>
                 </b-col>
               </b-form-row>

@@ -18,7 +18,8 @@
           >
             <b-card-text>
               <p>
-                View or adjust an individual student's personal time limit clock for this assignment.
+                View or adjust an individual student's personal time limit clock for this assignment, or choose
+                Everybody to adjust the whole class at once.
               </p>
               <b-form-group
                 label-cols-sm="3"
@@ -41,7 +42,16 @@
                 </b-form-row>
               </b-form-group>
               <div v-if="timerApplyTo && studentTimerStatus.time_limit">
-                <p class="mb-2">
+                <p v-if="isEverybodyTimer" class="mb-2">
+                  <span class="font-weight-bold">Time Limit:</span>
+                  {{ studentTimerStatus.time_limit }}
+                  <br>
+                  <span class="font-weight-bold">Students:</span>
+                  <span class="text-success">{{ timerSummary.running }} running</span>,
+                  <span class="text-danger">{{ timerSummary.expired }} expired</span>,
+                  {{ timerSummary.not_started }} not started
+                </p>
+                <p v-else class="mb-2">
                   <span class="font-weight-bold">Time Limit:</span>
                   {{ studentTimerStatus.time_limit_override || studentTimerStatus.time_limit }}
                   <span v-if="studentTimerStatus.time_limit_override" class="text-muted">
@@ -73,29 +83,33 @@
                     Add minutes to the current clock
                     <QuestionCircleTooltip id="add-time-tooltip"/>
                     <b-tooltip target="add-time-tooltip" delay="250" triggers="hover focus">
-                      Adds time to whatever's currently running. The fastest option for a quick, small extension -
-                      no need to know or calculate the current total.
+                      <span v-if="isEverybodyTimer">
+                        Adds time to every student whose clock is currently running. Students who haven't started
+                        or whose time has already expired are not changed.
+                      </span>
+                      <span v-else>
+                        Adds time to whatever's currently running. The fastest option for a quick, small extension -
+                        no need to know or calculate the current total.
+                      </span>
                     </b-tooltip>
                   </template>
                   <b-input-group>
                     <b-form-input v-model.number="minutesToAddForStudent" type="number" min="1" size="sm" style="max-width: 120px;"/>
                     <b-input-group-append>
                       <span id="add-time-button-wrapper" tabindex="0" class="d-inline-block">
-                        <b-button size="sm" variant="primary" :disabled="addingTimeForStudent || !studentTimerStatus.started_at" @click="addTimeForStudent"
-                                  :style="{ 'pointer-events': (addingTimeForStudent || !studentTimerStatus.started_at) ? 'none' : 'auto' }"
+                        <b-button size="sm" variant="primary" :disabled="addTimeDisabled" @click="addTimeForStudent"
+                                  :style="{ 'pointer-events': addTimeDisabled ? 'none' : 'auto' }"
                         >
                           Add Time
                         </b-button>
                       </span>
-                      <b-tooltip v-if="!studentTimerStatus.started_at" target="add-time-button-wrapper" delay="250" triggers="hover focus">
-                        This student hasn't started yet, so there's no running clock to add time to. Use Set Time
-                        below to start one on their behalf.
+                      <b-tooltip v-if="addTimeDisabledReason" target="add-time-button-wrapper" delay="250" triggers="hover focus">
+                        {{ addTimeDisabledReason }}
                       </b-tooltip>
                     </b-input-group-append>
                   </b-input-group>
-                  <small v-if="!studentTimerStatus.started_at" class="text-muted">
-                    This student hasn't started yet, so there's no running clock to add time to. Use Set Time below
-                    to start one on their behalf.
+                  <small v-if="noClockToAddMessage" class="text-muted">
+                    {{ noClockToAddMessage }}
                   </small>
                 </b-form-group>
                 <b-form-group label-size="sm">
@@ -103,9 +117,16 @@
                     Set a new total duration (e.g. '1 hour', '90 seconds')
                     <QuestionCircleTooltip id="set-time-tooltip"/>
                     <b-tooltip target="set-time-tooltip" delay="250" triggers="hover focus">
-                      Sets a brand-new total duration, replacing the current clock. If the student hasn't started
-                      yet, this starts their clock immediately, right now - unlike Reset, it doesn't wait for them
-                      to click Start.
+                      <span v-if="isEverybodyTimer">
+                        Sets a new total duration for every student who has started, measured from when each of
+                        them started. Students who haven't started aren't affected - they'll get the assignment's
+                        normal time limit when they click Start.
+                      </span>
+                      <span v-else>
+                        Sets a brand-new total duration, replacing the current clock. If the student hasn't started
+                        yet, this starts their clock immediately, right now - unlike Reset, it doesn't wait for them
+                        to click Start.
+                      </span>
                     </b-tooltip>
                   </template>
                   <b-input-group>
@@ -116,9 +137,9 @@
                     <b-input-group-append>
                       <span id="set-time-button-wrapper" tabindex="0" class="d-inline-block">
                         <b-button size="sm" variant="primary"
-                                  :disabled="settingTimeForStudent || !newTimeLimitForStudent || !looksLikeValidDuration(newTimeLimitForStudent)"
+                                  :disabled="settingTimeForStudent || Boolean(setTimeDisabledReason())"
                                   @click="setTimeForStudent"
-                                  :style="{ 'pointer-events': (settingTimeForStudent || !newTimeLimitForStudent || !looksLikeValidDuration(newTimeLimitForStudent)) ? 'none' : 'auto' }"
+                                  :style="{ 'pointer-events': (settingTimeForStudent || setTimeDisabledReason()) ? 'none' : 'auto' }"
                         >
                           Set Time
                         </b-button>
@@ -132,8 +153,11 @@
                     </b-form-invalid-feedback>
                   </b-input-group>
                 </b-form-group>
-                <b-button size="sm" variant="outline-danger" :disabled="resettingStudentTimer" @click="resetStudentTimer">
-                  Reset Timer Entirely
+                <b-button size="sm" variant="outline-danger"
+                          :disabled="resettingStudentTimer || (isEverybodyTimer && !timerSummaryStarted)"
+                          @click="resetStudentTimer"
+                >
+                  {{ isEverybodyTimer ? 'Reset Everybody\'s Timer' : 'Reset Timer Entirely' }}
                 </b-button>
                 <QuestionCircleTooltip id="reset-timer-tooltip"/>
                 <b-tooltip target="reset-timer-tooltip" delay="250" triggers="hover focus">
@@ -142,7 +166,8 @@
                 </b-tooltip>
               </div>
               <b-alert v-else-if="timerApplyTo && !studentTimerStatusLoading" :show="true" variant="info" class="font-weight-bold">
-                This assignment does not have a time limit configured for this student.
+                <span v-if="isEverybodyTimer">No students have a time limit configured for this assignment.</span>
+                <span v-else>This assignment does not have a time limit configured for this student.</span>
               </b-alert>
             </b-card-text>
           </b-card>
@@ -576,6 +601,39 @@ export default {
       { key: 'select', label: '' }
     ]
   }),
+  computed: {
+    isEverybodyTimer () {
+      return this.timerApplyTo === -1
+    },
+    timerSummary () {
+      return this.studentTimerStatus.summary || { total: 0, running: 0, expired: 0, not_started: 0 }
+    },
+    timerSummaryStarted () {
+      return this.timerSummary.running + this.timerSummary.expired
+    },
+    noClockToAddMessage () {
+      if (this.isEverybodyTimer) {
+        return this.timerSummary.running
+          ? ''
+          : 'No students currently have a running clock, so there is nothing to add time to.'
+      }
+      return this.studentTimerStatus.started_at
+        ? ''
+        : 'This student hasn\'t started yet, so there\'s no running clock to add time to. Use Set Time below to start one on their behalf.'
+    },
+    addTimeDisabledReason () {
+      if (this.noClockToAddMessage) {
+        return this.noClockToAddMessage
+      }
+      if (!this.minutesToAddForStudent || this.minutesToAddForStudent < 1) {
+        return 'Enter the number of minutes to add first.'
+      }
+      return ''
+    },
+    addTimeDisabled () {
+      return this.addingTimeForStudent || Boolean(this.addTimeDisabledReason)
+    }
+  },
   async mounted () {
     this.assignmentId = this.$route.params.assignmentId
     await this.getAssignmentSummary()
@@ -786,6 +844,9 @@ export default {
       if (this.settingTimeForStudent) {
         return ''
       }
+      if (this.isEverybodyTimer && !this.timerSummaryStarted) {
+        return 'No students have started yet. Students who haven\'t started get the assignment\'s normal time limit when they click Start.'
+      }
       if (!this.newTimeLimitForStudent) {
         return 'Enter a duration first, like "1 hour" or "90 seconds".'
       }
@@ -825,10 +886,15 @@ export default {
       }
     },
     async addTimeForStudent () {
-      const alreadyExpired = this.studentTimerStatus.started_at && this.studentTimerStatus.seconds_left <= 0
-      const message = alreadyExpired
-        ? `This student's time limit has already expired. Adding ${this.minutesToAddForStudent} minute(s) will give them that much time starting now. Continue?`
-        : `Add ${this.minutesToAddForStudent} minute(s) to this student's current clock?`
+      let message
+      if (this.isEverybodyTimer) {
+        message = `Add ${this.minutesToAddForStudent} minute(s) for the ${this.timerSummary.running} student(s) whose clock is currently running? Students who haven't started or whose time has expired won't be changed.`
+      } else {
+        const alreadyExpired = this.studentTimerStatus.started_at && this.studentTimerStatus.seconds_left <= 0
+        message = alreadyExpired
+          ? `This student's time limit has already expired. Adding ${this.minutesToAddForStudent} minute(s) will give them that much time starting now. Continue?`
+          : `Add ${this.minutesToAddForStudent} minute(s) to this student's current clock?`
+      }
       this.showTimerConfirm(message, () => this.performAddTimeForStudent())
     },
     async performAddTimeForStudent () {
@@ -845,11 +911,15 @@ export default {
         await this.getStudentTimerStatus()
         await this.getAllStudentStatuses()
         this.minutesToAddForStudent = null
-        this.$noty.success(
-          data.extended_past_due
-            ? `Time added. Note: this student's time now extends past the assignment due date.`
-            : 'Time added.'
-        )
+        if (data.is_everybody) {
+          this.$noty.success(data.message)
+        } else {
+          this.$noty.success(
+            data.extended_past_due
+              ? `Time added. Note: this student's time now extends past the assignment due date.`
+              : 'Time added.'
+          )
+        }
       } catch (error) {
         this.$noty.error(error.message)
       } finally {
@@ -857,13 +927,13 @@ export default {
       }
     },
     async setTimeForStudent () {
-      if (!this.newTimeLimitForStudent || !this.looksLikeValidDuration(this.newTimeLimitForStudent)) {
+      if (this.setTimeDisabledReason()) {
         return
       }
-      this.showTimerConfirm(
-        'This will set a new total duration for this student, replacing their current clock. Continue?',
-        () => this.performSetTimeForStudent()
-      )
+      const message = this.isEverybodyTimer
+        ? `This will set a total duration of "${this.newTimeLimitForStudent}" for the ${this.timerSummaryStarted} student(s) who have started, measured from when each of them started. Students for whom that much time has already passed will stay expired. Students who haven't started aren't affected. Continue?`
+        : 'This will set a new total duration for this student, replacing their current clock. Continue?'
+      this.showTimerConfirm(message, () => this.performSetTimeForStudent())
     },
     async performSetTimeForStudent () {
       this.settingTimeForStudent = true
@@ -879,11 +949,15 @@ export default {
         await this.getStudentTimerStatus()
         await this.getAllStudentStatuses()
         this.newTimeLimitForStudent = ''
-        this.$noty.success(
-          data.extended_past_due
-            ? `Time set. Note: this student's time now extends past the assignment due date.`
-            : 'Time set.'
-        )
+        if (data.is_everybody) {
+          this.$noty.success(data.message)
+        } else {
+          this.$noty.success(
+            data.extended_past_due
+              ? `Time set. Note: this student's time now extends past the assignment due date.`
+              : 'Time set.'
+          )
+        }
       } catch (error) {
         this.$noty.error(error.message)
       } finally {
@@ -891,10 +965,10 @@ export default {
       }
     },
     async resetStudentTimer () {
-      this.showTimerConfirm(
-        'This will fully reset this student\'s timer. They will need to click Start Assignment again for a fresh duration. Continue?',
-        () => this.performResetStudentTimer()
-      )
+      const message = this.isEverybodyTimer
+        ? `This will fully reset the timer for all ${this.timerSummaryStarted} student(s) who have started. They will all need to click Start Assignment again for a fresh duration. Continue?`
+        : 'This will fully reset this student\'s timer. They will need to click Start Assignment again for a fresh duration. Continue?'
+      this.showTimerConfirm(message, () => this.performResetStudentTimer())
     },
     async performResetStudentTimer () {
       this.resettingStudentTimer = true
@@ -906,7 +980,7 @@ export default {
         }
         await this.getStudentTimerStatus()
         await this.getAllStudentStatuses()
-        this.$noty.success('Timer reset for this student.')
+        this.$noty.success(data.is_everybody ? data.message : 'Timer reset for this student.')
       } catch (error) {
         this.$noty.error(error.message)
       } finally {
