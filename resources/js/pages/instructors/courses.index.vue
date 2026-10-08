@@ -5,8 +5,8 @@
                           :imported-course="importedCourse"
                           :import-actioning="courseToImportForm.action === 'clone' ? 'Cloning' : 'Importing'"
     />
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course"/>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-delete-course" />
     <b-modal id="modal-discuss-it-or-clicker-or-open-ended-in-realtime-questions-exist"
              title="Question Settings Within Assignments"
              no-close-on-esc
@@ -21,7 +21,7 @@
       >
         <template #label>
           Reset Discuss-it Settings
-          <QuestionCircleTooltip :id="'discuss-it-settings-tooltip'"/>
+          <QuestionCircleTooltip :id="'discuss-it-settings-tooltip'" />
           <b-tooltip target="discuss-it-settings-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -50,8 +50,9 @@
         label="Reset Clicker Settings"
         label-for="reset_clicker_settings_to_default"
       >
-        <template #label>Reset Clicker Settings
-          <QuestionCircleTooltip :id="'discuss-it-settings-tooltip'"/>
+        <template #label>
+          Reset Clicker Settings
+          <QuestionCircleTooltip :id="'discuss-it-settings-tooltip'" />
           <b-tooltip target="discuss-it-settings-tooltip"
                      delay="250"
                      triggers="hover focus"
@@ -146,7 +147,7 @@
               class="datepicker"
               :class="{ 'is-invalid': courseToImportForm.errors.has('due_date') }"
             />
-            <has-error :form="courseToImportForm" field="due_date"/>
+            <has-error :form="courseToImportForm" field="due_date" />
           </b-col>
           <b-col>
             <vue-timepicker v-model="courseToImportForm.due_time"
@@ -158,10 +159,10 @@
                             @shown="courseToImportForm.errors.clear('due_time')"
             >
               <template v-slot:icon>
-                <b-icon-clock/>
+                <b-icon-clock />
               </template>
             </vue-timepicker>
-            <ErrorMessage :message="courseToImportForm.errors.get('due_time')"/>
+            <ErrorMessage :message="courseToImportForm.errors.get('due_time')" />
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -265,11 +266,11 @@
         <template v-slot:label>
           Import as Beta Course
           <span id="beta_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
           <b-tooltip target="beta_course_tooltip"
                      delay="250"
           >
-            <ImportAsBetaText/>
+            <ImportAsBetaText />
           </b-tooltip>
         </template>
         <b-form-radio-group v-model="courseToImportForm.import_as_beta" class="mt-2">
@@ -328,24 +329,39 @@
     <PageTitle v-if="canViewCourses"
                :consult-insight-url="'https://commons.libretexts.org/insight/course-properties-overview'"
                title="My Courses"
-    />
-    <b-container v-if="canViewCourses && user && [2,5].includes(user.role)">
-      <b-row class="float-right mb-4 d-inline-flex">
-        <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
+    >
+      <template #actions>
+        <!-- the page itself says these are courses, so the buttons stay short (same as the assignments page) -->
+        <b-button v-if="user && [2,5].includes(user.role)"
+                  v-b-tooltip.hover.bottom="'Create a new course'"
                   size="sm"
+                  variant="primary"
+                  aria-label="Add course"
+                  @click="$bvModal.show('modal-course-details')"
         >
-          New Course
+          Add
         </b-button>
-        <b-button v-if="[2,5].includes(user.role)"
-                  variant="outline-primary"
+        <b-button v-if="user && [2,5].includes(user.role)"
+                  v-b-tooltip.hover.bottom="'Import a course, such as one from the Commons or another instructor'"
+                  class="ml-1"
                   size="sm"
-                  class="mr-1"
+                  variant="primary"
+                  aria-label="Import course"
                   @click="initImportCourse"
         >
-          Import Course
+          Import
         </b-button>
-      </b-row>
-    </b-container>
+        <b-button v-if="user && user.role === 4"
+                  v-b-modal.modal-course-grader-access-code
+                  v-b-tooltip.hover.bottom="'Join a course as a grader using the access code from the instructor'"
+                  size="sm"
+                  variant="primary"
+                  aria-label="Add course as a grader"
+        >
+          Add
+        </b-button>
+      </template>
+    </PageTitle>
 
     <b-modal
       id="modal-course-details"
@@ -359,22 +375,20 @@
           <h5 class="modal-title mb-0 mr-1">
             Course Details
           </h5>
-          <div class="d-flex align-items-center">
-            <ConsultInsight
-              :url="'https://commons.libretexts.org/insight/adapt-course-properties---general-information'"
-              class="mr-2"
-            />
-            <button type="button"
-                    class="close"
-                    aria-label="Close"
-                    @click="$bvModal.hide('modal-course-details')"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
+          <ConsultInsight
+            :url="'https://commons.libretexts.org/insight/adapt-course-properties---general-information'"
+            class="mr-2"
+          />
+          <button type="button"
+                  class="close ml-auto"
+                  aria-label="Close"
+                  @click="$bvModal.hide('modal-course-details')"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
       </template>
-      <CourseForm :form="newCourseForm"/>
+      <CourseForm :form="newCourseForm" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -422,7 +436,7 @@
           <li>All submitted student responses</li>
           <li>All student scores</li>
         </ol>
-        <RequiredText :plural="false"/>
+        <RequiredText :plural="false" />
         <b-form-group
           label-cols-sm="1"
           label-cols-lg="2"
@@ -441,7 +455,7 @@
             :class="{ 'is-invalid': deleteCourseForm.errors.has('confirmation') }"
             @keydown="deleteCourseForm.errors.clear('confirmation')"
           />
-          <has-error :form="deleteCourseForm" field="confirmation"/>
+          <has-error :form="deleteCourseForm" field="confirmation" />
         </b-form-group>
       </b-form>
       <template #modal-footer>
@@ -460,20 +474,13 @@
           @click="handleDeleteCourse"
         >
           <span v-if="!processingDeletingCourse">Yes, delete course!</span>
-          <span v-if="processingDeletingCourse"><b-spinner small type="grow"/>
+          <span v-if="processingDeletingCourse"><b-spinner small type="grow" />
             Deleting Course...
           </span>
         </b-button>
       </template>
     </b-modal>
 
-    <div v-if="user && user.role === 4">
-      <div v-if="canViewCourses" class="row mb-4 float-right">
-        <b-button v-b-modal.modal-course-grader-access-code variant="primary">
-          New Course
-        </b-button>
-      </div>
-    </div>
     <b-modal
       id="modal-show-course-warning"
       ref="modal"
@@ -521,7 +528,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('access_code') }"
             @keydown="graderForm.errors.clear('access_code')"
           />
-          <has-error :form="graderForm" field="access_code"/>
+          <has-error :form="graderForm" field="access_code" />
         </b-form-group>
       </b-form>
     </b-modal>
@@ -541,11 +548,11 @@
         </b-alert>
       </div>
       <div class="table-responsive">
-        <table class="table table-striped" aria-label="Course List">
+        <table class="table table-striped courses-table" aria-label="Course List">
           <thead>
           <tr>
             <th scope="col">
-              Course
+              Name
             </th>
             <th v-if="[2,4].includes(user.role)" style="width:100px">
                 <span v-show="user.role === 2">
@@ -578,7 +585,7 @@
           >
             <th scope="row">
               <div class="mb-0">
-                <b-icon v-if="user.role === 2" icon="list" class="handle"/>
+                <b-icon v-if="user.role === 2" icon="list" class="handle" />
                 <span v-show="parseInt(course.alpha) === 1"
                       :id="getTooltipTarget('alphaCourse',course.id)"
                       class="text-muted"
@@ -590,15 +597,15 @@
                   course will be directly reflected in the associated Beta courses.
                 </b-tooltip>
                 <span v-if="course.is_co_instructor">
-                <b-tooltip :target="getTooltipTarget('coInstructor',course.id)"
-                           delay="500"
-                >
-                 You are a co-instructor in this course. The main instructor is {{ course.main_instructor_name }}.
-                </b-tooltip>
-                <font-awesome-icon :icon="coInstructorIcon"
-                                   :id="getTooltipTarget('coInstructor',course.id)"
-                                   class="text-muted"
-                />
+                    <b-tooltip :target="getTooltipTarget('coInstructor',course.id)"
+                               delay="500"
+                    >
+                      You are a co-instructor in this course. The main instructor is {{ course.main_instructor_name }}.
+                    </b-tooltip>
+                    <font-awesome-icon :id="getTooltipTarget('coInstructor',course.id)"
+                                       :icon="coInstructorIcon"
+                                       class="text-muted"
+                    />
                   </span>
                 <span v-show="parseInt(course.is_beta_course) === 1"
                       :id="getTooltipTarget('betaCourse',course.id)"
@@ -890,7 +897,7 @@ export default {
     this.fields = (this.user.role === 2)
       ? [{
         key: 'name',
-        label: 'Course',
+        label: 'Name',
         sortable: true
       },
         'shown',
@@ -906,7 +913,7 @@ export default {
       ]
       : [{
         key: 'name',
-        label: 'Course',
+        label: 'Name',
         sortable: true
       },
         'sections',
@@ -1355,5 +1362,10 @@ body, html {
 
 svg:focus, svg:active:focus {
   outline: none !important;
+}
+
+/* the page title already draws a line right above the table, so drop the table's own top border */
+.courses-table > thead > tr > th {
+  border-top: 0;
 }
 </style>

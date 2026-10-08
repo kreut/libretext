@@ -16,7 +16,8 @@
       <navbar :linked-accounts="linkedAccounts"/>
     </div>
     <div v-else id="default-padding-top" style="padding-top:30px"/>
-    <div id="main-content" class="page-container" role="main" :class="{ 'container': true, 'mt-4': true }"
+    <div id="main-content" class="page-container mt-4" role="main"
+         :class="isFullWidth ? 'container-fluid px-md-4' : 'container'"
          tabindex="-1"
     >
       <child/>
@@ -152,9 +153,33 @@ export default {
     isLearningTreesEditor: false,
     sitemapURL: ''
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    isFullWidth () {
+      // Every page uses the full browser width except the ones listed here, which read better at the
+      // centered container width (mostly short forms). To keep another page centered, add its route name
+      // below, or its parent route's path to centeredSections to cover every tab in that section.
+      const centeredPages = [
+        'login',
+        'register',
+        'question-editor-register',
+        'tester-register',
+        'finish.sso.registration',
+        'incomplete.registration',
+        'password.request',
+        'password.reset',
+        'verification.verify',
+        'verification.resend'
+      ]
+      const centeredSections = [
+        '/settings'
+      ]
+      const inCenteredSection = this.$route.matched.some(route => centeredSections.includes(route.path))
+      return !inCenteredSection && !centeredPages.includes(this.$route.name)
+    }
+  },
   watch: {
     '$route' (to, from) {
       this.skipToContent = to.name === 'questions.view' ? '#question-to-view' : '#main-content'
@@ -256,3 +281,26 @@ export default {
   }
 }
 </script>
+<style>
+/*
+  On full-width pages, let any fixed-width container inside the page (b-container / .container) fill the
+  available width too, so pages and components that box in their own content don't stay narrow.
+  Pop-up windows (modals) are rendered outside #main-content, so they keep their normal sizes.
+  To keep one particular container centered on a full-width page, give it the class "keep-centered".
+*/
+#main-content.container-fluid .container:not(.keep-centered) {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/*
+  Bootstrap rows pull their contents 15px outward, expecting columns inside them to pull it back in.
+  Some pages put buttons or selects straight into a row with no columns, which then sticks out past the
+  page edge now that the containers above have no side padding, so rows without columns don't shift.
+*/
+#main-content.container-fluid .row:not(:has(> [class*="col"])) {
+  margin-left: 0;
+  margin-right: 0;
+}
+</style>

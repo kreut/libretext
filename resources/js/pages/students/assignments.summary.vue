@@ -64,13 +64,13 @@
                    :assessment-type="assessmentType"
                    :has-time-limit="Boolean(timeLimitStatus.time_limit)"
         />
-        <b-container>
+        <b-container fluid class="px-0">
           <div v-if="!showNoAccessMessage && (assessmentType !== 'clicker' || solutionsReleased)">
-            <b-row align-h="end">
-              <b-button class="ml-3 mb-2" variant="primary" size="sm" @click="getStudentView(assignmentId)">
+            <div class="d-flex justify-content-end">
+              <b-button class="mb-2" variant="primary" size="sm" @click="getStudentView(assignmentId)">
                 View Assessments
               </b-button>
-            </b-row>
+            </div>
             <hr>
           </div>
           <div v-show="isInstructorLoggedInAsStudent" class="mb-2">

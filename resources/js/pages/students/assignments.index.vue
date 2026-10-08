@@ -192,36 +192,33 @@
               </b-tooltip>
             </p>
           </div>
-          <b-container>
-            <b-row class="mb-4">
-              <b-col lg="3">
-                <b-form-select v-if="assignmentGroupOptions.length>1"
-                               v-model="chosenAssignmentGroup"
-                               title="Filter by assignment group"
-                               size="sm"
-                               :options="assignmentGroupOptions"
-                               @input="updateAssignmentGroupFilter();getAssignmentsWithinChosenAssignmentGroup()"
-                />
-              </b-col>
-              <b-col lg="3">
-                <b-form-select v-model="chosenAssignmentStatus"
-                               title="Filter by assignment status"
-                               size="sm"
-                               :options="assignmentStatusOptions"
-                               @input="getAssignmentsWithChosenAssignmentStatus()"
-                />
-              </b-col>
-              <b-col class="pt-1">
-                <b-button v-show="scoreInfoByAssignmentGroup.length && showProgressReport"
-                          variant="primary"
-                          size="sm"
-                          @click="$bvModal.show('modal-progress-report')"
-                >
-                  Progress Report
-                </b-button>
-              </b-col>
-            </b-row>
-          </b-container>
+          <div class="d-flex flex-wrap align-items-center mb-3 student-assignments-toolbar">
+            <b-form-select v-if="assignmentGroupOptions.length>1"
+                           v-model="chosenAssignmentGroup"
+                           title="Filter by assignment group"
+                           aria-label="Filter by assignment group"
+                           size="sm"
+                           class="mr-2 mb-2 student-assignments-filter"
+                           :options="assignmentGroupOptions"
+                           @input="updateAssignmentGroupFilter();getAssignmentsWithinChosenAssignmentGroup()"
+            />
+            <b-form-select v-model="chosenAssignmentStatus"
+                           title="Filter by assignment status"
+                           aria-label="Filter by assignment status"
+                           size="sm"
+                           class="mr-2 mb-2 student-assignments-filter"
+                           :options="assignmentStatusOptions"
+                           @input="getAssignmentsWithChosenAssignmentStatus()"
+            />
+            <b-button v-show="scoreInfoByAssignmentGroup.length && showProgressReport"
+                      class="ml-auto mb-2"
+                      variant="primary"
+                      size="sm"
+                      @click="$bvModal.show('modal-progress-report')"
+            >
+              Progress Report
+            </b-button>
+          </div>
           <div v-show="showNoMatchingMessage">
             <b-alert show variant="info">
               There are no assignments that match this criteria.
@@ -773,3 +770,10 @@ export default {
   }
 }
 </script>
+<style>
+.student-assignments-toolbar .student-assignments-filter {
+  width: auto;
+  min-width: 200px;
+  max-width: 320px;
+}
+</style>

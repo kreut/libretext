@@ -76,6 +76,14 @@
         </span>
         </small>
       </b-col>
+      <b-col v-if="$slots.actions"
+             cols="12"
+             md="auto"
+             class="d-flex flex-wrap align-items-center mt-2 mt-md-0 page-title-actions"
+      >
+        <!-- optional buttons shown at the right end of the title line -->
+        <slot name="actions" />
+      </b-col>
       <b-col v-if="user.role === 2" cols="auto" class="text-right"/>
       <div id="instructor-action-icons"
            style="display: flex;align-items: flex-end; padding-bottom: 0 !important;gap: 0.25rem; "

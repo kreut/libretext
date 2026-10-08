@@ -393,11 +393,6 @@ let general_paths = [
         component: page('instructors/assignment_information/properties.vue')
       },
       {
-        path: 'control_panel',
-        name: 'instructors.assignments.control_panel',
-        component: page('instructors/assignment_information/control_panel.vue')
-      },
-      {
         path: 'overrides',
         name: 'instructors.assignments.overrides',
         component: page('instructors/assignment_information/overrides.vue')

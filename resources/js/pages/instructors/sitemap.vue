@@ -34,12 +34,6 @@
               </router-link>
               -
               <router-link
-                :to="{name: 'instructors.assignments.control_panel', params: {assignmentId: assignment.value}}"
-              >
-                Control Panel
-              </router-link>
-              -
-              <router-link
                 :to="{name: 'instructors.assignments.overrides', params: {assignmentId: assignment.value}}"
               >
                 Submission Overrides

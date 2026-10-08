@@ -14,11 +14,9 @@
     </b-modal>
     <div v-if="[2, 4, 5].includes(user.role)">
       <CannotAddAssessmentToBetaAssignmentModal/>
-      <b-container>
-        <hr>
-      </b-container>
+      <hr>
       <div v-show="showPanel" class="row">
-        <div class="mt-2 mb-2">
+        <div class="col-md-3 col-xl-2 mt-2 mb-2">
           <div class="mb-1">
             <b-button v-if="[2,5].includes(user.role)"
                       class="btn-block text-left view-questions-btn"
@@ -140,7 +138,7 @@
           </b-card>
         </div>
 
-        <div class="col-md-9">
+        <div class="col-md-9 col-xl-10">
           <transition name="fade" mode="out-in">
             <router-view :key="`router-view-${tabKey}`"/>
           </transition>
@@ -198,11 +196,6 @@ export default {
           icon: '',
           name: 'Properties',
           route: 'instructors.assignments.properties'
-        },
-        {
-          icon: '',
-          name: 'Control Panel',
-          route: 'instructors.assignments.control_panel'
         }
       ]
     },

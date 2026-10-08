@@ -173,18 +173,33 @@
       >
         Manual
       </b-form-checkbox>
-      <b-form-checkbox
-        :id="`auto-release-activated-${property}-${assignment.id}`"
-        :key="`auto-release-activated-${property}`"
-        v-model="assignment['auto_release_activated_' + property]"
-        :name="`auto-release-activated-${property}`"
-        value="1"
-        :disabled="disabled"
-        unchecked-value="0"
-        @change="updateAutoReleaseActivated()"
-      >
-        Auto
-      </b-form-checkbox>
+      <div class="d-flex align-items-center">
+        <b-form-checkbox
+          :id="`auto-release-activated-${property}-${assignment.id}`"
+          :key="`auto-release-activated-${property}`"
+          v-model="assignment['auto_release_activated_' + property]"
+          :name="`auto-release-activated-${property}`"
+          value="1"
+          :disabled="disabled"
+          unchecked-value="0"
+          @change="updateAutoReleaseActivated()"
+        >
+          Auto<span v-if="disabled" class="sr-only"> (unavailable: {{ autoReleaseUnavailableReason }})</span>
+        </b-form-checkbox>
+        <!--
+          A disabled checkbox gives no hint as to why it's disabled (and doesn't fire hover events), so the reason
+          sits in a (?) right next to it.
+        -->
+        <template v-if="disabled && showAutoUnavailableReason">
+          <QuestionCircleTooltip :id="`auto-release-unavailable-${property}-${assignment.id}`" class="ml-1" />
+          <b-tooltip :target="`auto-release-unavailable-${property}-${assignment.id}`"
+                     delay="250"
+                     triggers="hover focus"
+          >
+            {{ autoReleaseUnavailableReason }}
+          </b-tooltip>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -193,6 +208,14 @@
 import 'vue-loading-overlay/dist/vue-loading.css'
 import axios from 'axios'
 import QuestionCircleTooltip from './QuestionCircleTooltip.vue'
+
+// how each property is referred to in the "why is Auto unavailable" message
+const propertyDescriptions = {
+  shown: 'the assignment',
+  show_scores: 'scores',
+  solutions_released: 'solutions',
+  students_can_view_assignment_statistics: 'statistics'
+}
 
 export default {
   name: 'ShowHideAssignmentProperties',
@@ -207,10 +230,14 @@ export default {
     property: {
       type: String,
       default: ''
+    },
+    // false hides the (?) next to a greyed-out Auto box; the Control Panel explains it in its column headers instead
+    showAutoUnavailableReason: {
+      type: Boolean,
+      default: true
     }
   },
   data: () => ({
-    disabled: false,
     toggleColors: window.config.toggleColors,
     assessmentType: '',
     deactivateAutoRelease: 1,
@@ -220,11 +247,31 @@ export default {
   computed: {
     scoresAlwaysReleased () {
       return this.property === 'show_scores' && ['real time', 'learning tree'].includes(this.assignment.assessment_type)
+    },
+    autoReleaseUnavailableReason () {
+      // '' means Auto can be used
+      if (this.assignment.assessment_type === 'clicker') {
+        return 'Auto isn\'t available for clicker assignments, since you open them yourself during class.'
+      }
+      if (this.property === 'solutions_released' && this.assignment.solutions_availability === 'automatic') {
+        // the properties modal greys out the solutions auto-release timing in this case too
+        return 'Auto isn\'t available because Solutions Availability is set to Automatic in this assignment\'s ' +
+          'properties, so solutions are already shown to students automatically.'
+      }
+      if (!this.assignment['auto_release_' + this.property]) {
+        const item = propertyDescriptions[this.property] || 'this item'
+        return `Auto isn't available because there's no auto-release timing for ${item}. To use it, open this ` +
+          `assignment's properties (the gear icon) and set when ${item} should be released.`
+      }
+      return ''
+    },
+    disabled () {
+      // computed (rather than set once when mounted) so it stays right after the assignment's properties change
+      return Boolean(this.autoReleaseUnavailableReason)
     }
   },
   mounted () {
     this.assessmentType = this.assignment.assessment_type
-    this.disabled = this.assignment.assessment_type === 'clicker' || !this.assignment['auto_release_' + this.property]
   },
   methods: {
     async updateAutoReleaseActivated () {
