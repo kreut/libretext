@@ -47,17 +47,17 @@
       </template>
     </b-modal>
     <b-modal id="modal-manual-grading-error"
-             title="Incorrect Open-Ended Submission Type"
+             title="No Open-Ended Submission"
              hide-footer
     >
       <p>
-        You've set the Open-Ended Submission Type for this question in your assignment to something other
-        that "manual" but it looks like there are no student files associated with this question.
+        The student has no open-ended submission so there's nothing to score.
       </p>
-      <p>
-        Please <a :href="`/assignments/${this.assignmentId}/questions/view/${this.questionView}`" target="_blank">visit
-        the question</a>
-        and update the Open-Ended Submission Type to one of the manual options.
+      <p class="mb-0 text-muted small">
+        If you meant to grade this question without student uploads,
+        <a :href="`/assignments/${this.assignmentId}/questions/view/${this.questionView}`" target="_blank">visit
+          the question</a>
+        and change its Open-Ended Submission Type to one of the manual options.
       </p>
     </b-modal>
     <b-modal id="modal-manage-student-timer"
@@ -2371,6 +2371,10 @@ export default {
         this.gradingForm.user_id = this.grading[this.currentStudentPage - 1]['open_ended_submission']['user_id']
         const { data } = await this.gradingForm.post('/api/grading')
         if (data.manual_grading_error) {
+          // The backend sets this when this student has no open-ended submission
+          // and the question isn't set to a manual-grading type.
+          // Nothing was saved, so clear the score the grader entered (e.g. from Zero Score).
+          this.gradingForm.file_submission_score = null
           this.$bvModal.show('modal-manual-grading-error')
           return false
         }
@@ -2557,9 +2561,11 @@ export default {
         this.grading[this.currentStudentPage - 1]['open_ended_submission']['submission'] === null
 
       let textFeedback = this.grading[this.currentStudentPage - 1]['open_ended_submission']['text_feedback']
-      this.gradingForm.file_submission_score = this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] === 'N/A'
+      // Leave the box blank when no score has been entered (1 * null would show a misleading 0)
+      const savedFileSubmissionScore = this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score']
+      this.gradingForm.file_submission_score = [null, undefined, '', 'N/A'].includes(savedFileSubmissionScore)
         ? null
-        : 1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score']
+        : 1 * savedFileSubmissionScore
       this.gradingForm.question_submission_score = !this.grading[this.currentStudentPage - 1]['auto_graded_submission']
         ? null
         : 1 * this.grading[this.currentStudentPage - 1]['auto_graded_submission']['score']
