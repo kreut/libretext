@@ -1112,9 +1112,23 @@
       hide-header-close
       no-close-on-backdrop
       no-close-on-esc
-      title="Preview"
+      title="Confirm Your Submission"
       @shown="renderMathJax()"
     >
+      <b-alert v-if="unconfirmedSubmissionRemainingAttempts !== null"
+               show
+               :variant="unconfirmedSubmissionRemainingAttempts <= 1 ? 'danger' : 'info'"
+      >
+        <span v-if="unconfirmedSubmissionRemainingAttempts <= 1">
+          This is your <strong>last</strong> attempt. Once you submit, no additional submissions will be accepted.
+        </span>
+        <span v-else>
+          You have <strong>{{ unconfirmedSubmissionRemainingAttempts }}</strong> attempts remaining.
+          After this submission, you will have {{ unconfirmedSubmissionRemainingAttempts - 1 }}
+          attempt{{ unconfirmedSubmissionRemainingAttempts - 1 === 1 ? '' : 's' }} left.
+        </span>
+      </b-alert>
+      <p>Please review your answers before submitting.</p>
       <div class="table-responsive">
         <table class="table table-striped pb-3" style="width:100%">
           <thead>
@@ -1139,6 +1153,7 @@
         <b-button
           size="sm"
           class="float-right"
+          :disabled="completingSubmission"
           @click="cancelWebworkSubmission()"
         >
           Cancel
@@ -1147,8 +1162,10 @@
           variant="primary"
           size="sm"
           class="float-right"
+          :disabled="completingSubmission"
           @click="completeSubmission()"
         >
+          <b-spinner v-if="completingSubmission" small class="mr-1"/>
           Complete Submission
         </b-button>
       </template>
@@ -4089,6 +4106,8 @@ export default {
     completedAllAssignmentQuestions: false,
     submissionArray: [],
     unconfirmedSubmission: [],
+    unconfirmedSubmissionRemainingAttempts: null,
+    completingSubmission: false,
     questionNumbersShownOutOfIframe: true,
     formativeQuestionURL: '',
     technologySrcDoc: '',
@@ -4742,7 +4761,7 @@ export default {
       // await this.startClickerAssessment()
     }
     this.previouslyUploadedAudioFile = this.questions[this.currentPage - 1].submission ? this.questions[this.currentPage - 1].submission : ''
-  this.loaded = true
+    this.loaded = true
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
@@ -5591,8 +5610,13 @@ export default {
     updateCustomQuestionTitle (newTitle) {
       this.questions[this.currentPage - 1].title = newTitle
     },
-    cancelWebworkSubmission () {
+    async cancelWebworkSubmission () {
       this.$bvModal.hide('modal-confirm-submission')
+      try {
+        await axios.delete(`/api/unconfirmed-submissions/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
+      } catch (error) {
+        console.error(error.message)
+      }
       this.$noty.info('Your submission has not been saved.')
     },
     async initConfirmSubmission () {
@@ -5600,23 +5624,34 @@ export default {
         const { data } = await axios.get(`/api/unconfirmed-submissions/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
-        } else {
-          this.hasHTML = data.has_html
-          this.unconfirmedSubmission = data.unconfirmed_submission
-          // this.$bvModal.show('modal-confirm-submission')
-          await this.completeSubmission()
+          return
         }
+        if (!data.requires_confirmation) {
+          // unlimited attempts (or not WeBWorK): nothing at stake, so just save it
+          await this.completeSubmission()
+          return
+        }
+        this.hasHTML = data.has_html
+        this.unconfirmedSubmission = data.unconfirmed_submission
+        this.unconfirmedSubmissionRemainingAttempts = data.number_of_remaining_attempts
+        this.$bvModal.show('modal-confirm-submission')
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
     async completeSubmission () {
-      this.$bvModal.hide('modal-confirm-submission')
+      if (this.completingSubmission) {
+        return
+      }
+      this.completingSubmission = true
       try {
         const { data } = await axios.post(`/api/unconfirmed-submissions/assignment/${this.assignmentId}/question/${this.questions[this.currentPage - 1].id}/store-submission`)
+        this.$bvModal.hide('modal-confirm-submission')
         await this.showResponse(data)
       } catch (error) {
         this.$noty.error(error.message)
+      } finally {
+        this.completingSubmission = false
       }
     },
     renderMathJax () {

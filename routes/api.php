@@ -713,6 +713,7 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
 
     Route::get('/unconfirmed-submissions/assignment/{assignment}/question/{question}', 'UnconfirmedSubmissionController@show');
     Route::post('/unconfirmed-submissions/assignment/{assignment}/question/{question}/store-submission', 'UnconfirmedSubmissionController@storeSubmission');
+    Route::delete('/unconfirmed-submissions/assignment/{assignment}/question/{question}', 'UnconfirmedSubmissionController@destroy');
 
     Route::put('/webwork-attachments/upload', 'WebworkAttachmentController@upload');
     Route::get('/webwork-attachments/question/{question}/{question_revision_id}', 'WebworkAttachmentController@getWebworkAttachmentsByQuestion');
