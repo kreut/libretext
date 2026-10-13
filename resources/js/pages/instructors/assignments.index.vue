@@ -280,14 +280,14 @@
       </b-modal>
 
       <b-modal id="modal-assignment-status"
-               title="Explanation of Submission Status"
+               title="Explanation of Assignment Status"
                size="lg"
       >
         <table v-if="assignments.length" :key="`link-to-lms-${updateKey}`" class="table table-striped">
           <thead>
           <tr>
             <th scope="col">
-              Submission Status
+              Assignment Status
             </th>
             <th scope="col">
               Explanation
@@ -1590,7 +1590,7 @@
               </b-tooltip>
             </th>
             <th v-if="[2,4].includes(user.role)" scope="col" style="width:110px">
-              Submission <span class="text-nowrap">Status
+              Assignment <span class="text-nowrap">Status
                 <span @mouseover="showAssignmentStatusModal()" @mouseout="mouseOverAssignmentStatus = false">
                   <QuestionCircleTooltip />
                 </span></span>
@@ -1616,7 +1616,7 @@
                  class="assignment-tbody"
                  :data-assignment-id="assignment.id"
           >
-          <tr :style="getAssignmentRowStyle(assignment)">
+          <tr :style="getAssignmentRowStyle(assignment)" class="assignment-row">
             <td v-if="hasSettingsColumn" class="text-center sticky-col sticky-col-first">
               <b-button v-if="canSeeSettings(assignment)"
                         variant="link"
@@ -1781,28 +1781,28 @@
                 </component>
               </div>
             </td>
-            <td v-if="[2,4].includes(user.role)" class="show_date d-none d-md-table-cell date-separator">
+            <td v-if="[2,4].includes(user.role)" class="show_date d-none d-md-table-cell date-separator date-cell">
               <AutoReleaseDate :key="`auto-release-date-${assignment.id}-${showHideAssignmentPropertiesKey}`"
                                :assignment="assignment"
                                :property="'show_date'"
                                :auto-release-activated="+assignment.auto_release_activated_shown"
               />
             </td>
-            <td v-if="[2,4].includes(user.role)" class="date-separator-narrow">
+            <td v-if="[2,4].includes(user.role)" class="date-separator-narrow date-cell">
               <div v-if="!showAssignTos(assignment)">
                 N/A
               </div>
               <div v-if="showAssignTos(assignment)">
                   <span v-if="assignment.assign_tos.length === 1">
                     {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
-                    {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mmA') }}
+                    {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                   </span>
                 <span v-if="assignment.assign_tos.length > 1">
                     <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
                   </span>
               </div>
             </td>
-            <td v-if="[2,4].includes(user.role)">
+            <td v-if="[2,4].includes(user.role)" class="date-cell">
               <div v-if="!showAssignTos(assignment)">
                 N/A
               </div>
@@ -1810,14 +1810,14 @@
                   <span v-if="assignment.assign_tos.length === 1">
                     <span v-if="!showFinalSubmissionDeadline(assignment.assign_tos[0])">
                       {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
-                      {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mmA') }}
+                      {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                     </span>
                     <span v-if="showFinalSubmissionDeadline(assignment.assign_tos[0])">
                       {{
                         $moment(assignment.assign_tos[0].final_submission_deadline_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY')
                       }}<br>
                       {{
-                        $moment(assignment.assign_tos[0].final_submission_deadline_time, 'HH:mm:ss A').format('h:mmA')
+                        $moment(assignment.assign_tos[0].final_submission_deadline_time, 'HH:mm:ss A').format('h:mm A')
                       }}
                     </span>
                   </span>
@@ -2547,7 +2547,7 @@ export default {
     },
     numberOfTableColumns () {
       // settings arrow + name + the instructor/grader columns + Released Status badges + actions
-      // instructor/grader columns: Group, Release Date, Open Date, Due Date, Submission Status
+      // instructor/grader columns: Group, Release Date, Open Date, Due Date, Assignment Status
       // (Group and Release Date are hidden on narrow screens)
       const instructorOrGraderColumns = this.user && [2, 4].includes(this.user.role)
         ? (this.isNarrowScreen ? 3 : 5)
@@ -3303,7 +3303,7 @@ What assignment parameters??? */
         }
         const autoDate = assignment.auto_release_show_dates && assignment.auto_release_show_dates[dateKey]
         if (autoDate && +assignment[`auto_release_activated_${key}`]) {
-          const formatted = this.$moment(autoDate, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mmA')
+          const formatted = this.$moment(autoDate, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
           return { key, dateKey, label, text: `Auto-release ${formatted}`, class: 'text-primary', icon: 'clock', badgeClass: scheduled, toggleable: true }
         }
         return { key, dateKey, label, text: 'Not released', class: 'text-muted', icon: 'x-circle', badgeClass: notReleased, toggleable: true }
@@ -3899,6 +3899,21 @@ svg:focus, svg:active:focus {
 
 .header-button-group + .header-button-group {
   margin-left: 1.25rem;
+}
+
+/*
+  Even space above and below the Released Status badges. Two-line dates were making each row taller than the
+  2x2 badge block, which then sat at the top with a bigger gap underneath. The dates now use tighter line spacing
+  (two lines are about as tall as the badge block), and every cell in the row is centered vertically, so if
+  something else makes a row taller (a long wrapping name, say), the leftover space is split evenly.
+*/
+.assignment-table > tbody > tr.assignment-row > td,
+.assignment-table > tbody > tr.assignment-row > th {
+  vertical-align: middle;
+}
+
+.assignment-table .date-cell {
+  line-height: 1.25;
 }
 
 /* Released Status: a 2x2 block read across (Assignment, Solutions / Scores, Statistics) */
