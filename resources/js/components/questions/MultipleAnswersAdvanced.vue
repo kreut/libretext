@@ -17,7 +17,7 @@
         <b-button size="sm" variant="primary"
                   @click="$bvModal.hide('modal-single-marker-sketcher-viewer')"
         >
-        OK
+          OK
         </b-button>
       </template>
     </b-modal>

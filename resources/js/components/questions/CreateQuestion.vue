@@ -116,12 +116,12 @@
       </template>
     </b-modal>
     <b-modal id="modal-confirm-update-structure"
-             title="Confirm Update Structure"
+             title="Confirm Start Over"
              no-close-on-backdrop
     >
       <p>
-        Please confirm that you would like to update the structure. By doing so, the Sketcher will be reset: your
-        structure, any associated point values, and any feedback will also be deleted as well.
+        Please confirm that you would like to start over. The Sketcher will be cleared, and your molecule, marks,
+        and feedback will all be deleted.
       </p>
       <template #modal-footer>
         <b-button
@@ -135,7 +135,34 @@
           variant="danger"
           @click="updateStructure"
         >
-          Update Structure
+          Start Over
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-molecule-changed-feedback"
+             title="Molecule Changed"
+             no-close-on-backdrop
+             no-close-on-esc
+             hide-header-close
+    >
+      <p>
+        You changed the molecule, and this question already has feedback. Would you like to keep the feedback or
+        clear all of it?
+      </p>
+      <b-alert show variant="warning" class="mb-0">
+        If you keep it, some feedback may no longer line up with the right atoms or bonds, or may no longer make
+        sense for the new molecule. Please check each piece of feedback in the table afterwards. Feedback on atoms
+        or bonds you deleted is removed either way.
+      </b-alert>
+      <template #modal-footer>
+        <b-button size="sm" @click="backToEditingMolecule">
+          Back to Editing
+        </b-button>
+        <b-button size="sm" variant="danger" @click="finishMoleculeFeedbackChoice(true)">
+          Clear All Feedback
+        </b-button>
+        <b-button size="sm" variant="primary" @click="finishMoleculeFeedbackChoice(false)">
+          Keep Feedback
         </b-button>
       </template>
     </b-modal>
@@ -442,8 +469,8 @@
     >
       <p>
         ADAPT can automatically create the necessary WeBWork to create <a
-          href="https://webwork.maa.org/wiki/StaticImages" target="_blank"
-        >static images</a>. All parameters are optional.
+        href="https://webwork.maa.org/wiki/StaticImages" target="_blank"
+      >static images</a>. All parameters are optional.
       </p>
       <b-card header-html="<h5>Resize Image</h5>" class="mb-2">
         <template #header>
@@ -708,7 +735,8 @@
     </b-modal>
     <span ref="top-of-form" />
     <div v-if="fullyMounted" v-show="false" id="from-sketcher-component">
-      <Sketcher :error-message="questionForm.errors.get(`solution_structure`)"
+      <Sketcher ref="questionSketcher"
+                :error-message="questionForm.errors.get(`solution_structure`)"
                 :solution-structure="solutionStructure"
                 :init-reload="initSketcherReload"
                 :type="sketcherType"
@@ -735,7 +763,7 @@
             addition, you may export
             the webWork code, which can be found under the <a style="cursor: pointer;"
                                                               @click.prevent="activeTabIndex=1"
-            >Primary Content</a> tab.
+          >Primary Content</a> tab.
           </b-alert>
           <p>
             The question properties help us to organize the
@@ -767,8 +795,8 @@
                     :key="`view-clone-history-${index}`"
               >
                 <a href="" @click.prevent="copyHistoryQuestionId=questionId;$bvModal.show('modal-clone-history')">{{
-                  questionId
-                }}</a>
+                    questionId
+                  }}</a>
                 <span v-if="questionForm.clone_history.length > 1 && index !== questionForm.clone_history.length-1">-></span>
               </span>
             </b-form-row>
@@ -1151,8 +1179,8 @@
                             style="line-height:.8"
                             @click="removeFrameworkItemSyncQuestion('descriptors',descriptor.id)"
                   >{{
-                    descriptor.text
-                  }} x
+                      descriptor.text
+                    }} x
                   </b-button>
                 </span>
               </span>
@@ -1166,8 +1194,8 @@
                             style="line-height:.8"
                             @click="removeFrameworkItemSyncQuestion('levels',level.id)"
                   >{{
-                    level.text
-                  }} x
+                      level.text
+                    }} x
                   </b-button>
                 </span>
               </span>
@@ -1222,7 +1250,7 @@
                   {{
                     //labels are brought in if it's an edited question otherwise it's done on the fly
                     chosenLearningOutcome.label ? chosenLearningOutcome.label :
-                    getLearningOutcomeLabel(chosenLearningOutcome)
+                      getLearningOutcomeLabel(chosenLearningOutcome)
                   }} x
                 </b-button>
               </div>
@@ -1538,10 +1566,10 @@
 
                     <b-form-radio value="webwork">
                       WeBWork <ConsultInsight
-                        id="consult-insight-webwork"
-                        :url="'https://commons.libretexts.org/insight/webwork-techniques'"
-                        :formatting-class="''"
-                      />
+                      id="consult-insight-webwork"
+                      :url="'https://commons.libretexts.org/insight/webwork-techniques'"
+                      :formatting-class="''"
+                    />
                     </b-form-radio>
                   </b-form-radio-group>
                   <b-form-select
@@ -1603,10 +1631,10 @@
                     </b-form-radio>
                     <b-form-radio value="accounting">
                       Accounting <ConsultInsight
-                        id="consult-insight-accounting"
-                        :url="'https://commons.libretexts.org/insight/adapt-accounting'"
-                        :formatting-class="''"
-                      />
+                      id="consult-insight-accounting"
+                      :url="'https://commons.libretexts.org/insight/adapt-accounting'"
+                      :formatting-class="''"
+                    />
                     </b-form-radio>
                     <b-modal id="modal-discuss-it"
                              title="Explanation of Discuss-it Questions"
@@ -1654,10 +1682,10 @@
                     </b-form-radio>
                     <b-form-radio value="sketcher">
                       Sketcher <ConsultInsight
-                        id="consult-insight-sketcher"
-                        :url="'https://commons.libretexts.org/insight/adapt-sketcher'"
-                        :formatting-class="''"
-                      />
+                      id="consult-insight-sketcher"
+                      :url="'https://commons.libretexts.org/insight/adapt-sketcher'"
+                      :formatting-class="''"
+                    />
                     </b-form-radio>
                     <b-form-radio value="3d_model">
                       3D Model
@@ -1851,10 +1879,10 @@
                                   @change="initQTIQuestionType('submit_molecule')"
                     >
                       Sketcher <ConsultInsight
-                        id="consult-insight-sketcher"
-                        :url="'https://commons.libretexts.org/insight/adapt-sketcher'"
-                        :formatting-class="''"
-                      />
+                      id="consult-insight-sketcher"
+                      :url="'https://commons.libretexts.org/insight/adapt-sketcher'"
+                      :formatting-class="''"
+                    />
                     </b-form-radio>
                   </div>
                 </b-form-group>
@@ -2251,11 +2279,18 @@
                         Set Molecule
                       </b-button>
                     </div>
-                    <div v-else>
+                    <div v-else-if="!isEditingMolecule">
+                      <b-button
+                        variant="outline-primary"
+                        size="sm"
+                        @click="editMolecule"
+                      >
+                        Edit Molecule
+                      </b-button>
                       <b-button
                         variant="info"
                         size="sm"
-                        @click="updateMarks"
+                        @click="updateMarks()"
                       >
                         Update Marks
                       </b-button>
@@ -2264,7 +2299,43 @@
                         size="sm"
                         @click="initUpdateStructure"
                       >
-                        Update Structure
+                        Start Over
+                      </b-button>
+                      <QuestionCircleTooltip id="marker-buttons-tooltip" />
+                      <b-tooltip target="marker-buttons-tooltip"
+                                 delay="250"
+                                 triggers="hover focus"
+                      >
+                        <div style="max-width: 320px; font-size: 13px; line-height: 1.6; text-align: left;">
+                          <p style="margin: 0 0 8px;">
+                            <strong>Edit Molecule:</strong> change the molecule with the full toolset. Marks and
+                            feedback stay with their atoms and bonds. If the question already has feedback, you'll be
+                            asked whether to keep it or clear it.
+                          </p>
+                          <p style="margin: 0 0 8px;">
+                            <strong>Update Marks:</strong> keep the molecule as it is and update the table below after
+                            adding or removing marks.
+                          </p>
+                          <p style="margin: 0;">
+                            <strong>Start Over:</strong> clear the Sketcher, deleting the molecule, every mark, and all
+                            feedback.
+                          </p>
+                        </div>
+                      </b-tooltip>
+                    </div>
+                    <div v-else>
+                      <b-button
+                        variant="primary"
+                        size="sm"
+                        @click="finishEditingMolecule"
+                      >
+                        Done Editing Molecule
+                      </b-button>
+                      <b-button
+                        size="sm"
+                        @click="cancelEditingMolecule"
+                      >
+                        Cancel
                       </b-button>
                     </div>
                   </div>
@@ -2308,7 +2379,7 @@
                     <div />
                   </div>
                   <MultipleAnswersAdvanced
-                    v-if="qtiQuestionType === 'marker' && qtiJson.solutionStructure.atoms && qtiJson.solutionStructure.bonds"
+                    v-if="qtiQuestionType === 'marker' && !isEditingMolecule && qtiJson.solutionStructure.atoms && qtiJson.solutionStructure.bonds"
                     ref="multipleAnswersAdvanced"
                     :key="`multiple-answers-advanced-${multipleAnswersAdvancedKey}`"
                     :qti-json="qtiJson"
@@ -2590,8 +2661,8 @@
                   you
                   will need to visit
                   {{ getTextFromTechnology(questionForm.technology) }}'s <a
-                    :href="questionForm.technology === 'h5p' ? h5pUrl : imathASUrl" target="_blank"
-                  >question editor</a>. Please note that you must have
+                  :href="questionForm.technology === 'h5p' ? h5pUrl : imathASUrl" target="_blank"
+                >question editor</a>. Please note that you must have
                   access to the editor.
                 </p>
               </div>
@@ -3083,6 +3154,7 @@ import {
   initAddEditDeleteSubjectChapterSection
 } from '~/helpers/SubjectChapterSection'
 import StructureImageUploader from '../StructureImageUploader.vue'
+import { carryOverScoring, moleculeChanged, structureHasFeedback } from '~/helpers/MarkerStructure'
 import { capitalize } from '../../helpers/Questions'
 import ThreeDModel from './ThreeDModel.vue'
 import AccountingJournalEntry from './accounting/AccountingJournalEntry.vue'
@@ -3369,6 +3441,9 @@ export default {
     imathASUrl: 'https://imathas.libretexts.org/imathas/course/moddataset.php',
     initSketcherReload: false,
     multipleAnswersAdvancedKey: 0,
+    isEditingMolecule: false,
+    structureBeforeMoleculeEdit: null,
+    editedMarkerStructure: null,
     sketcherType: 'default',
     updatingStructure: false,
     isWebworkDownloadOnly: false,
@@ -3474,18 +3549,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-    {
-      key: 'incorrect',
-      id: 'incorrect-response-feedback',
-      label: 'Incorrect Response',
-      editorShown: false
-    },
-    {
-      key: 'any',
-      id: 'any-response-feedback',
-      label: 'Any Response',
-      editorShown: false
-    }
+      {
+        key: 'incorrect',
+        id: 'incorrect-response-feedback',
+        label: 'Incorrect Response',
+        editorShown: false
+      },
+      {
+        key: 'any',
+        id: 'any-response-feedback',
+        label: 'Any Response',
+        editorShown: false
+      }
     ],
     webworkTemplate: null,
     webworkTemplateOptions: [],
@@ -3497,18 +3572,18 @@ export default {
       label: 'Correct Response',
       editorShown: false
     },
-    {
-      key: 'incorrect',
-      id: 'incorrect-response-feedback',
-      label: 'Incorrect Response',
-      editorShown: false
-    },
-    {
-      key: 'any',
-      id: 'any-response-feedback',
-      label: 'Any Response',
-      editorShown: false
-    }
+      {
+        key: 'incorrect',
+        id: 'incorrect-response-feedback',
+        label: 'Incorrect Response',
+        editorShown: false
+      },
+      {
+        key: 'any',
+        id: 'any-response-feedback',
+        label: 'Any Response',
+        editorShown: false
+      }
     ],
     simpleChoiceFeedbackConfig: simpleChoiceFeedbackConfig,
     jsonShown: false,
@@ -3964,7 +4039,7 @@ export default {
       console.error(this.qtiJson)
     },
     convertToMolecule () {
-      const iframe = document.querySelector('iframe[src="/api/sketcher/default"]')
+      const iframe = this.editorSketcherIframe()
       iframe.contentWindow.postMessage({
         method: 'import',
         smiles: this.smiles
@@ -3992,7 +4067,61 @@ export default {
     initUpdateStructure () {
       this.$bvModal.show('modal-confirm-update-structure')
     },
-    async updateMarks () {
+    // Marker: switch the Sketcher to the full toolset without losing the molecule,
+    // its marks, or the scoring/feedback typed into the table below it.
+    async editMolecule () {
+      await this.updateMarks(true) // flush the table's scoring/feedback into the structure first
+      this.structureBeforeMoleculeEdit = JSON.parse(JSON.stringify(this.qtiJson.solutionStructure))
+      this.solutionStructure = this.qtiJson.solutionStructure
+      this.isEditingMolecule = true
+      this.sketcherType = 'default' // iframe reloads with the full toolset; @load re-sends solutionStructure
+    },
+    async finishEditingMolecule () {
+      this.receivedStructure = false
+      this.editorSketcherIframe().contentWindow.postMessage('save', '*')
+      await this.handleGetStructure() // qtiJson.solutionStructure is now the edited molecule
+      const editedStructure = JSON.parse(JSON.stringify(this.qtiJson.solutionStructure))
+      if (moleculeChanged(this.structureBeforeMoleculeEdit, editedStructure) &&
+        structureHasFeedback(this.structureBeforeMoleculeEdit)) {
+        // The instructor decides whether to keep or clear the existing feedback.
+        this.editedMarkerStructure = editedStructure
+        this.$bvModal.show('modal-molecule-changed-feedback')
+        return
+      }
+      this.applyMarkerStructure(carryOverScoring(this.structureBeforeMoleculeEdit, editedStructure))
+      this.$noty.success('The molecule has been updated.')
+    },
+    finishMoleculeFeedbackChoice (clearFeedback) {
+      const structure = carryOverScoring(this.structureBeforeMoleculeEdit, this.editedMarkerStructure, { clearFeedback })
+      this.editedMarkerStructure = null
+      this.$bvModal.hide('modal-molecule-changed-feedback')
+      this.applyMarkerStructure(structure)
+      if (clearFeedback) {
+        this.$noty.success('The molecule has been updated and all feedback has been cleared.')
+      } else {
+        this.$noty.info('The molecule has been updated. Please check the feedback below to make sure it still applies.')
+      }
+    },
+    backToEditingMolecule () {
+      // The Sketcher is still showing the edited molecule with the full toolset.
+      this.editedMarkerStructure = null
+      this.$bvModal.hide('modal-molecule-changed-feedback')
+    },
+    cancelEditingMolecule () {
+      this.applyMarkerStructure(this.structureBeforeMoleculeEdit)
+      this.$noty.info('Your changes to the molecule have been discarded.')
+    },
+    applyMarkerStructure (structure) {
+      this.qtiJson.solutionStructure = structure
+      this.solutionStructure = structure
+      this.questionForm.solution_structure = JSON.stringify(structure)
+      this.questionForm.qti_json = JSON.stringify(this.qtiJson)
+      this.structureBeforeMoleculeEdit = null
+      this.isEditingMolecule = false
+      this.sketcherType = 'marker-only' // iframe reloads with the marker toolset and this structure
+      this.multipleAnswersAdvancedKey++ // rebuild the table (and atoms_and_bonds) from the new indexes
+    },
+    async updateMarks (silent = false) {
       await this.setMolecule()
       console.error('Molecule has been set')
       console.error('starting solutions structure')
@@ -4009,11 +4138,13 @@ export default {
       console.error('final solutions structure')
       console.error(this.qtiJson.solutionStructure)
       this.multipleAnswersAdvancedKey++
-      this.$noty.success('The marks have been updated.')
+      if (!silent) {
+        this.$noty.success('The marks have been updated.')
+      }
     },
     async setMolecule () {
       this.receivedStructure = false
-      const iframe = document.getElementById('sketcher')
+      const iframe = this.editorSketcherIframe()
       iframe.contentWindow.postMessage('save', '*')
       await this.handleGetStructure()
       this.sketcherType = 'marker-only'
@@ -4025,111 +4156,111 @@ export default {
         case ('numerical'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-            this.nativeType = 'basic'
-            this.initNativeType('basic')
-          }
-          , 250
+              this.nativeType = 'basic'
+              this.initNativeType('basic')
+            }
+            , 250
           )
           window.setTimeout(() => {
-            document.querySelector('input[type="radio"][name="qti-question-type"][value="numerical"]').click()
-          }
-          , 250
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="numerical"]').click()
+            }
+            , 250
           )
           break
         case ('multi_numerical'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-            this.nativeType = 'basic'
-            this.initNativeType('basic')
-          }
-          , 250
+              this.nativeType = 'basic'
+              this.initNativeType('basic')
+            }
+            , 250
           )
           window.setTimeout(() => {
-            document.querySelector('input[type="radio"][name="qti-question-type"][value="multi_numerical"]').click()
-          }
-          , 250
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="multi_numerical"]').click()
+            }
+            , 250
           )
           break
         case ('accounting_multi_part_computation'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-            this.nativeType = 'accounting'
-            this.initNativeType('accounting')
-          }, 250
+              this.nativeType = 'accounting'
+              this.initNativeType('accounting')
+            }, 250
           )
           window.setTimeout(() => {
-            document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_multi_part_computation"]').click()
-          }, 250
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_multi_part_computation"]').click()
+            }, 250
           )
           break
         case ('accounting_report'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-            this.nativeType = 'accounting'
-            this.initNativeType('accounting')
-          }
-          , 250
+              this.nativeType = 'accounting'
+              this.initNativeType('accounting')
+            }
+            , 250
           )
           window.setTimeout(() => {
-            document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_report"]').click()
-          }
-          , 250
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_report"]').click()
+            }
+            , 250
           )
           break
         case ('accounting_journal_entry'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-            this.nativeType = 'accounting'
-            this.initNativeType('accounting')
-          }
-          , 250
+              this.nativeType = 'accounting'
+              this.initNativeType('accounting')
+            }
+            , 250
           )
           window.setTimeout(() => {
-            document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_journal_entry"]').click()
-          }
-          , 250
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="accounting_journal_entry"]').click()
+            }
+            , 250
           )
           break
         case ('three_d_model_multiple_choice'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-            this.nativeType = '3d_model'
-            this.initNativeType('3d_model')
-          }
-          , 250
+              this.nativeType = '3d_model'
+              this.initNativeType('3d_model')
+            }
+            , 250
           )
           window.setTimeout(() => {
-            document.querySelector('input[type="radio"][name="qti-question-type"][value="three_d_model_multiple_choice"]').click()
-          }
-          , 250
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="three_d_model_multiple_choice"]').click()
+            }
+            , 250
           )
           break
         case ('flashcard'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-            this.nativeType = 'basic'
-            this.initNativeType('basic')
-          }
-          , 250
+              this.nativeType = 'basic'
+              this.initNativeType('basic')
+            }
+            , 250
           )
           window.setTimeout(() => {
-            document.querySelector('input[type="radio"][name="qti-question-type"][value="flashcard"]').click()
-          }
-          , 250
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="flashcard"]').click()
+            }
+            , 250
           )
           break
         case ('marker'):
           document.querySelector('input[type="radio"][name="question-type"][value="qti"]').click()
           window.setTimeout(() => {
-            this.nativeType = 'sketcher'
-            this.initNativeType('sketcher')
-          }
-          , 250
+              this.nativeType = 'sketcher'
+              this.initNativeType('sketcher')
+            }
+            , 250
           )
           window.setTimeout(() => {
-            document.querySelector('input[type="radio"][name="qti-question-type"][value="marker"]').click()
-          }
-          , 250
+              document.querySelector('input[type="radio"][name="qti-question-type"][value="marker"]').click()
+            }
+            , 250
           )
           break
       }
@@ -4137,7 +4268,7 @@ export default {
     async moveSketcherFromTab (loadStructure) {
       if (loadStructure) {
         this.receivedStructure = false
-        const iframe = document.getElementById('sketcher')
+        const iframe = this.editorSketcherIframe()
         iframe.contentWindow.postMessage('save', '*')
         await this.handleGetStructure()
       }
@@ -4287,12 +4418,24 @@ export default {
     updateQuestionMediaUploadsOrder (orderedMediaUploads) {
       this.questionForm.media_uploads = orderedMediaUploads
     },
+    // The editor's own Sketcher iframe. Other Sketchers can be on the page at the same
+    // time (e.g. the question being previewed behind this editor), all with id="sketcher",
+    // so never look it up with document.getElementById.
+    editorSketcherIframe () {
+      const sketcherComponent = this.$refs.questionSketcher
+      return sketcherComponent && sketcherComponent.$refs.sketcher ? sketcherComponent.$refs.sketcher : null
+    },
     receiveMessage (event) {
       console.error(event.data)
       console.error(this.nativeType)
       switch (this.nativeType) {
         case ('sketcher'):
           if (event.data.structure) {
+            const editorIframe = this.editorSketcherIframe()
+            if (editorIframe && event.source && event.source !== window && event.source !== editorIframe.contentWindow) {
+              // A structure from some other Sketcher iframe on the page; ignore it.
+              return
+            }
             this.receivedStructure = true
             this.qtiJson.solutionStructure = event.data.structure
             this.solutionStructure = event.data.structure
@@ -4464,6 +4607,10 @@ export default {
       if (window.self !== window.top) {
         window.parent.postMessage('scroll-to-top', '*')
       }
+      if (this.isEditingMolecule) {
+        this.$noty.info('Please click "Done Editing Molecule" (or Cancel) before saving.')
+        return false
+      }
       if (!this.checkedOpenEndedSubmissionType &&
         this.questionForm.technology === 'text' &&
         this.questionForm.non_technology_text !== '' &&
@@ -4562,7 +4709,7 @@ export default {
           case ('submit_molecule'):
           case ('marker'):
             this.receivedStructure = false
-            const iframe1 = document.getElementById('sketcher')
+            const iframe1 = this.editorSketcherIframe()
             iframe1.contentWindow.postMessage('save', '*')
             await this.handleGetStructure()
             break
@@ -4572,7 +4719,7 @@ export default {
             // yet support partial credit for arrows; force it regardless of
             // what's in qtiJson.partialCredit (the picker is hidden in the UI).
             this.qtiJson.partialCredit = 'exclusive'
-            const iframe2 = document.getElementById('sketcher')
+            const iframe2 = this.editorSketcherIframe()
             iframe2.contentWindow.postMessage('save', '*')
             await this.handleGetStructure()
             break
@@ -6247,10 +6394,14 @@ export default {
       if (window.self !== window.top) {
         window.parent.postMessage('scroll-to-top', '*')
       }
+      if (this.isEditingMolecule) {
+        this.$noty.info('Please click "Done Editing Molecule" (or Cancel) before previewing.')
+        return false
+      }
       if (['marker', 'submit-molecule', 'pushing_arrows'].includes(this.qtiQuestionType)) {
         this.previewingQuestion = true
         this.receivedStructure = false
-        const iframe = document.getElementById('sketcher')
+        const iframe = this.editorSketcherIframe()
         iframe.contentWindow.postMessage('save', '*')
         await this.handleGetStructure()
       }
