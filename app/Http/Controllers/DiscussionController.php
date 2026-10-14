@@ -6,6 +6,8 @@ use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\Discussion;
 use App\DiscussionComment;
+use App\DiscussionCommentAttachment;
+use App\DiscussionCommentTimestamp;
 use App\DiscussItChain;
 use App\DiscussionGroup;
 use App\Exceptions\Handler;
@@ -81,6 +83,21 @@ class DiscussionController extends Controller
                     return $response;
                 }
             }
+            //moments in audio/video comments (same thread) that this reply points to
+            $timestamps = DiscussionCommentTimestamp::normalize($request->input('timestamps', []));
+            $timestamps_error = DiscussionCommentTimestamp::validationError($timestamps, $discussion_id);
+            if ($timestamps_error) {
+                $response['message'] = $timestamps_error;
+                return $response;
+            }
+            $discuss_it_settings = json_decode($assignmentSyncQuestion->discussItSettings($assignment->id, $question->id));
+            //files (PDF, image, Office) attached to the comment
+            $attachments = DiscussionCommentAttachment::normalize($request->input('attachments', []));
+            $attachments_error = DiscussionCommentAttachment::validationError($attachments, 0, $discuss_it_settings);
+            if ($attachments_error) {
+                $response['message'] = $attachments_error;
+                return $response;
+            }
             DB::beginTransaction();
             if (!$discussion_id) {
                 if ($request->user()->role === 3) {
@@ -103,8 +120,16 @@ class DiscussionController extends Controller
                     $response['message'] = "That discussion thread is not part of this assignment.";
                     return $response;
                 }
+                //until they've posted, students only see (and reply in) threads by instructors or by themselves
+                if ($request->user()->role === 3
+                    && Helper::discussItMustPostBeforeViewing($discuss_it_settings)
+                    && !Discussion::studentHasPostedToSeeComments($assignment->id, $question->id, $request->user()->id)
+                    && !Discussion::studentCanReplyBeforePosting($discussion, $request->user()->id)) {
+                    DB::rollback();
+                    $response['message'] = "You can reply to your classmates once you've started a thread that meets the requirements.";
+                    return $response;
+                }
             }
-            $discuss_it_settings = json_decode($assignmentSyncQuestion->discussItSettings($assignment->id, $question->id));
             $discussionComment = new DiscussionComment();
             $discussionComment->discussion_id = $discussion->id;
             $discussionComment->posted_in_assignment_id = $assignment->id;
@@ -117,6 +142,8 @@ class DiscussionController extends Controller
 
             $discussionComment->satisfied_requirement = $satisfied_requirement;
             $discussionComment->save();
+            DiscussionCommentTimestamp::storeForComment($discussionComment->id, $timestamps);
+            DiscussionCommentAttachment::storeForComment($discussionComment->id, $attachments);
             if ($type === 'file') {
                 InitProcessTranscribe::dispatch($data['file'], 'discussion_comment');
             }
@@ -167,6 +194,19 @@ class DiscussionController extends Controller
             $page = 1;
 
             $discussions = $discussion->getByAssignmentQuestionMediaUploadId($assignment, $question, $media_upload_id)['discussions'];
+            //students may have to start a thread before they see their classmates' comments (instructors and graders
+            //see everything; the grader gets its comments elsewhere).  Once a student can no longer post (e.g. the
+            //assignment is closed), there's nothing left to copy into, so they see everything.
+            $response['comments_hidden_until_posted'] = false;
+            if (request()->user()->role === 3) {
+                $discuss_it_settings = json_decode((new AssignmentSyncQuestion())->discussItSettings($assignment->id, $question->id));
+                if (Helper::discussItMustPostBeforeViewing($discuss_it_settings)
+                    && !Discussion::studentHasPostedToSeeComments($assignment->id, $question->id, request()->user()->id)
+                    && Gate::inspect('store', [$discussion, $assignment, $question])->allowed()) {
+                    $discussions = Discussion::onlyWhatAStudentCanSeeBeforePosting($discussions, request()->user()->id);
+                    $response['comments_hidden_until_posted'] = true;
+                }
+            }
             if (!in_array($assignment->id, [207943, 94618]) && $assignment->course->public && request()->user()->id !== $assignment->course->user_id) {
                 $discussions = [];
             }

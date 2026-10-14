@@ -29,6 +29,12 @@ class DiscussionComment extends Model
                     ->value('assignment_id');
             }
         });
+        //every comment deletion goes through Eloquent, so related rows are cleaned up here (there are no foreign keys):
+        //the comment's own timestamps, timestamps in other replies that point to it, and its attached files
+        static::deleting(function (DiscussionComment $discussionComment) {
+            DiscussionCommentTimestamp::deleteForComment($discussionComment->id);
+            DiscussionCommentAttachment::deleteForComment($discussionComment->id);
+        });
     }
 
     /**
@@ -158,6 +164,15 @@ class DiscussionComment extends Model
             +$discuss_it_settings->min_number_of_initiate_or_reply_in_threads === 0
             || $number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements >= $discuss_it_settings->min_number_of_initiate_or_reply_in_threads;
 
+        //files attached to the student's comments made in this assignment (0 or missing = not required)
+        $min_number_of_attached_files = isset($discuss_it_settings->min_number_of_attached_files)
+        && DiscussionCommentAttachment::attachmentsAllowed($discuss_it_settings)
+            ? (int)$discuss_it_settings->min_number_of_attached_files
+            : 0;
+        $number_of_attached_files = DiscussionCommentAttachment::numberAttachedByStudent($assignment_id, $question_id, $user_id);
+        $satisfied_min_number_of_attached_files_requirement = $min_number_of_attached_files === 0
+            || $number_of_attached_files >= $min_number_of_attached_files;
+
         $satisfied_min_number_of_comments_requirement = (!property_exists($discuss_it_settings, 'min_number_of_comments'))
             || (+$discuss_it_settings->min_number_of_comments === 0) || ($discuss_it_settings->min_number_of_comments && $number_of_comments_that_satisfied_the_requirements >= $discuss_it_settings->min_number_of_comments);
 
@@ -179,6 +194,10 @@ class DiscussionComment extends Model
         $response['satisfied_min_number_of_replies_requirement'] = $satisfied_min_number_of_replies_requirement;
         $response['satisfied_min_number_of_initiate_or_reply_in_threads_requirement'] = $satisfied_min_number_of_initiate_or_reply_in_threads_requirement;
         $response['satisfied_min_number_of_comments_requirement'] = $satisfied_min_number_of_comments_requirement;
+        $response['satisfied_min_number_of_attached_files_requirement'] = $satisfied_min_number_of_attached_files_requirement;
+        $response['min_number_of_attached_files'] = $min_number_of_attached_files;
+        $response['number_of_attached_files'] = $number_of_attached_files;
+        $response['number_of_attached_files_message'] = "You have attached $number_of_attached_files file" . ($number_of_attached_files !== 1 ? 's' : '') . ".";
 
 
         $response['number_of_initiated_discussion_threads'] = $number_of_initiated_discussion_threads_that_satisfied_the_requirements;
@@ -246,7 +265,8 @@ class DiscussionComment extends Model
         $response['satisfied_all_requirements'] = $satisfied_min_number_of_initiated_discussion_threads_requirement
             && $satisfied_min_number_of_replies_requirement
             && $satisfied_min_number_of_initiate_or_reply_in_threads_requirement
-            && $satisfied_min_number_of_comments_requirement;
+            && $satisfied_min_number_of_comments_requirement
+            && $satisfied_min_number_of_attached_files_requirement;
         return $response;
     }
 

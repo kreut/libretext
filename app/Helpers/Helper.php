@@ -413,7 +413,7 @@ class Helper
 
     public static function defaultDiscussItSettings(): string
     {
-        return '{"number_of_groups":"1","auto_grade":"0","response_modes":[],"completion_criteria":"1","students_can_edit_comments":"1","students_can_delete_comments":"0","students_can_start_threads":"1","students_can_reply_to_threads":"1","min_number_of_initiated_discussion_threads":"1","min_number_of_replies":"1","min_number_of_initiate_or_reply_in_threads":"1","min_number_of_words":"","min_length_of_audio_video":""}';
+        return '{"number_of_groups":"1","auto_grade":"0","response_modes":[],"completion_criteria":"1","students_can_edit_comments":"1","students_can_delete_comments":"0","students_can_start_threads":"1","students_can_reply_to_threads":"1","students_must_post_before_viewing":"0","students_can_attach_files":"0","allowed_file_types":["pdf","image","word","excel","powerpoint"],"min_number_of_attached_files":"0","min_number_of_initiated_discussion_threads":"1","min_number_of_replies":"1","min_number_of_initiate_or_reply_in_threads":"1","min_number_of_words":"","min_length_of_audio_video":""}';
     }
 
     /**
@@ -428,6 +428,43 @@ class Helper
     {
         $discuss_it_settings = (array)$discuss_it_settings;
         return !isset($discuss_it_settings[$setting]) || +$discuss_it_settings[$setting] !== 0;
+    }
+
+    /**
+     * Why "students must post before seeing classmates' comments" can't be on with these settings, or null if it can.
+     * A student who can't see the threads can't reply to them, so they unlock by starting a thread that meets the
+     * requirements: completion criteria must be on, a thread must be required, and students must be able to start one.
+     *
+     * @param array|object|null $discuss_it_settings
+     * @return string|null
+     */
+    public static function discussItMustPostBeforeViewingError($discuss_it_settings): ?string
+    {
+        $discuss_it_settings = (array)$discuss_it_settings;
+        if (!+($discuss_it_settings['students_must_post_before_viewing'] ?? 0)) {
+            return null;
+        }
+        if (!+($discuss_it_settings['completion_criteria'] ?? 0)
+            || (int)($discuss_it_settings['min_number_of_initiated_discussion_threads'] ?? 0) < 1) {
+            return "To hide classmates' comments until students post, the completion criteria must require students to start at least 1 thread.";
+        }
+        if (!self::discussItStudentActionAllowed($discuss_it_settings, 'students_can_start_threads')) {
+            return "To hide classmates' comments until students post, students must be able to start new threads.";
+        }
+        return null;
+    }
+
+    /**
+     * Whether students only see classmates' comments once they've started a thread that meets the requirements.
+     *
+     * @param array|object|null $discuss_it_settings
+     * @return bool
+     */
+    public static function discussItMustPostBeforeViewing($discuss_it_settings): bool
+    {
+        $discuss_it_settings = (array)$discuss_it_settings;
+        return +($discuss_it_settings['students_must_post_before_viewing'] ?? 0) === 1
+            && !self::discussItMustPostBeforeViewingError($discuss_it_settings);
     }
 
     /**

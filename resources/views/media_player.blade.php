@@ -25,6 +25,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-hotkeys/0.2.27/videojs.hotkeys.min.js"></script>
 
   <script>
+    //how far the skip buttons and the left/right arrow keys move the playback position
+    var SKIP_SECONDS = 10;
+
     function configureAudioPlayer(audioId, captionId, startTime, vttUrl) {
       var audio = document.getElementById(audioId);
       var display = document.getElementById(captionId);
@@ -56,6 +59,48 @@
             };
           });
       }
+    }
+
+    /**
+     * Moves the playback position by `seconds` (negative goes back), staying within the recording.
+     * media: { getTime(), setTime(seconds), getDuration() }
+     */
+    function skipMedia(media, seconds) {
+      var duration = media.getDuration();
+      var target = Math.max(0, (media.getTime() || 0) + seconds);
+      if (duration && isFinite(duration)) {
+        target = Math.min(duration, target);
+      }
+      media.setTime(target);
+    }
+
+    //wires up the "Back 10s" / "Forward 10s" buttons inside the given container
+    function configureSkipControls(containerId, media) {
+      var container = document.getElementById(containerId);
+      if (!container) return;
+      container.querySelectorAll('[data-skip]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          skipMedia(media, +button.getAttribute('data-skip'));
+        });
+      });
+    }
+
+    //the browser's own audio controls jump 5 seconds on the arrow keys; match the 10-second buttons instead
+    function configureAudioArrowKeys(audio) {
+      var media = {
+        getTime: function () { return audio.currentTime; },
+        setTime: function (seconds) { audio.currentTime = seconds; },
+        getDuration: function () { return audio.duration; }
+      };
+      //listen in the capture phase so this runs before the browser's own control handlers, then stop them
+      audio.addEventListener('keydown', function (event) {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          skipMedia(media, event.key === 'ArrowLeft' ? -SKIP_SECONDS : SKIP_SECONDS);
+        }
+      }, true);
+      return media;
     }
 
     function parseVTT(vtt) {
@@ -152,6 +197,16 @@
       padding: 0;
       background: #f1f3f4;
     }
+    /* the Back 10s / Forward 10s buttons under each player */
+    .skip-controls {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+    }
+    .skip-controls .btn {
+      min-width: 110px;
+    }
   </style>
 </head>
 <body>
@@ -165,21 +220,39 @@
         <audio id="mobile-audio-player" class="native-audio-player" controls preload="auto">
           <source type="audio/mpeg" src="{{ $temporary_url }}"/>
         </audio>
+        <div id="mobile-audio-skip-controls" class="skip-controls" role="group" aria-label="Move back or forward 10 seconds">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-skip="-10" aria-label="Back 10 seconds">
+            <i class="fas fa-backward" aria-hidden="true"></i> Back 10s
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-skip="10" aria-label="Forward 10 seconds">
+            Forward 10s <i class="fas fa-forward" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
       <script>
         configureAudioPlayer('mobile-audio-player', {!! $vtt_file ? "'mobile-caption-display'" : 'null' !!}, {{ $start_time ?? 0 }}, {!! $vtt_file ? json_encode($vtt_file) : 'null' !!});
-        document.getElementById('audio-player').addEventListener('timeupdate', function() {
-          window.parent.postMessage({
-            type: 'videoTimeUpdate',
-            mediaId: "{{ $media_id ?? '' }}",
-            currentTime: this.currentTime
-          }, '*');
-        });
-        window.addEventListener('message', function(event) {
-          if (event.data?.type !== 'mediaPlayerSeekTo') return
-          if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
-          document.getElementById('audio-player').currentTime = event.data.time
-        });</script>
+        (function () {
+          var mediaId = "{{ $media_id ?? '' }}";
+          var audio = document.getElementById('mobile-audio-player');
+          configureSkipControls('mobile-audio-skip-controls', configureAudioArrowKeys(audio));
+          //report the playback position so the parent page can show/capture it (Transcript, timestamped replies);
+          //loadedmetadata reports it before playback starts, so "Reply at 0:00" is available right away
+          function postTime() {
+            window.parent.postMessage({
+              type: 'videoTimeUpdate',
+              mediaId: mediaId,
+              currentTime: audio.currentTime
+            }, '*');
+          }
+          ['loadedmetadata', 'timeupdate', 'pause', 'seeked'].forEach(function (eventName) {
+            audio.addEventListener(eventName, postTime);
+          });
+          window.addEventListener('message', function(event) {
+            if (!event.data || event.data.mediaId !== mediaId) return
+            if (event.data.type === 'mediaPlayerSeekTo') audio.currentTime = event.data.time
+            if (event.data.type === 'mediaPlayerPause') audio.pause()
+          });
+        })();</script>
 
     @elseif($type === 'video')
       @php
@@ -207,16 +280,24 @@
             <track kind="captions" src="{{ $vtt_file }}" />
           @endif
         </video>
+        <div id="mobile-video-skip-controls" class="skip-controls" role="group" aria-label="Move back or forward 10 seconds">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-skip="-10" aria-label="Back 10 seconds">
+            <i class="fas fa-backward" aria-hidden="true"></i> Back 10s
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-skip="10" aria-label="Forward 10 seconds">
+            Forward 10s <i class="fas fa-forward" aria-hidden="true"></i>
+          </button>
+        </div>
 
         @if (!$use_hls && isset($show_buttons) && $show_buttons)
-          <div class="controls" style="margin-bottom:50px;margin-top:25px">
-            <button type="button" class="btn btn-primary me-2" onclick="rotateLeft()">
+          <div class="controls" style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:50px;margin-top:0.5rem">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="rotateLeft()">
               <i class="fas fa-rotate-left"></i> Rotate Left
             </button>
-            <button type="button" class="btn btn-primary me-2" onclick="rotateRight()">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="rotateRight()">
               <i class="fas fa-rotate-right"></i> Rotate Right
             </button>
-            <button type="button" class="btn btn-secondary" onclick="resetRotation()">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetRotation()">
               <i class="fas fa-undo"></i> Reset
             </button>
           </div>
@@ -232,7 +313,7 @@
               plugins: {
                 hotkeys: {
                   volumeStep: 0.1,
-                  seekStep: 5,
+                  seekStep: SKIP_SECONDS,
                   enableMute: true,
                   enableFullscreen: true,
                 }
@@ -251,22 +332,45 @@
             const options = Object.assign({}, defaultOptions, extraOptions);
 
             const player = videojs('mobile-video-player', options);
+            configureSkipControls('mobile-video-skip-controls', {
+              getTime: function () { return player.currentTime(); },
+              setTime: function (seconds) { player.currentTime(seconds); },
+              getDuration: function () { return player.duration(); }
+            });
             player.ready(function () {
               const startTime = {{ $start_time ?? 0 }};
               if (startTime) {
-                this.currentTime(startTime);
+                //open at the requested moment (a reply's timestamp). Seeking before the video has loaded doesn't
+                //stick (it ends up back at 0), so it's applied again once the video can play; after that the
+                //person is in control.
+                const goToStartTime = function () {
+                  if (Math.abs(player.currentTime() - startTime) > 0.5) {
+                    player.currentTime(startTime);
+                  }
+                };
+                goToStartTime();
+                //HLS streams may not be seekable until the metadata loads
+                player.one('loadedmetadata', goToStartTime);
+                player.one('canplay', goToStartTime);
               }
-              player.on('timeupdate', function() {
+              //report the playback position so the parent page can show/capture it (Transcript, timestamped replies);
+              //it's also reported once the video has loaded, so "Reply at 0:00" is available before playback starts
+              function postTime() {
                 window.parent.postMessage({
                   type: 'videoTimeUpdate',
                   mediaId: "{{ $media_id ?? '' }}",  // pass your media ID into the blade template
                   currentTime: player.currentTime()
                 }, '*');
-              });
+              }
+              player.on(['loadedmetadata', 'timeupdate', 'pause', 'seeked'], postTime);
+              //the metadata may have loaded before this player was ready, in which case loadedmetadata has already fired
+              if (player.readyState() >= 1 && !startTime) {
+                postTime();
+              }
               window.addEventListener('message', function(event) {
-                if (event.data?.type !== 'mediaPlayerSeekTo') return
-                if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
-                player.currentTime(event.data.time)
+                if (!event.data || event.data.mediaId !== "{{ $media_id ?? '' }}") return
+                if (event.data.type === 'mediaPlayerSeekTo') player.currentTime(event.data.time)
+                if (event.data.type === 'mediaPlayerPause') player.pause()
               });
             });
           })();
@@ -288,6 +392,8 @@
             <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Your video is being optimized for mobile view...</p>
             <p style="font-size: 0.95rem; color: #555;">This may take a few minutes. In the meantime, you may view your
               video in a browser.</p>
+            <p style="font-size: 0.95rem; color: #555; margin-bottom: 0;">Once it's ready, you'll be able to reply to a
+              specific moment in it.</p>
           </div>
         </div>
       @endif
@@ -304,21 +410,39 @@
             <source type="audio/mpeg" src="{{ $temporary_url }}"/>
           </audio>
         </div>
+        <div id="audio-skip-controls" class="skip-controls" role="group" aria-label="Move back or forward 10 seconds">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-skip="-10" aria-label="Back 10 seconds">
+            <i class="fas fa-backward" aria-hidden="true"></i> Back 10s
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-skip="10" aria-label="Forward 10 seconds">
+            Forward 10s <i class="fas fa-forward" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
       <script>
         configureAudioPlayer('audio-player', {!! $vtt_file ? "'caption-display'" : 'null' !!}, {{ $start_time ?? 0 }}, {!! $vtt_file ? json_encode($vtt_file) : 'null' !!});
-        document.getElementById('audio-player').addEventListener('timeupdate', function() {
-          window.parent.postMessage({
-            type: 'videoTimeUpdate',
-            mediaId: "{{ $media_id ?? '' }}",
-            currentTime: this.currentTime
-          }, '*');
-        });
-        window.addEventListener('message', function(event) {
-          if (event.data?.type !== 'mediaPlayerSeekTo') return
-          if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
-          document.getElementById('audio-player').currentTime = event.data.time
-        });</script>
+        (function () {
+          var mediaId = "{{ $media_id ?? '' }}";
+          var audio = document.getElementById('audio-player');
+          configureSkipControls('audio-skip-controls', configureAudioArrowKeys(audio));
+          //report the playback position so the parent page can show/capture it (Transcript, timestamped replies);
+          //loadedmetadata reports it before playback starts, so "Reply at 0:00" is available right away
+          function postTime() {
+            window.parent.postMessage({
+              type: 'videoTimeUpdate',
+              mediaId: mediaId,
+              currentTime: audio.currentTime
+            }, '*');
+          }
+          ['loadedmetadata', 'timeupdate', 'pause', 'seeked'].forEach(function (eventName) {
+            audio.addEventListener(eventName, postTime);
+          });
+          window.addEventListener('message', function(event) {
+            if (!event.data || event.data.mediaId !== mediaId) return
+            if (event.data.type === 'mediaPlayerSeekTo') audio.currentTime = event.data.time
+            if (event.data.type === 'mediaPlayerPause') audio.pause()
+          });
+        })();</script>
 
     @elseif($type === 'video')
       @php
@@ -346,16 +470,24 @@
             <track kind="captions" src="{{ $vtt_file }}" />
           @endif
         </video>
+        <div id="video-skip-controls" class="skip-controls" role="group" aria-label="Move back or forward 10 seconds">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-skip="-10" aria-label="Back 10 seconds">
+            <i class="fas fa-backward" aria-hidden="true"></i> Back 10s
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-skip="10" aria-label="Forward 10 seconds">
+            Forward 10s <i class="fas fa-forward" aria-hidden="true"></i>
+          </button>
+        </div>
 
         @if (!$use_hls && isset($show_buttons) && $show_buttons)
-          <div class="controls" style="margin-bottom:50px;margin-top:25px">
-            <button type="button" class="btn btn-primary me-2" onclick="rotateLeft()">
+          <div class="controls" style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:50px;margin-top:0.5rem">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="rotateLeft()">
               <i class="fas fa-rotate-left"></i> Rotate Left
             </button>
-            <button type="button" class="btn btn-primary me-2" onclick="rotateRight()">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="rotateRight()">
               <i class="fas fa-rotate-right"></i> Rotate Right
             </button>
-            <button type="button" class="btn btn-secondary" onclick="resetRotation()">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetRotation()">
               <i class="fas fa-undo"></i> Reset
             </button>
           </div>
@@ -371,7 +503,7 @@
               plugins: {
                 hotkeys: {
                   volumeStep: 0.1,
-                  seekStep: 5,
+                  seekStep: SKIP_SECONDS,
                   enableMute: true,
                   enableFullscreen: true,
                 }
@@ -389,10 +521,26 @@
             const options = Object.assign({}, defaultOptions, extraOptions);
 
             const player = videojs('video1', options);
+            configureSkipControls('video-skip-controls', {
+              getTime: function () { return player.currentTime(); },
+              setTime: function (seconds) { player.currentTime(seconds); },
+              getDuration: function () { return player.duration(); }
+            });
             player.ready(function () {
               const startTime = {{ $start_time ?? 0 }};
               if (startTime) {
-                this.currentTime(startTime);
+                //open at the requested moment (a reply's timestamp). Seeking before the video has loaded doesn't
+                //stick (it ends up back at 0), so it's applied again once the video can play; after that the
+                //person is in control.
+                const goToStartTime = function () {
+                  if (Math.abs(player.currentTime() - startTime) > 0.5) {
+                    player.currentTime(startTime);
+                  }
+                };
+                goToStartTime();
+                //HLS streams may not be seekable until the metadata loads
+                player.one('loadedmetadata', goToStartTime);
+                player.one('canplay', goToStartTime);
               }
               const ro = new ResizeObserver(() => {
                 this.trigger('resize');
@@ -401,17 +549,24 @@
 
               });
               ro.observe(this.el());
-              player.on('timeupdate', function() {
+              //report the playback position so the parent page can show/capture it (Transcript, timestamped replies);
+              //it's also reported once the video has loaded, so "Reply at 0:00" is available before playback starts
+              function postTime() {
                 window.parent.postMessage({
                   type: 'videoTimeUpdate',
                   mediaId: "{{ $media_id ?? '' }}",  // pass your media ID into the blade template
                   currentTime: player.currentTime()
                 }, '*');
-              });
+              }
+              player.on(['loadedmetadata', 'timeupdate', 'pause', 'seeked'], postTime);
+              //the metadata may have loaded before this player was ready, in which case loadedmetadata has already fired
+              if (player.readyState() >= 1 && !startTime) {
+                postTime();
+              }
               window.addEventListener('message', function(event) {
-                if (event.data?.type !== 'mediaPlayerSeekTo') return
-                if (event.data?.mediaId !== "{{ $media_id ?? '' }}") return
-                player.currentTime(event.data.time)
+                if (!event.data || event.data.mediaId !== "{{ $media_id ?? '' }}") return
+                if (event.data.type === 'mediaPlayerSeekTo') player.currentTime(event.data.time)
+                if (event.data.type === 'mediaPlayerPause') player.pause()
               });
             });
           })();
@@ -432,6 +587,8 @@
           >
             <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Your video is being optimized...</p>
             <p style="font-size: 0.95rem; color: #555;">This may take a few minutes. Please check back shortly.</p>
+            <p style="font-size: 0.95rem; color: #555; margin-bottom: 0;">Once it's ready, you'll be able to reply to a
+              specific moment in it.</p>
           </div>
         </div>
       @endif

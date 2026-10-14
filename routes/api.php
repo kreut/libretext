@@ -243,6 +243,7 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
 
     Route::delete('/discussion-comments/{discussionComment}', 'DiscussionCommentController@destroy');
     Route::patch('/discussion-comments/{discussionComment}', 'DiscussionCommentController@update');
+    Route::patch('/discussion-comments/{discussionComment}/attachments', 'DiscussionCommentController@updateAttachments');
     Route::get('/discussion-comments/assignment/{assignment}/question/{question}/user/{user}/satisfied', 'DiscussionCommentController@satisfiedRequirements');
     Route::post('/discussion-comments/assignment/{assignment}/question/{question}/audio', 'DiscussionCommentController@storeAudioDiscussionComment');
     Route::patch('/discussion-comments/assignment/{assignment}/question/{question}/audio-video-satisfied-file-requirements', 'DiscussionCommentController@audioVideoUploadSatisfiedRequirement');

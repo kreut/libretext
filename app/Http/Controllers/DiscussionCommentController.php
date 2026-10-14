@@ -6,6 +6,8 @@ use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\Discussion;
 use App\DiscussionComment;
+use App\DiscussionCommentAttachment;
+use App\DiscussionCommentTimestamp;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\UpdateDiscussionRequest;
@@ -633,6 +635,10 @@ class DiscussionCommentController extends Controller
                 $discussionComment->satisfied_requirement = 1;
             }
             $discussionComment->save();
+            //timestamps can be removed while editing, but not added (they're added from the video/audio window)
+            if ($request->has('keep_timestamp_ids')) {
+                DiscussionCommentTimestamp::keepOnly($discussionComment->id, (array)$request->input('keep_timestamp_ids', []));
+            }
             $discussion_comment_submission_results = $discussionComment->satisfiedRequirements($assignment, $question->id, $request->user()->id, $assignmentSyncQuestion);
             $discussionComment->updateScore($discuss_it_settings,
                 $discussion_comment_submission_results,
@@ -653,6 +659,87 @@ class DiscussionCommentController extends Controller
         }
         return $response;
 
+    }
+
+    /**
+     * Changes the files attached to a comment: keeps the listed ones and adds new ones (up to 5 in all).  Separate from
+     * update() so that audio/video comments can change their files without being re-recorded and re-transcribed.
+     *
+     * @param Request $request
+     * @param DiscussionComment $discussionComment
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Submission $submission
+     * @param Score $score
+     * @param SubmissionFile $submissionFile
+     * @return array
+     * @throws Exception
+     */
+    public
+    function updateAttachments(Request                $request,
+                               DiscussionComment      $discussionComment,
+                               AssignmentSyncQuestion $assignmentSyncQuestion,
+                               Submission             $submission,
+                               Score                  $score,
+                               SubmissionFile         $submissionFile): array
+    {
+        $response['type'] = 'error';
+        try {
+            $request->validate([
+                'keep_attachment_ids' => 'present|array',
+                'keep_attachment_ids.*' => 'integer',
+                'attachments' => 'nullable|array|max:' . DiscussionCommentAttachment::MAX_PER_COMMENT,
+                'attachments.*.file' => 'required|string|max:191',
+                'attachments.*.original_filename' => 'required|string|max:255']);
+            $discussion = Discussion::find($discussionComment->discussion_id);
+            //for linked (daisy-chained) questions, the comment belongs to the assignment it was made in
+            $assignment = Assignment::find($discussionComment->postedInAssignmentId());
+            $question = Question::find($discussion->question_id);
+            $authorized = Gate::inspect('update', [$discussionComment, $assignment->id, $question->id, (int)$request->viewing_assignment_id]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $discuss_it_settings = json_decode($assignmentSyncQuestion->discussItSettings($assignment->id, $question->id));
+            //only this comment's own attachments can be kept
+            $keep_attachment_ids = DB::table('discussion_comment_attachments')
+                ->where('discussion_comment_id', $discussionComment->id)
+                ->whereIn('id', array_map('intval', $request->input('keep_attachment_ids', [])))
+                ->pluck('id')
+                ->toArray();
+            $attachments = DiscussionCommentAttachment::normalize($request->input('attachments', []));
+            $attachments_error = DiscussionCommentAttachment::validationError($attachments, count($keep_attachment_ids), $discuss_it_settings);
+            if ($attachments_error) {
+                $response['message'] = $attachments_error;
+                return $response;
+            }
+            DB::beginTransaction();
+            DiscussionCommentAttachment::keepOnly($discussionComment->id, $keep_attachment_ids);
+            DiscussionCommentAttachment::storeForComment($discussionComment->id, $attachments);
+            //the number of attached files can be a completion criterion
+            $discussion_comment_submission_results = $discussionComment->satisfiedRequirements($assignment, $question->id, $discussionComment->user_id, $assignmentSyncQuestion);
+            $discussionComment->updateScore($discuss_it_settings,
+                $discussion_comment_submission_results,
+                $assignmentSyncQuestion,
+                $discussionComment->user_id,
+                $assignment,
+                $question,
+                $submission,
+                $submissionFile,
+                $score);
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = 'The attached files have been updated.';
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            if (DB::transactionLevel()) {
+                DB::rollback();
+            }
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We are unable to update the attached files.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
@@ -749,7 +836,8 @@ class DiscussionCommentController extends Controller
             'temporary_url' => $temporary_url,
             'mp4_temporary_url' => $mp4_temporary_url,
             'vtt_file' => $vtt_file,
-            'start_time' => 0,
+            //lets a reply's timestamp open the comment at that moment
+            'start_time' => max(0, round((float)$request->query('start_time', 0), 2)),
             'show_buttons' => true,
             'is_phone' => $is_phone,
             'in_modal' => true,

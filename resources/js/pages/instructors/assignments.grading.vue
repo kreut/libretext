@@ -149,6 +149,54 @@
     >
       <p class="mb-0">{{ confirmTimerModalMessage }}</p>
     </b-modal>
+    <b-modal id="modal-grader-file-comment"
+             :title="activeFileComment.original_filename || 'File'"
+             size="xl"
+             @hidden="activeFileComment = {}"
+    >
+      <VuePdfEmbed v-if="activeFileComment.file_kind === 'pdf' && activeFileComment.file_url"
+                   annotation-layer
+                   text-layer
+                   :source="activeFileComment.file_url"
+      />
+      <img v-if="activeFileComment.file_kind === 'image' && activeFileComment.file_url"
+           :src="activeFileComment.file_url"
+           :alt="activeFileComment.original_filename"
+           class="d-block mx-auto"
+           style="max-width: 100%"
+      >
+      <template #modal-footer>
+        <a v-if="activeFileComment.download_url"
+           :href="activeFileComment.download_url"
+           class="btn btn-sm btn-outline-primary mr-auto"
+        ><b-icon icon="download" aria-hidden="true"/> Download</a>
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-grader-file-comment')">
+          OK
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-timestamped-comment"
+             :title="`Comment by ${timestampedComment.name} from ${timestampedComment.time}`"
+             size="lg"
+             @hidden="timestampedComment.src = ''"
+    >
+      <iframe v-if="timestampedComment.src"
+              :key="timestampedComment.src"
+              v-resize="{ log: false }"
+              :src="timestampedComment.src"
+              width="100%"
+              frameborder="0"
+              allowfullscreen=""
+      />
+      <template #modal-footer>
+        <b-button size="sm"
+                  variant="primary"
+                  @click="$bvModal.hide('modal-timestamped-comment')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal id="modal-discussion"
              :title="`Started by ${activeDiscussion.started_by} on ${activeDiscussion.created_at}`"
              no-close-on-backdrop
@@ -165,7 +213,38 @@
         >
           From {{ comment.assignment_name }}
         </b-badge>
+        <div v-if="comment.timestamps && comment.timestamps.length" class="mt-1 mb-1">
+          <b-button v-for="timestamp in comment.timestamps"
+                    :key="`timestamp-${timestamp.id}`"
+                    size="sm"
+                    variant="outline-secondary"
+                    class="mr-1 py-0 font-weight-normal"
+                    :aria-label="`Play ${timestamp.referenced_created_by_name}'s comment from ${formatSeconds(timestamp.seconds)}`"
+                    @click="openTimestampedComment(timestamp)"
+          >
+            <b-icon icon="play-fill" aria-hidden="true"/>
+            {{ timestamp.referenced_created_by_name }} {{ formatSeconds(timestamp.seconds) }}
+          </b-button>
+        </div>
         <span v-if="comment.text" v-html="comment.text"/>
+        <div v-if="comment.attachments && comment.attachments.length" class="mt-1 mb-2">
+          <div v-for="attachment in comment.attachments" :key="`attachment-${attachment.id}`" class="mb-1">
+            <img v-if="attachment.file_kind === 'image' && attachment.file_url"
+                 :src="attachment.file_url"
+                 :alt="`Image attached by the student: ${attachment.original_filename}`"
+                 class="d-block mb-1"
+                 style="max-width: 100%; max-height: 400px; border-radius: 4px; cursor: pointer"
+                 @click="viewFileComment(attachment)"
+            >
+            <b-icon icon="paperclip" aria-hidden="true"/>
+            <!-- PDFs and images open in a window with a Download button; Office files download -->
+            <a v-if="['pdf', 'image'].includes(attachment.file_kind)"
+               href=""
+               @click.prevent="viewFileComment(attachment)"
+            >{{ attachment.original_filename }}</a>
+            <a v-else :href="attachment.download_url">{{ attachment.original_filename }}</a>
+          </div>
+        </div>
         <iframe
           v-if="comment.file"
           v-resize="{ log: false }"
@@ -619,6 +698,11 @@
                       />
                     </div>
                     <div v-if="isDiscussIt">
+                      <!-- shown while the student's requirements are being checked, instead of an empty card -->
+                      <div v-if="!showDiscussIt" class="text-center text-muted py-4">
+                        <b-spinner small type="grow" class="mr-1"/>
+                        Loading comments...
+                      </div>
                       <div v-show="showDiscussIt">
                         <ul v-show="discussItCompletionCriteria" style="list-style: none;">
                           <li>
@@ -665,6 +749,18 @@
                                 with {{ discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads }} required.
                               </span>
                           </li>
+                          <li v-show="discussItRequirementsInfo.min_number_of_attached_files > 0">
+                            <CompletedIcon
+                              :completed="discussItRequirementsInfo.satisfied_min_number_of_attached_files_requirement"
+                            />
+                            <span
+                              :class="discussItRequirementsInfo.satisfied_min_number_of_attached_files_requirement ? 'text-success' : 'text-danger'"
+                            >
+                              Attached {{ discussItRequirementsInfo.number_of_attached_files }}
+                              file<span v-if="+discussItRequirementsInfo.number_of_attached_files !== 1">s</span>,
+                              with {{ discussItRequirementsInfo.min_number_of_attached_files }} required.
+                            </span>
+                          </li>
 
                         </ul>
 
@@ -705,6 +801,19 @@
                                 student may have used ChatGPT to generate the comment.
                               </b-tooltip>
                             </b-alert>
+                            <div v-if="comment.timestamps && comment.timestamps.length" class="mt-1 mb-1">
+                              <b-button v-for="timestamp in comment.timestamps"
+                                        :key="`timestamp-${timestamp.id}`"
+                                        size="sm"
+                                        variant="outline-secondary"
+                                        class="mr-1 py-0 font-weight-normal"
+                                        :aria-label="`Play ${timestamp.referenced_created_by_name}'s comment from ${formatSeconds(timestamp.seconds)}`"
+                                        @click="openTimestampedComment(timestamp)"
+                              >
+                                <b-icon icon="play-fill" aria-hidden="true"/>
+                                {{ timestamp.referenced_created_by_name }} {{ formatSeconds(timestamp.seconds) }}
+                              </b-button>
+                            </div>
                             <div v-if="comment.text" v-html="comment.text"/>
 
                             <b-tooltip :target="`view-in-new-tab-${comment.discussion_comment_id}`"
@@ -721,6 +830,24 @@
                             >
                                 <font-awesome-icon :icon="externalLink"/>
                               </span>
+                            <div v-if="comment.attachments && comment.attachments.length" class="mt-1 mb-2">
+                              <div v-for="attachment in comment.attachments" :key="`attachment-${attachment.id}`" class="mb-1">
+                                <img v-if="attachment.file_kind === 'image' && attachment.file_url"
+                                     :src="attachment.file_url"
+                                     :alt="`Image attached by the student: ${attachment.original_filename}`"
+                                     class="d-block mb-1"
+                                     style="max-width: 100%; max-height: 400px; border-radius: 4px; cursor: pointer"
+                                     @click="viewFileComment(attachment)"
+                                >
+                                <b-icon icon="paperclip" aria-hidden="true"/>
+                                <!-- PDFs and images open in a window with a Download button; Office files download -->
+                                <a v-if="['pdf', 'image'].includes(attachment.file_kind)"
+                                   href=""
+                                   @click.prevent="viewFileComment(attachment)"
+                                >{{ attachment.original_filename }}</a>
+                                <a v-else :href="attachment.download_url">{{ attachment.original_filename }}</a>
+                              </div>
+                            </div>
                             <iframe
                               v-if="comment.file"
                               :key="`discussion-comment-${discussionCommentCacheKey}`"
@@ -1464,12 +1591,14 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { roundToDecimalSigFig } from '../../helpers/Math'
 import ForgeViewer from '../../components/viewers/ForgeViewer.vue'
 import Transcript from '../../components/Transcript.vue'
+import VuePdfEmbed from 'vue-pdf-embed/dist/vue2-pdf-embed'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
     Transcript,
+    VuePdfEmbed,
     ForgeViewer,
     FontAwesomeIcon,
     QtiJsonAnswerViewer,
@@ -1531,7 +1660,12 @@ export default {
     imageRetried: false,
     showDiscussIt: false,
     discussItRequirementsInfo: {},
+    discussItRequirementsKey: '',
     activeDiscussion: {},
+    // the audio/video comment (at a moment) that a reply's timestamp points to
+    timestampedComment: { name: '', time: '', src: '' },
+    // a Discuss-it file comment (PDF or image) being viewed
+    activeFileComment: {},
     activeUserId: 0,
     discussions: [],
     discussionsByUserId: [],
@@ -1757,6 +1891,27 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    formatSeconds (totalSeconds) {
+      totalSeconds = Math.floor(+totalSeconds || 0)
+      const hours = Math.floor(totalSeconds / 3600)
+      const minutes = Math.floor((totalSeconds % 3600) / 60)
+      const seconds = String(totalSeconds % 60).padStart(2, '0')
+      return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}` : `${minutes}:${seconds}`
+    },
+    viewFileComment (comment) {
+      this.activeFileComment = comment
+      this.$bvModal.show('modal-grader-file-comment')
+    },
+    openTimestampedComment (timestamp) {
+      // start a few seconds early so the lead-up to the moment can be heard (same as the student view)
+      const startTime = Math.max(0, timestamp.seconds - 5)
+      this.timestampedComment = {
+        name: timestamp.referenced_created_by_name,
+        time: this.formatSeconds(timestamp.seconds),
+        src: `/discussion-comments/media-player/discussion-comment-id/${timestamp.referenced_discussion_comment_id}/is-phone/0?start_time=${startTime}`
+      }
+      this.$bvModal.show('modal-timestamped-comment')
+    },
     viewInNewTab (url) {
       window.open(url, '_blank')
     },
@@ -1875,9 +2030,14 @@ export default {
       }
     },
     async getDiscussItRequirementInfo () {
-      this.showDiscussIt = false
       const questionId = this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_id']
       const userId = this.grading[this.currentStudentPage - 1]['open_ended_submission']['user_id']
+      // only show the loading message when switching to a different student; this is called more than once
+      // for the same student when the page loads, and that should refresh quietly instead of flashing
+      const requirementsKey = `${questionId}-${userId}`
+      if (requirementsKey !== this.discussItRequirementsKey) {
+        this.showDiscussIt = false
+      }
       try {
         const { data } = await axios.get(`/api/discussion-comments/assignment/${this.assignmentId}/question/${questionId}/user/${userId}/satisfied`)
         if (data.type === 'error') {
@@ -1885,6 +2045,7 @@ export default {
         } else {
           this.discussItCompletionCriteria = data.completion_criteria
           this.discussItRequirementsInfo = data.satisfied_requirements
+          this.discussItRequirementsKey = requirementsKey
         }
       } catch (error) {
         this.$noty.error(error.message)

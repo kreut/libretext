@@ -35,6 +35,13 @@ class StoreDiscussionRequest extends FormRequest
             default:
                 throw new Exception ("This type of comment has no validation associated with it.");
         }
+        $rules['timestamps'] = 'nullable|array';
+        $rules['timestamps.*.discussion_comment_id'] = 'required|integer';
+        $rules['timestamps.*.seconds'] = 'required|numeric|min:0';
+        //files attached to the comment; their type and size are checked when the comment is saved
+        $rules['attachments'] = 'nullable|array|max:' . \App\DiscussionCommentAttachment::MAX_PER_COMMENT;
+        $rules['attachments.*.file'] = 'required|string|max:191';
+        $rules['attachments.*.original_filename'] = 'required|string|max:255';
         return $rules;
     }
 }

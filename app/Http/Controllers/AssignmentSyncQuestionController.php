@@ -1686,6 +1686,12 @@ class AssignmentSyncQuestionController extends Controller
             foreach (['students_can_start_threads', 'students_can_reply_to_threads'] as $key) {
                 $settings[$key] = $current_settings[$key] ?? '1';
             }
+            //students who can't start threads there could never unlock their classmates' comments
+            $must_post_before_viewing_error = Helper::discussItMustPostBeforeViewingError($settings);
+            if ($must_post_before_viewing_error) {
+                $response['message'] = "In $name: $must_post_before_viewing_error Nothing was saved.";
+                return $response;
+            }
             //with its own new-thread/reply options, students there might not be able to meet the criteria
             foreach (Helper::discussItParticipationConflicts($settings) as $conflict) {
                 $response['participation_warnings'][] = "In $name: $conflict";

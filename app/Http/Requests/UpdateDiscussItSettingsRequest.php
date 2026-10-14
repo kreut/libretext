@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\Helper;
+use App\DiscussionCommentAttachment;
 use App\Rules\IsValidMinNumberForDiscussIt;
 use App\Rules\IsValidNumberOfDiscussItGroups;
 use App\Rules\IsValidPeriodOfTime;
@@ -33,6 +35,23 @@ class UpdateDiscussItSettingsRequest extends FormRequest
                 $this->merge([$key => '1']);
             }
         }
+        //"file" was briefly a response mode before files became attachments; settings saved then still have it
+        if (is_array($this->response_modes)) {
+            $this->merge(['response_modes' => array_values(array_diff($this->response_modes, ['file']))]);
+        }
+        if (!$this->has('students_must_post_before_viewing')) {
+            $this->merge(['students_must_post_before_viewing' => '0']);
+        }
+        //attaching files is off unless turned on; when on, every type is allowed unless the instructor narrows it down
+        if (!$this->has('students_can_attach_files')) {
+            $this->merge(['students_can_attach_files' => '0']);
+        }
+        if (!$this->has('allowed_file_types')) {
+            $this->merge(['allowed_file_types' => array_keys(DiscussionCommentAttachment::fileTypes())]);
+        }
+        if (!$this->has('min_number_of_attached_files') || $this->min_number_of_attached_files === null || $this->min_number_of_attached_files === '') {
+            $this->merge(['min_number_of_attached_files' => '0']);
+        }
     }
 
     /**
@@ -46,7 +65,24 @@ class UpdateDiscussItSettingsRequest extends FormRequest
         $question_id = $request->route('question')->id;
         $response_modes = $this->response_modes ?: [];
         $rules = [
-            'response_modes' => ['required'],
+            'response_modes' => ['required', 'array'],
+            'response_modes.*' => [Rule::in(['text', 'audio', 'video'])],
+            'students_can_attach_files' => ['required', Rule::in([0, 1])],
+            'allowed_file_types' => +$this->students_can_attach_files === 1 ? ['required', 'array', 'min:1'] : ['array'],
+            'allowed_file_types.*' => [Rule::in(array_keys(DiscussionCommentAttachment::fileTypes()))],
+            'min_number_of_attached_files' => ['required', 'integer', 'min:0', 'max:1000',
+                function ($attribute, $value, $fail) {
+                    if (+$value > 0 && +$this->students_can_attach_files !== 1) {
+                        $fail('To require attached files, students must be able to attach files.');
+                    }
+                }],
+            'students_must_post_before_viewing' => ['required', Rule::in([0, 1]),
+                function ($attribute, $value, $fail) {
+                    $error = Helper::discussItMustPostBeforeViewingError($this->all());
+                    if ($error) {
+                        $fail($error);
+                    }
+                }],
             'number_of_groups' => new IsValidNumberOfDiscussItGroups($assignment_id, $question_id),
             "students_can_edit_comments" => ['required', Rule::in([0, 1])],
             "students_can_delete_comments" => ['required', Rule::in([0, 1])],
@@ -76,6 +112,8 @@ class UpdateDiscussItSettingsRequest extends FormRequest
     public function messages()
     {
         $messages['response_modes.required'] = "At least one method of responding is required.";
+        $messages['allowed_file_types.required'] = "Choose at least one type of file students can upload.";
+        $messages['allowed_file_types.min'] = "Choose at least one type of file students can upload.";
         return $messages;
 
     }

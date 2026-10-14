@@ -41,7 +41,7 @@
         assignment, open the question from that assignment instead.
       </p>
       <template #modal-footer>
-        <b-button size="sm" @click="$bvModal.hide('modal-linked-discussion-notice')">
+        <b-button size="sm" @click="cancelLinkedDiscussionNotice">
           Cancel
         </b-button>
         <b-button size="sm" variant="primary" @click="acknowledgeLinkedDiscussionNotice">
@@ -163,6 +163,17 @@
             }}
           </th>
         </tr>
+        <tr
+          v-show="completionRequirements.find(item => item.key === 'min_number_of_attached_files')"
+          :class="discussionCommentSubmissionResults.satisfied_min_number_of_attached_files_requirement ? 'text-success' : 'text-danger'"
+        >
+          <th>Attach Files</th>
+          <th>{{ discussionCommentSubmissionResults.min_number_of_attached_files }}</th>
+          <th>{{ discussionCommentSubmissionResults.number_of_attached_files }}</th>
+          <th>
+            {{ discussionCommentSubmissionResults.satisfied_min_number_of_attached_files_requirement ? 'Yes' : 'No' }}
+          </th>
+        </tr>
       </table>
       <template #modal-footer>
         <b-button size="sm"
@@ -184,6 +195,21 @@
                                      :comment-type="'text'"
       />
 
+      <div v-if="editTimestamps.length" class="mb-2">
+        <span class="small text-muted mr-1">Timestamp:</span>
+        <b-badge v-for="(timestamp, timestampIndex) in editTimestamps"
+                 :key="`edit-timestamp-${timestamp.id}`"
+                 variant="info"
+                 class="mr-1 discuss-it-timestamp-chip"
+        >
+          {{ timestamp.referenced_created_by_name }} {{ formatSeconds(timestamp.seconds) }}
+          <a href=""
+             class="text-white ml-1"
+             :aria-label="`Remove the ${formatSeconds(timestamp.seconds)} timestamp`"
+             @click.prevent="editTimestamps.splice(timestampIndex, 1)"
+          >&times;</a>
+        </b-badge>
+      </div>
       <ckeditor
         id="discuss_it_text"
         ref="discuss_it_text"
@@ -197,6 +223,29 @@
         @ready="handleFixCKEditorWithPasteWarning"
         @keydown="commentForm.errors.clear('text')"
       />
+      <div v-if="studentsCanAttachFiles || editAttachments.length" class="mb-2">
+        <div class="small font-weight-bold mb-1">Attached files</div>
+        <div v-for="(attachment, attachmentIndex) in editAttachments"
+             :key="`edit-attachment-${attachment.id}`"
+             class="small mb-1"
+        >
+          <b-icon-paperclip aria-hidden="true" />
+          {{ attachment.original_filename }}
+          <a href=""
+             class="ml-1 text-danger"
+             :aria-label="`Remove ${attachment.original_filename}`"
+             @click.prevent="editAttachments.splice(attachmentIndex, 1)"
+          >&times;</a>
+        </div>
+        <DiscussItFileUpload v-if="studentsCanAttachFiles"
+                             v-model="newEditAttachments"
+                             :files-still-needed="editAttachedFilesStillNeeded"
+                             :assignment-id="+assignmentId"
+                             :allowed-file-types="discussItSettingsForm.allowed_file_types || []"
+                             :existing-count="editAttachments.length"
+                             @uploading="attachmentUploading = $event"
+        />
+      </div>
       <template #modal-footer>
         <b-button size="sm"
                   @click="$bvModal.hide('modal-update-text-comment')"
@@ -205,6 +254,7 @@
         </b-button>
         <b-button size="sm"
                   variant="primary"
+                  :disabled="attachmentUploading"
                   @click="saveComment()"
         >
           Save
@@ -249,16 +299,28 @@
              size="lg"
              no-close-on-backdrop
              @shown="currentFile = ''"
-             @hidden="reRecording=false"
+             @hidden="onListenOrViewCommentHidden"
     >
       <iframe v-if="!reRecording"
               :key="`transcript-key-${listenOrViewCommentKey}`"
               v-resize="{ log: false }"
-              :src="`/discussion-comments/media-player/discussion-comment-id/${activeDiscussionComment.id}/is-phone/${+this.isPhone()}`"
+              :src="listenOrViewCommentSrc"
               width="100%"
               frameborder="0"
               allowfullscreen
       />
+      <!-- shown every time: the moment a reply points to is wherever the player is now, which is
+           usually a little past what the student wants to respond to -->
+      <b-alert v-if="canTimestampActiveComment"
+               show
+               variant="info"
+               class="p-2 mt-2 mb-0 small discuss-it-reply-at-hint"
+      >
+        Your reply will point to <strong>{{ formatSeconds(mediaCurrentTime) }}</strong> in
+        {{ activeDiscussionComment.created_by_name }}'s comment. If the part you're responding to has already
+        passed, use the <strong>Back 10s</strong> button under the player to go back to it, then click
+        "{{ timestampButtonText }}".
+      </b-alert>
       <DiscussItSatisfiesRequirement v-if="reRecording && Boolean(+discussItSettingsForm.completion_criteria)"
                                      ref="discussItSatisfiesRequirementReRecord"
                                      :key="`discussItSatisfiesRequirement-${discussItSatisfiesRequirementKey}`"
@@ -333,6 +395,42 @@
                     @removeCurrentTranscript="removeCurrentTranscript"
         />
       </div>
+      <div v-if="!reRecording && showAction('editComment', activeDiscussionComment.created_by_user_id, activeDiscussionComment)"
+           class="mt-3"
+      >
+        <div v-if="studentsCanAttachFiles || editAttachments.length" class="mb-2">
+          <div class="small font-weight-bold mb-1">Attached files</div>
+          <div v-for="(attachment, attachmentIndex) in editAttachments"
+               :key="`edit-attachment-${attachment.id}`"
+               class="small mb-1"
+          >
+            <b-icon-paperclip aria-hidden="true" />
+            {{ attachment.original_filename }}
+            <a href=""
+               class="ml-1 text-danger"
+               :aria-label="`Remove ${attachment.original_filename}`"
+               @click.prevent="editAttachments.splice(attachmentIndex, 1)"
+            >&times;</a>
+          </div>
+          <DiscussItFileUpload v-if="studentsCanAttachFiles"
+                               v-model="newEditAttachments"
+                               :files-still-needed="editAttachedFilesStillNeeded"
+                               :assignment-id="+assignmentId"
+                               :allowed-file-types="discussItSettingsForm.allowed_file_types || []"
+                               :existing-count="editAttachments.length"
+                               @uploading="attachmentUploading = $event"
+          />
+          <b-button v-if="attachmentsChanged()"
+                    size="sm"
+                    variant="primary"
+                    class="mt-2"
+                    :disabled="attachmentUploading"
+                    @click="saveListenOrViewAttachments"
+          >
+            Save attached files
+          </b-button>
+        </div>
+      </div>
       <template #modal-footer>
         <span v-show="commentType === 'video' || !reRecording || (commentType === 'audio' && !stoppedAudioRecording)">
           <b-button v-if="showAction('editComment', activeDiscussionComment.created_by_user_id, activeDiscussionComment)" variant="danger"
@@ -347,6 +445,13 @@
             >Download transcript</a>
             <b-button size="sm" variant="info" @click="downloadTranscript"> Download Transcript</b-button>
           </span>
+          <b-button v-if="canTimestampActiveComment"
+                    size="sm"
+                    variant="success"
+                    @click="timestampActiveComment"
+          >
+            {{ timestampButtonText }}
+          </b-button>
           <b-button size="sm" variant="primary"
                     @click="$bvModal.hide('modal-listen-or-view-comment')"
           >
@@ -421,7 +526,7 @@
               label-cols-lg="4"
               label-for="number_of_groups"
               label-size="sm"
-              label-align="right"
+              label-align="left"
             >
               <template #label>
                 Number of Groups
@@ -448,7 +553,7 @@
               label-cols-sm="5"
               label-cols-lg="4"
               label-size="sm"
-              label-align="right"
+              label-align="left"
             >
               <template #label>
                 Language
@@ -473,7 +578,7 @@
             <b-form-radio-group v-model="discussItSettingsForm.auto_grade"
                                 class="mb-2"
             >
-              <label class="col-sm-5 col-lg-4 col-form-label col-form-label-sm text-right">Auto-grade
+              <label class="col-sm-5 col-lg-4 col-form-label col-form-label-sm pl-0">Auto-grade
                 <QuestionCircleTooltip :id="'autograde-tooltip'" />
                 <b-tooltip target="autograde-tooltip" triggers="hover focus" delay="500">
                   If you choose "yes", once a student completes the criteria above, they will get full credit for the
@@ -490,7 +595,7 @@
             <b-form-radio-group v-model="discussItSettingsForm.completion_criteria"
                                 class="mb-2"
             >
-              <label class="col-sm-5 col-lg-4 col-form-label col-form-label-sm text-right">Completion Criteria
+              <label class="col-sm-5 col-lg-4 col-form-label col-form-label-sm pl-0">Completion Criteria
                 <QuestionCircleTooltip :id="'show-completion-criteria-tooltip'" />
                 <b-tooltip target="show-completion-criteria-tooltip" triggers="hover focus" delay="500">
                   Please choose "yes" if you would like to show your students the completion criteria (minimum number of
@@ -618,7 +723,7 @@
               label-for="students_can_edit_comments"
               label="Students can edit comments"
               label-size="sm"
-              label-align="right"
+              label-align="left"
             >
               <template #label>
                 Students can edit comments
@@ -653,7 +758,7 @@
               label-cols-lg="4"
               label-for="students_can_delete_comments"
               label-size="sm"
-              label-align="right"
+              label-align="left"
             >
               <template #label>
                 Students can delete comments
@@ -689,7 +794,7 @@
               label-cols-lg="4"
               label-for="students_can_start_threads"
               label-size="sm"
-              label-align="right"
+              label-align="left"
             >
               <template #label>
                 Students can start new threads
@@ -723,7 +828,7 @@
               label-cols-lg="4"
               label-for="students_can_reply_to_threads"
               label-size="sm"
-              label-align="right"
+              label-align="left"
             >
               <template #label>
                 Students can reply to threads
@@ -751,6 +856,90 @@
               </b-form-radio-group>
               <ErrorMessage :message="discussItSettingsForm.errors.get('students_can_reply_to_threads')" />
             </b-form-group>
+            <b-form-group
+              label-cols-sm="5"
+              label-cols-lg="4"
+              label-for="students_must_post_before_viewing"
+              label-size="sm"
+              label-align="left"
+            >
+              <template #label>
+                Students must post before seeing classmates' comments
+                <QuestionCircleTooltip id="must-post-before-viewing-tooltip" />
+                <b-tooltip target="must-post-before-viewing-tooltip"
+                           delay="250"
+                           triggers="hover focus"
+                >
+                  Students won't see other students' threads or comments until they've started a thread that meets
+                  the completion criteria, so they can't copy what others wrote. Your comments are always visible.
+                  Requires the completion criteria to include starting at least 1 thread.
+                </b-tooltip>
+              </template>
+              <b-form-radio-group
+                id="students_must_post_before_viewing"
+                v-model="discussItSettingsForm.students_must_post_before_viewing"
+                class="pt-1"
+                @change="discussItSettingsForm.errors.clear('students_must_post_before_viewing')"
+              >
+                <b-form-radio name="students_must_post_before_viewing" value="1">
+                  Yes
+                </b-form-radio>
+                <b-form-radio name="students_must_post_before_viewing" value="0">
+                  No
+                </b-form-radio>
+              </b-form-radio-group>
+              <!-- shown as soon as it's turned on, so the instructor doesn't first find out when saving -->
+              <b-alert v-if="mustPostBeforeViewingMissing.length"
+                       show
+                       variant="warning"
+                       class="mt-2 mb-0 p-2 small"
+              >
+                For this to work, also:
+                <ul class="mb-0 pl-3">
+                  <li v-for="missing in mustPostBeforeViewingMissing" :key="missing">
+                    {{ missing }}
+                  </li>
+                </ul>
+              </b-alert>
+              <ErrorMessage v-else :message="discussItSettingsForm.errors.get('students_must_post_before_viewing')" />
+            </b-form-group>
+            <b-form-group
+              label-cols-sm="5"
+              label-cols-lg="4"
+              label-for="students_can_attach_files"
+              label-size="sm"
+              label-align="left"
+            >
+              <template #label>
+                Students can attach files to comments
+                <QuestionCircleTooltip id="attach-files-tooltip" />
+                <b-tooltip target="attach-files-tooltip" delay="250" triggers="hover focus">
+                  Students can add up to 5 files (25 MB each) to any text, audio or video comment.
+                </b-tooltip>
+              </template>
+              <b-form-radio-group
+                id="students_can_attach_files"
+                v-model="discussItSettingsForm.students_can_attach_files"
+                class="pt-1"
+                @change="discussItSettingsForm.errors.clear('students_can_attach_files');discussItSettingsForm.errors.clear('min_number_of_attached_files')"
+              >
+                <b-form-radio name="students_can_attach_files" value="1">
+                  Yes
+                </b-form-radio>
+                <b-form-radio name="students_can_attach_files" value="0">
+                  No
+                </b-form-radio>
+              </b-form-radio-group>
+              <div v-if="studentsCanAttachFiles" class="mt-1">
+                <b-form-checkbox-group v-model="discussItSettingsForm.allowed_file_types"
+                                       :options="fileTypeOptions"
+                                       aria-label="File types students may attach"
+                                       size="sm"
+                                       @change="discussItSettingsForm.errors.clear('allowed_file_types')"
+                />
+                <ErrorMessage :message="discussItSettingsForm.errors.get('allowed_file_types')" />
+              </div>
+            </b-form-group>
           </b-card-text>
         </b-card>
         <div v-if="+discussItSettingsForm.completion_criteria" class="pt-3">
@@ -762,18 +951,12 @@
                 Any scoring issues that may arise can be fixed
                 using the Open Grader.
               </b-alert>
-              <b-form-group
-                class="pl-4"
-                label-cols-sm="1"
-                label-cols-lg="1"
-                label-for="number_of_initiated_discussion_threads"
-                label-size="sm"
-                label-align="right"
-                label="Initiate"
-              >
+              <div class="d-flex flex-wrap align-items-center discuss-it-criteria-sentence">
+                <span class="col-form-label col-form-label-sm pr-2">Initiate</span>
                 <div class="flex d-inline-flex">
                   <b-form-input
                     v-model="discussItSettingsForm.min_number_of_initiated_discussion_threads"
+                    aria-label="Number of discussion threads to initiate"
                     style="width:50px"
                     size="sm"
                     :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_number_of_initiated_discussion_threads') }"
@@ -793,24 +976,18 @@
                     </b-tooltip>
                   </div>
                 </div>
-              </b-form-group>
+              </div>
               <div>
                 <ErrorMessage
                   :message="discussItSettingsForm.errors.get('min_number_of_initiated_discussion_threads')"
                 />
               </div>
-              <b-form-group
-                class="pl-4"
-                label-cols-sm="1"
-                label-cols-lg="1"
-                label-for="number_of_min_replies"
-                label-size="sm"
-                label-align="right"
-                label="Submit"
-              >
+              <div class="d-flex flex-wrap align-items-center discuss-it-criteria-sentence">
+                <span class="col-form-label col-form-label-sm pr-2">Submit</span>
                 <div class="flex d-inline-flex">
                   <b-form-input
                     v-model="discussItSettingsForm.min_number_of_replies"
+                    aria-label="Number of replies to submit"
                     style="width:50px"
                     size="sm"
                     :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_number_of_replies') }"
@@ -828,23 +1005,18 @@
                     </b-tooltip>
                   </div>
                 </div>
-              </b-form-group>
+              </div>
               <div>
                 <ErrorMessage
                   :message="discussItSettingsForm.errors.get('min_number_of_replies')"
                 />
               </div>
-              <b-form-group
-                label-cols-sm="5"
-                label-cols-lg="4"
-                label-for="min_number_of_initiate_or_reply_in_threads"
-                label-size="sm"
-                label-align="right"
-                label="Participate (initiate or reply) in"
-              >
+              <div class="d-flex flex-wrap align-items-center discuss-it-criteria-sentence">
+                <span class="col-form-label col-form-label-sm pr-2">Participate (initiate or reply) in</span>
                 <div class="flex d-inline-flex">
                   <b-form-input
                     v-model="discussItSettingsForm.min_number_of_initiate_or_reply_in_threads"
+                    aria-label="Number of threads to participate in"
                     style="width:50px"
                     size="sm"
                     :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_number_of_initiate_or_reply_in_threads') }"
@@ -862,27 +1034,43 @@
                     </b-tooltip>
                   </div>
                 </div>
-              </b-form-group>
+              </div>
               <div>
                 <ErrorMessage
                   :message="discussItSettingsForm.errors.get('min_number_of_initiate_or_reply_in_threads')"
                 />
               </div>
-              <b-form-group
-                v-if="showSubmitAtLeastXComments"
-                label-cols-sm="5"
-                label-cols-lg="4"
-                label-for="number_of_comments"
-                label-size="sm"
-                label-align="right"
-              >
-                <template #label>
-                  Submit at least
-                </template>
+              <div v-if="studentsCanAttachFiles" class="d-flex flex-wrap align-items-center discuss-it-criteria-sentence">
+                <span class="col-form-label col-form-label-sm pr-2">Attach</span>
+                <div class="flex d-inline-flex">
+                  <b-form-input
+                    v-model="discussItSettingsForm.min_number_of_attached_files"
+                    aria-label="Number of files to attach"
+                    style="width:50px"
+                    size="sm"
+                    :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_number_of_attached_files') }"
+                    @keydown="discussItSettingsForm.errors.clear('min_number_of_attached_files')"
+                  />
+                  <div class="col-form-label col-form-label-sm pl-2">
+                    {{ +discussItSettingsForm.min_number_of_attached_files === 1 ? 'file' : 'files' }} to their comments
+                    <QuestionCircleTooltip id="min-number-of-attached-files-tooltip" />
+                    <b-tooltip target="min-number-of-attached-files-tooltip" triggers="hover focus" delay="500">
+                      Counts every file attached to the student's comments (threads and replies) in this assignment.
+                      If you enter a 0, this will not be considered in the completion criteria.
+                    </b-tooltip>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_attached_files')" />
+              </div>
+              <div v-if="showSubmitAtLeastXComments" class="d-flex flex-wrap align-items-center discuss-it-criteria-sentence">
+                <span class="col-form-label col-form-label-sm pr-2">Submit at least</span>
                 <div class="flex d-inline-flex">
                   <div class="flex d-inline-flex">
                     <b-form-input
                       v-model="discussItSettingsForm.min_number_of_comments"
+                      aria-label="Number of comments to submit"
                       style="width:50px"
                       size="sm"
                       :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_number_of_comments') }"
@@ -893,7 +1081,7 @@
                     </div>
                   </div>
                 </div>
-                <QuestionCircleTooltip :id="'submit-comments-tooltip'" />
+                <QuestionCircleTooltip :id="'submit-comments-tooltip'" class="ml-1" />
                 <b-tooltip target="submit-comments-tooltip" triggers="hover focus" delay="500">
                   You or any of your students can submit comments. Each comment can be text or audio/video. Comments
                   are
@@ -903,7 +1091,7 @@
                   be considered in the
                   completion criteria.
                 </b-tooltip>
-              </b-form-group>
+              </div>
               <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_comments')" />
               <div class="pb-1 flex d-inline-flex col-form-label col-form-label-sm">
                 <label for="response-modes" class="mr-2">Students may respond using:
@@ -927,51 +1115,52 @@
                 />
                 <ErrorMessage :message="discussItSettingsForm.errors.get('response_modes')" />
               </div>
-              <div v-show="getAudioVideoLabel()" class="pb-2 col-form-label col-form-label-sm">
-                A comment will receive credit towards completion if:
-              </div>
-              <b-form-group
-                v-show="discussItSettingsForm.response_modes && discussItSettingsForm.response_modes.includes('text')"
-                label-cols-sm="5"
-                label-cols-lg="4"
-                label="Text is at least"
-                label-size="sm"
-                label-align="right"
+              <!-- one row per response type: what a comment of that type needs in order to count -->
+              <div v-if="discussItSettingsForm.response_modes && discussItSettingsForm.response_modes.length"
+                   class="border rounded p-3"
               >
-                <div style="width:115px">
-                  <b-input-group
-                    :append="+discussItSettingsForm.min_number_of_words === 1 ?'word' : 'words'"
-                    size="sm"
-                  >
-                    <b-form-input v-model="discussItSettingsForm.min_number_of_words"
-                                  :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_number_of_words') }"
-                                  @keydown="discussItSettingsForm.errors.clear('min_number_of_words')"
-                    />
-                  </b-input-group>
+                <div class="col-form-label col-form-label-sm pt-0 pb-2 font-weight-bold">
+                  A comment counts toward completion if it's:
                 </div>
-                <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_words')" />
-              </b-form-group>
-              <b-form-group
-                v-show="getAudioVideoLabel()"
-                label-cols-sm="5"
-                label-cols-lg="4"
-                label-for="audio_video_length"
-                label-size="sm"
-                label-align="right"
-              >
-                <template #label>
-                  {{ getAudioVideoLabel() }} is at least
-                </template>
-                <b-form-input id="audio_video_length"
-                              v-model="discussItSettingsForm.min_length_of_audio_video"
-                              size="sm"
-                              placeholder="Ex. 1 minute"
-                              style="width:200px"
-                              :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_length_of_audio_video') }"
-                              @keydown="discussItSettingsForm.errors.clear('min_length_of_audio_video')"
-                />
-                <ErrorMessage :message="discussItSettingsForm.errors.get('min_length_of_audio_video')" />
-              </b-form-group>
+                <div v-show="discussItSettingsForm.response_modes.includes('text')" class="discuss-it-criteria-row">
+                  <span class="discuss-it-criteria-label">Text</span>
+                  <div>
+                    <div class="d-flex align-items-center">
+                      <span class="mr-2">at least</span>
+                      <b-input-group :append="+discussItSettingsForm.min_number_of_words === 1 ? 'word' : 'words'"
+                                     size="sm"
+                                     style="width:130px"
+                      >
+                        <b-form-input v-model="discussItSettingsForm.min_number_of_words"
+                                      aria-label="Minimum number of words for a text comment"
+                                      :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_number_of_words') }"
+                                      @keydown="discussItSettingsForm.errors.clear('min_number_of_words')"
+                        />
+                      </b-input-group>
+                    </div>
+                    <ErrorMessage :message="discussItSettingsForm.errors.get('min_number_of_words')" />
+                  </div>
+                </div>
+                <div v-show="getAudioVideoLabel()" class="discuss-it-criteria-row">
+                  <span class="discuss-it-criteria-label">{{ getAudioVideoLabel() }}</span>
+                  <div>
+                    <div class="d-flex align-items-center">
+                      <span class="mr-2">at least</span>
+                      <b-form-input id="audio_video_length"
+                                    v-model="discussItSettingsForm.min_length_of_audio_video"
+                                    aria-label="Minimum length of an audio or video comment"
+                                    size="sm"
+                                    placeholder="Ex. 1 minute"
+                                    style="width:160px"
+                                    :class="{ 'is-invalid': discussItSettingsForm.errors.has('min_length_of_audio_video') }"
+                                    @keydown="discussItSettingsForm.errors.clear('min_length_of_audio_video')"
+                      />
+                      <span class="ml-2">long</span>
+                    </div>
+                    <ErrorMessage :message="discussItSettingsForm.errors.get('min_length_of_audio_video')" />
+                  </div>
+                </div>
+              </div>
             </b-card-text>
           </b-card>
         </div>
@@ -1019,6 +1208,32 @@
                   @click="saveDiscussItSettings"
         >
           Save
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal id="modal-discuss-it-file-comment"
+             :title="activeFileComment.original_filename || 'File'"
+             size="xl"
+             @hidden="activeFileComment = {}"
+    >
+      <VuePdfEmbed v-if="activeFileComment.file_kind === 'pdf' && activeFileComment.file_url"
+                   annotation-layer
+                   text-layer
+                   :source="activeFileComment.file_url"
+      />
+      <img v-if="activeFileComment.file_kind === 'image' && activeFileComment.file_url"
+           :src="activeFileComment.file_url"
+           :alt="activeFileComment.original_filename"
+           class="d-block mx-auto"
+           style="max-width: 100%"
+      >
+      <template #modal-footer>
+        <a v-if="activeFileComment.download_url"
+           :href="activeFileComment.download_url"
+           class="btn btn-sm btn-outline-primary mr-auto"
+        ><b-icon-download aria-hidden="true" /> Download</a>
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-discuss-it-file-comment')">
+          OK
         </b-button>
       </template>
     </b-modal>
@@ -1285,6 +1500,15 @@
                   </b-form-radio>
                 </b-form-radio-group>
               </b-form-group>
+              <!-- chosen before the comment is saved (audio/video comments save as soon as the recording stops) -->
+              <div v-if="studentsCanAttachFiles" class="mb-3">
+                <DiscussItFileUpload v-model="pendingAttachments"
+                                     :files-still-needed="attachedFilesStillNeeded"
+                                     :assignment-id="+assignmentId"
+                                     :allowed-file-types="discussItSettingsForm.allowed_file_types || []"
+                                     @uploading="attachmentUploading = $event"
+                />
+              </div>
               <div v-if="commentType === 'text'">
                 <DiscussItSatisfiesRequirement v-if="+discussItSettingsForm.completion_criteria"
                                                :min-number-of-words="+minNumberOfWords"
@@ -1415,6 +1639,7 @@
                 <span v-show="commentType === 'text'">
                   <b-button size="sm"
                             variant="primary"
+                            :disabled="attachmentUploading"
                             @click="saveComment()"
                   >
                     Save
@@ -1430,6 +1655,10 @@
               </div>
             </div>
           </div>
+          <b-alert v-if="commentsHiddenUntilPosted" show variant="info" class="p-2">
+            Your classmates' comments will appear once you start a thread that meets the requirements.
+            <span v-if="completionRequirementsToolTipText">{{ completionRequirementsToolTipText }}</span>
+          </b-alert>
           <div v-if="discussions.length">
             <div class="accordion" role="tablist">
               <div class="clearfix mb-2" />
@@ -1470,7 +1699,38 @@
                         >
                           {{ comment.assignment_name }}
                         </b-badge>
+                        <div v-if="comment.timestamps && comment.timestamps.length" class="mt-1">
+                          <b-button v-for="timestamp in comment.timestamps"
+                                    :key="`timestamp-${timestamp.id}`"
+                                    size="sm"
+                                    variant="outline-secondary"
+                                    class="mr-1 mb-1 py-0 discuss-it-timestamp-chip"
+                                    :aria-label="`Play ${timestamp.referenced_created_by_name}'s comment from ${formatSeconds(timestamp.seconds)}`"
+                                    @click="openTimestamp(timestamp)"
+                          >
+                            <b-icon-play-fill aria-hidden="true" />
+                            {{ timestamp.referenced_created_by_name }} {{ formatSeconds(timestamp.seconds) }}
+                          </b-button>
+                        </div>
                         <div v-show="comment.text" v-html="comment.text" />
+                        <div v-if="comment.attachments && comment.attachments.length" class="mt-1">
+                          <div v-for="attachment in comment.attachments" :key="`attachment-${attachment.id}`" class="small mb-1">
+                            <img v-if="attachment.file_kind === 'image' && attachment.file_url"
+                                 :src="attachment.file_url"
+                                 :alt="`Image attached by ${comment.created_by_name}: ${attachment.original_filename}`"
+                                 class="discuss-it-comment-image d-block mb-1"
+                                 role="button"
+                                 @click="viewFileComment(attachment)"
+                            >
+                            <b-icon-paperclip aria-hidden="true" />
+                            <!-- PDFs and images open in a window with a Download button; Office files download -->
+                            <a v-if="['pdf', 'image'].includes(attachment.file_kind)"
+                               href=""
+                               @click.prevent="viewFileComment(attachment)"
+                            >{{ attachment.original_filename }}</a>
+                            <a v-else :href="attachment.download_url">{{ attachment.original_filename }}</a>
+                          </div>
+                        </div>
                         <div class="mt-1">
                           <b-button v-if="comment.file"
                                     size="sm"
@@ -1517,6 +1777,26 @@
                            :id="`discuss-it-compose-panel-${discussion.id}`"
                            class="discuss-it-compose-panel border rounded p-3 mb-3"
                       >
+                        <div v-if="pendingTimestamps.length" class="mb-2">
+                          <span class="small text-muted mr-1">Timestamp:</span>
+                          <b-badge v-for="(timestamp, timestampIndex) in pendingTimestamps"
+                                   :key="`pending-timestamp-${timestampIndex}`"
+                                   variant="info"
+                                   class="mr-1 discuss-it-timestamp-chip"
+                          >
+                            {{ timestamp.created_by_name }} {{ formatSeconds(timestamp.seconds) }}
+                            <a href=""
+                               class="text-white ml-1"
+                               :aria-label="`Remove the ${formatSeconds(timestamp.seconds)} timestamp`"
+                               @click.prevent="pendingTimestamps.splice(timestampIndex, 1)"
+                            >&times;</a>
+                          </b-badge>
+                          <div class="small text-muted">
+                            A reply can have one timestamp. To use a different moment, open a video or audio comment in
+                            this thread, go to the part you're responding to (Back 10s helps if it has just passed), and
+                            click "Use".
+                          </div>
+                        </div>
                         <div v-if="responseModeMissingError">
                           <b-alert variant="info" show>
                             The response mode (text, audio, video) for this Discuss-it question has not yet been set.
@@ -1547,6 +1827,15 @@
                               </b-form-radio>
                             </b-form-radio-group>
                           </b-form-group>
+                          <!-- chosen before the comment is saved (audio/video comments save as soon as the recording stops) -->
+                          <div v-if="studentsCanAttachFiles" class="mb-3">
+                            <DiscussItFileUpload v-model="pendingAttachments"
+                                                 :files-still-needed="attachedFilesStillNeeded"
+                                                 :assignment-id="+assignmentId"
+                                                 :allowed-file-types="discussItSettingsForm.allowed_file_types || []"
+                                                 @uploading="attachmentUploading = $event"
+                            />
+                          </div>
                           <div v-if="commentType === 'text'">
                             <DiscussItSatisfiesRequirement v-if="+discussItSettingsForm.completion_criteria"
                                                            :min-number-of-words="+minNumberOfWords"
@@ -1677,6 +1966,7 @@
                             <span v-show="commentType === 'text'">
                               <b-button size="sm"
                                         variant="primary"
+                                        :disabled="attachmentUploading"
                                         @click="saveComment()"
                               >
                                 Save
@@ -1720,13 +2010,18 @@ import CKEditor from 'ckeditor4-vue'
 import Transcript from '../Transcript.vue'
 import DiscussItCommentAndSubmitWorkUpload from '../DiscussItCommentAndSubmitWorkUpload.vue'
 import NativeAudioVideoRecorder from '../NativeAudioVideoRecorder.vue'
+import DiscussItFileUpload from '../DiscussItFileUpload.vue'
 import { isPhone } from '~/helpers/isPhone'
 import { handleFixCKEditorWithPasteWarning } from '~/helpers/ckeditor.js'
+
+// how far before a reply's timestamp playback starts when someone clicks it (same in the Open Grader)
+const TIMESTAMP_LEAD_IN_SECONDS = 5
 
 export default {
   name: 'DiscussItViewer',
   components: {
     NativeAudioVideoRecorder,
+    DiscussItFileUpload,
     DiscussItCommentAndSubmitWorkUpload,
     Transcript,
     DiscussItSatisfiesRequirement,
@@ -1793,6 +2088,20 @@ export default {
         { item: 'text', name: 'Text' },
         { item: 'audio', name: 'Audio' },
         { item: 'video', name: 'Video' }],
+      fileTypeOptions: [
+        { value: 'pdf', text: 'PDF' },
+        { value: 'image', text: 'Images' },
+        { value: 'word', text: 'Word' },
+        { value: 'excel', text: 'Excel' },
+        { value: 'powerpoint', text: 'PowerPoint' }],
+      // students who haven't started a qualifying thread yet only see instructors' and their own comments
+      commentsHiddenUntilPosted: false,
+      activeFileComment: {},
+      // files to attach to the comment being written, and while editing: the ones kept and the ones added
+      pendingAttachments: [],
+      editAttachments: [],
+      newEditAttachments: [],
+      attachmentUploading: false,
       listenOrViewCommentKey: 0,
       currentFile: '',
       fileRequirementSatisfied: false,
@@ -1843,7 +2152,11 @@ export default {
         students_can_edit_comments: '',
         students_can_delete_comments: '',
         students_can_start_threads: '1',
-        students_can_reply_to_threads: '1'
+        students_can_reply_to_threads: '1',
+        students_must_post_before_viewing: '0',
+        students_can_attach_files: '0',
+        allowed_file_types: ['pdf', 'image', 'word', 'excel', 'powerpoint'],
+        min_number_of_attached_files: '0'
       }),
       activeDiscussionComment: {},
       activeDiscussionCommentId: 0,
@@ -1879,13 +2192,89 @@ export default {
       discussions: [],
       currentMediaUploadOrder: 1,
       numPages: 0,
-      completionRequirements: []
+      completionRequirements: [],
+      // timestamped replies: the moment in an audio/video comment (same thread) that a reply points to (at most one)
+      pendingTimestamps: [],
+      pendingTimestampToAdd: null,
+      editTimestamps: [],
+      mediaCurrentTime: 0,
+      mediaTimeReported: false,
+      mediaStartTime: 0,
+      composerStateBeforeViewing: null
     }
   ),
   computed: {
     ...mapGetters({
       user: 'auth/user'
     }),
+    studentsCanAttachFiles () {
+      return +this.discussItSettingsForm.students_can_attach_files === 1
+    },
+    // files the completion criteria still need across all of this student's comments (0 when none are required,
+    // or the requirement is already met), so the upload box doesn't call a required file "optional"
+    // the same, while editing a comment: files kept on it still count, and removing one can make the requirement unmet
+    editAttachedFilesStillNeeded () {
+      if (!this.completionRequirements.find(item => item.key === 'min_number_of_attached_files')) {
+        return 0
+      }
+      const results = this.discussionCommentSubmissionResults
+      const removed = Math.max(0, (this.activeDiscussionComment.attachments || []).length - this.editAttachments.length)
+      return Math.max(0, (+results.min_number_of_attached_files || 0) - ((+results.number_of_attached_files || 0) - removed))
+    },
+    attachedFilesStillNeeded () {
+      // instructors see the same wording as students, matching the requirements card they're shown
+      const requirement = this.completionRequirements.find(item => item.key === 'min_number_of_attached_files')
+      if (!requirement || requirement.requirement_satisfied) {
+        return 0
+      }
+      const results = this.discussionCommentSubmissionResults
+      return Math.max(1, (+results.min_number_of_attached_files || 0) - (+results.number_of_attached_files || 0))
+    },
+    // what still needs changing for "students must post before seeing classmates' comments" to be saved
+    // (the same rules as Helper::discussItMustPostBeforeViewingError on the server)
+    mustPostBeforeViewingMissing () {
+      const form = this.discussItSettingsForm
+      if (+form.students_must_post_before_viewing !== 1) {
+        return []
+      }
+      const missing = []
+      if (+form.students_can_start_threads === 0) {
+        missing.push('Set "Students can start new threads" to Yes.')
+      }
+      if (+form.completion_criteria !== 1) {
+        missing.push('Turn on the completion criteria and require students to initiate at least 1 discussion thread.')
+      } else if (!(+form.min_number_of_initiated_discussion_threads >= 1)) {
+        missing.push('Under Completion Criteria, require students to initiate at least 1 discussion thread.')
+      }
+      return missing
+    },
+    listenOrViewCommentSrc () {
+      // the modal is still fading out when a reply is started, so don't point the player at a missing comment
+      if (!this.activeDiscussionComment.id) {
+        return 'about:blank'
+      }
+      const startTime = this.mediaStartTime > 0 ? `?start_time=${this.mediaStartTime}` : ''
+      return `/discussion-comments/media-player/discussion-comment-id/${this.activeDiscussionComment.id}/is-phone/${+this.isPhone()}${startTime}`
+    },
+    // the reply box is already open in the thread of the comment being viewed, so the button sets its timestamp
+    isAddingToOpenReply () {
+      return Boolean(this.showComposePanel &&
+        this.activeDiscussion.id &&
+        this.activeDiscussion.id === this.activeDiscussionComment.discussion_id)
+    },
+    canTimestampActiveComment () {
+      return !this.previewingQuestion &&
+        !this.reRecording &&
+        Boolean(this.activeDiscussionComment.file) &&
+        Boolean(this.activeDiscussionComment.discussion_id) &&
+        this.mediaTimeReported &&
+        this.canStartDiscussionOrAddComments &&
+        this.studentsCanReplyToThreads
+    },
+    timestampButtonText () {
+      const time = this.formatSeconds(this.mediaCurrentTime)
+      return this.isAddingToOpenReply ? `Use ${time} in your reply` : `Reply at ${time}`
+    },
     // instructors can always start threads and reply
     studentsCanStartThreads () {
       return this.user.role !== 3 || +this.discussItSettingsForm.students_can_start_threads !== 0
@@ -1907,6 +2296,10 @@ export default {
     }
   },
   watch: {
+    // a saved error about this setting is out of date once the settings it depends on change
+    mustPostBeforeViewingMissing () {
+      this.discussItSettingsForm.errors.clear('students_must_post_before_viewing')
+    },
     'discussItSettingsForm.auto_grade': {
       handler (newValue) {
         this.$forceUpdate()
@@ -1931,7 +2324,12 @@ export default {
       deep: true
     }
   },
+  beforeDestroy () {
+    window.removeEventListener('message', this.handleMediaTimeUpdate)
+  },
   async mounted () {
+    // the media player (in an iframe) reports its playback position, used for timestamped replies
+    window.addEventListener('message', this.handleMediaTimeUpdate)
     if (this.assignmentId && this.questionId) {
       if (this.user.role === 2) {
         this.group = 1
@@ -2006,6 +2404,40 @@ export default {
     },
     downloadTranscript () {
       document.getElementById('download-transcript').click()
+    },
+    attachmentsChanged () {
+      return this.newEditAttachments.length > 0 ||
+        this.editAttachments.length !== (this.activeDiscussionComment.attachments || []).length
+    },
+    async saveAttachments (discussionCommentId) {
+      try {
+        const { data } = await axios.patch(`/api/discussion-comments/${discussionCommentId}/attachments`, {
+          keep_attachment_ids: this.editAttachments.map(attachment => attachment.id),
+          attachments: this.newEditAttachments,
+          viewing_assignment_id: this.assignmentId
+        })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.newEditAttachments = []
+        return true
+      } catch (error) {
+        this.$noty.error(error.message)
+        return false
+      }
+    },
+    async saveListenOrViewAttachments () {
+      if (await this.saveAttachments(this.activeDiscussionComment.id)) {
+        this.$noty.success('The attached files have been updated.')
+        this.$bvModal.hide('modal-listen-or-view-comment')
+        await this.getDiscussionsByMediaUploadId()
+        await this.getSatisfiedRequirements()
+      }
+    },
+    viewFileComment (comment) {
+      this.activeFileComment = comment
+      this.$bvModal.show('modal-discuss-it-file-comment')
     },
     saveUploadedAudioVideoComment (file, fileRequirementSatisfied) {
       this.fileRequirementSatisfied = fileRequirementSatisfied
@@ -2125,6 +2557,9 @@ export default {
             this.completionRequirements.find(item => item.key === 'min_number_of_initiate_or_reply_in_threads').requirement_satisfied = satisfiedRequirements.satisfied_min_number_of_initiate_or_reply_in_threads_requirement
             this.numberOfInitiateOrReplyInThreadsMessage = satisfiedRequirements.number_of_initiate_or_reply_in_threads_message
           }
+          if (this.completionRequirements.find(item => item.key === 'min_number_of_attached_files')) {
+            this.completionRequirements.find(item => item.key === 'min_number_of_attached_files').requirement_satisfied = satisfiedRequirements.satisfied_min_number_of_attached_files_requirement
+          }
           if (this.completionRequirements.find(item => item.key === 'min_number_of_comments')) {
             this.completionRequirements.find(item => item.key === 'min_number_of_comments').requirement_satisfied = satisfiedRequirements.satisfied_min_number_of_comments_requirement
             this.numberOfCommentsSubmittedMessage = satisfiedRequirements.number_of_comments_submitted_message
@@ -2137,6 +2572,10 @@ export default {
     },
     initEditComment (comment) {
       this.activeDiscussionComment = comment
+      this.editAttachments = (comment.attachments || []).slice()
+      this.newEditAttachments = []
+      // timestamps can be removed while editing, but only added from the video/audio window
+      this.editTimestamps = (comment.timestamps || []).slice()
       if (comment.text) {
         this.commentForm.text = comment.text
         this.commentForm.type = 'text'
@@ -2267,12 +2706,20 @@ export default {
           this.discussItSettingsForm = new Form({
             students_can_start_threads: '1',
             students_can_reply_to_threads: '1',
+            students_must_post_before_viewing: '0',
+            students_can_attach_files: '0',
+            allowed_file_types: ['pdf', 'image', 'word', 'excel', 'powerpoint'],
+            min_number_of_attached_files: '0',
             ...JSON.parse(data.discuss_it_settings),
             // other linked assignments to save the same settings in (not a setting itself)
             apply_to_assignment_ids: [],
             // set only after the instructor confirms the participation warnings
             confirm_participation_warnings: false
           })
+          // "file" was briefly a response mode before files became attachments; there's no checkbox for it any more
+          if (Array.isArray(this.discussItSettingsForm.response_modes)) {
+            this.discussItSettingsForm.response_modes = this.discussItSettingsForm.response_modes.filter(mode => mode !== 'file')
+          }
           this.linkedDiscussItSettings = data.linked_discuss_it_settings || []
           this.copyFromAssignmentId = null
           this.assignmentName = data.assignment_name || ''
@@ -2294,6 +2741,7 @@ export default {
               requirement_satisfied: false,
               show: this.discussItSettingsForm.hasOwnProperty('min_number_of_comments')
             },
+            { key: 'min_number_of_attached_files', requirement_satisfied: false, show: true },
             { key: 'min_number_of_words', show: false },
             { key: 'min_length_of_audio_video', show: false }
           ]
@@ -2301,7 +2749,9 @@ export default {
           if (+this.discussItSettingsForm.completion_criteria) {
             for (let i = 0; i < this.completionRequirements.length; i++) {
               const key = this.completionRequirements[i].key
-              const requirementExists = this.discussItSettingsForm[key] !== '' && +this.discussItSettingsForm[key] !== 0
+              const requirementExists = this.discussItSettingsForm[key] !== undefined &&
+                this.discussItSettingsForm[key] !== '' && +this.discussItSettingsForm[key] !== 0 &&
+                (key !== 'min_number_of_attached_files' || this.studentsCanAttachFiles)
               this.completionRequirements[i].requirementExists = requirementExists
               if (requirementExists) {
                 const value = this.discussItSettingsForm[key]
@@ -2320,6 +2770,9 @@ export default {
                     break
                   case ('min_number_of_comments'):
                     this.completionRequirements[i].text = `Submit at least ${value} comment${plural}.`
+                    break
+                  case ('min_number_of_attached_files'):
+                    this.completionRequirements[i].text = `Attach ${value} file${plural} to your comments.`
                     break
                   case ('min_number_of_words'):
                     if (this.discussItSettingsForm && this.discussItSettingsForm.response_modes.includes('text')) {
@@ -2385,12 +2838,108 @@ export default {
       this.listenOrViewCommentKey++
       this.activeDiscussionComment = activeComment
     },
-    listenOrViewComment (comment) {
+    listenOrViewComment (comment, startSeconds = 0) {
+      // viewing a comment reuses some of the reply box's state, so remember it while the reply box is open
+      if (this.showComposePanel && !this.composerStateBeforeViewing) {
+        this.composerStateBeforeViewing = {
+          activeDiscussionComment: this.activeDiscussionComment,
+          commentType: this.commentType,
+          fileRequirementSatisfied: this.fileRequirementSatisfied,
+          stoppedAudioRecording: this.stoppedAudioRecording
+        }
+      }
+      this.mediaStartTime = startSeconds
+      this.mediaCurrentTime = startSeconds
+      this.mediaTimeReported = false
+      this.listenOrViewCommentKey++
       this.activeDiscussionComment = comment
+      this.editAttachments = (comment.attachments || []).slice()
+      this.newEditAttachments = []
       this.fileRequirementSatisfied = false
       this.commentType = comment.recording_type
       this.stoppedAudioRecording = false
       this.$bvModal.show('modal-listen-or-view-comment')
+    },
+    onListenOrViewCommentHidden () {
+      this.reRecording = false
+      this.restoreComposerState()
+    },
+    restoreComposerState () {
+      if (!this.composerStateBeforeViewing) {
+        return
+      }
+      if (this.showComposePanel) {
+        const state = this.composerStateBeforeViewing
+        this.activeDiscussionComment = state.activeDiscussionComment
+        this.commentType = state.commentType
+        this.fileRequirementSatisfied = state.fileRequirementSatisfied
+        this.stoppedAudioRecording = state.stoppedAudioRecording
+      }
+      this.composerStateBeforeViewing = null
+    },
+    handleMediaTimeUpdate (event) {
+      if (!event.data || event.data.type !== 'videoTimeUpdate') return
+      if (!this.activeDiscussionComment.id || event.data.mediaId !== `media_id-${this.activeDiscussionComment.id}`) return
+      this.mediaCurrentTime = +event.data.currentTime || 0
+      this.mediaTimeReported = true
+    },
+    pauseMedia (discussionCommentId) {
+      window.document.querySelectorAll('iframe').forEach(iframe => {
+        iframe.contentWindow.postMessage({
+          type: 'mediaPlayerPause',
+          mediaId: `media_id-${discussionCommentId}`
+        }, '*')
+      })
+    },
+    formatSeconds (totalSeconds) {
+      totalSeconds = Math.floor(+totalSeconds || 0)
+      const hours = Math.floor(totalSeconds / 3600)
+      const minutes = Math.floor((totalSeconds % 3600) / 60)
+      const seconds = String(totalSeconds % 60).padStart(2, '0')
+      return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}` : `${minutes}:${seconds}`
+    },
+    timestampActiveComment () {
+      const comment = this.activeDiscussionComment
+      const timestamp = {
+        discussion_comment_id: comment.id,
+        seconds: Math.round(this.mediaCurrentTime * 100) / 100,
+        created_by_name: comment.created_by_name
+      }
+      this.pauseMedia(comment.id)
+      if (this.isAddingToOpenReply) {
+        // a reply has one timestamp, so this replaces any it already has
+        this.pendingTimestamps = [timestamp]
+        this.restoreComposerState()
+        this.$bvModal.hide('modal-listen-or-view-comment')
+        return
+      }
+      const discussionIndex = this.discussions.findIndex(discussion => discussion.id === comment.discussion_id)
+      if (discussionIndex === -1) {
+        this.$noty.error('We were unable to find the thread for this comment.  Please refresh the page and try again.')
+        return
+      }
+      // starting a new reply, so whatever the reply box held before is replaced
+      this.composerStateBeforeViewing = null
+      this.pendingTimestampToAdd = timestamp
+      this.$set(this.openStates, discussionIndex, true)
+      this.$bvModal.hide('modal-listen-or-view-comment')
+      this.initCommentOrDiscussionAfterNotice(this.discussions[discussionIndex])
+    },
+    openTimestamp (timestamp) {
+      let referencedComment = null
+      for (const discussion of this.discussions) {
+        referencedComment = discussion.comments.find(comment => comment.id === timestamp.referenced_discussion_comment_id)
+        if (referencedComment) {
+          break
+        }
+      }
+      if (!referencedComment) {
+        this.$noty.info('That comment is no longer available.')
+        return
+      }
+      // start a few seconds early so the listener hears the lead-up to the moment being discussed
+      // (students often stop the player a little after the part they're responding to)
+      this.listenOrViewComment(referencedComment, Math.max(0, timestamp.seconds - TIMESTAMP_LEAD_IN_SECONDS))
     },
     confirmDeleteComment (test) {
 
@@ -2475,6 +3024,10 @@ export default {
     },
     initCommentOrDiscussion (discussion = {}) {
       this.responseModeMissingError = false
+      this.pendingTimestamps = []
+      this.pendingAttachments = []
+      const pendingTimestampToAdd = this.pendingTimestampToAdd
+      this.pendingTimestampToAdd = null
       if (!this.discussItSettingsForm.response_modes.length) {
         this.responseModeMissingError = true
         this.openComposePanel()
@@ -2499,6 +3052,9 @@ export default {
       this.fileRequirementSatisfied = false
 
       this.activeDiscussion = discussion.id ? discussion : {}
+      if (pendingTimestampToAdd && discussion.id) {
+        this.pendingTimestamps.push(pendingTimestampToAdd)
+      }
       this.openComposePanel()
     },
     startDiscussion () {
@@ -2515,6 +3071,11 @@ export default {
         return
       }
       this.initCommentOrDiscussion(discussion)
+    },
+    cancelLinkedDiscussionNotice () {
+      this.discussionAwaitingNotice = null
+      this.pendingTimestampToAdd = null
+      this.$bvModal.hide('modal-linked-discussion-notice')
     },
     acknowledgeLinkedDiscussionNotice () {
       this.linkedDiscussionNoticeAcknowledged = true
@@ -2583,6 +3144,27 @@ export default {
         this.commentForm.recording_type = recordingType
         this.commentForm.file_requirement_satisfied = this.fileRequirementSatisfied
       }
+      // timestamps: new replies send the ones added from the video/audio window;
+      // editing a text comment sends the ones still kept (removed ones are deleted);
+      // re-recording an audio/video comment leaves them as they are
+      delete this.commentForm.timestamps
+      delete this.commentForm.keep_timestamp_ids
+      delete this.commentForm.attachments
+      // a recording can finish while a file is still uploading; wait so the file is included
+      while (this.attachmentUploading) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+      }
+      // attached files: new comments send theirs; edited text comments save theirs separately once the text is saved
+      const editedCommentId = this.activeDiscussionComment.id
+      const saveEditedAttachments = action === 'patch' && this.commentForm.type === 'text' && this.attachmentsChanged()
+      if (action === 'post') {
+        this.commentForm.attachments = this.pendingAttachments
+        this.commentForm.timestamps = discussionId
+          ? this.pendingTimestamps.map(item => ({ discussion_comment_id: item.discussion_comment_id, seconds: item.seconds }))
+          : []
+      } else if (this.commentForm.type === 'text') {
+        this.commentForm.keep_timestamp_ids = this.editTimestamps.map(item => item.id)
+      }
 
       try {
         await this.getDiscussionsByMediaUploadId(false)
@@ -2592,6 +3174,12 @@ export default {
         const { data } = await this.commentForm[action](url)
         this.activeDiscussionCommentId = data.discussion_comment_id
         if (data.type !== 'error') {
+          if (saveEditedAttachments) {
+            await this.saveAttachments(editedCommentId)
+          }
+          this.pendingAttachments = []
+          this.pendingTimestamps = []
+          this.editTimestamps = []
           await this.getSatisfiedRequirements()
           this.$bvModal.show('modal-discussion-comment-submission-accepted')
           await this.getDiscussionsByMediaUploadId()
@@ -2617,6 +3205,7 @@ export default {
           return false
         }
         this.discussions = data.discussions.filter(item => item.group === this.group)
+        this.commentsHiddenUntilPosted = Boolean(data.comments_hidden_until_posted)
 
         await this.typesetMath()
         if (resetOpenStates) {
@@ -2632,6 +3221,38 @@ export default {
 }
 </script>
 <style scoped>
+.discuss-it-criteria-row {
+  display: flex;
+  align-items: flex-start;
+  font-size: 0.875rem;
+  padding: 0.25rem 0;
+}
+
+/* each label and the first line of its controls share one 31px line (the height of a small input) */
+.discuss-it-criteria-label {
+  flex: 0 0 110px;
+  font-weight: 600;
+  line-height: 31px;
+}
+
+.discuss-it-criteria-row > div > .d-flex {
+  min-height: 31px;
+}
+
+.discuss-it-criteria-sentence {
+  font-size: 0.875rem;
+}
+
+.discuss-it-comment-image {
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 4px;
+}
+
+.discuss-it-timestamp-chip {
+  font-weight: normal;
+}
+
 .discuss-it-sticky-col {
   /* Keeps the discussion/compose column in view while the person scrolls
      through a long attachment on the left. It stays pinned near the top

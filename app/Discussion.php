@@ -126,6 +126,10 @@ class Discussion extends Model
         }
         $discussion_infos = $discussion_infos->orderBy('comment_created_at', 'ASC')
             ->get();
+        //timestamps in replies that point to moments in audio/video comments (skips any whose comment was deleted)
+        $timestamps_by_comment_id = DiscussionCommentTimestamp::byCommentIds($discussion_infos->pluck('comment_id')->toArray());
+        //files attached to each comment, with their links
+        $attachments_by_comment_id = DiscussionCommentAttachment::byCommentIds($discussion_infos->pluck('comment_id')->toArray());
         $discussions = [];
         $discussions_by_user_id = [];
         $htmlDom = new DOMDocument();
@@ -141,6 +145,7 @@ class Discussion extends Model
                     'id' => $discussion_id,
                     'created_at' => $this->_formatDate($value->discussion_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_user_id]),
                     'started_by' => $enrolled_students_by_user_id[$value->discussion_user_id],
+                    'started_by_user_id' => (int)$value->discussion_user_id,
                     'group' => $value->group,
                     'assignment_id' => $value->discussion_assignment_id,
                     'assignment_name' => $assignment_names_by_id[$value->discussion_assignment_id] ?? '',
@@ -148,6 +153,7 @@ class Discussion extends Model
                 ];
             }
             $discussionComment = new DiscussionComment();
+            $recording_type = $discussionComment->getRecordingType($value);
             if (!isset($enrolled_student_time_zones_by_user_id[$value->discussion_user_id])) {
                 $enrolled_student_time_zones_by_user_id[$value->discussion_user_id] = User::find($value->discussion_user_id)->time_zone;
             }
@@ -161,6 +167,8 @@ class Discussion extends Model
 
             $discussions[$discussion_id]['comments'][] = [
                 'id' => $value->comment_id,
+                'discussion_id' => $discussion_id,
+                'timestamps' => $timestamps_by_comment_id[$value->comment_id] ?? [],
                 'created_by_user_id' => $value->discussion_comments_user_id,
                 'created_by_name' => $enrolled_students_by_user_id[$value->discussion_comments_user_id],
                 'assignment_id' => (int)$value->comment_assignment_id,
@@ -168,7 +176,8 @@ class Discussion extends Model
                 'text' => $question->addTimeToS3Files($value->text, $htmlDom, false),
                 'pasted_comment' => $value->pasted_comment,
                 'file' => $value->file,
-                'recording_type' => $discussionComment->getRecordingType($value),
+                'recording_type' => $recording_type,
+                'attachments' => $attachments_by_comment_id[$value->comment_id] ?? [],
                 'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
                 're_processed_transcript' => $value->re_processed_transcript,
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_user_id])];
@@ -185,9 +194,12 @@ class Discussion extends Model
                 'id' => $value->comment_id, //needed for the trnascript
                 'discussion_comment_id' => $value->comment_id,
                 'discussion_id' => $discussion_id,
+                'timestamps' => $timestamps_by_comment_id[$value->comment_id] ?? [],
                 'text' => $question->addTimeToS3Files($value->text, $htmlDom, false),
                 'pasted_comment' => $value->pasted_comment,
                 'file' => $value->file,
+                'recording_type' => $recording_type,
+                'attachments' => $attachments_by_comment_id[$value->comment_id] ?? [],
                 'transcript' => $value->transcript ? $questionMediaUpload->parseVtt($value->transcript) : null,
                 're_processed_transcript' => $value->re_processed_transcript,
                 'created_at' => $this->_formatDate($value->comment_created_at, $enrolled_student_time_zones_by_user_id[$value->discussion_comments_user_id])
@@ -202,6 +214,88 @@ class Discussion extends Model
             $discussions_by_user_id[$enrolled_student->id]['user_id'] = $enrolled_student->id;
         }
         return ['discussions' => array_values($discussions), 'discussions_by_user_id' => array_values($discussions_by_user_id)];
+    }
+
+    /**
+     * Whether the student has started a thread in this assignment (for this question, on any media page) with a
+     * comment of theirs that meets the requirements.  Recomputed each time, so deleting that thread hides the
+     * comments again.
+     *
+     * @param int $assignment_id
+     * @param int $question_id
+     * @param int $user_id
+     * @return bool
+     */
+    public static function studentHasPostedToSeeComments(int $assignment_id, int $question_id, int $user_id): bool
+    {
+        return DB::table('discussions')
+            ->join('discussion_comments', 'discussions.id', '=', 'discussion_comments.discussion_id')
+            ->where('discussions.assignment_id', $assignment_id)
+            ->where('discussions.question_id', $question_id)
+            ->where('discussions.user_id', $user_id)
+            ->where('discussion_comments.user_id', $user_id)
+            ->where('discussion_comments.posted_in_assignment_id', $assignment_id)
+            ->where('discussion_comments.satisfied_requirement', 1)
+            ->exists();
+    }
+
+    /**
+     * What a student who hasn't posted yet may see: threads started by instructors (or other non-students) and by
+     * the student, and within them only comments by non-students and by the student.
+     *
+     * @param array $discussions as returned by getByAssignmentQuestionMediaUploadId
+     * @param int $user_id
+     * @return array
+     */
+    public static function onlyWhatAStudentCanSeeBeforePosting(array $discussions, int $user_id): array
+    {
+        $author_ids = [];
+        foreach ($discussions as $discussion) {
+            $author_ids[] = $discussion['started_by_user_id'];
+            foreach ($discussion['comments'] as $comment) {
+                $author_ids[] = $comment['created_by_user_id'];
+            }
+        }
+        $student_author_ids = DB::table('users')
+            ->whereIn('id', array_unique($author_ids))
+            ->where('role', 3)
+            ->pluck('id')
+            ->map(function ($id) {
+                return (int)$id;
+            })
+            ->toArray();
+        $can_see = function ($author_id) use ($user_id, $student_author_ids) {
+            return (int)$author_id === $user_id || !in_array((int)$author_id, $student_author_ids);
+        };
+        $visible_discussions = [];
+        foreach ($discussions as $discussion) {
+            if (!$can_see($discussion['started_by_user_id'])) {
+                continue;
+            }
+            $discussion['comments'] = array_values(array_filter($discussion['comments'], function ($comment) use ($can_see) {
+                return $can_see($comment['created_by_user_id']);
+            }));
+            $visible_discussions[] = $discussion;
+        }
+        return $visible_discussions;
+    }
+
+    /**
+     * Whether a student who hasn't posted yet may reply in this thread (one started by a non-student or by them).
+     *
+     * @param Discussion $discussion
+     * @param int $user_id
+     * @return bool
+     */
+    public static function studentCanReplyBeforePosting(Discussion $discussion, int $user_id): bool
+    {
+        if ((int)$discussion->user_id === $user_id) {
+            return true;
+        }
+        return DB::table('users')
+            ->where('id', $discussion->user_id)
+            ->where('role', '<>', 3)
+            ->exists();
     }
 
     /**

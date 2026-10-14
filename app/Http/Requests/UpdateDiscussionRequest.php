@@ -35,6 +35,13 @@ class UpdateDiscussionRequest extends FormRequest
             default:
                 throw new Exception ("This type of comment has no validation associated with it.");
         }
+        //when editing, timestamps can be removed (by leaving them out) but not added
+        $rules['keep_timestamp_ids'] = 'nullable|array';
+        $rules['keep_timestamp_ids.*'] = 'integer';
+        //files attached to the comment; their type and size are checked when the comment is saved
+        $rules['attachments'] = 'nullable|array|max:' . \App\DiscussionCommentAttachment::MAX_PER_COMMENT;
+        $rules['attachments.*.file'] = 'required|string|max:191';
+        $rules['attachments.*.original_filename'] = 'required|string|max:255';
         return $rules;
     }
 }
