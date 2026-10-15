@@ -306,11 +306,53 @@ class AssignmentSyncQuestionController extends Controller
                     }
                 }
             }
+            //forge_settings copied from another assignment can point at that assignment's draft questions,
+            //so only reuse draft questions that are actually in this assignment
+            if ($existing_draft_question_ids) {
+                $draft_question_ids_in_this_assignment = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->whereIn('question_id', array_values($existing_draft_question_ids))
+                    ->pluck('question_id')
+                    ->toArray();
+                $existing_draft_question_ids = array_filter($existing_draft_question_ids,
+                    function ($draft_question_id) use ($draft_question_ids_in_this_assignment) {
+                        return in_array($draft_question_id, $draft_question_ids_in_this_assignment);
+                    });
+            }
 
             // Build clean drafts array with only necessary fields, converting to UTC
             $clean_drafts = [];
             $draft_number = 1;
             $new_draft_question_ids = []; // Track which draft question IDs are still in use
+
+            //each Forge draft can only belong to one assignment; a draft id shared across assignments sends
+            //Forge students to the wrong course (they then show as "not enrolled" and the question as closed)
+            $draft_uuids = [];
+            if (isset($data['drafts']) && is_array($data['drafts'])) {
+                foreach ($data['drafts'] as $draft) {
+                    if (!empty($draft['uuid'])) {
+                        $draft_uuids[] = $draft['uuid'];
+                    }
+                }
+            }
+            if (count($draft_uuids) !== count(array_unique($draft_uuids))) {
+                $response['message'] = "Two of the drafts have the same ID.  Please refresh the page and try again.";
+                return $response;
+            }
+            if ($draft_uuids) {
+                $draft_used_in_another_assignment = DB::table('assignment_question_forge_draft')
+                    ->join('assignment_question', 'assignment_question_forge_draft.assignment_question_id', '=', 'assignment_question.id')
+                    ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+                    ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                    ->whereIn('assignment_question_forge_draft.forge_draft_id', $draft_uuids)
+                    ->where('assignment_question.assignment_id', '<>', $assignment->id)
+                    ->select('assignments.name AS assignment_name', 'courses.name AS course_name')
+                    ->first();
+                if ($draft_used_in_another_assignment) {
+                    $response['message'] = "These Forge settings were copied from \"$draft_used_in_another_assignment->assignment_name\" in \"$draft_used_in_another_assignment->course_name\" and are still tied to that assignment, so they can't be saved here.  Please contact us for assistance.";
+                    return $response;
+                }
+            }
 
             DB::beginTransaction();
             if (isset($data['drafts']) && is_array($data['drafts'])) {
@@ -1828,6 +1870,9 @@ class AssignmentSyncQuestionController extends Controller
                                 ? Helper::defaultDiscussItSettings()
                                 : Helper::makeDiscussItSettingsBackwardsCompatible($assignment_question->discuss_it_settings);
                         }
+                        //same as importAssignmentQuestionsAndLearningTrees(): Forge drafts (and their ids) belong to
+                        //the source assignment, so the copy starts with fresh Forge settings
+                        $assignment_question->forge_settings = null;
 
                         $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
                             ->where('assignment_question_id', $assignment_question->id)
@@ -1894,6 +1939,11 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment_question->assignment_id = $assignment->id;
                     $assignment_question->order = count($assignment_questions) + $key + 1;
                     $question_to_add = Question::find($question['question_id']);
+                    if ($question_to_add->forge_source_id) {
+                        DB::rollBack();
+                        $response['message'] = "\"$question_to_add->title\" is a Forge draft. Please add its main Forge question instead.";
+                        return $response;
+                    }
                     switch ($assignment->points_per_question) {
                         case('number of points'):
                             $assignment_question->points = $assignment->default_points_per_question;

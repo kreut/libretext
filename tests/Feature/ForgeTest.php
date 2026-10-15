@@ -13,6 +13,7 @@ use App\SubmissionFile;
 use App\Traits\Test;
 use App\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 use function factory;
 
@@ -427,6 +428,255 @@ class ForgeTest extends TestCase
         $this->postJson("/api/forge/submissions/forge-draft-id/test-draft-uuid/user/{$this->student_user->central_identity_id}")
             ->assertJson(['message' => 'Invalid Bearer token']);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Forge draft ids must belong to exactly one assignment
+    |--------------------------------------------------------------------------
+    | A draft id shared by two assignments made validateForgeQuestionAccess()
+    | resolve students to the wrong course ("not enrolled" + question closed).
+    */
+
+    //UpdateForgeSettings requires draft ids to be valid UUIDs
+    private const SHARED_DRAFT_UUID = '11111111-1111-4111-8111-111111111111';
+    private const SAME_DRAFT_UUID = '22222222-2222-4222-8222-222222222222';
+    private const FINAL_DRAFT_UUID = '33333333-3333-4333-8333-333333333333';
+    private const COPIED_DRAFT_UUID = '44444444-4444-4444-8444-444444444444';
+    private const SOURCE_DRAFT_UUID = '55555555-5555-4555-8555-555555555555';
+
+    //update to match the remix route in routes/api.php
+    private const REMIX_URL = '/api/assignments/%d/remix-assignment-with-chosen-questions';
+
+    /**
+     * Another course owned by the same instructor, with an assignment whose Forge
+     * question already uses $forge_draft_id (the state a copied question used to create).
+     */
+    private function createOtherAssignmentUsingDraftId(string $forge_draft_id): Assignment
+    {
+        $other_course = factory(Course::class)->create(['user_id' => $this->user->id, 'name' => 'Other Course']);
+        factory(Section::class)->create(['course_id' => $other_course->id]);
+        $other_assignment = factory(Assignment::class)->create(['course_id' => $other_course->id, 'name' => 'Other Assignment']);
+        $other_assignment_question_id = DB::table('assignment_question')->insertGetId([
+            'assignment_id' => $other_assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
+        ]);
+        DB::table('assignment_question_forge_draft')->insert([
+            'assignment_question_id' => $other_assignment_question_id,
+            'forge_draft_id' => $forge_draft_id,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        return $other_assignment;
+    }
+
+    private function draft(string $uuid, string $title, bool $is_final, ?int $question_id = null): array
+    {
+        $draft = [
+            'uuid' => $uuid,
+            'title' => $title,
+            'isFinal' => $is_final,
+            'late_policy' => 'not accepted',
+            'late_deduction_percent' => null,
+            'late_deduction_applied_once' => null,
+            'late_deduction_application_period' => null,
+            'extensions' => [],
+            'assign_tos' => [
+                [
+                    'groups' => [['text' => 'Everybody', 'value' => ['course_id' => $this->course->id]]],
+                    'available_from_date' => '2025-01-01',
+                    'available_from_time' => '9:00 AM',
+                    'due_date' => '2025-12-31',
+                    'due_time' => '11:59 PM'
+                ]
+            ]
+        ];
+        if ($question_id) {
+            $draft['question_id'] = $question_id;
+        }
+        return $draft;
+    }
+
+    private function forgeSettingsWithDrafts(array $drafts): array
+    {
+        $data = $this->getValidForgeSettingsData();
+        $data['drafts'] = $drafts;
+        return $data;
+    }
+
+    /** @test */
+    public function cannot_save_forge_settings_with_a_draft_id_used_in_another_assignment()
+    {
+        $this->createOtherAssignmentUsingDraftId(self::SHARED_DRAFT_UUID);
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/forge-settings",
+                $this->forgeSettingsWithDrafts([$this->draft(self::SHARED_DRAFT_UUID, 'Final Submission', true)]))
+            ->assertJson([
+                'type' => 'error',
+                'message' => 'These Forge settings were copied from "Other Assignment" in "Other Course" and are still tied to that assignment, so they can\'t be saved here.  Please contact us for assistance.'
+            ]);
+
+        $this->assertEquals(1, DB::table('assignment_question_forge_draft')
+            ->where('forge_draft_id', self::SHARED_DRAFT_UUID)
+            ->count());
+        $this->assertDatabaseHas('assignment_question_forge_draft', [
+            'assignment_question_id' => $this->assignment_question_id,
+            'forge_draft_id' => 'test-draft-uuid'
+        ]);
+    }
+
+    /** @test */
+    public function cannot_save_forge_settings_with_the_same_draft_id_twice()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/forge-settings",
+                $this->forgeSettingsWithDrafts([
+                    $this->draft(self::SAME_DRAFT_UUID, 'Draft 1', false),
+                    $this->draft(self::SAME_DRAFT_UUID, 'Final Submission', true)
+                ]))
+            ->assertJson([
+                'type' => 'error',
+                'message' => 'Two of the drafts have the same ID.  Please refresh the page and try again.'
+            ]);
+    }
+
+    /** @test */
+    public function can_save_forge_settings_with_a_draft_id_only_used_in_this_assignment()
+    {
+        Http::fake(['*' => Http::response(['type' => 'success'], 200)]);
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/forge-settings",
+                $this->forgeSettingsWithDrafts([$this->draft(self::FINAL_DRAFT_UUID, 'Final Submission', true)]))
+            ->assertJson(['type' => 'success']);
+
+        $this->assertDatabaseHas('assignment_question_forge_draft', [
+            'assignment_question_id' => $this->assignment_question_id,
+            'forge_draft_id' => self::FINAL_DRAFT_UUID
+        ]);
+    }
+
+    /** @test */
+    public function saving_copied_forge_settings_does_not_change_another_assignments_draft_question()
+    {
+        Http::fake(['*' => Http::response(['type' => 'success'], 200)]);
+
+        //a draft question that lives in another assignment
+        $other_assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $other_draft_question = factory(Question::class)->create([
+            'library' => 'adapt',
+            'qti_json_type' => 'forge_iteration',
+            'forge_source_id' => $this->question->id,
+            'title' => 'Other Assignment Draft'
+        ]);
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $other_assignment->id,
+            'question_id' => $other_draft_question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
+        ]);
+
+        //this assignment's settings point at it, as copied settings used to
+        DB::table('assignment_question')
+            ->where('id', $this->assignment_question_id)
+            ->update(['forge_settings' => json_encode([
+                'drafts' => [
+                    $this->draft(self::COPIED_DRAFT_UUID, 'Draft 1', false, $other_draft_question->id),
+                    $this->draft(self::FINAL_DRAFT_UUID, 'Final Submission', true)
+                ],
+                'settings' => []
+            ])]);
+
+        $response = $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/question/{$this->question->id}/forge-settings",
+                $this->forgeSettingsWithDrafts([
+                    $this->draft(self::COPIED_DRAFT_UUID, 'Renamed Draft', false, $other_draft_question->id),
+                    $this->draft(self::FINAL_DRAFT_UUID, 'Final Submission', true)
+                ]))
+            ->assertJson(['type' => 'success']);
+
+        $this->assertEquals('Other Assignment Draft', $other_draft_question->fresh()->title);
+        $this->assertNotEquals($other_draft_question->id, $response->json('drafts.0.question_id'));
+        $this->assertDatabaseMissing('assignment_question', [
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $other_draft_question->id
+        ]);
+    }
+
+    /** @test */
+    public function remixing_a_forge_question_from_my_courses_does_not_copy_its_drafts()
+    {
+        $source_assignment = $this->createOtherAssignmentUsingDraftId(self::SOURCE_DRAFT_UUID);
+        DB::table('assignment_question')
+            ->where('assignment_id', $source_assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['forge_settings' => json_encode([
+                'drafts' => [$this->draft(self::SOURCE_DRAFT_UUID, 'Final Submission', true)],
+                'settings' => []
+            ])]);
+        $target_assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+
+        $this->actingAs($this->user)
+            ->patchJson(sprintf(self::REMIX_URL, $target_assignment->id), [
+                'question_source' => 'my_courses',
+                'chosen_questions' => [
+                    ['assignment_id' => $source_assignment->id, 'question_id' => $this->question->id]
+                ]
+            ])
+            ->assertJson(['type' => 'success']);
+
+        $copied_assignment_question = DB::table('assignment_question')
+            ->where('assignment_id', $target_assignment->id)
+            ->where('question_id', $this->question->id)
+            ->first();
+        $this->assertNotNull($copied_assignment_question);
+        $this->assertNull($copied_assignment_question->forge_settings);
+        $this->assertDatabaseMissing('assignment_question_forge_draft', [
+            'assignment_question_id' => $copied_assignment_question->id
+        ]);
+    }
+
+    /** @test */
+    public function cannot_remix_a_forge_draft_question_on_its_own()
+    {
+        $source_assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $draft_question = factory(Question::class)->create([
+            'library' => 'adapt',
+            'qti_json_type' => 'forge_iteration',
+            'forge_source_id' => $this->question->id,
+            'title' => 'Some Draft'
+        ]);
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $source_assignment->id,
+            'question_id' => $draft_question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
+        ]);
+        $target_assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+
+        $this->actingAs($this->user)
+            ->patchJson(sprintf(self::REMIX_URL, $target_assignment->id), [
+                'question_source' => 'my_courses',
+                'chosen_questions' => [
+                    ['assignment_id' => $source_assignment->id, 'question_id' => $draft_question->id]
+                ]
+            ])
+            ->assertJson([
+                'type' => 'error',
+                'message' => '"Some Draft" is a Forge draft. Please add its main Forge question instead.'
+            ]);
+
+        $this->assertDatabaseMissing('assignment_question', [
+            'assignment_id' => $target_assignment->id,
+            'question_id' => $draft_question->id
+        ]);
+    }
+
 
 
 }
