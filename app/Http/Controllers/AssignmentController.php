@@ -1683,31 +1683,6 @@ class AssignmentController extends Controller
         return '';
     }
 
-    public
-    function showPointsPerQuestion(Assignment $assignment, int $showPointsPerQuestion)
-    {
-
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('showPointsPerQuestion', $assignment);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        try {
-            $assignment->update(['show_points_per_question' => !$showPointsPerQuestion]);
-            $response['type'] = !$showPointsPerQuestion ? 'success' : 'info';
-            $points_per_question = !$showPointsPerQuestion ? 'can' : 'cannot';
-            $response['message'] = "Your students <strong>{$points_per_question}</strong> view the points per question.";
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error releasing the solutions to <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
-        }
-        return $response;
-    }
-
     /**
      * @param Request $request
      * @param Assignment $assignment
@@ -1836,7 +1811,7 @@ class AssignmentController extends Controller
 
             if ($request->user()->role === 5 || $formative) {
 
-                $assignment_json = '{"public_description":null,"private_description":null,"assessment_type":"real time","number_of_allowed_attempts":"1","number_of_allowed_attempts_penalty":null,"can_view_hint":0,"hint_penalty":null,"algorithmic":0,"min_number_of_minutes_in_exposition_node":null,"assignment_group_id":1,"source":"a","instructions":"","number_of_randomized_assessments":null,"external_source_points":null,"scoring_type":"p","points_per_question":"number of points","default_completion_scoring_mode":null,"default_points_per_question":"10.00","total_points":null,"default_clicker_time_to_submit":null,"show_points_per_question":1,"file_upload_mode":null,"default_open_ended_submission_type":"0","default_open_ended_text_editor":null,"late_policy":"not accepted","late_deduction_percent":null,"late_deduction_application_period":"once","shown":1,"show_scores":1,"solutions_released":0,"solutions_availability":"automatic","graders_can_see_student_names":1,"students_can_view_assignment_statistics":0,"include_in_weighted_average":1,"notifications":1,"course_id":512,"lms_resource_link_id":null,"textbook_url":null}';
+                $assignment_json = '{"public_description":null,"private_description":null,"assessment_type":"real time","number_of_allowed_attempts":"1","number_of_allowed_attempts_penalty":null,"can_view_hint":0,"hint_penalty":null,"algorithmic":0,"min_number_of_minutes_in_exposition_node":null,"assignment_group_id":1,"source":"a","instructions":"","number_of_randomized_assessments":null,"external_source_points":null,"scoring_type":"p","points_per_question":"number of points","default_completion_scoring_mode":null,"default_points_per_question":"10.00","total_points":null,"default_clicker_time_to_submit":null,"file_upload_mode":null,"default_open_ended_submission_type":"0","default_open_ended_text_editor":null,"late_policy":"not accepted","late_deduction_percent":null,"late_deduction_application_period":"once","shown":1,"show_scores":1,"solutions_released":0,"solutions_availability":"automatic","graders_can_see_student_names":1,"students_can_view_assignment_statistics":0,"include_in_weighted_average":1,"notifications":1,"course_id":512,"lms_resource_link_id":null,"textbook_url":null}';
                 $data = json_decode($assignment_json, 1);
                 $data['name'] = $request->name;
                 if ($formative) {
@@ -2037,7 +2012,6 @@ class AssignmentController extends Controller
                 'source' => $assignment->source,
                 'default_clicker_time_to_submit' => $assignment->default_clicker_time_to_submit,
                 'submission_files' => $assignment->submission_files,
-                'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,
                 'show_scores' => $assignment->show_scores,
                 'question_url_view' => $assignment->question_url_view,

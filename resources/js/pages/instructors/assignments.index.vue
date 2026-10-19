@@ -907,13 +907,7 @@
                   {{ column.tooltip }}
                 </b-tooltip>
               </th>
-              <th scope="col" class="cp-group-start">
-                Points per <span class="text-nowrap">question <QuestionCircleTooltip :id="'cp-points-tooltip'" /></span>
-                <b-tooltip target="cp-points-tooltip" delay="250" triggers="hover focus">
-                  Whether students see how many points each question is worth.
-                </b-tooltip>
-              </th>
-              <th v-if="user.role === 2" scope="col">
+              <th v-if="user.role === 2" scope="col" class="cp-group-start">
                 Question <span class="text-nowrap">titles <QuestionCircleTooltip :id="'cp-titles-tooltip'" /></span>
                 <b-tooltip target="cp-titles-tooltip" delay="250" triggers="hover focus">
                   Whether students see the titles of the questions.
@@ -940,7 +934,7 @@
               </td>
               <td v-for="column in bulkSettingColumns"
                   :key="`bulk-setting-${column.key}`"
-                  :class="{ 'cp-group-start': column.key === 'show_points_per_question' }"
+                  :class="{ 'cp-group-start': column.key === 'question_titles_shown' }"
               >
                 <b-form-select :key="`bulk-setting-select-${column.key}-${bulkSettingSelectKey}`"
                                :value="null"
@@ -978,16 +972,7 @@
                   </div>
                 </template>
               </td>
-              <td class="cp-group-start">
-                <span v-if="isFormative(assignment)" class="text-muted">N/A</span>
-                <ShowPointsPerQuestionToggle
-                  v-else
-                  :key="`overview-points-${assignment.id}-${showHideAssignmentPropertiesKey}`"
-                  :assignment="assignment"
-                  :radio-buttons="true"
-                />
-              </td>
-              <td v-if="user.role === 2">
+              <td v-if="user.role === 2" class="cp-group-start">
                 <span v-if="isFormative(assignment)" class="text-muted">N/A</span>
                 <ShowQuestionTitlesToggle
                   v-else
@@ -2116,25 +2101,6 @@
                       </tr>
                       </thead>
                       <tbody>
-                      <tr v-if="!isFormative(assignment)">
-                        <th scope="row">
-                          Points per question
-                          <QuestionCircleTooltip :id="`points-per-question-tooltip-${assignment.id}`" />
-                          <b-tooltip :target="`points-per-question-tooltip-${assignment.id}`"
-                                     delay="500"
-                                     triggers="hover focus"
-                          >
-                            Whether students see how many points each question is worth.
-                          </b-tooltip>
-                        </th>
-                        <td>
-                          <ShowPointsPerQuestionToggle
-                            :key="`show-points-per-question-toggle-${assignment.id}-${showHideAssignmentPropertiesKey}`"
-                            :assignment="assignment"
-                            :radio-buttons="true"
-                          />
-                        </td>
-                      </tr>
                       <tr v-if="user.role === 2 && !isFormative(assignment)">
                         <th scope="row">
                           Question titles
@@ -2251,7 +2217,6 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { faLink } from '@fortawesome/free-solid-svg-icons'
 import AllFormErrors from '~/components/AllFormErrors'
-import ShowPointsPerQuestionToggle from '~/components/ShowPointsPerQuestionToggle'
 import ShowQuestionTitlesToggle from '~/components/ShowQuestionTitlesToggle.vue'
 import GradersCanSeeStudentNamesToggle from '~/components/GradersCanSeeStudentNamesToggle'
 import { fixInvalid } from '~/helpers/accessibility/FixInvalid'
@@ -2284,7 +2249,6 @@ export default {
     AssignTosToView,
     FontAwesomeIcon,
     AllFormErrors,
-    ShowPointsPerQuestionToggle,
     GradersCanSeeStudentNamesToggle,
     ShowQuestionTitlesToggle
   },
@@ -2409,8 +2373,7 @@ export default {
         { key: 'shown', label: 'Assignment', options: release, type: 'release' },
         { key: 'show_scores', label: 'Scores', options: release, type: 'release' },
         { key: 'solutions_released', label: 'Solutions', options: release, type: 'release' },
-        { key: 'students_can_view_assignment_statistics', label: 'Statistics', options: release, type: 'release' },
-        { key: 'show_points_per_question', label: 'Points per question', options: visibility, type: 'visibility' }
+        { key: 'students_can_view_assignment_statistics', label: 'Statistics', options: release, type: 'release' }
       ]
       if (this.user && this.user.role === 2) {
         columns.push(
@@ -3218,8 +3181,6 @@ What assignment parameters??? */
           return `/api/assignments/${assignment.id}/solutions-released`
         case ('students_can_view_assignment_statistics'):
           return `/api/assignments/${assignment.id}/show-assignment-statistics`
-        case ('show_points_per_question'):
-          return `/api/assignments/${assignment.id}/show-points-per-question/${Number(+assignment.show_points_per_question)}`
         case ('question_titles_shown'):
           return `/api/assignments/${assignment.id}/show-question-titles`
         case ('graders_can_see_student_names'):
@@ -3389,9 +3350,8 @@ What assignment parameters??? */
       return this.hasSettingsColumn
     },
     hasVisibilitySettings (assignment) {
-      // Instructors always have the question URL view; graders only have points per question,
-      // which doesn't apply to formative assignments.
-      return this.user.role === 2 || !this.isFormative(assignment)
+      // Only instructors have visibility settings (the question URL view always applies, even to formative assignments).
+      return this.user.role === 2
     },
     isSettingsExpanded (assignment) {
       return this.expandedAssignmentSettingIds.includes(assignment.id)

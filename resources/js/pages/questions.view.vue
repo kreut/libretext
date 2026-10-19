@@ -4329,7 +4329,6 @@ export default {
     latePolicy: '',
     capitalFormattedAssessmentType: '',
     assessmentType: '',
-    showPointsPerQuestion: false,
     showQuestionDoesNotExistMessage: false,
     maintainAspectRatio: false,
     showAssignmentStatisticsModal: false,
@@ -5922,7 +5921,7 @@ export default {
       return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
     },
     studentShowPointsNonClicker () {
-      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.showPointsPerQuestion && this.assessmentType !== 'clicker' && !this.isFormative
+      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.assessmentType !== 'clicker' && !this.isFormative
     },
     studentNonClicker () {
       return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.assessmentType !== 'clicker'
@@ -7786,7 +7785,6 @@ export default {
         this.showScores = Boolean(Number(assignment.show_scores))
         this.scoring_type = assignment.scoring_type
         this.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
-        this.showPointsPerQuestion = assignment.show_points_per_question
         this.showUpdatePointsPerQuestion = assignment.points_per_question === 'number of points'
         this.canViewHintAtAssignmentLevel = assignment.can_view_hint
         this.flashcardSettings = assignment.flashcard_settings || (assignment.assessment_type === 'flashcard' ? {

@@ -548,7 +548,7 @@ export default {
           {
             key: 'points',
             label: 'Question Points',
-            shown: assignment.show_points_per_question
+            shown: true
           },
           {
             key: 'total_score',

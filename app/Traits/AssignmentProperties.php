@@ -227,7 +227,6 @@ trait AssignmentProperties
             'late_policy' => $data['late_policy'],
             'show_scores' => ($data['source'] === 'x' || ($data['source'] === 'a' && $request->assessment_type === 'delayed')) ? 0 : 1,
             'solutions_released' => 0,
-            'show_points_per_question' => ($data['source'] === 'x' || $request->assessment_type === 'delayed') ? 0 : 1,
             'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
             'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
             'include_in_weighted_average' => $data['include_in_weighted_average'],

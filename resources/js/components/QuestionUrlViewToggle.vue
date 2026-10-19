@@ -7,10 +7,10 @@
       required
       @change="submitQuestionUrlView()"
     >
-      <b-form-radio name="showPointsPerQuestion" value="assignment">
+      <b-form-radio :name="`question-url-view-${assignment.id}`" value="assignment">
         Assignment
       </b-form-radio>
-      <b-form-radio name="showPointsPerQuestion" value="question">
+      <b-form-radio :name="`question-url-view-${assignment.id}`" value="question">
         Question
       </b-form-radio>
     </b-form-radio-group>

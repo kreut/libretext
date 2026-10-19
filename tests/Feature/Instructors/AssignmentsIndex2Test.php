@@ -708,14 +708,6 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
-    public
-    function can_only_toggle_show_points_per_question_for_a_delayed_assignment()
-    {
-//todo
-
-    }
-
-    /** @test */
 
     public
     function a_valid_late_policy_is_submitted()
@@ -740,24 +732,6 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-
-    /** @test */
-    public
-    function non_owner_cannot_toggle_show_points_per_question()
-    {
-        $this->actingAs($this->user_2)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-points-per-question/1")
-            ->assertJson(['message' => 'You are not allowed to show/hide the points per question.']);
-    }
-
-    /** @test */
-    public
-    function owner_can_toggle_show_points_per_question()
-    {
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/show-points-per-question/1")
-            ->assertJson(['message' => 'Your students <strong>cannot</strong> view the points per question.']);
-    }
 
     public
     function can_update_an_assignment_if_you_are_the_owner()

@@ -435,27 +435,6 @@ class AssignmentPolicy
             : Response::deny($message);
     }
 
-    public function showPointsPerQuestion(User $user, Assignment $assignment)
-    {
-        $has_access = false;
-        switch ($user->role) {
-            case(2):
-                $has_access = $assignment->course->ownsCourseOrIsCoInstructor($user->id);
-                break;
-            case(4):
-                $has_access = $assignment->course->isGrader();
-                break;
-        }
-        if (!$has_access) {
-            $message = 'You are not allowed to show/hide the points per question.';
-        }
-
-        return $has_access
-            ? Response::allow()
-            : Response::deny($message);
-    }
-
-
     /**
      * Determine whether the user can add/set a student's personal time
      * limit clock for this assignment (AssignmentTimeLimitController).

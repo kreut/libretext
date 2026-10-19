@@ -513,7 +513,6 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
     Route::patch('/assignments/{assignment}/link-to-lms', 'AssignmentController@linkToLMS');
 
     Route::patch('/assignments/{assignment}/graders-can-see-student-names/{gradersCanSeeStudentNames}', 'AssignmentController@gradersCanSeeStudentNames');
-    Route::patch('/assignments/{assignment}/show-points-per-question/{showPointsPerQuestion}', 'AssignmentController@showPointsPerQuestion');
     Route::patch('/assignments/{assignment}/solutions-released', 'AssignmentController@solutionsReleased');
 
     Route::patch('/assignments/{assignment}/show-question-titles', 'AssignmentController@showQuestionTitles');

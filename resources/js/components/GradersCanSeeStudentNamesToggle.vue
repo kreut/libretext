@@ -7,10 +7,10 @@
       required
       @change="submitGradersCanSeeStudentNames(assignment)"
     >
-      <b-form-radio name="showPointsPerQuestion" value="1">
+      <b-form-radio :name="`graders-can-see-student-names-${assignment.id}`" value="1">
         Shown
       </b-form-radio>
-      <b-form-radio name="showPointsPerQuestion" value="0">
+      <b-form-radio :name="`graders-can-see-student-names-${assignment.id}`" value="0">
         Hidden
       </b-form-radio>
     </b-form-radio-group>
