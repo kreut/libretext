@@ -943,6 +943,9 @@ Route::group(['middleware' => ['auth:api', 'analytics','rate.limit.by.user']], f
     Route::patch('/submission-files/{assignment}/{question}/scores', 'SubmissionFileController@updateScores');
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}', 'SubmissionFileController@getFilesFromS3');
+    Route::get('/submission-page-annotations/assignment/{assignment}/question/{question}/mine', 'SubmissionPageAnnotationController@mine');
+    Route::get('/submission-page-annotations/assignment/{assignment}/question/{question}/student/{studentUser}', 'SubmissionPageAnnotationController@index');
+    Route::put('/submission-page-annotations/assignment/{assignment}/question/{question}/student/{studentUser}/page/{page}', 'SubmissionPageAnnotationController@update')->where('page', '[0-9]+');
     Route::post('/submission-files/can-submit-file-submission', 'SubmissionFileController@canSubmitFileSubmission');
 
     Route::post('/question-media/text', 'QuestionMediaController@storeText');

@@ -108,6 +108,7 @@
       </b-modal>
       <b-modal id="modal-submission-information"
                :title="modalSubmissionInformationTitle"
+               @show="loadMarkedUpSubmission"
       >
         <b-card v-if="showAutoGradedSubmissionInformation"
                 :class="{'no-card-style': !showOpenEndedSubmissionInformation}"
@@ -192,10 +193,18 @@
                     :class="{ 'text-danger': questions[currentPage - 1].date_submitted === 'N/A' }"
                   >{{ questions[currentPage - 1].date_submitted }}</span></strong>
               </li>
-              <li v-if="showScores">
+              <!-- mt-3: a small gap between the submission (above) and its grading (below) -->
+              <li v-if="showScores" class="mt-3">
                 <strong>Date Graded: {{ questions[currentPage - 1].date_graded }}</strong>
               </li>
 
+              <li v-if="showScores && markedUpSubmission.pages.length">
+                <strong>Grader Markup:
+                  <a href="#" @click.prevent="$bvModal.show('modal-marked-up-submission')">
+                    View Marked-Up Submission
+                  </a>
+                </strong>
+              </li>
               <li v-if="showScores && questions[currentPage-1].file_feedback">
                 <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:
                   <a :href="questions[currentPage-1].file_feedback_url"
@@ -207,7 +216,7 @@
                   </a>
                 </strong>
               </li>
-              <li v-if="!showScores">
+              <li v-if="!showScores" :class="{ 'mt-3': questions[currentPage-1].rubric }">
                 <RubricPointsBreakdownModal
                   v-if="questions[currentPage-1].rubric"
                   :key="`rubric-points-modal-${questions[currentPage - 1].id}`"
@@ -264,6 +273,26 @@
             OK
           </b-button>
         </template>
+      </b-modal>
+      <b-modal id="modal-marked-up-submission"
+               title="Your Submission, Marked Up By Your Grader"
+               size="xl"
+               ok-only
+               ok-title="Close"
+               ok-variant="primary"
+               @shown="markedUpSubmissionShown = true"
+               @hidden="markedUpSubmissionShown = false"
+      >
+        <SubmissionPagesViewer
+          v-if="markedUpSubmissionShown && markedUpSubmission.pages.length"
+          :key="`marked-up-${markedUpSubmission.questionId}`"
+          :pages="markedUpSubmission.pages"
+          :assignment-id="+assignmentId"
+          :question-id="+markedUpSubmission.questionId"
+          :student-user-id="+user.id"
+          :initial-annotations="markedUpSubmission.annotations"
+          :can-annotate="false"
+        />
       </b-modal>
     </div>
     <b-modal id="modal-confirm-paste-into-ckeditor"
@@ -1797,8 +1826,9 @@
       no-close-on-backdrop
     >
       <p>
-        For each question below, enter the page in your PDF where your answer starts and click
-        <strong>Assign</strong>. Only questions that accept a file upload are listed.
+        For each question below, enter the pages in your PDF where your answer starts and ends, then click
+        <strong>Assign</strong>. If an answer ends partway down a page and the next one starts on that same page,
+        include that page for both. Only questions that accept a file upload are listed.
         <span v-if="fullPdfNumberOfPages">
           Your PDF has {{ fullPdfNumberOfPages }} {{ fullPdfNumberOfPages === 1 ? 'page' : 'pages' }}.
         </span>
@@ -1818,7 +1848,10 @@
             </template>
             <template #cell(status)="data">
               <span v-if="data.item.submission_file_page" class="text-success">
-                Page {{ data.item.submission_file_page }}
+                <span v-if="data.item.submission_file_end_page && +data.item.submission_file_end_page > +data.item.submission_file_page">
+                  Pages {{ data.item.submission_file_page }}-{{ data.item.submission_file_end_page }}
+                </span>
+                <span v-else>Page {{ data.item.submission_file_page }}</span>
               </span>
               <span v-else-if="data.item.submission_file_exists">Separate file uploaded</span>
               <span v-else class="text-muted">Not assigned</span>
@@ -1827,10 +1860,21 @@
               <div class="d-flex align-items-center">
                 <b-form-input v-model="assignPdfPages[data.item.id]"
                               :aria-label="`Starting page for question ${data.item.questionNumber}`"
+                              placeholder="from"
                               type="text"
                               size="sm"
                               style="width: 60px"
                               @focus="pdfPreviewPage = assignPdfPages[data.item.id] || pdfPreviewPage"
+                              @change="prefillAssignPdfEndPage(data.item)"
+                />
+                <span class="mx-1">to</span>
+                <b-form-input v-model="assignPdfEndPages[data.item.id]"
+                              :aria-label="`Ending page for question ${data.item.questionNumber}`"
+                              placeholder="to"
+                              type="text"
+                              size="sm"
+                              style="width: 60px"
+                              @focus="pdfPreviewPage = assignPdfEndPages[data.item.id] || pdfPreviewPage"
                 />
                 <b-button variant="primary"
                           size="sm"
@@ -3400,6 +3444,7 @@
                                   variant="outline-primary"
                                   size="sm"
                                   class="ml-2"
+                                  :disabled="!submitButtonActive"
                                   @click="openAssignPdfPagesModal"
                         >
                           Assign Pages From My Uploaded PDF
@@ -3971,6 +4016,7 @@ import SubmitMoleculeSubmission from '../components/SubmitMoleculeSubmission.vue
 import CanSubmitWorkTooltip from '../components/CanSubmitWorkTooltip.vue'
 import SubmitWork from '~/components/SubmitWork.vue'
 import RubricPointsBreakdownModal from '../components/RubricPointsBreakdownModal.vue'
+import SubmissionPagesViewer from '../components/SubmissionPagesViewer.vue'
 import RubricPropertiesModal from '../components/RubricPropertiesModal.vue'
 import RedirectToClickerModal from '../components/RedirectToClickerModal.vue'
 import MarkerSubmission from '../components/MarkerSubmission.vue'
@@ -4011,6 +4057,7 @@ export default {
     RedirectToClickerModal,
     RubricPropertiesModal,
     RubricPointsBreakdownModal,
+    SubmissionPagesViewer,
     SubmitWork,
     CanSubmitWorkTooltip,
     SubmitMoleculeSubmission,
@@ -4215,13 +4262,16 @@ export default {
     fullPdfUrl: '',
     pdfUploadDestination: null,
     assignPdfPages: {},
+    assignPdfEndPages: {},
+    markedUpSubmission: { questionId: 0, pages: [], annotations: {} },
+    markedUpSubmissionShown: false,
     fullPdfNumberOfPages: null, // known once the PDF is uploaded or a page is assigned
     pdfPreviewPage: 1,
     assigningPdfPageQuestionId: 0,
     assignPdfPagesFields: [
       { key: 'question', label: 'Question', isRowHeader: true },
       { key: 'status', label: 'Currently' },
-      { key: 'page', label: 'Starting Page' }
+      { key: 'page', label: 'Pages' }
     ],
     handledOK: false,
     fileUploadKey: 1,
@@ -4329,6 +4379,7 @@ export default {
     latePolicy: '',
     capitalFormattedAssessmentType: '',
     assessmentType: '',
+    showPointsPerQuestion: false,
     showQuestionDoesNotExistMessage: false,
     maintainAspectRatio: false,
     showAssignmentStatisticsModal: false,
@@ -5921,7 +5972,7 @@ export default {
       return this.isInstructor() && !this.isInstructorWithAnonymousView && !this.presentationMode && this.questionView !== 'basic' && !this.inIFrame
     },
     studentShowPointsNonClicker () {
-      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.assessmentType !== 'clicker' && !this.isFormative
+      return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.showPointsPerQuestion && this.assessmentType !== 'clicker' && !this.isFormative
     },
     studentNonClicker () {
       return this.source === 'a' && !this.inIFrame && !this.isAnonymousUser && !this.isInstructorWithAnonymousView && !this.isInstructor() && this.user.role !== 5 && this.assessmentType !== 'clicker'
@@ -7322,19 +7373,79 @@ export default {
       this.processingFile = false
       this.$bvModal.hide(`modal-upload-file`)
     },
+    // The grader's markup on the student's own file, shown once scores are released (the server checks this too)
+    async loadMarkedUpSubmission () {
+      const question = this.questions[this.currentPage - 1]
+      if (!question || !this.showScores || !question.submission_file_exists ||
+        (!this.isOpenEndedFileSubmission && !question.submission_file_page)) {
+        this.markedUpSubmission = { questionId: 0, pages: [], annotations: {} }
+        return
+      }
+      if (this.markedUpSubmission.questionId === question.id) {
+        return
+      }
+      try {
+        const { data } = await axios.get(`/api/submission-page-annotations/assignment/${this.assignmentId}/question/${question.id}/mine`)
+        this.markedUpSubmission = data.type === 'success'
+          ? { questionId: question.id, pages: data.pages || [], annotations: data.annotations || {} }
+          : { questionId: question.id, pages: [], annotations: {} }
+      } catch (error) {
+        this.markedUpSubmission = { questionId: 0, pages: [], annotations: {} }
+      }
+    },
     openAssignPdfPagesModal () {
       const assignPdfPages = {}
+      const assignPdfEndPages = {}
       for (const question of this.eligiblePdfQuestions) {
         assignPdfPages[question.id] = question.submission_file_page ? String(question.submission_file_page) : ''
+        assignPdfEndPages[question.id] = question.submission_file_end_page ? String(question.submission_file_end_page) : ''
       }
       this.assignPdfPages = assignPdfPages
+      this.assignPdfEndPages = assignPdfEndPages
       this.pdfPreviewPage = 1
       this.$bvModal.show('modal-assign-pdf-pages')
+    },
+    // Guess where an answer ends: on the next start page anyone has entered (inclusive, since two answers can
+    // share a page), or the last page of the PDF. Only fills an empty "to" box; the student can change it.
+    guessAssignPdfEndPage (questionId) {
+      const start = +String(this.assignPdfPages[questionId] || '').trim()
+      if (!start) {
+        return ''
+      }
+      const laterStarts = Object.keys(this.assignPdfPages)
+        .filter(id => +id !== +questionId)
+        .map(id => +String(this.assignPdfPages[id] || '').trim())
+        .filter(otherStart => otherStart > start)
+      if (laterStarts.length) {
+        return String(Math.min(...laterStarts))
+      }
+      return String(this.fullPdfNumberOfPages || start)
+    },
+    prefillAssignPdfEndPage (eligibleQuestion) {
+      if (!String(this.assignPdfEndPages[eligibleQuestion.id] || '').trim()) {
+        this.$set(this.assignPdfEndPages, eligibleQuestion.id, this.guessAssignPdfEndPage(eligibleQuestion.id))
+      }
     },
     async initAssignPdfPage (eligibleQuestion) {
       const page = String(this.assignPdfPages[eligibleQuestion.id] || '').trim()
       if (!/^[1-9]\d*$/.test(page)) {
         this.$noty.info(`Please enter the starting page for Question ${eligibleQuestion.questionNumber}.`)
+        return false
+      }
+      this.prefillAssignPdfEndPage(eligibleQuestion)
+      const endPage = String(this.assignPdfEndPages[eligibleQuestion.id] || '').trim()
+      if (!/^[1-9]\d*$/.test(endPage)) {
+        this.$noty.info(`Please enter the ending page for Question ${eligibleQuestion.questionNumber}.`)
+        return false
+      }
+      if (+endPage < +page) {
+        this.$noty.info(`For Question ${eligibleQuestion.questionNumber}, the ending page must be the same as or after the starting page.`)
+        return false
+      }
+      if (this.fullPdfNumberOfPages && +endPage > this.fullPdfNumberOfPages) {
+        this.$noty.info(this.fullPdfNumberOfPages === 1
+          ? 'Your PDF only has 1 page.'
+          : `Your PDF only has ${this.fullPdfNumberOfPages} pages.  Please choose a page from 1 to ${this.fullPdfNumberOfPages}.`)
         return false
       }
       if (this.fullPdfNumberOfPages && +page > this.fullPdfNumberOfPages) {
@@ -7353,13 +7464,14 @@ export default {
           return false
         }
       }
-      await this.assignPdfPage(eligibleQuestion, page)
+      await this.assignPdfPage(eligibleQuestion, page, endPage)
     },
-    async assignPdfPage (eligibleQuestion, page) {
+    async assignPdfPage (eligibleQuestion, page, endPage) {
       this.assigningPdfPageQuestionId = eligibleQuestion.id
       try {
         const { data } = await axios.patch(`/api/submission-files/${this.assignmentId}/${eligibleQuestion.id}/page`, {
           page: page,
+          end_page: endPage,
           question_number: eligibleQuestion.questionNumber
         })
         this.$noty[data.type](data.message)
@@ -7376,6 +7488,7 @@ export default {
               file_feedback: 'N/A',
               submission_file_exists: true,
               submission_file_page: data.page,
+              submission_file_end_page: data.end_page,
               late_file_submission: data.late_file_submission,
               submission_file_url: data.submission_file_url,
               date_submitted: data.date_submitted
@@ -7392,7 +7505,8 @@ export default {
           this.pdfPreviewPage = page
         }
       } catch (error) {
-        const pageErrors = error.response && error.response.data && error.response.data.errors && error.response.data.errors.page
+        const errors = error.response && error.response.data && error.response.data.errors
+        const pageErrors = errors && (errors.page || errors.end_page)
         this.$noty.error(pageErrors ? pageErrors[0] : error.message)
       }
       this.assigningPdfPageQuestionId = 0
@@ -7785,6 +7899,7 @@ export default {
         this.showScores = Boolean(Number(assignment.show_scores))
         this.scoring_type = assignment.scoring_type
         this.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
+        this.showPointsPerQuestion = assignment.show_points_per_question
         this.showUpdatePointsPerQuestion = assignment.points_per_question === 'number of points'
         this.canViewHintAtAssignmentLevel = assignment.can_view_hint
         this.flashcardSettings = assignment.flashcard_settings || (assignment.assessment_type === 'flashcard' ? {

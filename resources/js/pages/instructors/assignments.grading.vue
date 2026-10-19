@@ -534,12 +534,7 @@
                   @change="processing=true;getGrading()"
                 />
               </b-col>
-              <b-col lg="2">
-                <span v-if="processing">
-                  <b-spinner small type="grow"/>
-                  Processing...
-                </span>
-              </b-col>
+              <!-- loading is shown where the grading panels go (grading-loading-placeholder) -->
             </b-form-row>
           </b-form-group>
           <hr>
@@ -642,7 +637,13 @@
             </div>
           </div>
           <hr>
-          <b-container>
+          <!-- while another question or filter loads, what's on screen belongs to the old selection: hide it
+               (v-show keeps its editors alive) so nobody marks up or scores the wrong question -->
+          <div v-if="processing" class="grading-loading-placeholder text-muted" role="status">
+            <b-spinner small class="mr-2"/>
+            Loading&hellip;
+          </div>
+          <b-container v-show="!processing" :fluid="splitView">
             <div
               v-if="grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission'] !== false"
             >
@@ -668,881 +669,920 @@
               </b-alert>
             </div>
             <b-row>
-              <b-col>
-                <b-card ref="questionCard" header="default" :header-html="questionHeader">
-                  <b-card-text>
-                    <div v-if="grading[currentStudentPage - 1]['technology_iframe']
-                           && technology === 'h5p'
-                           && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
-                         class="border-bottom border-gray-200 pb-3"
-                    >
-                      <div v-if="grading[currentStudentPage - 1]['auto_graded_submission']
-                        && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
+              <!-- Left: the student's open-ended work (split view only; full width below otherwise) -->
+              <b-col cols="12"
+                     :lg="splitView ? 7 : 12"
+                     :xl="splitView ? 8 : 12"
+                     :class="splitView ? 'order-1' : 'order-2'"
+              >
+                <div :class="{ 'submission-pane-sticky': splitView }">
+                  <div v-if="splitView && viewSubmission && retrievedFromS3 && !grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                       class="submission-pane-empty text-muted"
+                  >
+                    This student has no open-ended submission.
+                  </div>
+                  <b-container v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
+                    <b-row align-h="center" class="pb-2">
+                      <toggle-button
+                        v-if="grading[currentStudentPage - 1]['rubric_category_submission'].length"
+                        class="mt-2"
+                        :width="113"
+                        :value="fullView"
+                        :sync="true"
+                        :font-size="14"
+                        :margin="4"
+                        :color="toggleColors"
+                        :labels="{checked: 'Full View', unchecked: 'Rubric View'}"
+                        @change="updateFullView()"
+                      />
+                    </b-row>
+                  </b-container>
+                  <div v-if="!fullView && grading[currentStudentPage - 1]['rubric_category_submission'] && rubricCategories">
+                    <Report
+                      v-if="rubricCategories.length"
+                      :key="`lab-report-key-${grading[currentStudentPage - 1].student.user_id}-${questionView}`"
+                      :assignment-id="Number(assignmentId)"
+                      :question-id="Number(questionView)"
+                      :user-id="grading[currentStudentPage - 1].student.user_id"
+                      :rubric-categories="rubricCategories"
+                      :rubric-scale="rubricScale"
+                      :grading="true"
+                      :points="+grading[currentStudentPage - 1]['open_ended_submission']['points']"
+                      @saveOpenEndedScore="saveOpenEndedScore"
+                    />
+                  </div>
+                  <div v-show="retrievedFromS3"
+                       :class="splitView ? 'submission-pane' : 'row mt-4 d-flex justify-content-center'"
+                  >
+                    <div v-show="viewSubmission" :class="{ 'w-100': splitView }">
+                      <div v-if="isOpenEnded && isAutoGraded">
+                        <hr>
+                      </div>
+                      <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
+                        <b-row v-if="fullView" align-h="center" class="pb-2">
+                          <span class="font-weight-bold">Open-Ended Submission</span>
+                        </b-row>
+                      </div>
+                      <div
+                        v-if="(grading[currentStudentPage - 1]['open_ended_submission']['pasted_content'])"
                       >
-                        <span class="font-weight-bold">Student Submission: </span> <span
-                        v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
-                      />
-                      </div>
-                    </div>
-                    <div v-if="grading[currentStudentPage - 1]['non_technology_iframe_src']">
-                      <iframe
-                        id="open_ended_question_text"
-                        :key="`non-technology-iframe-${grading[currentStudentPage - 1]['non_technology_iframe_src']}`"
-                        v-resize="{ log: false }"
-                        aria-label="open_ended_question_text"
-                        style="height: 30px"
-                        width="100%"
-                        scrolling="no"
-                        :src="grading[currentStudentPage - 1]['non_technology_iframe_src']"
-                        frameborder="0"
-                      />
-                    </div>
-                    <div v-if="isDiscussIt">
-                      <!-- shown while the student's requirements are being checked, instead of an empty card -->
-                      <div v-if="!showDiscussIt" class="text-center text-muted py-4">
-                        <b-spinner small type="grow" class="mr-1"/>
-                        Loading comments...
-                      </div>
-                      <div v-show="showDiscussIt">
-                        <ul v-show="discussItCompletionCriteria" style="list-style: none;">
-                          <li>
-                            <CompletedIcon
-                              :completed="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement"
-                            />
-                            <span
-                              :class="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement ? 'text-success' : 'text-danger'"
+                        <b-row v-if="fullView" align-h="center" class="pb-2">
+                          <b-alert show>
+                            This text submission was pasted in by the student.
+                            <QuestionCircleTooltip id="pasted-submission-tooltip"/>
+                            <b-tooltip target="pasted-submission-tooltip"
+                                       delay="250"
+                                       width="600"
+                                       triggers="hover focus"
+                                       custom-class="custom-tooltip"
                             >
-                                Initiated {{ discussItRequirementsInfo.number_of_initiated_discussion_threads }} discussion thread<span
-                              v-if="+discussItRequirementsInfo.number_of_initiated_discussion_threads !== 1"
-                            >s</span>,
-                                with {{ discussItRequirementsInfo.min_number_of_initiated_discussion_threads }} required.
-                              </span>
-                          </li>
-                          <li>
-                            <CompletedIcon
-                              :completed="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement"
-                            />
-                            <span
-                              :class="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement ? 'text-success' : 'text-danger'"
-                            >
-                                Submitted {{
-                                discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements
-                              }}
-                                {{
-                                +discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements !== 1 ? 'replies' : 'reply'
-                              }},
-                                with {{ discussItRequirementsInfo.min_number_of_replies }} required.
-                              </span>
-                          </li>
-                          <li v-show="discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads > 0">
-                            <CompletedIcon
-                              :completed="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement"
-                            />
-                            <span
-                              :class="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement ? 'text-success' : 'text-danger'"
-                            >
-                                Initiated or replied to {{
-                                discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements
-                              }} discussion thread<span
-                              v-if="+discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements !== 1"
-                            >s</span>,
-                                with {{ discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads }} required.
-                              </span>
-                          </li>
-                          <li v-show="discussItRequirementsInfo.min_number_of_attached_files > 0">
-                            <CompletedIcon
-                              :completed="discussItRequirementsInfo.satisfied_min_number_of_attached_files_requirement"
-                            />
-                            <span
-                              :class="discussItRequirementsInfo.satisfied_min_number_of_attached_files_requirement ? 'text-success' : 'text-danger'"
-                            >
-                              Attached {{ discussItRequirementsInfo.number_of_attached_files }}
-                              file<span v-if="+discussItRequirementsInfo.number_of_attached_files !== 1">s</span>,
-                              with {{ discussItRequirementsInfo.min_number_of_attached_files }} required.
-                            </span>
-                          </li>
-
-                        </ul>
-
-                        <div
-                          v-if="discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
-                        >
-                          <div
-                            v-for="(comment,commentIndex) in discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
-                            :key="`comments-${commentIndex}`"
-                          >
-                            <span v-show="discussItCompletionCriteria">
-                                <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
-                                      :title="satisfiedRequirement(comment.discussion_comment_id)
-                                        ? 'This discussion comment satisfied the requirement.'
-                                        : 'This discussion comment did not satisfy the requirement.'"
-                                >
-                                  <CompletedIcon
-                                    :completed="satisfiedRequirement(comment.discussion_comment_id)"
-                                  />
-                                </span>
-                              </span>
-                            <a href=""
-                               @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
-                            >{{ comment.created_at }}:</a>
-                            <b-alert :show="comment.pasted_comment === 1">
-                              This comment was pasted in by the student.
-                              <QuestionCircleTooltip :id="`pasted-comment-${comment.id}`"/>
-                              <b-tooltip :target="`pasted-comment-${comment.id}`"
-                                         delay="250"
-                                         width="600"
-                                         triggers="hover focus"
-                                         custom-class="custom-tooltip"
-                              >
-                                If a student pastes in a comment, they are informed that you will be notified.<br><br>Comments
-                                that were
-                                pasted in may have first been written by the student in an application such as
-                                Microsoft Word or the
-                                student may have used ChatGPT to generate the comment.
-                              </b-tooltip>
-                            </b-alert>
-                            <div v-if="comment.timestamps && comment.timestamps.length" class="mt-1 mb-1">
-                              <b-button v-for="timestamp in comment.timestamps"
-                                        :key="`timestamp-${timestamp.id}`"
-                                        size="sm"
-                                        variant="outline-secondary"
-                                        class="mr-1 py-0 font-weight-normal"
-                                        :aria-label="`Play ${timestamp.referenced_created_by_name}'s comment from ${formatSeconds(timestamp.seconds)}`"
-                                        @click="openTimestampedComment(timestamp)"
-                              >
-                                <b-icon icon="play-fill" aria-hidden="true"/>
-                                {{ timestamp.referenced_created_by_name }} {{ formatSeconds(timestamp.seconds) }}
-                              </b-button>
-                            </div>
-                            <div v-if="comment.text" v-html="comment.text"/>
-
-                            <b-tooltip :target="`view-in-new-tab-${comment.discussion_comment_id}`"
-                                       triggers="hover focus" delay="500"
-                            >
-                              View in New Tab
+                              If a student pastes in a text submission, they are informed that you will be notified.<br><br>Text
+                              submissions that were
+                              pasted in may have first been written by the student in an application such as Microsoft Word or
+                              the
+                              student may have used ChatGPT to generate the comment.
                             </b-tooltip>
-                            <span
-                              v-show="comment.file"
-                              :id="`view-in-new-tab-${comment.discussion_comment_id}`"
-                              class="float-right primary"
-                              style="cursor: pointer"
-                              @click="viewInNewTab(`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`)"
+                          </b-alert>
+                        </b-row>
+                      </div>
+                      <div
+                        v-if="(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'])"
+                      >
+                        <div v-if="fullView && isOpenEndedFileSubmission && pageImages().length" class="w-100">
+                          <SubmissionPagesViewer
+                            :key="`pages-${grading[currentStudentPage - 1].student.user_id}-${questionView}`"
+                            :pages="pageImages()"
+                            :assignment-id="+assignmentId"
+                            :question-id="+grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
+                            :student-user-id="+grading[currentStudentPage - 1].student.user_id"
+                            :can-annotate="[2, 4].includes(user.role)"
+                            @imageError="refreshPageImages"
+                          />
+                        </div>
+                        <div v-else-if="fullView && isOpenEndedFileSubmission && isImageSubmission()" class="submission-image-viewer">
+                          <b-alert v-if="markupUnavailableReason()" show variant="info" class="small py-2 mb-2">
+                            {{ markupUnavailableReason() }}
+                          </b-alert>
+                          <div class="submission-image-toolbar">
+                            <b-button-group size="sm">
+                              <b-button variant="outline-secondary"
+                                        :pressed="imageViewMode === 'width'"
+                                        @click="setImageFit('width')"
+                              >
+                                Fit Width
+                              </b-button>
+                              <b-button variant="outline-secondary"
+                                        :pressed="imageViewMode === 'page'"
+                                        @click="setImageFit('page')"
+                              >
+                                Fit Page
+                              </b-button>
+                              <b-button variant="outline-secondary"
+                                        :pressed="imageViewMode === 'zoom' && imageZoom === 1"
+                                        @click="setImageZoom(1)"
+                              >
+                                100%
+                              </b-button>
+                            </b-button-group>
+                            <b-button-group size="sm" class="ml-2">
+                              <b-button variant="outline-secondary" aria-label="Zoom out" @click="stepImageZoom(-1)">
+                                &minus;
+                              </b-button>
+                              <b-button variant="outline-secondary" aria-label="Zoom in" @click="stepImageZoom(1)">
+                                +
+                              </b-button>
+                            </b-button-group>
+                            <span class="ml-2 small text-muted">{{ imageZoomLabel() }} · click image to zoom</span>
+                          </div>
+                          <div ref="imageViewport"
+                               class="submission-image-viewport"
+                               :class="`mode-${imageViewMode}`"
+                          >
+                            <img v-show="!imageLoadError"
+                                 :key="grading[currentStudentPage - 1]['open_ended_submission']['submission_url']"
+                                 ref="submissionImage"
+                                 alt="Student file submission"
+                                 :src="grading[currentStudentPage - 1]['open_ended_submission']['submission_url']"
+                                 :style="imageViewMode === 'zoom' && imageNaturalWidth ? { width: `${imageNaturalWidth * imageZoom}px` } : {}"
+                                 @load="onSubmissionImageLoad"
+                                 @error="onSubmissionImageError"
+                                 @click="toggleImageZoom"
                             >
-                                <font-awesome-icon :icon="externalLink"/>
-                              </span>
-                            <div v-if="comment.attachments && comment.attachments.length" class="mt-1 mb-2">
-                              <div v-for="attachment in comment.attachments" :key="`attachment-${attachment.id}`" class="mb-1">
-                                <img v-if="attachment.file_kind === 'image' && attachment.file_url"
-                                     :src="attachment.file_url"
-                                     :alt="`Image attached by the student: ${attachment.original_filename}`"
-                                     class="d-block mb-1"
-                                     style="max-width: 100%; max-height: 400px; border-radius: 4px; cursor: pointer"
-                                     @click="viewFileComment(attachment)"
+                            <div v-if="imageLoadError" class="p-4 text-center">
+                              This image can't be displayed in the browser (for example, an iPhone HEIC photo).
+                              Use <strong>Open File Submission</strong> above to download it.
+                            </div>
+                          </div>
+                        </div>
+                        <div v-else-if="fullView && isOpenEndedFileSubmission" :class="{ row: !splitView }">
+                          <b-alert v-if="markupUnavailableReason()" show variant="info" class="small py-2 mb-2 w-100">
+                            {{ markupUnavailableReason() }}
+                          </b-alert>
+                          <iframe :key="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                                  title="Open-ended submission"
+                                  :class="{ 'submission-pane-frame': splitView }"
+                                  :width="splitView ? '100%' : 600"
+                                  height="600"
+                                  :src="getFullPdfUrlAtPage(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'],grading[currentStudentPage - 1]['open_ended_submission']['page'])"
+                          />
+                        </div>
+                        <div v-if="isOpenEndedAudioSubmission">
+                          <b-card sub-title="Submission">
+                            <audio-player
+                              :src="grading[currentStudentPage - 1]['open_ended_submission']['submission_url']"
+                            />
+                          </b-card>
+                        </div>
+                      </div>
+                      <b-container
+                        v-if="isOpenEndedTextSubmission
+                          && grading[currentStudentPage -1]['open_ended_submission']['submission_text']"
+                      >
+                        <b-card>
+                          <b-card-body>
+                            <b-card-text>
+                              <span class="font-weight-bold"
+                                    v-html="grading[currentStudentPage - 1]['open_ended_submission']['submission_text']"
+                              />
+                            </b-card-text>
+                          </b-card-body>
+                        </b-card>
+                      </b-container>
+                    </div>
+                    <div v-show="!viewSubmission" :class="{ 'w-100': splitView }">
+                      <iframe
+                        v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] !== 'audio'"
+                        :class="{ 'submission-pane-frame': splitView }"
+                        :width="splitView ? '100%' : 600"
+                        height="600"
+                        :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
+                      />
+                      <b-card
+                        v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
+                        sub-title="Audio Feedback"
+                      >
+                        <audio-player
+                          v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
+                          :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
+                        />
+                      </b-card>
+                      <b-alert class="mt-1" :variant="audioFeedbackDataType" :show="showAudioFeedbackMessage">
+                        <span class="font-weight-bold">{{ audioFeedbackDataMessage }}</span>
+                      </b-alert>
+                    </div>
+                  </div>
+                </div>
+              </b-col>
+
+              <!-- Right: question, scores, feedback -->
+              <b-col cols="12"
+                     :lg="splitView ? 5 : 12"
+                     :xl="splitView ? 4 : 12"
+                     :class="splitView ? 'order-2' : 'order-1'"
+              >
+                <b-row>
+                  <b-col cols="12" :lg="splitView ? 12 : 6">
+                    <b-card ref="questionCard" class="mb-3" header="default" :header-html="questionHeader">
+                      <b-card-text>
+                        <div v-if="grading[currentStudentPage - 1]['technology_iframe']
+                               && technology === 'h5p'
+                               && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
+                             class="border-bottom border-gray-200 pb-3"
+                        >
+                          <div v-if="grading[currentStudentPage - 1]['auto_graded_submission']
+                            && grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
+                          >
+                            <span class="font-weight-bold">Student Submission: </span> <span
+                            v-html="grading[currentStudentPage - 1]['auto_graded_submission']['submission']"
+                          />
+                          </div>
+                        </div>
+                        <div v-if="grading[currentStudentPage - 1]['non_technology_iframe_src']">
+                          <iframe
+                            id="open_ended_question_text"
+                            :key="`non-technology-iframe-${grading[currentStudentPage - 1]['non_technology_iframe_src']}`"
+                            v-resize="{ log: false }"
+                            aria-label="open_ended_question_text"
+                            style="height: 30px"
+                            width="100%"
+                            scrolling="no"
+                            :src="grading[currentStudentPage - 1]['non_technology_iframe_src']"
+                            frameborder="0"
+                          />
+                        </div>
+                        <div v-if="isDiscussIt">
+                          <!-- shown while the student's requirements are being checked, instead of an empty card -->
+                          <div v-if="!showDiscussIt" class="text-center text-muted py-4">
+                            <b-spinner small type="grow" class="mr-1"/>
+                            Loading comments...
+                          </div>
+                          <div v-show="showDiscussIt">
+                            <ul v-show="discussItCompletionCriteria" style="list-style: none;">
+                              <li>
+                                <CompletedIcon
+                                  :completed="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement"
+                                />
+                                <span
+                                  :class="discussItRequirementsInfo.satisfied_min_number_of_initiated_discussion_threads_requirement ? 'text-success' : 'text-danger'"
                                 >
-                                <b-icon icon="paperclip" aria-hidden="true"/>
-                                <!-- PDFs and images open in a window with a Download button; Office files download -->
-                                <a v-if="['pdf', 'image'].includes(attachment.file_kind)"
-                                   href=""
-                                   @click.prevent="viewFileComment(attachment)"
-                                >{{ attachment.original_filename }}</a>
-                                <a v-else :href="attachment.download_url">{{ attachment.original_filename }}</a>
+                                    Initiated {{ discussItRequirementsInfo.number_of_initiated_discussion_threads }} discussion thread<span
+                                  v-if="+discussItRequirementsInfo.number_of_initiated_discussion_threads !== 1"
+                                >s</span>,
+                                    with {{ discussItRequirementsInfo.min_number_of_initiated_discussion_threads }} required.
+                                  </span>
+                              </li>
+                              <li>
+                                <CompletedIcon
+                                  :completed="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement"
+                                />
+                                <span
+                                  :class="discussItRequirementsInfo.satisfied_min_number_of_replies_requirement ? 'text-success' : 'text-danger'"
+                                >
+                                    Submitted {{
+                                    discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements
+                                  }}
+                                    {{
+                                    +discussItRequirementsInfo.number_of_replies_that_satisfied_the_requirements !== 1 ? 'replies' : 'reply'
+                                  }},
+                                    with {{ discussItRequirementsInfo.min_number_of_replies }} required.
+                                  </span>
+                              </li>
+                              <li v-show="discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads > 0">
+                                <CompletedIcon
+                                  :completed="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement"
+                                />
+                                <span
+                                  :class="discussItRequirementsInfo.satisfied_min_number_of_initiate_or_reply_in_threads_requirement ? 'text-success' : 'text-danger'"
+                                >
+                                    Initiated or replied to {{
+                                    discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements
+                                  }} discussion thread<span
+                                  v-if="+discussItRequirementsInfo.number_of_initiate_or_reply_in_threads_that_satisfied_the_requirements !== 1"
+                                >s</span>,
+                                    with {{ discussItRequirementsInfo.min_number_of_initiate_or_reply_in_threads }} required.
+                                  </span>
+                              </li>
+                              <li v-show="discussItRequirementsInfo.min_number_of_attached_files > 0">
+                                <CompletedIcon
+                                  :completed="discussItRequirementsInfo.satisfied_min_number_of_attached_files_requirement"
+                                />
+                                <span
+                                  :class="discussItRequirementsInfo.satisfied_min_number_of_attached_files_requirement ? 'text-success' : 'text-danger'"
+                                >
+                                  Attached {{ discussItRequirementsInfo.number_of_attached_files }}
+                                  file<span v-if="+discussItRequirementsInfo.number_of_attached_files !== 1">s</span>,
+                                  with {{ discussItRequirementsInfo.min_number_of_attached_files }} required.
+                                </span>
+                              </li>
+
+                            </ul>
+
+                            <div
+                              v-if="discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
+                            >
+                              <div
+                                v-for="(comment,commentIndex) in discussionsByUserId.find(value => value.user_id === grading[currentStudentPage - 1].student.user_id).comments"
+                                :key="`comments-${commentIndex}`"
+                              >
+                                <span v-show="discussItCompletionCriteria">
+                                    <span v-b-tooltip.hover="{ delay: { show: 500, hide: 0 } }"
+                                          :title="satisfiedRequirement(comment.discussion_comment_id)
+                                            ? 'This discussion comment satisfied the requirement.'
+                                            : 'This discussion comment did not satisfy the requirement.'"
+                                    >
+                                      <CompletedIcon
+                                        :completed="satisfiedRequirement(comment.discussion_comment_id)"
+                                      />
+                                    </span>
+                                  </span>
+                                <a href=""
+                                   @click.prevent="showDiscussion(comment.discussion_id, grading[currentStudentPage - 1].student.user_id)"
+                                >{{ comment.created_at }}:</a>
+                                <b-alert :show="comment.pasted_comment === 1">
+                                  This comment was pasted in by the student.
+                                  <QuestionCircleTooltip :id="`pasted-comment-${comment.id}`"/>
+                                  <b-tooltip :target="`pasted-comment-${comment.id}`"
+                                             delay="250"
+                                             width="600"
+                                             triggers="hover focus"
+                                             custom-class="custom-tooltip"
+                                  >
+                                    If a student pastes in a comment, they are informed that you will be notified.<br><br>Comments
+                                    that were
+                                    pasted in may have first been written by the student in an application such as
+                                    Microsoft Word or the
+                                    student may have used ChatGPT to generate the comment.
+                                  </b-tooltip>
+                                </b-alert>
+                                <div v-if="comment.timestamps && comment.timestamps.length" class="mt-1 mb-1">
+                                  <b-button v-for="timestamp in comment.timestamps"
+                                            :key="`timestamp-${timestamp.id}`"
+                                            size="sm"
+                                            variant="outline-secondary"
+                                            class="mr-1 py-0 font-weight-normal"
+                                            :aria-label="`Play ${timestamp.referenced_created_by_name}'s comment from ${formatSeconds(timestamp.seconds)}`"
+                                            @click="openTimestampedComment(timestamp)"
+                                  >
+                                    <b-icon icon="play-fill" aria-hidden="true"/>
+                                    {{ timestamp.referenced_created_by_name }} {{ formatSeconds(timestamp.seconds) }}
+                                  </b-button>
+                                </div>
+                                <div v-if="comment.text" v-html="comment.text"/>
+
+                                <b-tooltip :target="`view-in-new-tab-${comment.discussion_comment_id}`"
+                                           triggers="hover focus" delay="500"
+                                >
+                                  View in New Tab
+                                </b-tooltip>
+                                <span
+                                  v-show="comment.file"
+                                  :id="`view-in-new-tab-${comment.discussion_comment_id}`"
+                                  class="float-right primary"
+                                  style="cursor: pointer"
+                                  @click="viewInNewTab(`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`)"
+                                >
+                                    <font-awesome-icon :icon="externalLink"/>
+                                  </span>
+                                <div v-if="comment.attachments && comment.attachments.length" class="mt-1 mb-2">
+                                  <div v-for="attachment in comment.attachments" :key="`attachment-${attachment.id}`" class="mb-1">
+                                    <img v-if="attachment.file_kind === 'image' && attachment.file_url"
+                                         :src="attachment.file_url"
+                                         :alt="`Image attached by the student: ${attachment.original_filename}`"
+                                         class="d-block mb-1"
+                                         style="max-width: 100%; max-height: 400px; border-radius: 4px; cursor: pointer"
+                                         @click="viewFileComment(attachment)"
+                                    >
+                                    <b-icon icon="paperclip" aria-hidden="true"/>
+                                    <!-- PDFs and images open in a window with a Download button; Office files download -->
+                                    <a v-if="['pdf', 'image'].includes(attachment.file_kind)"
+                                       href=""
+                                       @click.prevent="viewFileComment(attachment)"
+                                    >{{ attachment.original_filename }}</a>
+                                    <a v-else :href="attachment.download_url">{{ attachment.original_filename }}</a>
+                                  </div>
+                                </div>
+                                <iframe
+                                  v-if="comment.file"
+                                  :key="`discussion-comment-${discussionCommentCacheKey}`"
+                                  v-resize="{ log: false }"
+                                  :src="`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`"
+                                  width="100%"
+                                  frameborder="0"
+                                  allowfullscreen=""
+                                />
+                                <Transcript :key="`discussion-comment-id-${comment.id}`"
+                                            :active-transcript="comment.transcript"
+                                            :active-media="comment"
+                                            :model="'DiscussionComment'"
+                                            :in-modal="false"
+                                            @updateTranscriptInMedia="updateTranscriptInComment"
+                                            @setActiveMedia="setActiveComment"
+                                />
                               </div>
                             </div>
-                            <iframe
-                              v-if="comment.file"
-                              :key="`discussion-comment-${discussionCommentCacheKey}`"
-                              v-resize="{ log: false }"
-                              :src="`/discussion-comments/media-player/discussion-comment-id/${comment.discussion_comment_id}/is-phone/0`"
-                              width="100%"
-                              frameborder="0"
-                              allowfullscreen=""
-                            />
-                            <Transcript :key="`discussion-comment-id-${comment.id}`"
-                                        :active-transcript="comment.transcript"
-                                        :active-media="comment"
-                                        :model="'DiscussionComment'"
-                                        :in-modal="false"
-                                        @updateTranscriptInMedia="updateTranscriptInComment"
-                                        @setActiveMedia="setActiveComment"
-                            />
+                            <div v-else>
+                              No comments have been submitted by this student.
+                            </div>
                           </div>
                         </div>
                         <div v-else>
-                          No comments have been submitted by this student.
-                        </div>
-                      </div>
-                    </div>
-                    <div v-else>
-                      <b-button
-                        v-show="grading[currentStudentPage - 1].auto_graded_submission
-                          && grading[currentStudentPage - 1].auto_graded_submission.submission
-                          && grading[currentStudentPage - 1].auto_graded_submission.submission.includes('structure_s3_key')"
-                        variant="primary"
-                        size="sm"
-                        @click="viewStructureImage(grading[currentStudentPage - 1])"
-                      >
-                        View Scanned Image
-                      </b-button>
-                      <QtiJsonQuestionViewer :key="`qti-json-${currentStudentPage}`"
-                                             :qti-json="grading[currentStudentPage - 1]['qti_json']"
-                                             :show-qti-answer="true"
-                                             :show-submit="false"
-                                             :show-response-feedback="false"
-                                             :student-response="getStudentResponse(grading[currentStudentPage - 1])"
-                      />
-                    </div>
-
-                    <div v-if="grading[currentStudentPage - 1]['technology_iframe']">
-                      <iframe
-                        :key="`technology-iframe-${currentStudentPage}`"
-                        v-resize="{ log: false }"
-                        aria-label="auto_graded_submission_text"
-                        width="100%"
-                        allowtransparency="true"
-                        :src="grading[currentStudentPage - 1]['technology_iframe']"
-                        frameborder="0"
-                        @load="receiveMessage"
-                      />
-                    </div>
-                  </b-card-text>
-                </b-card>
-                <div
-                  v-if="isForge"
-                  class="mt-2"
-                >
-                  <b-card header="default"
-                          :header-html="getForgeSubmissionHeader()"
-                  >
-                    <ForgeViewer
-                      :key="`forge-viewer-${grading[currentStudentPage - 1]['open_ended_submission']['question_id']}-${grading[currentStudentPage - 1].student.user_id}`"
-                      :type="'submissionViewer'"
-                      :resubmission-enabled="+grading[currentStudentPage - 1]['open_ended_submission']['upload_count'] === 0"
-                      :assignment-id="+assignmentId"
-                      :show-forge-button="grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] !== null"
-                      :question-id="grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
-                      :student-id="grading[currentStudentPage - 1].student.user_id"
-                      @submissionExists="updateSubmissionExists"
-                    />
-                  </b-card>
-                </div>
-              </b-col>
-
-              <b-col>
-                <div class="mb-2">
-                  <b-card
-                    class="h-50"
-                    :style="{ borderColor: cardBorderColor, borderWidth:'2px' }"
-                  >
-                    <template #header>
-                      <h2 class="h7 mb-0">
-                        Scores for {{ grading[currentStudentPage - 1]['student']['name'] }}
-                        <QuestionCircleTooltip :id="`student-info`"/>
-                        <b-tooltip :target="`student-info`"
-                                   delay="250"
-                                   width="600"
-                                   triggers="hover focus"
-                                   custom-class="custom-tooltip"
-                        >
-                          Student ID: {{ grading[currentStudentPage - 1]['student']['student_id'] }}<br>
-                          Email: {{ grading[currentStudentPage - 1]['student']['email'] }}
-                        </b-tooltip>
-                      </h2>
-                      <div v-if="grading[currentStudentPage - 1]['last_graded']">
-                        <small>Updated {{ grading[currentStudentPage - 1]['last_graded'] }}</small>
-                      </div>
-                      <div v-else>
-                        <small>A score has yet to be entered for this student.</small>
-                      </div>
-                    </template>
-                    <b-card-text>
-                      <b-form ref="form">
-                        <div v-show="grading[currentStudentPage - 1]['submission_score_override']">
-                          <b-alert show>
-                            The student will see the override score for this question.
-                          </b-alert>
-                          <span class="pr-2"><strong>Override Score:</strong> {{
-                              grading[currentStudentPage - 1]['submission_score_override']
-                            }}
-                          </span>
-                          <b-button size="sm"
-                                    variant="outline-primary"
-                                    @click="initOverrideSubmissionScore(grading[currentStudentPage - 1])"
+                          <b-button
+                            v-show="grading[currentStudentPage - 1].auto_graded_submission
+                              && grading[currentStudentPage - 1].auto_graded_submission.submission
+                              && grading[currentStudentPage - 1].auto_graded_submission.submission.includes('structure_s3_key')"
+                            variant="primary"
+                            size="sm"
+                            @click="viewStructureImage(grading[currentStudentPage - 1])"
                           >
-                            Update
+                            View Scanned Image
                           </b-button>
-                          <hr>
-                        </div>
-                        <b-form-group
-                          v-if="!isDiscussIt && !isForge"
-                          label-cols-sm="4"
-                          label-cols-lg="3"
-                          label-for="auto_graded_score"
-                        >
-                          <template v-slot:label>
-                            <span class="font-weight-bold">Auto-graded<br/>score:</span>
-                          </template>
-                          <div v-show="isAutoGraded" class="pt-1">
-                            <div class="d-flex align-items-center">
-                              <b-form-input v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
-                                            id="auto_graded_score"
-                                            v-model="gradingForm.question_submission_score"
-                                            type="text"
-                                            :aria-labelledby="questionSubmissionScoreErrorMessage.length ? 'question_submission_score_error' : ''"
-                                            size="sm"
-                                            style="width:75px"
-                                            :class="{ 'is-invalid': questionSubmissionScoreErrorMessage.length }"
-                                            @keydown="questionSubmissionScoreErrorMessage = ''"
-                              />
-                              <span v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
-                                    class="text-muted ml-2 mr-3"
-                                    style="font-size: 0.9em; white-space: nowrap;"
-                              >(Max: {{
-                                  grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
-                                }})</span>
-                              <span
-                                v-if="isAutoGraded && !isOpenEnded && grading[currentStudentPage - 1]['auto_graded_submission']"
-                                class="d-inline-flex"
-                              >
-    <b-button size="sm"
-              variant="outline-success"
-              class="mr-2"
-              @click="submitGradingForm(true,
-                                        {
-                                          scoreType: 'question_submission_score',
-                                          score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
-                                        })"
-    >Full Score</b-button>
-    <b-button size="sm"
-              variant="outline-danger"
-              @click="submitGradingForm(true,
-                                        {
-                                          scoreType: 'question_submission_score',
-                                          score: 0
-                                        })"
-    >
-      Zero Score</b-button>
-  </span>
-                            </div>
-
-                            <div v-if="!grading[currentStudentPage - 1]['auto_graded_submission']"
-                                 class="pt-1"
-                            >
-                              <span>No submission</span>
-                            </div>
-                          </div>
-                          <div v-show="!isAutoGraded" class="pt-2">
-                            <span>Not applicable</span>
-                          </div>
-                          <div v-if="questionSubmissionScoreErrorMessage"
-                               id="question_submission_score_error"
-                               class="text-danger"
-                               style="font-size: 80%"
-                          >
-                            {{ questionSubmissionScoreErrorMessage }}
-                          </div>
-                        </b-form-group>
-                        <div v-if="canSubmitWork" class="mb-2">
-                        <span v-show="submittedWork.pending_score">
-                          <strong>Approve score</strong>: <span
-                          :class="{'text-success': submittedWork.url, 'text-danger': !submittedWork.url}"
-                        >{{ roundToDecimalSigFig(submittedWork.pending_score, 4) }}
-                          <span id="apply-pending-score-tooltip">
-                       <b-button
-                         :variant="submittedWork.url ? 'outline-success' : 'outline-danger'"
-                         size="sm"
-                         class="ml-1"
-                         @click="applyPendingScore()"
-                       >
-  Approve
-                       </b-button></span></span></span>
-                          <span v-if="submittedWork.url">
-                        <b-button @click="$bvModal.show('modal-submitted-work')"
-                                  variant="primary"
-                                  size="sm"
-                        >
-                          View Submitted Work
-                        </b-button>
-                      </span>
-                          <span v-if="!submittedWork.url" class="text-danger">There is no submitted work.</span>
-
-                          <b-tooltip v-if="!submittedWork.url"
-                                     target="apply-pending-score-tooltip"
-                                     delay="500"
-                                     triggers="hover focus"
-                          >You will be applying the score even though this student has not submitted work.
-                          </b-tooltip>
-                        </div>
-
-                        <b-form-group
-                          v-show="isOpenEnded || isDiscussIt || isForge"
-                          label-cols-sm="5"
-                          label-cols-lg="4"
-                          label-for="open_ended_score"
-                        >
-                          <template v-slot:label>
-                            <span class="font-weight-bold">{{
-                                getScoreLabel()
-                              }}<br/>score:</span>
-                          </template>
-                          <div class="pt-1">
-                            <div class="d-flex align-items-center">
-                              <b-form-input
-                                v-show="isOpenEnded
-    || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
-      || discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments"
-                                id="open_ended_score"
-                                v-model="gradingForm.file_submission_score"
-                                type="text"
-                                size="sm"
-                                :aria-labelledby="fileSubmissionScoreErrorMessage.length ? 'file_submission_score_error' : ''"
-                                style="width:75px"
-                                :class="{ 'is-invalid': fileSubmissionScoreErrorMessage.length }"
-                                @keydown="fileSubmissionScoreErrorMessage=''"
-                              />
-                              <span v-show="grading[currentStudentPage - 1]['open_ended_submission']"
-                                    class="text-muted ml-2 mr-3"
-                                    style="font-size: 0.9em; white-space: nowrap;"
-                              >(Max: {{
-                                  grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
-                                }})</span>
-                              <span
-                                v-if="(isOpenEnded && !isAutoGraded)
-    || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
-      || (isDiscussIt && discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
-                                class="d-inline-flex"
-                              >
-    <b-button size="sm"
-              class="mr-2"
-              variant="outline-success"
-              @click="submitGradingForm(true,
-                                        {
-                                          specialScore: 'full score',
-                                          scoreType: 'file_submission_score',
-                                          score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
-                                        })"
-    >Full Score</b-button>
-    <b-button size="sm"
-              variant="outline-danger"
-              @click="submitGradingForm(true,
-                                        {
-                                          specialScore: 'zero score',
-                                          scoreType: 'file_submission_score',
-                                          score: 0
-                                        })"
-    >
-      Zero Score</b-button>
-  </span>
-                            </div>
-                            <div
-                              v-show="(isDiscussIt && !discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
-                              class="pt-1"
-                            >
-                              No comments submitted
-                            </div>
-                          </div>
-                          <div v-show="!isOpenEnded && !isDiscussIt && !isForge" class="pt-2">
-                            <span>Not applicable</span>
-                          </div>
-                          <div v-if="fileSubmissionScoreErrorMessage"
-                               id="file_submission_score_error"
-                               class="text-danger"
-                               style="font-size: 80%"
-                          >
-                            {{ fileSubmissionScoreErrorMessage }}
-                          </div>
-                        </b-form-group>
-                        <b-form-group
-                          v-if="grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']"
-                          label-cols-sm="5"
-                          label-cols-lg="4"
-                          label-for="late_penalty_percent"
-                        >
-                          <template v-slot:label>
-                            <span class="font-weight-bold">
-                              Late Penalty:
-                            </span>
-                          </template>
-                          <div class="mt-1 mb-1 d-flex">
-                            <b-form-input
-                              id="late_penalty_percent"
-                              v-model="grading[currentStudentPage - 1]['open_ended_submission']['applied_late_penalty']"
-                              type="text"
-                              size="sm"
-                              style="width:75px"
-                            />
-                            <b-button
-                              size="sm"
-                              variant="info"
-                              class="ml-2"
-                              @click="applyLatePenalty()"
-                            >
-                              Apply Late Penalty
-                            </b-button>
-                          </div>
-                        </b-form-group>
-                        <br>
-                        <div
-                          v-if="rubric && (isOpenEnded || isDiscussIt || isForge)"
-                        >
-                          <RubricPointsBreakdown
-                            :key="`rubric-points-breakdown-${rubricPointsBreakdownIndex}-${grading[currentStudentPage - 1]['open_ended_submission']['user_id']}-${grading[currentStudentPage - 1]['open_ended_submission']['question_id']}`"
-                            :user-id="grading[currentStudentPage - 1]['open_ended_submission']['user_id']"
-                            :assignment-id="+assignmentId"
-                            :original-rubric="rubric"
-                            :question-id="grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
-                            :question-points="grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 -gradingForm.question_submission_score* 1"
-                            @updateOpenEndedSubmissionScore="updateOpenEndedSubmissionScore"
-                            @setRubricPointsBreakdown="setRubricPointsBreakdown"
-                            @setOriginalRubricWithMaxes="setOriginalRubricWithMaxes"
+                          <QtiJsonQuestionViewer :key="`qti-json-${currentStudentPage}`"
+                                                 :qti-json="grading[currentStudentPage - 1]['qti_json']"
+                                                 :show-qti-answer="true"
+                                                 :show-submit="false"
+                                                 :show-response-feedback="false"
+                                                 :student-response="getStudentResponse(grading[currentStudentPage - 1])"
                           />
                         </div>
-                        <hr>
-                        <b-container>
-                          <b-row>
-                            <b-col v-if="isOpenEndedFileSubmission">
-                              <b-button variant="outline-primary"
-                                        :disabled="grading[currentStudentPage - 1]['open_ended_submission']['submission_url'] === null"
-                                        size="sm"
-                                        @click="openInNewTab(getFullPdfUrlAtPage(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'],grading[currentStudentPage - 1]['page']) )"
-                              >
-                                Open File Submission
-                              </b-button>
-                            </b-col>
-                          </b-row>
-                        </b-container>
-                      </b-form>
-                    </b-card-text>
-                  </b-card>
-                </div>
-                <div class="mb-2">
-                  <b-card header="default"
-                          :header-html="getGraderFeedbackTitle()"
-                  >
-                    <b-card-text align="center">
-                      <div v-show="isOpenEnded || isDiscussIt || isForge">
-                        <div v-show="(isForge && grading[currentStudentPage-1]['open_ended_submission']['date_submitted']) || (isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
-                          ||(isDiscussIt && discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
-                        >
-                          <b-row class="mb-2">
-                            <b-col>
-                              <b-form-select id="text_feedback_mode"
-                                             v-model="textFeedbackMode"
-                                             title="Text Feedback Mode"
-                                             :options="textFeedbackModeOptions"
-                                             size="sm"
-                              />
-                            </b-col>
-                            <b-col>
-                              <b-button v-if="textFeedbackMode === 'canned_response'"
-                                        variant="info"
-                                        size="sm"
-                                        @click="openEditCannedResponsesModal"
-                              >
-                                Edit Responses
-                              </b-button>
-                            </b-col>
-                          </b-row>
-                          <b-form ref="form">
-                            <ckeditor v-if="textFeedbackMode === 'rich_text'"
-                                      :key="`${currentQuestionPage}-${currentStudentPage}`"
-                                      v-model="richTextFeedback"
-                                      :config="richEditorConfig"
-                                      tabindex="0"
-                                      style="margin-bottom: 23px"
-                                      rows="5"
-                                      max-rows="5"
-                                      :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
-                                      @namespaceloaded="onCKEditorNamespaceLoaded"
-                                      @ready="handleFixCKEditor()"
-                            />
-                            <b-form-textarea
-                              v-if="textFeedbackMode === 'plain_text'"
-                              id="text_comments"
-                              v-model="plainTextFeedback"
-                              style="margin-bottom: 23px"
-                              placeholder="Enter something..."
-                              rows="5"
-                              max-rows="5"
-                              :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
-                              @keydown="gradingForm.errors.clear('textFeedback')"
-                            />
-                            <has-error :form="gradingForm" field="textFeedback"/>
 
-                            <b-form-select v-if="textFeedbackMode === 'canned_response'"
-                                           v-model="cannedResponse"
-                                           title="Canned response"
-                                           :options="cannedResponseOptions"
-                                           class="mb-5"
-                            />
-                            <hr>
-                            <b-row class="float-right">
-                              <b-button
-                                variant="primary"
-                                size="sm"
-                                @click="openUploadFileModal()"
-                              >
-                                Upload Feedback File
-                              </b-button>
-
-                              <b-button
-                                :class="{ 'disabled': !viewSubmission}"
-                                :aria-disabled="!viewSubmission"
-                                size="sm"
-                                class="ml-2 mr-4"
-                                @click="!viewSubmission ? '' : toggleView()"
-                              >
-                                View Feedback File
-                              </b-button>
-                            </b-row>
-                          </b-form>
+                        <div v-if="grading[currentStudentPage - 1]['technology_iframe']">
+                          <iframe
+                            :key="`technology-iframe-${currentStudentPage}`"
+                            v-resize="{ log: false }"
+                            aria-label="auto_graded_submission_text"
+                            width="100%"
+                            allowtransparency="true"
+                            :src="grading[currentStudentPage - 1]['technology_iframe']"
+                            frameborder="0"
+                            @load="receiveMessage"
+                          />
                         </div>
-                        <div
-                          v-show="(isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission'])
-                           || (isForge && !grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'])"
-                        >
-                          <h4 class="pt-2">
-                            <span class="text-muted">
-                              There is no open-ended submission for which to provide feedback.
-                            </span>
-                          </h4>
-                        </div>
-                        <div
-                          v-show="isDiscussIt && !discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments"
-                        >
-                          <h4 class="pt-5">
-                            <span class="text-muted">
-                              There are no comments for which to provide feedback.
-                            </span>
-                          </h4>
-                        </div>
-                      </div>
-                      <div v-show="!isOpenEnded && !isDiscussIt && !isForge">
-                        <h4 class="pt-5">
-                          <span class="text-muted">
-                            This panel is applicable to open-ended assessments.
-                          </span>
-                        </h4>
-                      </div>
-                    </b-card-text>
-                  </b-card>
-                </div>
-                <div class="text-center pt-3 pb-3">
-                  <b-button variant="primary"
-                            :class="{ 'disabled': noSubmission && !gradingForm.file_submission_score}"
-                            :aria-disabled="noSubmission && !gradingForm.file_submission_score"
-                            size="sm"
-                            class="ml-1 mr-1"
-                            @click="noSubmission && !gradingForm.file_submission_score ? '' :submitGradingForm(false)"
-                  >
-                    Submit
-                  </b-button>
-                  <b-button
-                    :class="{ 'disabled': currentStudentPage === numStudents || (noSubmission && !gradingForm.file_submission_score)}"
-                    :aria-disabled="currentStudentPage === numStudents || (noSubmission && !gradingForm.file_submission_score)"
-                    size="sm"
-                    variant="success"
-                    @click="currentStudentPage === numStudents || (noSubmission && !gradingForm.file_submission_score)? '' : submitGradingForm(true)"
-                  >
-                    Submit And Next
-                  </b-button>
-                </div>
-              </b-col>
-            </b-row>
-          </b-container>
-          <b-container>
-            <b-row v-if="!isDiscussIt && submissionArray.length" class="mt-2">
-              <b-col>
-                <b-card header="default" :header-html="getSubmissionSummaryTitle()">
-                  <SubmissionArray
-                    :key="`submission-array-${+renderMathJax}`"
-                    :submission-array="submissionArray"
-                    :question-submission-array="submissionArray"
-                    :question-id="+questionView"
-                    :assignment-id="+assignmentId"
-                    :technology="technology"
-                    :scoring-type="scoringType"
-                    :user-id="grading[currentStudentPage - 1].student.user_id"
-                    :user-role="user.role"
-                    :small-table="true"
-                    :penalties="grading[currentStudentPage - 1]['penalties']"
-                    :render-math-jax="renderMathJax"
-                  />
-                </b-card>
-              </b-col>
-              <b-col/>
-            </b-row>
-          </b-container>
-          <b-container v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
-            <b-row align-h="center" class="pb-2">
-              <toggle-button
-                v-if="grading[currentStudentPage - 1]['rubric_category_submission'].length"
-                class="mt-2"
-                :width="113"
-                :value="fullView"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="toggleColors"
-                :labels="{checked: 'Full View', unchecked: 'Rubric View'}"
-                @change="updateFullView()"
-              />
-            </b-row>
-          </b-container>
-          <div v-if="!fullView && grading[currentStudentPage - 1]['rubric_category_submission'] && rubricCategories">
-            <Report
-              v-if="rubricCategories.length"
-              :key="`lab-report-key-${grading[currentStudentPage - 1].student.user_id}-${questionView}`"
-              :assignment-id="Number(assignmentId)"
-              :question-id="Number(questionView)"
-              :user-id="grading[currentStudentPage - 1].student.user_id"
-              :rubric-categories="rubricCategories"
-              :rubric-scale="rubricScale"
-              :grading="true"
-              :points="+grading[currentStudentPage - 1]['open_ended_submission']['points']"
-              @saveOpenEndedScore="saveOpenEndedScore"
-            />
-          </div>
-          <div v-show="retrievedFromS3" class="row mt-4 d-flex justify-content-center"
-               :style="grading[currentStudentPage - 1]['open_ended_submission']['submission'] ? 'height:1000px' : ''"
-          >
-            <div v-show="viewSubmission">
-              <div v-if="isOpenEnded && isAutoGraded">
-                <hr>
-              </div>
-              <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
-                <b-row v-if="fullView" align-h="center" class="pb-2">
-                  <span class="font-weight-bold">Open-Ended Submission</span>
-                </b-row>
-              </div>
-              <div
-                v-if="(grading[currentStudentPage - 1]['open_ended_submission']['pasted_content'])"
-              >
-                <b-row v-if="fullView" align-h="center" class="pb-2">
-                  <b-alert show>
-                    This text submission was pasted in by the student.
-                    <QuestionCircleTooltip id="pasted-submission-tooltip"/>
-                    <b-tooltip target="pasted-submission-tooltip"
-                               delay="250"
-                               width="600"
-                               triggers="hover focus"
-                               custom-class="custom-tooltip"
+                      </b-card-text>
+                    </b-card>
+                    <div
+                      v-if="isForge"
+                      class="mt-2"
                     >
-                      If a student pastes in a text submission, they are informed that you will be notified.<br><br>Text
-                      submissions that were
-                      pasted in may have first been written by the student in an application such as Microsoft Word or
-                      the
-                      student may have used ChatGPT to generate the comment.
-                    </b-tooltip>
-                  </b-alert>
-                </b-row>
-              </div>
-              <div
-                v-if="(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'])"
-              >
-                <div v-if="fullView && isOpenEndedFileSubmission && isImageSubmission()" class="submission-image-viewer">
-                  <div class="submission-image-toolbar">
-                    <b-button-group size="sm">
-                      <b-button variant="outline-secondary"
-                                :pressed="imageViewMode === 'width'"
-                                @click="setImageFit('width')"
+                      <b-card header="default"
+                              :header-html="getForgeSubmissionHeader()"
                       >
-                        Fit Width
-                      </b-button>
-                      <b-button variant="outline-secondary"
-                                :pressed="imageViewMode === 'page'"
-                                @click="setImageFit('page')"
-                      >
-                        Fit Page
-                      </b-button>
-                      <b-button variant="outline-secondary"
-                                :pressed="imageViewMode === 'zoom' && imageZoom === 1"
-                                @click="setImageZoom(1)"
-                      >
-                        100%
-                      </b-button>
-                    </b-button-group>
-                    <b-button-group size="sm" class="ml-2">
-                      <b-button variant="outline-secondary" aria-label="Zoom out" @click="stepImageZoom(-1)">
-                        &minus;
-                      </b-button>
-                      <b-button variant="outline-secondary" aria-label="Zoom in" @click="stepImageZoom(1)">
-                        +
-                      </b-button>
-                    </b-button-group>
-                    <span class="ml-2 small text-muted">{{ imageZoomLabel() }} · click image to zoom</span>
-                  </div>
-                  <div ref="imageViewport"
-                       class="submission-image-viewport"
-                       :class="`mode-${imageViewMode}`"
-                  >
-                    <img v-show="!imageLoadError"
-                         :key="grading[currentStudentPage - 1]['open_ended_submission']['submission_url']"
-                         ref="submissionImage"
-                         alt="Student file submission"
-                         :src="grading[currentStudentPage - 1]['open_ended_submission']['submission_url']"
-                         :style="imageViewMode === 'zoom' && imageNaturalWidth ? { width: `${imageNaturalWidth * imageZoom}px` } : {}"
-                         @load="onSubmissionImageLoad"
-                         @error="onSubmissionImageError"
-                         @click="toggleImageZoom"
-                    >
-                    <div v-if="imageLoadError" class="p-4 text-center">
-                      This image can't be displayed in the browser (for example, an iPhone HEIC photo).
-                      Use <strong>Open File Submission</strong> above to download it.
+                        <ForgeViewer
+                          :key="`forge-viewer-${grading[currentStudentPage - 1]['open_ended_submission']['question_id']}-${grading[currentStudentPage - 1].student.user_id}`"
+                          :type="'submissionViewer'"
+                          :resubmission-enabled="+grading[currentStudentPage - 1]['open_ended_submission']['upload_count'] === 0"
+                          :assignment-id="+assignmentId"
+                          :show-forge-button="grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] !== null"
+                          :question-id="grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
+                          :student-id="grading[currentStudentPage - 1].student.user_id"
+                          @submissionExists="updateSubmissionExists"
+                        />
+                      </b-card>
                     </div>
-                  </div>
-                </div>
-                <div v-else-if="fullView && isOpenEndedFileSubmission" class="row">
-                  <iframe :key="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
-                          title="Open-ended submission"
-                          width="600"
-                          height="600"
-                          :src="getFullPdfUrlAtPage(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'],grading[currentStudentPage - 1]['open_ended_submission']['page'])"
-                  />
-                </div>
-                <div v-if="isOpenEndedAudioSubmission">
-                  <b-card sub-title="Submission">
-                    <audio-player
-                      :src="grading[currentStudentPage - 1]['open_ended_submission']['submission_url']"
-                    />
-                  </b-card>
-                </div>
-              </div>
-              <b-container
-                v-if="isOpenEndedTextSubmission
-                  && grading[currentStudentPage -1]['open_ended_submission']['submission_text']"
-              >
-                <b-card>
-                  <b-card-body>
-                    <b-card-text>
-                      <span class="font-weight-bold"
-                            v-html="grading[currentStudentPage - 1]['open_ended_submission']['submission_text']"
+                  </b-col>
+                  <b-col cols="12" :lg="splitView ? 12 : 6">
+                    <div class="mb-2">
+                      <b-card
+                        class="h-50"
+                        :style="{ borderColor: cardBorderColor, borderWidth:'2px' }"
+                      >
+                        <template #header>
+                          <h2 class="h7 mb-0">
+                            Scores for {{ grading[currentStudentPage - 1]['student']['name'] }}
+                            <QuestionCircleTooltip :id="`student-info`"/>
+                            <b-tooltip :target="`student-info`"
+                                       delay="250"
+                                       width="600"
+                                       triggers="hover focus"
+                                       custom-class="custom-tooltip"
+                            >
+                              Student ID: {{ grading[currentStudentPage - 1]['student']['student_id'] }}<br>
+                              Email: {{ grading[currentStudentPage - 1]['student']['email'] }}
+                            </b-tooltip>
+                          </h2>
+                          <div v-if="grading[currentStudentPage - 1]['last_graded']">
+                            <small>Updated {{ grading[currentStudentPage - 1]['last_graded'] }}</small>
+                          </div>
+                          <div v-else>
+                            <small>A score has yet to be entered for this student.</small>
+                          </div>
+                        </template>
+                        <b-card-text>
+                          <b-form ref="form">
+                            <div v-show="grading[currentStudentPage - 1]['submission_score_override']">
+                              <b-alert show>
+                                The student will see the override score for this question.
+                              </b-alert>
+                              <span class="pr-2"><strong>Override Score:</strong> {{
+                                  grading[currentStudentPage - 1]['submission_score_override']
+                                }}
+                              </span>
+                              <b-button size="sm"
+                                        variant="outline-primary"
+                                        @click="initOverrideSubmissionScore(grading[currentStudentPage - 1])"
+                              >
+                                Update
+                              </b-button>
+                              <hr>
+                            </div>
+                            <b-form-group
+                              v-if="!isDiscussIt && !isForge"
+                              label-cols-sm="4"
+                              label-cols-lg="3"
+                              label-for="auto_graded_score"
+                            >
+                              <template v-slot:label>
+                                <span class="font-weight-bold">Auto-graded<br/>score:</span>
+                              </template>
+                              <div v-show="isAutoGraded" class="pt-1">
+                                <div class="d-flex align-items-center">
+                                  <b-form-input v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
+                                                id="auto_graded_score"
+                                                v-model="gradingForm.question_submission_score"
+                                                type="text"
+                                                :aria-labelledby="questionSubmissionScoreErrorMessage.length ? 'question_submission_score_error' : ''"
+                                                size="sm"
+                                                style="width:75px"
+                                                :class="{ 'is-invalid': questionSubmissionScoreErrorMessage.length }"
+                                                @keydown="questionSubmissionScoreErrorMessage = ''"
+                                  />
+                                  <span v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
+                                        class="text-muted ml-2 mr-3"
+                                        style="font-size: 0.9em; white-space: nowrap;"
+                                  >(Max: {{
+                                      grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
+                                    }})</span>
+                                  <span
+                                    v-if="isAutoGraded && !isOpenEnded && grading[currentStudentPage - 1]['auto_graded_submission']"
+                                    class="d-inline-flex"
+                                  >
+        <b-button size="sm"
+                  variant="outline-success"
+                  class="mr-2"
+                  @click="submitGradingForm(true,
+                                            {
+                                              scoreType: 'question_submission_score',
+                                              score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
+                                            })"
+        >Full Score</b-button>
+        <b-button size="sm"
+                  variant="outline-danger"
+                  @click="submitGradingForm(true,
+                                            {
+                                              scoreType: 'question_submission_score',
+                                              score: 0
+                                            })"
+        >
+          Zero Score</b-button>
+      </span>
+                                </div>
+
+                                <div v-if="!grading[currentStudentPage - 1]['auto_graded_submission']"
+                                     class="pt-1"
+                                >
+                                  <span>No submission</span>
+                                </div>
+                              </div>
+                              <div v-show="!isAutoGraded" class="pt-2">
+                                <span>Not applicable</span>
+                              </div>
+                              <div v-if="questionSubmissionScoreErrorMessage"
+                                   id="question_submission_score_error"
+                                   class="text-danger"
+                                   style="font-size: 80%"
+                              >
+                                {{ questionSubmissionScoreErrorMessage }}
+                              </div>
+                            </b-form-group>
+                            <div v-if="canSubmitWork" class="mb-2">
+                            <span v-show="submittedWork.pending_score">
+                              <strong>Approve score</strong>: <span
+                              :class="{'text-success': submittedWork.url, 'text-danger': !submittedWork.url}"
+                            >{{ roundToDecimalSigFig(submittedWork.pending_score, 4) }}
+                              <span id="apply-pending-score-tooltip">
+                           <b-button
+                             :variant="submittedWork.url ? 'outline-success' : 'outline-danger'"
+                             size="sm"
+                             class="ml-1"
+                             @click="applyPendingScore()"
+                           >
+      Approve
+                           </b-button></span></span></span>
+                              <span v-if="submittedWork.url">
+                            <b-button @click="$bvModal.show('modal-submitted-work')"
+                                      variant="primary"
+                                      size="sm"
+                            >
+                              View Submitted Work
+                            </b-button>
+                          </span>
+                              <span v-if="!submittedWork.url" class="text-danger">There is no submitted work.</span>
+
+                              <b-tooltip v-if="!submittedWork.url"
+                                         target="apply-pending-score-tooltip"
+                                         delay="500"
+                                         triggers="hover focus"
+                              >You will be applying the score even though this student has not submitted work.
+                              </b-tooltip>
+                            </div>
+
+                            <b-form-group
+                              v-show="isOpenEnded || isDiscussIt || isForge"
+                              label-cols-sm="5"
+                              label-cols-lg="4"
+                              label-for="open_ended_score"
+                            >
+                              <template v-slot:label>
+                                <span class="font-weight-bold">{{
+                                    getScoreLabel()
+                                  }}<br/>score:</span>
+                              </template>
+                              <div class="pt-1">
+                                <div class="d-flex align-items-center">
+                                  <b-form-input
+                                    v-show="isOpenEnded
+        || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
+          || discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments"
+                                    id="open_ended_score"
+                                    v-model="gradingForm.file_submission_score"
+                                    type="text"
+                                    size="sm"
+                                    :aria-labelledby="fileSubmissionScoreErrorMessage.length ? 'file_submission_score_error' : ''"
+                                    style="width:75px"
+                                    :class="{ 'is-invalid': fileSubmissionScoreErrorMessage.length }"
+                                    @keydown="fileSubmissionScoreErrorMessage=''"
+                                  />
+                                  <span v-show="grading[currentStudentPage - 1]['open_ended_submission']"
+                                        class="text-muted ml-2 mr-3"
+                                        style="font-size: 0.9em; white-space: nowrap;"
+                                  >(Max: {{
+                                      grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
+                                    }})</span>
+                                  <span
+                                    v-if="(isOpenEnded && !isAutoGraded)
+        || (isForge && grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'] )
+          || (isDiscussIt && discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
+                                    class="d-inline-flex"
+                                  >
+        <b-button size="sm"
+                  class="mr-2"
+                  variant="outline-success"
+                  @click="submitGradingForm(true,
+                                            {
+                                              specialScore: 'full score',
+                                              scoreType: 'file_submission_score',
+                                              score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
+                                            })"
+        >Full Score</b-button>
+        <b-button size="sm"
+                  variant="outline-danger"
+                  @click="submitGradingForm(true,
+                                            {
+                                              specialScore: 'zero score',
+                                              scoreType: 'file_submission_score',
+                                              score: 0
+                                            })"
+        >
+          Zero Score</b-button>
+      </span>
+                                </div>
+                                <div
+                                  v-show="(isDiscussIt && !discussionsByUserId.find(item => item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
+                                  class="pt-1"
+                                >
+                                  No comments submitted
+                                </div>
+                              </div>
+                              <div v-show="!isOpenEnded && !isDiscussIt && !isForge" class="pt-2">
+                                <span>Not applicable</span>
+                              </div>
+                              <div v-if="fileSubmissionScoreErrorMessage"
+                                   id="file_submission_score_error"
+                                   class="text-danger"
+                                   style="font-size: 80%"
+                              >
+                                {{ fileSubmissionScoreErrorMessage }}
+                              </div>
+                            </b-form-group>
+                            <b-form-group
+                              v-if="grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']"
+                              label-cols-sm="5"
+                              label-cols-lg="4"
+                              label-for="late_penalty_percent"
+                            >
+                              <template v-slot:label>
+                                <span class="font-weight-bold">
+                                  Late Penalty:
+                                </span>
+                              </template>
+                              <div class="mt-1 mb-1 d-flex">
+                                <b-form-input
+                                  id="late_penalty_percent"
+                                  v-model="grading[currentStudentPage - 1]['open_ended_submission']['applied_late_penalty']"
+                                  type="text"
+                                  size="sm"
+                                  style="width:75px"
+                                />
+                                <b-button
+                                  size="sm"
+                                  variant="info"
+                                  class="ml-2"
+                                  @click="applyLatePenalty()"
+                                >
+                                  Apply Late Penalty
+                                </b-button>
+                              </div>
+                            </b-form-group>
+                            <br>
+                            <div
+                              v-if="rubric && (isOpenEnded || isDiscussIt || isForge)"
+                            >
+                              <RubricPointsBreakdown
+                                :key="`rubric-points-breakdown-${rubricPointsBreakdownIndex}-${grading[currentStudentPage - 1]['open_ended_submission']['user_id']}-${grading[currentStudentPage - 1]['open_ended_submission']['question_id']}`"
+                                :user-id="grading[currentStudentPage - 1]['open_ended_submission']['user_id']"
+                                :assignment-id="+assignmentId"
+                                :original-rubric="rubric"
+                                :question-id="grading[currentStudentPage - 1]['open_ended_submission']['question_id']"
+                                :question-points="grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 -gradingForm.question_submission_score* 1"
+                                @updateOpenEndedSubmissionScore="updateOpenEndedSubmissionScore"
+                                @setRubricPointsBreakdown="setRubricPointsBreakdown"
+                                @setOriginalRubricWithMaxes="setOriginalRubricWithMaxes"
+                              />
+                            </div>
+                            <hr>
+                            <b-container>
+                              <b-row>
+                                <b-col v-if="isOpenEndedFileSubmission">
+                                  <b-button variant="outline-primary"
+                                            :disabled="grading[currentStudentPage - 1]['open_ended_submission']['submission_url'] === null"
+                                            size="sm"
+                                            @click="openInNewTab(getFullPdfUrlAtPage(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'],grading[currentStudentPage - 1]['open_ended_submission']['page'] || 1) )"
+                                  >
+                                    Open File Submission
+                                  </b-button>
+                                </b-col>
+                              </b-row>
+                            </b-container>
+                          </b-form>
+                        </b-card-text>
+                      </b-card>
+                    </div>
+                    <div class="mb-2">
+                      <b-card header="default"
+                              :header-html="getGraderFeedbackTitle()"
+                      >
+                        <b-card-text align="center">
+                          <div v-show="isOpenEnded || isDiscussIt || isForge">
+                            <div v-show="(isForge && grading[currentStudentPage-1]['open_ended_submission']['date_submitted']) || (isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission'])
+                              ||(isDiscussIt && discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments)"
+                            >
+                              <b-row class="mb-2">
+                                <b-col>
+                                  <b-form-select id="text_feedback_mode"
+                                                 v-model="textFeedbackMode"
+                                                 title="Text Feedback Mode"
+                                                 :options="textFeedbackModeOptions"
+                                                 size="sm"
+                                  />
+                                </b-col>
+                                <b-col>
+                                  <b-button v-if="textFeedbackMode === 'canned_response'"
+                                            variant="info"
+                                            size="sm"
+                                            @click="openEditCannedResponsesModal"
+                                  >
+                                    Edit Responses
+                                  </b-button>
+                                </b-col>
+                              </b-row>
+                              <b-form ref="form">
+                                <ckeditor v-if="textFeedbackMode === 'rich_text'"
+                                          :key="`${currentQuestionPage}-${currentStudentPage}`"
+                                          v-model="richTextFeedback"
+                                          :config="richEditorConfig"
+                                          tabindex="0"
+                                          style="margin-bottom: 23px"
+                                          rows="5"
+                                          max-rows="5"
+                                          :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
+                                          @namespaceloaded="onCKEditorNamespaceLoaded"
+                                          @ready="handleFixCKEditor()"
+                                />
+                                <b-form-textarea
+                                  v-if="textFeedbackMode === 'plain_text'"
+                                  id="text_comments"
+                                  v-model="plainTextFeedback"
+                                  style="margin-bottom: 23px"
+                                  placeholder="Enter something..."
+                                  rows="5"
+                                  max-rows="5"
+                                  :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
+                                  @keydown="gradingForm.errors.clear('textFeedback')"
+                                />
+                                <has-error :form="gradingForm" field="textFeedback"/>
+
+                                <b-form-select v-if="textFeedbackMode === 'canned_response'"
+                                               v-model="cannedResponse"
+                                               title="Canned response"
+                                               :options="cannedResponseOptions"
+                                               class="mb-5"
+                                />
+                                <hr>
+                                <b-row class="float-right">
+                                  <b-button
+                                    variant="primary"
+                                    size="sm"
+                                    @click="openUploadFileModal()"
+                                  >
+                                    Upload Feedback File
+                                  </b-button>
+
+                                  <b-button
+                                    :class="{ 'disabled': !viewSubmission}"
+                                    :aria-disabled="!viewSubmission"
+                                    size="sm"
+                                    class="ml-2 mr-4"
+                                    @click="!viewSubmission ? '' : toggleView()"
+                                  >
+                                    View Feedback File
+                                  </b-button>
+                                </b-row>
+                              </b-form>
+                            </div>
+                            <div
+                              v-show="(isOpenEnded && !grading[currentStudentPage - 1]['open_ended_submission']['submission'])
+                               || (isForge && !grading[currentStudentPage - 1]['open_ended_submission']['date_submitted'])"
+                            >
+                              <h4 class="pt-2">
+                                <span class="text-muted">
+                                  There is no open-ended submission for which to provide feedback.
+                                </span>
+                              </h4>
+                            </div>
+                            <div
+                              v-show="isDiscussIt && !discussionsByUserId.find(item =>item.user_id === grading[currentStudentPage-1].student.user_id).comments"
+                            >
+                              <h4 class="pt-5">
+                                <span class="text-muted">
+                                  There are no comments for which to provide feedback.
+                                </span>
+                              </h4>
+                            </div>
+                          </div>
+                          <div v-show="!isOpenEnded && !isDiscussIt && !isForge">
+                            <h4 class="pt-5">
+                              <span class="text-muted">
+                                This panel is applicable to open-ended assessments.
+                              </span>
+                            </h4>
+                          </div>
+                        </b-card-text>
+                      </b-card>
+                    </div>
+                    <div class="text-center pt-3 pb-3">
+                      <b-button variant="primary"
+                                :class="{ 'disabled': noSubmission && !gradingForm.file_submission_score}"
+                                :aria-disabled="noSubmission && !gradingForm.file_submission_score"
+                                size="sm"
+                                class="ml-1 mr-1"
+                                @click="noSubmission && !gradingForm.file_submission_score ? '' :submitGradingForm(false)"
+                      >
+                        Submit
+                      </b-button>
+                      <b-button
+                        :class="{ 'disabled': currentStudentPage === numStudents || (noSubmission && !gradingForm.file_submission_score)}"
+                        :aria-disabled="currentStudentPage === numStudents || (noSubmission && !gradingForm.file_submission_score)"
+                        size="sm"
+                        variant="success"
+                        @click="currentStudentPage === numStudents || (noSubmission && !gradingForm.file_submission_score)? '' : submitGradingForm(true)"
+                      >
+                        Submit And Next
+                      </b-button>
+                    </div>
+                  </b-col>
+                </b-row>
+                <b-row v-if="!isDiscussIt && submissionArray.length" class="mt-2">
+                  <b-col cols="12" :lg="splitView ? 12 : 6">
+                    <b-card header="default" :header-html="getSubmissionSummaryTitle()">
+                      <SubmissionArray
+                        :key="`submission-array-${+renderMathJax}`"
+                        :submission-array="submissionArray"
+                        :question-submission-array="submissionArray"
+                        :question-id="+questionView"
+                        :assignment-id="+assignmentId"
+                        :technology="technology"
+                        :scoring-type="scoringType"
+                        :user-id="grading[currentStudentPage - 1].student.user_id"
+                        :user-role="user.role"
+                        :small-table="true"
+                        :penalties="grading[currentStudentPage - 1]['penalties']"
+                        :render-math-jax="renderMathJax"
                       />
-                    </b-card-text>
-                  </b-card-body>
-                </b-card>
-              </b-container>
-            </div>
-            <div v-show="!viewSubmission">
-              <iframe
-                v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] !== 'audio'"
-                width="600"
-                height="600"
-                :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
-              />
-              <b-card
-                v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
-                sub-title="Audio Feedback"
-              >
-                <audio-player
-                  v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
-                  :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
-                />
-              </b-card>
-              <b-alert class="mt-1" :variant="audioFeedbackDataType" :show="showAudioFeedbackMessage">
-                <span class="font-weight-bold">{{ audioFeedbackDataMessage }}</span>
-              </b-alert>
-            </div>
-          </div>
+                    </b-card>
+                  </b-col>
+                </b-row>
+              </b-col>
+            </b-row>
+          </b-container>
         </div>
       </div>
       <div v-if="showNoAutoGradedOrOpenSubmissionsExistAlert" class="mt-4">
@@ -1591,6 +1631,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { roundToDecimalSigFig } from '../../helpers/Math'
 import ForgeViewer from '../../components/viewers/ForgeViewer.vue'
 import Transcript from '../../components/Transcript.vue'
+import SubmissionPagesViewer from '../../components/SubmissionPagesViewer.vue'
 import VuePdfEmbed from 'vue-pdf-embed/dist/vue2-pdf-embed'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -1598,6 +1639,7 @@ export default {
   middleware: 'auth',
   components: {
     Transcript,
+    SubmissionPagesViewer,
     VuePdfEmbed,
     ForgeViewer,
     FontAwesomeIcon,
@@ -1782,9 +1824,16 @@ export default {
       textFeedback: null
     })
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    // Open-ended questions get the side-by-side layout: student work on the left,
+    // question/scores/feedback on the right. Everything else keeps the stacked layout.
+    splitView () {
+      return this.isOpenEnded
+    }
+  },
   watch: {
     'gradingForm.file_submission_score' (newVal, oldVal) {
       this.totalScore = +this.gradingForm.question_submission_score + +newVal || 0
@@ -2223,7 +2272,12 @@ export default {
       }
     },
     arrowListener (event) {
-      let inTextArea = document.activeElement.id === 'text_comments'
+      const active = document.activeElement
+      // don't switch students while typing (feedback box, markup text) or with a modal such as the markup editor open
+      let inTextArea = (active && (active.id === 'text_comments' ||
+          ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName) ||
+          active.isContentEditable)) ||
+        Boolean(document.querySelector('.modal.show'))
       if (event.key === 'ArrowRight' &&
         this.currentStudentPage < this.numStudents &&
         !inTextArea) {
@@ -2309,6 +2363,8 @@ export default {
             this.grading[this.currentStudentPage - 1]['open_ended_submission'].file_feedback_url = files.file_feedback_url
             this.grading[this.currentStudentPage - 1]['open_ended_submission'].submission_url = files.submission_url
             this.grading[this.currentStudentPage - 1]['open_ended_submission'].submission_text = files.submission_text
+            this.$set(this.grading[this.currentStudentPage - 1]['open_ended_submission'], 'page_images', files.page_images || [])
+            this.$set(this.grading[this.currentStudentPage - 1]['open_ended_submission'], 'page_images_status', files.page_images_status || null)
             this.grading[this.currentStudentPage - 1]['open_ended_submission'].got_files = true
           } else {
             this.$noty.error(data.message)
@@ -2363,6 +2419,49 @@ export default {
         ? 'by ' + this.grading[this.currentStudentPage - 1]['open_ended_submission'].grader_name
         : ''
       return `<h2 class="h7 mb-0">Grader Feedback ${grader}</h2>`
+    },
+    // Page images of the student's PDF for this question (empty until they've been rendered, or for old
+    // start-page-only assignments, in which case the PDF view is used)
+    pageImages () {
+      const current = this.grading[this.currentStudentPage - 1]
+      return (current && current.open_ended_submission && current.open_ended_submission.page_images) || []
+    },
+    // Why a file submission is shown as the original file instead of as pages that can be marked up ('' when
+    // there's nothing to explain). Uses the conversion status that get-files-from-s3 returns with the files.
+    markupUnavailableReason () {
+      const current = this.grading[this.currentStudentPage - 1]
+      const submission = current && current.open_ended_submission
+      if (!submission || !submission.got_files || this.pageImages().length) {
+        return ''
+      }
+      const isPdf = /\.pdf$/i.test(submission.submission || '')
+      // only these are converted (ConvertSubmissionPdfToImages::canConvert); other files are never marked up
+      if (!isPdf && !/\.(jpe?g|png|gif)$/i.test(submission.submission || '')) {
+        return ''
+      }
+      const original = isPdf ? 'the PDF' : 'the original image'
+      switch (submission.page_images_status) {
+        case 'pending':
+        case 'processing':
+          return `This file is still being prepared for marking up. Showing ${original} for now; reload in a minute to mark it up.`
+        case 'failed':
+          return `This file couldn't be converted for marking up, so markup isn't available. Showing ${original} instead.`
+        case 'completed':
+          // converted, but this question only has a starting page (assigned before page ranges existed)
+          return 'The student assigned only a starting page for this question, so its pages can\'t be marked up. Showing the PDF from that page.'
+        default:
+          return `This file was uploaded before marking up was available. Showing ${original}.`
+      }
+    },
+    // The page image links are temporary; on a load error fetch fresh ones once per student
+    async refreshPageImages () {
+      const current = this.grading[this.currentStudentPage - 1]?.open_ended_submission
+      if (!current || current.page_images_refreshed) {
+        return
+      }
+      this.$set(current, 'page_images_refreshed', true)
+      current.got_files = false
+      await this.getFilesFromS3()
     },
     isImageSubmission () {
       const submission = this.grading[this.currentStudentPage - 1]?.open_ended_submission?.submission
@@ -3136,6 +3235,47 @@ div.ar-icon svg {
   max-width: 100%;
   max-height: 100%;
   cursor: zoom-in;
+}
+
+/* Split view: student work on the left, grading on the right */
+.submission-pane .submission-image-viewer {
+  width: 100%;
+}
+
+.submission-pane .submission-image-viewport,
+.submission-pane-frame {
+  height: calc(100vh - 140px);
+  min-height: 500px;
+}
+
+.submission-pane-frame {
+  width: 100%;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+/* holds the space the hidden grading panels used, so the page doesn't jump while loading */
+.grading-loading-placeholder {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 60vh;
+  padding-top: 48px;
+}
+
+.submission-pane-empty {
+  padding: 3rem 1rem;
+  text-align: center;
+  border: 1px dashed #dee2e6;
+  border-radius: 4px;
+}
+
+@media (min-width: 992px) {
+  /* Keep the submission in view while scrolling through the grading panels */
+  .submission-pane-sticky {
+    position: sticky;
+    top: 1rem;
+  }
 }
 
 .submission-image-viewport.mode-zoom img {

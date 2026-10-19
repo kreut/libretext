@@ -11,6 +11,8 @@ use App\GraderNotification;
 use App\Helpers\Helper;
 use App\Http\Requests\UpdateScoresRequest;
 use App\Http\Requests\UpdateSubmisionFilePage;
+use App\Jobs\ConvertSubmissionPdfToImages;
+use App\SubmissionFilePage;
 use App\Question;
 use App\QuestionLevelOverride;
 use App\Score;
@@ -187,12 +189,15 @@ class SubmissionFileController extends Controller
 
         $data = $request->validated();
         $number_of_pages = $this->_getNumberOfPages($full_file);
-        if ($number_of_pages && $data['page'] > $number_of_pages) {
-            $response['message'] = $number_of_pages === 1
-                ? "Your PDF only has 1 page."
-                : "Your PDF only has $number_of_pages pages.  Please choose a page from 1 to $number_of_pages.";
-            $response['number_of_pages'] = $number_of_pages;
-            return $response;
+        $end_page = $data['end_page'] ?? null;
+        foreach (array_filter([$data['page'], $end_page]) as $requested_page) {
+            if ($number_of_pages && $requested_page > $number_of_pages) {
+                $response['message'] = $number_of_pages === 1
+                    ? "Your PDF only has 1 page."
+                    : "Your PDF only has $number_of_pages pages.  Please choose a page from 1 to $number_of_pages.";
+                $response['number_of_pages'] = $number_of_pages;
+                return $response;
+            }
         }
         try {
             $page = $data['page'];
@@ -201,6 +206,7 @@ class SubmissionFileController extends Controller
                 'submission' => $full_file->submission,
                 'original_filename' => $full_file->original_filename,
                 'page' => $page,
+                'end_page' => $end_page,
                 'file_feedback' => null,
                 'text_feedback' => null,
                 'date_graded' => null,
@@ -219,6 +225,12 @@ class SubmissionFileController extends Controller
                     'type' => 'q'],
                 $submission_file_data
             );
+            // re-assigning wipes the grade and feedback above, so the grader's markup goes too
+            DB::table('submission_page_annotations')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->where('user_id', Auth::user()->id)
+                ->delete();
             $open_ended_score = $this->updateScoreIfCompletedScoringType($assignment, $question->id);
             DB::commit();
             $auto_graded_submission = DB::table('submissions')->where('user_id', Auth::user()->id)
@@ -235,8 +247,12 @@ class SubmissionFileController extends Controller
             $response['total_score'] = Helper::removeZerosAfterDecimal($total_score);
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
             $re = $is_update ? 're-' : '';
-            $response['message'] = "You have {$re}assigned Page $page as the start of the submitted solution to Question $request->question_number.";
+            $pages_text = $end_page && $end_page > $page ? "Pages $page-$end_page" : "Page $page";
+            $response['message'] = $end_page
+                ? "You have {$re}assigned $pages_text to Question $request->question_number."
+                : "You have {$re}assigned Page $page as the start of the submitted solution to Question $request->question_number.";
             $response['page'] = $page;
+            $response['end_page'] = $end_page;
             $response['number_of_pages'] = $number_of_pages;
             $response['type'] = 'success';
 
@@ -287,7 +303,9 @@ class SubmissionFileController extends Controller
 
             $response['files'] = ['submission_text' => null,
                 'submission_url' => null,
-                'submission' => null];
+                'submission' => null,
+                'page_images' => [],
+                'page_images_status' => null];
             $file_feedback = null;
             if ($submission_file_info) {
                 $submission = $submission_file_info['submission'];
@@ -307,6 +325,15 @@ class SubmissionFileController extends Controller
                 } else {
                     $response['files']['submission_url'] = $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null;
                     $response['files']['submission_text'] = null;
+                    if ($request->user()->role !== 3) {
+                        // page images for the grader: the question's page range, or all pages of a single-question PDF
+                        $page_images = SubmissionFilePage::forSubmission($assignment->id,
+                            $submission,
+                            $submission_file_info['page'],
+                            $submission_file_info['end_page']);
+                        $response['files']['page_images'] = $page_images['pages'];
+                        $response['files']['page_images_status'] = $page_images['status'];
+                    }
                 }
             }
             $response['files']['file_feedback_url'] = $file_feedback ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null;
@@ -606,6 +633,9 @@ class SubmissionFileController extends Controller
                     $response['full_pdf_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
                     break;
                 case('question'):
+                    // a file for just this question replaces any page range from the compiled PDF
+                    $submission_file_data['page'] = null;
+                    $submission_file_data['end_page'] = null;
                     $submissionFile->updateOrCreate(
                         ['user_id' => Auth::user()->id,
                             'assignment_id' => $assignment_id,
@@ -613,6 +643,12 @@ class SubmissionFileController extends Controller
                             'type' => 'q'],
                         $submission_file_data
                     );
+                    // the grade and feedback were wiped above, so the grader's markup on the old file goes too
+                    DB::table('submission_page_annotations')
+                        ->where('assignment_id', $assignment_id)
+                        ->where('question_id', $question_id)
+                        ->where('user_id', Auth::user()->id)
+                        ->delete();
                     //they may have used the audio file uploader instead of the file uploader so let's remove the regular one
                     $submissionFile->where('user_id', Auth::user()->id)
                         ->where('assignment_id', $assignment_id)
@@ -637,6 +673,16 @@ class SubmissionFileController extends Controller
             }
             $response['type'] = 'success';
             DB::commit();
+            if (in_array($mime_type, ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'])) {
+                // page images for the grader to view and mark up; dispatched after the commit so the row exists
+                // a queueing failure must not turn an already-saved upload into an error for the student
+                try {
+                    ConvertSubmissionPdfToImages::dispatch((int)$assignment_id, basename($submission));
+                } catch (Exception $e) {
+                    $h = new Handler(app());
+                    $h->report($e);
+                }
+            }
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());

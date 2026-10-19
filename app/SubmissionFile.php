@@ -278,6 +278,7 @@ class SubmissionFile extends Model
                 $all_info['applied_late_penalty'] = $applied_late_penalty;
                 $all_info['order'] = $question->order;
                 $all_info['pasted_content'] = $pasted_content;
+                $all_info['end_page'] = $questionFilesByUser[$question->question_id][$user->id]->end_page ?? null;
                 $all_info['submission_status'] = $this->submissionStatus($all_info);
                 $user_and_submission_file_info[$question->question_id][$key] = $all_info;
 
