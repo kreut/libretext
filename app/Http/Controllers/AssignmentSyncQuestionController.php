@@ -1507,12 +1507,19 @@ class AssignmentSyncQuestionController extends Controller
                 //for "Copy settings from" and "Also apply to" in the settings modal
                 $response['linked_discuss_it_settings'] = [];
                 foreach ($response['discuss_it_links']['is_linked'] ? $response['discuss_it_links']['linked_assignments'] : [] as $linked_assignment) {
-                    $response['linked_discuss_it_settings'][] = [
-                        'id' => $linked_assignment['id'],
-                        'name' => $linked_assignment['name'],
-                        'discuss_it_settings' => json_decode($assignmentSyncQuestion->discussItSettings($linked_assignment['id'], $question->id), true),
-                        'has_real_student_comments' => DiscussItChain::realStudentCommentsExist([$linked_assignment['id']], $question->id)
-                    ];
+                    try {
+                        $response['linked_discuss_it_settings'][] = [
+                            'id' => $linked_assignment['id'],
+                            'name' => $linked_assignment['name'],
+                            'discuss_it_settings' => json_decode($assignmentSyncQuestion->discussItSettings($linked_assignment['id'], $question->id), true),
+                            'has_real_student_comments' => DiscussItChain::realStudentCommentsExist([$linked_assignment['id']], $question->id)
+                        ];
+                    } catch (Exception $e) {
+                        //a bad row in one linked assignment shouldn't stop this assignment's settings from loading;
+                        //it's left out of "Copy settings from"/"Also apply to" and reported so it can be fixed
+                        $h = new Handler(app());
+                        $h->report($e);
+                    }
                 }
             }
             $response['type'] = 'success';
@@ -1565,6 +1572,12 @@ class AssignmentSyncQuestionController extends Controller
                 if (!isset($data[$key])) {
                     $data[$key] = $value;
                 }
+            }
+            //only validated when audio or video is a response mode, so don't keep an unvalidated value around
+            //(discussItSettings() parses it whenever it's set)
+            $response_modes = is_array($data['response_modes'] ?? null) ? $data['response_modes'] : [];
+            if (!array_intersect(['audio', 'video'], $response_modes)) {
+                $data['min_length_of_audio_video'] = '';
             }
             $apply_to_info = $this->_discussItSettingsForLinkedAssignments($assignmentSyncQuestion, $assignment, $question, $data, $apply_to_assignment_ids);
             if ($apply_to_info['type'] === 'error') {

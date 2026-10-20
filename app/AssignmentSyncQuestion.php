@@ -364,15 +364,14 @@ class AssignmentSyncQuestion extends Model
             ->where('question_id', $question_id)
             ->select('discuss_it_settings')
             ->first();
-
         if ($assignment_question_info->discuss_it_settings) {
             $discuss_it_settings = json_decode($assignment_question_info->discuss_it_settings);
-            if ($discuss_it_settings->min_length_of_audio_video) {
-                $base = Carbon::now();
-                $min_length_of_audio_video = $discuss_it_settings->min_length_of_audio_video;
-                $min_length_of_audio_video = str_replace('and', ',', $min_length_of_audio_video);
-                $parsedTime = Carbon::parse($min_length_of_audio_video);
-                $discuss_it_settings->min_length_of_audio_video_in_milliseconds = $base->diffInMilliseconds($parsedTime);
+            if (!empty($discuss_it_settings->min_length_of_audio_video)) {
+                //parsed exactly the way IsValidPeriodOfTime validates it, so anything that was saved can be read back
+                //(Carbon::parse() can't handle values the validator accepts, e.g. "1.5 minutes")
+                $base = CarbonImmutable::now();
+                $discuss_it_settings->min_length_of_audio_video_in_milliseconds =
+                    $base->add($discuss_it_settings->min_length_of_audio_video)->diffInMilliseconds($base);
             }
         } else {
             $discuss_it_settings = Helper::defaultDiscussItSettings();

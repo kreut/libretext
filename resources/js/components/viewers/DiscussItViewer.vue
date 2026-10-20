@@ -797,8 +797,7 @@
               label-align="left"
             >
               <template #label>
-                Students can start new threads
-                <QuestionCircleTooltip id="start-threads-tooltip" />
+                Students can start new threads<QuestionCircleTooltip id="start-threads-tooltip" class="ml-1"/>
                 <b-tooltip target="start-threads-tooltip"
                            delay="250"
                            triggers="hover focus"

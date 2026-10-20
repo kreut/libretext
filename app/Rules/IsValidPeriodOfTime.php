@@ -27,14 +27,16 @@ class IsValidPeriodOfTime implements Rule
      */
     public function passes($attribute, $value)
     {
-        $is_valid = true;
-        $date = CarbonImmutable::now();
-        try {
-            $date->add($value)->calendar();
-        } catch (Exception $e){
-           $is_valid = false;
+        if (!is_string($value) || trim($value) === '') {
+            return false;
         }
-        return $is_valid;
+        try {
+            $base = CarbonImmutable::now();
+            //must be an actual length of time: "0 minutes" or a negative interval doesn't count
+            return $base->add($value)->greaterThan($base);
+        } catch (Exception $e) {
+            return false;
+        }
 
     }
 
