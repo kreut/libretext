@@ -122,7 +122,7 @@ class graderNotificationsReminders extends Command
 
             $sql = $graderNotification->submissionSQL($where);
 
-            $ungraded_submissions = DB::select(DB::raw($sql));
+            $ungraded_submissions = DB::select(($sql));
             $process_ungraded_submissions = $graderNotification->processUngradedSubmissions($ungraded_submissions, $assignment);
           $graders_by_id = $process_ungraded_submissions['graders_by_id'];
             $formatted_ungraded_submissions_by_grader = $process_ungraded_submissions['formatted_ungraded_submissions_by_grader'];

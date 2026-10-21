@@ -17,7 +17,7 @@ class CreateExtraCreditsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('course_id');
-            $table->unsignedDecimal('extra_credit', 5);
+            $table->decimal('extra_credit', 5)->unsigned();
             $table->timestamps();
             $table->unique(['user_id', 'course_id']);
             $table->foreign('user_id')->references('id')->on('users');

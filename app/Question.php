@@ -313,7 +313,7 @@ class Question extends Model
         $is_efs = is_dir($efs_dir);
         $storage_path = $is_efs
             ? $efs_dir
-            : Storage::disk('local')->getAdapter()->getPathPrefix();
+            : Storage::disk('local')->path('');
 
         libxml_use_internal_errors(true);//errors from DOM that I don't care about
         $htmlDom->loadHTML(mb_convert_encoding($contents, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);

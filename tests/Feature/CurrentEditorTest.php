@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Question;
 use App\Traits\DateFormatter;
 use App\User;
@@ -26,7 +27,7 @@ class CurrentEditorTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_question_editor_cannot_update_a_current_question_editor()
     {
 
@@ -35,7 +36,7 @@ class CurrentEditorTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_question_editor_can_update_a_current_question_editor()
     {
         $this->actingAs($this->non_instructor_question_editor)
@@ -48,7 +49,7 @@ class CurrentEditorTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function if_non_instructor_question_editor_began_editing_less_than_24_hours_ago_new_non_instructor_question_editor_will_receive_a_message()
     {
         $this->actingAs($this->non_instructor_question_editor)
@@ -66,7 +67,7 @@ class CurrentEditorTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_question_editor_cannot_have_current_question_editor_deleted()
     {
         $this->actingAs($this->user)->deleteJson("/api/current-question-editor/{$this->question->id}")
@@ -74,7 +75,7 @@ class CurrentEditorTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function instructor_editor_can_have_current_question_editor_deleted()
     {
         DB::table('current_question_editors')->insert(['user_id' => $this->non_instructor_question_editor->id,

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
@@ -9,13 +10,7 @@ use App\Question;
 use App\QuestionMediaUpload;
 use App\Section;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
-use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
-use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
-use MiladRahimi\Jwt\Generator;
-use MiladRahimi\Jwt\Parser;
 use Tests\TestCase;
 
 class DiscussItTest extends TestCase
@@ -59,7 +54,7 @@ class DiscussItTest extends TestCase
             'user_id' => $this->user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function can_only_update_text_if_the_resource_is_owned()
     {
         $new_user = factory(User::class)->create(['role' => 3]);
@@ -71,7 +66,7 @@ class DiscussItTest extends TestCase
             ->assertJson(['message' => "You are not allowed to update the text for this question media upload."]);
     }
 
-    /** @test */
+    #[Test]
     public function text_and_description_are_required()
     {
         $this->actingAs($this->user)
@@ -79,7 +74,7 @@ class DiscussItTest extends TestCase
             ->assertJsonValidationErrors(['text', 'description']);
     }
 
-    /** @test */
+    #[Test]
     public function only_instructors_can_do_this()
     {
         $new_user = factory(User::class)->create(['role' => 3]);
@@ -90,7 +85,7 @@ class DiscussItTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to store text as a question media upload.']);
     }
 
-    /** @test */
+    #[Test]
     public function non_student_cannot_get_discuss_it_questions()
     {
         $new_user = factory(User::class)->create(['role' => 3]);
@@ -99,7 +94,7 @@ class DiscussItTest extends TestCase
             ->assertJson(['message' => "You are not allowed to get the discuss-it questions for that assignment."]);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_discuss_it_settings_if_not_student_or_instructor()
     {
         $new_user = factory(User::class)->create(['role' => 3]);
@@ -108,7 +103,7 @@ class DiscussItTest extends TestCase
             ->assertJson(['message' => "You are not allowed to get the discuss-it settings for that question."]);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_update_discuss_it_settings_if_not_owner()
     {
         $info = ["students_can_edit_comments" => 1,
@@ -128,7 +123,7 @@ class DiscussItTest extends TestCase
             ->assertJson(['message' => "You are not allowed to update the discuss-it settings for that question."]);
     }
 
-    /** @test */
+    #[Test]
     public function data_must_be_valid()
     {
         $this->actingAs($this->user)
@@ -144,7 +139,7 @@ class DiscussItTest extends TestCase
                 'auto_grade']);
     }
 
-    /** @test */
+    #[Test]
     public function min_number_of_replies_can_be_independent_of_the_other_completion_criteria()
     {
         // min_number_of_replies (2) is intentionally lower than both
@@ -170,7 +165,7 @@ class DiscussItTest extends TestCase
             ->assertJsonMissingValidationErrors(['min_number_of_replies']);
     }
 
-    /** @test */
+    #[Test]
     public function min_number_of_replies_must_still_be_a_non_negative_integer()
     {
         $info = ["students_can_edit_comments" => 1,

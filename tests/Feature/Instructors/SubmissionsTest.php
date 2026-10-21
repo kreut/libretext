@@ -16,8 +16,6 @@ use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -82,7 +80,7 @@ class SubmissionsTest extends TestCase
             'type' => 'Auto-graded'];
 
     }
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function return_if_the_new_score_goes_over_the_points_for_the_question(){
         $this->scores['new_score'] = 20;
         $this->createSubmission($this->student_user, 5);
@@ -115,7 +113,7 @@ class SubmissionsTest extends TestCase
         $score->save();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function apply_to_filter_only_affects_students_in_post()
     {
         //need 1 submission in post and 1 not in post
@@ -139,7 +137,7 @@ class SubmissionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function update_works_for_file_submissions()
     {
 
@@ -167,7 +165,7 @@ class SubmissionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_get_auto_graded_submissions()
     {
         $this->actingAs($this->user)->getJson("/api/scores/{$this->assignment->id}/{$this->question->id}/get-scores-by-assignment-and-question")
@@ -176,7 +174,7 @@ class SubmissionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_get_auto_graded_submissions()
     {
         $this->actingAs($this->student_user)->getJson("/api/scores/{$this->assignment->id}/{$this->question->id}/get-scores-by-assignment-and-question")
@@ -185,7 +183,7 @@ class SubmissionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_update_auto_graded_submissions()
     {
 
@@ -195,7 +193,7 @@ class SubmissionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function score_must_be_valid()
     {
         $this->scores['new_score'] = -1;
@@ -208,7 +206,7 @@ class SubmissionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_update_auto_graded_submissions()
     {
         $this->actingAs($this->user)->patchJson("/api/submissions/{$this->assignment->id}/{$this->question->id}/scores", $this->scores)

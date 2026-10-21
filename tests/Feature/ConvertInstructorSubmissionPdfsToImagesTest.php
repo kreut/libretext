@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Jobs\ConvertSubmissionPdfToImages;
@@ -51,7 +52,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         $this->_submissionFile($this->other_assignment->id, 'q', 1, 'not-mine.pdf');
     }
 
-    /** @test */
+    #[Test]
     public function it_queues_one_job_per_distinct_pdf_or_image_in_the_instructors_courses()
     {
         Queue::fake();
@@ -61,7 +62,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         Queue::assertPushed(ConvertSubmissionPdfToImages::class, 3);
     }
 
-    /** @test */
+    #[Test]
     public function dry_run_reports_counts_and_queues_nothing()
     {
         Queue::fake();
@@ -74,7 +75,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    /** @test */
+    #[Test]
     public function it_skips_pdfs_that_are_already_converted()
     {
         Queue::fake();
@@ -90,7 +91,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         Queue::assertPushed(ConvertSubmissionPdfToImages::class, 2);
     }
 
-    /** @test */
+    #[Test]
     public function force_requeues_pdfs_that_are_already_converted()
     {
         Queue::fake();
@@ -106,7 +107,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         Queue::assertPushed(ConvertSubmissionPdfToImages::class, 3);
     }
 
-    /** @test */
+    #[Test]
     public function failed_conversions_are_retried()
     {
         Queue::fake();
@@ -122,7 +123,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         Queue::assertPushed(ConvertSubmissionPdfToImages::class, 3);
     }
 
-    /** @test */
+    #[Test]
     public function course_option_limits_to_that_course()
     {
         Queue::fake();
@@ -136,7 +137,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         Queue::assertPushed(ConvertSubmissionPdfToImages::class, 1);
     }
 
-    /** @test */
+    #[Test]
     public function student_option_limits_to_those_students()
     {
         Queue::fake();
@@ -162,7 +163,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function student_option_can_be_repeated()
     {
         Queue::fake();
@@ -185,7 +186,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         Queue::assertPushed(ConvertSubmissionPdfToImages::class, 4);
     }
 
-    /** @test */
+    #[Test]
     public function a_student_outside_the_instructors_courses_finds_nothing()
     {
         Queue::fake();
@@ -207,7 +208,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         return $property->getValue($job);
     }
 
-    /** @test */
+    #[Test]
     public function it_refuses_a_user_who_is_not_an_instructor()
     {
         Queue::fake();
@@ -218,7 +219,7 @@ class ConvertInstructorSubmissionPdfsToImagesTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    /** @test */
+    #[Test]
     public function it_refuses_a_user_that_does_not_exist()
     {
         Queue::fake();

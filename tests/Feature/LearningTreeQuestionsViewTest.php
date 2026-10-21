@@ -64,14 +64,14 @@ class LearningTreeQuestionsViewTest extends TestCase
         $this->learning_tree->save();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function flag_is_false_when_tree_is_up_to_date()
     {
         $this->viewQuestions()
             ->assertJson(['questions' => [['learning_tree_needs_update' => false]]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_sees_learning_tree_needs_update_flag_when_a_node_revision_changed()
     {
         factory(QuestionRevision::class)->create(['question_id' => $this->root_question->id, 'revision_number' => 2]);
@@ -80,7 +80,7 @@ class LearningTreeQuestionsViewTest extends TestCase
             ->assertJson(['questions' => [['learning_tree_needs_update' => true]]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function viewing_assignment_does_not_error_when_root_node_question_was_swapped()
     {
         // direct regression test for the "Undefined offset" crash
@@ -90,7 +90,7 @@ class LearningTreeQuestionsViewTest extends TestCase
         $this->viewQuestions()->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function needs_update_flag_stays_correct_when_root_node_question_was_swapped()
     {
         // regression test for the "keyed by root_node_question_id instead of
@@ -102,7 +102,7 @@ class LearningTreeQuestionsViewTest extends TestCase
             ->assertJson(['questions' => [['learning_tree_needs_update' => true]]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function title_stays_correct_when_root_node_question_was_swapped()
     {
         $new_root_question = factory(Question::class)->create();
@@ -112,7 +112,7 @@ class LearningTreeQuestionsViewTest extends TestCase
             ->assertJson(['questions' => [['title' => $this->learning_tree->fresh()->title]]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function risks_real_submissions_flag_is_true_when_tree_needs_update_and_assignment_is_closed_but_no_submissions_exist_is_false()
     {
         // this assignment has no assign_to_timings row at all, so it's
@@ -127,7 +127,7 @@ class LearningTreeQuestionsViewTest extends TestCase
             ]]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function risks_real_submissions_flag_defaults_true_when_the_tree_does_not_need_an_update()
     {
         $this->viewQuestions()
@@ -137,7 +137,7 @@ class LearningTreeQuestionsViewTest extends TestCase
             ]]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_never_receives_a_true_learning_tree_needs_update_flag()
     {
         $section = factory(Section::class)->create(['course_id' => $this->course->id]);

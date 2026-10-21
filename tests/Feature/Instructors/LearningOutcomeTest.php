@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Tests\TestCase;
 
@@ -16,7 +17,7 @@ class LearningOutcomeTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_the_learning_outcomes()
     {
         $this->actingAs($this->user)
@@ -24,7 +25,7 @@ class LearningOutcomeTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to retrieve a default subject from the database.']);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_the_default_subject()
     {
         $this->actingAs($this->user)

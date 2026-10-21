@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\QuestionChapter;
-use App\QuestionSubject;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -26,7 +24,7 @@ class QuestionSectionTest extends TestCase
         $this->questionChapter->save();
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_delete_a_section()
     {
         $question_section_id = DB::table('question_sections')->insertGetId([
@@ -39,7 +37,7 @@ class QuestionSectionTest extends TestCase
                 'message' => 'You are not allowed to delete sections.']);
     }
 
-    /** @test */
+    #[Test]
     public function correctly_deletes_subjects_chapters_sections()
     {
 
@@ -65,7 +63,7 @@ class QuestionSectionTest extends TestCase
         $this->assertDatabaseCount('question_sections', 1);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_store_a_section()
     {
         $this->actingAs($this->user_2)
@@ -74,7 +72,7 @@ class QuestionSectionTest extends TestCase
                 'message' => 'You are not allowed to add sections.']);
     }
 
-    /** @test */
+    #[Test]
     public function section_names_must_be_unique()
     {
         DB::table('question_sections')
@@ -84,7 +82,7 @@ class QuestionSectionTest extends TestCase
             ->assertJsonValidationErrors('name');
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_update_a_section()
     {
         $question_section_id = DB::table('question_sections')

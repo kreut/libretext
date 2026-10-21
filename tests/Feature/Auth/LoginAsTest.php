@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\User;
@@ -38,7 +39,7 @@ class LoginAsTest extends TestCase
         return \JWTAuth::setToken($token)->toUser();
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_log_in_as_instructor_using_a_bare_assignment_id()
     {
         $response = $this->actingAs($this->admin_user)
@@ -49,7 +50,7 @@ class LoginAsTest extends TestCase
         $this->assertEquals($this->instructor->id, $loggedInAs->id);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_log_in_as_instructor_using_a_url_containing_the_assignment_id()
     {
         $url = "https://adapt.libretexts.org/instructors/assignments/{$this->assignment->id}/information/questions";
@@ -62,7 +63,7 @@ class LoginAsTest extends TestCase
         $this->assertEquals($this->instructor->id, $loggedInAs->id);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_still_log_in_as_instructor_using_the_original_question_view_url_shape()
     {
         // Regression check: the URL pattern this branch originally matched
@@ -78,7 +79,7 @@ class LoginAsTest extends TestCase
         $this->assertEquals($this->instructor->id, $loggedInAs->id);
     }
 
-    /** @test */
+    #[Test]
     public function login_as_fails_gracefully_for_a_nonexistent_assignment_id()
     {
         $bogus_id = $this->assignment->id + 999999;
@@ -91,7 +92,7 @@ class LoginAsTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function login_as_fails_gracefully_for_a_url_with_a_nonexistent_assignment_id()
     {
         $bogus_id = $this->assignment->id + 999999;
@@ -105,7 +106,7 @@ class LoginAsTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function login_as_fails_gracefully_for_a_url_with_no_assignment_id()
     {
         $this->actingAs($this->admin_user)
@@ -116,7 +117,7 @@ class LoginAsTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_still_log_in_as_a_user_selected_by_name()
     {
         // Regression check: the original "First Last --- email" selection flow,
@@ -131,7 +132,7 @@ class LoginAsTest extends TestCase
         $this->assertEquals($this->instructor->id, $loggedInAs->id);
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_log_in_as_instructor_via_assignment_id()
     {
         $this->actingAs($this->non_admin_user)

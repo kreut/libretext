@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\LmsAPI;
 use App\User;
 use Illuminate\Support\Carbon;
@@ -62,7 +63,7 @@ class CanvasAPITest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function update_access_token_uses_the_refresh_token_scoped_to_the_correct_school()
     {
         $user = factory(User::class)->create();
@@ -91,7 +92,7 @@ class CanvasAPITest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function update_access_token_persists_a_rotated_refresh_token()
     {
         $user = factory(User::class)->create();
@@ -116,7 +117,7 @@ class CanvasAPITest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function update_access_token_leaves_refresh_token_unchanged_when_canvas_does_not_rotate_it()
     {
         $user = factory(User::class)->create();
@@ -139,7 +140,7 @@ class CanvasAPITest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function update_access_token_is_not_called_when_token_is_still_fresh()
     {
         $user = factory(User::class)->create();
@@ -166,7 +167,7 @@ class CanvasAPITest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function get_courses_returns_an_error_when_canvas_rejects_the_refresh_token()
     {
         $user = factory(User::class)->create();

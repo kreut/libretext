@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\Course;
@@ -13,8 +14,6 @@ use App\Section;
 use App\SubmissionFile;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -74,7 +73,7 @@ class DiscussionCommentTest extends TestCase
         $this->assignment_question->save();
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_update_caption()
     {
         $this->actingAs($this->student_user)
@@ -82,7 +81,7 @@ class DiscussionCommentTest extends TestCase
             ->assertJson(['message' => "You are not allowed to update this transcript."]);
     }
 
-    /** @test */
+    #[Test]
     public function can_check_if_audio_video_satisfied_requirements_only_if_satisfy_general_submission_policy_or_it_is_instructor_assignment()
     {
         $this->actingAs($this->student_user)
@@ -99,7 +98,7 @@ class DiscussionCommentTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_post_audio_only_if_satisfy_general_submission_policy_or_it_is_instructor_assignment()
     {
         $this->actingAs($this->student_user)
@@ -115,7 +114,7 @@ class DiscussionCommentTest extends TestCase
             ->assertJson(['message' => "You may not store audio/video discussion comments."]);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_or_not_instructor_cannot_get_if_criteria_satisfied()
     {
 
@@ -133,7 +132,7 @@ class DiscussionCommentTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_or_not_instructor_cannot_check_deleting_will_make_requirements_not_satisfied()
     {
 
@@ -153,7 +152,7 @@ class DiscussionCommentTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function instructor_cannot_edit_or_delete_discussion_comment_if_not_their_assignment()
     {
 
@@ -168,7 +167,7 @@ class DiscussionCommentTest extends TestCase
                 'message' => 'You are not allowed to edit this comment.']);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_edit_or_delete_discussion_comment_if_not_set_in_settings()
     {
         $this->_updateDiscussItSettings('students_can_delete_comments');
@@ -183,7 +182,7 @@ class DiscussionCommentTest extends TestCase
                 'message' => "Your instructor's settings indicate you may not edit your comments."]);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_edit_or_delete_discussion_comment_if_instructor_graded_it()
     {
         SubmissionFile::create(['assignment_id' => $this->assignment->id,
@@ -205,7 +204,7 @@ class DiscussionCommentTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_edit_or_delete_discussion_comment_based_on_general_submission_policy()
     {
         DB::table('enrollments')->delete();
@@ -221,7 +220,7 @@ class DiscussionCommentTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function number_of_participated_threads_counts_distinct_threads_not_total_comments()
     {
         // the seeded comment satisfies the requirement
@@ -247,7 +246,7 @@ class DiscussionCommentTest extends TestCase
         $this->assertEquals(1, $number_of_threads);
     }
 
-    /** @test */
+    #[Test]
     public function number_of_participated_threads_counts_each_distinct_thread_once()
     {
         $this->discussion_comment->satisfied_requirement = 1;
@@ -276,7 +275,7 @@ class DiscussionCommentTest extends TestCase
         $this->assertEquals(2, $number_of_threads);
     }
 
-    /** @test */
+    #[Test]
     public function satisfied_requirements_response_includes_satisfied_min_number_of_comments_requirement()
     {
         // the fixture's discuss_it_settings has min_number_of_comments = 1, and the

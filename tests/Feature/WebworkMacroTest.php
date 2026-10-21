@@ -2,9 +2,10 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+use App\Question;
 use App\User;
 use App\WebworkMacro;
-use App\WebworkMacroEditor;
 use App\WebworkMacroRevision;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -56,15 +57,14 @@ class WebworkMacroTest extends TestCase
     // -------------------------------------------------------------------------
     // INDEX
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_list_macros(): void
     {
         $this->getJson('/api/webwork-macros')
             ->assertUnauthorized();
     }
 
-    /** @test */
+    #[Test]
     public function index_returns_co_editor_count_for_each_macro(): void
     {
         $co_editor = factory(User::class)->create();
@@ -94,7 +94,7 @@ class WebworkMacroTest extends TestCase
         $this->assertEquals(1, $macro_entry['co_editor_count']);
     }
 
-    /** @test */
+    #[Test]
     public function global_editor_sees_all_macros_including_ones_they_did_not_create(): void
     {
         // A second macro owned by a different editor
@@ -125,7 +125,7 @@ class WebworkMacroTest extends TestCase
         $this->assertContains('otherMacro.pl', $names);
     }
 
-    /** @test */
+    #[Test]
     public function global_editor_can_create_new_macros(): void
     {
         Http::fake([
@@ -147,8 +147,7 @@ class WebworkMacroTest extends TestCase
     // -------------------------------------------------------------------------
     // STORE
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function editor_can_create_a_macro(): void
     {
         Http::fake([
@@ -169,7 +168,7 @@ class WebworkMacroTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_create_a_macro(): void
     {
         DB::table('webwork_macro_editors')->insertOrIgnore([
@@ -189,7 +188,7 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_create_a_macro(): void
     {
         $this->actingAs($this->student)
@@ -197,7 +196,7 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to create macros.']);
     }
 
-    /** @test */
+    #[Test]
     public function store_returns_error_when_webwork_server_post_fails(): void
     {
         Http::fake([
@@ -213,7 +212,7 @@ class WebworkMacroTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function store_creates_revision_0_attributed_to_creator(): void
     {
         Http::fake([
@@ -237,8 +236,7 @@ class WebworkMacroTest extends TestCase
     // -------------------------------------------------------------------------
     // UPDATE
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function editor_can_update_their_own_macro(): void
     {
         Http::fake(['*/api/authored/macros*' => Http::response([], 200)]);
@@ -261,7 +259,7 @@ class WebworkMacroTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_any_macro(): void
     {
         DB::table('webwork_macro_editors')->insertOrIgnore([
@@ -288,7 +286,7 @@ class WebworkMacroTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function editor_cannot_update_another_editors_macro(): void
     {
         $other_editor = factory(User::class)->create();
@@ -309,7 +307,7 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to edit that macro.']);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_update_a_macro(): void
     {
         $this->actingAs($this->student)
@@ -322,7 +320,7 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to edit that macro.']);
     }
 
-    /** @test */
+    #[Test]
     public function update_returns_error_when_webwork_server_post_fails(): void
     {
         Http::fake(['*/api/authored/macros*' => Http::response([], 500)]);
@@ -340,7 +338,7 @@ class WebworkMacroTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function update_records_revision_attributed_to_actual_editor_not_owner(): void
     {
         // Set up a co-editor who is different from the macro owner
@@ -383,7 +381,7 @@ class WebworkMacroTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function lazy_revision_0_is_attributed_to_macro_owner_not_co_editor(): void
     {
         // No revisions exist yet for this macro
@@ -434,8 +432,7 @@ class WebworkMacroTest extends TestCase
     // -------------------------------------------------------------------------
     // CO-EDITORS
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function co_editor_can_update_an_assigned_macro(): void
     {
         $co_editor = factory(User::class)->create();
@@ -464,7 +461,7 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function co_editor_cannot_update_a_macro_they_are_not_assigned_to(): void
     {
         $co_editor = factory(User::class)->create();
@@ -486,7 +483,7 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to edit that macro.']);
     }
 
-    /** @test */
+    #[Test]
     public function co_editor_cannot_retire_a_macro(): void
     {
         $co_editor = factory(User::class)->create();
@@ -513,7 +510,7 @@ class WebworkMacroTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function co_editor_can_view_revisions_for_assigned_macro(): void
     {
         $co_editor = factory(User::class)->create();
@@ -546,7 +543,7 @@ class WebworkMacroTest extends TestCase
             ->assertJsonStructure(['revisions']);
     }
 
-    /** @test */
+    #[Test]
     public function co_editor_cannot_view_revisions_for_unassigned_macro(): void
     {
         $co_editor = factory(User::class)->create();
@@ -563,7 +560,7 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['message' => 'You are not authorised to view revisions for this macro.']);
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_add_a_co_editor(): void
     {
         $co_editor = factory(User::class)->create();
@@ -586,7 +583,7 @@ class WebworkMacroTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_add_a_co_editor(): void
     {
         $other_editor = factory(User::class)->create();
@@ -606,7 +603,7 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['message' => 'Only the macro owner or an admin can add co-editors.']);
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_remove_a_co_editor(): void
     {
         $co_editor = factory(User::class)->create();
@@ -626,7 +623,7 @@ class WebworkMacroTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_remove_a_co_editor(): void
     {
         $other_editor = factory(User::class)->create();
@@ -657,8 +654,7 @@ class WebworkMacroTest extends TestCase
     // -------------------------------------------------------------------------
     // DESTROY
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function editor_can_retire_their_own_macro(): void
     {
         $this->actingAs($this->editor)
@@ -674,7 +670,7 @@ class WebworkMacroTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_retire_any_macro(): void
     {
         $this->actingAs($this->admin)
@@ -687,7 +683,7 @@ class WebworkMacroTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function editor_cannot_retire_another_editors_macro(): void
     {
         $other_editor = factory(User::class)->create();
@@ -703,7 +699,7 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to retire that macro.']);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_retire_a_macro(): void
     {
         $this->actingAs($this->student)
@@ -711,10 +707,10 @@ class WebworkMacroTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to retire that macro.']);
     }
 
-    /** @test */
+    #[Test]
     public function macro_in_use_by_a_question_cannot_be_retired(): void
     {
-        $question = factory(\App\Question::class)->create(['page_id' => 23482671]);
+        $question = factory(Question::class)->create(['page_id' => 23482671]);
 
         DB::table('question_webwork_macros')->insert([
             'question_id'          => $question->id,
@@ -735,8 +731,7 @@ class WebworkMacroTest extends TestCase
     // -------------------------------------------------------------------------
     // REVISIONS
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function editor_can_view_revisions_for_a_macro(): void
     {
         WebworkMacroRevision::create([
@@ -755,7 +750,7 @@ class WebworkMacroTest extends TestCase
             ->assertJsonStructure(['revisions']);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_view_revisions(): void
     {
         $this->actingAs($this->student)

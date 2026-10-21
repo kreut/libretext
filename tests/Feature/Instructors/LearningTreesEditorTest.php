@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\LearningTreeHistory;
@@ -120,7 +121,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function instructors_can_get_question_types()
     {
         $this->question->question_type = 'exposition';
@@ -130,7 +131,7 @@ EOT;
             ->assertJson($question_types);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_question_types()
     {
         $this->actingAs($this->student_user)->postJson("api/questions/question-types", ['question_ids' => [1, 2, 3]])
@@ -138,7 +139,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_update_a_tree_to_the_database()
     {
         $this->learning_tree_info['learning_tree'] = $this->flowy;
@@ -151,7 +152,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function non_root_node_can_be_auto_graded_when_using_question_id()
     {
         $this->actingAs($this->user)->getJson("/api/learning-trees/validate-remediation-by-assignment-question-id/{$this->question->id}/0")
@@ -160,7 +161,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function non_root_node_can_be_text_when_using_question_id()
     {
 
@@ -171,7 +172,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function non_root_node_can_be_auto_graded_when_using_assignment_question_id()
     {
 
@@ -182,7 +183,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function non_root_node_can_be_text_when_using_assignment_question_id()
     {
 
@@ -195,7 +196,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_all_learning_trees()
     {
 
@@ -206,7 +207,7 @@ EOT;
             ->assertJson(['message' => "You are not allowed to get all Learning Trees."]);
     }
 
-    /** @test */
+    #[Test]
     public function root_node_must_be_auto_graded_when_using_assignment_question_id()
     {
 
@@ -226,8 +227,7 @@ EOT;
     }
 
 
-    /** @test */
-
+    #[Test]
     public function non_owner_cannot_undo_learning_tree()
     {
         $this->actingAs($this->user_2)->patchJson("/api/learning-tree-histories/{$this->learning_tree->id}")
@@ -235,8 +235,7 @@ EOT;
 
     }
 
-    /** @test */
-
+    #[Test]
     public function owner_can_undo_learning_tree()
     {
         $this->actingAs($this->user)->patchJson("/api/learning-tree-histories/{$this->learning_tree->id}")
@@ -244,7 +243,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_update_a_node()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
@@ -255,7 +254,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_update_a_node()
     {
 
@@ -268,7 +267,7 @@ EOT;
 
     }
 
-    /** @test */
+    #[Test]
     public function node_description_is_required_for_non_root_node()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
@@ -281,7 +280,7 @@ EOT;
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_update_a_tree_to_the_database()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
@@ -293,7 +292,7 @@ EOT;
     }
 
 
-    /** @test */
+    #[Test]
     public function must_have_a_description()
     {
         $this->learning_tree_info['description'] = '';
@@ -301,7 +300,7 @@ EOT;
             ->assertJsonValidationErrors(['description']);
     }
 
-    /** @test */
+    #[Test]
     public function must_have_a_title()
     {
         $this->learning_tree_info['title'] = '';
@@ -310,7 +309,7 @@ EOT;
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_save_a_tree_to_the_database()
     {
 
@@ -321,7 +320,7 @@ EOT;
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_delete_a_learning_tree()
     {
         $this->actingAs($this->user_2)->deleteJson("/api/learning-trees/{$this->learning_tree->id}")
@@ -331,7 +330,7 @@ EOT;
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_delete_a_learning_tree()
     {
         $this->actingAs($this->user)->deleteJson("/api/learning-trees/{$this->learning_tree->id}")
@@ -341,7 +340,7 @@ EOT;
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_create_a_learning_tree()
     {
 
@@ -351,7 +350,7 @@ EOT;
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function instructor_can_create_a_learning_tree()
     {
 

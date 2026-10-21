@@ -333,9 +333,9 @@ class QuestionMediaUpload extends Model
                 default:
                     throw new Exception("$pending_transcription->environment is not set up in the transcribe endpoint.");
             }
-            $adapter = Storage::disk($disk)->getDriver()->getAdapter(); // Get the filesystem adapter
+            $adapter = Storage::disk($disk); // Get the filesystem adapter
             $client = $adapter->getClient(); // Get the aws client
-            $bucket = $adapter->getBucket(); // Get the current bucket
+            $bucket = $adapter->getConfig()['bucket']; // Get the current bucket
             // Download the file from S3 and save it locally
             $local_path = storage_path('app/' . $this->getDir() . "/" . $filename);
             $client->getObject([

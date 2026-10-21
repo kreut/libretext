@@ -8,6 +8,7 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\FilesystemException;
 use Telegram\Bot\Laravel\Facades\Telegram;
 use Throwable;
 
@@ -138,10 +139,17 @@ class Handler extends ExceptionHandler
                     } else {
                         $log_file = $dontReports ? "logs/unreported-errors.log" : "logs/laravel-$date.log";
                     }
-                    $contents = Storage::disk('s3')->exists("$log_file")
-                        ? Storage::disk('s3')->get("$log_file") . "\r\n$error_info"
-                        : $error_info;
-                    Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
+                    try {
+                        $contents = Storage::disk('s3')->exists("$log_file")
+                            ? Storage::disk('s3')->get("$log_file") . "\r\n$error_info"
+                            : $error_info;
+                        Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
+                    } catch (Throwable $logException) {
+                        // Never let a failed S3 write hide the original error:
+                        // fall back to the default log (CloudWatch on Vapor).
+                        Log::error($error_info);
+                        Log::error('Could not write the error log to S3: ' . $logException->getMessage());
+                    }
                 }
 
         }
@@ -159,6 +167,18 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
+        // File storage (S3) failures: show a friendly message instead of a 500 page.
+        // The error has already been reported above. Locally, keep the full error page for debugging.
+        if ($exception instanceof FilesystemException && !app()->environment('local')) {
+            $message = "We couldn't load that file right now. Please try again, or contact us if it keeps happening.";
+            if ($request->is('discussion-comments/media-player/*')) {
+                return response()->view('media_player_error', ['message' => $message], 503);
+            }
+            return $request->expectsJson()
+                ? response()->json(['type' => 'error', 'message' => $message], 503)
+                : response($message, 503);
+        }
+
         return parent::render($request, $exception);
     }
 

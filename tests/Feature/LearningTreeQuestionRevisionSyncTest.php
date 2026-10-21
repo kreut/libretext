@@ -83,8 +83,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
     // ------------------------------------------------------------------
     // AssignmentQuestionLearningTree::propagateQuestionRevisionToLearningTreeSnapshots()
     // ------------------------------------------------------------------
-
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagate_patches_the_root_nodes_revision_in_every_assignment_using_the_tree()
     {
         $assignment_1 = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -106,7 +105,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
         $this->assertEquals($new_revision->id, $this->revisionIdForBlock($this->snapshotFor($learning_tree_2, $assignment_2->id), 0));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagate_patches_a_non_root_nodes_revision_too()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -120,7 +119,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
         $this->assertEquals($new_revision->id, $this->revisionIdForBlock($this->snapshotFor($learning_tree, $assignment->id), 2));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagate_does_not_touch_a_snapshot_that_doesnt_reference_the_question()
     {
         $assignment_1 = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -136,7 +135,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
         $this->assertEquals(json_decode($unrelated_snapshot_before, true), json_decode($unrelated_snapshot_after, true));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagate_does_not_wipe_any_submissions()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -154,7 +153,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
             'learning_tree_id' => $learning_tree->id, 'number_resets_available' => 1]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagate_is_a_no_op_when_the_question_id_matches_no_block()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -172,8 +171,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
     // ------------------------------------------------------------------
     // AssignmentQuestionLearningTree::patchNodeRevisionInAssignmentSnapshot()
     // ------------------------------------------------------------------
-
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function patch_updates_the_snapshot_for_the_root_node_in_this_specific_assignment()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -185,7 +183,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
         $this->assertEquals($new_revision->id, $this->revisionIdForBlock($this->snapshotFor($learning_tree, $assignment->id), 0));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function patch_does_not_touch_the_snapshot_for_a_different_assignment_using_the_same_question()
     {
         $assignment_1 = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -207,7 +205,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
         $this->assertEquals(json_decode($snapshot_2_before, true), json_decode($snapshot_2_after, true));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function patch_is_a_no_op_when_the_question_is_not_this_assignments_tree_root()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -223,7 +221,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
         $this->assertEquals(json_decode($snapshot_before, true), json_decode($snapshot_after, true));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function patch_is_a_no_op_when_the_assignment_question_has_no_learning_tree_row_at_all()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -245,7 +243,6 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
     // ------------------------------------------------------------------
     // Full wiring, through QuestionController@update
     // ------------------------------------------------------------------
-
     /**
      * Builds the payload from $root_question->toArray() (matching
      * QuestionRevisionsTest::_getQuestionInfo()'s established pattern),
@@ -255,9 +252,8 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
      * "differing properties" rejection from revision_action=propagate's
      * nonMetaPropertiesDiffer() gate, whatever factory(Question::class)
      * happens to default those fields to.
-     *
-     * @test
      */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagating_a_root_nodes_question_updates_the_tree_snapshot_via_the_real_endpoint()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -294,9 +290,8 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
     /**
      * Same ->toArray()-based payload approach as
      * propagating_a_root_nodes_question_updates_the_tree_snapshot_via_the_real_endpoint().
-     *
-     * @test
      */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagating_a_non_root_nodes_question_updates_the_tree_snapshot_via_the_real_endpoint()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -348,9 +343,8 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
      * all, so the ->toArray()-based payload trick used in the propagate
      * tests above isn't needed here - StoreQuestionRequest's own validation
      * (folder_id, technology_id, etc.) still applies though.
-     *
-     * @test
      */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function notify_auto_update_at_course_level_keeps_the_tree_snapshot_in_sync()
     {
         DB::table('courses')->where('id', $this->course->id)->update(['auto_update_question_revisions' => 1]);
@@ -396,7 +390,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
         $this->assertEquals($new_revision_id, $this->revisionIdForBlock($this->snapshotFor($learning_tree, $assignment->id), 0));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagate_reports_back_only_the_snapshot_ids_it_actually_touched()
     {
         $assignment_1 = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -417,8 +411,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
     // QuestionRevisionPropagation - the "who propagated this, and what did
     // it reach" audit trail, written by QuestionController@update
     // ------------------------------------------------------------------
-
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagating_a_root_nodes_question_logs_the_learning_tree_snapshot_row_it_reached()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -463,7 +456,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
         $this->assertEquals([$expected_snapshot_row_id], $log->assignment_question_learning_tree_ids);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagating_a_question_used_directly_and_in_a_tree_logs_both_kinds_of_row()
     {
         // question_id 1 as an ordinary (non-tree) assignment_question in one
@@ -538,8 +531,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
     // anyone opened it inside the affected assignment, even though nothing
     // about the tree's actual content was wrong.
     // ------------------------------------------------------------------
-
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function propagate_preserves_html_and_blockarr_in_the_patched_snapshot()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -563,7 +555,7 @@ class LearningTreeQuestionRevisionSyncTest extends TestCase
         $this->assertNotEmpty($after['blockarr']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function patch_preserves_html_and_blockarr_in_the_patched_snapshot()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);

@@ -13,9 +13,8 @@ class UpdateScoreToSubmissionFiles extends Migration
      */
     public function up()
     {
-        DB::connection()->getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
         Schema::table('submission_files', function (Blueprint $table) {
-                $table->unsignedDecimal('score',5,2)->change();
+                $table->decimal('score',5,2)->unsigned()->nullable()->change();
 
         });
     }

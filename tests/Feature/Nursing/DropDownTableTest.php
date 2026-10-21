@@ -2,10 +2,9 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class DropDownTableTest extends TestCase
@@ -50,7 +49,7 @@ class DropDownTableTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function prompt_is_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -59,7 +58,7 @@ class DropDownTableTest extends TestCase
         $this->assertEquals('A prompt is required.', json_decode($response)->errors->qti_prompt[0]);
     }
 
-    /** @test */
+    #[Test]
     public function headers_are_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -69,7 +68,7 @@ class DropDownTableTest extends TestCase
         $this->assertEquals('Header text is required.', json_decode(json_decode($response)->errors->colHeaders[0])->specific[0]);
     }
 
-    /** @test */
+    #[Test]
     public function at_least_two_rows()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -78,7 +77,7 @@ class DropDownTableTest extends TestCase
         $this->assertEquals('You need at least 1 Distractor.', $this->getRowResponse($response)->general);
     }
 
-    /** @test */
+    #[Test]
     public function row_headers_are_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -88,7 +87,7 @@ class DropDownTableTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function each_identifier_needs_text()
     {
         $identifier = 'de7a40d1-e5df-4977-970e-209233f2aad7';

@@ -71,7 +71,7 @@ class graderNotificationsForLateSubmissions extends Command
                         AND courses.id IN ($course_ids)";
 
             $sql = $graderNotification->submissionSQL($where);
-            $ungraded_submissions = DB::select(DB::raw($sql));
+            $ungraded_submissions = DB::select(($sql));
 
             if (!$ungraded_submissions) {
                 exit;

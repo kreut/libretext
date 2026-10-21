@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
 use Tests\TestCase;
@@ -72,7 +73,7 @@ class DropDownRationaleTriadTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function triad_must_have_three_to_five()
     {
         unset($this->triad_qti_question_info['qti_select_choice_condition'][0]);
@@ -84,7 +85,7 @@ class DropDownRationaleTriadTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function no_item_should_repeat()
     {
         $this->triad_qti_question_info['qti_select_choice_condition'][0] = $this->triad_qti_question_info['qti_select_choice_condition'][1];
@@ -98,7 +99,7 @@ class DropDownRationaleTriadTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function text_is_required()
     {
         $this->triad_qti_question_info['qti_select_choice_condition'][0]['text'] = '';

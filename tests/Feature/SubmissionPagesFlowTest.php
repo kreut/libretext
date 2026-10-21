@@ -118,7 +118,7 @@ class SubmissionPagesFlowTest extends TestCase
         return $pdf->Output('S');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function assigning_a_page_range_saves_the_end_page()
     {
         $this->actingAs($this->student)
@@ -136,7 +136,7 @@ class SubmissionPagesFlowTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function an_end_page_past_the_end_of_the_pdf_is_rejected()
     {
         $this->actingAs($this->student)
@@ -151,7 +151,7 @@ class SubmissionPagesFlowTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reassigning_pages_deletes_that_questions_markup_only()
     {
         $this->_annotate($this->question, 2);
@@ -165,7 +165,7 @@ class SubmissionPagesFlowTest extends TestCase
         $this->assertDatabaseHas('submission_page_annotations', ['question_id' => $this->question_2->id, 'page' => 5]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function uploading_a_new_file_for_a_question_clears_its_pages_and_markup_and_queues_a_conversion()
     {
         $this->_fakeS3();
@@ -209,7 +209,7 @@ class SubmissionPagesFlowTest extends TestCase
         Queue::assertPushed(ConvertSubmissionPdfToImages::class, 1);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function uploading_a_text_file_does_not_queue_a_conversion()
     {
         $this->_fakeS3();
@@ -230,7 +230,7 @@ class SubmissionPagesFlowTest extends TestCase
         Queue::assertNotPushed(ConvertSubmissionPdfToImages::class);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function the_grader_gets_the_questions_page_images_and_the_student_does_not()
     {
         $this->_fakeS3();

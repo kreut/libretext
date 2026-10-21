@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class LibreOneAccessCodeTest extends TestCase
@@ -17,7 +16,7 @@ class LibreOneAccessCodeTest extends TestCase
         $this->user = factory(User::class)->create(['id' => 99]);//not admin
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_user_by_access_code_without_authorization()
     {
 

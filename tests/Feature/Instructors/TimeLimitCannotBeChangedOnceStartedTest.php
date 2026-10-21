@@ -9,7 +9,6 @@ use App\Enrollment;
 use App\Rules\TimeLimitCannotBeChangedOnceStarted;
 use App\Section;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\Traits\Test;
@@ -69,7 +68,7 @@ class TimeLimitCannotBeChangedOnceStartedTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function passes_when_no_assign_to_timing_exists_yet_at_this_position()
     {
         // A brand-new assign-to group being added has nothing to protect.
@@ -77,14 +76,14 @@ class TimeLimitCannotBeChangedOnceStartedTest extends TestCase
         $this->assertTrue($rule->passes('time_limit_5', 'anything'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function passes_when_no_real_student_has_started_regardless_of_the_new_value()
     {
         $rule = new TimeLimitCannotBeChangedOnceStarted($this->assignment->id, 0);
         $this->assertTrue($rule->passes('time_limit_0', '99 minutes'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function fails_when_a_real_student_has_started_and_the_value_changed()
     {
         $this->startTimer($this->student_user);
@@ -93,7 +92,7 @@ class TimeLimitCannotBeChangedOnceStartedTest extends TestCase
         $this->assertFalse($rule->passes('time_limit_0', '99 minutes'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function passes_when_a_real_student_has_started_but_the_value_is_unchanged()
     {
         $this->startTimer($this->student_user);
@@ -102,7 +101,7 @@ class TimeLimitCannotBeChangedOnceStartedTest extends TestCase
         $this->assertTrue($rule->passes('time_limit_0', '10 minutes'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function fails_when_removing_the_time_limit_entirely_after_a_real_student_started()
     {
         $this->startTimer($this->student_user);
@@ -111,7 +110,7 @@ class TimeLimitCannotBeChangedOnceStartedTest extends TestCase
         $this->assertFalse($rule->passes('time_limit_0', null));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function passes_when_only_a_fake_student_has_started()
     {
         // fake_student rows are explicitly excluded from the "a real student
@@ -122,7 +121,7 @@ class TimeLimitCannotBeChangedOnceStartedTest extends TestCase
         $this->assertTrue($rule->passes('time_limit_0', '99 minutes'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function message_explains_why_it_was_blocked()
     {
         $rule = new TimeLimitCannotBeChangedOnceStarted($this->assignment->id, 0);

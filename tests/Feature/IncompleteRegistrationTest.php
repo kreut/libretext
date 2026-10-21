@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Course;
 use App\Enrollment;
 use App\Question;
@@ -25,7 +26,7 @@ class IncompleteRegistrationTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_zero_role_will_not_be_deleted()
     {
         $this->user->role = 1;
@@ -34,7 +35,7 @@ class IncompleteRegistrationTest extends TestCase
             ->assertJson(['message' => 'You are an active user and cannot be removed from the database.']);
     }
 
-    /** @test */
+    #[Test]
     public function instructor_with_course_will_not_be_deleted()
     {
         $this->course->user_id = $this->user->id;
@@ -44,7 +45,7 @@ class IncompleteRegistrationTest extends TestCase
             ->assertJson(['message' => 'You are an active user and cannot be removed from the database.']);
     }
 
-    /** @test */
+    #[Test]
     public function student_enrolled_in_course_will_not_be_deleted()
     {
         $student_user = factory(User::class)->create(['role' => 0]);
@@ -58,7 +59,7 @@ class IncompleteRegistrationTest extends TestCase
             ->assertJson(['message' => 'You are an active user and cannot be removed from the database.']);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_question_editor_with_question_will_not_be_deleted()
     {
         $non_question_editor_user = factory(User::class)->create(['role' => 0]);
@@ -70,7 +71,7 @@ class IncompleteRegistrationTest extends TestCase
             ->assertJson(['message' => 'You are an active user and cannot be removed from the database.']);
     }
 
-    /** @test */
+    #[Test]
     public function user_with_0_role_can_be_deleted()
     {
 

@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class LinkedAccountsTest extends TestCase
@@ -21,7 +20,7 @@ class LinkedAccountsTest extends TestCase
             Route::patch('/linked-account/unlink/{account_to_unlink}', 'LinkedAccountController@unlink');*/
     }
 
-    /** @test */
+    #[Test]
     public function cannot_link_to_own_account()
     {
         $this->actingAs($this->user)
@@ -29,7 +28,7 @@ class LinkedAccountsTest extends TestCase
             ->assertJsonValidationErrors('email');
     }
 
-    /** @test */
+    #[Test]
     public function cannot_link_to_non_instructor_account()
     {
         $student_user = factory(User::class)->create(['role' => 3]);
@@ -39,7 +38,7 @@ class LinkedAccountsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_link_to_admin_account()
     {
         $admin_user = factory(User::class)->create(['role' => 5]);
@@ -49,7 +48,7 @@ class LinkedAccountsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function must_be_correct_validation_code()
     {
         $this->actingAs($this->user)
@@ -57,7 +56,7 @@ class LinkedAccountsTest extends TestCase
             ->assertJsonValidationErrors('validation_code');
     }
 
-    /** @test */
+    #[Test]
     public function cannot_switch_to_invalid_account()
     {
         $user_2 = factory(User::class)->create();
@@ -66,7 +65,7 @@ class LinkedAccountsTest extends TestCase
             ->assertJson(['message' => 'You cannot switch to that account.']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_unlink_from_account_you_are_not_linked_to()
     {
         $user_2 = factory(User::class)->create();

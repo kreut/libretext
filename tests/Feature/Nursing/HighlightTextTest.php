@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
 use Tests\TestCase;
@@ -58,7 +59,7 @@ class HighlightTextTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function must_choose_response_or_distractor()
     {
         $this->qti_question_info['responses'][0]['correctResponse'] = null;
@@ -69,7 +70,7 @@ class HighlightTextTest extends TestCase
         $this->assertEquals('Please choose Correct Response or Distractor.', json_decode(json_decode($response)->errors->responses[0],1)[$identifier]);
     }
 
-    /** @test */
+    #[Test]
     public function no_repeated_brackets()
     {
         $this->qti_question_info['qti_prompt'] = '[term] and again [term] and [some other term]';
@@ -81,7 +82,7 @@ class HighlightTextTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function prompt_is_required()
     {
         $this->qti_question_info['qti_prompt'] = '';
@@ -93,7 +94,7 @@ class HighlightTextTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function at_least_two_brackets()
     {
         $this->qti_question_info['qti_prompt'] = '[a] and nothing else';
@@ -105,7 +106,7 @@ class HighlightTextTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function no_more_than_ten_brackets()
     {
         $this->qti_question_info['qti_prompt'] = '[1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11]';
@@ -118,7 +119,7 @@ class HighlightTextTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function brackets_cannot_be_empty()
     {
         $this->qti_question_info['qti_prompt'] = '[term] and again []';

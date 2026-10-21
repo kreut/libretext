@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class FormativeTest extends TestCase
@@ -22,7 +21,7 @@ class FormativeTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
     }
 
-    /** @test */
+    #[Test]
     public function course_must_be_formative()
     {
 
@@ -31,7 +30,7 @@ class FormativeTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function creates_new_student()
     {
 

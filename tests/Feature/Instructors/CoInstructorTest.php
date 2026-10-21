@@ -21,7 +21,7 @@ class CoInstructorTest extends TestCase
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
     }
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_main_instructor_cannot_change_main_instructor()
     {
         $this->actingAs($this->user_2)
@@ -29,7 +29,7 @@ class CoInstructorTest extends TestCase
             ->assertJson(['message' => "You are not allowed to change the main instructor for that course."]);
     }
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_delete_co_instructor()
     {
         $this->actingAs($this->user_2)
@@ -37,7 +37,7 @@ class CoInstructorTest extends TestCase
             ->assertJson(['message' => "You are not allowed to remove a co-instructor from this course."]);
     }
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function access_code_must_be_valid()
     {
         $this->actingAs($this->user_2)

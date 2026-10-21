@@ -41,7 +41,7 @@ class LearningTreeAssignmentQuestionTest extends TestCase
             ->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}");
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function adding_a_learning_tree_sets_the_root_nodes_question_revision_id()
     {
         $this->addLearningTreeToAssignment();
@@ -53,7 +53,7 @@ class LearningTreeAssignmentQuestionTest extends TestCase
             'question_revision_id' => $latest_revision_id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function adding_a_learning_tree_stores_a_structure_and_revision_snapshot()
     {
         $this->addLearningTreeToAssignment();
@@ -71,7 +71,7 @@ class LearningTreeAssignmentQuestionTest extends TestCase
         $this->assertCount(6, $blocks);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function snapshot_records_the_latest_revision_id_for_the_root_node()
     {
         $this->addLearningTreeToAssignment();
@@ -92,7 +92,7 @@ class LearningTreeAssignmentQuestionTest extends TestCase
         $this->assertEquals($latest_revision_id, (int)$revision_entry['value']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function snapshot_records_an_empty_revision_for_a_node_question_with_no_revisions()
     {
         // block id 5 in the fixture tree points to question_id 2, which has
@@ -114,7 +114,7 @@ class LearningTreeAssignmentQuestionTest extends TestCase
         $this->assertSame('', $revision_entry['value']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_add_a_learning_tree_whose_root_question_is_already_in_the_assignment()
     {
         DB::table('assignment_question')->insert([

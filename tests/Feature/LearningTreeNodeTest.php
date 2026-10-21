@@ -11,14 +11,11 @@ use App\Enrollment;
 use App\LearningTree;
 use App\LearningTreeNodeDescription;
 use App\LearningTreeNodeSubmission;
-use App\LearningTreeReset;
 use App\Question;
 use App\QuestionRevision;
 use App\Section;
 use App\User;
 use App\Traits\Test;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -73,7 +70,7 @@ class LearningTreeNodeTest extends TestCase
         $this->admin_user = factory(User::class)->create(['email' => 'me@me.com']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function gets_the_correct_time_left_for_exposition_node_node_or_text_question()
     {
         $this->assignment->min_number_of_minutes_in_exposition_node = 15;
@@ -83,7 +80,7 @@ class LearningTreeNodeTest extends TestCase
         $this->assertEquals(15 * 60 * 1000, json_decode($response)->node_question->time_left);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function only_valid_student_can_get_credit_for_completion()
     {
         $this->actingAs($this->user_2)
@@ -92,7 +89,7 @@ class LearningTreeNodeTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_be_text_based_or_exposition_to_get_timed_credit()
     {
 
@@ -102,7 +99,7 @@ class LearningTreeNodeTest extends TestCase
             ->assertJson(['message' => 'The question should either be text-based or an exposition question.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_only_reset_root_node_submission_question_if_question_is_in_assignment()
     {
         DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
@@ -112,7 +109,7 @@ class LearningTreeNodeTest extends TestCase
             ->assertJson(['message' => "That question cannot be reset since it's not in the assignment."]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_only_reset_root_node_submission_question_if_assignment_is_in_your_course()
     {
 
@@ -120,7 +117,7 @@ class LearningTreeNodeTest extends TestCase
             ->assertJson(['message' => 'You are not a student in this course so you cannot reset the root node submission.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_not_reset_root_node_submission_question_if_assignment_is_past_due()
     {
         $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
@@ -132,7 +129,7 @@ class LearningTreeNodeTest extends TestCase
             ->assertJson(['message' => 'Since this assignment is past due, you cannot reset the original submission.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function only_owner_of_learning_tree_node_submission_can_view_it()
     {
 
@@ -140,7 +137,7 @@ class LearningTreeNodeTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to show this learning tree node submission.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correctly_applies_reset()
     {
         $this->assertDatabaseHas('learning_tree_node_submissions', [
@@ -175,7 +172,7 @@ class LearningTreeNodeTest extends TestCase
             'check_for_reset' => 0]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function does_not_reseed_a_non_random_technology_node_after_an_incomplete_attempt()
     {
         // Regression test: LearningTreeNodeSubmissionController::show() used
@@ -243,7 +240,7 @@ class LearningTreeNodeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function node_is_served_using_its_locked_revision_not_the_live_question()
     {
         // NOTE: not using `title` here - show() deliberately overwrites it
@@ -271,7 +268,7 @@ class LearningTreeNodeTest extends TestCase
         $this->assertEquals('Locked text content', json_decode($response)->node_question->text_question);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function node_falls_back_to_live_question_when_no_revision_was_recorded()
     {
         // no QuestionRevision rows created for node_question at all
@@ -284,7 +281,7 @@ class LearningTreeNodeTest extends TestCase
         $this->assertEquals($this->node_question->text_question, json_decode($response)->node_question->text_question);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function exposition_node_iframe_uses_the_locked_revision_number()
     {
         // Question::formatQuestionFromDatabase() builds non_technology_iframe_src
@@ -315,7 +312,7 @@ class LearningTreeNodeTest extends TestCase
         $this->assertStringEndsWith('/' . $locked_revision->revision_number, $iframe_src);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function viewing_a_past_node_submission_uses_the_locked_revision()
     {
         // Question::getTechnologySrcAndProblemJWT()'s h5p case builds
@@ -350,7 +347,7 @@ class LearningTreeNodeTest extends TestCase
         $this->assertStringNotContainsString('222', $data['technology_iframe_src'] ?? '');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function editing_node_metadata_is_allowed_even_when_submissions_exist()
     {
         // learning_tree_node_submission already exists for this tree from
@@ -378,8 +375,7 @@ class LearningTreeNodeTest extends TestCase
     // drift the live tree away from it, and confirm access is still decided
     // by the snapshot.
     // ------------------------------------------------------------------
-
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_still_view_a_snapshotted_node_after_the_live_trees_root_question_changes()
     {
         $this->addSnapshotWithLockedRevision();
@@ -396,7 +392,7 @@ class LearningTreeNodeTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function still_denies_a_question_that_was_never_in_the_snapshot_even_after_the_root_changes()
     {
         $this->addSnapshotWithLockedRevision();
@@ -412,7 +408,7 @@ class LearningTreeNodeTest extends TestCase
             ->assertJson(['message' => 'That is not a question node in the learning tree.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function falls_back_to_the_live_tree_when_no_snapshot_was_ever_recorded()
     {
         // deliberately no addSnapshotWithLockedRevision() call here -
@@ -432,8 +428,7 @@ class LearningTreeNodeTest extends TestCase
     // actually delete the tree clear that row first so they're only
     // exercising the permission check, not FK/cascade behavior.
     // ------------------------------------------------------------------
-
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_destroy_their_own_learning_tree()
     {
         $this->learning_tree_node_submission->delete();
@@ -445,7 +440,7 @@ class LearningTreeNodeTest extends TestCase
         $this->assertDatabaseMissing('learning_trees', ['id' => $this->learning_tree->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_non_admin_cannot_destroy_someone_elses_learning_tree()
     {
         $this->actingAs($this->user_2)
@@ -455,7 +450,7 @@ class LearningTreeNodeTest extends TestCase
         $this->assertDatabaseHas('learning_trees', ['id' => $this->learning_tree->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_destroy_a_learning_tree_they_do_not_own()
     {
         // Regression test: LearningTreePolicy::destroy() was missing the

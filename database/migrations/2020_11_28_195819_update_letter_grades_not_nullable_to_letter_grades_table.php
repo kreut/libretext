@@ -14,7 +14,7 @@ class UpdateLetterGradesNotNullableToLetterGradesTable extends Migration
     public function up()
     {
         Schema::table('letter_grades', function (Blueprint $table) {
-            $table->string('letter_grades')->nullable(false)->change();
+            $table->string('letter_grades')->nullable(false)->default('')->change();
         });
     }
 

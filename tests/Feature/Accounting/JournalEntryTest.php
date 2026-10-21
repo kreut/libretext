@@ -3,12 +3,11 @@
 namespace Tests\Feature\Accounting;
 
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Question;
 use App\SavedQuestionsFolder;
 use App\Submission;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class JournalEntryTest extends TestCase
@@ -85,7 +84,7 @@ class JournalEntryTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function can_create_accounting_journal_entry_question()
     {
         $this->actingAs($this->user)->postJson("/api/questions", $this->qti_question_info)
@@ -96,7 +95,7 @@ class JournalEntryTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function entries_must_exist()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -112,7 +111,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('At least one journal entry is required.', $errorData['general']);
     }
 
-    /** @test */
+    #[Test]
     public function entry_text_is_required()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -128,7 +127,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('Entry text is required.', $errorData['specific'][0]['entryText']);
     }
 
-    /** @test */
+    #[Test]
     public function entry_description_is_required()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -144,7 +143,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('Entry description is required.', $errorData['specific'][0]['entryDescription']);
     }
 
-    /** @test */
+    #[Test]
     public function solution_rows_must_have_at_least_two_rows()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -167,7 +166,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('At least 2 solution rows are required.', $errorData['specific'][0]['solutionRows']['general']);
     }
 
-    /** @test */
+    #[Test]
     public function solution_rows_cannot_exceed_five_rows()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -190,7 +189,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('Maximum of 5 solution rows allowed.', $errorData['specific'][0]['solutionRows']['general']);
     }
 
-    /** @test */
+    #[Test]
     public function account_title_is_required()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -206,7 +205,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('Account title is required.', $errorData['specific'][0]['solutionRows'][0]['accountTitle']);
     }
 
-    /** @test */
+    #[Test]
     public function account_title_must_be_from_valid_list()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -222,7 +221,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('Account title must be from the valid list of accounts.', $errorData['specific'][0]['solutionRows'][0]['accountTitle']);
     }
 
-    /** @test */
+    #[Test]
     public function type_must_be_debit_or_credit()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -238,7 +237,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('Type must be either debit or credit.', $errorData['specific'][0]['solutionRows'][0]['type']);
     }
 
-    /** @test */
+    #[Test]
     public function amount_is_required()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -254,7 +253,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('Amount is required.', $errorData['specific'][0]['solutionRows'][0]['amount']);
     }
 
-    /** @test */
+    #[Test]
     public function amount_of_zero_is_allowed()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -265,7 +264,7 @@ class JournalEntryTest extends TestCase
         $response->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function negative_amount_is_rejected()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -280,7 +279,7 @@ class JournalEntryTest extends TestCase
         $errorData = json_decode($errors[0], true);
         $this->assertEquals('Amount cannot be negative.', $errorData['specific'][0]['solutionRows'][0]['amount']);
     }
-    /** @test */
+    #[Test]
     public function entry_must_balance()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -297,7 +296,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals('Entry does not balance. Debits: $5000.00, Credits: $3000.00', $errorData['specific'][0]['solutionRows']['general']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_all_correct_submission_as_100_percent()
     {
         // Create question
@@ -334,7 +333,7 @@ class JournalEntryTest extends TestCase
         $this->assertTrue($result['allCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_partially_correct_submission_proportionally()
     {
         $submission = new Submission();
@@ -370,7 +369,7 @@ class JournalEntryTest extends TestCase
         $this->assertFalse($result['allCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_all_incorrect_submission_as_zero()
     {
         $submission = new Submission();
@@ -404,7 +403,7 @@ class JournalEntryTest extends TestCase
         $this->assertFalse($result['allCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function empty_debit_is_correct_when_solution_is_credit()
     {
         $submission = new Submission();
@@ -436,7 +435,7 @@ class JournalEntryTest extends TestCase
         $this->assertTrue($result['results'][0]['rows'][0]['creditCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function empty_credit_is_correct_when_solution_is_debit()
     {
         $submission = new Submission();
@@ -468,7 +467,7 @@ class JournalEntryTest extends TestCase
         $this->assertTrue($result['results'][0]['rows'][0]['creditCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function wrong_entry_selection_is_marked_incorrect()
     {
         $submission = new Submission();
@@ -500,7 +499,7 @@ class JournalEntryTest extends TestCase
         $this->assertFalse($result['results'][0]['selectedEntryCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function handles_decimal_amounts_with_tolerance()
     {
         $submission = new Submission();
@@ -534,7 +533,7 @@ class JournalEntryTest extends TestCase
         $this->assertTrue($result['results'][0]['rows'][1]['creditCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function empty_string_is_not_equal_to_zero()
     {
         $submission = new Submission();
@@ -566,7 +565,7 @@ class JournalEntryTest extends TestCase
         $this->assertFalse($result['results'][0]['rows'][0]['creditCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function grading_results_contain_all_required_fields()
     {
         $submission = new Submission();
@@ -616,7 +615,7 @@ class JournalEntryTest extends TestCase
         $this->assertArrayHasKey('isCorrect', $result['results'][0]['rows'][0]);
     }
 
-    /** @test */
+    #[Test]
     public function marks_rows_incorrect_when_credit_appears_before_debit_followed_by_debit()
     {
         $submission = new Submission();
@@ -670,7 +669,7 @@ class JournalEntryTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function allows_correct_order_debits_then_credits()
     {
         $submission = new Submission();
@@ -711,7 +710,7 @@ class JournalEntryTest extends TestCase
         $this->assertEquals(1.0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function allows_multiple_credits_after_debits()
     {
         $submission = new Submission();
@@ -751,7 +750,7 @@ class JournalEntryTest extends TestCase
         $this->assertTrue($result['allCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function order_violation_in_one_entry_does_not_affect_other_entries()
     {
         $submission = new Submission();

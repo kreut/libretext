@@ -2,11 +2,10 @@
 
 namespace Tests\Feature\Accounting;
 
-use App\Question;
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\Submission;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AccountingReportTest extends TestCase
@@ -178,8 +177,7 @@ class AccountingReportTest extends TestCase
     // =========================================================================
     // QUESTION CREATION - VALIDATION
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function can_create_accounting_report_question()
     {
         $this->actingAs($this->user)->postJson("/api/questions", $this->qti_question_info)
@@ -190,7 +188,7 @@ class AccountingReportTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function prompt_is_required()
     {
         $this->qti_question_info['qti_prompt'] = '';
@@ -200,7 +198,7 @@ class AccountingReportTest extends TestCase
         $this->assertNotNull($response->json('errors.qti_prompt'));
     }
 
-    /** @test */
+    #[Test]
     public function at_least_one_column_must_exist()
     {
         $qtiJson = $this->getQtiJson();
@@ -211,7 +209,7 @@ class AccountingReportTest extends TestCase
         $this->assertStringContainsString('at least one column', strtolower($errorData['general']));
     }
 
-    /** @test */
+    #[Test]
     public function at_least_one_row_must_exist()
     {
         $qtiJson = $this->getQtiJson();
@@ -222,7 +220,7 @@ class AccountingReportTest extends TestCase
         $this->assertStringContainsString('at least one row', strtolower($errorData['general']));
     }
 
-    /** @test */
+    #[Test]
     public function at_least_one_data_row_must_exist()
     {
         $qtiJson = $this->getQtiJson();
@@ -235,7 +233,7 @@ class AccountingReportTest extends TestCase
         $this->assertStringContainsString('at least one data row', strtolower($errorData['general']));
     }
 
-    /** @test */
+    #[Test]
     public function at_least_one_answer_cell_must_exist()
     {
         $qtiJson = $this->getQtiJson();
@@ -258,7 +256,7 @@ class AccountingReportTest extends TestCase
         $this->assertStringContainsString('at least one answer cell', strtolower($errorData['general']));
     }
 
-    /** @test */
+    #[Test]
     public function at_least_one_display_cell_or_section_header_must_exist()
     {
         $qtiJson = $this->getQtiJson();
@@ -280,7 +278,7 @@ class AccountingReportTest extends TestCase
         $this->assertStringContainsString('at least one display cell or section header', strtolower($errorData['general']));
     }
 
-    /** @test */
+    #[Test]
     public function section_header_text_cannot_be_empty()
     {
         $qtiJson = $this->getQtiJson();
@@ -291,7 +289,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals('Section header text is required.', $errorData['specific']['0']['header']);
     }
 
-    /** @test */
+    #[Test]
     public function display_cell_values_cannot_be_empty()
     {
         $qtiJson = $this->getQtiJson();
@@ -302,7 +300,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals('Display cell must have a value.', $errorData['specific']['1']['0']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function answer_cells_must_have_expected_values()
     {
         $qtiJson = $this->getQtiJson();
@@ -313,7 +311,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals('An expected answer is required.', $errorData['specific']['1']['1']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function numeric_answer_values_must_be_numeric()
     {
         $qtiJson = $this->getQtiJson();
@@ -324,7 +322,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals('Value must be numeric.', $errorData['specific']['1']['1']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function numeric_display_values_must_be_numeric()
     {
         $qtiJson = $this->getQtiJson();
@@ -336,7 +334,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals('Value must be numeric.', $errorData['specific']['1']['0']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function cell_count_must_match_column_count()
     {
         $qtiJson = $this->getQtiJson();
@@ -349,7 +347,7 @@ class AccountingReportTest extends TestCase
         $this->assertStringContainsString('expected 2 cells but found 1', strtolower($errorData['general']));
     }
 
-    /** @test */
+    #[Test]
     public function dropdown_columns_must_have_at_least_two_options()
     {
         $qtiJson = $this->getQtiJson();
@@ -364,8 +362,7 @@ class AccountingReportTest extends TestCase
     // =========================================================================
     // SCORING - EXACT MODE
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function exact_mode_scores_all_correct_as_100_percent()
     {
         $qtiArray = $this->buildQtiArray('exact');
@@ -389,7 +386,7 @@ class AccountingReportTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function exact_mode_scores_partially_correct_proportionally()
     {
         $qtiArray = $this->buildQtiArray('exact');
@@ -409,7 +406,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals(round(1 / 5, 4), $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function exact_mode_scores_all_incorrect_as_zero()
     {
         $qtiArray = $this->buildQtiArray('exact');
@@ -428,7 +425,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals(0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function exact_mode_accepts_values_with_commas()
     {
         $qtiArray = $this->buildQtiArray('exact');
@@ -447,7 +444,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals(1.0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function exact_mode_accepts_values_with_dollar_signs()
     {
         $qtiArray = $this->buildQtiArray('exact');
@@ -466,7 +463,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals(1.0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function exact_mode_numeric_comparison_uses_tolerance()
     {
         $qtiArray = $this->getQtiJson();
@@ -488,7 +485,7 @@ class AccountingReportTest extends TestCase
         $this->assertTrue($result['results']['1']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function exact_mode_text_comparison_is_case_insensitive()
     {
         $qtiArray = $this->getQtiJson();
@@ -511,7 +508,7 @@ class AccountingReportTest extends TestCase
         $this->assertTrue($result['results']['1']['0']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function exact_mode_wrong_row_order_is_marked_incorrect()
     {
         // In exact mode, putting Rent Expense value (36000) where Salaries Expense (80000)
@@ -538,8 +535,7 @@ class AccountingReportTest extends TestCase
     // =========================================================================
     // SCORING - WITHIN_SECTIONS MODE, NO FLEXIBLE ROWS (all positional)
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function within_sections_mode_with_no_flexible_rows_behaves_like_exact()
     {
         // When orderMode is within_sections but no rows are marked flexible,
@@ -566,8 +562,7 @@ class AccountingReportTest extends TestCase
     // =========================================================================
     // SCORING - WITHIN_SECTIONS MODE, WITH FLEXIBLE ROWS
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function flexible_rows_score_100_when_submitted_in_correct_order()
     {
         // rows 3 and 4 (Salaries, Rent) marked flexible; row 5 (Total) and row 6 (Net Income) positional
@@ -588,7 +583,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals(1.0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function flexible_rows_score_100_when_submitted_in_swapped_order()
     {
         // rows 3 and 4 marked flexible; student swaps their values — should still be 100%.
@@ -608,7 +603,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals(1.0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function positional_rows_within_within_sections_mode_still_require_correct_position()
     {
         // row 5 (Total Expenses) is NOT marked flexible — swapping it should score wrong.
@@ -631,7 +626,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals(round(4 / 5, 4), $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function flexible_rows_do_not_match_across_sections()
     {
         // rows 1 (Revenue section) and 3 (Expenses section) both marked flexible,
@@ -656,7 +651,7 @@ class AccountingReportTest extends TestCase
         $this->assertLessThan(1.0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function flexible_rows_with_one_wrong_value_score_proportionally()
     {
         // rows 3 and 4 flexible. Student swaps correctly but one value is wrong.
@@ -680,7 +675,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals(round(3 / 5, 4), $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function flexible_rows_blank_submission_counts_as_wrong()
     {
         $qtiArray = $this->buildQtiArray('within_sections', [3, 4]);
@@ -700,7 +695,7 @@ class AccountingReportTest extends TestCase
         $this->assertEquals(round(3 / 5, 4), $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function flexible_rows_partial_blank_still_awards_matching_cells()
     {
         // rows 3 and 4 flexible. One row blank, one row correct.

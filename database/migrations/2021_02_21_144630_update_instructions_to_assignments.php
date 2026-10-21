@@ -16,7 +16,7 @@ class UpdateInstructionsToAssignments extends Migration
         Schema::table('assignments', function (Blueprint $table) {
             $table->string('instructions', 10000)
                 ->nullable()
-                ->change();
+                ->default('')->change();
         });
     }
 

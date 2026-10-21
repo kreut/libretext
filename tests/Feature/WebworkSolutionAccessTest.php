@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\JWE;
 use App\Question;
 use App\Submission;
 use App\User;
-use App\Webwork;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use function factory;
@@ -121,7 +121,7 @@ class WebworkSolutionAccessTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function student_without_show_solution_flag_is_denied_on_unlimited_attempts()
     {
         $this->assignment->update(['number_of_allowed_attempts' => 'unlimited']);
@@ -130,7 +130,7 @@ class WebworkSolutionAccessTest extends TestCase
         $this->assertAccessDenied($problemJWT, $this->student, 'You do not have access to this weBWork solution.');
     }
 
-    /** @test */
+    #[Test]
     public function missing_assignment_id_denies_access()
     {
         $secret = $this->jwe->getSecret('webwork');
@@ -145,7 +145,7 @@ class WebworkSolutionAccessTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function missing_adapt_claim_denies_access()
     {
         $secret = $this->jwe->getSecret('webwork');
@@ -158,15 +158,14 @@ class WebworkSolutionAccessTest extends TestCase
 
 
     // --- Non-student access ---
-
-    /** @test */
+    #[Test]
     public function non_role_3_user_can_view_solution()
     {
         $problemJWT = $this->createProblemJWT($this->instructor);
         $this->assertAccessGranted($problemJWT, $this->instructor);
     }
 
-    /** @test */
+    #[Test]
     public function fake_student_can_view_solution()
     {
         $fakeStudent = factory(User::class)->create(['role' => 3, 'fake_student' => 1]);
@@ -175,9 +174,7 @@ class WebworkSolutionAccessTest extends TestCase
     }
 
     // --- JWT claim validation ---
-
-
-    /** @test */
+    #[Test]
     public function missing_question_id_denies_access()
     {
         $secret = $this->jwe->getSecret('webwork');
@@ -193,15 +190,14 @@ class WebworkSolutionAccessTest extends TestCase
     }
 
     // --- showRealTimeSolution paths ---
-
-    /** @test */
+    #[Test]
     public function student_with_no_submission_is_denied()
     {
         $problemJWT = $this->createProblemJWT($this->student);
         $this->assertAccessDenied($problemJWT, $this->student, 'You do not have access to this weBWork solution.');
     }
 
-    /** @test */
+    #[Test]
     public function student_with_show_solution_flag_can_view_on_unlimited_attempts()
     {
         $this->assignment->update(['number_of_allowed_attempts' => 'unlimited']);
@@ -212,7 +208,7 @@ class WebworkSolutionAccessTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function student_who_exhausted_attempts_can_view_solution()
     {
         $this->assignment->update(['number_of_allowed_attempts' => 3]);
@@ -221,7 +217,7 @@ class WebworkSolutionAccessTest extends TestCase
         $this->assertAccessGranted($problemJWT, $this->student);
     }
 
-    /** @test */
+    #[Test]
     public function student_who_has_not_exhausted_attempts_is_denied()
     {
         $this->assignment->update(['number_of_allowed_attempts' => 3]);
@@ -231,8 +227,7 @@ class WebworkSolutionAccessTest extends TestCase
     }
 
     // --- Give up / solutions released ---
-
-    /** @test */
+    #[Test]
     public function student_who_gave_up_can_view_solution()
     {
         $this->createSubmission();
@@ -241,7 +236,7 @@ class WebworkSolutionAccessTest extends TestCase
         $this->assertAccessGranted($problemJWT, $this->student);
     }
 
-    /** @test */
+    #[Test]
     public function student_can_view_solution_when_solutions_released()
     {
         $this->assignment->update(['solutions_released' => 1]);
@@ -250,7 +245,7 @@ class WebworkSolutionAccessTest extends TestCase
         $this->assertAccessGranted($problemJWT, $this->student);
     }
 
-    /** @test */
+    #[Test]
     public function student_denied_when_no_real_time_assessment_type()
     {
         $this->assignment->update(['assessment_type' => 'delayed']);
@@ -259,7 +254,7 @@ class WebworkSolutionAccessTest extends TestCase
         $this->assertAccessDenied($problemJWT, $this->student, 'You do not have access to this weBWork solution.');
     }
 
-    /** @test */
+    #[Test]
     public function student_denied_when_solutions_availability_not_automatic()
     {
         $this->assignment->update(['solutions_availability' => 'manual']);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
 use Tests\TestCase;
@@ -49,7 +50,7 @@ class MultipleResponseSelectAllThatApplyOrSelectNTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function prompt_is_required()
     {
 
@@ -59,7 +60,7 @@ class MultipleResponseSelectAllThatApplyOrSelectNTest extends TestCase
         $this->assertEquals('A prompt is required.', json_decode($response)->errors->qti_prompt[0]);
     }
 
-    /** @test */
+    #[Test]
     public function text_is_required()
     {
         $identifier = $this->qti_question_info['responses'][0]['identifier'];
@@ -70,7 +71,7 @@ class MultipleResponseSelectAllThatApplyOrSelectNTest extends TestCase
         $this->assertEquals('Text is required.', json_decode(json_decode($response)->errors->responses[0])->specific->{$identifier});
     }
 
-    /** @test */
+    #[Test]
     public function number_to_select_should_equal_number_of_responses_in_select_n()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json']);

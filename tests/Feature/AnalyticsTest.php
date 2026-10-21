@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use MiladRahimi\Jwt\Cryptography\Algorithms\Hmac\HS256;
 use MiladRahimi\Jwt\Cryptography\Keys\HmacKey;
 use MiladRahimi\Jwt\Generator;
@@ -25,7 +24,7 @@ class AnalyticsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_get_user_jwt_if_not_instructor_or_student()
     {
         $this->user->role = 5;
@@ -35,7 +34,7 @@ class AnalyticsTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to retrieve a signed user id.']);
 
     }
-    /** @test */
+    #[Test]
     public function cannot_access_all_routes_with_analytics_key()
     {
 
@@ -49,7 +48,7 @@ class AnalyticsTest extends TestCase
             ->assertJson(['message' => 'GET:CaseStudyNoteController@show is not authorized for analytics use.']);
 
     }
-    /** @test */
+    #[Test]
     public function can_access_specific_routes()
     {
 
@@ -64,17 +63,17 @@ class AnalyticsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_do_auto_log_in_without_bearer_token()
     {
         $this->getJson("/api/users/auto-login")
             ->assertJson(['message' => 'Missing Bearer Token.']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_do_auto_log_in_without_valid_signature()
     {
-        \JWTAuth::getJWTProvider()->setSecret('fake-secret');
+        \JWTAuth::getJWTProvider()->setSecret('fake-secret-that-is-long-enough-for-hs256-keys');
         $token = \JWTAuth::getJWTProvider()->encode(['foo' => 'bar']);
         $this->withHeaders([
             'Accept' => 'application/json',
@@ -84,7 +83,7 @@ class AnalyticsTest extends TestCase
             ->assertJson(['message' => 'InvalidSignatureException: cannot log do auto-login.']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_do_auto_log_in_without_valid_JWT()
     {
         $this->withHeaders([
@@ -92,10 +91,10 @@ class AnalyticsTest extends TestCase
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer ' . 'garbage-jwt'])
             ->getJson("/api/users/auto-login")
-            ->assertJson(['message' => 'JWT format is not valid.']);
+            ->assertJson(['message' => 'The JWT format is not valid.']);
     }
 
-    /** @test */
+    #[Test]
     public function can_do_auto_log_in_with_valid_signature()
     {
         $key = new HmacKey(config('myconfig.analytics_token'));
@@ -110,7 +109,7 @@ class AnalyticsTest extends TestCase
             ->assertJson(['message' => '10 is not a valid user id.']);
     }
 
-    /** @test */
+    #[Test]
     public function can_get_user_if_instructor()
     {
         $user = factory(User::class)->create(['id' => 2, 'role' => 2]);
@@ -124,7 +123,7 @@ class AnalyticsTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_user_if_not_instructor()
     {
         $user = factory(User::class)->create(['id' => 2, 'role' => 3]);
@@ -138,7 +137,7 @@ class AnalyticsTest extends TestCase
             ->assertJson(['message' => '2 is a user who is not an instructor.']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_user_if_admin()
     {
         $user = factory(User::class)->create(['id' => 5]);
@@ -153,7 +152,7 @@ class AnalyticsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_get_nursing_analytics_if_not_nursing_account()
     {
 

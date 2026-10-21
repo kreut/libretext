@@ -14,7 +14,7 @@ class UpdateCentralIdentityIdIndexToUsers extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('central_identity_id')->index()->change();
+            $table->string('central_identity_id')->index()->nullable()->change();
         });
     }
 

@@ -4,9 +4,7 @@ namespace Tests\Feature\Instructors;
 
 use App\Assignment;
 use App\Course;
-use App\Cutup;
 use App\Enrollment;
-use App\LearningTree;
 use App\Question;
 use App\Section;
 use App\Traits\Test;

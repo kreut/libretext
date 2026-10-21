@@ -8,10 +8,7 @@ use App\Course;
 use App\Section;
 use App\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 use App\Traits\Test;
 
@@ -34,7 +31,7 @@ class ShiftDatesTest extends TestCase
             'students_can_view_assignment_statistics' => 0]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_get_dates()
     {
         $this->actingAs($this->user_1)
@@ -43,7 +40,7 @@ class ShiftDatesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_shift_dates()
     {
         $this->actingAs($this->user_1)
@@ -51,7 +48,7 @@ class ShiftDatesTest extends TestCase
             ->assertJson(['message' => "You are not allowed to shift the dates since you do not own all of these assignments."]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function shift_by_must_be_valid()
     {
         $this->actingAs($this->user)
@@ -62,7 +59,7 @@ class ShiftDatesTest extends TestCase
             ->assertJsonValidationErrors('shift_by');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function dates_are_correctly_shifted()
     {
         $student_user = factory(User::class)->create(['role' => 3]);

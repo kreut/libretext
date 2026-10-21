@@ -14,7 +14,7 @@ class UpdateDecimalPrecisionOfPointsWeightToAssignmentQuestion extends Migration
     public function up()
     {
         Schema::table('assignment_question', function (Blueprint $table) {
-            $table->decimal('weight', 8, 4)->change();
+            $table->decimal('weight', 8, 4)->nullable()->change();
             $table->decimal('points', 8, 4)->change();
         });
     }
@@ -27,7 +27,7 @@ class UpdateDecimalPrecisionOfPointsWeightToAssignmentQuestion extends Migration
     public function down()
     {
         Schema::table('assignment_question', function (Blueprint $table) {
-            $table->decimal('weight')->change();
+            $table->decimal('weight')->nullable()->change();
             $table->decimal('points')->change();
         });
     }

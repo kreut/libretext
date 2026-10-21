@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\LearningTreeHistory;
@@ -49,7 +50,7 @@ class LearningTreesIndexTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function owner_can_add_a_valid_learning_tree_to_an_assignment()
     {
 
@@ -66,7 +67,7 @@ class LearningTreesIndexTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_create_learning_tree_from_template()
     {
         $this->actingAs($this->student_user)->postJson("api/learning-trees/{$this->learning_tree->id}/create-learning-tree-from-template")
@@ -75,7 +76,7 @@ class LearningTreesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_create_learning_tree_from_template()
     {
         $num_learning_tree_histories = count(LearningTreeHistory::all());
@@ -88,8 +89,7 @@ class LearningTreesIndexTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function non_instructor_cannot_clone_learning_trees()
     {
 
@@ -98,7 +98,7 @@ class LearningTreesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cloned_learning_trees_must_be_valid()
     {
         $this->actingAs($this->user)->postJson("/api/learning-trees/clone", ['learning_tree_ids' => "{$this->learning_tree->id},badValue,3"])
@@ -107,8 +107,7 @@ class LearningTreesIndexTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function instructor_can_clone_learning_trees()
     {
 
@@ -118,7 +117,7 @@ class LearningTreesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function existing_learning_tree_can_be_retrieved()
     {
 
@@ -128,7 +127,7 @@ class LearningTreesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function user_is_told_if_learning_tree_does_not_exist()
     {
 
@@ -137,7 +136,7 @@ class LearningTreesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_add_a_learning_tree_to_an_assignment()
     {
 

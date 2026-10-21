@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use App\WebworkMacroEditor;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use function factory;
 
@@ -33,7 +33,7 @@ class WebworkMacroEditorTest extends TestCase
         $this->student = factory(User::class)->create(['role' => 3]);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_potential_users_if_you_have_an_incorrect_email()
     {
         $user = factory(User::class)->create();
@@ -44,7 +44,7 @@ class WebworkMacroEditorTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function admin_can_list_macro_editors(): void
     {
         $this->actingAs($this->admin)
@@ -54,7 +54,7 @@ class WebworkMacroEditorTest extends TestCase
             ->assertJsonFragment(['user_id' => $this->editor->id]);
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_list_macro_editors(): void
     {
         $this->actingAs($this->student)
@@ -62,7 +62,7 @@ class WebworkMacroEditorTest extends TestCase
             ->assertJson(['message' => 'Only administrators can manage macro editors.']);
     }
 
-    /** @test */
+    #[Test]
     public function editor_themselves_cannot_list_macro_editors(): void
     {
         $this->actingAs($this->editor)
@@ -70,14 +70,14 @@ class WebworkMacroEditorTest extends TestCase
             ->assertJson(['message' => 'Only administrators can manage macro editors.']);
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_list_macro_editors(): void
     {
         $this->getJson('/api/webwork-macro-editors')
             ->assertUnauthorized();
     }
 
-    /** @test */
+    #[Test]
     public function index_returns_editor_name_and_granted_by_name(): void
     {
         $response = $this->actingAs($this->admin)
@@ -96,8 +96,7 @@ class WebworkMacroEditorTest extends TestCase
     // -------------------------------------------------------------------------
     // STORE
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function admin_can_grant_macro_editor_role(): void
     {
         $new_user = factory(User::class)->create([
@@ -121,7 +120,7 @@ class WebworkMacroEditorTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_grant_macro_editor_role(): void
     {
         $new_user = factory(User::class)->create([
@@ -140,7 +139,7 @@ class WebworkMacroEditorTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function granting_editor_role_to_existing_editor_returns_error(): void
     {
         $this->actingAs($this->admin)
@@ -154,7 +153,7 @@ class WebworkMacroEditorTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function editor_themselves_cannot_grant_macro_editor_role(): void
     {
         $new_user = factory(User::class)->create([
@@ -172,8 +171,7 @@ class WebworkMacroEditorTest extends TestCase
     // -------------------------------------------------------------------------
     // DESTROY
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function admin_can_revoke_macro_editor_role(): void
     {
         $this->actingAs($this->admin)
@@ -188,7 +186,7 @@ class WebworkMacroEditorTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_revoke_macro_editor_role(): void
     {
         $this->actingAs($this->student)
@@ -200,7 +198,7 @@ class WebworkMacroEditorTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function editor_cannot_revoke_their_own_editor_role(): void
     {
         $this->actingAs($this->editor)
@@ -212,7 +210,7 @@ class WebworkMacroEditorTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_revoke_macro_editor_role(): void
     {
         $this->deleteJson("/api/webwork-macro-editors/{$this->macro_editor->id}")

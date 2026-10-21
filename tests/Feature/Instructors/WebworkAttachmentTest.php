@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Question;
 use App\User;
 use Tests\TestCase;
@@ -20,7 +21,7 @@ class WebworkAttachmentTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_destroy_webwork_attachment()
     {
         $this->question->question_editor_user_id = $this->question_editor_user->id;
@@ -35,7 +36,7 @@ class WebworkAttachmentTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_upload_webwork_attachments()
     {
         $this->actingAs($this->student_user)
@@ -45,7 +46,7 @@ class WebworkAttachmentTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_get_webwork_attachments_by_question()
     {
         $this->question->question_editor_user_id = $this->question_editor_user->id;

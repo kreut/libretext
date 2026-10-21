@@ -14,7 +14,7 @@ class AddScoreToSubmissions extends Migration
     public function up()
     {
         Schema::table('submissions', function (Blueprint $table) {
-            $table->unsignedDecimal('score',5,2)->after('submission');
+            $table->decimal('score',5,2)->unsigned()->after('submission');
         });
     }
 

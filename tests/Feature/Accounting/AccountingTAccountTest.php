@@ -3,12 +3,11 @@
 namespace Tests\Feature\Accounting;
 
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Question;
 use App\SavedQuestionsFolder;
 use App\Submission;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class AccountingTAccountTest extends TestCase
@@ -114,8 +113,7 @@ class AccountingTAccountTest extends TestCase
     // ------------------------------------------------------------------
     // Validation (question creation)
     // ------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function can_create_question_with_t_accounts()
     {
         $this->actingAs($this->user)->postJson("/api/questions", $this->qti_question_info)
@@ -126,7 +124,7 @@ class AccountingTAccountTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function t_account_requires_at_least_one_posting()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -140,7 +138,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertEquals('At least one posting is required.', $errorData['tAccounts'][0]['postings']['general']);
     }
 
-    /** @test */
+    #[Test]
     public function a_label_without_a_matching_amount_is_rejected()
     {
         // Regression test for the exact reported bug: a credit label was typed
@@ -161,7 +159,7 @@ class AccountingTAccountTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function an_amount_without_a_matching_label_is_rejected()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -179,7 +177,7 @@ class AccountingTAccountTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function an_unused_side_left_fully_blank_is_valid()
     {
         // The base fixture's posting[0] uses only the debit side (credit label
@@ -189,7 +187,7 @@ class AccountingTAccountTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function posting_requires_an_amount_on_at_least_one_side()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -207,7 +205,7 @@ class AccountingTAccountTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function posting_may_have_both_a_debit_and_a_credit_amount()
     {
         // A row is just a shared grid line - it may legitimately hold both an
@@ -221,7 +219,7 @@ class AccountingTAccountTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function posting_amount_of_zero_is_allowed()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -232,7 +230,7 @@ class AccountingTAccountTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function posting_negative_amount_is_rejected()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -246,7 +244,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertEquals('Amount cannot be negative.', $errorData['tAccounts'][0]['postings'][0]['debit']);
     }
 
-    /** @test */
+    #[Test]
     public function account_title_must_be_from_valid_list()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -263,7 +261,7 @@ class AccountingTAccountTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function balance_requires_exactly_one_side()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -285,7 +283,7 @@ class AccountingTAccountTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function balance_cannot_be_on_both_sides()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -307,7 +305,7 @@ class AccountingTAccountTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function balance_requires_a_label_on_the_side_used()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -329,7 +327,7 @@ class AccountingTAccountTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function beginning_balance_does_not_require_a_label()
     {
         // NOTE: this test's original premise ("Beginning Balance has no
@@ -359,7 +357,7 @@ class AccountingTAccountTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function beginning_balance_cannot_be_on_both_sides()
     {
         $qti_json = json_decode($this->qti_question_info['qti_json'], true);
@@ -382,8 +380,7 @@ class AccountingTAccountTest extends TestCase
     // ------------------------------------------------------------------
     // Grading
     // ------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function scores_all_correct_t_account_submission_as_100_percent()
     {
         $submission = new Submission();
@@ -420,7 +417,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertTrue($result['allCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function grades_a_row_with_both_debit_and_credit_amounts_independently()
     {
         // Regression test: a row is just a shared grid line and may hold both
@@ -468,7 +465,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertGreaterThan(0.0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function stray_entry_on_a_side_the_solution_does_not_use_is_marked_wrong()
     {
         // Regression test: a box the solution has nothing on (this row/side is
@@ -517,7 +514,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertLessThan(1.0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function stray_label_alone_does_not_mark_a_correctly_blank_amount_as_wrong()
     {
         // Regression test: a stray label with no matching amount must only
@@ -559,7 +556,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertTrue($row['creditCorrect']); // genuinely blank amount - correct
     }
 
-    /** @test */
+    #[Test]
     public function debit_and_credit_columns_are_graded_independently_for_order()
     {
         // A label out of order on one side must not affect the other side.
@@ -601,7 +598,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertTrue($result['tAccountResults'][0]['rows'][2]['creditCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function same_label_rows_may_be_posted_in_either_order()
     {
         $submission = new Submission();
@@ -639,7 +636,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertEquals(1.0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function balance_grades_debit_and_credit_independently()
     {
         // gradeSimpleBalance no longer derives one "side" from the amount and
@@ -683,7 +680,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertFalse($balance['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function balance_amount_can_be_correct_even_when_its_label_is_on_the_wrong_side()
     {
         // Regression test for the exact scenario walked through with the
@@ -729,7 +726,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertFalse($balance['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function beginning_balance_grades_debit_and_credit_independently()
     {
         // Beginning Balance now has a real editable label (a dropdown the
@@ -777,7 +774,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertTrue($beginningBalance['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function beginning_balance_now_requires_the_label_to_be_selected()
     {
         // Regression test: Beginning Balance used to be graded on side +
@@ -819,7 +816,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertFalse($beginningBalance['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function t_account_score_blends_with_journal_entry_score()
     {
         $submission = new Submission();
@@ -880,7 +877,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertTrue($result['results'][0]['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function t_account_grading_is_skipped_when_no_t_accounts_solution_given()
     {
         // Backward compatibility: existing callers passing just (solution, studentSubmission)
@@ -978,7 +975,7 @@ class AccountingTAccountTest extends TestCase
         return $this;
     }
 
-    /** @test */
+    #[Test]
     public function students_still_get_the_right_number_of_input_boxes()
     {
         // Regression test for the original reported bug: students saw no
@@ -999,7 +996,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertNotNull($account['beginningBalance']); // beginning balance row still exists
     }
 
-    /** @test */
+    #[Test]
     public function students_never_see_t_account_amounts()
     {
         $question = new Question();
@@ -1017,7 +1014,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertEquals('', $account['beginningBalance']['credit']);
     }
 
-    /** @test */
+    #[Test]
     public function students_can_select_the_balance_label_as_a_dropdown_option()
     {
         // Regression test for this session's bug: the ending Balance's label
@@ -1038,7 +1035,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertEquals('', $balance['credit']);
     }
 
-    /** @test */
+    #[Test]
     public function balance_label_mirroring_works_regardless_of_which_side_the_solution_uses()
     {
         // Same as above, but the solution's real label lives on debit
@@ -1060,7 +1057,7 @@ class AccountingTAccountTest extends TestCase
         $this->assertEquals('', $balance['credit']);
     }
 
-    /** @test */
+    #[Test]
     public function instructors_see_the_full_unstripped_solution()
     {
         // Sanity check: this stripping is role-3-specific. An instructor

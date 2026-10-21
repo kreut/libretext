@@ -19,7 +19,7 @@ class Cutup extends Model
     {
         $pdf = new FPDI();
         $dir = "solutions/$user_id";
-        $storage_path = Storage::disk('local')->getAdapter()->getPathPrefix();
+        $storage_path = Storage::disk('local')->path('');
 
         //recompile if add a single question OR cutups for a question
         //get all of the question ids from that assignment as an array order by assignment_question_id
@@ -90,7 +90,7 @@ class Cutup extends Model
         $dir = "solutions/$user_id";
         //
 
-        $storage_path = Storage::disk('local')->getAdapter()->getPathPrefix();
+        $storage_path = Storage::disk('local')->path('');
         $files = Cutup::where('assignment_id', $assignment_id)
             ->where('user_id', $user_id)
             ->get();
@@ -140,7 +140,7 @@ class Cutup extends Model
     function cutUpPdf(string $filename, string $directory, int $assignment_id, int $user_id)
     {
         $pdf = new Fpdi();
-        $storage_path = Storage::disk('local')->getAdapter()->getPathPrefix();
+        $storage_path = Storage::disk('local')->path('');
         $pageCount = $pdf->setSourceFile($storage_path . $filename);
         $file = pathinfo($filename, PATHINFO_FILENAME);
         // Split each page into a new PDF

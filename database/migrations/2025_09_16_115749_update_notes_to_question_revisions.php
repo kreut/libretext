@@ -14,7 +14,7 @@ class UpdateNotesToQuestionRevisions extends Migration
     public function up()
     {
         Schema::table('question_revisions', function (Blueprint $table) {
-            $table->mediumText('notes')->change();
+            $table->mediumText('notes')->nullable()->change();
         });
     }
 

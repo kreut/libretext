@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Question;
@@ -86,8 +87,7 @@ class UnconfirmedSubmissionTest extends TestCase
     // -------------------------------------------------------------------------
     // SHOW
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function webwork_question_with_limited_attempts_requires_confirmation_and_reports_remaining_attempts()
     {
         $this->createSubmission(1);
@@ -103,7 +103,7 @@ class UnconfirmedSubmissionTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function last_attempt_reports_one_remaining_attempt()
     {
         $this->createSubmission(2);
@@ -117,7 +117,7 @@ class UnconfirmedSubmissionTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function first_attempt_reports_all_attempts_remaining()
     {
         $this->createUnconfirmedSubmission($this->student);
@@ -131,7 +131,7 @@ class UnconfirmedSubmissionTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function unlimited_attempts_do_not_require_confirmation()
     {
         $this->assignment->update(['number_of_allowed_attempts' => 'unlimited']);
@@ -147,7 +147,7 @@ class UnconfirmedSubmissionTest extends TestCase
         $this->assertNull($response->json('number_of_remaining_attempts'));
     }
 
-    /** @test */
+    #[Test]
     public function delayed_assignments_do_not_require_confirmation_even_with_a_numeric_attempt_limit()
     {
         $this->assignment->update(['assessment_type' => 'delayed', 'number_of_allowed_attempts' => '1']);
@@ -163,7 +163,7 @@ class UnconfirmedSubmissionTest extends TestCase
         $this->assertNull($response->json('number_of_remaining_attempts'));
     }
 
-    /** @test */
+    #[Test]
     public function learning_tree_assignment_with_limited_attempts_requires_confirmation()
     {
         $this->assignment->update(['assessment_type' => 'learning tree']);
@@ -178,7 +178,7 @@ class UnconfirmedSubmissionTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function has_html_is_not_reset_by_a_later_plain_text_answer()
     {
         $this->createUnconfirmedSubmission($this->student, [
@@ -193,7 +193,7 @@ class UnconfirmedSubmissionTest extends TestCase
         $this->assertEquals(['<b>x</b>', '\(7\)'], $response->json('unconfirmed_submission'));
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_see_another_students_unconfirmed_submission()
     {
         $this->createUnconfirmedSubmission($this->other_student);
@@ -209,8 +209,7 @@ class UnconfirmedSubmissionTest extends TestCase
     // -------------------------------------------------------------------------
     // DESTROY
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function cancelling_removes_only_the_students_own_unconfirmed_submission()
     {
         $this->createUnconfirmedSubmission($this->student);
@@ -232,7 +231,7 @@ class UnconfirmedSubmissionTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_cancel_an_unconfirmed_submission()
     {
         $this->createUnconfirmedSubmission($this->student);
@@ -245,8 +244,7 @@ class UnconfirmedSubmissionTest extends TestCase
     // -------------------------------------------------------------------------
     // STORE SUBMISSION
     // -------------------------------------------------------------------------
-
-    /** @test */
+    #[Test]
     public function confirming_without_a_pending_submission_returns_an_error()
     {
         $this->actingAs($this->student)

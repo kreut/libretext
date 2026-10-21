@@ -2,12 +2,11 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Course;
 use App\Grader;
 use App\Section;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class PeopleTest extends TestCase
@@ -32,7 +31,7 @@ class PeopleTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_invite_a_grader_to_a_section()
     {
 
@@ -41,7 +40,7 @@ class PeopleTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function commons_owner_cannot_invite_a_grader_to_a_section()
     {
         $this->user_2->email = 'commons@libretexts.org';
@@ -51,7 +50,7 @@ class PeopleTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function email_must_be_valid()
     {
         $this->invite_info['email'] = 'bad email';
@@ -60,7 +59,7 @@ class PeopleTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_invite_a_grader_to_a_section()
     {
         $this->actingAs($this->user)->postJson("/api/invitations/grader", $this->invite_info)
@@ -68,7 +67,7 @@ class PeopleTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_update_grader_sections()
     {
         $this->actingAs($this->user_2)->patchJson("/api/graders/{$this->grader_user->id}", $this->invite_info)
@@ -76,7 +75,7 @@ class PeopleTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_update_grader_sections()
     {
         $this->actingAs($this->user)->patchJson("/api/graders/{$this->grader_user->id}", $this->invite_info)
@@ -84,7 +83,7 @@ class PeopleTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_remove_grader()
     {
         $this->actingAs($this->user_2)->deleteJson("/api/graders/{$this->course->id}/{$this->grader_user->id}")
@@ -92,7 +91,7 @@ class PeopleTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_remove_grader()
     {
         $this->actingAs($this->user_2)->deleteJson("/api/graders/{$this->course->id}/{$this->grader_user->id}")

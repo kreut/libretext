@@ -50,7 +50,7 @@ class LetterGradesTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_toggle_students_can_view_weighted_average()
     {
         $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}/students-can-view-weighted-average", ['students_can_view_weighted_average' => 1])
@@ -58,7 +58,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_cannot_toggle_students_can_view_weighted_average_if_weights_are_not_100()
     {
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/students-can-view-weighted-average", ['students_can_view_weighted_average' => 1])
@@ -66,7 +66,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_toggle_students_can_view_weighted_average_if_weights_are_100()
     {
 
@@ -85,7 +85,7 @@ class LetterGradesTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_toggle_show_progress_report()
     {
         $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}/show-progress-report", ['show_progress_report' => 1])
@@ -93,7 +93,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_toggle_show_z_scores()
     {
         $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}/show-z-scores", ['show_z_scores' => 1])
@@ -101,7 +101,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_toggle_show_z_scores_if_weights_do_not_equal_100()
     {
 
@@ -110,7 +110,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_toggle_show_progress_reports()
     {
         $this->createAssignmentGroupWeightsAndAssignments();
@@ -118,7 +118,7 @@ class LetterGradesTest extends TestCase
             ->assertJson(['message' => 'Students <strong>cannot</strong> view their progress reports.']);
 
     }
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_toggle_show_z_scores()
     {
         $this->createAssignmentGroupWeightsAndAssignments();
@@ -133,7 +133,7 @@ class LetterGradesTest extends TestCase
         return $response;
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function nonowner_cannot_update_letter_grades()
     {
         $this->actingAs($this->user_2)
@@ -142,7 +142,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_update_letter_grades()
     {
         $this->actingAs($this->user)
@@ -152,7 +152,7 @@ class LetterGradesTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_be_an_equal_number_of_letter_grades_and_cutoffs()
     {
         $this->actingAs($this->user)
@@ -161,7 +161,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function letter_grades_and_cutoffs_are_required()
     {
         $this->actingAs($this->user)
@@ -170,7 +170,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cutoffs_must_be_numerical()
     {
         $this->actingAs($this->user)
@@ -179,7 +179,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function there_should_be_at_least_one_zero_cutoff()
     {
         $this->actingAs($this->user)
@@ -187,7 +187,7 @@ class LetterGradesTest extends TestCase
             ->assertJson($this->letter_grades_error_message());
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function all_cutoff_should_be_positive()
     {
         $this->actingAs($this->user)
@@ -196,7 +196,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function letter_grades_should_not_be_repeated()
     {
         $this->actingAs($this->user)
@@ -205,7 +205,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cutoffs_should_not_be_repeated()
     {
         $this->actingAs($this->user)
@@ -214,7 +214,7 @@ class LetterGradesTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_toggle_round_scores()
     {
         $this->actingAs($this->user_2)
@@ -222,8 +222,7 @@ class LetterGradesTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to choose how scores are rounded.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_toggle_round_scores()
     {
         $this->actingAs($this->user)
@@ -231,8 +230,7 @@ class LetterGradesTest extends TestCase
             ->assertJson(['message' => 'Scores <strong>will not</strong> be rounded up to the nearest integer.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_release_letter_grades()
     {
         $this->actingAs($this->user_2)
@@ -241,8 +239,7 @@ class LetterGradesTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function nonowner_cannot_get_course_letter_grades()
     {
         $this->actingAs($this->user_2)
@@ -250,8 +247,7 @@ class LetterGradesTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to get the course letter grades.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_get_course_letter_grades()
     {
         $response['letter_grades'][0] = ['letter_grade' => 'A', 'min' => '90%', 'max' => '-'];

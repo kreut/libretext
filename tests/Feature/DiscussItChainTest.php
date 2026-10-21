@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\BetaAssignment;
 use App\Course;
@@ -177,8 +178,7 @@ class DiscussItChainTest extends TestCase
     | Linking and unlinking
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function non_owner_cannot_link_or_unlink()
     {
         $new_user = factory(User::class)->create(['role' => 2]);
@@ -191,7 +191,7 @@ class DiscussItChainTest extends TestCase
             ->assertJson(['message' => "You are not allowed to update the discuss-it settings for that question."]);
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_link_assignments_in_the_same_course()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])
@@ -201,7 +201,7 @@ class DiscussItChainTest extends TestCase
         $this->assertNull($this->_chainId($this->assignment_3));
     }
 
-    /** @test */
+    #[Test]
     public function cannot_link_with_an_assignment_in_another_course()
     {
         $other_course = factory(Course::class)->create(['user_id' => $this->user->id]);
@@ -213,7 +213,7 @@ class DiscussItChainTest extends TestCase
         $this->assertNull($this->_chainId($this->assignment_2));
     }
 
-    /** @test */
+    #[Test]
     public function there_is_at_most_one_link_per_question_per_course()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -226,7 +226,7 @@ class DiscussItChainTest extends TestCase
             ->count());
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_unlink_before_students_comment_and_a_link_of_one_is_removed()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -238,7 +238,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals(0, DiscussItChain::where('course_id', $this->course->id)->count());
     }
 
-    /** @test */
+    #[Test]
     public function can_unlink_when_students_commented_only_in_the_other_linked_assignments()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -252,7 +252,7 @@ class DiscussItChainTest extends TestCase
             'posted_in_assignment_id' => $this->assignment_1->id]);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_unlink_after_real_students_comment_in_this_assignment()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -267,7 +267,7 @@ class DiscussItChainTest extends TestCase
         $this->assertNotNull($this->_chainId($this->assignment_2));
     }
 
-    /** @test */
+    #[Test]
     public function cannot_unlink_when_students_elsewhere_replied_to_a_thread_started_here()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -279,7 +279,7 @@ class DiscussItChainTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[Test]
     public function the_settings_modal_says_whether_this_assignment_can_be_unlinked()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -292,7 +292,7 @@ class DiscussItChainTest extends TestCase
             ->assertJson(['discuss_it_links' => ['can_unlink' => false]]);
     }
 
-    /** @test */
+    #[Test]
     public function fake_student_comments_do_not_block_unlinking()
     {
         $fake_student = factory(User::class)->create(['role' => 3, 'fake_student' => 1]);
@@ -309,8 +309,7 @@ class DiscussItChainTest extends TestCase
     | Groups
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function linking_gives_the_new_assignment_the_same_number_of_groups()
     {
         $this->_setNumberOfGroups($this->assignment_1, 3);
@@ -318,7 +317,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals(3, DiscussItChain::numberOfGroups($this->assignment_2->id, $this->question->id));
     }
 
-    /** @test */
+    #[Test]
     public function when_only_one_assignment_has_student_comments_its_number_of_groups_is_kept()
     {
         $this->_setNumberOfGroups($this->assignment_1, 3);
@@ -331,7 +330,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals(1, DiscussItChain::numberOfGroups($this->assignment_2->id, $this->question->id));
     }
 
-    /** @test */
+    #[Test]
     public function cannot_join_a_link_when_students_already_commented_with_a_different_number_of_groups()
     {
         $this->_setNumberOfGroups($this->assignment_1, 3);
@@ -344,7 +343,7 @@ class DiscussItChainTest extends TestCase
         $this->assertNull($this->_chainId($this->assignment_2));
     }
 
-    /** @test */
+    #[Test]
     public function a_student_who_has_not_commented_is_moved_into_their_existing_group()
     {
         $this->_setNumberOfGroups($this->assignment_1, 2);
@@ -362,7 +361,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals([2], $groups);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_link_when_a_student_commented_in_two_different_groups()
     {
         $this->_setNumberOfGroups($this->assignment_1, 2);
@@ -381,8 +380,7 @@ class DiscussItChainTest extends TestCase
     | Shared discussion, per-assignment completion
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function linked_assignments_show_each_others_discussions()
     {
         $discussion_id = $this->_startDiscussion($this->assignment_1, $this->user);
@@ -398,7 +396,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals($this->assignment_1->id, $response->json('discussions.0.comments.0.assignment_id'));
     }
 
-    /** @test */
+    #[Test]
     public function completion_only_counts_comments_made_in_that_assignment()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -413,7 +411,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals(2, $discussionComment->numberOfCommentsThatSatisfiedTheRequirements($this->assignment_2->id, $this->question->id, $this->student_user->id));
     }
 
-    /** @test */
+    #[Test]
     public function comments_record_the_assignment_they_were_made_in_when_not_given()
     {
         $discussion_id = $this->_startDiscussion($this->assignment_1, $this->student_user);
@@ -424,7 +422,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals($this->assignment_1->id, $discussion_comment->fresh()->posted_in_assignment_id);
     }
 
-    /** @test */
+    #[Test]
     public function can_reply_to_a_thread_from_a_linked_assignment_but_not_an_unlinked_one()
     {
         $discussion_id = $this->_startDiscussion($this->assignment_1, $this->user);
@@ -444,7 +442,7 @@ class DiscussItChainTest extends TestCase
             'posted_in_assignment_id' => $this->assignment_2->id]);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_edit_or_delete_a_comment_made_in_another_linked_assignment()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -473,8 +471,7 @@ class DiscussItChainTest extends TestCase
     | Removing, deleting, revisions
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function cannot_remove_a_linked_question_after_students_comment_in_this_assignment()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -485,7 +482,7 @@ class DiscussItChainTest extends TestCase
                 'message' => 'You cannot remove this question since it is linked in other assignments and students have already commented on it in this assignment. Their comments here would need to be removed first.']);
     }
 
-    /** @test */
+    #[Test]
     public function can_remove_a_linked_question_when_students_commented_only_in_the_other_linked_assignments()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -500,7 +497,7 @@ class DiscussItChainTest extends TestCase
         $this->assertDatabaseHas('discussion_comments', ['discussion_id' => $discussion_id]);
     }
 
-    /** @test */
+    #[Test]
     public function deleting_an_assignment_keeps_comments_made_elsewhere_on_threads_started_elsewhere()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -515,7 +512,7 @@ class DiscussItChainTest extends TestCase
             'user_id' => $this->student_user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function revision_status_lists_linked_assignments_and_blocks_updates_after_students_comment()
     {
         $url = "/api/assignments/{$this->assignment_2->id}/question/{$this->question->id}/discuss-it-link-revision-status";
@@ -539,8 +536,7 @@ class DiscussItChainTest extends TestCase
     | Adding questions and copying assignments
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function link_options_list_the_other_assignments_with_the_question()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -557,7 +553,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEmpty($link_option['unlinked_assignments']);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_get_link_options()
     {
         $new_user = factory(User::class)->create(['role' => 2]);
@@ -567,7 +563,7 @@ class DiscussItChainTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[Test]
     public function creating_an_assignment_from_a_template_links_its_discuss_it_questions()
     {
         $this->actingAs($this->user)
@@ -585,7 +581,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals($this->_chainId($this->assignment_1), $this->_chainId($new_assignment));
     }
 
-    /** @test */
+    #[Test]
     public function creating_an_assignment_from_a_template_can_leave_discuss_it_questions_unlinked()
     {
         $this->actingAs($this->user)
@@ -603,8 +599,7 @@ class DiscussItChainTest extends TestCase
     | Revisions and groups across a link
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function linking_moves_the_new_assignment_to_the_linked_revision()
     {
         $revision_1 = $this->_createRevision(1);
@@ -615,7 +610,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals($revision_1, DiscussItChain::questionRevisionId($this->assignment_2->id, $this->question->id));
     }
 
-    /** @test */
+    #[Test]
     public function when_only_one_assignment_has_student_comments_its_revision_is_kept()
     {
         $revision_1 = $this->_createRevision(1);
@@ -629,7 +624,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals($revision_2, DiscussItChain::questionRevisionId($this->assignment_2->id, $this->question->id));
     }
 
-    /** @test */
+    #[Test]
     public function cannot_join_a_link_when_students_commented_on_a_different_revision()
     {
         $revision_1 = $this->_createRevision(1);
@@ -646,7 +641,7 @@ class DiscussItChainTest extends TestCase
         $this->assertNull($this->_chainId($this->assignment_2));
     }
 
-    /** @test */
+    #[Test]
     public function a_student_keeps_the_same_group_in_every_linked_assignment()
     {
         $this->_setNumberOfGroups($this->assignment_1, 3);
@@ -684,7 +679,7 @@ class DiscussItChainTest extends TestCase
         return [$beta_instructor, $beta_course, $beta_assignments];
     }
 
-    /** @test */
+    #[Test]
     public function beta_courses_get_the_same_links_as_the_alpha_course()
     {
         [, , $beta_assignments] = $this->_createBetaCourse();
@@ -700,7 +695,7 @@ class DiscussItChainTest extends TestCase
         $this->assertNull($this->_chainId($beta_assignments[1]));
     }
 
-    /** @test */
+    #[Test]
     public function beta_instructors_cannot_link_or_unlink()
     {
         [$beta_instructor, , $beta_assignments] = $this->_createBetaCourse();
@@ -711,7 +706,7 @@ class DiscussItChainTest extends TestCase
                 'message' => 'Links for Discuss-it questions in Beta courses are managed by the Alpha course.']);
     }
 
-    /** @test */
+    #[Test]
     public function alpha_cannot_unlink_after_beta_students_comment_in_its_copy()
     {
         [, , $beta_assignments] = $this->_createBetaCourse();
@@ -729,8 +724,7 @@ class DiscussItChainTest extends TestCase
     | Copying courses
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function a_course_copy_keeps_the_links_and_starts_with_one_group()
     {
         $this->_setNumberOfGroups($this->assignment_1, 3);
@@ -776,7 +770,7 @@ class DiscussItChainTest extends TestCase
             ->update(['discuss_it_settings' => json_encode(array_merge($discuss_it_settings, $settings))]);
     }
 
-    /** @test */
+    #[Test]
     public function new_threads_and_replies_are_allowed_when_the_settings_are_missing()
     {
         //settings saved before the options existed
@@ -785,7 +779,7 @@ class DiscussItChainTest extends TestCase
         $this->assertNull(Helper::discussItStudentCommentBlockedMessage(null, true));
     }
 
-    /** @test */
+    #[Test]
     public function students_are_blocked_only_from_what_was_turned_off()
     {
         $no_new_threads = ['students_can_start_threads' => '0', 'students_can_reply_to_threads' => '1'];
@@ -799,7 +793,7 @@ class DiscussItChainTest extends TestCase
             Helper::discussItStudentCommentBlockedMessage($no_replies, false));
     }
 
-    /** @test */
+    #[Test]
     public function turning_off_new_threads_while_threads_must_be_initiated_is_a_participation_warning()
     {
         $conflicts = Helper::discussItParticipationConflicts(['completion_criteria' => '1',
@@ -811,7 +805,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals(['students_can_start_threads'], array_keys($conflicts));
     }
 
-    /** @test */
+    #[Test]
     public function turning_off_replies_while_replies_are_required_is_a_participation_warning()
     {
         $conflicts = Helper::discussItParticipationConflicts(['completion_criteria' => '1',
@@ -822,7 +816,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals(['students_can_reply_to_threads'], array_keys($conflicts));
     }
 
-    /** @test */
+    #[Test]
     public function participating_in_threads_can_still_be_met_by_whichever_is_allowed()
     {
         foreach (['students_can_start_threads', 'students_can_reply_to_threads'] as $turned_off) {
@@ -837,7 +831,7 @@ class DiscussItChainTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function turning_off_both_while_any_participation_is_required_is_a_participation_warning()
     {
         $settings = ['completion_criteria' => '1',
@@ -853,7 +847,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals([], Helper::discussItParticipationConflicts($settings));
     }
 
-    /** @test */
+    #[Test]
     public function completion_criteria_that_are_off_give_no_participation_warnings()
     {
         $this->assertEquals([], Helper::discussItParticipationConflicts(['completion_criteria' => '0',
@@ -863,7 +857,7 @@ class DiscussItChainTest extends TestCase
             'min_number_of_replies' => '2']));
     }
 
-    /** @test */
+    #[Test]
     public function instructors_can_still_start_threads_and_reply_when_students_cannot()
     {
         $this->_setDiscussItSettings($this->assignment_1, ['students_can_start_threads' => '0',
@@ -878,7 +872,7 @@ class DiscussItChainTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function new_discuss_it_questions_allow_new_threads_and_replies_by_default()
     {
         $default_settings = json_decode(Helper::defaultDiscussItSettings(), true);
@@ -905,7 +899,7 @@ class DiscussItChainTest extends TestCase
                     'completion_criteria' => '1'], $settings));
     }
 
-    /** @test */
+    #[Test]
     public function closing_new_threads_while_they_are_required_asks_for_confirmation_before_saving()
     {
         $this->_saveDiscussItSettings($this->assignment_1, ['students_can_start_threads' => '0',
@@ -915,7 +909,7 @@ class DiscussItChainTest extends TestCase
         $this->assertNotEquals('9', $this->_storedSettings($this->assignment_1)['min_number_of_words']);
     }
 
-    /** @test */
+    #[Test]
     public function closing_new_threads_while_they_are_required_saves_once_confirmed()
     {
         $this->_saveDiscussItSettings($this->assignment_1, ['students_can_start_threads' => '0',
@@ -926,7 +920,7 @@ class DiscussItChainTest extends TestCase
         $this->assertArrayNotHasKey('confirm_participation_warnings', $settings);
     }
 
-    /** @test */
+    #[Test]
     public function closing_replies_while_they_are_required_asks_for_confirmation_before_saving()
     {
         $this->_saveDiscussItSettings($this->assignment_1, ['students_can_reply_to_threads' => '0',
@@ -941,7 +935,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals('0', $this->_storedSettings($this->assignment_1)['students_can_reply_to_threads']);
     }
 
-    /** @test */
+    #[Test]
     public function settings_students_can_meet_save_without_confirmation()
     {
         $this->_saveDiscussItSettings($this->assignment_1, ['students_can_reply_to_threads' => '0',
@@ -949,7 +943,7 @@ class DiscussItChainTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function saving_settings_stores_whether_students_can_start_threads_and_reply()
     {
         $this->_saveDiscussItSettings($this->assignment_1, ['students_can_reply_to_threads' => '0'])
@@ -962,7 +956,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals('0', $discuss_it_settings['students_can_reply_to_threads']);
     }
 
-    /** @test */
+    #[Test]
     public function older_clients_that_do_not_send_the_new_settings_leave_them_allowed()
     {
         $this->actingAs($this->user)
@@ -1002,7 +996,7 @@ class DiscussItChainTest extends TestCase
                 ['type' => 'text', 'text' => $text]);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_start_a_thread_when_new_threads_are_turned_off_but_can_still_reply()
     {
         $this->_makeFormative($this->assignment_1);
@@ -1023,7 +1017,7 @@ class DiscussItChainTest extends TestCase
             'posted_in_assignment_id' => $this->assignment_1->id]);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_reply_when_replies_are_turned_off_but_can_still_start_a_thread()
     {
         $this->_makeFormative($this->assignment_1);
@@ -1043,7 +1037,7 @@ class DiscussItChainTest extends TestCase
             'user_id' => $this->student_user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function turning_off_replies_in_one_linked_assignment_does_not_affect_the_others()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -1078,7 +1072,7 @@ class DiscussItChainTest extends TestCase
             ->value('discuss_it_settings'), true);
     }
 
-    /** @test */
+    #[Test]
     public function settings_can_be_applied_to_linked_assignments()
     {
         $this->_link($this->assignment_1, [$this->assignment_2, $this->assignment_3])->assertJson(['type' => 'success']);
@@ -1092,7 +1086,7 @@ class DiscussItChainTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function applying_settings_keeps_each_assignments_new_thread_and_reply_options()
     {
         $this->_link($this->assignment_1, [$this->assignment_2])->assertJson(['type' => 'success']);
@@ -1104,7 +1098,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals('0', $this->_storedSettings($this->assignment_2)['students_can_reply_to_threads']);
     }
 
-    /** @test */
+    #[Test]
     public function applying_settings_students_could_not_meet_in_a_linked_assignment_asks_for_confirmation()
     {
         $this->_link($this->assignment_1, [$this->assignment_2])->assertJson(['type' => 'success']);
@@ -1129,7 +1123,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals('0', $this->_storedSettings($this->assignment_2)['students_can_reply_to_threads']);
     }
 
-    /** @test */
+    #[Test]
     public function settings_cannot_be_applied_where_real_students_have_commented_and_nothing_is_saved()
     {
         $this->_link($this->assignment_1, [$this->assignment_2, $this->assignment_3])->assertJson(['type' => 'success']);
@@ -1143,7 +1137,7 @@ class DiscussItChainTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function comments_in_the_assignment_being_saved_do_not_block_applying_to_the_others()
     {
         $this->_link($this->assignment_1, [$this->assignment_2])->assertJson(['type' => 'success']);
@@ -1155,7 +1149,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals('9', $this->_storedSettings($this->assignment_2)['min_number_of_words']);
     }
 
-    /** @test */
+    #[Test]
     public function fake_student_comments_do_not_block_applying_settings()
     {
         $this->_link($this->assignment_1, [$this->assignment_2])->assertJson(['type' => 'success']);
@@ -1168,7 +1162,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEquals('9', $this->_storedSettings($this->assignment_2)['min_number_of_words']);
     }
 
-    /** @test */
+    #[Test]
     public function settings_cannot_be_applied_to_assignments_that_are_not_linked()
     {
         $this->_link($this->assignment_1, [$this->assignment_2])->assertJson(['type' => 'success']);
@@ -1179,7 +1173,7 @@ class DiscussItChainTest extends TestCase
         $this->assertNotEquals('9', $this->_storedSettings($this->assignment_3)['min_number_of_words']);
     }
 
-    /** @test */
+    #[Test]
     public function the_settings_modal_gets_each_linked_assignments_settings_and_whether_students_commented()
     {
         $this->_link($this->assignment_1, [$this->assignment_2, $this->assignment_3])->assertJson(['type' => 'success']);
@@ -1240,7 +1234,7 @@ class DiscussItChainTest extends TestCase
             'user_id' => $user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function delete_check_counts_only_the_comments_that_would_be_removed()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -1262,7 +1256,7 @@ class DiscussItChainTest extends TestCase
         $this->assertEqualsCanonicalizing([$this->assignment_1->name, $this->assignment_2->name], $check['assignment_names']);
     }
 
-    /** @test */
+    #[Test]
     public function deleting_without_confirming_the_removed_comments_is_refused()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -1274,7 +1268,7 @@ class DiscussItChainTest extends TestCase
         $this->assertDatabaseHas('discussion_comments', ['discussion_id' => $discussion_id]);
     }
 
-    /** @test */
+    #[Test]
     public function confirmed_deletion_removes_the_comments_and_returns_the_students_emails()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -1292,7 +1286,7 @@ class DiscussItChainTest extends TestCase
         $this->assertDatabaseHas('discussion_comments', ['discussion_id' => $kept_discussion_id]);
     }
 
-    /** @test */
+    #[Test]
     public function deletion_is_refused_if_students_commented_after_the_instructor_confirmed()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -1307,7 +1301,7 @@ class DiscussItChainTest extends TestCase
         $this->assertDatabaseHas('assignments', ['id' => $this->assignment_2->id]);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_delete_once_comments_that_would_be_removed_have_been_scored()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -1325,7 +1319,7 @@ class DiscussItChainTest extends TestCase
         $this->assertDatabaseHas('assignments', ['id' => $this->assignment_2->id]);
     }
 
-    /** @test */
+    #[Test]
     public function a_scored_reply_in_another_assignment_to_a_thread_started_here_blocks_deletion()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -1343,7 +1337,7 @@ class DiscussItChainTest extends TestCase
                 'cannot_delete_message' => "You cannot delete this assignment.  Deleting it would remove student comments on its linked Discuss-it questions, and some of those comments have already been scored in: {$this->assignment_1->name}."]);
     }
 
-    /** @test */
+    #[Test]
     public function scores_that_do_not_depend_on_removed_comments_do_not_block_deletion()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -1360,7 +1354,7 @@ class DiscussItChainTest extends TestCase
         $this->_assertScored($this->assignment_1, $this->student_user);
     }
 
-    /** @test */
+    #[Test]
     public function fake_student_comments_do_not_need_confirming()
     {
         $this->_link($this->assignment_2, [$this->assignment_1])->assertJson(['type' => 'success']);
@@ -1373,7 +1367,7 @@ class DiscussItChainTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_see_the_delete_check()
     {
         $this->actingAs(factory(User::class)->create(['role' => 2]))

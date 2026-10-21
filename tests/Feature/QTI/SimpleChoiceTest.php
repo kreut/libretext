@@ -57,7 +57,7 @@ class SimpleChoiceTest extends TestCase
             'qti_directory' => $this->directory]);
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function simpleChoice_question_can_be_edited_without_repeat_issue()
     {
 
@@ -78,7 +78,7 @@ class SimpleChoiceTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function simpleChoice_question_cannot_be_repeated()
     {
 
@@ -95,7 +95,7 @@ class SimpleChoiceTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function qti_randomize_order_is_required()
     {
         unset($this->qti_question_info['qti_randomize_order']);
@@ -107,7 +107,7 @@ class SimpleChoiceTest extends TestCase
             ]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function there_should_be_at_least_two_choices()
     {
         unset($this->qti_question_info['qti_simple_choice_1']);
@@ -119,10 +119,10 @@ class SimpleChoiceTest extends TestCase
             ]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function two_choices_should_not_be_the_same()
     {
-        $this->qti_question_info = str_replace('some other response', 'some response', $this->qti_question_info);
+        $this->qti_question_info = json_decode(str_replace('some other response', 'some response', json_encode($this->qti_question_info)), true);
 
         $this->actingAs($this->user)->postJson("/api/questions",
             $this->qti_question_info)
@@ -133,7 +133,7 @@ class SimpleChoiceTest extends TestCase
     }
 
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function prompt_is_required()
     {
         unset($this->qti_question_info['qti_prompt']);
@@ -142,7 +142,7 @@ class SimpleChoiceTest extends TestCase
             ->assertJsonValidationErrors('qti_prompt');
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function prompt_should_have_length()
     {
         $this->qti_question_info['qti_prompt'] = '';
@@ -157,7 +157,7 @@ class SimpleChoiceTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correct_response_is_required()
     {
         unset($this->qti_question_info['qti_correct_response']);

@@ -128,3 +128,6 @@ fabric.properties
 /.env.testing
 
 /storage/firebase/*
+
+.phpunit.cache/
+*.bak.*

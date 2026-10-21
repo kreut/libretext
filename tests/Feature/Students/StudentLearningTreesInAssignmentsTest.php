@@ -3,15 +3,12 @@
 namespace Tests\Feature\Students;
 
 use App\Assignment;
-use App\AssignmentQuestionLearningTree;
-use App\AssignToTiming;
 use App\Course;
 use App\Enrollment;
 use App\Question;
 use App\Section;
 use App\Traits\Test;
 use App\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 

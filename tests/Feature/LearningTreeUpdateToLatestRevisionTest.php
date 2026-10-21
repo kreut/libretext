@@ -69,7 +69,7 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
         $this->learning_tree->save();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_update_without_confirming_submissions_will_be_removed_when_the_assignment_is_open()
     {
         $this->openTheAssignment();
@@ -78,7 +78,7 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
             ->assertJson(['message' => 'You must confirm that you understand that student submissions will be removed.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_update_without_confirming_submissions_will_be_removed_when_a_real_node_submission_exists()
     {
         // assignment itself is still closed (no assign_to_timings at all) -
@@ -95,7 +95,7 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
             ->assertJson(['message' => 'You must confirm that you understand that student submissions will be removed.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_update_without_confirming_when_the_assignment_is_closed_and_has_no_real_submissions()
     {
         // no assign_to_timings row at all is created in setup(), so the
@@ -106,7 +106,7 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function fake_student_node_submissions_dont_require_confirmation()
     {
         $fake_student = factory(User::class)->create(['role' => 3, 'fake_student' => 1]);
@@ -136,14 +136,14 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
         $assignToTiming->save();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function only_course_owner_or_co_instructor_can_update()
     {
         $this->updateEndpoint($this->user_2)
             ->assertJson(['message' => 'You are not allowed to update to the latest revision for that question.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_sets_the_root_nodes_question_revision_id_to_latest()
     {
         factory(QuestionRevision::class)->create(['question_id' => $this->root_question->id, 'revision_number' => 2]);
@@ -158,7 +158,7 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
             'question_revision_id' => $latest_revision_id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_resyncs_the_snapshot_to_the_live_tree()
     {
         $assignmentQuestionLearningTree = new AssignmentQuestionLearningTree();
@@ -181,7 +181,7 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
         $this->assertFalse($assignmentQuestionLearningTree->learningTreeNeedsUpdate($row_after, $this->learning_tree->fresh()));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_moves_assignment_question_to_a_new_root_question_id_when_the_root_was_swapped()
     {
         // direct regression test for the "Undefined offset" crash / silent
@@ -200,7 +200,7 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
             'question_id' => $new_root_question->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function authorization_uses_the_currently_attached_question_not_the_new_root()
     {
         // direct regression test for the policy-denial bug: authorizing
@@ -214,7 +214,7 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
         $this->updateEndpoint()->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_removes_learning_tree_node_seeds_resets_and_submissions_for_the_whole_tree()
     {
         $student = factory(User::class)->create(['role' => 3]);
@@ -238,14 +238,14 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
         $this->assertDatabaseMissing('learning_tree_node_seeds', ['learning_tree_id' => $this->learning_tree->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_returns_no_emails_when_there_were_no_submissions()
     {
         $this->updateEndpoint()
             ->assertJson(['student_emails_associated_with_submissions' => []]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function response_includes_the_new_root_question_id()
     {
         $new_root_question = factory(Question::class)->create();
@@ -256,7 +256,7 @@ class LearningTreeUpdateToLatestRevisionTest extends TestCase
             ->assertJson(['new_root_question_id' => $new_root_question->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function throws_when_the_tree_isnt_actually_attached_to_the_assignment()
     {
         $other_tree = factory(LearningTree::class)->create([

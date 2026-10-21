@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Question;
-use App\QuestionSubject;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -21,7 +19,7 @@ class QuestionSubjectTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_delete_a_subject()
     {
         $question_subject_id = DB::table('question_subjects')->insertGetId(['name' => 'some name']);
@@ -32,7 +30,7 @@ class QuestionSubjectTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function correctly_deletes_subjects_chapters_sections()
     {
         $question_subject_id = DB::table('question_subjects')->insertGetId(['name' => 'some name']);
@@ -90,7 +88,7 @@ class QuestionSubjectTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_store_a_subject()
     {
         $this->actingAs($this->user_2)
@@ -99,7 +97,7 @@ class QuestionSubjectTest extends TestCase
                 'message' => 'You are not allowed to add subjects.']);
     }
 
-    /** @test */
+    #[Test]
     public function subject_names_must_be_unique()
     {
         DB::table('question_subjects')->insert(['name' => 'some name']);
@@ -108,7 +106,7 @@ class QuestionSubjectTest extends TestCase
             ->assertJsonValidationErrors('name');
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_update_a_subject()
     {
         $question_subject_id = DB::table('question_subjects')->insertGetId(['name' => 'some name']);

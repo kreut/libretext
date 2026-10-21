@@ -17,7 +17,7 @@ class UpdateIdentifierToCaseStudyNotes extends Migration
             $table->renameColumn('description','identifier');
         });
         Schema::table('case_study_notes', function (Blueprint $table) {
-            $table->string('identifier')->nullable()->change();
+            $table->string('identifier')->nullable()->default('')->change();
         });
     }
 

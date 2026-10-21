@@ -2,12 +2,10 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Question;
 use App\QuestionMediaUpload;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class QuestionMediaUploadTest extends TestCase
@@ -28,7 +26,7 @@ class QuestionMediaUploadTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_temporary_urls()
     {
         $student_user = factory(User::class)->create(['role' => 3]);
@@ -38,7 +36,7 @@ class QuestionMediaUploadTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_get_presigned_url()
     {
         $this->actingAs($this->user_2)
@@ -51,7 +49,7 @@ class QuestionMediaUploadTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_validate_vtt()
     {
         $this->actingAs($this->user_2)
@@ -59,7 +57,7 @@ class QuestionMediaUploadTest extends TestCase
             ->assertJson(['message' => "You are not allowed to validate the .vtt file."]);
     }
 
-    /** @test */
+    #[Test]
     public function vtt_file_must_exist()
     {
         $this->actingAs($this->user_2)
@@ -67,7 +65,7 @@ class QuestionMediaUploadTest extends TestCase
             ->assertJson(['message' => "You are not allowed to update this transcript."]);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_update_caption()
     {
         $this->actingAs($this->user_2)
@@ -75,7 +73,7 @@ class QuestionMediaUploadTest extends TestCase
             ->assertJson(['message' => "You are not allowed to update this transcript."]);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_delete_question_media_upload()
     {
         $this->actingAs($this->user_2)

@@ -56,7 +56,7 @@ class removeLocalQtiFiles extends Command
             $is_efs = is_dir($efs_dir);
             $storage_path = $is_efs
                 ? $efs_dir
-                : Storage::disk('local')->getAdapter()->getPathPrefix();
+                : Storage::disk('local')->path('');
             $local_dir = "{$storage_path}uploads/qti";
             $dir = new DirectoryIterator($local_dir);
             $time = time();

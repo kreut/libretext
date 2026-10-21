@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Assignment;
-use App\AssignmentSyncQuestion;
 use App\Course;
 use App\Enrollment;
 use App\ForgeAssignmentQuestion;
@@ -123,14 +122,14 @@ class ForgeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function need_valid_bearer_token_to_check_grader_access()
     {
         $this->getJson("/api/forge/grader-has-access/forge-draft-id/test-draft-uuid/grader/some-grader-uuid/student/some-student-uuid")
             ->assertJson(['message' => 'We were unable to validate whether the grader with UUID some-grader-uuid has access to the forge draft with draft ID test-draft-uuid submitted by the student with UUID some-student-uuid: Invalid Bearer token.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function grader_access_fails_with_invalid_forge_draft_id()
     {
         $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
@@ -140,7 +139,7 @@ class ForgeTest extends TestCase
             ->assertJson(['message' => 'There is no Forge assignment question with Forge draft ID nonexistent-draft-id.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function grader_access_fails_with_nonexistent_student()
     {
         $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
@@ -150,7 +149,7 @@ class ForgeTest extends TestCase
             ->assertJson(['message' => 'There is no student with UUID nonexistent-student-uuid.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function grader_access_fails_with_nonexistent_grader()
     {
         $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
@@ -160,7 +159,7 @@ class ForgeTest extends TestCase
             ->assertJson(['message' => 'There is no grader with UUID nonexistent-grader-uuid.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function grader_access_fails_when_grader_not_assigned_to_student_section()
     {
         $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
@@ -174,7 +173,7 @@ class ForgeTest extends TestCase
             ->assertJson(['message' => "The grader with UUID {$grader_user->central_identity_id} is not a grader for the student's section."]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function grader_with_section_access_can_access_forge_draft()
     {
         $secret = DB::table('key_secrets')->where('key', 'forge')->first()->secret;
@@ -196,7 +195,7 @@ class ForgeTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function bearer_token_must_be_valid()
     {
 
@@ -206,7 +205,7 @@ class ForgeTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_not_enrolled_cannot_have_submission_stored()
     {
         $secret = DB::table('key_secrets')
@@ -218,7 +217,7 @@ class ForgeTest extends TestCase
             ->postJson("/api/forge/submissions/forge-draft-id/test-draft-uuid/user/{$this->non_enrolled_student->central_identity_id}")
             ->assertJson(['message' => "The student with UUID {$this->non_enrolled_student->central_identity_id} is not enrolled in this course."]);
     }
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_course_owner_cannot_get_drafts()
     {
         $this->actingAs($this->non_owner_user)
@@ -227,7 +226,7 @@ class ForgeTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_course_owner_cannot_update_forge_settings()
     {
         $this->actingAs($this->non_owner_user)
@@ -269,7 +268,7 @@ class ForgeTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_course_owner_cannot_get_forge_settings()
     {
         $this->actingAs($this->non_owner_user)
@@ -278,7 +277,7 @@ class ForgeTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_course_owner_cannot_allow_resubmission()
     {
         // Create a submission file for the student
@@ -299,7 +298,7 @@ class ForgeTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_course_owner_cannot_get_submission_by_assignment_question_student()
     {
         $this->actingAs($this->non_owner_user)
@@ -308,7 +307,7 @@ class ForgeTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_enrolled_student_cannot_get_drafts_by_logged_in_user()
     {
         // Create a draft question for the test
@@ -339,7 +338,7 @@ class ForgeTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_instructor_and_non_student_cannot_initialize()
     {
         // Create a user with role 4 (grader) who isn't a grader for this course
@@ -354,7 +353,7 @@ class ForgeTest extends TestCase
             ->assertJson(['message' => 'You cannot initialize the Forge settings.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_instructor_cannot_initialize()
     {
         $this->actingAs($this->non_owner_user)
@@ -364,7 +363,7 @@ class ForgeTest extends TestCase
             ->assertJson(['message' => 'You cannot initialize the Forge settings since you do not own this course.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_enrolled_student_cannot_initialize()
     {
         $this->actingAs($this->non_enrolled_student)
@@ -374,14 +373,14 @@ class ForgeTest extends TestCase
             ->assertJson(['message' => 'You are not enrolled in this course so you cannot initialize the Forge settings.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function need_valid_bearer_token_to_get_user()
     {
         $this->getJson("/api/forge/user/{$this->user->central_identity_id}")
             ->assertJson(['message' => 'Invalid Bearer token']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function valid_bearer_token_can_get_user()
     {
         $secret = DB::table('key_secrets')
@@ -399,14 +398,14 @@ class ForgeTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function need_valid_bearer_token_to_get_course()
     {
         $this->getJson("/api/forge/course/{$this->course->id}")
             ->assertJson(['message' => 'Invalid Bearer token']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function valid_bearer_token_can_get_course()
     {
         $secret = DB::table('key_secrets')
@@ -422,7 +421,7 @@ class ForgeTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function need_valid_bearer_token_to_store_submission()
     {
         $this->postJson("/api/forge/submissions/forge-draft-id/test-draft-uuid/user/{$this->student_user->central_identity_id}")
@@ -506,7 +505,7 @@ class ForgeTest extends TestCase
         return $data;
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_save_forge_settings_with_a_draft_id_used_in_another_assignment()
     {
         $this->createOtherAssignmentUsingDraftId(self::SHARED_DRAFT_UUID);
@@ -528,7 +527,7 @@ class ForgeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_save_forge_settings_with_the_same_draft_id_twice()
     {
         $this->actingAs($this->user)
@@ -543,7 +542,7 @@ class ForgeTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_save_forge_settings_with_a_draft_id_only_used_in_this_assignment()
     {
         Http::fake(['*' => Http::response(['type' => 'success'], 200)]);
@@ -559,7 +558,7 @@ class ForgeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function saving_copied_forge_settings_does_not_change_another_assignments_draft_question()
     {
         Http::fake(['*' => Http::response(['type' => 'success'], 200)]);
@@ -607,7 +606,7 @@ class ForgeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function remixing_a_forge_question_from_my_courses_does_not_copy_its_drafts()
     {
         $source_assignment = $this->createOtherAssignmentUsingDraftId(self::SOURCE_DRAFT_UUID);
@@ -640,7 +639,7 @@ class ForgeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_remix_a_forge_draft_question_on_its_own()
     {
         $source_assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);

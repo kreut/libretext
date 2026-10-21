@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use App\Question;
 use Tests\TestCase;
@@ -20,13 +21,12 @@ class QueryTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function will_give_an_error_for_bad_page_ids() {
 
 
     }
-    /** @test */
+    #[Test]
     public function can_save_a_public_query_technology_to_the_database()
     {
         $this->actingAs($this->user)->postJson('/api/questions/getQuestionsByTags',[
@@ -37,7 +37,7 @@ class QueryTest extends TestCase
         $this->assertTrue($Question->where('page_id', '102682')->get()->isNotEmpty());
 
     }
-/** @test */
+#[Test]
     public function can_save_a_private_query_technology_to_the_database()
     {
         $this->actingAs($this->user)->postJson('/api/questions/getQuestionsByTags',[
@@ -47,7 +47,7 @@ class QueryTest extends TestCase
         $Question = new Question();
         $this->assertTrue($Question->where('page_id', '102654')->get()->isNotEmpty());
     }
-/** @test */
+#[Test]
     public function can_save_a_frankenstein_technology_to_the_database()
     {
         Storage::disk('public')->delete('102686.html');
@@ -64,7 +64,7 @@ class QueryTest extends TestCase
         $this->assertTrue( Storage::disk('public')->exists('102686.html'));
         Storage::disk('public')->delete('102686.html');
     }
-/** @test */
+#[Test]
     public function can_save_a_non_technology_query_to_the_database()
     {
         Storage::disk('public')->delete('102686.html');

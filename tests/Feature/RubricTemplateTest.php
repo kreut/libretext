@@ -2,10 +2,9 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\RubricTemplate;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class RubricTemplateTest extends TestCase
@@ -25,7 +24,7 @@ class RubricTemplateTest extends TestCase
         $this->rubricTemplate->save();
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_store_rubric_template()
     {
         $template_info = [
@@ -43,7 +42,7 @@ class RubricTemplateTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_update_rubric_template()
     {
         $template_info = [
@@ -59,7 +58,7 @@ class RubricTemplateTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_delete_rubric_template()
     {
 
@@ -69,7 +68,7 @@ class RubricTemplateTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_copy_rubric_template()
     {
 

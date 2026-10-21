@@ -20,7 +20,7 @@ class QuestionBank extends Model
         $is_efs = is_dir($efs_dir);
         $storage_path = $is_efs
             ? $efs_dir
-            : Storage::disk('local')->getAdapter()->getPathPrefix();
+            : Storage::disk('local')->path('');
         $question_in_assignment_information = $userAssignment ? $userAssignment->questionInAssignmentInformation() : [];
         if ($question_ids) {
             $latest_revisions = DB::table('question_revisions as qr1')

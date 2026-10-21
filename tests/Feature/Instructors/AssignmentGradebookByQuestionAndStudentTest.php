@@ -9,9 +9,6 @@ use App\Question;
 use App\Section;
 use App\User;
 use App\Traits\Test;
-
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -39,7 +36,7 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correctly_computes_the_percent_correct_by_student()
     {
         $this->question = factory(Question::class)->create(['page_id' => 1123123]);
@@ -88,8 +85,7 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_get_the_assignment_scores_by_question_and_user()
     {
 
@@ -98,8 +94,7 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to retrieve the question scores by user for this assignment.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_get_the_assignment_scores_by_question_and_user()
     {
         $this->actingAs($this->user)->getJson("/api/scores/assignment/get-assignment-questions-scores-by-user/{$this->assignment->id}/0/0")

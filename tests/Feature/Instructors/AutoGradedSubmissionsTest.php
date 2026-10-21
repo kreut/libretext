@@ -2,15 +2,9 @@
 
 namespace Tests\Feature\Instructors;
 
-use App\AssignmentGroupWeight;
 use App\Course;
-use App\Grader;
-use App\Section;
 use App\User;
 use App\Assignment;
-use App\Extension;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 use App\Traits\Test;
@@ -34,7 +28,7 @@ class AutoGradedSubmissionsTest extends TestCase
 
 
 
-/** @test */
+#[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_get_timings()
 {
 
@@ -43,7 +37,7 @@ class AutoGradedSubmissionsTest extends TestCase
         ->assertJson(['message' => "You are not allowed to get the submission times by assignment and student."]);
 
 }
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_get_auto_graded_submissions()
     {
 
@@ -52,8 +46,7 @@ class AutoGradedSubmissionsTest extends TestCase
             ->assertJson(['message' => "You can't get the auto-graded submissions for an assignment that is not in one of your courses."]);
 
     }
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_get_auto_graded_submissions()
     {
 

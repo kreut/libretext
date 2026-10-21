@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Tests\TestCase;
 
@@ -20,7 +21,7 @@ class UserTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_get_php_info()
     {
         $this->getJson("/api/php-info")
@@ -28,7 +29,7 @@ class UserTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function role_must_be_valid()
     {
         $this->actingAs($this->user)
@@ -37,7 +38,7 @@ class UserTest extends TestCase
             ->assertJson(['message' => 'That is not a valid role.']);
 
     }
-    /** @test */
+    #[Test]
     public function user_must_be_admin_to_update_role()
     {
         $this->actingAs($this->user)
@@ -46,7 +47,7 @@ class UserTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function user_must_be_admin_to_update_email()
     {
         $this->actingAs($this->user)

@@ -38,7 +38,7 @@ class AssignmentsSummaryTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_student_cannot_get_clicker_assignments_for_open_and_enrolled()
     {
 
@@ -47,7 +47,7 @@ class AssignmentsSummaryTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_can_get_summary_info_if_enrolled_in_course()
     {
 
@@ -56,7 +56,7 @@ class AssignmentsSummaryTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_cannot_get_scores_info_if_students_can_view_assignment_statistics_is_false()
     {
 
@@ -66,7 +66,7 @@ class AssignmentsSummaryTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_can_get_scores_info_if_students_can_view_assignment_statistics_is_true()
     {
         $this->assignment->students_can_view_assignment_statistics = 1;
@@ -76,7 +76,7 @@ class AssignmentsSummaryTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_cannot_get_summary_info_if_not_enrolled_in_course()
     {
 
@@ -87,7 +87,7 @@ class AssignmentsSummaryTest extends TestCase
     }
 
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_get_summary_info_if_not_enrolled_in_course()
     {
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/summary")

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
@@ -11,8 +12,6 @@ use App\RubricCategory;
 use App\RubricCategorySubmission;
 use App\Section;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -63,7 +62,7 @@ class ReportsTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function grader_student_or_instructor_can_get_rubric_category_submission()
     {
         $this->actingAs($this->user)
@@ -77,7 +76,7 @@ class ReportsTest extends TestCase
             ->assertJson(['type' => 'success']);
 
     }
-    /** @test */
+    #[Test]
     public function must_be_owner_or_grader_to_test_new_rubric_criteria()
     {
 
@@ -88,7 +87,7 @@ class ReportsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function must_be_owner_or_grader_to_update_custom_feedback()
     {
 
@@ -98,7 +97,7 @@ class ReportsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function must_be_owner_or_grader_to_get_the_rubric_categories_for_an_assignment_question()
     {
 
@@ -108,7 +107,7 @@ class ReportsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function must_have_token_to_receive_results_from_ai()
     {
         $this->postJson("/api/open-ai/results/lab-report")
@@ -117,7 +116,7 @@ class ReportsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function only_student_with_valid_submission_credentials_can_store_rubric_category_submission()
     {
         $student_user_2 = factory(User::class)->create(['role' => 3]);
@@ -134,7 +133,7 @@ class ReportsTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function non_grader_student_or_instructor_cannot_get_rubric_category_submission()
     {
         $student_user_2 = factory(User::class)->create(['role' => 3]);

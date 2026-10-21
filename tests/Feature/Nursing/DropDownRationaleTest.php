@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
 use Tests\TestCase;
@@ -61,7 +62,7 @@ class DropDownRationaleTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function dyad_must_have_two_drop_downs()
     {
         $qti_json = json_decode($this->dyad_qti_question_info['qti_json'], 1);

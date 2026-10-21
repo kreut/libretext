@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Framework;
 use App\FrameworkLevel;
 use App\LearningTree;
@@ -41,7 +42,7 @@ class FrameworkItemSyncLearningTreeTest extends TestCase
         $this->learningTree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_framework_items_by_learning_tree()
     {
         $this->actingAs($this->student)
@@ -49,7 +50,7 @@ class FrameworkItemSyncLearningTreeTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to get the framework alignments for the learning tree.']);
     }
 
-    /** @test */
+    #[Test]
     public function instructor_can_get_framework_items_by_learning_tree()
     {
         $this->actingAs($this->user)
@@ -57,7 +58,7 @@ class FrameworkItemSyncLearningTreeTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function saving_framework_alignment_creates_framework_item_learning_tree_rows_for_levels_and_descriptors()
     {
         $data = [
@@ -86,7 +87,7 @@ class FrameworkItemSyncLearningTreeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function resaving_framework_alignment_replaces_the_old_set_instead_of_accumulating_duplicates()
     {
         $this->learningTree->addFrameworkItems([
@@ -123,7 +124,7 @@ class FrameworkItemSyncLearningTreeTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function getting_learning_trees_by_descriptor_returns_synced_trees()
     {
         $this->learningTree->addFrameworkItems([

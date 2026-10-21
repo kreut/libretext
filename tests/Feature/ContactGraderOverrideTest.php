@@ -2,14 +2,13 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
 use App\Grader;
 use App\Section;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -35,7 +34,7 @@ class ContactGraderOverrideTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function if_there_is_no_grader_email_gets_sent_to_the_owner()
     {
         DB::table('graders')->delete();
@@ -44,7 +43,7 @@ class ContactGraderOverrideTest extends TestCase
             ->assertJson(['default_grader_id' => $this->course->user_id]);
     }
 
-    /** @test */
+    #[Test]
     public function if_there_is_a_grader_they_are_the_default_grader()
     {
         $this->actingAs($this->student_user)
@@ -53,7 +52,7 @@ class ContactGraderOverrideTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function if_there_is_an_override_grader_they_are_returned()
     {
 
@@ -65,7 +64,7 @@ class ContactGraderOverrideTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function user_must_be_enrolled_in_the_course_to_send_an_email_to_the_grader()
     {
         $this->actingAs($this->student_user_2)
@@ -74,7 +73,7 @@ class ContactGraderOverrideTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_update_grader_overrides()
     {
 
@@ -84,7 +83,7 @@ class ContactGraderOverrideTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function override_can_be_empty()
     {
         $this->actingAs($this->user)
@@ -92,7 +91,7 @@ class ContactGraderOverrideTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function override_can_be_that_user()
     {
         $this->actingAs($this->user)
@@ -100,7 +99,7 @@ class ContactGraderOverrideTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function override_can_be_a_grader()
     {
 
@@ -109,7 +108,7 @@ class ContactGraderOverrideTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function override_must_be_section_grader_empty_or_owner()
     {
 

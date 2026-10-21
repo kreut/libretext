@@ -14,7 +14,7 @@ class UdpateScoreToSubmissionsTable extends Migration
     public function up()
     {
         Schema::table('submissions', function (Blueprint $table) {
-            $table->unsignedDecimal('score',5)
+            $table->decimal('score',5)->unsigned()
                 ->after('submission')
                 ->comment("The computed score based on whether it was correct and any learning tree/late penalty deductions.")
                 ->change();

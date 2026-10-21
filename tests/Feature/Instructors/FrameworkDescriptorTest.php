@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Framework;
 use App\FrameworkDescriptor;
 use App\FrameworkLevel;
@@ -35,7 +36,7 @@ class FrameworkDescriptorTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_delete_descriptor()
     {
         $descriptor = FrameworkDescriptor::first();
@@ -45,7 +46,7 @@ class FrameworkDescriptorTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_delete_descriptor()
     {
         $descriptor = FrameworkDescriptor::first();
@@ -56,7 +57,7 @@ class FrameworkDescriptorTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function move_to_and_from_locations_must_be_valid()
     {
         $descriptor = DB::table('framework_descriptors')->first();
@@ -81,7 +82,7 @@ class FrameworkDescriptorTest extends TestCase
             ->assertJson(["message" => "You cannot move the descriptor to a framework level that you do not own."]);
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_move_descriptor()
     {
         $descriptor = DB::table('framework_descriptors')->first();

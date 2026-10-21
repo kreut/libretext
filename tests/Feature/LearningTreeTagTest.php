@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+use Illuminate\Support\Facades\DB;
 use App\LearningTree;
 use App\Question;
 use App\Tag;
@@ -21,7 +23,7 @@ class LearningTreeTagTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function saving_tags_creates_learning_tree_tag_rows_and_reuses_existing_tags()
     {
         $existing_tag = factory(Tag::class)->create(['tag' => 'existing tag']);
@@ -43,7 +45,7 @@ class LearningTreeTagTest extends TestCase
         $this->assertDatabaseCount('tags', 2);
     }
 
-    /** @test */
+    #[Test]
     public function removing_a_tag_deletes_it_from_the_shared_tags_table_if_nothing_else_uses_it()
     {
         $learningTree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
@@ -67,14 +69,13 @@ class LearningTreeTagTest extends TestCase
      * (SQLSTATE 23000 foreign key violation on question_tag, or silent data
      * loss if the FK constraint didn't exist). Fixed to also check
      * question_tag before deleting.
-     *
-     * @test
      */
+    #[Test]
     public function removing_a_tag_from_a_learning_tree_does_not_delete_it_if_a_question_still_uses_it()
     {
         $shared_tag = factory(Tag::class)->create(['tag' => 'shared tag']);
         $question = factory(Question::class)->create(['question_editor_user_id' => $this->user->id]);
-        \Illuminate\Support\Facades\DB::table('question_tag')->insert([
+        DB::table('question_tag')->insert([
             'question_id' => $question->id,
             'tag_id' => $shared_tag->id,
             'created_at' => now(),
@@ -82,7 +83,7 @@ class LearningTreeTagTest extends TestCase
         ]);
 
         $learningTree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
-        \Illuminate\Support\Facades\DB::table('learning_tree_tag')->insert([
+        DB::table('learning_tree_tag')->insert([
             'learning_tree_id' => $learningTree->id,
             'tag_id' => $shared_tag->id,
             'created_at' => now(),
@@ -106,14 +107,13 @@ class LearningTreeTagTest extends TestCase
      * must survive a Question's own cleanUpTags() call. Question.php's
      * cleanUpTags() needs the equivalent fix (check learning_tree_tag too),
      * matching what was done for LearningTree::cleanUpTags().
-     *
-     * @test
      */
+    #[Test]
     public function removing_a_tag_from_a_question_does_not_delete_it_if_a_learning_tree_still_uses_it()
     {
         $shared_tag = factory(Tag::class)->create(['tag' => 'shared tag']);
         $learningTree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
-        \Illuminate\Support\Facades\DB::table('learning_tree_tag')->insert([
+        DB::table('learning_tree_tag')->insert([
             'learning_tree_id' => $learningTree->id,
             'tag_id' => $shared_tag->id,
             'created_at' => now(),

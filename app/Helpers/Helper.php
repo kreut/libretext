@@ -580,7 +580,7 @@ class Helper
         $is_efs = is_dir($efs_dir);
         $storage_path = $is_efs
             ? $efs_dir
-            : Storage::disk('local')->getAdapter()->getPathPrefix();
+            : Storage::disk('local')->path('');
         if (!is_dir($storage_path)) {
             mkdir($storage_path);
         }
@@ -609,9 +609,9 @@ class Helper
 
 
         //Storage::disk('s3')->putObject($questionMediaUpload->getDir() . "/$file", file_get_contents($audio_file_path));
-        $adapter = Storage::disk('s3')->getDriver()->getAdapter(); // Get the filesystem adapter
+        $adapter = Storage::disk('s3'); // Get the filesystem adapter
         $client = $adapter->getClient(); // Get the aws client
-        $bucket = $adapter->getBucket(); // Get the current bucket
+        $bucket = $adapter->getConfig()['bucket']; // Get the current bucket
         $client->putObject([
             'Bucket' => $bucket,
             'Key' => "$dir/$file",

@@ -2,6 +2,7 @@
 
 namespace Tests\Browser;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\Register;
@@ -16,7 +17,7 @@ class RegisterTest extends DuskTestCase
         static::closeAll();
     }
 
-    /** @test */
+    #[Test]
     public function register_with_valid_data()
     {
         $this->browse(function ($browser) {
@@ -31,7 +32,7 @@ class RegisterTest extends DuskTestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function can_not_register_with_the_same_twice()
     {
         $user = factory(User::class)->create();

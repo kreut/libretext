@@ -53,7 +53,7 @@ class FillInTheBlankTest extends TestCase
             'qti_directory' => $this->directory]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function at_least_one_response()
     {
         $bad_item_body = "Nothing underlined here.";
@@ -67,7 +67,7 @@ class FillInTheBlankTest extends TestCase
     }
 
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function fill_in_the_blank_question_cannot_be_repeated()
     {
 /*

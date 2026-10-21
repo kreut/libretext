@@ -5,48 +5,46 @@ namespace App\Traits;
 
 
 use Exception;
-use Illuminate\Support\Facades\Log;
-use Jose\Component\Core\JWK;
-use Jose\Easy\Load;
+use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\KeyManagement\JWKFactory;
+use Jose\Component\Signature\Algorithm\HS256;
+use Jose\Component\Signature\JWSVerifier;
+use Jose\Component\Signature\Serializer\CompactSerializer;
 
 
 trait JWT
 {
 
-    public function getPayload($token, $secret) {
-        // TODO: Refactor secret here.
-        $jwk = JWKFactory::createFromSecret(
-       $secret
-        );
+    /**
+     * Verifies an HS256-signed JWT and returns its claims as an object.
+     * Replaces Jose\Easy\Load::jws(), which does not exist in web-token/jwt-library.
+     *
+     * @throws Exception if the token is malformed, not HS256, or the signature is invalid
+     */
+    public function getPayload($token, $secret)
+    {
+        $jwk = JWKFactory::createFromSecret($secret);
 
-        ///TODO: test a junk token!!!!!!!
-        /// TODO: refactor and get imathAS as well
-        $jwt = Load::jws($token) // We want to load and verify the token in the variable $token
-        ->algs(['HS256']) // The algorithms allowed to be used
-        // ->exp() // We check the "exp" claim
-        // ->iat(1000) // We check the "iat" claim. Leeway is 1000ms (1s)
-        // ->nbf() // We check the "nbf" claim
-        // ->aud('audience1') // Allowed audience
-        // ->iss('issuer') // Allowed issuer
-        // ->sub('subject') // Allowed subject
-        // ->jti('0123456789') // Token ID
-        ->key($jwk) // Key used to verify the signature
-        ->run(); // Go!
-        $jwt = (object)$jwt->claims->all();
+        $jws = (new CompactSerializer())->unserialize($token);
 
-        return $jwt;
+        // Only HS256 is allowed, as before (->algs(['HS256']))
+        $header = $jws->getSignature(0)->getProtectedHeader();
+        if (($header['alg'] ?? null) !== 'HS256') {
+            throw new Exception('Unsupported JWT algorithm: ' . ($header['alg'] ?? 'none'));
+        }
 
-        // $tokenParts = explode(".", $token);
-        // $tokenHeader = base64_decode($tokenParts[0]);
-        // $tokenPayload = base64_decode($tokenParts[1]);
-        // // $tokenPayload = str_replace("'", '"', $tokenPayload);
-        // $jwtPayload = json_decode($tokenPayload, false, 512, JSON_UNESCAPED_UNICODE);
-        // if (!$jwtPayload) {
-        //     Log::info($tokenPayload);
-        //     throw new Exception('JWT Payload does not exist: ' . $token);
-        // }
-        // return $jwtPayload;
+        $verifier = new JWSVerifier(new AlgorithmManager([new HS256()]));
+        if (!$verifier->verifyWithKey($jws, $jwk, 0)) {
+            throw new Exception('Invalid JWT signature.');
+        }
+
+        // Same shape as before: top-level object, nested claims as arrays
+        $claims = json_decode($jws->getPayload(), true, 512, JSON_THROW_ON_ERROR);
+        if (!is_array($claims)) {
+            throw new Exception('JWT payload is not a JSON object.');
+        }
+
+        return (object)$claims;
     }
 
 }

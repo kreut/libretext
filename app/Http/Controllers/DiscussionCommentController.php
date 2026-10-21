@@ -90,9 +90,9 @@ class DiscussionCommentController extends Controller
                 default:
                     throw new Exception("$environment is not set up in the mp4 conversion endpoint.");
             }
-            $adapter = Storage::disk($disk)->getDriver()->getAdapter(); // Get the filesystem adapter
+            $adapter = Storage::disk($disk); // Get the filesystem adapter
             $client = $adapter->getClient(); // Get the aws client
-            $bucket = $adapter->getBucket(); // Get the current bucket
+            $bucket = $adapter->getConfig()['bucket']; // Get the current bucket
             // Download the file from S3 and save it locally
             $local_path = storage_path('app/' . $questionMediaUpload->getDir() . "/" . $filename);
             $client->getObject([
@@ -320,9 +320,9 @@ class DiscussionCommentController extends Controller
             $storage_path = app()->environment('local')
                 ? app()->storagePath() . "/app/tmp"
                 : '/tmp';
-            $adapter = Storage::disk('s3')->getDriver()->getAdapter(); // Get the filesystem adapter
+            $adapter = Storage::disk('s3'); // Get the filesystem adapter
             $client = $adapter->getClient(); // Get the aws client
-            $bucket = $adapter->getBucket(); // Get the current bucket
+            $bucket = $adapter->getConfig()['bucket']; // Get the current bucket
             $path = "{$questionMediaUpload->getDir()}/$s3_key";
             if (Storage::disk('s3')->exists($path)) {
                 $result = $client->getObject([
@@ -794,8 +794,8 @@ class DiscussionCommentController extends Controller
         } else {
             try {
                 $disk = Storage::disk('s3');
-                $client = $disk->getDriver()->getAdapter()->getClient();
-                $bucket = $disk->getDriver()->getAdapter()->getBucket(); // Get the current bucket
+                $client = $disk->getClient();
+                $bucket = $disk->getConfig()['bucket']; // Get the current bucket
                 $result = $client->headObject([
                     'Bucket' => $bucket,
                     'Key' => "{$questionMediaUpload->getDir()}/$file",

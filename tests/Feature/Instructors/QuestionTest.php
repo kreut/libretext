@@ -3,6 +3,7 @@
 namespace Tests\Feature\Instructors;
 
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\LearningTree;
@@ -34,7 +35,7 @@ class QuestionTest extends TestCase
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_add_time_to_a_clicker()
     {
         $this->actingAs($this->student_user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/add-time")
@@ -42,7 +43,7 @@ class QuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_customize_the_clicker_timing()
     {
         $this->actingAs($this->student_user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/custom-clicker-time-to-submit",
@@ -51,7 +52,7 @@ class QuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function customized_clicker_timing_must_be_valid()
     {
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/custom-clicker-time-to-submit",
@@ -61,7 +62,7 @@ class QuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_restart_a_clicker_assessment()
     {
         $this->actingAs($this->student_user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/open-clicker")
@@ -69,14 +70,14 @@ class QuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_pause_a_clicker_assessment()
     {
         $this->actingAs($this->student_user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/pause-clicker")
             ->assertJson(['message' => 'You are not allowed to pause this clicker assessment.']);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_resume_a_clicker_assessment()
     {
         $this->actingAs($this->student_user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/resume-clicker")
@@ -85,7 +86,7 @@ class QuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function an_assignment_with_a_learning_tree_assessment_will_return_this_info()
     {
 
@@ -99,7 +100,7 @@ class QuestionTest extends TestCase
         $this->assertEquals(true, $response['rows'][0]['learning_tree']);
     }
 
-    /** @test */
+    #[Test]
     public function an_assignment_that_is_just_auto_graded_will_return_this_info()
     {
 
@@ -109,7 +110,7 @@ class QuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function an_assignment_that_is_not_just_auto_graded_will_return_this_info()
     {
         DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
@@ -120,7 +121,7 @@ class QuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function a_student_cannot_view_the_question_view_page()
     {
         $this->actingAs($this->student_user)->getJson("/api/questions/{$this->question->id}")
@@ -129,7 +130,7 @@ class QuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function a_non_student_can_view_the_question_view_page()
     {
         $this->actingAs($this->user)->getJson("/api/questions/{$this->question->id}")

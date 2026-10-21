@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Course;
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class WebworkSubmissionErrorsTest extends TestCase
@@ -16,7 +14,7 @@ class WebworkSubmissionErrorsTest extends TestCase
         parent::setUp();
     }
 
-    /** @test */
+    #[Test]
     public function only_admin_can_get_webwork_submission_errors()
     {
         $user = factory(User::class)->create(['id'=>20]);

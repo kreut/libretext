@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Question;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -34,7 +33,7 @@ class RubricPointsBreakdownTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_update_custom_rubric()
     {
         $this->actingAs($this->user_2)
@@ -42,7 +41,7 @@ class RubricPointsBreakdownTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update the custom rubric for that question.']);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_check_if_rubric_points_breakdown_exists()
     {
         $this->actingAs($this->user_2)
@@ -51,7 +50,7 @@ class RubricPointsBreakdownTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_get_rubric_points_breakdown_by_assignment_user_question()
     {
         $student_user = factory(User::class)->create();

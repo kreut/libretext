@@ -14,7 +14,7 @@ class UpdateDefaultOpenEndedSubmissionTypeV2ToAssignments extends Migration
     public function up()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->string('default_open_ended_submission_type', 10)->change();
+            $table->string('default_open_ended_submission_type', 10)->nullable()->change();
         });
     }
 

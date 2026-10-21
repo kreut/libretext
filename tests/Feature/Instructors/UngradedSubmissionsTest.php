@@ -2,24 +2,25 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use App\Course;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class UngradedSubmissionsTest extends TestCase
 {
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $course;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $user_2;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $user;
 
@@ -32,14 +33,14 @@ class UngradedSubmissionsTest extends TestCase
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_get_ungraded_submissions(){
         $this->actingAs($this->user_2)->getJson("api/submission-files/ungraded-submissions/{$this->course->id}")
             ->assertJson(['message'=> 'You are not allowed to get the ungraded submissions for this course.']);
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_get_ungraded_submissions(){
         $this->actingAs($this->user)->getJson("api/submission-files/ungraded-submissions/{$this->course->id}")
             ->assertJson(['type'=> 'success']);

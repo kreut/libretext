@@ -5,7 +5,6 @@ namespace Tests\Feature\Instructors;
 use App\Assignment;
 use App\AutoRelease;
 use App\Course;
-use App\Question;
 use App\Section;
 use App\User;
 use Illuminate\Support\Facades\Artisan;
@@ -141,7 +140,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         DB::table('assignment_question')->where('assignment_id', $this->assignment->id)->delete();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_cannot_hide_scores_for_real_time_assignment()
     {
         $this->assignment->update(['assessment_type' => 'real time', 'show_scores' => 1]);
@@ -152,7 +151,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals(1, $this->assignment->fresh()->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_cannot_hide_scores_for_learning_tree_assignment()
     {
         $this->assignment->update(['assessment_type' => 'learning tree', 'show_scores' => 1]);
@@ -163,7 +162,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals(1, $this->assignment->fresh()->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_release_hidden_scores_for_real_time_assignment()
     {
         $this->assignment->update(['assessment_type' => 'real time', 'show_scores' => 0]);
@@ -173,7 +172,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals(1, $this->assignment->fresh()->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_still_hide_scores_for_delayed_assignment()
     {
         $this->assignment->update(['assessment_type' => 'delayed', 'show_scores' => 1]);
@@ -183,7 +182,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals(0, $this->assignment->fresh()->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function creating_a_real_time_assignment_releases_scores_and_ignores_show_scores_auto_release()
     {
         $assignment_info = $this->assignmentInfoFor('real time');
@@ -200,7 +199,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertNull($auto_release ? $auto_release->show_scores : null);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_a_real_time_assignment_releases_scores_and_clears_show_scores_auto_release()
     {
         $this->removeQuestions();
@@ -216,7 +215,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertNull($auto_release ? $auto_release->show_scores : null);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_a_learning_tree_assignment_ignores_a_submitted_show_scores_auto_release()
     {
         $this->removeQuestions();
@@ -236,7 +235,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertNull($auto_release->show_scores_after);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function switching_a_real_time_assignment_to_delayed_hides_the_scores()
     {
         $this->removeQuestions();
@@ -249,7 +248,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals(0, $this->assignment->fresh()->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function creating_from_a_real_time_template_releases_scores_and_clears_show_scores_auto_release()
     {
         $this->assignment->update(['assessment_type' => 'real time', 'show_scores' => 0]);
@@ -266,7 +265,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertNull($auto_release ? $auto_release->show_scores : null);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function creating_from_a_delayed_template_still_hides_scores()
     {
         $this->assignment->update(['assessment_type' => 'delayed', 'show_scores' => 1]);
@@ -279,7 +278,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals(0, $new_assignment->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function importing_a_learning_tree_assignment_releases_scores_and_drops_the_course_default_show_scores()
     {
         $this->assignment->update(['assessment_type' => 'learning tree', 'show_scores' => 0]);
@@ -299,7 +298,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertNull($auto_release->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function global_manual_off_does_not_hide_real_time_scores_but_does_hide_delayed_scores()
     {
         $this->assignment->update(['assessment_type' => 'real time', 'show_scores' => 1]);
@@ -320,7 +319,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals(0, $delayed_assignment->fresh()->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_activate_the_show_scores_auto_release_for_a_real_time_assignment()
     {
         $this->assignment->update(['assessment_type' => 'real time']);
@@ -333,7 +332,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals(0, $this->autoReleaseFor($this->assignment->id)->show_scores_activated);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function compare_to_course_default_finds_no_mismatch_when_the_settings_match()
     {
         $this->assignment->update(['assessment_type' => 'delayed', 'formative' => 0, 'late_policy' => 'not accepted']);
@@ -347,7 +346,7 @@ class ScoresAlwaysReleasedTest extends TestCase
             ->assertJson(['type' => 'success', 'non_matching_auto_releases' => []]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function compare_to_course_default_detects_an_assignment_timing_the_course_does_not_have()
     {
         $this->assignment->update(['assessment_type' => 'delayed', 'formative' => 0]);
@@ -361,7 +360,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals(['shown'], collect($response->json('non_matching_auto_releases'))->pluck('key')->toArray());
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function compare_to_course_default_ignores_show_scores_for_real_time()
     {
         $this->assignment->update(['assessment_type' => 'real time', 'formative' => 0]);
@@ -373,7 +372,7 @@ class ScoresAlwaysReleasedTest extends TestCase
             ->assertJson(['type' => 'success', 'non_matching_auto_releases' => []]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function applying_course_auto_release_to_all_skips_show_scores_for_real_time()
     {
         $this->assignment->update(['assessment_type' => 'real time']);
@@ -397,7 +396,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals('2 days', $this->autoReleaseFor($delayed_assignment->id)->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function command_dry_run_does_not_change_anything()
     {
         $this->assignment->update(['assessment_type' => 'real time', 'show_scores' => 0]);
@@ -409,7 +408,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals('1 day', $this->autoReleaseFor($this->assignment->id)->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function command_releases_scores_and_clears_auto_release_only_for_real_time_and_learning_tree()
     {
         $this->assignment->update(['assessment_type' => 'real time', 'show_scores' => 0]);
@@ -437,7 +436,7 @@ class ScoresAlwaysReleasedTest extends TestCase
         $this->assertEquals('1 day', $this->autoReleaseFor($delayed_assignment->id)->show_scores);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function command_saves_the_previous_values_and_revert_restores_them()
     {
         $this->assignment->update(['assessment_type' => 'real time', 'show_scores' => 0]);

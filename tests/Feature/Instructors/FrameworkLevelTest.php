@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Framework;
 use App\FrameworkLevel;
 use App\User;
@@ -36,7 +37,7 @@ class FrameworkLevelTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function descriptors_will_not_be_repeated_within_a_framework()
     {
         $this->_createFrameworkAndLevels();
@@ -51,7 +52,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function descriptor_action_must_be_valid()
     {
         $this->_createFrameworkAndLevels();
@@ -68,7 +69,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function only_the_owner_can_upload()
     {
 
@@ -82,7 +83,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function an_upload_needs_correct_headings()
     {
 
@@ -98,7 +99,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function csv_should_not_have_missing_entries_within_the_structure()
     {
 
@@ -111,7 +112,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function title_cannot_be_repeated_at_a_level_when_updating()
     {
         $this->_createFrameworkAndLevels();
@@ -127,7 +128,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function parent_id_must_be_correct_based_on_level_to_store_with_descriptors()
     {
         $framework_level_info = ['description' => 'some description',
@@ -144,7 +145,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_move_if_there_are_too_many_sublevels()
     {
         $this->_createFrameworkAndLevels();
@@ -162,7 +163,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_move_to_lower_level_within_a_given_level()
     {
         $this->_createFrameworkAndLevels();
@@ -180,7 +181,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_move_to_the_same_level()
     {
         $this->_createFrameworkAndLevels();
@@ -198,7 +199,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_move_levels()
     {
         $this->_createFrameworkAndLevels();
@@ -226,7 +227,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_change_framework_level_position_within_level()
     {
         $framework_level_info = [
@@ -241,7 +242,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_store_framework_level()
     {
         $this->_createFrameworkAndLevels();
@@ -262,7 +263,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function level_must_be_valid_when_storing()
     {
         $this->_createFrameworkAndLevels();
@@ -282,7 +283,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function parent_id_and_level_should_match()
     {
         $this->_createFrameworkAndLevels();
@@ -303,7 +304,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public
     function owner_can_update_framework_level()
     {
@@ -314,7 +315,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public
     function non_owner_cannot_update_framework_level()
     {
@@ -324,7 +325,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_delete_framework_level()
     {
 
@@ -334,7 +335,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_get_all_children()
     {
         $this->actingAs($this->user_2)
@@ -343,7 +344,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_get_all_children()
     {
         $this->actingAs($this->user)
@@ -353,7 +354,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_get_all_levels_from_same_parent()
     {
         $this->actingAs($this->user_2)
@@ -362,7 +363,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_get_all_levels_from_same_parent()
     {
         $this->actingAs($this->user)
@@ -372,7 +373,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function owner_can_change_framework_level_position_within_level()
     {
         $this->_createFrameworkAndLevels();
@@ -391,7 +392,7 @@ class FrameworkLevelTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_store_level_with_descriptor()
     {
         $framework_level_info = ['description' => 'some description',
@@ -407,7 +408,7 @@ class FrameworkLevelTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function title_cannot_be_repeated_at_a_level()
     {
         $framework_level_info = ['description' => 'some description',
@@ -422,7 +423,7 @@ class FrameworkLevelTest extends TestCase
             ->assertJsonValidationErrors('title');
     }
 
-    /** @test */
+    #[Test]
     public function optionally_delete_associated_descriptors()
     {
         $this->_createFrameworkAndLevels();
@@ -441,7 +442,7 @@ class FrameworkLevelTest extends TestCase
         $this->assertDatabaseMissing('framework_levels', ['id' => $framework_level_id]);
     }
 
-    /** @test */
+    #[Test]
     public function optionally_move_associated_descriptors_to_a_new_level()
     {
         $this->_createFrameworkAndLevels();

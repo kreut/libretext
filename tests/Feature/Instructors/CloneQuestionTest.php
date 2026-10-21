@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Question;
@@ -11,7 +12,6 @@ use App\User;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class CloneQuestionTest extends TestCase
@@ -28,7 +28,7 @@ class CloneQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function must_be_owner_of_assignment_to_check_question_weight_submission_issue()
     {
         $course = factory(Course::class)->create(['user_id' => $this->user->id]);
@@ -40,7 +40,7 @@ class CloneQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_clone_question_into_assignment_that_uses_question_weights_and_has_a_submission()
     {
         $course = factory(Course::class)->create(['user_id' => $this->user->id]);
@@ -71,7 +71,7 @@ class CloneQuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function will_create_a_cloned_questions_folder_if_none_exist()
     {
         $user_1 = factory(User::class)->create(['role' => 2]);
@@ -83,7 +83,7 @@ class CloneQuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_instructor_or_editor_cannot_get_cloned_questions_folder()
     {
 
@@ -93,7 +93,7 @@ class CloneQuestionTest extends TestCase
             ->assertJson(['message' => "You are not allowed to retrieve the Cloned Questions folder."]);
     }
 
-    /** @test */
+    #[Test]
     public function private_question_you_do_not_own_cannot_be_cloned()
     {
 
@@ -114,7 +114,7 @@ class CloneQuestionTest extends TestCase
             )->assertJson(['message' => "This is a private question and cannot be cloned."]);
     }
 
-    /** @test */
+    #[Test]
     public function question_with_a_restrictive_license_you_do_not_own_cannot_be_cloned()
     {
 
@@ -137,7 +137,7 @@ class CloneQuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function make_sure_admin_acting_as_really_is_admin()
     {
         $this->actingAs($this->user)
@@ -150,7 +150,7 @@ class CloneQuestionTest extends TestCase
             )->assertJson(['message' => "You are not Admin."]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_copy_questions()
     {
 
@@ -165,7 +165,7 @@ class CloneQuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function question_editor_must_be_instructor_or_non_instructor_editor()
     {
         $this->user->role = 3;
@@ -180,7 +180,7 @@ class CloneQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function question_id_must_be_valid()
     {
         $this->actingAs($this->admin_user)
@@ -192,7 +192,7 @@ class CloneQuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_copy_questions_to_another_account()
     {
         $this->actingAs($this->user)
@@ -203,7 +203,7 @@ class CloneQuestionTest extends TestCase
             )->assertJson(['message' => "You cannot clone a question to someone else's account."]);
     }
 
-    /** @test */
+    #[Test]
     public function assignment_id_must_be_valid()
     {
         $this->actingAs($this->user)
@@ -215,7 +215,7 @@ class CloneQuestionTest extends TestCase
             )->assertJson(['message' => "You cannot clone a question to someone else's account."]);
     }
 
-    /** @test */
+    #[Test]
     public function must_clone_to_an_assignment_you_own()
     {
         $user_1 = factory(User::class)->create(['role' => 2]);
@@ -232,7 +232,7 @@ class CloneQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function you_must_choose_a_folder()
     {
         $user_1 = factory(User::class)->create(['role' => 2]);
@@ -249,7 +249,7 @@ class CloneQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function folder_must_exist()
     {
         $user_1 = factory(User::class)->create(['role' => 2]);
@@ -267,7 +267,7 @@ class CloneQuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function you_must_own_the_folder()
     {
 
@@ -287,7 +287,7 @@ class CloneQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function question_gets_added_to_the_assignment()
     {
 
@@ -309,7 +309,7 @@ class CloneQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_copy_questions()
     {
         $this->user->role = 3;

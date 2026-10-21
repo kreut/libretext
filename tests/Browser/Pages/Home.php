@@ -43,7 +43,7 @@ class Home extends Page
     /**
      * Click on the log out link.
      *
-     * @param  \Laravel\Dusk\Browser $browser
+     * @param Browser $browser
      * @return void
      */
     public function clickLogout($browser)

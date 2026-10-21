@@ -55,7 +55,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function linking_to_lms_will_show_if_in_different_account()
     {
         $lms_course_id = 'adsfs';
@@ -68,7 +68,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_update_disciplines()
     {
         $this->actingAs($this->user_2)
@@ -78,7 +78,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_get_the_mini_summary_if_you_do_not_have_an_analytics_token()
     {
         $this->actingAs($this->user_2)
@@ -91,7 +91,7 @@ class CoursesIndexTest extends TestCase
                 'message' => 'There was an error getting the course mini-summary.  Please try again or contact us for assistance.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_update_a_course_if_you_are_not_the_owner()
     {
         //create two users
@@ -109,7 +109,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function if_shifting_dates_due_time_and_date_must_be_valid()
     {
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}",
@@ -120,7 +120,7 @@ class CoursesIndexTest extends TestCase
             ->assertJsonValidationErrors(['due_time', 'due_date']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_order_courses()
     {
 
@@ -133,7 +133,7 @@ class CoursesIndexTest extends TestCase
         $this->assertDatabaseHas('course_orders', ['course_id' => $this->course->id, 'order' => 2]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_order_courses()
     {
 
@@ -141,7 +141,7 @@ class CoursesIndexTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to re-order a course that is not yours.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_import_non_public_course()
     {
         $this->course_2->public = 0;
@@ -150,7 +150,7 @@ class CoursesIndexTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to import that course.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_instructor_cannot_import_a_course()
     {
         $this->actingAs($this->grader_user)->postJson("/api/courses/import/{$this->course_2->id}")
@@ -158,7 +158,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function import_action_must_be_copy_or_import()
     {
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", ['action' => 'bogus action'])
@@ -166,7 +166,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_import_a_course()
     {
 
@@ -175,7 +175,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_copy_your_own_course()
     {
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course->id}", ['action' => 'clone'])
@@ -183,7 +183,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_non_owner_cannot_toggle_showing_a_course()
     {
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course_2->id}/show-course/1")
@@ -191,7 +191,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function an_owner_can_toggle_showing_a_course()
     {
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/show-course/1")
@@ -199,7 +199,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function grader_access_code_must_be_valid()
     {
 
@@ -209,7 +209,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function only_graders_can_add_themselves_to_courses()
     {
 
@@ -219,7 +219,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_grader_with_a_valid_access_code_can_add_themselves_to_a_course()
     {
 
@@ -232,31 +232,31 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_refresh_course_access_code()
     {
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_refresh_course_access_code()
     {
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_remove_a_grader_from_a_course()
     {
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_remove_a_grader_from_a_course()
     {
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_cannot_email_grader_invitation_without_a_valid_email()
     {
         $this->actingAs($this->user)->postJson("/api/invitations/grader",
@@ -266,7 +266,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_cannot_email_grader_invitation_if_not_owner()
     {
         $this->actingAs($this->user_2)->postJson("/api/invitations/grader",
@@ -276,7 +276,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_can_email_grader_invitation_if_owner()
     {
         $this->markTestIncomplete(
@@ -286,7 +286,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function grader_can_get_courses_for_which_they_grade()
     {
 
@@ -297,14 +297,14 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_get_your_courses()
     {
         $this->actingAs($this->user)->getJson("/api/courses")
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_get_courses_if_student()
 
     {
@@ -314,14 +314,13 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correctly_handles_different_timezones()
     {
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_delete_a_course_if_you_are_the_owner()
     {
 
@@ -330,7 +329,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_delete_a_course_if_you_are_not_the_owner()
     {
 
@@ -343,7 +342,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_create_a_course()
     {
 
@@ -364,7 +363,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function term_field_is_required()
     {
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}", [
@@ -375,7 +374,7 @@ class CoursesIndexTest extends TestCase
         ])->assertJsonValidationErrors(['term']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_update_a_course_if_you_are_the_owner()
     {
 
@@ -392,7 +391,7 @@ class CoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_include_a_course_name()
     {
         $this->actingAs($this->user)->postJson('/api/courses', [
@@ -404,7 +403,7 @@ class CoursesIndexTest extends TestCase
         ])->assertJsonValidationErrors(['name']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function textbook_url_must_be_valid()
     {
         $this->actingAs($this->user)->postJson('/api/courses', [
@@ -417,7 +416,7 @@ class CoursesIndexTest extends TestCase
         ])->assertJsonValidationErrors('textbook_url');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_include_valid_start_date()
     {
         $this->actingAs($this->user)->postJson('/api/courses', [
@@ -430,7 +429,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_include_valid_end_date()
     {
         $this->actingAs($this->user)->postJson('/api/courses', [
@@ -443,7 +442,7 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function end_date_must_be_after_start_date()
     {
         $this->actingAs($this->user)->postJson('/api/courses', [

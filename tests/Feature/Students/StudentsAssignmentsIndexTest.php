@@ -3,11 +3,8 @@
 namespace Tests\Feature\Students;
 
 
-use App\AssignToUser;
 use App\FinalGrade;
 use App\Section;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\User;
 use App\Score;
@@ -79,8 +76,7 @@ class StudentsAssignmentsIndexTest extends TestCase
             'letter_grades' => $finalGrade->defaultLetterGrades()]);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correctly_computes_the_final_score_for_the_student_if_all_assignments_show_scores_and_student_is_not_assigned_to_all()
     {
         //4 assignments with 2 different weights
@@ -105,8 +101,7 @@ class StudentsAssignmentsIndexTest extends TestCase
 
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correctly_computes_the_final_score_for_the_student_if_all_assignments_show_scores_and_student_is_assigned_to_all()
     {
         //4 assignments with 2 different weights
@@ -123,7 +118,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correctly_computes_the_z_score_for_an_assignment()
     {
         $scores = [80, 40, 36];
@@ -142,8 +137,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->assertEquals($z_score, $response['assignments'][0]['z_score']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_be_enrolled_in_the_course_to_view_the_score()
     {
 
@@ -153,8 +147,7 @@ class StudentsAssignmentsIndexTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function course_must_have_students_can_view_weighted_average_enabled_to_view_the_score()
     {
         $this->course->students_can_view_weighted_average = 0;
@@ -166,14 +159,14 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_get_assignment_file_info_if_owner()
     {
         $this->actingAs($this->student_user)->getJson("/api/assignment-files/assignment-file-info-by-student/{$this->assignment->id}")
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_get_assignment_file_info_if_not_owner()
     {
         $this->actingAs($this->student_user_2)->getJson("/api/assignment-files/assignment-file-info-by-student/{$this->assignment->id}")
@@ -181,7 +174,7 @@ class StudentsAssignmentsIndexTest extends TestCase
                 'message' => 'You are not allowed to get the information on this file submission.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_download_assignment_file_if_not_owner()
     {
         /*    need exception... $this->actingAs($this->student_user_2)->postJson("/api/submission-files/download",
@@ -195,15 +188,14 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correctly_handles_different_timezones()
     {
 
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_store_assignment_file_if_enrolled_in_course()
     {
 
@@ -214,7 +206,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function computes_the_correct_z_score_at_the_course_level()
     {
         $this->course->show_z_scores = 1;
@@ -237,10 +229,7 @@ class StudentsAssignmentsIndexTest extends TestCase
 
     }
 
-    /** @test */
-
-
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correctly_computes_the_z_score_for_an_assignment_if_nothing_submitted()
     {
         $scores = [40, 36];

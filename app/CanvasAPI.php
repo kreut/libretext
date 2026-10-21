@@ -24,7 +24,11 @@ class CanvasAPI extends Model
      */
     private $user_id;
 
-    public function __construct(object $lti_registration, int $user_id, array $attributes = array())
+    /**
+     * The arguments are optional because Laravel 11+ creates a bare instance of every model
+     * (with no arguments) while booting it. Real callers always pass both.
+     */
+    public function __construct(?object $lti_registration = null, ?int $user_id = null, array $attributes = array())
     {
         $this->lti_registration = $lti_registration;
         $this->user_id = $user_id;

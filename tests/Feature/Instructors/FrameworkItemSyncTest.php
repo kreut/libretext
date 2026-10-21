@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Framework;
 use App\FrameworkLevel;
 use App\Question;
@@ -34,7 +35,7 @@ class FrameworkItemSyncTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_questions_synced_to_descriptor()
     {
         $this->user->role = 3;
@@ -46,7 +47,7 @@ class FrameworkItemSyncTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function instructor_can_get_questions_synced_to_descriptor()
     {
         $framework_descriptor = DB::table('framework_descriptors')->first();
@@ -57,7 +58,7 @@ class FrameworkItemSyncTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_framework_items_by_question()
     {
         $this->user->role = 3;
@@ -67,7 +68,7 @@ class FrameworkItemSyncTest extends TestCase
             ->assertJson(["message" => "You are not allowed to get the framework alignments for the question."]);
     }
 
-    /** @test */
+    #[Test]
     public function instructor_can_get_framework_items_by_question()
     {
         $this->actingAs($this->user)

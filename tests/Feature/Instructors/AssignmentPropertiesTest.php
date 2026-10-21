@@ -10,8 +10,6 @@ use App\LearningTree;
 use App\Question;
 use App\Section;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\Traits\Test;
@@ -46,7 +44,7 @@ class AssignmentPropertiesTest extends TestCase
     }
 
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function the_correct_formatted_late_policy_is_retrieved_for_not_accepted()
     {
         $this->assignment->late_policy = 'not accepted';
@@ -58,8 +56,7 @@ class AssignmentPropertiesTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_cannot_change_to_external_if_a_question_already_exists()
     {
         $this->question = factory(Question::class)->create(['page_id' => 112356]);
@@ -77,8 +74,7 @@ class AssignmentPropertiesTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_cannot_change_to_a_non_learning_tree_from_learning_tree_if_learning_tree_exists()
     {
         $this->question = factory(Question::class)->create(['page_id' => 187376]);
@@ -104,8 +100,7 @@ class AssignmentPropertiesTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function user_cannot_change_to_learning_tree_if_regular_question_exists()
     {
         $this->question = factory(Question::class)->create(['page_id' => 212361]);
@@ -123,7 +118,7 @@ class AssignmentPropertiesTest extends TestCase
             ->assertJson(['message' => "You can't switch to a learning tree assessment type since this is not a learning tree assignment and you already have non-learning tree questions."]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function time_limit_is_included_in_the_assignment_summary_for_the_instructor()
     {
         AssignToTiming::where('assignment_id', $this->assignment->id)->update(['time_limit' => '2 minutes']);
@@ -133,7 +128,7 @@ class AssignmentPropertiesTest extends TestCase
             ->assertJson($response);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function time_limit_is_included_when_listing_assignments_for_the_instructor()
     {
         AssignToTiming::where('assignment_id', $this->assignment->id)->update(['time_limit' => '90 seconds']);

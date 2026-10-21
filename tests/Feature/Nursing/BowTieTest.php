@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
 use Tests\TestCase;
@@ -67,8 +68,7 @@ class BowTieTest extends TestCase
         ];
     }
 
-    /** @test */
-
+    #[Test]
     public function values_within_a_group_should_not_be_repeated()
     {
         $this->qti_question_info['actions_to_take'] = [
@@ -100,7 +100,7 @@ class BowTieTest extends TestCase
         $this->assertEquals('A prompt is required.', json_decode($response)->errors->qti_prompt[0]);
     }
 
-    /** @test */
+    #[Test]
     public function each_item_needs_text()
     {
         $identifier = $this->qti_question_info['actions_to_take'][0]['identifier'];
@@ -110,7 +110,7 @@ class BowTieTest extends TestCase
         $this->assertEquals('Text is required.', $this->getErrorResponse($response)->specific->{$identifier});
     }
 
-    /** @test */
+    #[Test]
     public function each_item_needs_a_distractor()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",

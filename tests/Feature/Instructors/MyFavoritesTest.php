@@ -9,9 +9,6 @@ use App\MyFavorite;
 use App\SavedQuestionsFolder;
 use App\User;
 use App\Traits\Test;
-
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -46,7 +43,7 @@ class MyFavoritesTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_only_save_to_my_favorites_if_commons_or_public_or_course_owner_or_question_editor()
     {
         $this->question->public = 0;
@@ -95,7 +92,7 @@ class MyFavoritesTest extends TestCase
 
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_destroy_a_my_favorites_question_if_its_not_in_your_folder()
     {
         $this->saved_questions_folder->user_id = $this->user->id + 1;
@@ -105,7 +102,7 @@ class MyFavoritesTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to remove that question from My Favorites.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_destroy_a_my_favorites_question_if_the_question_is_not_in_your_folder()
     {
         $myFavorite = new MyFavorite();
@@ -119,7 +116,7 @@ class MyFavoritesTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to remove that question from My Favorites.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_destroy_a_my_favorites_question_if_its_in_your_folder()
     {
         $myFavorite = new MyFavorite();
@@ -134,7 +131,7 @@ class MyFavoritesTest extends TestCase
         $this->assertDatabaseCount('my_favorites', 0);
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_own_the_favorites_folder_to_save_to_it()
     {
         $data = ['question_ids' => [$this->question->id],

@@ -2,20 +2,15 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\AssignToTiming;
 use App\AssignToUser;
-use App\BetaAssignment;
-use App\BetaCourse;
 use App\Course;
-use App\LearningTree;
 use App\Question;
-use App\School;
 use App\Section;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -44,7 +39,7 @@ class SubmitWorkTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function work_cannot_be_submitted_if_assignment_is_past_due()
     {
      $this->_enrollStudentUser();
@@ -54,7 +49,7 @@ class SubmitWorkTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function unenrolled_student_cannot_submit_work()
     {
         $this->actingAs($this->user)
@@ -64,7 +59,7 @@ class SubmitWorkTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function unenrolled_student_cannot_submit_audio_work()
     {
         $this->actingAs($this->student_user)
@@ -73,7 +68,7 @@ class SubmitWorkTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_delete_submitted_work_if_assignment_is_closed()
     {
         $this->_enrollStudentUser();
@@ -83,7 +78,7 @@ class SubmitWorkTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_get_submitted_work_with_pending_score()
     {
         $new_user = factory(User::class)->create();

@@ -68,7 +68,7 @@ class importDatabaseToVapor extends Command
             /* echo $ssh->exec('gunzip dmp.sql.gz');
              echo $ssh->exec('ls');
              exit;*/
-            $tables = DB::connection()->getDoctrineSchemaManager()->listTableNames();
+            $tables = array_column(\Illuminate\Support\Facades\Schema::getTables(), "name");
 
             $mysql8_db_password = config('myconfig.mysql8_db_password');
             //shell_exec('scp -i ~/.ssh/vapor-jump-production /Users/franciscaparedes/adapt_laravel_8/storage/app/db_backups/2024-03-12.sql ec2-user@ec2-54-183-249-159.us-west-1.compute.amazonaws.com:2024-03-12.sql');

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -21,7 +22,7 @@ class LtiRegistrationTest extends TestCase
             'school' => 'western washington university'];
     }
 
-    /** @test */
+    #[Test]
     public function school_must_be_valid()
     {
 
@@ -31,14 +32,14 @@ class LtiRegistrationTest extends TestCase
         ])->assertJsonValidationErrors(['school']);
     }
 
-    /** @test */
+    #[Test]
     public function campus_id_must_be_in_pending()
     {
         $this->postJson('/api/lti-registration/email-details', $this->lti_registration_info)
             ->assertJson(['message' => 'Your LTI Campus ID is not valid.  Please contact us for assistance.']);
     }
 
-    /** @test */
+    #[Test]
     public function campus_id_must_not_be_used_already()
     {
         DB::table('lti_pending_registrations')->insert(['campus_id' => 'some_id']);

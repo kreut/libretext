@@ -2,21 +2,12 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
-use App\Enrollment;
-use App\Extension;
-use App\Cutup;
-use App\Solution;
 use App\User;
 use App\Question;
-use App\SubmissionFile;
-use Carbon\Carbon;
-use App\Score;
-use App\Submission;
 use App\Traits\Statistics;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -55,8 +46,7 @@ class QuestionsSummaryTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function non_instructor_cannot_refresh_question_properties()
     {
         $this->actingAs($this->student_user)->patchJson("/api/questions/{$this->question->id}/refresh-properties")
@@ -64,8 +54,7 @@ class QuestionsSummaryTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function non_owner_cannot_reorder_an_assignment()
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/order", [
@@ -74,8 +63,7 @@ class QuestionsSummaryTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function owner_can_reorder_an_assignment()
     {
 

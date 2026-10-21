@@ -56,14 +56,14 @@ class LmsOutageTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_get_lms_outage_status()
     {
         $this->actingAs($this->instructor)->getJson('/api/lms-outage/status')
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_get_lms_outage_status()
     {
         $response = $this->actingAs($this->admin_user)->getJson('/api/lms-outage/status')
@@ -76,7 +76,7 @@ class LmsOutageTest extends TestCase
         $this->assertEquals(0, $canvas['currently_off_count']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_turn_off_lms()
     {
         $this->actingAs($this->instructor)->postJson('/api/lms-outage/canvas/turn-off')
@@ -85,7 +85,7 @@ class LmsOutageTest extends TestCase
         $this->assertEquals(1, $this->canvas_course->fresh()->lms);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_turn_off_active_canvas_courses()
     {
         Mail::fake();
@@ -108,7 +108,7 @@ class LmsOutageTest extends TestCase
         });
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function turning_off_canvas_does_not_affect_blackboard_courses()
     {
         $blackboard_instructor = factory(User::class)->create();
@@ -133,7 +133,7 @@ class LmsOutageTest extends TestCase
         });
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function concluded_courses_are_not_turned_off()
     {
         $concluded_course = factory(Course::class)->create([
@@ -155,7 +155,7 @@ class LmsOutageTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function turning_off_with_no_active_linked_courses_returns_info()
     {
         $this->canvas_course->lms = 0;
@@ -165,14 +165,14 @@ class LmsOutageTest extends TestCase
             ->assertJson(['type' => 'info']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function turning_off_an_unsupported_lms_type_returns_error()
     {
         $this->actingAs($this->admin_user)->postJson('/api/lms-outage/moodle/turn-off')
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_turn_canvas_back_on()
     {
         Mail::fake();
@@ -193,7 +193,7 @@ class LmsOutageTest extends TestCase
         });
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_turn_lms_back_on()
     {
         Mail::fake();
@@ -207,14 +207,14 @@ class LmsOutageTest extends TestCase
         $this->assertEquals(0, $this->canvas_course->fresh()->lms);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function turning_on_with_nothing_currently_off_returns_info()
     {
         $this->actingAs($this->admin_user)->postJson('/api/lms-outage/canvas/turn-on')
             ->assertJson(['type' => 'info']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function status_reflects_currently_off_count_after_turning_off()
     {
         Mail::fake();

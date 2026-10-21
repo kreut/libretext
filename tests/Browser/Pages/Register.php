@@ -2,6 +2,8 @@
 
 namespace Tests\Browser\Pages;
 
+use Laravel\Dusk\Browser;
+
 class Register extends Page
 {
     /**
@@ -17,7 +19,7 @@ class Register extends Page
     /**
      * Submit the form with the given data.
      *
-     * @param  \Laravel\Dusk\Browser $browser
+     * @param Browser $browser
      * @param  array $data
      * @return void
      */

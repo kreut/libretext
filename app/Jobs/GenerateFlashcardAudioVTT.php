@@ -72,7 +72,7 @@ class GenerateFlashcardAudioVTT extends FlashcardAudioJob
         $is_efs = is_dir($efs_dir);
         $storage_path = $is_efs
             ? $efs_dir
-            : Storage::disk('local')->getAdapter()->getPathPrefix();
+            : Storage::disk('local')->path('');
 
         $full_dir = rtrim($storage_path, '/') . '/whisper-files';
         if (!is_dir($full_dir)) {

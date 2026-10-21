@@ -55,7 +55,7 @@ class BackfillLearningTreeQuestionRevisionsTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function backfills_snapshot_for_trees_with_no_snapshot_recorded()
     {
         $this->artisan('learning-trees:backfill-question-revisions');
@@ -66,7 +66,7 @@ class BackfillLearningTreeQuestionRevisionsTest extends TestCase
         $this->assertNotNull($row->learning_tree);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function sets_root_question_revision_id_when_missing()
     {
         $this->artisan('learning-trees:backfill-question-revisions');
@@ -77,7 +77,7 @@ class BackfillLearningTreeQuestionRevisionsTest extends TestCase
             'question_revision_id' => $latest_revision_id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function does_not_overwrite_the_root_question_revision_id_if_already_set()
     {
         $revision_2 = factory(QuestionRevision::class)->create(['question_id' => $this->root_question->id, 'revision_number' => 2]);
@@ -94,7 +94,7 @@ class BackfillLearningTreeQuestionRevisionsTest extends TestCase
             'question_revision_id' => $revision_2->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function does_not_touch_rows_that_already_have_a_snapshot()
     {
         $existing_snapshot = json_encode(['blocks' => ['already here']]);
@@ -110,7 +110,7 @@ class BackfillLearningTreeQuestionRevisionsTest extends TestCase
         $this->assertEquals(json_decode($existing_snapshot, true), json_decode($row->learning_tree, true));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function is_safe_to_run_twice()
     {
         $this->artisan('learning-trees:backfill-question-revisions');
@@ -126,7 +126,7 @@ class BackfillLearningTreeQuestionRevisionsTest extends TestCase
         $this->assertEquals($first_run_snapshot, $second_run_snapshot);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function skips_gracefully_when_the_learning_tree_no_longer_exists()
     {
         // a foreign key constraint (assignment_question_learning_tree_learning_tree_id_foreign)

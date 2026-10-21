@@ -137,7 +137,7 @@ class LearningTreeStructuralAutoUpdateTest extends TestCase
         return $student;
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function auto_updates_a_closed_assignment_with_no_real_students_enrolled_when_the_course_flag_is_on()
     {
         DB::table('courses')->where('id', $this->course->id)->update(['auto_update_question_revisions' => 1]);
@@ -148,7 +148,7 @@ class LearningTreeStructuralAutoUpdateTest extends TestCase
         $this->assertEquals(999901, $this->questionIdForBlockInSnapshot(1));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function does_not_auto_update_when_the_course_flag_is_off()
     {
         // auto_update_question_revisions defaults to 0/off - not touched here
@@ -161,7 +161,7 @@ class LearningTreeStructuralAutoUpdateTest extends TestCase
         $this->assertEquals(102438, $this->questionIdForBlockInSnapshot(1));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function auto_updates_an_open_assignment_with_no_real_students_enrolled_when_the_course_flag_is_on()
     {
         // EK: autoUpdateRisksRealStudents() matches QuestionController::store()'s
@@ -177,7 +177,7 @@ class LearningTreeStructuralAutoUpdateTest extends TestCase
         $this->assertEquals(999903, $this->questionIdForBlockInSnapshot(1));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function does_not_auto_update_when_a_real_student_is_enrolled_in_the_course_even_with_the_assignment_closed_and_no_submissions()
     {
         // EK: the defining difference from the manual button's check - a
@@ -194,7 +194,7 @@ class LearningTreeStructuralAutoUpdateTest extends TestCase
         $this->assertEquals(102438, $this->questionIdForBlockInSnapshot(1));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function auto_updates_despite_a_fake_student_enrolled_in_the_course()
     {
         DB::table('courses')->where('id', $this->course->id)->update(['auto_update_question_revisions' => 1]);
@@ -205,7 +205,7 @@ class LearningTreeStructuralAutoUpdateTest extends TestCase
         $this->assertEquals(999905, $this->questionIdForBlockInSnapshot(1));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function does_not_auto_update_when_a_formative_student_is_enrolled_even_if_also_flagged_fake()
     {
         // EK: the exact fake_student=0 OR formative_student=1 precedent from
@@ -220,7 +220,7 @@ class LearningTreeStructuralAutoUpdateTest extends TestCase
         $this->assertEquals(102438, $this->questionIdForBlockInSnapshot(1));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function auto_updated_snapshot_still_has_html_and_blockarr()
     {
         // regression coverage: autoUpdateEligibleAssignmentSnapshots() calls
@@ -242,7 +242,7 @@ class LearningTreeStructuralAutoUpdateTest extends TestCase
         $this->assertNotEmpty($decoded['blockarr']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_no_op_save_does_not_trigger_auto_update_logic()
     {
         DB::table('courses')->where('id', $this->course->id)->update(['auto_update_question_revisions' => 1]);

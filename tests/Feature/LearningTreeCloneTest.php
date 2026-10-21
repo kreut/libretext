@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Framework;
 use App\FrameworkLevel;
 use App\LearningTree;
@@ -48,7 +49,7 @@ class LearningTreeCloneTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function cloning_a_learning_tree_copies_its_tags()
     {
         $this->actingAs($this->user)
@@ -72,7 +73,7 @@ class LearningTreeCloneTest extends TestCase
         $this->assertDatabaseCount('tags', 2);
     }
 
-    /** @test */
+    #[Test]
     public function cloning_a_learning_tree_copies_its_framework_alignment()
     {
         $this->actingAs($this->user)
@@ -91,7 +92,7 @@ class LearningTreeCloneTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function cloning_a_learning_tree_copies_its_subject_chapter_and_section()
     {
         $this->actingAs($this->user)
@@ -107,7 +108,7 @@ class LearningTreeCloneTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function cloning_multiple_learning_trees_at_once_copies_tags_and_framework_for_each_independently()
     {
         $second_learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
@@ -135,7 +136,7 @@ class LearningTreeCloneTest extends TestCase
         $this->assertTrue($cloned_tag_ids->contains($second_tag->id));
     }
 
-    /** @test */
+    #[Test]
     public function create_learning_tree_from_template_also_copies_tags_framework_and_subject_chapter_section()
     {
         $this->actingAs($this->user)

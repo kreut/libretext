@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Discussion;
@@ -117,8 +118,7 @@ class DiscussionCommentTimestampTest extends TestCase
     | Posting a reply with timestamps
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function a_reply_can_point_to_a_moment_in_a_video_comment_in_its_thread()
     {
         $this->_reply([['discussion_comment_id' => $this->video_comment->id, 'seconds' => 83.456]])
@@ -131,7 +131,7 @@ class DiscussionCommentTimestampTest extends TestCase
             'seconds' => 83.46]);
     }
 
-    /** @test */
+    #[Test]
     public function a_reply_can_point_to_a_moment_in_an_audio_comment_in_its_thread()
     {
         $this->_reply([['discussion_comment_id' => $this->audio_comment->id, 'seconds' => 12]])
@@ -141,7 +141,7 @@ class DiscussionCommentTimestampTest extends TestCase
             'seconds' => 12]);
     }
 
-    /** @test */
+    #[Test]
     public function a_reply_can_only_have_one_timestamp()
     {
         $this->_reply([
@@ -153,7 +153,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertEquals(0, DB::table('discussion_comment_timestamps')->count());
     }
 
-    /** @test */
+    #[Test]
     public function a_reply_without_timestamps_still_works()
     {
         $this->actingAs($this->user)
@@ -162,7 +162,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertEquals(0, DB::table('discussion_comment_timestamps')->count());
     }
 
-    /** @test */
+    #[Test]
     public function timestamps_can_only_point_to_audio_or_video_comments()
     {
         $this->_reply([['discussion_comment_id' => $this->text_comment->id, 'seconds' => 5]])
@@ -171,7 +171,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertDatabaseMissing('discussion_comments', ['text' => 'a reply about the video']);
     }
 
-    /** @test */
+    #[Test]
     public function timestamps_can_only_point_to_comments_in_the_same_thread()
     {
         $other_discussion_id = $this->_startDiscussion();
@@ -181,7 +181,7 @@ class DiscussionCommentTimestampTest extends TestCase
                 'message' => 'Timestamps can only point to comments in the same thread.']);
     }
 
-    /** @test */
+    #[Test]
     public function timestamps_cannot_point_to_a_comment_that_no_longer_exists()
     {
         $this->_reply([['discussion_comment_id' => 999999999, 'seconds' => 5]])
@@ -189,7 +189,7 @@ class DiscussionCommentTimestampTest extends TestCase
                 'message' => 'One of the comments you added a timestamp for no longer exists.']);
     }
 
-    /** @test */
+    #[Test]
     public function a_new_thread_cannot_have_timestamps()
     {
         $this->_reply([['discussion_comment_id' => $this->video_comment->id, 'seconds' => 5]], 0)
@@ -197,7 +197,7 @@ class DiscussionCommentTimestampTest extends TestCase
                 'message' => 'Timestamps can only be added to replies in an existing thread.']);
     }
 
-    /** @test */
+    #[Test]
     public function timestamps_must_have_a_comment_and_a_non_negative_time()
     {
         $this->_reply([['seconds' => -1]])
@@ -209,8 +209,7 @@ class DiscussionCommentTimestampTest extends TestCase
     | Editing
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function editing_a_reply_can_remove_its_timestamp()
     {
         $reply = $this->_comment($this->discussion_id, $this->user, ['text' => 'a reply']);
@@ -227,7 +226,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertDatabaseMissing('discussion_comment_timestamps', ['id' => $timestamp_id]);
     }
 
-    /** @test */
+    #[Test]
     public function editing_a_reply_can_keep_its_timestamp()
     {
         $reply = $this->_comment($this->discussion_id, $this->user, ['text' => 'a reply']);
@@ -244,7 +243,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertDatabaseHas('discussion_comment_timestamps', ['id' => $timestamp_id]);
     }
 
-    /** @test */
+    #[Test]
     public function editing_a_reply_without_saying_which_timestamps_to_keep_leaves_them_alone()
     {
         //re-recording an audio/video reply doesn't send keep_timestamp_ids
@@ -261,7 +260,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertDatabaseHas('discussion_comment_timestamps', ['id' => $timestamp_id]);
     }
 
-    /** @test */
+    #[Test]
     public function editing_cannot_keep_timestamps_from_another_reply()
     {
         $reply = $this->_comment($this->discussion_id, $this->user, ['text' => 'a reply']);
@@ -287,8 +286,7 @@ class DiscussionCommentTimestampTest extends TestCase
     | Deleting (cleanup is done in the application; there are no foreign keys)
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function deleting_a_reply_deletes_its_timestamps()
     {
         $reply = $this->_comment($this->discussion_id, $this->user, ['text' => 'a reply']);
@@ -301,7 +299,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertDatabaseMissing('discussion_comment_timestamps', ['discussion_comment_id' => $reply->id]);
     }
 
-    /** @test */
+    #[Test]
     public function deleting_a_video_comment_deletes_the_timestamps_that_point_to_it()
     {
         $reply = $this->_comment($this->discussion_id, $this->user, ['text' => 'a reply']);
@@ -319,7 +317,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertDatabaseHas('discussion_comment_timestamps', ['id' => $audio_timestamp_id]);
     }
 
-    /** @test */
+    #[Test]
     public function removing_all_student_submissions_deletes_the_timestamps()
     {
         $reply = $this->_comment($this->discussion_id, $this->user, ['text' => 'a reply']);
@@ -331,7 +329,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertEquals(0, DB::table('discussion_comment_timestamps')->count());
     }
 
-    /** @test */
+    #[Test]
     public function deleting_the_assignment_discussions_deletes_the_timestamps()
     {
         $reply = $this->_comment($this->discussion_id, $this->user, ['text' => 'a reply']);
@@ -348,8 +346,7 @@ class DiscussionCommentTimestampTest extends TestCase
     | Showing timestamps
     |--------------------------------------------------------------------------
     */
-
-    /** @test */
+    #[Test]
     public function discussions_include_each_replys_timestamp()
     {
         $reply = $this->_comment($this->discussion_id, $this->user, ['text' => 'a reply']);
@@ -367,7 +364,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertEquals("{$this->student_user->first_name} {$this->student_user->last_name}", $reply_json['timestamps'][0]['referenced_created_by_name']);
     }
 
-    /** @test */
+    #[Test]
     public function the_grading_list_includes_timestamps()
     {
         $reply = $this->_comment($this->discussion_id, $this->student_user, ['text' => 'a student reply']);
@@ -381,7 +378,7 @@ class DiscussionCommentTimestampTest extends TestCase
         $this->assertEquals($this->video_comment->id, $reply_json['timestamps'][0]['referenced_discussion_comment_id']);
     }
 
-    /** @test */
+    #[Test]
     public function timestamps_pointing_to_a_comment_that_no_longer_exists_are_not_shown()
     {
         //safety net in case a deletion ever bypasses the model event

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Instructors;
 
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\AssignToTiming;
@@ -16,7 +17,6 @@ use App\Submission;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class QuestionRevisionsTest extends TestCase
@@ -61,7 +61,7 @@ class QuestionRevisionsTest extends TestCase
         $question_info['reason_for_edit'] = 'blah blah blah';
         return $question_info;
     }
-    /** @test */
+    #[Test]
     public function correct_webwork_dir_is_created()
     {
         $question_info = $this->_getQuestionInfo($this->user->id);
@@ -83,7 +83,7 @@ class QuestionRevisionsTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function if_a_course_has_auto_update_and_no_enrollments_and_the_owner_does_not_request_an_update_the_question_is_not_automatically_updated()
     {
 
@@ -130,7 +130,7 @@ class QuestionRevisionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function if_a_course_has_auto_update_and_no_enrollments_the_question_is_automatically_updated()
     {
 
@@ -166,7 +166,7 @@ class QuestionRevisionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function if_a_course_has_auto_update_and_enrollments_the_question_is_not_automatically_updated()
     {
 
@@ -213,7 +213,7 @@ class QuestionRevisionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_revision_info_for_a_question()
     {
         $this->question->question_editor_user_id = $this->student_user->id;
@@ -224,7 +224,7 @@ class QuestionRevisionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_update_revision_info_for_a_question()
     {
 
@@ -233,7 +233,7 @@ class QuestionRevisionsTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to get the revision for this question.']);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_show_revision_info_for_a_question()
     {
 
@@ -243,7 +243,7 @@ class QuestionRevisionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_power_user_cannot_propagate_if_there_are_differing_non_meta_properties()
     {
         $user = factory(User::class)->create(['id' => 3234]);
@@ -254,7 +254,7 @@ class QuestionRevisionsTest extends TestCase
             ->assertJson(['message' => 'You cannot propagate the question revision since there are differing properties that are not topical in nature.']);
     }
 
-    /** @test */
+    #[Test]
     public function must_state_whether_to_automatically_update_revision()
     {
         $question_info = $this->_getQuestionInfo($this->user->id);
@@ -265,7 +265,7 @@ class QuestionRevisionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function reason_for_edit_must_exist()
     {
         $question_info = $this->_getQuestionInfo($this->user->id);
@@ -277,7 +277,7 @@ class QuestionRevisionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function must_confirm_that_the_change_is_topical_for_save_and_propagate()
     {
         $question_info = $this->_getQuestionInfo($this->user->id);
@@ -291,7 +291,7 @@ class QuestionRevisionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_update_to_latest_revision()
     {
         $this->actingAs($this->student_user)
@@ -300,7 +300,7 @@ class QuestionRevisionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function assignment_question_correctly_updated_to_most_latest_revision()
     {
         $assignment_question = AssignmentSyncQuestion::find($this->assignment_question_id);
@@ -313,7 +313,7 @@ class QuestionRevisionsTest extends TestCase
         $this->assertEquals($this->question_revision->id, $assignment_question->question_revision_id);
     }
 
-    /** @test */
+    #[Test]
     public function scores_are_correctly_recomputed_for_save_and_notify_updates()
     {
         $original_assignment_score = 30;

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
 use Tests\TestCase;
@@ -60,7 +61,7 @@ class MultipleResponseGroupingTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function cannot_repeat_within_a_grouping()
     {
 
@@ -88,7 +89,7 @@ class MultipleResponseGroupingTest extends TestCase
         $this->assertEquals('The response `some response` appears multiple times within the grouping.', json_decode(json_decode($response)->errors->rows[0])->specific->{0}->value->{1});
     }
 
-    /** @test */
+    #[Test]
     public function headers_are_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -97,7 +98,7 @@ class MultipleResponseGroupingTest extends TestCase
         $this->assertEquals('Header text is required.', json_decode(json_decode($response)->errors->headers[0])->specific[0]);
     }
 
-    /** @test */
+    #[Test]
     public function prompt_is_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -107,7 +108,7 @@ class MultipleResponseGroupingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function row_headers_are_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -117,7 +118,7 @@ class MultipleResponseGroupingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function responses_need_text()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -127,7 +128,7 @@ class MultipleResponseGroupingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function at_least_one_in_the_group_should_be_correct()
     {
         $this->qti_question_info['rows'] = [
@@ -154,7 +155,7 @@ class MultipleResponseGroupingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function each_group_should_have_at_least_two_responses()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -164,7 +165,7 @@ class MultipleResponseGroupingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function there_should_be_at_least_one_row()
     {
         $this->qti_question_info['rows'] = [];

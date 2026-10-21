@@ -745,7 +745,7 @@ class FrameworkLevelController extends Controller
             $is_efs = is_dir($efs_dir);
             $storage_path = $is_efs
                 ? $efs_dir
-                : Storage::disk('local')->getAdapter()->getPathPrefix();
+                : Storage::disk('local')->path('');
             $file = "{$storage_path}framework-template.csv";
             $fp = fopen($file, 'w');
 

@@ -2,10 +2,8 @@
 
 namespace Tests\Feature\Instructors;
 
-use App\AssignToGroup;
 use App\AssignToTiming;
 use App\AssignToUser;
-use App\BetaAssignment;
 use App\BetaCourse;
 use App\Course;
 use App\Enrollment;
@@ -19,10 +17,6 @@ use App\SubmissionFile;
 use App\User;
 use App\Assignment;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\RefreshDatabaseState;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\Traits\Test;
@@ -158,7 +152,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function lms_course_needs_the_lms_grade_passback_option()
     {
@@ -176,7 +170,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_of_assignment_can_import_it_to_their_course_if_public()
     {
@@ -191,7 +185,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_change_points_per_question_if_submissions_exist()
     {
         $this->student_user->role = 3;
@@ -217,7 +211,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJson(['message' => "This assignment already has submissions so you can't change the way that points are computed."]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_of_assignment_cannot_create_it_from_template_if_alpha_course_and_properties_and_questions()
     {
@@ -229,7 +223,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function the_correct_user_is_assigned_an_assignment_with_sections()
     {
@@ -243,7 +237,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_of_assignment_cannot_import_it_to_their_course_if_not_public()
     {
@@ -258,7 +252,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_of_assignment_can_import_it_to_their_course_if_from_the_commons_even_if_not_public()
     {
@@ -275,8 +269,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_of_assignment_can_import_properties_and_questions()
     {
@@ -291,8 +284,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_of_assignment_can_import_properties_and_learning_trees()
     {
@@ -324,8 +316,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_of_assignment_can_import_just_properties()
     {
@@ -334,8 +325,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJson(['message' => "<strong>{$this->assignment->name} Import</strong> has been imported without its questions.</br></br>Don't forget to change the dates associated with this assignment."]);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function importing_must_include_a_valid_level()
     {
@@ -345,8 +335,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_of_assignment_cannot_import_it_to_their_course()
     {
@@ -358,8 +347,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function real_time_must_have_valid_number_of_attempts()
     {
         $assignment_info = $this->assignment_info;
@@ -370,8 +358,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function real_time_must_have_valid_number_of_attempts_based_on_penalty()
     {
         $assignment_info = $this->assignment_info;
@@ -382,8 +369,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJsonValidationErrors('number_of_allowed_attempts_penalty');
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function hint_value_must_be_valid()
     {
         $assignment_info = $this->assignment_info;
@@ -393,8 +379,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJsonValidationErrors('can_view_hint');
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function hint_penalty_must_be_valid()
     {
         $assignment_info = $this->assignment_info;
@@ -405,8 +390,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJsonValidationErrors('hint_penalty');
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function real_time_must_have_valid_solutions_availability()
     {
         $assignment_info = $this->assignment_info;
@@ -418,8 +402,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJsonValidationErrors('solutions_availability');
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function real_time_with_at_least_one_attempt_must_have_valid_percent()
     {
         $assignment_info = $this->assignment_info;
@@ -432,8 +415,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /**  @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_change_from_individual_to_compiled_or_vice_versa_if_there_are_any_submissions()
     {
 
@@ -457,8 +439,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /**  @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_change_from_individual_to_compiled_if_non_file_open_ended_assessment_exists()
     {
 
@@ -473,8 +454,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test * */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_change_the_number_of_randomized_assessments_if_a_student_has_randomizations()
     {
         $randomizedAssignmentQuestion = new RandomizedAssignmentQuestion ();
@@ -492,8 +472,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function assignment_names_must_be_unique_within_a_course()
     {
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
@@ -503,8 +482,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function number_of_randomized_assessments_must_be_a_valid_number()
     {
         $this->assignment_info['randomizations'] = 1;
@@ -513,7 +491,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJsonValidationErrors('number_of_randomized_assessments');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_of_assignment_can_create_it_from_template_and_copy_assign_to_groups()
     {
@@ -541,8 +519,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_repeat_assign_tos()
     {
         $assignment_info = $this->assignment_info;
@@ -555,7 +532,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function the_correct_user_is_assigned_an_assignment_with_everybody()
     {
@@ -566,7 +543,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function the_correct_user_is_assigned_an_assignment_with_different_sections()
     {
@@ -581,8 +558,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_cannot_reorder_assignments()
     {
@@ -591,8 +567,7 @@ class AssignmentsIndex2Test extends TestCase
         ])->assertJson(['message' => 'You are not allowed to re-order the assignments in that course.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_can_reorder_assignments()
     {
@@ -610,7 +585,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_of_assignment_cannot_create_it_from_template()
     {
@@ -619,7 +594,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJson(['message' => 'You are not allowed to create an assignment from this template.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_of_assignment_can_create_it_from_template()
     {
@@ -629,7 +604,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function must_include_a_valid_default_open_ended_submission_type()
     {
@@ -640,8 +615,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function complete_incomplete_scoring_type_cannot_be_learning_trees_assessment_types()
     {
@@ -652,8 +626,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function final_submission_deadline_must_be_valid()
     {
@@ -661,8 +634,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function for_real_time_assessments_students_must_be_shown_scores()
     {
@@ -670,8 +642,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function for_real_time_assessments_students_must_be_shown_solutions()
     {
@@ -679,8 +650,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function for_real_time_assessments_students_must_be_shown_question_points()
     {
@@ -689,8 +659,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function submission_count_percent_decrease_must_be_valid()
     {
@@ -699,7 +668,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function can_only_toggle_show_scores_for_a_delayed_assignment()
     {
@@ -707,15 +676,14 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function a_valid_late_policy_is_submitted()
     {
 //todo
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function a_valid_late_percent_is_submitted()
     {
@@ -723,7 +691,7 @@ class AssignmentsIndex2Test extends TestCase
         //todo
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function a_valid_late_deduction_application_period_is_submitted()
     {
@@ -743,7 +711,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function can_create_an_assignment()
     {
@@ -752,8 +720,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function must_be_of_a_valid_source()
     {
@@ -764,7 +731,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function must_include_an_assignment_name()
     {
@@ -774,7 +741,7 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function must_include_valid_available_on_date()
     {
@@ -786,7 +753,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function must_include_valid_default_points_per_question()
     {
@@ -806,7 +773,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function must_include_valid_due_date()
     {
@@ -817,7 +784,7 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function must_include_valid_due_time()
     {
@@ -826,7 +793,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJsonValidationErrors(['due_time_0']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function due_date_must_be_after_available_date()
     {
@@ -835,7 +802,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJsonValidationErrors(['due_0']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function must_include_valid_available_from_time()
     {
@@ -845,7 +812,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJsonValidationErrors(['available_from_time_0']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_create_an_assignment_with_a_time_limit()
     {
         $assignment_info = $this->assignment_info;
@@ -860,7 +827,7 @@ class AssignmentsIndex2Test extends TestCase
         $this->assertEquals('2 minutes', $assign_to_timing->time_limit);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function time_limit_is_optional_when_creating_an_assignment()
     {
         // $this->assignment_info never sets a time_limit_0 key.
@@ -872,7 +839,7 @@ class AssignmentsIndex2Test extends TestCase
         $this->assertNull($assign_to_timing->time_limit);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function invalid_time_limit_fails_validation()
     {
         // NOTE: written against the assumption that IsValidPeriodOfTime rejects
@@ -886,7 +853,7 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJsonValidationErrors(['time_limit_0']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function each_assign_to_group_can_have_its_own_time_limit()
     {
         $assignment_info = $this->assignment_info;

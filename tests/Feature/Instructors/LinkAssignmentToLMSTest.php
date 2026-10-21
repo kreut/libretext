@@ -4,12 +4,9 @@ namespace Tests\Feature\Instructors;
 
 
 use App\Course;
-use App\LtiAssignmentsAndGradesUrl;
 use App\LtiLaunch;
 use App\User;
 use App\Assignment;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -35,7 +32,7 @@ class LinkAssignmentToLMSTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_unlink_assignment_from_lms()
     {
 
@@ -45,7 +42,7 @@ class LinkAssignmentToLMSTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_link_assignment_to_lms()
     {
 
@@ -55,8 +52,7 @@ class LinkAssignmentToLMSTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_link_assignment_to_lms()
     {
         $jwt_body["https://purl.imsglobal.org/spec/lti-ags/claim/endpoint"]["lineitem"] = 'some url';
@@ -73,8 +69,7 @@ class LinkAssignmentToLMSTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_cannot_link_multiple_assignments_to_the_same_resource_id()
     {
         $this->assignment->lms_resource_link_id = 1;

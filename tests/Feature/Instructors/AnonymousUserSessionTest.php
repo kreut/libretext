@@ -4,6 +4,7 @@ namespace Tests\Feature\Instructors;
 
 
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Tests\TestCase;
 
@@ -16,7 +17,7 @@ class AnonymousUserSessionTest extends TestCase
         $this->user = factory(User::class)->create();
     }
 
-    /** @test */
+    #[Test]
     public function cannot_set_anonymous_user_session_if_not_instructor()
     {
         $this->user->role =3;
@@ -26,7 +27,7 @@ class AnonymousUserSessionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function instructors_can_set_anonymous_user_session()
     {
         $this->actingAs($this->user)

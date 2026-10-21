@@ -14,7 +14,7 @@ class UpdateScoreRoundingToSubmissionFiles extends Migration
     public function up()
     {
         Schema::table('submission_files', function (Blueprint $table) {
-            $table->decimal('score', 8, 4)->change();
+            $table->decimal('score', 8, 4)->nullable()->change();
         });
     }
 
@@ -26,7 +26,7 @@ class UpdateScoreRoundingToSubmissionFiles extends Migration
     public function down()
     {
         Schema::table('submission_files', function (Blueprint $table) {
-            $table->decimal('score', 8, 4)->change();
+            $table->decimal('score', 8, 4)->nullable()->change();
         });
     }
 }

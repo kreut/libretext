@@ -65,7 +65,7 @@ class QuestionMediaController extends Controller
             $parsed = parse_url($url);
             $host = $parsed['host'];
             $path = ltrim($parsed['path'], '/');
-            $bucket = Storage::disk('s3')->getDriver()->getAdapter()->getBucket();
+            $bucket = Storage::disk('s3')->getConfig()['bucket'];
 
             if (str_starts_with($host, 's3.')) {
                 $s3_path = preg_replace('#^' . preg_quote($bucket, '#') . '/#', '', $path);

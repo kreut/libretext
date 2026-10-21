@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\User;
@@ -23,7 +24,7 @@ class OpenCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_get_the_course_info_if_commons_course(){
 
         $this->course->user_id = $this->commons_user->id;
@@ -33,7 +34,7 @@ class OpenCoursesTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_the_course_info_if_not_commons_course(){
 
         $this->actingAs($this->user)
@@ -41,7 +42,7 @@ class OpenCoursesTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to access this course.']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_my_favorites_if_neither_public_nor_commons_nor_their_course()
     {
         $this->actingAs($this->user_2)
@@ -50,7 +51,7 @@ class OpenCoursesTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to get the My Favorites questions for this assignment.']);
     }
 
-    /** @test */
+    #[Test]
     public function can_get_favorites_if_public_and_instructor()
     {
         $this->course->public = 1;
@@ -60,7 +61,7 @@ class OpenCoursesTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function can_get_favorites_if_commons_and_instructor()
     {
         $this->course->user_id = $this->commons_user->id;
@@ -72,7 +73,7 @@ class OpenCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function anonymous_user_can_view_open_course_if_public()
     {
         $this->course->public = 1;
@@ -85,7 +86,7 @@ class OpenCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function anonymous_user_can_view_open_course_if_commons()
     {
         $this->course->user_id = $this->commons_user->id;
@@ -99,7 +100,7 @@ class OpenCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function user_cannot_view_open_course_if_neither_commons_nor_public()
     {
 
@@ -110,7 +111,7 @@ class OpenCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_get_public_assignments_using_public_parameter()
     {
         $this->course->public = 1;
@@ -120,7 +121,7 @@ class OpenCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function can_get_commons_assignments_using_commons_parameter()
     {
         $this->course->user_id = $this->commons_user->id;
@@ -130,14 +131,14 @@ class OpenCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_non_commons_using_commons_parameter()
     {
         $this->actingAs($this->user)->getJson("/api/assignments/open/commons/{$this->course->id}")
             ->assertJson(['message' => 'You are not allowed to access the assignments in that course since it is not a Commons course.']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_non_public_assignments_using_public_parameter()
     {
         $this->actingAs($this->user)->getJson("/api/assignments/open/public/{$this->course->id}")

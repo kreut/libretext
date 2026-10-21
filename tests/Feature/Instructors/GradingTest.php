@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\CannedResponse;
 use App\Grader;
 use App\Question;
@@ -9,8 +10,6 @@ use App\Score;
 use App\Section;
 use App\Submission;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\User;
@@ -100,8 +99,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function can_get_assignment_files_if_owner()
     {
 
@@ -110,7 +108,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function can_store_text_feedback_if_owner()
     {
         $this->actingAs($this->user)->postJson("/api/grading",
@@ -129,7 +127,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_get_assignment_files_if_not_owner()
     {
         $this->actingAs($this->user_2)->getJson("/api/grading/{$this->assignment->id}/{$this->question->id}/{$this->section->id}/all_students")
@@ -141,7 +139,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function assignments_of_scoring_type_p_and_submission_files_at_the_question_level_will_use_min_of_the_points_per_question_compared_to_the_sum_of_the_question_and_file_points()
     {
 
@@ -181,7 +179,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function assignments_of_scoring_type_p_and_submission_files_at_the_question_level_cannot_submit_a_score_greater_than_the_total_number_of_points_in_the_question()
     {
 
@@ -216,7 +214,7 @@ class GradingTest extends TestCase
             ->assertJson(['message' => "The total of your Auto-Graded Score and Open-Ended Submission score can't be greater than the total number of points for this question."]);
     }
 
-    /** @test */
+    #[Test]
     public function owner_or_grader_can_submit_score()
     {
 
@@ -229,8 +227,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function non_owner_can_not_submit_score()
     {
 
@@ -239,8 +236,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function question_submission_score_must_be_valid()
     {
 
@@ -251,8 +247,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function file_submission_score_must_be_valid()
     {
 
@@ -264,7 +259,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function owner_can_override_scores()
     {
         $score = new Score();
@@ -279,7 +274,7 @@ class GradingTest extends TestCase
         $this->assertEquals(2, $score->where('user_id', $this->student_user->id)->first()->score);
     }
 
-    /** @test */
+    #[Test]
     public function override_scores_does_not_affect_other_students()
     {
         $score = new Score();
@@ -295,8 +290,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function non_owner_cannot_override_scores()
     {
         $data['overrideScores'] = [['user_id' => $this->student_user->id, 'override_score' => 2]];
@@ -306,7 +300,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function students_must_be_enrolled_in_course_to_resetrides()
     {
         $data['overrideScores'] = [['user_id' => 1, 'override_score' => 2]];
@@ -315,8 +309,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function non_owner_cannot_get_assignment_options()
     {
         $this->actingAs($this->user_2)->getJson("/api/assignments/options/{$this->course->id}")
@@ -324,8 +317,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function an_owner_can_get_assignment_options()
     {
         $this->actingAs($this->user)->getJson("/api/assignments/options/{$this->course->id}")
@@ -333,7 +325,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_get_s3_files()
     {
         $response['files'] = ['submission' => 'fake_1.pdf'];
@@ -342,7 +334,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function grader_can_get_s3_files()
     {
         $response['files'] = ['submission' => 'fake_1.pdf'];
@@ -352,8 +344,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function student_can_get_their_own_s3_files()
     {
         $response['files'] = ['submission' => 'fake_1.pdf'];
@@ -362,8 +353,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function student_cannot_get_someone_elses_s3_files()
     {
 
@@ -372,8 +362,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function student_cannot_get_canned_responses()
     {
         $this->actingAs($this->student_user)->getJson("/api/canned-responses")
@@ -382,7 +371,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function instructor_can_get_canned_responses()
     {
 
@@ -391,7 +380,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_grader_instructor_cannot_store_canned_responses()
     {
         $this->actingAs($this->student_user)->postJson("/api/canned-responses", ['canned_response' => 'blah blah'])
@@ -399,7 +388,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function grader_instructor_can_store_canned_responses()
     {
         $this->actingAs($this->user)->postJson("/api/canned-responses", ['canned_response' => 'blah blah'])
@@ -407,8 +396,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function canned_responses_should_be_unique_by_user()
     {
         $this->actingAs($this->user)->postJson("/api/canned-responses", ['canned_response' => 'some canned response'])
@@ -416,8 +404,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function canned_responses_should_be_non_empty()
     {
         $this->actingAs($this->user)->postJson("/api/canned-responses", ['canned_response' => ''])
@@ -426,7 +413,7 @@ class GradingTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_download_assignment_file_if_owner()
     {
         $this->markTestIncomplete(
@@ -435,15 +422,14 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function can_download_assignment_file_if_grader()
     {
 
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_download_assignment_file_if_not_owner()
     {
         /*$this->actingAs($this->user_2)->postJson("/api/submission-files/download",
@@ -457,7 +443,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function can_get_temporary_url_from_request_if_owner()
     {
         $this->actingAs($this->user)->postJson("/api/submission-files/get-temporary-url-from-request",
@@ -470,7 +456,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_temporary_url_if_not_owner()
     {
         $this->actingAs($this->user_2)->postJson("/api/submission-files/get-temporary-url-from-request",

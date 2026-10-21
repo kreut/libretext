@@ -14,7 +14,7 @@ class UpdateDescriptionToCourses extends Migration
     public function up()
     {
         Schema::table('courses', function (Blueprint $table) {
-            $table->text('public_description')->change();
+            $table->text('public_description')->nullable()->change();
         });
     }
 

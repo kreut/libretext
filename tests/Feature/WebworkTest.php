@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\JWE;
 use App\Question;
 use App\User;
@@ -20,7 +21,7 @@ class WebworkTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function student_cannot_get_pre_signed_url_for_webwork_attachment()
     {
         $this->user->role = 3;
@@ -32,7 +33,7 @@ class WebworkTest extends TestCase
         ])
             ->assertJson(['message' => 'You are not allowed to upload webwork attachments.']);
     }
-    /** @test */
+    #[Test]
     public function student_cannot_get_the_webwork_templates()
     {
         $this->user->role = 3;
@@ -43,7 +44,7 @@ class WebworkTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_webwork_code_from_filepath()
     {
 
@@ -54,7 +55,7 @@ class WebworkTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function question_must_be_webwork_question()
     {
         $this->question->technology = 'not webwork';
@@ -64,7 +65,7 @@ class WebworkTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_export_webwork_code()
     {
         $this->user->role = 3;
@@ -97,7 +98,7 @@ class WebworkTest extends TestCase
         return $problemJWT;
     }
 
-    /** @test */
+    #[Test]
     public function get_hint_returns_render_api_response()
     {
         Http::fake([
@@ -116,7 +117,7 @@ class WebworkTest extends TestCase
         $this->assertEquals('<div>Some hint</div>', $response['message']);
     }
 
-    /** @test */
+    #[Test]
     public function get_hint_returns_error_response_when_http_call_fails()
     {
         Http::fake([
@@ -131,7 +132,7 @@ class WebworkTest extends TestCase
         $this->assertEquals('error', $response['type']);
     }
 
-    /** @test */
+    #[Test]
     public function student_cannot_access_webwork_hint_endpoint_directly()
     {
         $this->user->role = 3;
@@ -149,7 +150,7 @@ class WebworkTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to access this hint directly.']);
     }
 
-    /** @test */
+    #[Test]
     public function instructor_can_access_webwork_hint_endpoint_directly()
     {
         $this->user->role = 2;
@@ -166,7 +167,7 @@ class WebworkTest extends TestCase
             ->assertJson(['type' => 'success', 'message' => '<div>Some hint</div>']);
     }
 
-    /** @test */
+    #[Test]
     public function fake_student_can_access_webwork_hint_endpoint_directly()
     {
         $this->user->role = 3;
@@ -184,7 +185,7 @@ class WebworkTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function has_hint_returns_true_when_code_contains_begin_pgml_hint()
     {
         $webwork = new Webwork();
@@ -193,7 +194,7 @@ class WebworkTest extends TestCase
         $this->assertTrue($webwork->hasHint($this->question));
     }
 
-    /** @test */
+    #[Test]
     public function has_hint_returns_false_when_code_does_not_contain_begin_pgml_hint()
     {
         $webwork = new Webwork();
@@ -202,7 +203,7 @@ class WebworkTest extends TestCase
         $this->assertFalse($webwork->hasHint($this->question));
     }
 
-    /** @test */
+    #[Test]
     public function has_hint_returns_false_when_webwork_code_is_empty()
     {
         $webwork = new Webwork();

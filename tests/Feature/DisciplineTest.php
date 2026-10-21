@@ -2,10 +2,9 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Discipline;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class DisciplineTest extends TestCase
@@ -18,7 +17,7 @@ class DisciplineTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_request_new_discipline()
     {
         $this->user->role = 3;
@@ -31,7 +30,7 @@ class DisciplineTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_save_disciplines()
     {
         $this->actingAs($this->user)
@@ -41,7 +40,7 @@ class DisciplineTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_update_disciplines()
     {
         $this->actingAs($this->user)
@@ -51,7 +50,7 @@ class DisciplineTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_delete_disciplines()
     {
         $this->actingAs($this->user)
@@ -62,7 +61,7 @@ class DisciplineTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function disciplines_must_be_unique()
     {
         $this->user->id = 1;

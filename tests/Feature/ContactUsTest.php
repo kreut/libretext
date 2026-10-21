@@ -2,12 +2,13 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ContactUsTest extends TestCase
 {
 
-    /** @test */
+    #[Test]
     public function cannot_send_to_random_user_if_not_logged_in()
     {
 
@@ -24,7 +25,7 @@ class ContactUsTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function name_is_required()
     {
 
@@ -38,7 +39,7 @@ class ContactUsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function subject_is_required()
     {
 
@@ -52,7 +53,7 @@ class ContactUsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function email_must_be_valid()
     {
 
@@ -68,7 +69,7 @@ class ContactUsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_send_contact_us_email() {
 
 

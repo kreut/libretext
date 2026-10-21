@@ -2,11 +2,12 @@
 
 namespace Tests\Browser;
 
+use PHPUnit\Framework\Attributes\Test;
 use Tests\DuskTestCase;
 
 class WelcomeTest extends DuskTestCase
 {
-    /** @test */
+    #[Test]
     public function basic_test()
     {
         $this->browse(function ($browser) {

@@ -2,16 +2,9 @@
 
 namespace Tests\Feature\Instructors;
 
-use App\AssignToGroup;
 use App\AssignToTiming;
-use App\AssignToUser;
 use App\Course;
-use App\Enrollment;
-use App\FinalGrade;
-use App\Grader;
-use App\LearningTree;
 use App\Question;
-use App\RandomizedAssignmentQuestion;
 use App\Score;
 use App\Section;
 use App\Submission;
@@ -19,8 +12,6 @@ use App\SubmissionFile;
 use App\User;
 use App\Assignment;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\Traits\Test;
@@ -113,7 +104,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_remove_lti_link()
     {
         $this->actingAs($this->student_user)
@@ -121,7 +112,7 @@ class AssignmentsIndex3Test extends TestCase
             ->assertJson(['message' => 'You are not allowed to unlink this assignment from your LMS.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function auto_release_must_be_valid()
     {
         $this->assignment_info['auto_release_shown'] = "not a valid amount of time";
@@ -129,7 +120,7 @@ class AssignmentsIndex3Test extends TestCase
             ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
             ->assertJsonValidationErrors('auto_release_shown');
     }
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function is_valid_textbook_url()
     {
         $this->assignment_info['textbook_url'] = "I'm not a URL";
@@ -139,7 +130,7 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function is_valid_hint_penalty()
     {
         $this->assignment_info['can_view_hint'] = 1;
@@ -152,7 +143,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_view_hint_is_valid()
     {
         $this->assignment_info['can_view_hint'] = -1;
@@ -164,7 +155,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function delayed_assignment_cannot_switch_to_clicker_if_there_are_no_technology_questions()
     {
         DB::table('assignment_question')
@@ -184,7 +175,7 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_switch_scoring_type_to_performance_from_completed_if_there_are_submissions()
     {
         $this->student_user->role = 3;
@@ -210,7 +201,7 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_switch_scoring_type_to_performance_from_completed_if_there_are_instructor_submissions()
     {
         $this->student_user->role = 2;
@@ -237,7 +228,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_switch_scoring_type_to_completed_from_performance_if_there_are_submissions()
     {
         $this->student_user->role = 3;
@@ -259,7 +250,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function switching_from_number_of_points_to_question_weight_will_make_all_weights_1_and_equalize_the_points()
     {
         $this->assignment->points_per_question = 'number of points';
@@ -291,8 +282,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_update_total_points_if_assignment_is_open()
     {
         $this->assignment_info['assign_tos'][0]['due_date'] = Carbon::tomorrow()->toDateString();
@@ -306,8 +296,7 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function if_total_points_are_changed_everything_scales_correctly()
     {
 
@@ -370,7 +359,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_use_question_weight_for_alpha_courses()
     {
         $this->assignment_info['points_per_question'] = 'question weight';
@@ -388,7 +377,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function switching_from_question_weight_to_number_of_points_will_remove_the_weights()
     {
         $this->assignment->points_per_question = 'question weight';
@@ -420,7 +409,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function completed_must_have_a_valid_default_completion_scoring_mode()
     {
         $this->assignment_info['scoring_type'] = 'c';
@@ -444,7 +433,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function delayed_assignment_cannot_switch_to_learning_tree_assignment_if_it_has_assessments()
     {
         $this->assignment_info['assessment_type'] = 'learning tree';
@@ -460,7 +449,7 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function delayed_assignment_cannot_switch_to_clicker_if_there_are_open_ended_questions()
     {
         $this->assignment_info['assessment_type'] = 'clicker';
@@ -472,7 +461,7 @@ class AssignmentsIndex3Test extends TestCase
             ->assertJson(['message' => "If you would like to change this assignment to Clicker, please first remove any assessments that require an open-ended submission."]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function clicker_needs_number_of_allowed_attempts()
     {
         $this->assignment_info['assessment_type'] = 'clicker';
@@ -482,7 +471,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /**  @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function learning_tree_assignments_cannot_be_switched()
     {
         $this->assignment->assessment_type = 'learning tree';
@@ -498,7 +487,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_get_review_history_without_authorization()
     {
 
@@ -507,7 +496,7 @@ class AssignmentsIndex3Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_an_assignment_with_a_time_limit_does_not_error()
     {
         // Regression test: time_limit_0 was previously left in $data and passed
@@ -525,7 +514,7 @@ class AssignmentsIndex3Test extends TestCase
         $this->assertEquals('2 minutes', $assign_to_timing->time_limit);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_an_assignment_can_change_its_time_limit()
     {
         AssignToTiming::where('assignment_id', $this->assignment->id)->update(['time_limit' => '30 seconds']);
@@ -542,7 +531,7 @@ class AssignmentsIndex3Test extends TestCase
         $this->assertEquals('5 minutes', $assign_to_timing->time_limit);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updating_an_assignment_can_remove_its_time_limit()
     {
         AssignToTiming::where('assignment_id', $this->assignment->id)->update(['time_limit' => '5 minutes']);

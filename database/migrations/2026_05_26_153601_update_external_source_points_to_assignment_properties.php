@@ -14,11 +14,11 @@ class UpdateExternalSourcePointsToAssignmentProperties extends Migration
     public function up()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->unsignedSmallInteger('external_source_points')->change();
+            $table->unsignedSmallInteger('external_source_points')->nullable()->change();
         });
 
         Schema::table('assignment_templates', function (Blueprint $table) {
-            $table->unsignedSmallInteger('external_source_points')->change();
+            $table->unsignedSmallInteger('external_source_points')->nullable()->change();
         });
     }
 
@@ -30,11 +30,11 @@ class UpdateExternalSourcePointsToAssignmentProperties extends Migration
     public function down()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->unsignedTinyInteger('external_source_points')->change();
+            $table->unsignedTinyInteger('external_source_points')->nullable()->change();
         });
 
         Schema::table('assignment_templates', function (Blueprint $table) {
-            $table->unsignedTinyInteger('external_source_points')->change();
+            $table->unsignedTinyInteger('external_source_points')->nullable()->change();
         });
     }
 }

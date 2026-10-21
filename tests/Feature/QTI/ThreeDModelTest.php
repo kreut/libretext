@@ -2,11 +2,9 @@
 
 namespace Tests\Feature\QTI;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ThreeDModelTest extends TestCase
@@ -53,7 +51,7 @@ class ThreeDModelTest extends TestCase
         ];
     }
 
-    /** @test * */
+    #[Test]
     public function mark_component_must_store_valid_input()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions", $this->qti_question_info)

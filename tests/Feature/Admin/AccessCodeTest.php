@@ -6,8 +6,6 @@ use App\Traits\Test;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class AccessCodeTest extends TestCase
@@ -36,7 +34,7 @@ class AccessCodeTest extends TestCase
         $this->types = ['instructor', 'non-instructor editor'];
     }
 
-    private function getTable($type): string
+    private function getTestTable($type): string
     {
         switch ($type) {
             case('instructor'):
@@ -55,7 +53,7 @@ class AccessCodeTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_have_valid_bearer_token_to_just_get_instructor_access_code()
     {
 
@@ -65,7 +63,7 @@ class AccessCodeTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function access_code_type_must_be_valid()
     {
 
@@ -75,7 +73,7 @@ class AccessCodeTest extends TestCase
             ->assertJson(['message' => 'bogus type is not a valid type of access code.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_create_access_codes()
     {
 
@@ -88,7 +86,7 @@ class AccessCodeTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_create_instructor_access_codes()
     {
         foreach ($this->types as $type) {
@@ -97,11 +95,11 @@ class AccessCodeTest extends TestCase
                 'number_of_access_codes' => 2,
                 'type' => $type])
                 ->assertJson(['message' => 'The access codes have been created.']);
-            $this->assertDatabaseCount($this->getTable($type), 2);
+            $this->assertDatabaseCount($this->getTestTable($type), 2);
         }
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_be_a_valid_number_of_instructor_access_codes()
     {
         foreach ($this->types as $type) {
@@ -112,7 +110,7 @@ class AccessCodeTest extends TestCase
         }
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_email_instructor_access_codes()
     {
         foreach ($this->types as $type) {
@@ -124,7 +122,7 @@ class AccessCodeTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function email_must_be_legit()
     {
         foreach ($this->types as $type) {
@@ -136,7 +134,7 @@ class AccessCodeTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function email_must_not_already_be_in_database()
     {
         $this->actingAs($this->admin_user)->postJson('/api/access-code/email', [
@@ -145,7 +143,7 @@ class AccessCodeTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_email_instructor_access_codes()
     {
         foreach ($this->types as $type) {
@@ -153,7 +151,7 @@ class AccessCodeTest extends TestCase
                 'email' => 'some_new_email@hotmail.com',
                 'type' => $type])
                 ->assertJson(['type' => 'success']);
-            $this->assertDatabaseCount($this->getTable($type), 1);
+            $this->assertDatabaseCount($this->getTestTable($type), 1);
         }
     }
 }

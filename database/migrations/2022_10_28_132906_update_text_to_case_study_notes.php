@@ -14,7 +14,7 @@ class UpdateTextToCaseStudyNotes extends Migration
     public function up()
     {
         Schema::table('case_study_notes', function (Blueprint $table) {
-            $table->text('text')->change();
+            $table->text('text')->nullable()->change();
         });
     }
 

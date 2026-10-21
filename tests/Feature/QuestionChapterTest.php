@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Question;
 use App\QuestionSubject;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -23,7 +22,7 @@ class QuestionChapterTest extends TestCase
         $this->questionSubject->save();
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_delete_a_chapter()
     {
         $question_chapter_id = DB::table('question_chapters')->insertGetId([
@@ -37,7 +36,7 @@ class QuestionChapterTest extends TestCase
                 'message' => 'You are not allowed to delete chapters.']);
     }
 
-    /** @test */
+    #[Test]
     public function correctly_deletes_subjects_chapters_sections()
     {
         $question_chapter_id = DB::table('question_chapters')->insertGetId([
@@ -95,7 +94,7 @@ class QuestionChapterTest extends TestCase
             'question_section_id' => $question_section_id_2]);
     }
 
-    /** @test */
+    #[Test]
     public function chapter_names_must_be_unique()
     {
         DB::table('question_chapters')
@@ -106,7 +105,7 @@ class QuestionChapterTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_store_a_chapter()
     {
         $this->actingAs($this->user_2)
@@ -115,7 +114,7 @@ class QuestionChapterTest extends TestCase
                 'message' => 'You are not allowed to add chapters.']);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_update_a_chapter()
     {
         $question_chapter_id = DB::table('question_chapters')

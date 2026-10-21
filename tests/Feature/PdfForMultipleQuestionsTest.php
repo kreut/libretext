@@ -131,7 +131,7 @@ class PdfForMultipleQuestionsTest extends TestCase
         $assignToTiming->save();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_can_upload_a_pdf_for_multiple_questions()
     {
         $submission_file_data = $this->_getSubmissionFileData('my work.pdf', $this->_pdfContents(), 'assignment');
@@ -154,7 +154,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->count());
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function uploading_a_pdf_for_multiple_questions_saves_its_number_of_pages()
     {
         $submission_file_data = $this->_getSubmissionFileData('my work.pdf', $this->_pdfContents(2), 'assignment');
@@ -167,7 +167,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->number_of_pages);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_pdf_whose_pages_cannot_be_counted_can_still_be_uploaded()
     {
         $submission_file_data = $this->_getSubmissionFileData('my work.pdf', "%PDF-1.4\nnot really a pdf\n%%EOF\n", 'assignment');
@@ -175,7 +175,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->assertJson(['type' => 'success', 'number_of_pages' => null]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_assign_a_page_past_the_end_of_the_pdf()
     {
         $this->_createCompiledPdf();
@@ -189,7 +189,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->exists());
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function the_pages_of_a_pdf_uploaded_before_they_were_counted_are_counted_when_assigning_a_page()
     {
         $compiled_pdf = $this->_createCompiledPdf();
@@ -204,7 +204,7 @@ class PdfForMultipleQuestionsTest extends TestCase
         $this->assertEquals(2, $compiled_pdf->fresh()->number_of_pages);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_file_for_multiple_questions_must_be_a_pdf()
     {
         $submission_file_data = $this->_getSubmissionFileData('my work.txt', 'some file contents', 'assignment');
@@ -216,7 +216,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->exists());
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_non_pdf_file_can_still_be_uploaded_for_a_single_question()
     {
         $submission_file_data = $this->_getSubmissionFileData('my work.txt', 'some file contents', 'question');
@@ -224,7 +224,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->assertJson(['type' => 'success', 'message' => 'Your file submission has been saved.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function upload_level_must_be_valid()
     {
         $submission_file_data = $this->_getSubmissionFileData('my work.pdf', $this->_pdfContents(), 'bogus');
@@ -232,7 +232,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'bogus is not a valid upload level.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function single_question_uploads_do_not_count_against_the_pdf_for_multiple_questions()
     {
         //the student has used up all of their uploads for this one question...
@@ -248,7 +248,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_upload_a_pdf_for_multiple_questions_more_than_the_max_number_of_times()
     {
         $compiled_pdf = $this->_createCompiledPdf();
@@ -260,7 +260,7 @@ class PdfForMultipleQuestionsTest extends TestCase
                 'message' => 'You have exceeded the number of times that you can re-upload a file submission.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_upload_a_pdf_for_multiple_questions_if_past_due()
     {
         $this->_makePastDue();
@@ -270,7 +270,7 @@ class PdfForMultipleQuestionsTest extends TestCase
                 'message' => 'No responses will be saved since the due date for this assignment has passed.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_upload_a_pdf_for_multiple_questions_if_past_due_with_a_pdf_upload_override()
     {
         $this->_makePastDue();
@@ -283,7 +283,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_can_assign_pages_from_the_pdf_to_multiple_questions()
     {
         $this->_createCompiledPdf();
@@ -305,7 +305,7 @@ class PdfForMultipleQuestionsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function assigning_a_page_replaces_a_file_uploaded_for_just_that_question()
     {
         $this->_createCompiledPdf();
@@ -329,7 +329,7 @@ class PdfForMultipleQuestionsTest extends TestCase
         $this->assertEquals(2, $submission_files[0]->page);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_assign_a_page_before_uploading_a_pdf()
     {
         $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page",
@@ -337,7 +337,7 @@ class PdfForMultipleQuestionsTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'Please upload your PDF before assigning pages.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_assign_a_page_to_a_rich_text_question()
     {
         $this->_createCompiledPdf();
@@ -348,7 +348,7 @@ class PdfForMultipleQuestionsTest extends TestCase
                 'message' => 'Pages from your PDF can only be assigned to questions that accept a file upload.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_assign_a_page_to_an_audio_question()
     {
         $this->_createCompiledPdf();
@@ -359,7 +359,7 @@ class PdfForMultipleQuestionsTest extends TestCase
                 'message' => 'Pages from your PDF can only be assigned to questions that accept a file upload.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_assign_a_page_to_a_question_without_an_open_ended_submission()
     {
         $this->_createCompiledPdf();
@@ -370,7 +370,7 @@ class PdfForMultipleQuestionsTest extends TestCase
                 'message' => 'Pages from your PDF can only be assigned to questions that accept a file upload.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function delayed_assignments_always_use_the_both_file_upload_mode()
     {
         $properties = new class {
@@ -389,7 +389,7 @@ class PdfForMultipleQuestionsTest extends TestCase
         return DB::table('assignments')->where('id', $assignment->id)->value('file_upload_mode');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function convert_saves_the_original_file_upload_modes_and_switches_them_to_both()
     {
         $compiled_pdf = factory(Assignment::class)->create(['course_id' => $this->course->id, 'file_upload_mode' => 'compiled_pdf']);
@@ -403,7 +403,7 @@ class PdfForMultipleQuestionsTest extends TestCase
         $this->assertEquals('individual_assessment', DB::table('file_upload_mode_backups')->where('assignment_id', $individual->id)->value('file_upload_mode'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function restore_puts_back_the_original_file_upload_modes()
     {
         $compiled_pdf = factory(Assignment::class)->create(['course_id' => $this->course->id, 'file_upload_mode' => 'compiled_pdf']);
@@ -418,7 +418,7 @@ class PdfForMultipleQuestionsTest extends TestCase
         $this->assertEquals('both', $this->_fileUploadMode($this->assignment));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function convert_can_be_redone_after_a_restore()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'file_upload_mode' => 'compiled_pdf']);
@@ -435,7 +435,7 @@ class PdfForMultipleQuestionsTest extends TestCase
         $this->assertEquals('individual_assessment', $this->_fileUploadMode($assignment));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function running_convert_twice_keeps_the_original_file_upload_modes()
     {
         $assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'file_upload_mode' => 'compiled_pdf']);

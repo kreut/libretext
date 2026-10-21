@@ -64,7 +64,7 @@ class AssignmentTopicTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_cannot_move_deleted_topic_questions_to_topic_outside_of_the_current_assignment()
     {
 
@@ -81,7 +81,7 @@ class AssignmentTopicTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_move_deleted_topic_questions_to_a_different_topic_in_the_current_assignment()
     {
 
@@ -101,7 +101,7 @@ class AssignmentTopicTest extends TestCase
             'assignment_topic_id' => $topic_2->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function if_there_are_no_topics_left_questions_get_moved_to_the_null_topic()
     {
         DB::table('assignment_question')
@@ -116,7 +116,7 @@ class AssignmentTopicTest extends TestCase
             'assignment_topic_id' => null]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_delete_the_topic()
     {
         $this->actingAs($this->user_2)
@@ -126,7 +126,7 @@ class AssignmentTopicTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_delete_the_topic()
     {
 
@@ -138,7 +138,7 @@ class AssignmentTopicTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_move_a_question_from_a_topic_in_one_assignment_to_a_topic_in_the_same_assignment()
     {
 
@@ -150,7 +150,7 @@ class AssignmentTopicTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_move_a_question_from_a_topic_in_one_assignment_to_a_topic_in_another_assignment()
     {
         $assignment_2 = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -162,7 +162,7 @@ class AssignmentTopicTest extends TestCase
             ->assertJson(['message' => "You are trying to move a question from a topic in one assignment to a different assignment."]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_move_a_question_to_an_assignment_that_you_do_not_own()
     {
         $this->actingAs($this->user_2)
@@ -174,7 +174,7 @@ class AssignmentTopicTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_move_a_question_that_is_not_in_the_assignment()
     {
         $this->actingAs($this->user)
@@ -185,7 +185,7 @@ class AssignmentTopicTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_must_own_the_parent_assignment()
     {
         $this->user_2 = factory(User::class)->create();
@@ -199,7 +199,7 @@ class AssignmentTopicTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_of_topic_can_update_the_topic()
     {
         $topic_to_update = ['topic_id' => $this->topic->id,
@@ -212,7 +212,7 @@ class AssignmentTopicTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function an_instructor_can_create_a_topic()
     {
         $this->actingAs($this->user)
@@ -221,7 +221,7 @@ class AssignmentTopicTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_of_topic_cannot_update_the_topic()
     {
         $topic_to_update = ['topic_id' => $this->topic->id,
@@ -233,7 +233,7 @@ class AssignmentTopicTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function assignment_topic_must_be_unique_within_an_assignment()
     {
         $this->new_topic['name'] = $this->topic->name;
@@ -243,7 +243,7 @@ class AssignmentTopicTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function assignment_topic_must_not_be_empty()
     {
         $this->new_topic['name'] = '';
@@ -253,7 +253,7 @@ class AssignmentTopicTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_non_instructor_cannot_create_a_topic()
     {
         $this->actingAs($this->student_user)

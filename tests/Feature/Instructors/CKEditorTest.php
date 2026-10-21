@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -16,7 +17,7 @@ class CKEditorTest extends TestCase
         $this->user = factory(User::class)->create(['role' => 2]);
     }
 
-    /** @test */
+    #[Test]
     public function image_is_stored_on_s3()
     {
 
@@ -32,7 +33,7 @@ class CKEditorTest extends TestCase
         $this->assertTrue(Storage::disk('s3')->has("uploads/images/$file"));
     }
 
-    /** @test */
+    #[Test]
     public function upload_must_be_an_image()
     {
 
@@ -44,7 +45,7 @@ class CKEditorTest extends TestCase
             ->assertSeeText('application/pdf is not a valid mimetype.  Please verify that you are uploading an image.');
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_upload_image()
     {
         $this->user->role = 1;
@@ -54,7 +55,7 @@ class CKEditorTest extends TestCase
             ->assertSeeText('You are not allowed to upload images.');
     }
 
-    /** @test */
+    #[Test]
     public function upload_must_be_present()
     {
         $this->actingAs($this->user)

@@ -10,7 +10,6 @@ use App\Question;
 use App\Section;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\Traits\Test;
@@ -94,7 +93,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ->postJson("/api/assignments/{$this->assignment->id}/time-limit/start");
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_cannot_submit_before_starting_the_timer()
     {
 
@@ -106,7 +105,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_can_submit_once_started_and_within_the_time_window()
     {
         $this->startTimer($this->student_user);
@@ -116,7 +115,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_cannot_submit_once_their_personal_timer_has_expired_even_though_the_assignment_is_still_due_later()
     {
         $this->startTimer($this->student_user);
@@ -136,7 +135,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_student_with_no_time_limit_configured_is_unaffected()
     {
         $this->assign_to_timing->time_limit = null;
@@ -149,7 +148,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function the_course_owner_bypasses_the_time_limit_check_entirely()
     {
         // Never started a timer, and $this->user owns the course - the
@@ -160,7 +159,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function fake_student_or_instructor_impersonation_is_still_subject_to_the_time_limit()
     {
         // Regression test: the instructor_user_id ("logged in as student")
@@ -180,7 +179,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function fake_student_impersonation_still_blocks_submission_after_expiry()
     {
         $this->startTimer($this->student_user);
@@ -200,7 +199,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function impersonation_bypass_still_applies_for_ordinary_due_date_checks_once_the_timer_passes()
     {
         // The instructor_user_id bypass should still work for anything AFTER
@@ -218,7 +217,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function never_started_and_past_due_shows_the_normal_due_date_message_instead_of_not_started()
     {
         // Regression test: the time-limit "not started" check used to
@@ -238,7 +237,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function never_started_and_past_due_with_a_late_accepting_policy_is_let_through_with_no_timer_at_all()
     {
         // Intended behavior (confirmed with the product owner): once the
@@ -262,7 +261,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_real_fake_student_cannot_submit_before_starting_the_timer()
     {        // Regression test: an actual fake_student=1 user satisfies
         // ownsCourseOrIsCoInstructor($user->id) (they're the instructor's
@@ -280,7 +279,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_real_fake_student_can_submit_once_they_start_the_timer()
     {
         $this->startTimer($this->fake_student);
@@ -290,7 +289,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_real_fake_student_cannot_submit_once_their_personal_timer_has_expired()
     {
         $this->startTimer($this->fake_student);
@@ -308,7 +307,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_real_fake_student_who_never_started_is_still_blocked_once_past_due()
     {
         // Regression test: real students get an untimed late-policy
@@ -328,7 +327,7 @@ class SubmissionTimeLimitPolicyTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function never_started_and_before_available_from_shows_the_normal_not_yet_available_message()
     {
         // Same fix, other side of the window: never started and too early

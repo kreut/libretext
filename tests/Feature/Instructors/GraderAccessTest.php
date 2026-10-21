@@ -4,16 +4,10 @@ namespace Tests\Feature\Instructors;
 
 use App\Assignment;
 use App\Course;
-use App\Enrollment;
 use App\Grader;
-use App\Question;
 use App\Section;
 use App\User;
 use App\Traits\Test;
-
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class GraderAccessTest extends TestCase
@@ -43,28 +37,28 @@ class GraderAccessTest extends TestCase
         $this->grader_user_2 = factory(User::class)->create();
         $this->grader_user_2->role = 4;
     }
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_update_single_grader_permissions()
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignment-grader-access/{$this->assignment->id}/{$this->grader_user->id}/1")
             ->assertJson(['message' => 'You are not allowed to give this grader access to this assignment.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_be_grader_in_course_to_update_single_grader_permissions()
     {
         $this->actingAs($this->user)->patchJson("/api/assignment-grader-access/{$this->assignment->id}/{$this->grader_user_2->id}/1")
             ->assertJson(['message' => 'You are not allowed to give this grader access to this assignment.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_update_single_grader_permissions()
     {
         $this->actingAs($this->user)->patchJson("/api/assignment-grader-access/{$this->assignment->id}/{$this->grader_user->id}/1")
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_update_assignment_level_grader_permissions()
     {
         $this->actingAs($this->user)->patchJson("/api/assignment-grader-access/{$this->assignment->id}/1")
@@ -76,7 +70,7 @@ class GraderAccessTest extends TestCase
 
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function nonowner_cannot_update_assignment_level_grader_access()
     {
 
@@ -87,8 +81,7 @@ class GraderAccessTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_get_grader_permissions()
     {
 
@@ -97,7 +90,7 @@ class GraderAccessTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_get_grader_permissions()
     {
 

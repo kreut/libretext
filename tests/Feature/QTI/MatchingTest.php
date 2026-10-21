@@ -56,7 +56,7 @@ class MatchingTest extends TestCase
     }
 
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function possible_matches_must_be_unique()
     {
@@ -69,7 +69,7 @@ class MatchingTest extends TestCase
     }
 
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function at_least_two_matchings_are_required()
     {
@@ -85,7 +85,7 @@ class MatchingTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function every_term_to_match_requires_text()
     {
@@ -95,7 +95,7 @@ class MatchingTest extends TestCase
             ->assertJson(['errors' => ['qti_matching_term_to_match_0' => ['The term to match from Matching 1 is required.']]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function every_matching_term_requires_text()
     {
@@ -107,7 +107,7 @@ class MatchingTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function every_distractor_requires_text()
     {
@@ -119,7 +119,7 @@ class MatchingTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function prompt_is_required()
     {
         unset($this->qti_question_info['qti_prompt']);

@@ -14,7 +14,7 @@ class UpdateAuthorToQuestions extends Migration
     public function up()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->string('author',500)->change();
+            $table->string('author',500)->nullable()->change();
         });
     }
 
@@ -26,7 +26,7 @@ class UpdateAuthorToQuestions extends Migration
     public function down()
     {
         Schema::table('questions', function (Blueprint $table) {
-           $table->string('author',255)->change();
+           $table->string('author',255)->nullable()->change();
         });
     }
 }

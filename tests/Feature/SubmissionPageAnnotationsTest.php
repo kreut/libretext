@@ -83,7 +83,7 @@ class SubmissionPageAnnotationsTest extends TestCase
         return ['version' => 3, 'width' => 1275, 'height' => 1650, 'markers' => $markers];
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function the_instructor_can_save_and_read_markup_on_a_page_in_the_questions_range()
     {
         $this->actingAs($this->instructor)
@@ -102,7 +102,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'success', 'annotations' => ['3' => ['width' => 1275, 'height' => 1650]]]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function saving_again_replaces_the_pages_markup()
     {
         $this->actingAs($this->instructor)->putJson($this->_url(2), ['state' => $this->_state(1)]);
@@ -113,7 +113,7 @@ class SubmissionPageAnnotationsTest extends TestCase
         $this->assertCount(3, $annotations[0]->state['markers']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function saving_no_markers_removes_the_markup()
     {
         $this->actingAs($this->instructor)->putJson($this->_url(2), ['state' => $this->_state()]);
@@ -123,7 +123,7 @@ class SubmissionPageAnnotationsTest extends TestCase
         $this->assertDatabaseMissing('submission_page_annotations', ['user_id' => $this->student->id, 'page' => 2]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_page_outside_the_questions_range_cannot_be_marked_up()
     {
         $this->actingAs($this->instructor)
@@ -131,7 +131,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => "Page 5 isn't part of this student's submission for this question."]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function an_old_start_page_only_assignment_cannot_be_marked_up()
     {
         DB::table('submission_files')
@@ -143,7 +143,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function markup_needs_a_finished_conversion()
     {
         SubmissionFileConversion::where('submission', 'compiled.pdf')
@@ -153,7 +153,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function invalid_state_is_rejected()
     {
         $this->actingAs($this->instructor)
@@ -162,7 +162,7 @@ class SubmissionPageAnnotationsTest extends TestCase
         $this->assertDatabaseMissing('submission_page_annotations', ['user_id' => $this->student->id]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function too_many_markers_are_rejected()
     {
         $this->actingAs($this->instructor)
@@ -170,7 +170,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_student_cannot_save_markup()
     {
         $this->actingAs($this->student)
@@ -178,7 +178,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to mark up this submission.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function another_instructor_cannot_read_or_save_markup()
     {
         $this->actingAs($this->other_instructor)
@@ -189,7 +189,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function the_end_page_cannot_be_before_the_start_page()
     {
         $this->actingAs($this->student)
@@ -209,7 +209,7 @@ class SubmissionPageAnnotationsTest extends TestCase
         $this->assignment->save();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_student_cannot_see_markup_before_scores_are_released()
     {
         $this->_releaseScores(false);
@@ -224,7 +224,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_student_sees_their_marked_up_pages_once_scores_are_released()
     {
         $this->_releaseScores(true);
@@ -246,7 +246,7 @@ class SubmissionPageAnnotationsTest extends TestCase
         $this->assertEquals([2, 3, 4], array_column($response->json('pages'), 'page'));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_student_with_no_markup_gets_no_pages()
     {
         $this->_releaseScores(true);
@@ -255,7 +255,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'success', 'pages' => []]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_student_cannot_read_another_students_markup()
     {
         $this->_releaseScores(true);
@@ -268,7 +268,7 @@ class SubmissionPageAnnotationsTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to view this submission.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function page_ranges_follow_the_rules()
     {
         // a PDF uploaded for one question: all of it

@@ -52,7 +52,7 @@ class SelectChoiceTest extends TestCase
             'qti_directory' => $this->directory]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function each_identifier_should_have_at_least_two_choices()
     {
         $qti_array = json_decode($this->qti_question_info['qti_json'], true);
@@ -71,7 +71,7 @@ class SelectChoiceTest extends TestCase
 
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function no_choices_should_be_blank()
     {
         $qti_array = json_decode($this->qti_question_info['qti_json'], true);
@@ -91,7 +91,7 @@ class SelectChoiceTest extends TestCase
             ->assertJson($response);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function choices_cannot_repeat()
 
     {

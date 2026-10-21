@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
 use Tests\TestCase;
@@ -65,7 +66,7 @@ class MatrixMultipleResponseTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function prompt_is_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -75,7 +76,7 @@ class MatrixMultipleResponseTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function row_headers_are_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -85,7 +86,7 @@ class MatrixMultipleResponseTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function at_least_one_should_be_marked_correct_in_each_column()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -97,7 +98,7 @@ class MatrixMultipleResponseTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function there_should_be_at_least_one_row()
     {
         $this->qti_question_info['rows'] = [];
@@ -107,7 +108,7 @@ class MatrixMultipleResponseTest extends TestCase
         $this->assertEquals("The rows field is required.", json_decode($response)->errors->rows[0]);
     }
 
-    /** @test */
+    #[Test]
     public function headers_are_required()
     {
         $this->qti_question_info['colHeaders'][1] = '';

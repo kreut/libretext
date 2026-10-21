@@ -3,18 +3,10 @@
 namespace Tests\Feature\Students;
 
 
-use App\AssignToUser;
-use App\FinalGrade;
-use App\Section;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use App\User;
-use App\Score;
 use App\Course;
 use App\Assignment;
-use App\Enrollment;
-use App\SubmissionFile;
 use App\Traits\Test;
 use App\Traits\Statistics;
 
@@ -36,16 +28,14 @@ class AnonymousUsersAssignmentsIndexTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function anonymous_user_can_get_assignments_for_anonymous_course()
     {
         $this->actingAs($this->anonymous_user)->getJson("/api/assignments/courses/{$this->course->id}/anonymous-user")
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function anonymous_user_cannot_get_assignments_for_non_anonymous_course()
     {
         $this->anonymous_user->email = 'non_anonymous';

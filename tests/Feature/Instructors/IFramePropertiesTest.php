@@ -3,13 +3,8 @@
 namespace Tests\Feature\Instructors;
 
 
-use App\Assignment;
-use App\Enrollment;
-use App\GraderAccessCode;
-use App\Section;
 use App\User;
 use App\Course;
-use App\Grader;
 use Tests\TestCase;
 use App\Traits\Test;
 
@@ -29,8 +24,7 @@ class IFramePropertiesTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_update_iframe_properties()
     {
 
@@ -40,8 +34,7 @@ class IFramePropertiesTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update what is shown in the iframe.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function iframe_property_must_be_valid()
     {
 
@@ -51,8 +44,7 @@ class IFramePropertiesTest extends TestCase
             ->assertJson(['message' => 'bogus item is not a valid iframe property.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_update_iframe_properties()
     {
 

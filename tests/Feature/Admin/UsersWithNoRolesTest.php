@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Tests\TestCase;
 
@@ -19,7 +20,7 @@ class UsersWithNoRolesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function role_must_be_valid()
     {
         $this->actingAs($this->admin_user)
@@ -28,7 +29,7 @@ class UsersWithNoRolesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function updated_user_will_have_correct_role()
     {
         $this->actingAs($this->admin_user)
@@ -39,7 +40,7 @@ class UsersWithNoRolesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function delete_user_must_have_no_role()
     {
 
@@ -48,7 +49,7 @@ class UsersWithNoRolesTest extends TestCase
             ->assertJson(['message' => 'You cannot delete the user since they already have a role.']);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_delete_user()
     {
         $this->assertDatabaseCount('users', 3);
@@ -60,14 +61,14 @@ class UsersWithNoRolesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function must_be_admin_with_cookie_to_get_users_with_no_roles()
     {
         $this->actingAs($this->user)->getJson('/api/users-with-no-role')
             ->assertJson(['message' => 'You are not allowed to get the users without roles.']);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_get_users_with_no_roles()
     {
 

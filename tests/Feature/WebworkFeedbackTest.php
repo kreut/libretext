@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\JWE;
@@ -71,7 +72,7 @@ class WebworkFeedbackTest extends TestCase
             $this->assignment_question);
     }
 
-    /** @test */
+    #[Test]
     public function feedback_from_ans_message_is_included_in_the_submission_array()
     {
         $this->actAs($this->student);
@@ -86,7 +87,7 @@ class WebworkFeedbackTest extends TestCase
         $this->assertFalse($submission_array[0]['feedback_has_html']);
     }
 
-    /** @test */
+    #[Test]
     public function html_feedback_is_flagged_as_html()
     {
         $this->actAs($this->student);
@@ -100,7 +101,7 @@ class WebworkFeedbackTest extends TestCase
         $this->assertTrue($submission_array[0]['feedback_has_html']);
     }
 
-    /** @test */
+    #[Test]
     public function no_feedback_key_when_ans_message_is_empty_or_missing()
     {
         $this->actAs($this->student);
@@ -112,7 +113,7 @@ class WebworkFeedbackTest extends TestCase
         $this->assertArrayNotHasKey('feedback', $submission_array[1]);
     }
 
-    /** @test */
+    #[Test]
     public function student_sees_feedback_on_delayed_assignment_once_solutions_are_released()
     {
         $this->actAs($this->student);
@@ -122,7 +123,7 @@ class WebworkFeedbackTest extends TestCase
         $this->assertEquals('Try again.', $submission_array[0]['feedback']);
     }
 
-    /** @test */
+    #[Test]
     public function student_does_not_get_the_submission_array_on_delayed_assignment_before_solutions_are_released()
     {
         $this->actAs($this->student);
@@ -132,7 +133,7 @@ class WebworkFeedbackTest extends TestCase
         $this->assertEquals([], $submission_array);
     }
 
-    /** @test */
+    #[Test]
     public function instructor_sees_feedback_on_delayed_assignment_before_solutions_are_released()
     {
         $this->actAs($this->instructor);
@@ -176,7 +177,7 @@ class WebworkFeedbackTest extends TestCase
         return "$header.$payload.$signature";
     }
 
-    /** @test */
+    #[Test]
     public function format_error_submission_is_accepted_instead_of_rejected()
     {
         // unconfirmed_submissions has foreign keys to assignments and questions, so these must be real rows

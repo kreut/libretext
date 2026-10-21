@@ -2,22 +2,16 @@
 
 namespace Tests\Feature\Instructors;
 
-use App\Assignment;
+use PHPUnit\Framework\Attributes\Test;
 use App\Course;
 use App\MyFavorite;
 use App\Question;
 use App\SavedQuestionsFolder;
-use App\SubmissionFile;
-use App\Submission;
 use App\User;
-use App\Tag;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class SavedFoldersTest extends TestCase
 {
@@ -62,7 +56,7 @@ class SavedFoldersTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function for_my_favorites_folders_deleting_the_folder_removes_the_questions()
     {
 
@@ -78,7 +72,7 @@ class SavedFoldersTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function must_own_the_folder_you_are_moving_to_if_deleting()
     {
         $this->actingAs($this->user)->postJson("/api/saved-questions-folders/delete/{$this->from_saved_question_folder->id}",
@@ -91,7 +85,7 @@ class SavedFoldersTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function cannot_use_delete_option_for_my_questions()
     {
         $this->question->folder_id = $this->my_questions_folder->id;
@@ -104,7 +98,7 @@ class SavedFoldersTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function questions_are_moved_to_new_folder_if_moving()
     {
 
@@ -131,7 +125,7 @@ class SavedFoldersTest extends TestCase
         $this->assertEquals(1, $num_in_new_folder);
     }
 
-    /** @test */
+    #[Test]
     public function non_folder_owners_cannot_update_folders()
     {
         $this->actingAs($this->user)->postJson("/api/saved-questions-folders", $this->saved_question_folder)
@@ -143,7 +137,7 @@ class SavedFoldersTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function folder_owners_can_update_their_own_folders()
     {
         $this->actingAs($this->user)->postJson("/api/saved-questions-folders", $this->saved_question_folder)
@@ -156,7 +150,7 @@ class SavedFoldersTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function folder_names_must_not_be_empty()
     {
         $this->saved_question_folder['name'] = '';
@@ -165,7 +159,7 @@ class SavedFoldersTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructors_cannot_save_folders()
     {
         $this->actingAs($this->student_user)->postJson("/api/saved-questions-folders", $this->saved_question_folder)
@@ -174,7 +168,7 @@ class SavedFoldersTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function folder_names_cannot_repeat()
     {
         $this->actingAs($this->user)->postJson("/api/saved-questions-folders", $this->saved_question_folder)
@@ -184,7 +178,7 @@ class SavedFoldersTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function instructors_and_non_instructor_editors_can_create_folders()
     {
         $this->actingAs($this->user)->postJson("/api/saved-questions-folders", $this->saved_question_folder)
@@ -197,7 +191,7 @@ class SavedFoldersTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function non_instructors_cannot_get_saved_folders()
     {
         $this->actingAs($this->student_user)->getJson("/api/saved-questions-folders/my_questions")
@@ -205,7 +199,7 @@ class SavedFoldersTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function folder_type_must_be_valid()
     {
         $this->actingAs($this->user)->getJson("/api/saved-questions-folders/bad_folder_type")
@@ -213,7 +207,7 @@ class SavedFoldersTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function instructors_can_get_saved_folders()
     {
         $this->actingAs($this->user)->getJson("/api/saved-questions-folders/my_questions",)

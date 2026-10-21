@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\BetaAssignment;
 use App\BetaCourse;
@@ -89,7 +90,7 @@ class TetheredCoursesTest extends TestCase
         ]);
 
     }
-    /** @test */
+    #[Test]
     public function creates_a_beta_course_when_importing_an_alpha_course()
     {
         $current_num = count(BetaCourse::all());
@@ -103,7 +104,7 @@ class TetheredCoursesTest extends TestCase
         $this->assertCount($current_num + 1, BetaCourse::all());
     }
 
-    /** @test */
+    #[Test]
     public function alpha_course_with_beta_courses_cannot_change_formative_category()
     {
         $this->actingAs($this->user)
@@ -112,7 +113,7 @@ class TetheredCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function beta_course_cannot_change_formative_category()
     {
         $this->actingAs($this->user)
@@ -120,7 +121,7 @@ class TetheredCoursesTest extends TestCase
             ->assertJson(['errors' => ['formative' => ['You cannot switch the formative nature of the course since it is a Beta course.']]]);
     }
 
-    /** @test */
+    #[Test]
     public function beta_course_approval_is_added_when_you_add_an_assessment_via_the_remixer_to_an_alpha_course()
     {
         $data['chosen_questions'] = [
@@ -140,14 +141,14 @@ class TetheredCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function correctly_gets_beta_assignment_for_instructors()
     {
         $this->actingAs($this->beta_user)->getJson("/api/beta-assignments/get-from-alpha-assignment/{$this->assignment->id}")
             ->assertJson(['beta_assignment_id' => $this->beta_assignment->id]);
     }
 
-    /** @test */
+    #[Test]
     public function correctly_gets_beta_assignment_for_students()
     {
         $beta_student_user = factory(User::class)->create();
@@ -163,14 +164,14 @@ class TetheredCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_remove_alpha_assignment_if_it_has_beta_assignment()
     {
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}")
             ->assertJson(['message' => 'You cannot delete an Alpha assignment with tethered Beta assignments.']);
     }
 
-    /** @test */
+    #[Test]
     public function when_you_approve_adding_a_learning_tree_assessment_it_gets_stored_in_your_course()
     {
         $this->assignment['number_of_successful_paths_for_a_reset'] = 1;
@@ -191,7 +192,7 @@ class TetheredCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function when_you_approve_removing_a_learning_tree_assessment_it_gets_stored_in_your_course()
     {
 
@@ -237,7 +238,7 @@ class TetheredCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function beta_course_approval_is_added_when_you_remove_an_assessment_from_an_alpha_course()
     {
         DB::table('assignment_question')->insert([
@@ -271,7 +272,7 @@ class TetheredCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_cannot_untether_beta_course_without_correct_name_confirmation()
     {
         $this->actingAs($this->beta_user)->deleteJson("/api/beta-courses/untether/{$this->beta_course->id}",
@@ -282,7 +283,7 @@ class TetheredCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_untether_beta_course()
     {
         $this->actingAs($this->beta_user)->deleteJson("/api/beta-courses/untether/{$this->beta_course->id}",
@@ -293,7 +294,7 @@ class TetheredCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function course_cannot_be_both_alpha_and_beta()
     {
 
@@ -311,7 +312,7 @@ class TetheredCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_change_alpha_course_to_non_alpha_course_if_at_least_one_beta_course()
     {
 
@@ -330,7 +331,7 @@ class TetheredCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function when_you_approve_adding_an_assessment_it_gets_stored_in_your_course()
     {
 
@@ -356,7 +357,7 @@ class TetheredCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function when_you_approve_removing_an_assessment_it_gets_removed_from_your_course()
     {
         DB::table('assignment_question')->insert([
@@ -379,7 +380,7 @@ class TetheredCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function beta_course_approval_is_added_when_you_add_an_assessment_to_an_alpha_course()
     {
 
@@ -392,7 +393,7 @@ class TetheredCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function only_owner_can_get_list_of_beta_courses()
     {
         $this->actingAs($this->user)->getJson("api/beta-courses/get-from-alpha-course/{$this->course_2->id}")
@@ -400,7 +401,7 @@ class TetheredCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function correctly_gets_the_list_of_beta_courses()
     {
         $response = $this->actingAs($this->user)->getJson("api/beta-courses/get-from-alpha-course/{$this->course->id}");
@@ -408,7 +409,7 @@ class TetheredCoursesTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_remove_alpha_course_if_it_has_beta_courses()
     {
         $this->actingAs($this->user)->deleteJson("/api/courses/{$this->course->id}")
@@ -416,7 +417,7 @@ class TetheredCoursesTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function must_be_an_alpha_course_to_import_as_a_beta_course()
     {
         $this->course->alpha = 0;

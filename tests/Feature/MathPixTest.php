@@ -2,14 +2,10 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
-use App\Enrollment;
-use App\Section;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class MathPixTest extends TestCase
@@ -31,7 +27,7 @@ class MathPixTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_temporary_url()
     {
         $this->actingAs($this->user)
@@ -40,7 +36,7 @@ class MathPixTest extends TestCase
                 'message' => 'You are not allowed to get a temporary URL for this SMILE.']);
 
     }
-    /** @test */
+    #[Test]
     public function non_student_cannot_convert_to_smiles()
     {
         $this->actingAs($this->student_user)

@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\AnalyticsDashboard;
 use App\Assignment;
 use App\Course;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class AnalyticsDashboardTest extends TestCase
@@ -22,7 +21,7 @@ class AnalyticsDashboardTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
     }
 
-    /** @test */
+    #[Test]
     public function database_updates_correctly()
     {
         $analytics_course_id = 'kIUUELlfi';
@@ -44,7 +43,7 @@ class AnalyticsDashboardTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function valid_bearer_token_is_required_to_unsync_analytics_dashboard()
     {
         $this->withHeaders([
@@ -56,7 +55,7 @@ class AnalyticsDashboardTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function valid_bearer_token_is_required_to_sync_analytics_dashboard()
     {
         $this->withHeaders([
@@ -69,14 +68,14 @@ class AnalyticsDashboardTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_show_analytics_dashboard_if_not_course_owner()
     {
         $this->actingAs($this->user_2)->getJson("/api/analytics-dashboard/{$this->course->id}")
             ->assertJson(['message' => 'You are not allowed to view the analytics dashboard for the course.']);
     }
 
-    /** @test */
+    #[Test]
     public function bearer_token_is_required_to_sync_analytics_dashboard()
     {
         $this->postJson("/api/analytics-dashboard/sync/{$this->course->id}")

@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class AccountCustomizationsTest extends TestCase
@@ -17,7 +16,7 @@ class AccountCustomizationsTest extends TestCase
 
     }
 
-  /** @test */
+  #[Test]
     public function non_instructor_cannot_update_account_customizations() {
 
             $this->actingAs($this->user)->patchJson("/api/account-customizations")

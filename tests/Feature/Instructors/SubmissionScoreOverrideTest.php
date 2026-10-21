@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
-use App\Grader;
 use App\Question;
 use App\Section;
 use App\User;
@@ -52,7 +52,7 @@ class SubmissionScoreOverrideTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function question_must_be_in_assignment()
     {
         $this->submission_score_override['question_id'] = 23412123;
@@ -60,7 +60,7 @@ class SubmissionScoreOverrideTest extends TestCase
             ->assertJsonValidationErrors('score');
     }
 
-    /** @test */
+    #[Test]
     public function student_must_be_in_course()
     {
         DB::table('enrollments')->delete();
@@ -69,7 +69,7 @@ class SubmissionScoreOverrideTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function instructor_must_be_owner_of_course()
     {
         $user_2 = factory(User::class)->create();
@@ -78,7 +78,7 @@ class SubmissionScoreOverrideTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function score_must_be_valid()
     {
         $this->submission_score_override['score'] = 500;
@@ -87,7 +87,7 @@ class SubmissionScoreOverrideTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function instructor_can_override_submission_score()
     {
         $this->actingAs($this->user)->patchJson("/api/submission-score-overrides", $this->submission_score_override)

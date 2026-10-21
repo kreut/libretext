@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class PassbackByAssignmentTest extends TestCase
@@ -23,7 +22,7 @@ class PassbackByAssignmentTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_passback_by_assignment()
     {
         $this->actingAs($this->user_2)

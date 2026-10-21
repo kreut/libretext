@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Course;
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class LearningTreeAnalyticsTest extends TestCase
@@ -16,7 +14,7 @@ class LearningTreeAnalyticsTest extends TestCase
         parent::setUp();
     }
 
-    /** @test */
+    #[Test]
     public function only_admin_can_get_learning_tree_analytics()
     {
         $user = factory(User::class)->create(['id'=>20]);

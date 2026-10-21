@@ -7,7 +7,6 @@ use App\Course;
 use App\Enrollment;
 use App\Question;
 use App\RefreshQuestionRequest;
-use App\Score;
 use App\Section;
 use App\Submission;
 use App\Traits\Statistics;
@@ -102,7 +101,7 @@ class RefreshQuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_get_the_refresh_question_requests()
     {
 
@@ -112,7 +111,7 @@ class RefreshQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_get_the_refresh_question_requests()
     {
         $this->actingAs($this->user)
@@ -121,7 +120,7 @@ class RefreshQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_admin_cannot_deny_a_refresh_question_request()
     {
 
@@ -132,7 +131,7 @@ class RefreshQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_deny_a_refresh_question_request()
     {
         factory(RefreshQuestionRequest::class)->create(['question_id' => $this->question->id,
@@ -146,7 +145,7 @@ class RefreshQuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_refresh_if_submissions_in_other_assignments()
     {
         $this->submission_object = '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}';
@@ -171,7 +170,7 @@ class RefreshQuestionTest extends TestCase
 
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_instructor_cannot_make_a_refresh_question_request()
     {
         $this->actingAs($this->student_user)
@@ -181,7 +180,7 @@ class RefreshQuestionTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_make_a_refresh_question_request()
     {
         $this->actingAs($this->user)
@@ -191,7 +190,7 @@ class RefreshQuestionTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function reason_for_edit_must_be_valid()
     {
         $this->actingAs($this->user)
@@ -200,7 +199,7 @@ class RefreshQuestionTest extends TestCase
             ->assertJsonValidationErrors(['nature_of_update']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_refresh_if_not_an_instructor()
     {
         $this->actingAs($this->student_user)
@@ -209,7 +208,7 @@ class RefreshQuestionTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to refresh questions.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_refresh_if_in_beta_assignment()
     {
         $this->actingAs($this->user)

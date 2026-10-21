@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
 use App\Section;
 use App\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class A11yTest extends TestCase
@@ -32,7 +32,7 @@ class A11yTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_update_a11y()
     {
         $this->actingAs($this->user_2)->patchJson("/api/enrollments/a11y-redirect",
@@ -42,7 +42,7 @@ class A11yTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update a11y for this student.']);
     }
 
-    /** @test */
+    #[Test]
     public function student_must_be_enrolled_in_the_course_to_udpate_a11y()
     {
         $this->actingAs($this->user)->patchJson("/api/enrollments/a11y-redirect",
@@ -52,7 +52,7 @@ class A11yTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update a11y for this student.']);
     }
 
-    /** @test */
+    #[Test]
     public function instructor_can_update_a11y()
     {
         $this->actingAs($this->user)->patchJson("/api/enrollments/a11y-redirect",

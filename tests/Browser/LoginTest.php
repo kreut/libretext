@@ -2,6 +2,7 @@
 
 namespace Tests\Browser;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Tests\Browser\Pages\Home;
 use Tests\Browser\Pages\Login;
@@ -16,7 +17,7 @@ class LoginTest extends DuskTestCase
         static::closeAll();
     }
 
-    /** @test */
+    #[Test]
     public function login_with_valid_credentials()
     {
         $user = factory(User::class)->create();
@@ -28,7 +29,7 @@ class LoginTest extends DuskTestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function login_with_invalid_credentials()
     {
         $this->browse(function ($browser) {
@@ -38,7 +39,7 @@ class LoginTest extends DuskTestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function log_out_the_user()
     {
         $user = factory(User::class)->create();

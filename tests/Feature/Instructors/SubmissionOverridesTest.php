@@ -10,8 +10,6 @@ use App\Question;
 use App\Section;
 use App\User;
 use App\Assignment;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -53,8 +51,7 @@ class SubmissionOverridesTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_cannot_delete_compiled_pdf_overrides()
     {
@@ -65,8 +62,7 @@ class SubmissionOverridesTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_can_delete_compiled_pdf_overrides()
     {
@@ -76,8 +72,7 @@ class SubmissionOverridesTest extends TestCase
             ->assertJson(['type' => "info"]);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function grader_can_delete_compiled_pdf_overrides()
     {
@@ -88,8 +83,7 @@ class SubmissionOverridesTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_cannot_view_submission_overrides()
     {
@@ -101,8 +95,7 @@ class SubmissionOverridesTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_cannot_delete_question_level_overrides()
     {
@@ -113,8 +106,7 @@ class SubmissionOverridesTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_can_delete_question_level_overrides()
     {
@@ -124,8 +116,7 @@ class SubmissionOverridesTest extends TestCase
             ->assertJson(['type' => "info"]);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function grader_can_delete_question_level_overrides()
     {
@@ -136,8 +127,7 @@ class SubmissionOverridesTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_cannot_update_compiled_overrides()
     {
@@ -148,8 +138,7 @@ class SubmissionOverridesTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_can_update_compiled_overrides()
     {
@@ -160,8 +149,7 @@ class SubmissionOverridesTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_cannot_update_question_level_overrides()
     {
@@ -173,8 +161,7 @@ class SubmissionOverridesTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_can_update_question_level_overrides()
     {
@@ -190,8 +177,7 @@ class SubmissionOverridesTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function grader_can_update_question_level_overrides()
     {

@@ -8,9 +8,6 @@ use App\Grader;
 use App\Section;
 use App\User;
 use App\Assignment;
-use App\Extension;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 use App\Traits\Test;
@@ -65,8 +62,7 @@ class AssignmentsIndex1Test extends TestCase
 
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_cannot_release_letter_grades_if_assignment_weights_are_not_100()
     {
         $this->actingAs($this->user)
@@ -74,8 +70,7 @@ class AssignmentsIndex1Test extends TestCase
             ->assertJson(['message' => 'Please first update your Assignment Group Weights so that the total weighting is equal to 100.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_release_letter_grades()
     {
 
@@ -91,7 +86,7 @@ class AssignmentsIndex1Test extends TestCase
 
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_toggle_show_question_titles()
     {
         $this->actingAs($this->user_2)
@@ -100,7 +95,7 @@ class AssignmentsIndex1Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_toggle_question_url_view()
     {
         $this->actingAs($this->user_2)
@@ -110,7 +105,7 @@ class AssignmentsIndex1Test extends TestCase
 
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function nonowner_cannot_toggle_graders_seeing_student_names()
     {
         $this->actingAs($this->user_2)
@@ -118,7 +113,7 @@ class AssignmentsIndex1Test extends TestCase
             ->assertJson(['message' => "You are not allowed to switch whether graders can view their students' names."]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_cannot_toggle_graders_seeing_student_names()
     {
         $this->actingAs($this->user)
@@ -129,7 +124,7 @@ class AssignmentsIndex1Test extends TestCase
 
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function nonowner_cannot_create_new_assignment_group()
     {
 
@@ -138,8 +133,7 @@ class AssignmentsIndex1Test extends TestCase
             ->assertJson(['message' => 'You are not allowed to create an assignment group for this course.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_create_new_assignment_group()
     {
         $this->actingAs($this->user)
@@ -148,8 +142,7 @@ class AssignmentsIndex1Test extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function assignment_group_must_not_be_empty()
     {
         $this->actingAs($this->user)
@@ -158,13 +151,7 @@ class AssignmentsIndex1Test extends TestCase
     }
 
 
-    /** @test */
-
-
-
-
-
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function will_only_update_the_name_and_dates_if_there_is_already_a_submission()
     {
 
@@ -172,7 +159,7 @@ class AssignmentsIndex1Test extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_get_your_assignments()
     {
         $expected['assignments'][0]['name'] = 'First Assignment';
@@ -181,22 +168,20 @@ class AssignmentsIndex1Test extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owener_can_update_solutions_shown()
     {
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_update_solutions_shown_if_not_owner()
     {
 
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_submit_a_valid_scoring_type()
     {
         $this->markTestIncomplete(
@@ -205,7 +190,7 @@ class AssignmentsIndex1Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_submit_scoring_type_completed()
     {
         $assignment_info = $this->assignment_info;
@@ -216,7 +201,7 @@ class AssignmentsIndex1Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_get_assignments_if_you_are_a_student()
     {
         $this->user->role = 3;
@@ -225,14 +210,14 @@ class AssignmentsIndex1Test extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function can_delete_an_assignment_if_you_are_the_owner()
     {
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}")
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_delete_an_assignment_if_you_are_not_the_owner()
     {
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment_2->id}")

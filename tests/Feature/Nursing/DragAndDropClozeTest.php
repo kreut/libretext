@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
 use Tests\TestCase;
@@ -44,7 +45,7 @@ class DragAndDropClozeTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function need_at_least_one_drop_down()
     {
         $this->qti_question_info['prompt'] = '';
@@ -54,7 +55,7 @@ class DragAndDropClozeTest extends TestCase
         $this->assertEquals('You need at least one Correct Response in your prompt.', json_decode($response)->errors->qti_prompt[0]);
     }
 
-    /** @test */
+    #[Test]
     public function distractors_need_text()
     {
         $identifier = $this->qti_question_info['distractors'][0]['identifier'];
@@ -66,7 +67,7 @@ class DragAndDropClozeTest extends TestCase
         $this->assertEquals('Text is required.', $distractor_error->specific->{$identifier});
     }
 
-    /** @test */
+    #[Test]
     public function there_should_be_at_least_one_distractor()
     {
         $this->qti_question_info['distractors'] = [];

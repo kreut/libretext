@@ -40,7 +40,7 @@ class checkAssignTos extends Command
     public function handle()
     {
         try {
-            $counts = DB::select(DB::raw("
+            $counts = DB::select(("
                             SELECT COUNT(*) AS count, user_id
                             FROM assign_to_users
                             INNER JOIN assign_to_timings

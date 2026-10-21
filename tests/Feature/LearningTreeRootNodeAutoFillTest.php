@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Framework;
 use App\FrameworkLevel;
 use App\LearningTree;
@@ -59,7 +60,7 @@ class LearningTreeRootNodeAutoFillTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function it_does_nothing_when_root_node_question_changed_is_not_sent()
     {
         // same data, but WITHOUT the flag - normal Tree Properties save
@@ -80,7 +81,7 @@ class LearningTreeRootNodeAutoFillTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_copies_tags_from_the_root_question_when_the_tree_has_none()
     {
         $this->actingAs($this->user)
@@ -98,7 +99,7 @@ class LearningTreeRootNodeAutoFillTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_overwrite_existing_tags_on_the_tree()
     {
         $existing_tag = factory(Tag::class)->create(['tag' => 'tree already has this']);
@@ -139,7 +140,7 @@ class LearningTreeRootNodeAutoFillTest extends TestCase
         $this->assertDatabaseCount('learning_tree_tag', 1);
     }
 
-    /** @test */
+    #[Test]
     public function it_copies_framework_alignment_from_the_root_question_when_the_tree_has_none()
     {
         $this->actingAs($this->user)
@@ -153,7 +154,7 @@ class LearningTreeRootNodeAutoFillTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_overwrite_existing_framework_alignment_on_the_tree()
     {
         $other_framework_level = factory(FrameworkLevel::class)->create(['framework_id' => $this->framework->id]);
@@ -176,7 +177,7 @@ class LearningTreeRootNodeAutoFillTest extends TestCase
         $this->assertDatabaseCount('framework_item_learning_tree', 1);
     }
 
-    /** @test */
+    #[Test]
     public function it_copies_subject_chapter_and_section_from_the_root_question_when_the_tree_has_none()
     {
         $this->actingAs($this->user)
@@ -195,9 +196,8 @@ class LearningTreeRootNodeAutoFillTest extends TestCase
      * EK: subject/chapter/section is all-or-nothing - if the tree has ANY
      * of the three set, none are auto-filled, even if the other two are
      * empty. This is different from tags/framework, which are independent.
-     *
-     * @test
      */
+    #[Test]
     public function it_does_not_auto_fill_subject_chapter_section_if_the_tree_already_has_any_one_of_them()
     {
         $this->learningTree->question_subject_id = $this->questionSubject->id;
@@ -222,7 +222,7 @@ class LearningTreeRootNodeAutoFillTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_nothing_if_the_root_question_itself_has_no_tags_framework_or_subject_chapter_section()
     {
         $bare_question = factory(Question::class)->create(['question_editor_user_id' => $this->user->id]);

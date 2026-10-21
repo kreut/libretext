@@ -181,7 +181,7 @@ class AssignmentController extends Controller
                     if ($request->shifting_method !== 'assignment date property') {
                         if ($assign_to_timing->{$key}) {
                             $date = CarbonImmutable::parse($assign_to_timing->{$key});
-                            $assign_to_timing->{$key} = $date->add($shift_by)->sub("$request->offset_difference minutes")->toDateTimeString();
+                            $assign_to_timing->{$key} = $date->add($shift_by)->subMinutes((int) $request->offset_difference)->toDateTimeString();
                         }
                     } else {
                         if ($key === $request->assignment_date_property) {

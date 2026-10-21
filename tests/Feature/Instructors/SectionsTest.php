@@ -13,8 +13,6 @@ use App\Section;
 use App\Submission;
 use App\SubmissionFile;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class SectionsTest extends TestCase
@@ -50,7 +48,7 @@ class SectionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function the_main_section_cannot_be_removed()
     {
 
@@ -58,7 +56,7 @@ class SectionsTest extends TestCase
             ->assertJson(['message' => 'The first section cannot be removed.']);
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_delete_a_section()
     {
         $this->createStudentUsers();
@@ -131,7 +129,7 @@ class SectionsTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_delete_a_section()
     {
 
@@ -142,7 +140,7 @@ class SectionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_refresh_a_section_access_code()
     {
 
@@ -152,7 +150,7 @@ class SectionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_refresh_a_section_access_code()
     {
         $this->actingAs($this->user)->patchJson("api/sections/refresh-access-code/{$this->section->id}")
@@ -160,8 +158,7 @@ class SectionsTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function commons_owner_cannot_create_a_section()
     {
         $this->user_2->email = 'commons@libretexts.org';
@@ -170,8 +167,7 @@ class SectionsTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to create a section for this course.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_create_a_section()
     {
 
@@ -179,8 +175,7 @@ class SectionsTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to create a section for this course.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function section_name_must_be_valid()
     {
         $this->section_info['name'] = '';
@@ -190,8 +185,7 @@ class SectionsTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_create_a_new_section()
     {
         $this->actingAs($this->user)->postJson("/api/sections/{$this->course->id}", $this->section_info)
@@ -199,7 +193,7 @@ class SectionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_edit_a_section()
     {
 
@@ -208,7 +202,7 @@ class SectionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_edit_a_section()
     {
 

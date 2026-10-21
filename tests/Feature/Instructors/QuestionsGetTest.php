@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Question;
@@ -9,11 +10,8 @@ use App\SavedQuestionsFolder;
 use App\SubmissionFile;
 use App\Submission;
 use App\User;
-use App\Tag;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use Carbon\Carbon;
@@ -106,7 +104,7 @@ class QuestionsGetTest extends TestCase
 
 
     }
-    /** @test */
+    #[Test]
     public function heck_for_discuss_it_questions_over_course_or_assignment_should_be_course_or_assignment()
     {
         $this->actingAs($this->user)
@@ -115,7 +113,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_check_for_discuss_it_questions_over_course_or_assignment()
     {
         $this->actingAs($this->user_2)
@@ -123,7 +121,7 @@ class QuestionsGetTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to check for Discuss-it questions by course or assignment.']);
 
     }
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_check_for_discuss_it_questions_over_multiple_assignment_questions()
     {
         $this->actingAs($this->user_2)
@@ -133,7 +131,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_remix_assignment_of_based_on_weights_and_submissions_exist()
     {
 
@@ -166,7 +164,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_update_submit_work_override_if_not_owner()
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/can-submit-work-override/1")
@@ -174,7 +172,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_remove_a_question_from_an_assignment_if_there_are_submissions_and_using_weights()
     {
         DB::table('assignment_question')->insert([
@@ -201,8 +199,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function cannot_update_weight_if_student_made_a_submission()
     {
         Submission::create($this->h5pSubmission);
@@ -214,8 +211,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function cannot_update_weight_if_not_owner()
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-weight",
@@ -223,8 +219,7 @@ class QuestionsGetTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update that resource.']);
     }
 
-    /** @test */
-
+    #[Test]
     public function cannot_update_the_weight_if_randomized()
     {
         $this->assignment->number_of_randomized_assessments = 2;
@@ -235,8 +230,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function weight_must_be_valid()
     {
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-weight",
@@ -248,8 +242,7 @@ class QuestionsGetTest extends TestCase
             ->assertJsonValidationErrors('weight');
     }
 
-    /** @test */
-
+    #[Test]
     public function correct_computes_the_new_points()
     {
         $questions = Question::all();
@@ -291,7 +284,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function alpha_course_update_points_only_affects_beta_courses()
     {
 
@@ -335,7 +328,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_update_points_if_is_beta_course()
     {
         $this->actingAs($this->beta_user)
@@ -343,7 +336,7 @@ class QuestionsGetTest extends TestCase
             ->assertJson(['message' => "This is an assignment in a Beta course so you can't change the points."]);
     }
 
-    /** @test */
+    #[Test]
     public function alpha_course_cannot_update_points_if_beta_submission_exists()
     {
 
@@ -366,8 +359,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function must_remix_from_a_valid_question_source()
     {
 
@@ -382,8 +374,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function cannot_add_non_file_questions_to_a_compiled_assignment()
     {
         $this->assignment->file_upload_mode = 'compiled_pdf';
@@ -403,7 +394,7 @@ class QuestionsGetTest extends TestCase
             ->assertJson(['message' => "Your assignment is of file upload type Compiled PDF but you're trying to remix an open-ended type of audio.  If you would like to use this question, please edit your assignment and change the file upload type to 'Individual Assessment Upload' or 'Compiled Upload/Individual Assessment Upload'."]);
     }
 
-    /** @test */
+    #[Test]
     public function remixed_question_must_be_valid()
     {
         $data['chosen_questions'] = [['question_id' => 0, 'assignment_id' => 0]];
@@ -413,7 +404,7 @@ class QuestionsGetTest extends TestCase
             ->assertJson(['message' => 'Question 0 does not belong to that assignment.']);
     }
 
-    /** @test */
+    #[Test]
     public function owner_can_remix_assignment_with_chosen_questions()
     {
         $data['chosen_questions'] = [
@@ -426,7 +417,7 @@ class QuestionsGetTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_remix_assignment_with_chosen_questions()
     {
         $data['chosen_questions'] = [
@@ -440,7 +431,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function direct_import_of_adapt_id_can_be_imported_using_question_id()
     {
         $this->question->library = 'adapt';
@@ -451,7 +442,7 @@ class QuestionsGetTest extends TestCase
             )->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_direct_import_into_formative_assignment_if_you_do_not_own_question()
     {
         $this->question->library = 'adapt';
@@ -466,7 +457,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function direct_import_must_be_a_valid_adapt_id()
     {
         $this->actingAs($this->user)
@@ -477,7 +468,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function direct_import_of_adapt_id_must_be_of_the_correct_form()
     {
         $this->actingAs($this->user)
@@ -487,7 +478,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function direct_import_must_be_a_valid_type()
     {
         $this->actingAs($this->user)
@@ -498,7 +489,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_do_a_direct_import()
     {
         $this->actingAs($this->user_2)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
@@ -507,7 +498,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function page_ids_must_be_valid()
     {
         $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
@@ -517,7 +508,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_remove_a_question_from_an_assignment_if_you_are_the_owner()
     {
         DB::table('assignment_question')->insert([
@@ -533,8 +524,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function cannot_update_points_if_not_owner()
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",
@@ -542,7 +532,7 @@ class QuestionsGetTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update that resource.']);
     }
 
-    /** @test * */
+    #[Test]
     public function non_owner_cannot_get_assignment_info_for_get_questions()
     {
 
@@ -552,7 +542,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test * */
+    #[Test]
     public function owner_can_get_assignment_info_for_get_questions()
     {
 
@@ -570,8 +560,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function an_instructor_can_upload_a_solution_and_store_it_in_s3()
     {
 
@@ -579,8 +568,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function if_page_id_is_included_there_should_be_no_other_tags()
     {
         $this->markTestIncomplete(
@@ -591,8 +579,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[Test]
     public function cannot_update_points_if_points_are_not_valid()
     {
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",
@@ -601,8 +588,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function can_update_points_if_points_if_owner()
     {
 
@@ -612,8 +598,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function cannot_update_points_if_student_made_a_submission()
     {
         Submission::create($this->h5pSubmission);
@@ -623,8 +608,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function cannot_update_points_if_student_made_a_file_submission()
     {
         SubmissionFile::create($this->submission_file);
@@ -655,8 +639,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function user_gets_message_if_there_are_no_questions_associated_with_a_tag()
     {
         $this->markTestIncomplete(
@@ -666,8 +649,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function user_gets_message_if_there_are_no_questions_associated_with_an_intersection_of_tags()
     {
         $this->markTestIncomplete(
@@ -678,7 +660,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_get_tags_if_not_student()
     {
         $this->actingAs($this->user)->getJson("/api/tags")
@@ -686,7 +668,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_tags_if_student()
     {
         $this->actingAs($this->user_2)->getJson("/api/tags")
@@ -695,7 +677,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function can_add_a_question_to_an_assignment_if_you_are_the_owner()
     {
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
@@ -703,7 +685,7 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_add_a_question_to_an_assignment_if_you_are_not_the_owner()
     {
         $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
@@ -711,7 +693,7 @@ class QuestionsGetTest extends TestCase
                 'message' => 'You are not allowed to add a question to this assignment.']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_remove_a_question_to_an_assignment_if_you_are_not_the_owner()
     {
         DB::table('assignment_question')->insert([
@@ -728,7 +710,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function can_get_assignment_question_ids_if_owner()
     {
 
@@ -747,7 +729,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_assignment_question_ids_if_not_owner()
     {
         DB::table('assignment_question')

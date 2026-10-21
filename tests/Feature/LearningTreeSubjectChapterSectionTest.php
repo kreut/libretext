@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\LearningTree;
 use App\QuestionChapter;
 use App\QuestionSubject;
@@ -34,7 +35,7 @@ class LearningTreeSubjectChapterSectionTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function saving_a_learning_tree_persists_subject_chapter_and_section()
     {
         $data = array_merge($this->learning_tree_info, [
@@ -55,7 +56,7 @@ class LearningTreeSubjectChapterSectionTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function updating_a_learning_tree_can_change_its_subject_chapter_and_section()
     {
         $learningTree = factory(LearningTree::class)->create([
@@ -93,9 +94,8 @@ class LearningTreeSubjectChapterSectionTest extends TestCase
      * learning_trees shares those same columns. Fixed by adding a
      * LearningTree::where('question_chapter_id', ...)->update([...null...])
      * call alongside the existing Question/QuestionRevision updates.
-     *
-     * @test
      */
+    #[Test]
     public function deleting_a_chapter_nulls_it_out_on_learning_trees_too()
     {
         $learningTree = factory(LearningTree::class)->create([
@@ -120,9 +120,8 @@ class LearningTreeSubjectChapterSectionTest extends TestCase
     /**
      * EK: same gap as above, but for deleting the subject itself - also
      * fixed, in QuestionSubjectController::destroy().
-     *
-     * @test
      */
+    #[Test]
     public function deleting_a_subject_nulls_it_out_on_learning_trees_too()
     {
         $learningTree = factory(LearningTree::class)->create([
@@ -150,9 +149,8 @@ class LearningTreeSubjectChapterSectionTest extends TestCase
      * cases, deleting a section only nulls out question_section_id -
      * question_subject_id and question_chapter_id are left untouched,
      * since only the section itself becomes invalid.
-     *
-     * @test
      */
+    #[Test]
     public function deleting_a_section_nulls_it_out_on_learning_trees_too()
     {
         $learningTree = factory(LearningTree::class)->create([

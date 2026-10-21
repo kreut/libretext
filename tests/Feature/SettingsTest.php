@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -9,7 +10,7 @@ use function factory;
 
 class SettingsTest extends TestCase
 {
-    /** @var \App\User */
+    /** @var User */
     protected $user;
 
     public function setUp(): void
@@ -19,7 +20,7 @@ class SettingsTest extends TestCase
         $this->user = factory(User::class)->create();
     }
 
-    /** @test */
+    #[Test]
     public function anonymous_user_cannot_change_profile(){
         $this->user->email = 'anonymous';
         $this->user->save();
@@ -34,8 +35,7 @@ class SettingsTest extends TestCase
 
 
 
-    /** @test */
-
+    #[Test]
     public function first_name_must_be_valid(){
         $this->actingAs($this->user)
             ->patchJson('/api/settings/profile', [
@@ -45,7 +45,7 @@ class SettingsTest extends TestCase
             ])
             ->assertJsonValidationErrors(['first_name']);
     }
-/** @test */
+#[Test]
     public function last_name_must_be_valid(){
         $this->actingAs($this->user)
             ->patchJson('/api/settings/profile', [
@@ -56,7 +56,7 @@ class SettingsTest extends TestCase
             ->assertJsonValidationErrors(['last_name']);
     }
 
-    /** @test */
+    #[Test]
     public function time_zone_must_be_valid(){
         $this->actingAs($this->user)
             ->patchJson('/api/settings/profile', [
@@ -68,7 +68,7 @@ class SettingsTest extends TestCase
             ->assertJsonValidationErrors(['time_zone']);
     }
 
-    /** @test */
+    #[Test]
     public function email_must_be_valid(){
         $this->actingAs($this->user)
             ->patchJson('/api/settings/profile', [
@@ -80,7 +80,7 @@ class SettingsTest extends TestCase
     }
 
 
-/** @test */
+#[Test]
     public function update_profile_info()
     {
         $this->actingAs($this->user)
@@ -102,7 +102,7 @@ class SettingsTest extends TestCase
         ]);
     }
 
-/** @test */
+#[Test]
     public function update_password_must_be_complex()
     {
         ///the complexity is tested when registering.
@@ -115,7 +115,7 @@ class SettingsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function can_update_password()
     {
         ///the complexity is tested when registering.

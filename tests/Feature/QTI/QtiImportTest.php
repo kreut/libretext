@@ -50,7 +50,7 @@ class QtiImportTest extends TestCase
 
 
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function only_instructors_can_import_qti()
     {
         $this->user->role = 3;
@@ -60,7 +60,7 @@ class QtiImportTest extends TestCase
             ->assertJson(['message' => "You are not allowed to bulk import questions."]);
     }
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_own_course()
     {
         $this->qti_file_info['import_to_course'] = 1232131321312;
@@ -71,7 +71,7 @@ class QtiImportTest extends TestCase
 
     }
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_choose_an_assignment_template()
     {
         $this->qti_file_info['import_to_course'] = $this->course->id;
@@ -83,7 +83,7 @@ class QtiImportTest extends TestCase
     }
 
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_own_assignment_template()
     {
         $this->qti_file_info['import_to_course'] = $this->course->id;
@@ -95,7 +95,7 @@ class QtiImportTest extends TestCase
 
     }
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function author_is_required()
     {
         unset($this->qti_file_info['author']);
@@ -105,7 +105,7 @@ class QtiImportTest extends TestCase
             ->assertJson($error);
     }
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function folder_is_required()
     {
         unset($this->qti_file_info['folder_id']);
@@ -115,7 +115,7 @@ class QtiImportTest extends TestCase
             ->assertJson($error);
     }
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function must_own_folder()
     {
         $this->qti_file_info['folder_id'] = 12831238;
@@ -125,7 +125,7 @@ class QtiImportTest extends TestCase
             ->assertJson($error);
     }
 
-    /** @test **/
+    #[\PHPUnit\Framework\Attributes\Test]
     public function license_is_required()
     {
         unset($this->qti_file_info['license']);

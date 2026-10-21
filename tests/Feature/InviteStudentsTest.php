@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Course;
 use App\Section;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -30,35 +29,33 @@ class InviteStudentsTest extends TestCase
             'section_id' => $this->section->id];
     }
 
-    /** @test */
     /*public function student_can_enroll_with_access_code_from_pending_invitations()
-    {
-        $this->student_user->email = 'me@blah.com';
-        $this->student_user->save();
-        DB::table('pending_course_invitations')->insert([
-            'email' => 'me@blah.com',
-            'course_id' => $this->course->id,
-            'section_id' => $this->section->id,
-            'last_name' => '',
-            'first_name' => '',
-            'student_id' => '',
-            'access_code' => 'some-silly-code',
-            'status' => 'pending'
-        ]);
-        DB::table('whitelisted_domains')
-            ->insert([
-                'whitelisted_domain' => 'blah.com',
-                'course_id' => $this->course->id
-            ]);
-        $this->assertDatabaseHas('pending_course_invitations', ['access_code' => 'some-silly-code']);
-        $this->actingAs($this->student_user)
-            ->postJson("/api/enrollments", [
-                'access_code' => 'some-silly-code'])
-            ->assertJson(['message' => "You are now enrolled in <strong>{$this->course->name} - {$this->section->name}</strong>."]);
-        $this->assertDatabaseCount('pending_course_invitations', 0);
-    }*/
-
-    /** @test */
+      {
+          $this->student_user->email = 'me@blah.com';
+          $this->student_user->save();
+          DB::table('pending_course_invitations')->insert([
+              'email' => 'me@blah.com',
+              'course_id' => $this->course->id,
+              'section_id' => $this->section->id,
+              'last_name' => '',
+              'first_name' => '',
+              'student_id' => '',
+              'access_code' => 'some-silly-code',
+              'status' => 'pending'
+          ]);
+          DB::table('whitelisted_domains')
+              ->insert([
+                  'whitelisted_domain' => 'blah.com',
+                  'course_id' => $this->course->id
+              ]);
+          $this->assertDatabaseHas('pending_course_invitations', ['access_code' => 'some-silly-code']);
+          $this->actingAs($this->student_user)
+              ->postJson("/api/enrollments", [
+                  'access_code' => 'some-silly-code'])
+              ->assertJson(['message' => "You are now enrolled in <strong>{$this->course->name} - {$this->section->name}</strong>."]);
+          $this->assertDatabaseCount('pending_course_invitations', 0);
+      }*/
+    #[Test]
     public function non_owner_cannot_revoke_all_invitations()
     {
         $this->actingAs($this->user_2)
@@ -67,7 +64,7 @@ class InviteStudentsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_course_owner_cannot_invite_student()
     {
         $this->actingAs($this->user_2)
@@ -76,7 +73,7 @@ class InviteStudentsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_course_owner_cannot_revoke_single_invitation()
     {
         $pending_course_invitation = DB::table('pending_course_invitations')->insertGetId([
@@ -95,7 +92,7 @@ class InviteStudentsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_s3_presigned_url()
     {
 
@@ -106,7 +103,7 @@ class InviteStudentsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_student_roster_template()
     {
 
@@ -116,7 +113,7 @@ class InviteStudentsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_pending_course_invitations()
     {
         $this->actingAs($this->user_2)

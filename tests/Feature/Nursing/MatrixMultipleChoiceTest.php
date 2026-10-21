@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
 use Tests\TestCase;
@@ -38,7 +39,7 @@ class MatrixMultipleChoiceTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[Test]
     public function prompt_is_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -47,7 +48,7 @@ class MatrixMultipleChoiceTest extends TestCase
         $this->assertEquals('A prompt is required.', json_decode($response)->errors->qti_prompt[0]);
     }
 
-    /** @test */
+    #[Test]
     public function headers_are_required()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",
@@ -56,7 +57,7 @@ class MatrixMultipleChoiceTest extends TestCase
         $this->assertTrue(strpos(json_decode($response)->errors->headers[0], 'Header text is required.') !== false);
     }
 
-    /** @test */
+    #[Test]
     public function each_row_needs_correct_response()
     {
 
@@ -66,7 +67,7 @@ class MatrixMultipleChoiceTest extends TestCase
         $this->assertTrue(strpos(json_decode($response)->errors->rows[0], 'Correct response is required.') !== false);
     }
 
-    /** @test */
+    #[Test]
     public function each_row_needs_a_label()
     {
         $response = $this->actingAs($this->user)->postJson("/api/questions",

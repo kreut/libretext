@@ -2,10 +2,9 @@
 
 namespace Tests\Feature\QTI;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -42,7 +41,7 @@ class NumericalTest extends TestCase
         ];
     }
 
-    /** @test * */
+    #[Test]
     public function cannot_repeat_a_question()
     {
         $this->actingAs($this->user)->postJson("/api/questions",
@@ -55,7 +54,7 @@ class NumericalTest extends TestCase
 
     }
 
-    /** @test * */
+    #[Test]
     public function margin_of_error_must_be_a_positive_number()
     {
         $this->qti_question_info['margin_of_error'] = 'not a number';
@@ -69,7 +68,7 @@ class NumericalTest extends TestCase
             ->assertJson(['errors' => ['margin_of_error' => ['The margin of error must be at least 0.']]]);
     }
 
-    /** @test * */
+    #[Test]
     public function prompt_must_exist()
     {
         $this->qti_question_info['qti_prompt'] = '';
@@ -79,7 +78,7 @@ class NumericalTest extends TestCase
 
     }
 
-    /** @test * */
+    #[Test]
     public function correct_response_must_be_a_number()
     {
         $this->qti_question_info['correct_response'] = 'not a number';

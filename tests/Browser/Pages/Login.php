@@ -2,6 +2,8 @@
 
 namespace Tests\Browser\Pages;
 
+use Laravel\Dusk\Browser;
+
 class Login extends Page
 {
     /**
@@ -17,7 +19,7 @@ class Login extends Page
     /**
      * Submit the form with the given credentials.
      *
-     * @param  \Laravel\Dusk\Browser $browser
+     * @param Browser $browser
      * @param  string $email
      * @param  string $password
      * @return void

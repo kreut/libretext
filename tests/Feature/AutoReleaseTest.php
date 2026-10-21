@@ -2,15 +2,13 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\AssignToTiming;
 use App\AutoRelease;
 use App\Course;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AutoReleaseTest extends TestCase
@@ -30,7 +28,7 @@ class AutoReleaseTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_do_global_auto_release_for_course()
     {
         $user_2 = factory(User::class)->create();
@@ -39,7 +37,7 @@ class AutoReleaseTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to globally update the auto-releases for this course.']);
     }
 
-    /** @test */
+    #[Test]
     public function auto_release_for_course_cannot_be_updated_by_non_owner()
     {
         $user_2 = factory(User::class)->create();
@@ -48,7 +46,7 @@ class AutoReleaseTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to set the auto-release for this course.']);
     }
 
-    /** @test */
+    #[Test]
     public function compare_assignment_to_course_default_can_only_be_done_by_instructor()
     {
         $user_2 = factory(User::class)->create(['role' => 3]);
@@ -58,7 +56,7 @@ class AutoReleaseTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function correctly_updates_shown_when_past_earliest_assign_to()
     {
         //show 30 minutes before it becomes available.
@@ -87,7 +85,7 @@ class AutoReleaseTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function does_not_update_shown_when_not_past_earliest_assign_to()
     {
         //show 30 minutes before it becomes available.
@@ -117,7 +115,7 @@ class AutoReleaseTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function correctly_updates_post_releases_when_past_latest_due()
     {
         //release solutions 30 minutes after last due
@@ -152,7 +150,7 @@ class AutoReleaseTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function correctly_does_not_update_if_final_submission_deadline_is_chosen_but_not_past()
     {
         //release solutions 30 minutes after last final submission deadline
@@ -188,7 +186,7 @@ class AutoReleaseTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function does_not_update_post_releases_when_not_past_latest_due()
     {
         //release solutions 30 minutes after last due

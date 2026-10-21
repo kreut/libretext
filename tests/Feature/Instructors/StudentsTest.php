@@ -136,7 +136,7 @@ class StudentsTest extends TestCase
             SubmissionFile::create($data);
         }
     }
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_move_student_to_a_different_section()
     {
 
@@ -146,7 +146,7 @@ class StudentsTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function email_must_be_valid()
     {
 
@@ -155,7 +155,7 @@ class StudentsTest extends TestCase
             ->assertJsonValidationErrors('email');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function email_must_be_unique()
     {
 
@@ -165,7 +165,7 @@ class StudentsTest extends TestCase
     }
 
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_update_student_email()
     {
 
@@ -175,7 +175,7 @@ class StudentsTest extends TestCase
     }
 
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function when_owner_unenrolls_all_students_student_data_is_removed()
     {
         $this->createStudentUsers();
@@ -239,8 +239,7 @@ class StudentsTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_move_student_to_a_different_section()
     {
 
@@ -251,8 +250,7 @@ class StudentsTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function to_move_student_the_student_must_be_enrolled_in_owners_course()
     {
         $this->actingAs($this->user)->patchJson("/api/enrollments/{$this->course_2->id}}/{$this->student_user_2->id}")
@@ -261,8 +259,7 @@ class StudentsTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function to_unenroll_student_must_be_enrolled_in_owners_course()
     {
         $this->actingAs($this->user)->deleteJson("/api/enrollments/{$this->section_2->id}}/{$this->student_user_2->id}")
@@ -270,8 +267,7 @@ class StudentsTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function to_unenroll_all_students_must_be_owner_of_course()
     {
         $this->actingAs($this->user_2)->deleteJson("/api/courses/{$this->course->id}/reset", [
@@ -282,8 +278,7 @@ class StudentsTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function course_name_is_required()
     {
         $this->actingAs($this->user)->deleteJson("/api/courses/{$this->course->id}/reset", ['understand_scores_removed' => 1])
@@ -291,16 +286,14 @@ class StudentsTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_unenroll_all_students()
     {
         $this->actingAs($this->user)->deleteJson("/api/courses/{$this->course->id}/reset", ['understand_scores_removed' => 1, 'confirmation' => $this->course->name])
             ->assertJson(['message' => 'All students from <strong>First Course</strong> have been unenrolled and their data removed.']);
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function course_name_must_be_correct()
     {
         $this->actingAs($this->user)->deleteJson("/api/courses/{$this->course->id}/reset", ['understand_scores_removed' => 1, 'confirmation' => "not the right course name"])
@@ -308,8 +301,7 @@ class StudentsTest extends TestCase
     }
 
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function admin_can_unenroll_all_students()
     {
 
@@ -321,8 +313,7 @@ class StudentsTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_unenroll_student_from_course()
     {
         $this->actingAs($this->user)->deleteJson("/api/enrollments/{$this->section->id}}/{$this->student_user->id}")
@@ -330,8 +321,7 @@ class StudentsTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[\PHPUnit\Framework\Attributes\Test]
     public function correct_number_of_database_rows_remain_after_unenroll()
     {
         $enrollments = Enrollment::all()->count();

@@ -14,7 +14,7 @@ class UpdateNumberOfResetsAsNumberToAssignmentQuestionLearningTree extends Migra
     public function up()
     {
         Schema::table('assignment_question_learning_tree', function (Blueprint $table) {
-            $table->unsignedSmallInteger('number_of_resets')->change();
+            $table->unsignedSmallInteger('number_of_resets')->nullable()->change();
         });
     }
 
@@ -26,7 +26,7 @@ class UpdateNumberOfResetsAsNumberToAssignmentQuestionLearningTree extends Migra
     public function down()
     {
         Schema::table('assignment_question_learning_tree', function (Blueprint $table) {
-            $table->string('number_of_resets')->change();
+            $table->string('number_of_resets')->nullable()->change();
         });
     }
 }

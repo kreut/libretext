@@ -14,7 +14,7 @@ class UpdateErrorMessageToCloudflareStreamVideos extends Migration
     public function up()
     {
         Schema::table('cloudflare_stream_videos', function (Blueprint $table) {
-            $table->text('error_message')->change();
+            $table->text('error_message')->nullable()->change();
         });
     }
 

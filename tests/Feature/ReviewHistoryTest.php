@@ -2,19 +2,16 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\AssignToTiming;
 use App\AssignToUser;
 use App\Course;
 use App\Enrollment;
-use App\FinalGrade;
-use App\Grader;
 use App\Question;
 use App\Section;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class ReviewHistoryTest extends TestCase
@@ -52,7 +49,7 @@ class ReviewHistoryTest extends TestCase
         $assignToUser->save();
     }
 
-    /** @test */
+    #[Test]
     public function assignment_must_be_past_due()
     {
         $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
@@ -65,7 +62,7 @@ class ReviewHistoryTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function review_session_id_must_be_present()
     {
 

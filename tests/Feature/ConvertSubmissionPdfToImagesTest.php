@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Jobs\ConvertSubmissionPdfToImages;
@@ -41,7 +42,7 @@ class ConvertSubmissionPdfToImagesTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
     }
 
-    /** @test */
+    #[Test]
     public function it_renders_every_page_and_records_it()
     {
         $this->_putPdf('homework.pdf', 3);
@@ -68,7 +69,7 @@ class ConvertSubmissionPdfToImagesTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_pdfs_with_ten_or_more_pages()
     {
         // pdftoppm zero-pads names (page-01.jpg) once there are 10+ pages
@@ -81,7 +82,7 @@ class ConvertSubmissionPdfToImagesTest extends TestCase
         $this->assertEquals(12, SubmissionFilePage::where('submission', 'long.pdf')->count());
     }
 
-    /** @test */
+    #[Test]
     public function an_uploaded_image_becomes_one_page_pointing_at_the_original()
     {
         // a 40x60 white PNG
@@ -101,7 +102,7 @@ class ConvertSubmissionPdfToImagesTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function a_broken_pdf_is_marked_failed_and_does_not_throw()
     {
         Storage::disk('s3')->put("assignments/{$this->assignment->id}/broken.pdf", 'this is not a pdf');
@@ -114,7 +115,7 @@ class ConvertSubmissionPdfToImagesTest extends TestCase
         $this->assertEquals(0, SubmissionFilePage::where('submission', 'broken.pdf')->count());
     }
 
-    /** @test */
+    #[Test]
     public function missing_fonts_mark_the_conversion_failed_instead_of_saving_blank_pages()
     {
         // stand in for pdftoppm on a machine without fonts: it renders, exits 0, and warns on stderr
@@ -138,7 +139,7 @@ class ConvertSubmissionPdfToImagesTest extends TestCase
         $this->assertEquals(0, SubmissionFilePage::where('submission', 'homework.pdf')->count());
     }
 
-    /** @test */
+    #[Test]
     public function a_missing_pdf_is_marked_failed()
     {
         (new ConvertSubmissionPdfToImages($this->assignment->id, 'missing.pdf'))->handle();
@@ -149,7 +150,7 @@ class ConvertSubmissionPdfToImagesTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function a_completed_conversion_is_not_redone_unless_forced()
     {
         $this->_putPdf('homework.pdf', 2);
@@ -165,7 +166,7 @@ class ConvertSubmissionPdfToImagesTest extends TestCase
         $this->assertEquals(2, SubmissionFilePage::where('submission', 'homework.pdf')->count());
     }
 
-    /** @test */
+    #[Test]
     public function the_original_pdf_is_left_untouched()
     {
         $this->_putPdf('homework.pdf', 2);

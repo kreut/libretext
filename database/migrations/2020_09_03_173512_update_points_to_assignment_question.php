@@ -14,7 +14,7 @@ class UpdatePointsToAssignmentQuestion extends Migration
     public function up()
     {
         Schema::table('assignment_question', function (Blueprint $table) {
-            $table->unsignedDecimal('points', 5, 2)->change();
+            $table->decimal('points', 5, 2)->unsigned()->change();
 
         });
     }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Accounting;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\SavedQuestionsFolder;
 use App\Submission;
 use App\User;
@@ -238,8 +239,7 @@ class AccountingMultiPartComputationTest extends TestCase
     // =========================================================================
     // VALIDATION — QUESTION CREATION
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function can_create_accounting_multi_part_computation_question()
     {
         $this->actingAs($this->user)
@@ -251,7 +251,7 @@ class AccountingMultiPartComputationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function tables_must_exist()
     {
         $qtiJson = $this->getQtiJson();
@@ -262,7 +262,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('At least one table is required.', $errorData['general']);
     }
 
-    /** @test */
+    #[Test]
     public function each_table_must_have_at_least_one_column()
     {
         $qtiJson = $this->getQtiJson();
@@ -273,7 +273,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertStringContainsString('Table 1 must have at least one column', $errorData['general']);
     }
 
-    /** @test */
+    #[Test]
     public function each_table_must_have_at_least_one_row()
     {
         $qtiJson = $this->getQtiJson();
@@ -284,7 +284,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertStringContainsString('Table 1 must have at least one row', $errorData['general']);
     }
 
-    /** @test */
+    #[Test]
     public function each_table_must_have_at_least_one_answer_cell()
     {
         $qtiJson = $this->getQtiJson();
@@ -301,7 +301,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertStringContainsString('Table 1 must have at least one answer cell', $errorData['general']);
     }
 
-    /** @test */
+    #[Test]
     public function question_must_have_at_least_one_answer_cell_across_all_tables()
     {
         $qtiJson = $this->getQtiJson();
@@ -322,7 +322,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertStringContainsString('at least one answer cell', strtolower($errorData['general']));
     }
 
-    /** @test */
+    #[Test]
     public function instruction_row_text_is_required()
     {
         $qtiJson = $this->getQtiJson();
@@ -337,7 +337,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('Instruction text is required.', $errorData['specific'][0][0]['instructionText']);
     }
 
-    /** @test */
+    #[Test]
     public function display_cell_value_is_required()
     {
         $qtiJson = $this->getQtiJson();
@@ -351,8 +351,7 @@ class AccountingMultiPartComputationTest extends TestCase
     // =========================================================================
     // VALIDATION — DOLLAR
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function dollar_answer_value_is_required()
     {
         $qtiJson = $this->getQtiJson();
@@ -363,7 +362,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('A correct answer is required.', $errorData['specific'][0][0][1]['value']);
     }
 
-    /** @test */
+    #[Test]
     public function dollar_answer_must_be_numeric()
     {
         $qtiJson = $this->getQtiJson();
@@ -374,7 +373,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('Dollar amount must be numeric.', $errorData['specific'][0][0][1]['value']);
     }
 
-    /** @test */
+    #[Test]
     public function dollar_rounding_must_be_valid()
     {
         $qtiJson = $this->getQtiJson();
@@ -388,8 +387,7 @@ class AccountingMultiPartComputationTest extends TestCase
     // =========================================================================
     // VALIDATION — PERCENTAGE
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function percentage_answer_is_required()
     {
         $qtiJson = $this->getQtiJson();
@@ -400,7 +398,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('A correct answer is required.', $errorData['specific'][0][1][1]['value']);
     }
 
-    /** @test */
+    #[Test]
     public function percentage_answer_must_be_numeric()
     {
         $qtiJson = $this->getQtiJson();
@@ -411,7 +409,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('Percentage value must be numeric.', $errorData['specific'][0][1][1]['value']);
     }
 
-    /** @test */
+    #[Test]
     public function percentage_decimal_places_must_be_valid()
     {
         $qtiJson = $this->getQtiJson();
@@ -425,8 +423,7 @@ class AccountingMultiPartComputationTest extends TestCase
     // =========================================================================
     // VALIDATION — RATIO
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function ratio_answer_is_required()
     {
         $qtiJson = $this->getQtiJson();
@@ -437,7 +434,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('A correct answer is required.', $errorData['specific'][1][0][1]['value']);
     }
 
-    /** @test */
+    #[Test]
     public function ratio_answer_must_be_numeric()
     {
         $qtiJson = $this->getQtiJson();
@@ -451,8 +448,7 @@ class AccountingMultiPartComputationTest extends TestCase
     // =========================================================================
     // VALIDATION — CUSTOM
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function custom_unit_label_is_required()
     {
         $qtiJson = $this->getQtiJson();
@@ -463,7 +459,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('A unit label is required for custom type.', $errorData['specific'][1][1][1]['customUnit']);
     }
 
-    /** @test */
+    #[Test]
     public function custom_answer_must_be_numeric()
     {
         $qtiJson = $this->getQtiJson();
@@ -477,8 +473,7 @@ class AccountingMultiPartComputationTest extends TestCase
     // =========================================================================
     // VALIDATION — GENERAL
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function general_answer_is_required()
     {
         $qtiJson = $this->getQtiJson();
@@ -489,7 +484,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('A correct answer is required.', $errorData['specific'][1][2][1]['value']);
     }
 
-    /** @test */
+    #[Test]
     public function general_answer_must_be_numeric()
     {
         $qtiJson = $this->getQtiJson();
@@ -503,8 +498,7 @@ class AccountingMultiPartComputationTest extends TestCase
     // =========================================================================
     // VALIDATION — DROPDOWN
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function dropdown_must_have_at_least_two_options()
     {
         $qtiJson = $this->getQtiJson();
@@ -515,7 +509,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('At least 2 options are required.', $errorData['specific'][1][3][1]['dropdownOptions']);
     }
 
-    /** @test */
+    #[Test]
     public function dropdown_options_must_be_unique()
     {
         $qtiJson = $this->getQtiJson();
@@ -526,7 +520,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('Options must be unique.', $errorData['specific'][1][3][1]['dropdownOptions']);
     }
 
-    /** @test */
+    #[Test]
     public function dropdown_options_cannot_be_empty_strings()
     {
         $qtiJson = $this->getQtiJson();
@@ -537,7 +531,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('All options must have text.', $errorData['specific'][1][3][1]['dropdownOptions']);
     }
 
-    /** @test */
+    #[Test]
     public function dropdown_correct_answer_must_be_set()
     {
         $qtiJson = $this->getQtiJson();
@@ -548,7 +542,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals('Please select a correct answer.', $errorData['specific'][1][3][1]['value']);
     }
 
-    /** @test */
+    #[Test]
     public function dropdown_correct_answer_must_match_an_option()
     {
         $qtiJson = $this->getQtiJson();
@@ -562,8 +556,7 @@ class AccountingMultiPartComputationTest extends TestCase
     // =========================================================================
     // SCORING
     // =========================================================================
-
-    /** @test */
+    #[Test]
     public function scores_all_correct_submission_as_100_percent()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -582,7 +575,7 @@ class AccountingMultiPartComputationTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function scores_all_incorrect_as_zero()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -597,7 +590,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals(0, $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_partially_correct_submission_proportionally()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -613,7 +606,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertEquals(round(1 / 6, 4), $result['proportionCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_dollar_answer_with_dollar_signs_and_commas_stripped()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -626,7 +619,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertTrue($result['results']['0']['0']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_dollar_answer_within_nearest_dollar_tolerance()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -640,7 +633,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertTrue($result['results']['0']['0']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_dollar_answer_outside_nearest_dollar_tolerance_as_incorrect()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -654,7 +647,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertFalse($result['results']['0']['0']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_dollar_answer_within_nearest_cent_tolerance()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -671,7 +664,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertTrue($result['results']['0']['0']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_percentage_with_correct_decimal_tolerance()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -685,7 +678,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertTrue($result['results']['0']['1']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_percentage_outside_tolerance_as_incorrect()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -699,7 +692,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertFalse($result['results']['0']['1']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_ratio_with_correct_decimal_tolerance()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -713,7 +706,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertTrue($result['results']['1']['0']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_custom_units_correctly()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -727,7 +720,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertTrue($result['results']['1']['1']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_general_answer_correctly()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -740,7 +733,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertTrue($result['results']['1']['2']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_general_answer_outside_tolerance_as_incorrect()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -754,7 +747,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertFalse($result['results']['1']['2']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_dropdown_correct_answer()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -767,7 +760,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertTrue($result['results']['1']['3']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_dropdown_case_insensitive()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -780,7 +773,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertTrue($result['results']['1']['3']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_dropdown_incorrect_answer_as_wrong()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -793,7 +786,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertFalse($result['results']['1']['3']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function blank_answer_scores_as_incorrect()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -806,7 +799,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertFalse($result['results']['0']['0']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function scores_across_multiple_tables_independently()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -828,7 +821,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertFalse($result['results']['1']['3']['1']['isCorrect']);
     }
 
-    /** @test */
+    #[Test]
     public function results_contain_required_fields()
     {
         [$submission, $qtiArray] = $this->makeSubmission();
@@ -846,7 +839,7 @@ class AccountingMultiPartComputationTest extends TestCase
         $this->assertArrayHasKey('isCorrect', $cell);
     }
 
-    /** @test */
+    #[Test]
     public function proportion_correct_is_zero_when_no_answer_cells_submitted()
     {
         [$submission, $qtiArray] = $this->makeSubmission();

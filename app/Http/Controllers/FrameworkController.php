@@ -173,7 +173,7 @@ class FrameworkController extends Controller
             $is_efs = is_dir($efs_dir);
             $storage_path = $is_efs
                 ? $efs_dir
-                : Storage::disk('local')->getAdapter()->getPathPrefix();
+                : Storage::disk('local')->path('');
 
             if (!is_dir("{$storage_path}frameworks")) {
                 mkdir("{$storage_path}frameworks");

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Question;
@@ -11,7 +12,6 @@ use App\Tag;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
-use function env;
 use function factory;
 
 class MetaTagTest extends TestCase
@@ -74,7 +74,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function when_changing_owner_as_an_instructor_a_pending_question_ownership_transfer_is_added()
     {
 
@@ -91,7 +91,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function token_must_be_valid_for_pending_question_ownership_transfer()
     {
         $data = ['action' => 'accept', 'token' => 'bogus token'];
@@ -102,7 +102,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function accepted_question_ownership_transfer_request_will_transfer_the_ownership_and_delete_the_request()
     {
         $this->meta_tags_my_questions_info['owner'] = ['value' => $this->user_2->id];
@@ -127,7 +127,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function rejected_question_ownership_transfer_request_will_not_transfer_the_ownership_and_delete_the_request()
     {
 
@@ -153,7 +153,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_request_ownership_change_if_pending()
     {
         $this->meta_tags_my_questions_info['owner'] = ['value' => $this->user_2->id];
@@ -171,7 +171,7 @@ class MetaTagTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function choosing_all_folders_changes_all_my_questions()
     {
         $this->question->question_editor_user_id = $this->user->id;
@@ -195,7 +195,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function choosing_a_single_folder_changes_all_questions_in_that_folder()
     {
 
@@ -218,7 +218,7 @@ class MetaTagTest extends TestCase
         $this->assertEquals(1, $num_stephen_kings);
     }
 
-    /** @test */
+    #[Test]
     public function must_be_valid_instructor_to_switch_ownership()
     {
         $this->meta_tags_course_assignment_info['owner'] = ['value' => -1];
@@ -228,7 +228,7 @@ class MetaTagTest extends TestCase
             ->assertJson(['message' => 'The user new owner must be either an instructor or a non-instructor question editor.']);
     }
 
-    /** @test */
+    #[Test]
     public function if_is_me_question_editor_user_id_switches_to_new_owner()
     {
         $this->meta_tags_course_assignment_info['owner'] = ['value' => $this->user->id];
@@ -248,7 +248,7 @@ class MetaTagTest extends TestCase
         $this->assertEquals($saved_questions_folder->id, $question->folder_id);
     }
 
-    /** @test */
+    #[Test]
     public function choosing_all_questions_changes_for_all_questions_in_the_assignment()
     {
         $this->meta_tags_course_assignment_info['apply_to'] = 'all';
@@ -270,7 +270,7 @@ class MetaTagTest extends TestCase
         $this->assertEquals(count($assignment_questions), $questions);
     }
 
-    /** @test */
+    #[Test]
     public function choosing_single_question_changes_for_one_question_in_the_assignment()
     {
         $this->meta_tags_course_assignment_info['apply_to'] = $this->question->id;
@@ -290,7 +290,7 @@ class MetaTagTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function question_revisions_are_updated_as_well()
     {
         $this->meta_tags_course_assignment_info['apply_to'] = $this->question->id;
@@ -315,7 +315,7 @@ class MetaTagTest extends TestCase
         $this->assertEquals(1, $question_revisions);
     }
 
-    /** @test */
+    #[Test]
     public function is_me_can_remove_tags()
     {
         $tag = factory(Tag::class)->create(['tag' => 'some tag']);
@@ -332,7 +332,7 @@ class MetaTagTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function is_me_can_add_tags()
     {
         $this->meta_tags_course_assignment_info['tags_to_add'] = "tag 1, tag 2";
@@ -345,7 +345,7 @@ class MetaTagTest extends TestCase
         $this->assertCount(2, $question_tags);
     }
 
-    /** @test */
+    #[Test]
     public function is_me_can_update_license()
     {
 
@@ -361,7 +361,7 @@ class MetaTagTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function is_me_can_update_author()
     {
         $this->meta_tags_course_assignment_info['author'] = "Steven Smith";
@@ -378,7 +378,7 @@ class MetaTagTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function is_me_can_get_assignment_names_ids_by_course()
     {
         $this->actingAs($this->admin_user)
@@ -387,7 +387,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_is_me_non_instructor_cannot_get_assignment_names_ids_by_course()
     {
         $this->actingAs($this->student_user)
@@ -396,7 +396,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_non_instructor_cannot_get_all_courses()
     {
 
@@ -406,7 +406,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_get_all_courses()
     {
         $this->actingAs($this->admin_user)
@@ -416,7 +416,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_is_me_non_instructor_cannot_update_meta_tags()
     {
 
@@ -427,7 +427,7 @@ class MetaTagTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function is_me_can_update_meta_tags()
     {
 

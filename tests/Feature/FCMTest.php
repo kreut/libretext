@@ -2,11 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Question;
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class FCMTest extends TestCase
@@ -19,7 +16,7 @@ class FCMTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function can_store_fcm_token()
     {
         $this->actingAs($this->user)->postJson("/api/fcm-tokens",['fcm_token'=> 'Some token'])
@@ -27,7 +24,7 @@ class FCMTest extends TestCase
         $this->assertDatabaseHas('fcm_tokens',['user_id'=> $this->user->id,'fcm_token'=>'Some token']);
 
     }
-    /** @test */
+    #[Test]
     public function token_cannot_be_empty()
     {
         $this->actingAs($this->user)->postJson("/api/fcm-tokens",['fcm_token'=> ''])

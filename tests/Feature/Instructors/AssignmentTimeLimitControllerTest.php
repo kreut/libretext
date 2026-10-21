@@ -9,7 +9,6 @@ use App\Enrollment;
 use App\Section;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\Traits\Test;
@@ -65,7 +64,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         $this->assign_to_timing->save();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_student_not_enrolled_in_the_course_cannot_view_their_status()
     {
         $outside_student = factory(User::class)->create(['role' => 3]);
@@ -75,7 +74,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_student_not_enrolled_in_the_course_cannot_start_the_timer()
     {
         $outside_student = factory(User::class)->create(['role' => 3]);
@@ -90,7 +89,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_can_start_the_timer_for_a_timed_assignment()
     {
         $this->actingAs($this->student_user)
@@ -104,7 +103,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function starting_twice_does_not_reset_the_clock()
     {
         $first = $this->actingAs($this->student_user)
@@ -118,7 +117,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         $this->assertEquals($first['expires_at'], $second['expires_at']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_start_if_the_assignment_has_no_time_limit()
     {
         $this->assign_to_timing->time_limit = null;
@@ -129,7 +128,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'This assignment does not have a time limit.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_start_before_available_from()
     {
         $this->assign_to_timing->available_from = Carbon::now()->addDay();
@@ -140,7 +139,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'This assignment is not yet available.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function cannot_start_after_due()
     {
         $this->assign_to_timing->due = Carbon::now()->subMinute();
@@ -151,7 +150,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'This assignment is past due and can no longer be started.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_fake_student_can_start_the_timer_even_after_the_due_date()
     {
         // Fake students exist for instructors to test the timed experience,
@@ -178,7 +177,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         $this->assertGreaterThan(0, $data['seconds_left']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_fake_students_expiry_is_not_capped_at_a_due_date_that_has_already_passed()
     {
         // Regression check for the capping logic specifically: without the
@@ -203,7 +202,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         $this->assertGreaterThan(500, $data['seconds_left']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function start_caps_expiry_at_the_due_date_when_the_time_limit_would_exceed_it()
     {
         $this->assign_to_timing->time_limit = '2 hours'; // longer than the 1-hour window
@@ -218,7 +217,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         $this->assertTrue($expiresAt->equalTo($due) || $expiresAt->lessThanOrEqualTo($due));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function status_shows_no_time_limit_when_none_is_configured()
     {
         $this->assign_to_timing->time_limit = null;
@@ -229,7 +228,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'success', 'time_limit' => null]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function status_shows_seconds_left_for_a_running_timer()
     {
         $this->actingAs($this->student_user)
@@ -243,7 +242,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         $this->assertLessThanOrEqual(600, $data['seconds_left']); // 10 minutes
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_add_time_to_a_students_running_clock()
     {
         $this->actingAs($this->student_user)
@@ -262,7 +261,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_instructor_cannot_add_time()
     {
         $this->actingAs($this->student_user)
@@ -273,7 +272,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_cannot_add_time_to_their_own_clock()
     {
         $this->actingAs($this->student_user)
@@ -284,7 +283,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function adding_time_to_an_already_expired_clock_recomputes_from_now()
     {
         $this->actingAs($this->student_user)
@@ -304,7 +303,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         $this->assertGreaterThan(0, $data['seconds_left']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function adding_time_flags_when_it_extends_past_the_due_date()
     {
         $this->actingAs($this->student_user)
@@ -315,7 +314,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'success', 'extended_past_due' => true]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_setting_a_new_time_limit_for_an_already_expired_student_starts_fresh_from_now()
     {
         // Regression test: setTime() used to always recompute from the
@@ -342,7 +341,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         $this->assertGreaterThan(0, $data['seconds_left']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_set_a_new_time_limit_for_a_student()
     {
         $this->actingAs($this->student_user)
@@ -360,7 +359,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_fully_reset_a_students_timer()
     {
         $this->actingAs($this->student_user)
@@ -376,7 +375,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function fake_student_can_reset_their_own_timer()
     {
         $this->actingAs($this->fake_student)
@@ -387,7 +386,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function a_real_student_cannot_reset_their_own_timer()
     {
         $this->actingAs($this->student_user)
@@ -398,7 +397,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to reset this timer.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_view_a_specific_students_status()
     {
         $this->actingAs($this->student_user)
@@ -409,7 +408,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'success', 'time_limit' => '10 minutes']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_instructor_cannot_view_another_instructors_student_status()
     {
         $this->actingAs($this->user_2)
@@ -417,7 +416,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_view_status_of_a_student_who_has_not_started_yet()
     {
         // Regression test: buildTimeLimitStatus() used to read started_at/
@@ -437,7 +436,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function students_own_status_check_does_not_error_before_they_have_started()
     {
         // Same regression as above, via the student-facing self-status
@@ -452,7 +451,7 @@ class AssignmentTimeLimitControllerTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_set_a_time_limit_override_for_a_student_who_never_started_and_is_past_due()
     {
         // The actual override scenario this was reported from: the group's

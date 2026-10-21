@@ -3,7 +3,7 @@
 namespace Tests\Feature\Instructors;
 
 
-use App\Question;
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Tests\TestCase;
 
@@ -20,7 +20,7 @@ class LoginAsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_all_users_if_you_have_an_incorrect_email()
     {
         $response = $this->actingAs($this->user)
@@ -31,7 +31,7 @@ class LoginAsTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function can_get_all_users_if_you_have_a_correct_email()
     {
         $this->user->email = 'me@me.com';
@@ -42,7 +42,7 @@ class LoginAsTest extends TestCase
         $this->assertEquals('success', $response->original['type']);
     }
 
-    /** @test */
+    #[Test]
     public function cecilia_can_only_log_in_as_other_estrella_mountain_instructors()
     {
         $this->user->id = 7665;
@@ -52,7 +52,7 @@ class LoginAsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_login_as_another_user_if_you_use_an_invalid_url()
     {
         $this->login_as_info['user'] = 'https://some-bad-link';
@@ -62,7 +62,7 @@ class LoginAsTest extends TestCase
         $this->assertEquals('That is not a valid URL to log in as.', $response->original['message']);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_login_as_another_user_if_you_have_an_incorrect_email()
     {
         $response = $this->actingAs($this->user)
@@ -73,7 +73,7 @@ class LoginAsTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function can_login_as_another_user_if_you_have_a_correct_email()
     {
         $this->user->email = 'me@me.com';

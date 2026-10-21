@@ -35,7 +35,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
-ini_set('max_execution_time', 300);
+if (PHP_SAPI !== 'cli') {
+    ini_set('max_execution_time', 300); // web requests only; artisan, queues and tests keep no limit
+}
 
 class ScoreController extends Controller
 {

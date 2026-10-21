@@ -2,15 +2,13 @@
 
 namespace Tests\Feature\Students;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Section;
 use App\User;
 use App\Course;
 use App\Enrollment;
 use App\WhitelistedDomain;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class StudentsCoursesIndexTest extends TestCase
@@ -38,7 +36,7 @@ class StudentsCoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
      public function case_insensitive_email_works()
      {
          $whitelisted_domain = DB::table('whitelisted_domains')
@@ -60,7 +58,7 @@ class StudentsCoursesIndexTest extends TestCase
 
      }
 
-    /** @test */
+    #[Test]
     public function email_must_be_on_whitelisted_domain()
     {
         $whitelisted_domain = DB::table('whitelisted_domains')
@@ -81,7 +79,7 @@ class StudentsCoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function same_last_name_and_student_id_cannot_enroll_in_the_same_course()
     {
         $enrollment = new Enrollment();
@@ -107,7 +105,7 @@ class StudentsCoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_get_enrollments_of_shown_courses_if_user_is_a_student()
     {
         factory(Enrollment::class)->create([
@@ -132,7 +130,7 @@ class StudentsCoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_get_enrollments_if_user_is_a_student()
     {
 
@@ -149,7 +147,7 @@ class StudentsCoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_get_enrollments_if_user_is_not_a_student()
     {
         $this->actingAs($this->user)->getJson("/api/enrollments")
@@ -158,7 +156,7 @@ class StudentsCoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_enroll_in_a_course_with_a_valid_access_code()
     {
 
@@ -171,7 +169,7 @@ class StudentsCoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_enroll_in_more_than_one_section_of_a_course()
     {
         $enrollment = new Enrollment();
@@ -189,7 +187,7 @@ class StudentsCoursesIndexTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function cannot_enroll_in_a_course_with_an_invalid_access_code()
     {
         $this->actingAs($this->student_user)->postJson("/api/enrollments", [

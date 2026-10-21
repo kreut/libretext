@@ -3,14 +3,13 @@
 namespace Tests\Feature\Instructors;
 
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
-use App\AssignmentSyncQuestion;
 use App\BetaCourse;
 use App\Course;
 use App\Enrollment;
 use App\Question;
 use App\QuestionRevision;
-use App\SavedQuestionsFolder;
 use App\Section;
 use App\Submission;
 use App\User;
@@ -46,7 +45,7 @@ class NonUpdatedRevisionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function when_updating_a_single_question_must_confirm_about_student_submissions()
     {
 
@@ -57,7 +56,7 @@ class NonUpdatedRevisionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_auto_update_beta_course()
     {
         $alpha_course = factory(Course::class)->create(['user_id' => $this->user->id]);
@@ -68,7 +67,7 @@ class NonUpdatedRevisionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function correctly_updates_all_non_update_questions_to_the_latest_revision_in_the_course_including_the_revision_id_score_and_removes_submissions()
     {
         // Non-admin path: only here are submissions/scores still touched automatically.
@@ -138,7 +137,7 @@ class NonUpdatedRevisionsTest extends TestCase
         $this->assertDatabaseCount('submissions', 0);
     }
 
-    /** @test */
+    #[Test]
     public function admin_confirming_topical_updates_the_revision_but_leaves_submissions_and_scores_untouched()
     {
         $original_assignment_score = 30;
@@ -172,7 +171,7 @@ class NonUpdatedRevisionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function if_admin_must_confirm_changes_are_topical()
     {
 
@@ -181,7 +180,7 @@ class NonUpdatedRevisionsTest extends TestCase
             ->assertJson(['message' => "You must confirm that the changes are topical."]);
     }
 
-    /** @test */
+    #[Test]
     public function can_update_to_latest_if_students_in_course_if_admin()
     {
         $section = factory(Section::class)->create(['course_id' => $this->course->id]);
@@ -196,7 +195,7 @@ class NonUpdatedRevisionsTest extends TestCase
             ->assertJson(['message' => "The question has been updated to the latest revision. Since the changes were confirmed as topical, student submissions were not removed."]);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_update_all_questions_to_latest_if_students_in_course()
     {
         $section = factory(Section::class)->create(['course_id' => $this->course->id]);
@@ -213,7 +212,7 @@ class NonUpdatedRevisionsTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function nobody_can_be_enrolled_if_turning_on_auto_update()
     {
         $section = factory(Section::class)->create(['course_id' => $this->course->id]);
@@ -228,7 +227,7 @@ class NonUpdatedRevisionsTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function only_valid_users_can_auto_update()
     {
         $this->actingAs($this->student_user)

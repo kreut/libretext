@@ -14,7 +14,7 @@ class UpdateLibretextsLinkToQuestions extends Migration
     public function up()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->string('libretexts_link',1500)->change();
+            $table->string('libretexts_link',1500)->nullable()->change();
         });
     }
 

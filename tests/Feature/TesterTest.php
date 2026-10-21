@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
@@ -11,8 +12,6 @@ use App\Submission;
 use App\TesterCourse;
 use App\TesterStudent;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -39,8 +38,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
-
+    #[Test]
     public function tester_student_scores_are_created_correctly_at_the_assignment_level()
     {
         $this->tester_student->assignment_id = $this->assignment->id;
@@ -80,7 +78,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function student_info_must_be_valid()
     {
 
@@ -90,7 +88,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function a_tester_cannot_auto_enroll_students_if_the_assignment_is_not_in_the_course()
     {
         $this->actingAs($this->tester)
@@ -99,7 +97,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function a_tester_cannot_auto_enroll_students_if_it_is_not_their_course()
     {
         DB::table('tester_courses')->delete();
@@ -109,7 +107,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_tester_cannot_auto_enroll_students()
     {
         $this->actingAs($this->user)
@@ -119,7 +117,7 @@ class TesterTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function submissions_and_testing_students_are_removed_if_option_chosen()
     {
         $this->assertDatabaseHas('users', ['testing_student' => 1]);
@@ -130,7 +128,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function submissions_and_testing_students_are_not_removed_if_option_not_chosen()
     {
         $this->assertDatabaseHas('users', ['testing_student' => 1]);
@@ -142,7 +140,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function will_not_remove_students_who_are_not_testing_students()
     {
         $this->student_user->testing_student = 0;
@@ -152,7 +150,7 @@ class TesterTest extends TestCase
             ->assertJson(['message' => 'You cannot remove this tester because one of their students is not a testing students.  Please contact support.']);
     }
 
-    /** @test */
+    #[Test]
     public function must_be_valid_option_for_deleting_a_tester()
     {
 
@@ -163,7 +161,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function tester_must_be_instructors_tester()
     {
         $this->actingAs($this->tester)
@@ -179,7 +177,7 @@ class TesterTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function emailer_must_be_a_tester_for_the_student()
     {
 
@@ -213,7 +211,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function correct_information_is_emailed_to_instructor()
     {
         $score_1 = 5;
@@ -228,7 +226,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function tester_student_results_is_computed_correctly_at_the_course_level()
     {
         $section = factory(Section::class)->create(['course_id' => $this->course->id]);
@@ -248,7 +246,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_get_tester_student_results_if_not_tester_course()
     {
         DB::table('tester_courses')->delete();
@@ -259,7 +257,7 @@ class TesterTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function a_tester_can_remove_one_of_their_students_from_the_database()
     {
         $this->actingAs($this->tester)
@@ -268,7 +266,7 @@ class TesterTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $this->student_user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function student_must_be_of_tester_in_order_to_remove_them_from_the_database()
     {
         DB::table('tester_students')->delete();
@@ -278,7 +276,7 @@ class TesterTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_store_testers()
     {
         DB::table('tester_courses')->delete();
@@ -287,7 +285,7 @@ class TesterTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to add testers to this course.']);
     }
 
-    /** @test */
+    #[Test]
     public function course_must_be_valid_course_to_store_tester()
     {
         $this->actingAs($this->user)
@@ -296,7 +294,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function course_must_be_owned_by_instructor()
     {
         $course = factory(Course::class)->create(['user_id' => $this->user->id + 1]);
@@ -306,7 +304,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function instructor_can_get_testers()
     {
         $this->actingAs($this->user)
@@ -315,7 +313,7 @@ class TesterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_cannot_get_testers()
     {
         $this->actingAs($this->student_user)

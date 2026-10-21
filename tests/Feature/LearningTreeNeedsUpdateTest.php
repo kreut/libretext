@@ -64,14 +64,14 @@ class LearningTreeNeedsUpdateTest extends TestCase
         $this->learning_tree->save();
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function flags_false_when_nothing_has_changed()
     {
         $this->assertFalse($this->assignmentQuestionLearningTree->learningTreeNeedsUpdate(
             $this->assignment_question_learning_tree, $this->learning_tree->fresh()));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function flags_true_when_a_node_is_added_to_the_tree()
     {
         $tree = json_decode($this->learning_tree->learning_tree, true);
@@ -92,7 +92,7 @@ class LearningTreeNeedsUpdateTest extends TestCase
             $this->assignment_question_learning_tree, $this->learning_tree->fresh()));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function flags_true_when_a_node_is_removed_from_the_tree()
     {
         $tree = json_decode($this->learning_tree->learning_tree, true);
@@ -104,7 +104,7 @@ class LearningTreeNeedsUpdateTest extends TestCase
             $this->assignment_question_learning_tree, $this->learning_tree->fresh()));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function flags_true_when_a_nodes_parent_changes()
     {
         $tree = json_decode($this->learning_tree->learning_tree, true);
@@ -120,7 +120,7 @@ class LearningTreeNeedsUpdateTest extends TestCase
             $this->assignment_question_learning_tree, $this->learning_tree->fresh()));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function flags_true_when_a_nodes_question_id_changes()
     {
         // the root-swap scenario specifically - a node pointing at an
@@ -132,7 +132,7 @@ class LearningTreeNeedsUpdateTest extends TestCase
             $this->assignment_question_learning_tree, $this->learning_tree->fresh()));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function flags_true_when_a_nodes_question_has_a_newer_revision()
     {
         factory(QuestionRevision::class)->create(['question_id' => $this->root_question->id, 'revision_number' => 2]);
@@ -141,7 +141,7 @@ class LearningTreeNeedsUpdateTest extends TestCase
             $this->assignment_question_learning_tree, $this->learning_tree->fresh()));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function flags_false_when_a_node_question_exists_but_has_no_revisions()
     {
         // block id 1 in the fixture tree points to question_id 102438, which
@@ -153,7 +153,7 @@ class LearningTreeNeedsUpdateTest extends TestCase
             $this->assignment_question_learning_tree, $this->learning_tree->fresh()));
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function flags_true_when_no_snapshot_has_ever_been_recorded()
     {
         // simulates a tree added to an assignment before this feature existed

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\OAuthProvider;
 use App\User;
 use Illuminate\Support\Str;
@@ -33,7 +34,7 @@ class OAuthTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function can_create_sso_if_local_exists()
     {
         factory(User::class)->create(['email' => 'test@example.com']);
@@ -53,7 +54,7 @@ class OAuthTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function redirect_to_provider()
     {
         $this->mockSocialite('github');
@@ -63,41 +64,39 @@ class OAuthTest extends TestCase
             ->assertJson(['url' => 'https://url-to-provider']);
     }
 
-    /** @test */
     /*   public function create_user_and_return_token()
-    {
-     $this->mockSocialite('github', [
-            'id' => '123',
-            'name' => 'Test User',
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-            'token' => 'access-token',
-            'refreshToken' => 'refresh-token',
-        ]);
-
-        $this->withoutExceptionHandling();
-
-        $this->get('/api/oauth/github/callback')
-            ->assertText('token')
-            ->assertSuccessful();
-
-        $this->assertDatabaseHas('users', [
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'email' => 'test@example.com',
-        ]);
-
-        $this->assertDatabaseHas('oauth_providers', [
-            'user_id' => User::first()->id,
-            'provider' => 'github',
-            'provider_user_id' => '123',
-            'access_token' => 'access-token',
-            'refresh_token' => 'refresh-token',
-        ]);
-    }*/
-
-    /** @test */
+        {
+         $this->mockSocialite('github', [
+                'id' => '123',
+                'name' => 'Test User',
+                'first_name' => 'Test',
+                'last_name' => 'User',
+                'email' => 'test@example.com',
+                'token' => 'access-token',
+                'refreshToken' => 'refresh-token',
+            ]);
+    
+            $this->withoutExceptionHandling();
+    
+            $this->get('/api/oauth/github/callback')
+                ->assertText('token')
+                ->assertSuccessful();
+    
+            $this->assertDatabaseHas('users', [
+                'first_name' => 'Test',
+                'last_name' => 'User',
+                'email' => 'test@example.com',
+            ]);
+    
+            $this->assertDatabaseHas('oauth_providers', [
+                'user_id' => User::first()->id,
+                'provider' => 'github',
+                'provider_user_id' => '123',
+                'access_token' => 'access-token',
+                'refresh_token' => 'refresh-token',
+            ]);
+        }*/
+    #[Test]
     public function update_user_and_return_token()
     {
         $user = factory(User::class)->create(['first_name' => 'Test', 'last_name' => 'User', 'email' => 'test@example.com']);

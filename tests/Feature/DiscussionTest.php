@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
@@ -9,8 +10,6 @@ use App\Question;
 use App\QuestionMediaUpload;
 use App\Section;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -55,7 +54,7 @@ class DiscussionTest extends TestCase
             'user_id' => $this->user->id]);
     }
 
-    /** @test */
+    #[Test]
     public function non_enrolled_student_cannot_get_discussion_group()
     {
 
@@ -66,7 +65,7 @@ class DiscussionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function must_be_in_course_to_view_discussions()
     {
         $new_user = factory(User::class)->create();
@@ -76,7 +75,7 @@ class DiscussionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function must_be_in_course_to_create_discussion()
     {
         $new_student_user = factory(User::class)->create(['role' => 3]);
@@ -91,7 +90,7 @@ class DiscussionTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function text_is_required_for_creating_text_discussion()
     {
         $this->actingAs($this->student_user)

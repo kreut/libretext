@@ -16,7 +16,7 @@ class AddPrimaryKeyToPasswordResets extends Migration
     {
         Schema::table('password_resets', function (Blueprint $table) {
             //needed if using a dump of a current database
-            $keys = DB::select(DB::raw(
+            $keys = DB::select((
                 'SHOW KEYS
                         FROM password_resets
                         WHERE Key_name="PRIMARY"'));

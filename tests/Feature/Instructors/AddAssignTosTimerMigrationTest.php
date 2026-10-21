@@ -11,7 +11,6 @@ use App\Traits\AssignmentProperties;
 use App\Traits\DateFormatter;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\Traits\Test;
@@ -90,7 +89,7 @@ class AddAssignTosTimerMigrationTest extends TestCase
         ];
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function resaving_a_position_unchanged_carries_the_running_clock_forward()
     {
         $this->harness->addAssignTos($this->assignment, [$this->unchanged_assign_to], $this->section, $this->user);
@@ -108,7 +107,7 @@ class AddAssignTosTimerMigrationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function changing_the_due_date_wipes_the_running_clock()
     {
         $changed = $this->unchanged_assign_to;
@@ -126,7 +125,7 @@ class AddAssignTosTimerMigrationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function changing_the_time_limit_wipes_the_running_clock()
     {
         $changed = $this->unchanged_assign_to;
@@ -141,7 +140,7 @@ class AddAssignTosTimerMigrationTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function changing_who_is_assigned_wipes_the_running_clock()
     {
         // Same dates and time_limit, but now targets the section directly

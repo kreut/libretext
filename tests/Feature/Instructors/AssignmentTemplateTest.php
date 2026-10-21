@@ -55,7 +55,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function non_owner_cannot_reorder_assignment_templates()
     {
@@ -64,7 +64,7 @@ class AssignmentTemplateTest extends TestCase
         ])->assertJson(['message' => 'You are not allowed to re-order an assignment template that is not yours.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public
     function owner_can_reorder_assignment_templates()
     {
@@ -82,7 +82,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_store_assignment_templates()
     {
 
@@ -92,7 +92,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function template_names_must_be_unique()
     {
         $this->actingAs($this->user)->postJson("/api/assignment-templates", $this->assignment_template_info)
@@ -102,7 +102,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_update_assignment_templates()
     {
         $this->assignment_template_info['template_name'] = "new name";
@@ -112,7 +112,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_instructor_cannot_get_assignment_templates()
     {
 
@@ -121,7 +121,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_get_assignment_templates()
     {
         $this->actingAs($this->user)->getJson("/api/assignment-templates")
@@ -129,7 +129,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_instructor_cannot_store_assignment_templates()
     {
         $this->actingAs($this->student_user)->postJson("/api/assignment-templates", $this->assignment_template_info)
@@ -137,7 +137,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function template_name_must_be_valid()
     {
         $this->assignment_template_info['template_name'] = '';
@@ -146,7 +146,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test * */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function template_description_must_be_valid()
     {
         $this->assignment_template_info['template_description'] = '';
@@ -155,14 +155,14 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_retrieve_assignment_template()
     {
         $this->actingAs($this->student_user)->getJson("/api/assignment-templates/{$this->assignment_template->id}")
             ->assertJson(['message' => 'You are not allowed to retrieve this assignment template.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_retrieve_assignment_template()
     {
 
@@ -170,7 +170,7 @@ class AssignmentTemplateTest extends TestCase
             ->assertJson(['type' => 'info']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_delete_assignment_template()
     {
 
@@ -180,7 +180,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_delete_assignment_template()
     {
         $current_count = AssignmentTemplate::count();
@@ -191,7 +191,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_cannot_copy_assignment_template()
     {
         $this->actingAs($this->student_user)->patchJson("/api/assignment-templates/copy/{$this->assignment_template->id}")
@@ -200,7 +200,7 @@ class AssignmentTemplateTest extends TestCase
 
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function owner_can_copy_assignment_template()
     {
         $this->actingAs($this->user)->patchJson("/api/assignment-templates/copy/{$this->assignment_template->id}")

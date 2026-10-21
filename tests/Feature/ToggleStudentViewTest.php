@@ -2,9 +2,8 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class ToggleStudentViewTest extends TestCase
@@ -16,7 +15,7 @@ class ToggleStudentViewTest extends TestCase
         $this->user = factory(User::class)->create(['role'=> 3]);
     }
 
-    /** @test */
+    #[Test]
     public function non_instructor_non_fake_student_cannot_toggle()
     {
         $this->actingAs($this->user)

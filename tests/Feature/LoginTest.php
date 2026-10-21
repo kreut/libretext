@@ -2,13 +2,14 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\User;
 use Tests\TestCase;
 use function factory;
 
 class LoginTest extends TestCase
 {
-    /** @var \App\User */
+    /** @var User */
     protected $user;
 
     public function setUp(): void
@@ -18,7 +19,7 @@ class LoginTest extends TestCase
         $this->user = factory(User::class)->create();
     }
 
-    /** @test */
+    #[Test]
     public function authenticate()
     {
         $this->postJson('/api/login', [
@@ -30,7 +31,7 @@ class LoginTest extends TestCase
         ->assertJson(['token_type' => 'bearer']);
     }
 
-    /** @test */
+    #[Test]
     public function fetch_the_current_user()
     {
         $this->actingAs($this->user)
@@ -39,7 +40,7 @@ class LoginTest extends TestCase
             ->assertJsonStructure(['id', 'first_name', 'last_name', 'email']);
     }
 
-    /** @test */
+    #[Test]
     public function log_out()
     {
         $token = $this->postJson('/api/login', [

@@ -160,7 +160,8 @@ class JWTController extends Controller
             $request['learning_tree_id'] = $problemJWT->adapt->learning_tree_id ?? null;
             $request['branch_id'] = $problemJWT->adapt->branch_id ?? null;
             //nothing to be saved since this is a learning tree assignment and it's part of a remediation
-            $request['submission'] = $answerJWT;
+            // Symfony 6+ rejects objects via $request[...] = ; add the decoded answer JWT object directly.
+            $request->query = new \Symfony\Component\HttpFoundation\InputBag(array_merge($request->query->all(), ['submission' => $answerJWT]));
             if (isset($problemJWT->adapt->is_learning_tree_node)) {
                 $learningTreeNodeSubmission = new LearningTreeNodeSubmission();
                 $learning_tree = LearningTree::find($request['learning_tree_id']);

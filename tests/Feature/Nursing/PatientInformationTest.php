@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Nursing;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\PatientInformation;
 use App\User;
 use App\Course;
@@ -22,7 +23,7 @@ class PatientInformationTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_delete_patient_information()
     {
         $this->actingAs($this->user_2)
@@ -31,7 +32,7 @@ class PatientInformationTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_update_showing_updated_patient_information()
     {
         $this->actingAs($this->user_2)
@@ -39,7 +40,7 @@ class PatientInformationTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update whether to show the updated Patient Information.']);
     }
 
-    /** @test */
+    #[Test]
     public function non_owner_cannot_get_patient_information()
     {
         $this->actingAs($this->user_2)

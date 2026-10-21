@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
 use App\Course;
 use App\Grader;
 use App\GraderAccessCode;
@@ -45,7 +46,7 @@ class RegisterTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_register_as_tester_with_a_valid_access_code()
     {
 
@@ -65,7 +66,7 @@ class RegisterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_register_as_tester_with_an_invalid_access_code()
     {
 
@@ -84,7 +85,7 @@ class RegisterTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function password_must_be_complex()
     {
 
@@ -103,7 +104,7 @@ class RegisterTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_register_as_student()
     {
         $this->postJson('/api/register', [
@@ -120,7 +121,7 @@ class RegisterTest extends TestCase
             ->assertJsonStructure(['id', 'first_name', 'last_name', 'email', 'time_zone']);
     }
 
-    /** @test */
+    #[Test]
     public function can_register_as_grader_with_a_valid_access_code()
     {
 
@@ -144,7 +145,7 @@ class RegisterTest extends TestCase
 
     }
 
-    /** @test */
+    #[Test]
     public function cannot_register_as_grader_without_valid_access_code()
     {
         $this->postJson('/api/register', [
@@ -161,7 +162,7 @@ class RegisterTest extends TestCase
     }
 
 
-    /** @test */
+    #[Test]
     public function can_not_register_with_existing_email()
     {
         factory(User::class)->create(['email' => 'test@test.app']);
@@ -178,7 +179,7 @@ class RegisterTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
-    /** @test */
+    #[Test]
     public function can_not_register_with_invalid_time_zone()
     {
 

@@ -16,7 +16,7 @@ class AddPrimaryKeyToLtiDeployments extends Migration
     {
         Schema::table('lti_deployments', function (Blueprint $table) {
            //needed when importing a current database
-            $keys = DB::select(DB::raw(
+            $keys = DB::select((
                 'SHOW KEYS
                         FROM lti_deployments
                         WHERE Key_name="PRIMARY"'));

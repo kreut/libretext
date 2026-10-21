@@ -76,9 +76,9 @@ class S3Controller extends Controller
                 return $response;
             }
 
-            $adapter = Storage::disk('s3')->getDriver()->getAdapter(); // Get the filesystem adapter
+            $adapter = Storage::disk('s3'); // Get the filesystem adapter
             $client = $adapter->getClient(); // Get the aws client
-            $bucket = $adapter->getBucket(); // Get the current bucket
+            $bucket = $adapter->getConfig()['bucket']; // Get the current bucket
 // Make a PutObject command
             $dir = false;
             $questionMediaUpload = new QuestionMediaUpload();

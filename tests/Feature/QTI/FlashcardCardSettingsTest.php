@@ -70,8 +70,7 @@ class FlashcardCardSettingsTest extends TestCase
     }
 
     // ── getFlashcardCardSettings ────────────────────────────────────────────
-
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_get_flashcard_card_settings()
     {
         $this->actingAs($this->instructor)
@@ -79,7 +78,7 @@ class FlashcardCardSettingsTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function enrolled_student_can_get_flashcard_card_settings()
     {
         $this->actingAs($this->student)
@@ -87,7 +86,7 @@ class FlashcardCardSettingsTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_enrolled_student_cannot_get_flashcard_card_settings()
     {
         $this->actingAs($this->non_enrolled_student)
@@ -95,7 +94,7 @@ class FlashcardCardSettingsTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_instructor_cannot_get_flashcard_card_settings()
     {
         $this->actingAs($this->non_owner_instructor)
@@ -103,7 +102,7 @@ class FlashcardCardSettingsTest extends TestCase
             ->assertJson(['type' => 'error']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function returns_null_when_no_card_level_override_exists()
     {
         // No flashcard_card_settings set on assignment_question row
@@ -119,7 +118,7 @@ class FlashcardCardSettingsTest extends TestCase
         $this->assertArrayHasKey('captions', $response['flashcard_card_settings']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function returns_saved_settings_when_card_level_override_exists()
     {
         $card_settings = [
@@ -143,7 +142,7 @@ class FlashcardCardSettingsTest extends TestCase
         $this->assertTrue($response['flashcard_card_settings']->text_to_speech ?? $response['flashcard_card_settings']['text_to_speech']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function assignment_level_defaults_are_returned_as_fallback()
     {
         // show_hint is enabled at the assignment level
@@ -162,8 +161,7 @@ class FlashcardCardSettingsTest extends TestCase
     }
 
     // ── updateFlashcardCardSettings ─────────────────────────────────────────
-
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function instructor_can_update_flashcard_card_settings()
     {
         $this->actingAs($this->instructor)
@@ -176,7 +174,7 @@ class FlashcardCardSettingsTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function non_owner_instructor_cannot_update_flashcard_card_settings()
     {
         $this->actingAs($this->non_owner_instructor)
@@ -188,7 +186,7 @@ class FlashcardCardSettingsTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update the flashcard settings for that question.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function student_cannot_update_flashcard_card_settings()
     {
         $this->actingAs($this->student)
@@ -200,7 +198,7 @@ class FlashcardCardSettingsTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update the flashcard settings for that question.']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function settings_are_persisted_after_update()
     {
         $payload = [
@@ -226,7 +224,7 @@ class FlashcardCardSettingsTest extends TestCase
         $this->assertEquals(8, $decoded['autoplay_seconds']);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function updated_settings_are_returned_on_subsequent_get()
     {
         $payload = [
